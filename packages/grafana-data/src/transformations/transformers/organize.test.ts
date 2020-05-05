@@ -47,13 +47,23 @@ describe('OrganizeFields Transformer', () => {
       expect(organized.fields).toEqual([
         {
           config: {},
+          labels: undefined,
           name: 'temperature',
+          state: {
+            title: 'temperature',
+          },
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
         },
         {
-          config: {},
-          name: 'renamed_humidity',
+          config: {
+            title: 'renamed_humidity',
+          },
+          labels: undefined,
+          name: 'humidity',
+          state: {
+            title: 'renamed_humidity',
+          },
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
         },
@@ -93,14 +103,24 @@ describe('OrganizeFields Transformer', () => {
 
       expect(organized.fields).toEqual([
         {
-          config: {},
-          name: 'renamed_time',
+          labels: undefined,
+          config: {
+            title: 'renamed_time',
+          },
+          name: 'time',
+          state: {
+            title: 'renamed_time',
+          },
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
         },
         {
           config: {},
+          labels: undefined,
           name: 'pressure',
+          state: {
+            title: 'pressure',
+          },
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
         },

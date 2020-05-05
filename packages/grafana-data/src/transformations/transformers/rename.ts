@@ -1,6 +1,7 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame, Field } from '../..';
+import { DataFrame, Field } from '../../types/dataFrame';
+import { getFieldState } from '../../field/fieldState';
 
 export interface RenameFieldsTransformerOptions {
   renameByName: Record<string, string>;
@@ -28,19 +29,20 @@ export const renameFieldsTransformer: DataTransformerInfo<RenameFieldsTransforme
 
       return data.map(frame => ({
         ...frame,
-        fields: renamer(frame.fields),
+        fields: renamer(frame),
       }));
     };
   },
 };
 
-const createRenamer = (renameByName: Record<string, string>) => (fields: Field[]): Field[] => {
+const createRenamer = (renameByName: Record<string, string>) => (frame: DataFrame): Field[] => {
   if (!renameByName || Object.keys(renameByName).length === 0) {
-    return fields;
+    return frame.fields;
   }
 
-  return fields.map(field => {
-    const renameTo = renameByName[field.name];
+  return frame.fields.map(field => {
+    const state = getFieldState(field, frame);
+    const renameTo = renameByName[state.title];
 
     if (typeof renameTo !== 'string' || renameTo.length === 0) {
       return field;
@@ -48,7 +50,14 @@ const createRenamer = (renameByName: Record<string, string>) => (fields: Field[]
 
     return {
       ...field,
-      name: renameTo,
+      config: {
+        ...field.config,
+        title: renameTo,
+      },
+      state: {
+        ...state,
+        title: renameTo,
+      },
     };
   });
 };

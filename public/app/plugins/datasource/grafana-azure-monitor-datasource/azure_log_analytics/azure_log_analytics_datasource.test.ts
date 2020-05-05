@@ -185,8 +185,9 @@ describe('AzureLogAnalyticsDatasource', () => {
             expect(results.data.length).toBe(1);
             expect(getFrameDisplayTitle(results.data[0])).toEqual('grafana-vm');
             expect(results.data[0].fields.length).toBe(2);
+            expect(results.data[0].name).toBe('grafana-vm');
             expect(results.data[0].fields[0].name).toBe('Time');
-            expect(results.data[0].fields[1].name).toBe('grafana-vm');
+            expect(results.data[0].fields[1].name).toBe('Value');
             expect(results.data[0].fields[0].values.toArray().length).toBe(6);
             expect(results.data[0].fields[0].values.get(0)).toEqual(1587633300000);
             expect(results.data[0].fields[1].values.get(0)).toEqual(2017.25);
