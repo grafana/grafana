@@ -156,7 +156,7 @@ export class PanelModel implements DataConfigSource {
     this.replaceVariables = this.replaceVariables.bind(this);
   }
 
-  /** Given a persistened PanelModel restores property values */
+  /** Given a persisted PanelModel restores property values */
   restoreModel(model: any) {
     // Start with clean-up
     for (const property of Object.keys(this)) {
