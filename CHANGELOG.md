@@ -627,7 +627,7 @@ also fixed a security vulnerability. Thanks Yuriy Dyachenko for discovering and 
 ### Annotations
 
 There are some breaking changes in the annotations HTTP API for region annotations. Region annotations are now represented
-using a single event instead of two seperate events. Check breaking changes in HTTP API [below](#http-api) and [HTTP API documentation](https://grafana.com/docs/http_api/annotations/) for more details.
+using a single event instead of two separate events. Check breaking changes in HTTP API [below](#http-api) and [HTTP API documentation](https://grafana.com/docs/http_api/annotations/) for more details.
 
 ### Docker
 
