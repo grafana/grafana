@@ -12,7 +12,6 @@ import { Branding } from 'app/core/components/Branding/Branding';
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
-import { AngularSubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
@@ -297,7 +296,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {!editPanel && !featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
+              {!featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
