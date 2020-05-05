@@ -61,7 +61,7 @@ Hourly reports are generated once per hour. All fields are required.
 Daily reports are generated once per day. All fields are required.
 
 * **Time -** Time of day in 24 hours format when the report should be sent.
-* **Time zone -** Time zone for the **Time** argument.
+* **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
 
