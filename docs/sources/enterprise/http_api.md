@@ -62,7 +62,7 @@ Content-Length: 29
 
 Status Codes:
 
-code | description
+Code | Description
 ---- | -----------
 200 | Report was sent
 400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.)
