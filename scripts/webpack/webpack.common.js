@@ -14,7 +14,6 @@ function shouldExclude(filename) {
     'apache-arrow',
     'react-hook-form',
     'rc-trigger',
-    '@iconscout/react-unicons',
   ];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
