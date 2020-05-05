@@ -313,7 +313,7 @@ Part of issue triage should also be triaging of external PRs. Main goal should b
 
 ### Setting up Gmail filters
 
-If you're using Gmail it's highly recommened that you setup filters to automatically remove email from the inbox and label them accordingly to make it easy for you to understand when you need to act upon a notification or process all incoming issues that haven't been triaged.
+If you're using Gmail it's highly recommended that you setup filters to automatically remove email from the inbox and label them accordingly to make it easy for you to understand when you need to act upon a notification or process all incoming issues that haven't been triaged.
 
 This may be setup by personal preference, but here's a working configuration for reference.
 1. Follow instructions in [gist](https://gist.github.com/marefr/9167c2e31466f6316c1cba118874e74f)
