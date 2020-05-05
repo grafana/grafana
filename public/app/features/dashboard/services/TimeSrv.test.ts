@@ -184,7 +184,7 @@ describe('timeSrv', () => {
     });
 
     describe('data point windowing', () => {
-      it('handles time window specfied as interval string', () => {
+      it('handles time window specified as interval string', () => {
         location = {
           search: jest.fn(() => ({
             time: '1410337645000',
