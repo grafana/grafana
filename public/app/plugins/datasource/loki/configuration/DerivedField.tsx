@@ -152,7 +152,7 @@ const DataSourceSection = (props: DataSourceSectionProps) => {
   const { datasourceUid, onChange } = props;
   const datasources: DataSourceSelectItem[] = getDatasourceSrv()
     .getExternal()
-    // At this point internal link do not work with any other datasource than Jaeger and Zipkin
+    // At this moment only Jaeger and Zipkin datasource is supported as the link target.
     .filter(ds => ds.meta.tracing)
     .map(
       ds =>
