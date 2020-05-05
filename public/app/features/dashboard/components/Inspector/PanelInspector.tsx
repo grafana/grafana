@@ -103,7 +103,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     if (plugin && !plugin.meta.skipDataQuery) {
       this.querySubscription = panel
         .getQueryRunner()
-        .getData()
+        .getData(false)
         .subscribe({
           next: data => this.onUpdateData(data),
         });

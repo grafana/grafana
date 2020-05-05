@@ -82,21 +82,21 @@ export class PanelQueryRunner {
               series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
             };
           }
-        }
 
-        // Apply field defaults & overrides
-        const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          // Apply field defaults & overrides
+          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
-        if (fieldConfig) {
-          processedData = {
-            ...processedData,
-            series: applyFieldOverrides({
-              timeZone: this.timeZone,
-              autoMinMax: true,
-              data: processedData.series,
-              ...fieldConfig,
-            }),
-          };
+          if (fieldConfig) {
+            processedData = {
+              ...processedData,
+              series: applyFieldOverrides({
+                timeZone: this.timeZone,
+                autoMinMax: true,
+                data: processedData.series,
+                ...fieldConfig,
+              }),
+            };
+          }
         }
 
         return processedData;
