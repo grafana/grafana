@@ -20,15 +20,15 @@ To access the API you need to authenticate yourself. For more information about 
 
 ### Send report
 
+This API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.
+
 > Only available in Grafana Enterprise v7.0+.
 
 `POST /api/reports/email`
 
 Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client's timeout to at least 60 seconds.
 
-This API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.
-
-**Example request:**
+#### Example request
 
 ```http
 POST /api/reports/email HTTP/1.1
@@ -42,7 +42,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-JSON Body Schema:
+#### JSON Body Schema
 
 Field name | Type | Description
 ---------- | ---- | -----------
@@ -50,7 +50,7 @@ id | string | ID of the report to send. It is the same as in the URL when editin
 emails | string | Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
 useEmailsFromReport | boolean | Send the report to the emails specified in the report. Required if **emails** is not present.
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -60,13 +60,13 @@ Content-Length: 29
 {"message":"Report was sent"}
 ```
 
-Status Codes:
+#### Status Codes
 
 Code | Description
 ---- | -----------
-200 | Report was sent
-400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.)
-401 | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}})
-403 | User is authenticated but is not authorized to generate the report
-404 | Report not found
-500 | Unexpected error or server misconfiguration. Refer to body and/or server logs for more details
+200 | Report was sent.
+400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
+401 | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}}).
+403 | User is authenticated but is not authorized to generate the report.
+404 | Report not found.
+500 | Unexpected error or server misconfiguration. Refer to body and/or server logs for more details.
