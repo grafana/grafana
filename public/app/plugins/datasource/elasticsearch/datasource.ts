@@ -268,7 +268,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           }
         }
 
-        // legacy support for title tield
+        // legacy support for title field
         if (annotation.titleField) {
           const title = getFieldFromSource(source, annotation.titleField);
           if (title) {
