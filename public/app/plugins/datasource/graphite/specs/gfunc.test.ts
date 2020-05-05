@@ -60,19 +60,19 @@ describe('when rendering func instance', () => {
     expect(func.render('hello', replaceVariablesDummy)).toEqual("movingMedian(hello, '5min')");
   });
 
-  it('should never quote boolean paramater', () => {
+  it('should never quote boolean parameter', () => {
     const func = gfunc.createFuncInstance('sortByName');
     func.params[0] = '$natural';
     expect(func.render('hello', replaceVariablesDummy)).toEqual('sortByName(hello, $natural)');
   });
 
-  it('should never quote int paramater', () => {
+  it('should never quote int parameter', () => {
     const func = gfunc.createFuncInstance('maximumAbove');
     func.params[0] = '$value';
     expect(func.render('hello', replaceVariablesDummy)).toEqual('maximumAbove(hello, $value)');
   });
 
-  it('should never quote node paramater', () => {
+  it('should never quote node parameter', () => {
     const func = gfunc.createFuncInstance('aliasByNode');
     func.params[0] = '$node';
     expect(func.render('hello', replaceVariablesDummy)).toEqual('aliasByNode(hello, $node)');
