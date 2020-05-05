@@ -139,7 +139,7 @@ This attribute can be skipped if the type provided by `typescript` and the funct
 
 ```typescript
 /**
- * Will help to create a resource resovler depending
+ * Will help to create a resource resolver depending
  * on the current execution context.
  * 
  * @param context - The current execution context.
@@ -179,7 +179,7 @@ This attribute can be skipped if the type provided by `typescript` and the funct
 
 ```typescript
 /**
- * Will help to create a resource resovler depending
+ * Will help to create a resource resolver depending
  * on the current execution context.
  * 
  * @param context - The current execution context.
