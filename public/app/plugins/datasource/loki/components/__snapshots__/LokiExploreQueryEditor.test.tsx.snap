@@ -54,6 +54,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
   datasource={
     Object {
       "languageProvider": LokiLanguageProvider {
+        "addLabelValuesToOptions": [Function],
         "cleanText": [Function],
         "datasource": [Circular],
         "fetchSeriesLabels": [Function],
