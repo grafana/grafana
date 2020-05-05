@@ -11,7 +11,7 @@ weight = 1
 
 # Alerting Engine and Rules Guide
 
-Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard
+Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard,
 Grafana will extract the alert rules into a separate alert rule storage and schedule them for evaluation.
 
 {{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
