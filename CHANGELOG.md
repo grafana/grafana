@@ -2943,7 +2943,7 @@ Grunt & Watch tasks:
 **Fixes**
 
 - [Issue #1832](https://github.com/grafana/grafana/issues/1832). Graph Panel + Legend Table mode: Many series caused zero height graph, now legend will never reduce the height of the graph below 50% of row height.
-- [Issue #1846](https://github.com/grafana/grafana/issues/1846). Snapshots: Fixed issue with snapshoting dashboards with an interval template variable
+- [Issue #1846](https://github.com/grafana/grafana/issues/1846). Snapshots: Fixed issue with snapshotting dashboards with an interval template variable
 - [Issue #1848](https://github.com/grafana/grafana/issues/1848). Panel timeshift: You can now use panel timeshift without a relative time override
 
 # 2.0.1 (2015-04-20)
