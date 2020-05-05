@@ -162,7 +162,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       // Clear url state
       this.props.updateLocation({
         query: {
-          edit: null,
+          editPanel: null,
           viewPanel: null,
         },
         partial: true,
