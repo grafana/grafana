@@ -5,11 +5,6 @@ describe('getHighlighterExpressionsFromQuery', () => {
     expect(getHighlighterExpressionsFromQuery('')).toEqual([]);
   });
 
-  it('returns a single expressions for legacy query', () => {
-    expect(getHighlighterExpressionsFromQuery('{} x')).toEqual(['x']);
-    expect(getHighlighterExpressionsFromQuery('{foo="bar"} x')).toEqual(['x']);
-  });
-
   it('returns an expression for query with filter', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x"')).toEqual(['x']);
   });
