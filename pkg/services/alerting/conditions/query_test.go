@@ -84,7 +84,7 @@ func TestQueryCondition(t *testing.T) {
 				So(cr.Firing, ShouldBeFalse)
 			})
 
-			Convey("Should fire if only first serie matches", func() {
+			Convey("Should fire if only first series matches", func() {
 				ctx.series = tsdb.TimeSeriesSlice{
 					tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
 					tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(0, 0)),
@@ -149,7 +149,7 @@ func TestQueryCondition(t *testing.T) {
 					So(cr.NoDataFound, ShouldBeTrue)
 				})
 
-				Convey("Should not set NoDataFound if one serie is empty", func() {
+				Convey("Should not set NoDataFound if one series is empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
 						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
 						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),

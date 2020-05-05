@@ -75,7 +75,7 @@ describe('SingleStatCtrl', () => {
     });
   });
 
-  singleStatScenario('showing serie name instead of value', (ctx: TestContext) => {
+  singleStatScenario('showing series name instead of value', (ctx: TestContext) => {
     ctx.setup(() => {
       ctx.input = [
         {

@@ -45,11 +45,11 @@ func TestEvaluators(t *testing.T) {
 	})
 
 	Convey("no_value", t, func() {
-		Convey("should be false if serie have values", func() {
+		Convey("should be false if series have values", func() {
 			So(evaluatorScenario(`{"type": "no_value", "params": [] }`, 50), ShouldBeFalse)
 		})
 
-		Convey("should be true when the serie have no value", func() {
+		Convey("should be true when the series have no value", func() {
 			jsonModel, err := simplejson.NewJson([]byte(`{"type": "no_value", "params": [] }`))
 			So(err, ShouldBeNil)
 

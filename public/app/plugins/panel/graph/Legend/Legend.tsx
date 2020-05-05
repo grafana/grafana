@@ -142,7 +142,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
         delete hiddenSeries[value.alias];
       });
     } else {
-      // hide all but this serie
+      // hide all but this series
       this.props.seriesList.forEach(value => {
         if (value.alias === series.alias) {
           return;

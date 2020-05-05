@@ -91,7 +91,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
             }
           ]
         ],
-        "alias": "serie alias",
+        "alias": "series alias",
         "tags": [
           {
             "key": "datacenter",
@@ -118,7 +118,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(len(res.Tags), ShouldEqual, 2)
 			So(res.Tz, ShouldEqual, "Europe/Paris")
 			So(res.Interval, ShouldEqual, time.Second*20)
-			So(res.Alias, ShouldEqual, "serie alias")
+			So(res.Alias, ShouldEqual, "series alias")
 		})
 
 		Convey("can part raw query json model", func() {

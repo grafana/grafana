@@ -154,13 +154,13 @@ export default class AppInsightsDatasource {
         }
 
         queryRes.series.forEach((series: any) => {
-          const timeSerie: TimeSeries = {
+          const timeSeries: TimeSeries = {
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
           };
-          result.push(toDataFrame(timeSerie));
+          result.push(toDataFrame(timeSeries));
         });
       });
       return result;

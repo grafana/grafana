@@ -164,7 +164,7 @@ describe('toDataFrame', () => {
   });
 });
 
-describe('SerisData backwards compatibility', () => {
+describe('SeriesData backwards compatibility', () => {
   it('can convert TimeSeries to series and back again', () => {
     const timeseries = {
       target: 'Field Name',
