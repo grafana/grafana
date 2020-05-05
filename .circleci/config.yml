@@ -192,6 +192,7 @@ jobs:
       - run:
           name: Build internal Grafana plug-ins
           command: |
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
             /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
       - run:
           name: Move artifacts
