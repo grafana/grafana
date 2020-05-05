@@ -32,7 +32,7 @@ describe('SeriesOverridesCtrl', () => {
     });
   });
 
-  describe('When removing overide', () => {
+  describe('When removing override', () => {
     it('click should include option and value index', () => {
       $scope.setOverride(1, 0);
       $scope.removeOverride({ propertyName: 'lines' });
