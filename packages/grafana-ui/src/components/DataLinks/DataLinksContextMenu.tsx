@@ -5,16 +5,16 @@ import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 import { css } from 'emotion';
 
 interface DataLinksContextMenuProps {
-  children: (props: { openMenu?: React.MouseEventHandler<HTMLElement>; targetClassName?: string }) => JSX.Element;
-  hasLinks: boolean;
-  links?: () => LinkModel[];
+  children: (props: DataLinksContextMenuApi) => JSX.Element;
+  links: () => LinkModel[];
 }
 
-export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links, hasLinks }) => {
-  if (!links || !hasLinks) {
-    return children({});
-  }
+export interface DataLinksContextMenuApi {
+  openMenu?: React.MouseEventHandler<HTMLElement>;
+  targetClassName?: string;
+}
 
+export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links }) => {
   const getDataLinksContextMenuItems = () => {
     return [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
   };
