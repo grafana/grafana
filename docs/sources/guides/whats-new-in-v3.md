@@ -213,7 +213,7 @@ feature rich global performance monitoring directly from your on-prem Grafana.
 <img src="/img/docs/v3/wP-Screenshot-dash-web.png">
 
 #### [Zabbix App](https://grafana.com/plugins/alexanderzobnin-zabbix-app)
-This app contains the already very pouplar Zabbix data source plugin, 2 dashboards and a triggers panel. It is
+This app contains the already very popular Zabbix data source plugin, 2 dashboards and a triggers panel. It is
 created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/grafana-zabbix).
 
 <img src="/img/docs/v3/zabbix_app.png">
