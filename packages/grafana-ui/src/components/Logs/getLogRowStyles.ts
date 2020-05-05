@@ -138,7 +138,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       white-space: pre-wrap;
       word-break: break-all;
     `,
-    //Log details sepcific CSS
+    //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
       border: 1px solid ${borderColor};
