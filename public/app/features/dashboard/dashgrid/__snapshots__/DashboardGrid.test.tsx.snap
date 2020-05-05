@@ -961,7 +961,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 24,
+          "schemaVersion": 25,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
