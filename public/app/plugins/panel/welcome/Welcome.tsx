@@ -46,7 +46,9 @@ const onHelpLinkClick = (option: { label: string; href: string }) => {
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backgroundImage = theme.isDark ? 'public/img/login_background_dark.svg' : 'public/img/onboarding_art_light.svg';
+  const backgroundImage = theme.isDark
+    ? 'public/img/login_background_dark.svg'
+    : 'public/img/login_background_light.svg';
 
   return {
     container: css`
@@ -60,6 +62,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
       @media only screen and (max-width: ${theme.breakpoints.md}) {
         padding: 0 24px 0 100px;
+        background-position: 0px;
       }
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         flex-direction: column;
