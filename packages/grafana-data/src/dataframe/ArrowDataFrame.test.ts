@@ -57,7 +57,7 @@ describe('Read/Write arrow Table to DataFrame', () => {
       },
       fields: [
         { name: 'time', config: {}, type: FieldType.time, values: [1, 2, 3] },
-        { name: 'value', config: { min: 0, max: 50, unit: 'somthing' }, type: FieldType.number, values: [1, 2, 3] },
+        { name: 'value', config: { min: 0, max: 50, unit: 'something' }, type: FieldType.number, values: [1, 2, 3] },
         { name: 'str', config: {}, type: FieldType.string, values: ['a', 'b', 'c'] },
       ],
     });
