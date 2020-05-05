@@ -95,7 +95,7 @@ describe('ShareModal', () => {
 
     it('should generate share url absolute time', () => {
       const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&panelId=22&fullscreen');
+      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&viewPanel=22');
     });
 
     it('should generate render url', () => {
@@ -106,7 +106,7 @@ describe('ShareModal', () => {
 
       const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      const params = '?from=1000&to=2000&orgId=1&viewPanel=22&width=1000&height=500&tz=UTC';
       expect(state?.imageUrl).toContain(base + params);
     });
 
@@ -118,7 +118,7 @@ describe('ShareModal', () => {
 
       const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      const params = '?from=1000&to=2000&orgId=1&viewPanel=22&width=1000&height=500&tz=UTC';
       expect(state?.imageUrl).toContain(base + params);
     });
 
@@ -139,26 +139,15 @@ describe('ShareModal', () => {
       expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
     });
 
-    it('should remove fullscreen from image url when is first param in querystring and modeSharePanel is true', () => {
-      mockLocationHref('http://server/#!/test?fullscreen&edit');
-      ctx.mount({
-        panel: { id: 1, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
-      });
-
-      const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toContain('?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1');
-      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
-    });
-
     it('should remove edit from image url when is first param in querystring and modeSharePanel is true', () => {
-      mockLocationHref('http://server/#!/test?edit&fullscreen');
+      mockLocationHref('http://server/#!/test?edit');
       ctx.mount({
         panel: { id: 1, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
       });
 
       const state = ctx.wrapper?.state();
-      expect(state?.shareUrl).toContain('?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1');
-      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+      expect(state?.shareUrl).toContain('?edit&from=1000&to=2000&orgId=1&viewPanel=1');
+      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&viewPanel=1&width=1000&height=500&tz=UTC');
     });
 
     it('should include template variables in url', () => {
