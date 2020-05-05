@@ -33,6 +33,8 @@ The **Base** value represents minus infinity. It is generally the “good” col
 
 You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds from highest value to lowest.
 
+> **Note:** These instructions apply only to the Stat, Gauge, Bar gauge, and Table visualizations. 
+
 1. Navigate to the panel you want to add a threshold to.
 1. Click the **Field** tab.
 1. Click **Add threshold**. 
@@ -42,6 +44,10 @@ You can add as many thresholds to a panel as you want. Grafana automatically sor
    * **Edit number:** Click the number you wish to change and then enter a new number.
    * **Thresholds mode -** Click the mode to change it for all thresholds on this panel.
 1. Click **Save** to save the changes in the dashboard.
+
+## Add a threshold to a Graph panel
+
+
 
 ## Delete a threshold
 
