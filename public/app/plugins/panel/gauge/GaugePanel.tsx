@@ -1,24 +1,18 @@
-// Libraries
 import React, { PureComponent } from 'react';
+import { FieldDisplay, getFieldDisplayValues, PanelProps, VizOrientation } from '@grafana/data';
+import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 
-// Services & Utils
 import { config } from 'app/core/config';
-
-// Components
-import { Gauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-
-// Types
 import { GaugeOptions } from './types';
-import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay>): JSX.Element => {
     const { options } = this.props;
     const { value, width, height } = valueProps;
-    const { field, display } = value;
+    const { field, display, hasLinks, getLinks } = value;
 
     return (
-      <DataLinksContextMenu links={value.getLinks}>
+      <DataLinksContextMenu links={getLinks} hasLinks={hasLinks}>
         {({ openMenu, targetClassName }) => {
           return (
             <Gauge

@@ -7,6 +7,7 @@ import {
   DataFrame,
   DisplayValue,
   DisplayValueAlignmentFactors,
+  Field,
   FieldConfig,
   FieldConfigSource,
   FieldType,
@@ -80,6 +81,7 @@ export interface FieldDisplay {
   colIndex?: number; // The field column index
   rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
   getLinks?: () => LinkModel[];
+  hasLinks: boolean;
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -168,6 +170,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                       valueRowIndex: j,
                     })
                 : () => [],
+              hasLinks: hasLinks(field),
             });
 
             if (values.length >= limit) {
@@ -210,6 +213,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                       calculatedValue: displayValue,
                     })
                 : () => [],
+              hasLinks: hasLinks(field),
             });
           }
         }
@@ -226,6 +230,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   return values;
 };
+
+export function hasLinks(field: Field): boolean {
+  return field.config?.links?.length ? field.config.links.length > 0 : false;
+}
 
 export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): DisplayValueAlignmentFactors {
   const info: DisplayValueAlignmentFactors = {
@@ -287,6 +295,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
       numeric: 0,
       color: display.color,
     },
+    hasLinks: false,
   };
 }
 

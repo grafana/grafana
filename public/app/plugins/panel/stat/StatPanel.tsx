@@ -1,28 +1,23 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Utils & Services
-import { config } from 'app/core/config';
-
-// Types
-import { StatPanelOptions } from './types';
 import {
+  BigValue,
+  BigValueGraphMode,
+  BigValueSparkline,
+  DataLinksContextMenu,
   VizRepeater,
   VizRepeaterRenderValueProps,
-  BigValue,
-  DataLinksContextMenu,
-  BigValueSparkline,
-  BigValueGraphMode,
 } from '@grafana/ui';
-
 import {
-  PanelProps,
-  getFieldDisplayValues,
-  FieldDisplay,
-  ReducerID,
-  getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
+  ReducerID,
 } from '@grafana/data';
+
+import { config } from 'app/core/config';
+import { StatPanelOptions } from './types';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
@@ -46,7 +41,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     }
 
     return (
-      <DataLinksContextMenu links={value.getLinks}>
+      <DataLinksContextMenu links={value.getLinks} hasLinks={value.hasLinks}>
         {({ openMenu, targetClassName }) => {
           return (
             <BigValue

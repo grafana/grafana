@@ -1,27 +1,24 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Services & Utils
-import { config } from 'app/core/config';
-
-import { BarGauge, VizRepeater, VizRepeaterRenderValueProps, DataLinksContextMenu } from '@grafana/ui';
-import { BarGaugeOptions } from './types';
 import {
-  getFieldDisplayValues,
-  FieldDisplay,
-  PanelProps,
-  getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
 } from '@grafana/data';
+import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+
+import { config } from 'app/core/config';
+import { BarGaugeOptions } from './types';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { options } = this.props;
     const { value, alignmentFactors, orientation, width, height } = valueProps;
-    const { field, display, view, colIndex } = value;
+    const { field, display, view, colIndex, hasLinks, getLinks } = value;
 
     return (
-      <DataLinksContextMenu links={value.getLinks}>
+      <DataLinksContextMenu links={getLinks} hasLinks={hasLinks}>
         {({ openMenu, targetClassName }) => {
           return (
             <BarGauge
