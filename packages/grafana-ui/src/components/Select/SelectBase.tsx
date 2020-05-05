@@ -312,6 +312,11 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
+          menuPortal: ({ position, width }: any) => ({
+            position,
+            width,
+            zIndex: theme.zIndex.dropdown,
+          }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({
             top,

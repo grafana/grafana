@@ -88,7 +88,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       position: relative;
       flex-grow: 1;
       /* we want input to be above addons, especially for focused state */
-      z-index: 0;
+      z-index: 1;
 
       /* when input rendered with addon before only*/
       &:not(:first-child):last-child {
