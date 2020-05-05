@@ -2,23 +2,17 @@
   "links": [],
   "panels": [
     {
-      "content": "<div class=\"dashboard-header\">\n  <span>Welcome to Grafana</span>\n</div>",
       "datasource": null,
-      "editable": true,
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 0
       },
       "id": 1,
-      "links": [],
-      "mode": "html",
-      "options": {},
-      "style": {},
       "title": "",
       "transparent": true,
-      "type": "text"
+      "type": "welcome"
     },
     {
       "datasource": null,
