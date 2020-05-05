@@ -221,7 +221,7 @@ This is the most difficult thing with triaging issues since it requires a lot of
 
 The key here is asking for help and discuss issues to understand how more experienced project members thinks and reason. By doing that you learn more and eventually be more and more comfortable with prioritizing issues.
 
-In any case there are uncertainty around the priorization of an issue, please ask the maintainers for help.
+In any case there are uncertainty around the prioritization of an issue, please ask the maintainers for help.
 
 Label | Description
 ------- | --------
