@@ -200,6 +200,28 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 
 {{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
 
+## Tracing integration
+> Only available in Grafana v7.0+.
+
+You can visualize traces from tracing data sources in explore. Data sources currently supported:
+- [Jaeger]({{< relref "../datasources/jaeger" >}})
+- [Zipkin]({{< relref "../datasources/zipkin" >}})
+
+For information about how to use the query editor see documentation for specific data source.
+
+TODO: image of the trace view
+
+There are two main sections of the tracing view: header and timeline.
+
+TODO: The header with zoom
+
+Header shows trace metadata like root span name, trace ID or start time. It also shows condensed minimap of all the spans. You can use this minimap to zoom to a section of trace timeline by dragging with your mouse and selecting a region. You can reset the zoom selection with Reset Selection button which is shown when you hover over the minimap. Use search to the right of the root span name to highlight any spans containing the search text.
+
+TODO: image of expanded row
+
+Timeline shows detailed information about all the spans in the trace. You can click shevron icon to the left of the span name to show or hide all the children spans. You can open span details by clicking on the span row. In the details you can see Tags, Process and Logs section if span contains any logs. Each section can be expanded or collapsed by clicking on its title.
+
+
 ## Navigating between Explore and a dashboard
 
 To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
