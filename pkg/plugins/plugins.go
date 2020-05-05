@@ -174,7 +174,7 @@ func (pm *PluginManager) checkPluginPaths() error {
 			continue
 		}
 
-		if err := pm.scan(path, false); err != nil {
+		if err := pm.scan(path, true); err != nil {
 			return errutil.Wrapf(err, "failed to scan directory configured for plugin '%s': '%s'", pluginID, path)
 		}
 	}
@@ -241,7 +241,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	}
 
 	if f.Name() == "plugin.json" {
-		err := scanner.loadPluginJson(currentPath)
+		err := scanner.loadPlugin(currentPath)
 		if err != nil {
 			scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
 			scanner.errors = append(scanner.errors, err)
@@ -250,7 +250,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	return nil
 }
 
-func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
+func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 	currentDir := filepath.Dir(pluginJsonFilePath)
 	reader, err := os.Open(pluginJsonFilePath)
 	if err != nil {
@@ -269,29 +269,45 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
+	// The expressions feature toggle corresponds to transform plug-ins.
+	if pluginCommon.Type == "transform" {
+		isEnabled := scanner.cfg.IsExpressionsEnabled()
+		if !isEnabled {
+			scanner.log.Debug("Transform plugin is disabled since the expressions feature toggle is not enabled",
+				"pluginID", pluginCommon.Id)
+			return nil
+		}
+	}
+
 	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
 
 	// For the time being, we choose to only require back-end plugins to be signed
+	// NOTE: the state is calculated again for when setting metadata on the object
 	if pluginCommon.Backend && scanner.requireSigned {
-		scanner.log.Debug("Plugin signature required, validating", "pluginID", pluginCommon.Id,
-			"pluginDir", pluginCommon.PluginDir)
-		allowUnsigned := false
-		for _, plug := range scanner.cfg.PluginsAllowUnsigned {
-			if plug == pluginCommon.Id {
-				allowUnsigned = true
-				break
-			}
-		}
-		if sig := GetPluginSignatureState(&pluginCommon); sig != PluginSignatureValid && !allowUnsigned {
-			switch sig {
-			case PluginSignatureUnsigned:
-				return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
-			case PluginSignatureInvalid:
-				return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
-			case PluginSignatureModified:
-				return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
-			default:
-				return fmt.Errorf("unrecognized plugin signature state %v", sig)
+		sig := GetPluginSignatureState(&pluginCommon)
+		if sig != PluginSignatureValid {
+			scanner.log.Debug("Invalid Plugin Signature", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir, "state", sig)
+			if sig == PluginSignatureUnsigned {
+				allowUnsigned := false
+				for _, plug := range scanner.cfg.PluginsAllowUnsigned {
+					if plug == pluginCommon.Id {
+						allowUnsigned = true
+						break
+					}
+				}
+				if setting.Env != setting.DEV && !allowUnsigned {
+					return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
+				}
+				scanner.log.Warn("Running an unsigned backend plugin", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir)
+			} else {
+				switch sig {
+				case PluginSignatureInvalid:
+					return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
+				case PluginSignatureModified:
+					return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
+				default:
+					return fmt.Errorf("unrecognized plugin signature state %v", sig)
+				}
 			}
 		}
 	}
