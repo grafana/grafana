@@ -72,6 +72,13 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   return columns;
 }
 
+export function isNullOrUndefined(value: any) {
+  if (value === undefined || value === null) {
+    return true;
+  }
+  return false;
+}
+
 function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:

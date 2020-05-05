@@ -12,7 +12,7 @@ import {
   UseSortByState,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, getTextAlign } from './utils';
+import { getColumns, getTextAlign, isNullOrUndefined } from './utils';
 import { useTheme } from '../../themes';
 import { TableColumnResizeActionCallback, TableFilterActionCallback, TableSortByActionCallback } from './types';
 import { getTableStyles, TableStyles } from './styles';
@@ -76,8 +76,12 @@ export const Table: FC<Props> = memo((props: Props) => {
 
     // Check if an array buffer already exists
     const buffer = (data.fields[0].values as any).buffer;
-    if (Array.isArray(buffer) && buffer.length === data.length) {
-      return buffer;
+
+    // Check if buffer is array and filter out all null and undefined values as they would throw an error
+    const filteredBuffer = Array.isArray(buffer) && buffer.filter(value => !isNullOrUndefined(value));
+
+    if (filteredBuffer && filteredBuffer.length === data.length) {
+      return filteredBuffer;
     }
 
     // For arrow tables, the `toArray` implementation is expensive and akward *especially* for timestamps
