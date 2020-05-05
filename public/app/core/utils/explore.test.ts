@@ -408,7 +408,7 @@ describe('sortLogsResult', () => {
     logLevel: LogLevel.info,
     raw: '',
     timeEpochMs: 10,
-    timeEpochNs: 10,
+    timeEpochNs: 10000000,
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
