@@ -24,21 +24,22 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { ContextMenuGroup, ContextMenuItem, graphTimeFormatter, graphTimeFormat } from '@grafana/ui';
-import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
+import { ContextMenuGroup, ContextMenuItem, graphTimeFormat, graphTimeFormatter } from '@grafana/ui';
+import { getCurrentTheme, provideTheme } from 'app/core/utils/ConfigProvider';
 import {
-  toUtc,
-  LinkModelSupplier,
+  DataFrame,
   DataFrameView,
-  getValueFormat,
   FieldDisplay,
+  FieldType,
+  formattedValueToString,
   getDisplayProcessor,
   getFlotPairsConstant,
-  PanelEvents,
-  formattedValueToString,
-  FieldType,
-  DataFrame,
   getTimeField,
+  getValueFormat,
+  hasLinks,
+  LinkModelSupplier,
+  PanelEvents,
+  toUtc,
 } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -259,7 +260,8 @@ class GraphElement {
         const dataIndex = this.getDataIndexWithNullValuesCorrection(item, dataFrame);
 
         let links: any[] = this.panel.options.dataLinks || [];
-        if (field.config.links && field.config.links.length) {
+        const hasLinksValue = hasLinks(field);
+        if (hasLinksValue) {
           // Append the configured links to the panel datalinks
           links = [...links, ...field.config.links];
         }
@@ -280,6 +282,7 @@ class GraphElement {
               rowIndex: dataIndex,
               colIndex: item.series.fieldIndex,
               field: fieldConfig,
+              hasLinks: hasLinksValue,
             })
           : undefined;
       }
