@@ -48,7 +48,7 @@ Panel titles and metric queries can refer to variables using two different synta
   Example: apps.frontend.[[server]].requests.count
 
 Before queries are sent to your data source the query is _interpolated_, meaning the variable is replaced with its current value. During
-interpolation the variable value might be _escaped_ in order to conform to the syntax of the query language and where it is used.
+interpolation, the variable value might be _escaped_ in order to conform to the syntax of the query language and where it is used.
 For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
 documentation topic for details on value escaping during interpolation.
 

@@ -4,11 +4,55 @@ import RCCascader from 'rc-cascader';
 import React from 'react';
 import PromQlLanguageProvider, { DEFAULT_LOOKUP_METRICS_THRESHOLD } from '../language_provider';
 import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
+import { ButtonCascader } from '@grafana/ui';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { PromOptions } from '../types';
 
 describe('PromQueryField', () => {
   beforeAll(() => {
     // @ts-ignore
     window.getSelection = () => {};
+  });
+
+  it('renders metrics chooser regularly if lookups are not disabled in the datasource settings', () => {
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+      },
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+
+    const queryField = mount(
+      <PromQueryField
+        // @ts-ignore
+        datasource={datasource}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+      />
+    );
+
+    expect(queryField.find(ButtonCascader).length).toBe(1);
+  });
+
+  it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
+    const queryField = mount(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ lookupsDisabled: true }}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+      />
+    );
+
+    expect(
+      queryField
+        .find(ButtonCascader)
+        .find('button')
+        .props().disabled
+    ).toBe(true);
   });
 
   it('refreshes metrics when the data source changes', async () => {
