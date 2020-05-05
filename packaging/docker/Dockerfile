@@ -28,7 +28,7 @@ RUN apk add --no-cache ca-certificates bash tzdata && \
 
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
-      apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community libaio libnsl && \
+      apk add --no-cache --upgrade libaio libnsl && \
       ln -s /usr/lib/libnsl.so.2 /usr/lib/libnsl.so.1 && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-2.30-r0.apk \
         -O /tmp/glibc-2.30-r0.apk && \

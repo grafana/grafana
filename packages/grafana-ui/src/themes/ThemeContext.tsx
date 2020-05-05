@@ -35,7 +35,7 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
   return WithTheme as Hoisted;
 };
 
-export function useTheme() {
+export function useTheme(): GrafanaTheme {
   return useContext(ThemeContextMock || ThemeContext);
 }
 /** Hook for using memoized styles with access to the theme. */
