@@ -46,7 +46,7 @@ JSON Body Schema:
 
 Field name | Type | Description
 ---------- | ---- | -----------
-id | string | ID of the report to send (same as in the URL when editing a report, not to be confused with the ID of the dashboard). Required.
+id | string | ID of the report to send. It is the same as in the URL when editing a report, not to be confused with the ID of the dashboard. Required.
 emails | string | Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
 useEmailsFromReport | boolean | Send the report to the emails specified in the report. Required if **emails** is not present.
 
