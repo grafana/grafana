@@ -162,6 +162,7 @@ describe('Prometheus Result Transformer', () => {
       expect(result).toEqual([
         {
           target: '1',
+          title: '1',
           query: undefined,
           datapoints: [
             [10, 1445000010000],
@@ -172,6 +173,7 @@ describe('Prometheus Result Transformer', () => {
         },
         {
           target: '2',
+          title: '2',
           query: undefined,
           datapoints: [
             [10, 1445000010000],
@@ -182,6 +184,7 @@ describe('Prometheus Result Transformer', () => {
         },
         {
           target: '3',
+          title: '3',
           query: undefined,
           datapoints: [
             [10, 1445000010000],
@@ -284,7 +287,8 @@ describe('Prometheus Result Transformer', () => {
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         {
-          target: 'test',
+          target: 'test{job="testjob"}',
+          title: 'test{job="testjob"}',
           query: undefined,
           datapoints: [
             [10, 0],
@@ -323,7 +327,8 @@ describe('Prometheus Result Transformer', () => {
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         {
-          target: 'test',
+          target: 'test{job="testjob"}',
+          title: 'test{job="testjob"}',
           query: undefined,
           datapoints: [
             [null, 0],
@@ -360,7 +365,7 @@ describe('Prometheus Result Transformer', () => {
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
-      expect(result[0].target).toEqual('test');
+      expect(result[0].target).toEqual('test{job="testjob"}');
     });
 
     it('should set frame name to undefined if no __name__ label but there are other labels', () => {
@@ -389,7 +394,7 @@ describe('Prometheus Result Transformer', () => {
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
-      expect(result[0].target).toBeUndefined();
+      expect(result[0].target).toBe('{job="testjob"}');
       expect(result[0].tags.job).toEqual('testjob');
     });
 
@@ -414,13 +419,20 @@ describe('Prometheus Result Transformer', () => {
         step: 2,
         start: 0,
         end: 8,
+        refId: 'A',
+        meta: { custom: { hello: '1' } },
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         {
-          target: 'test',
+          target: 'test{job="testjob"}',
+          title: 'test{job="testjob"}',
+          meta: {
+            custom: { hello: '1' },
+          },
           query: undefined,
+          refId: 'A',
           datapoints: [
             [null, 0],
             [null, 2000],

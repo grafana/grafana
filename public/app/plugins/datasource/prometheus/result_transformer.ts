@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, FieldType, Labels } from '@grafana/data';
+import { TimeSeries, FieldType, Labels, formatLabels } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class ResultTransformer {
@@ -146,27 +146,34 @@ export class ResultTransformer {
     return { target: name, datapoints: dps, tags: labels, refId: options.refId, meta: options.meta };
   }
 
-  createLabelInfo(
-    labelData: { [key: string]: string },
-    options: any
-  ): { name?: string; labels: Labels; title?: string } {
+  createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels; title?: string } {
     if (options?.legendFormat) {
-      // Alternativly we could put the results in "title"
-      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData);
-      if (title) {
-        return { name: title, title, labels: labelData };
-      }
+      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labels);
+      return { name: title, title, labels };
     }
 
-    // Move the __name__ field to name
-    let { __name__, ...labels } = labelData;
+    let { __name__, ...labelsWithoutName } = labels;
 
-    //  if no labels use query as frame name
-    if (Object.keys(labels).length === 0) {
-      __name__ = options.query;
+    let title = __name__ || '';
+
+    const labelPart = formatLabels(labelsWithoutName);
+
+    if (!title && !labelPart) {
+      title = options.query;
     }
 
-    return { name: __name__, labels };
+    title = `${__name__ ?? ''}${labelPart}`;
+
+    return { name: title, title, labels: labelsWithoutName };
+  }
+
+  getOriginalMetricName(labelData: { [key: string]: string }) {
+    const metricName = labelData.__name__ || '';
+    delete labelData.__name__;
+    const labelPart = Object.entries(labelData)
+      .map(label => `${label[0]}="${label[1]}"`)
+      .join(',');
+    return `${metricName}{${labelPart}}`;
   }
 
   renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
@@ -177,15 +184,6 @@ export class ResultTransformer {
       }
       return '';
     });
-  }
-
-  getOriginalMetricName(labelData: { [key: string]: string }) {
-    const metricName = labelData.__name__ || '';
-    delete labelData.__name__;
-    const labelPart = _.map(_.toPairs(labelData), label => {
-      return label[0] + '="' + label[1] + '"';
-    }).join(',');
-    return metricName + '{' + labelPart + '}';
   }
 
   transformToHistogramOverTime(seriesList: TimeSeries[]) {

@@ -590,7 +590,7 @@ describe('PrometheusDatasource', () => {
       it('should return series list', async () => {
         const frame = toDataFrame(results.data[0]);
         expect(results.data.length).toBe(1);
-        expect(getFieldState(frame.fields[1]).title).toBe('test {job="testjob"}');
+        expect(getFieldState(frame.fields[1]).title).toBe('test{job="testjob"}');
       });
     });
 
@@ -735,7 +735,8 @@ describe('PrometheusDatasource', () => {
     it('should return series list', () => {
       const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
-      expect(getFieldState(frame.fields[1]).title).toBe('test {job="testjob"}');
+      expect(frame.name).toBe('test{job="testjob"}');
+      expect(getFieldState(frame.fields[1]).title).toBe('Value');
     });
   });
 
@@ -1640,7 +1641,7 @@ describe('PrometheusDatasource for POST', () => {
     it('should return series list', () => {
       const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
-      expect(getFieldState(frame.fields[1]).title).toBe('test {job="testjob"}');
+      expect(getFieldState(frame.fields[1]).title).toBe('test{job="testjob"}');
     });
   });
 

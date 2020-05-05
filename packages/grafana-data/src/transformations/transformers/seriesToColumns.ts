@@ -16,9 +16,8 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     byField: 'Time',
   },
   transformer: options => (data: DataFrame[]) => {
-    const keyFields: Field[] = [];
     const keyFieldMatch = options.byField || 'Time';
-    const allFields: Array<{ newField: Field; sourceField: Field; keyField: Field }> = [];
+    const allFields: FieldsToProcess[] = [];
 
     for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
       const frame = data[frameIndex];
@@ -131,4 +130,10 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
   }
 
   return null;
+}
+
+interface FieldsToProcess {
+  newField: Field;
+  sourceField: Field;
+  keyField: Field;
 }
