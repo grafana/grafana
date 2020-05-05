@@ -37,7 +37,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
       .addRadio({
         path: 'justifyMode',
         name: 'Justify mode',
-        description: 'Value & title posititioning',
+        description: 'Value & title positioning',
         defaultValue: 'auto',
         settings: {
           options: [
