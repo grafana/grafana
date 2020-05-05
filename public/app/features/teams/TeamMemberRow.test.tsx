@@ -68,7 +68,7 @@ describe('Functions', () => {
     expect(instance.props.removeTeamMember).toHaveBeenCalledWith(1);
   });
 
-  describe('on update permision for user in team', () => {
+  describe('on update permission for user in team', () => {
     const member: TeamMember = {
       userId: 3,
       teamId: 2,

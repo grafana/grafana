@@ -549,7 +549,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldNotBeAllow
 					newDefaultTeamPermission(childDashboardID, p),
 				}
 
-				// perminssion to update is higher than parent folder permission
+				// permission to update is higher than parent folder permission
 				if p > parentFolderPermission {
 					permissionList = append(permissionList, newEditorRolePermission(childDashboardID, p))
 				}
@@ -560,7 +560,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldNotBeAllow
 					newDefaultTeamPermission(childDashboardID, p),
 				}
 
-				// perminssion to update is higher than parent folder permission
+				// permission to update is higher than parent folder permission
 				if p > parentFolderPermission {
 					permissionList = append(permissionList, newViewerRolePermission(childDashboardID, p))
 				}
@@ -586,7 +586,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		// perminssion to update is higher tban parent folder permission
+		// permission to update is higher tban parent folder permission
 		if p > parentFolderPermission {
 			continue
 		}
@@ -631,7 +631,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		// perminssion to update is lower than/equal parent folder permission
+		// permission to update is lower than/equal parent folder permission
 		if p <= parentFolderPermission {
 			continue
 		}
