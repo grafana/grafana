@@ -15,7 +15,7 @@ For more information on developing for the backend:
 | /pkg/cmd | The binaries that we build: grafana-server and grafana-cli. |
 | /pkg/components | A mix of third-party packages and packages we have implemented ourselves. Includes our packages that have out-grown the util package and don't naturally belong somewhere else. |
 | /pkg/infra | Packages in infra should be packages that are used in multiple places in Grafana without knowing anything about the Grafana domain. |
-| /pkg/services | Packages in services are responsible for peristing domain objects and manage the relationship between domain objects. Services should communicate with each other using DI when possible. Most of Grafana's codebase still relies on global state for this. Any new features going forward should use DI. |
+| /pkg/services | Packages in services are responsible for persisting domain objects and manage the relationship between domain objects. Services should communicate with each other using DI when possible. Most of Grafana's codebase still relies on global state for this. Any new features going forward should use DI. |
 | /pkg/tsdb | All backend implementations of the data sources in Grafana. Used by both Grafana's frontend and alerting. |
 | /pkg/util | Small helper functions that are used in multiple parts of the codebase. Many functions are placed directly in the util folders which is something we want to avoid. Its better to give the util function a more descriptive package name. Ex `errutil`. |
 
