@@ -4,7 +4,7 @@ import {
   FilterFieldsByNameTransformerOptions,
   KeyValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { HorizontalGroup } from '../Layout/Layout';
@@ -185,7 +185,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<FilterFieldsByNameTransformerOptions> = {
+export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.filterFieldsByName,
   editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,

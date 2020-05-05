@@ -7,7 +7,7 @@ import {
   KeyValue,
   ReducerID,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
@@ -171,7 +171,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 }
 
-export const calculateFieldTransformRegistryItem: TransformerRegistyItem<CalculateFieldTransformerOptions> = {
+export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,

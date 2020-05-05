@@ -8,7 +8,7 @@ import {
   GrafanaTheme,
   OrganizeFieldsTransformerOptions,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
@@ -217,7 +217,7 @@ export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => 
   );
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<OrganizeFieldsTransformerOptions> = {
+export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
   editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,

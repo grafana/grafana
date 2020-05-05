@@ -12,7 +12,7 @@ export { OrganizeFieldsTransformerOptions } from './transformers/organize';
 export { createOrderFieldsComparer } from './transformers/order';
 export { transformDataFrame } from './transformDataFrame';
 export {
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   standardTransformersRegistry,
 } from './standardTransformersRegistry';
