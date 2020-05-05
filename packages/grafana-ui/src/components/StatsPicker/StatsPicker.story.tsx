@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { StatsPicker } from './StatsPicker';
@@ -61,9 +60,13 @@ export class WrapperWithState extends PureComponent<any, State> {
   }
 }
 
-const story = storiesOf('Pickers and Editors/StatsPicker', module);
-story.addDecorator(withCenteredStory);
-story.add('picker', () => {
+export default {
+  title: 'Pickers and Editors/StatsPicker',
+  component: StatsPicker,
+  decorators: [withCenteredStory],
+};
+
+export const picker = () => {
   const { placeholder, defaultStat, allowMultiple, initialStats } = getKnobs();
 
   return (
@@ -76,4 +79,4 @@ story.add('picker', () => {
       />
     </div>
   );
-});
+};

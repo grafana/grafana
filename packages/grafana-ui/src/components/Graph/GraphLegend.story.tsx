@@ -3,7 +3,7 @@ import { GraphLegend } from './GraphLegend';
 import { action } from '@storybook/addon-actions';
 import { select, number } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { generateLegendItems } from '../Legend/Legend.story';
+import { generateLegendItems } from '../Legend/Legend';
 import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
 
 export default {
