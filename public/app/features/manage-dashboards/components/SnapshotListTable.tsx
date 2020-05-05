@@ -26,14 +26,17 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
       });
   }, []);
 
-  const doRemoveSnapshot = useCallback(async (snapshot: Snapshot) => {
-    setSnapshots(snapshots.filter(ss => ss.key !== snapshot.key));
-    await getBackendSrv()
-      .delete(`/api/snapshots/${snapshot.key}`)
-      .then(noop, () => {
-        setSnapshots(snapshots.concat(snapshot));
-      });
-  }, []);
+  const doRemoveSnapshot = useCallback(
+    async (snapshot: Snapshot) => {
+      setSnapshots(snapshots.filter(ss => ss.key !== snapshot.key));
+      await getBackendSrv()
+        .delete(`/api/snapshots/${snapshot.key}`)
+        .then(noop, () => {
+          setSnapshots(snapshots.concat(snapshot));
+        });
+    },
+    [snapshots]
+  );
 
   useEffect(() => {
     getSnapshots();
