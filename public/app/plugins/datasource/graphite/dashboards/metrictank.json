@@ -4354,7 +4354,7 @@
         },
         {
           "refId": "D",
-          "target": "alias(sumSeries(perSecond(metrictank.stats.$environment.$instance.recovered_errors.cache.metric.searchForwardBug.counter32)), 'cache-bug-surpress')"
+          "target": "alias(sumSeries(perSecond(metrictank.stats.$environment.$instance.recovered_errors.cache.metric.searchForwardBug.counter32)), 'cache-bug-suppress')"
         }
       ],
       "thresholds": [],
