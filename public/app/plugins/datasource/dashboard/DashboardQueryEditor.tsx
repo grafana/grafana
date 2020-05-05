@@ -177,7 +177,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     }
 
     // Same as current URL, but different panelId
-    const editURL = `d/${dashboard.uid}/${dashboard.title}?&edit&viewPanel=${query.panelId}`;
+    const editURL = `d/${dashboard.uid}/${dashboard.title}?&editPanel=${query.panelId}`;
 
     return (
       <div>
