@@ -16,8 +16,8 @@ const searchSrv = new SearchSrv();
  * @param reducer - return result of useReducer
  * @param params - custom params
  */
-export const useSearch: UseSearch = (query, reducer, params) => {
-  const { queryParsing, folderUid, searchCallback } = params;
+export const useSearch: UseSearch = (query, reducer, params = {}) => {
+  const { queryParsing } = params;
   const [state, dispatch] = reducer;
 
   const search = () => {
@@ -25,10 +25,6 @@ export const useSearch: UseSearch = (query, reducer, params) => {
     const parsedQuery = getParsedQuery(query, queryParsing);
     searchSrv.search(parsedQuery).then(results => {
       dispatch({ type: FETCH_RESULTS, payload: results });
-
-      if (searchCallback) {
-        searchCallback(folderUid);
-      }
     });
   };
 
@@ -37,7 +33,7 @@ export const useSearch: UseSearch = (query, reducer, params) => {
     dispatch({ type: SEARCH_START });
   }, [query.tag, query.sort, query.starred, query.layout]);
 
-  useDebounce(search, 300, [query, folderUid, queryParsing]);
+  useDebounce(search, 300, [query, queryParsing]);
 
   // TODO as possible improvement, show spinner after expanding section while items are fetching
   const onToggleSection = (section: DashboardSection) => {
