@@ -289,6 +289,8 @@
       children:
         - link: /plugins/developing/development/
           name: Developer Guide
+        - link: /plugins/developing/dataframe/
+          name: Introduction to data frames
         - link: /plugins/developing/code-styleguide/
           name: Plugin Code Styleguide
         - link: /plugins/developing/plugin-review-guidelines/
