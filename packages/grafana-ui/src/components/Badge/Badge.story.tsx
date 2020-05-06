@@ -3,7 +3,7 @@ import { boolean, text, select } from '@storybook/addon-knobs';
 import { Badge, BadgeColor } from './Badge';
 
 export default {
-  title: 'Other/Badge',
+  title: 'Layout/Badge',
   component: Badge,
   decorators: [],
   parameters: {
