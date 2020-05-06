@@ -282,6 +282,8 @@
 - name: Plugins
   link: /plugins/
   children:
+    - name: Overview
+      link: /plugins/
     - name: Install plugins
       link: /plugins/installation/
     - name: Develop plugins
