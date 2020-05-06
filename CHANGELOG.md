@@ -2730,7 +2730,7 @@ slack channel (link to slack channel in readme).
 - **Row repeat**: Repeated rows will now appear next to each other and not by the bottom of the dashboard, fixes [#3942](https://github.com/grafana/grafana/issues/3942)
 - **Png renderer**: Fix for phantomjs path on windows, fixes [#3657](https://github.com/grafana/grafana/issues/3657)
 
-# 2.6.1 (unrelased, 2.6.x branch)
+# 2.6.1 (unreleased, 2.6.x branch)
 
 ### New Features
 
