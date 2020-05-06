@@ -238,8 +238,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
     const dataFrames = await this.makeLogActionRequest('DescribeLogGroups', [params]).toPromise();
 
-    const logGroupNames = dataFrames[0].fields[0].values.toArray();
-    return logGroupNames && logGroupNames.length > 0 ? logGroupNames : [];
+    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
+    return logGroupNames;
   }
 
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
