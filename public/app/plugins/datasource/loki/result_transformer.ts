@@ -300,7 +300,7 @@ export function lokiStreamsToDataframes(
   const stats: QueryResultMetaStat[] = lokiStatsToMetaStat(response.data.stats);
   // Use custom mechanism to identify which stat we want to promote to label
   const custom = {
-    lokiQueryStatKey: 'Summary: totalBytesProcessed',
+    lokiQueryStatKey: 'Summary: total bytes processed',
   };
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
