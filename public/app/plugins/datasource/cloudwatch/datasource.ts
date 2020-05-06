@@ -300,7 +300,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   getPeriod(target: CloudWatchMetricsQuery, options: any) {
-    let period = this.templateSrv.replace(target.period, options.scopedVars);
+    let period = this.templateSrv.replace(target.period, options.scopedVars) as any;
     if (period && period.toLowerCase() !== 'auto') {
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
