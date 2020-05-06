@@ -104,6 +104,16 @@ String to interpolate: '${servers:pipe}'
 Interpolation result: 'test1.|test2'
 ```
 
+## Raw
+
+Turns off data source-specific formatting, such as single quotes in an SQL query.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${var_name:raw}'
+Interpolation result: '{test.1,test2}'
+```
+
 ## Regex
 
 Formats multi-value variable into a regex string.
