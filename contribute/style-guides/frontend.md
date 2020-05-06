@@ -107,7 +107,7 @@ class DateCalculator {
 }
 class DateCalculator {
   // bad
-  calculate_timee_range () {...}
+  calculate_time_range () {...}
 }
 
 class DateCalculator {
