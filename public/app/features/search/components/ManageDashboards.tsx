@@ -16,7 +16,6 @@ import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
 
 export interface Props {
-  folderId?: number;
   folder?: FolderDTO;
 }
 
