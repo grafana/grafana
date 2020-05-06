@@ -26,7 +26,6 @@ export interface LokiQuery extends DataQuery {
   expr: string;
   liveStreaming?: boolean;
   query?: string;
-  regexp?: string;
   format?: string;
   reverse?: boolean;
   legendFormat?: string;

@@ -1,29 +1,7 @@
-import { LokiExpression } from './types';
 import escapeRegExp from 'lodash/escapeRegExp';
 
-const selectorRegexp = /(?:^|\s){[^{]*}/g;
-export function parseQuery(input: string): LokiExpression {
-  input = input || '';
-  const match = input.match(selectorRegexp);
-  let query = input;
-  let regexp = '';
-
-  if (match) {
-    // Regexp result is ignored on the server side
-    regexp = input.replace(selectorRegexp, '').trim();
-    // Keep old-style regexp, otherwise take whole query
-    if (regexp && regexp.search(/\|=|\|~|!=|!~/) === -1) {
-      query = match[0].trim();
-    } else {
-      regexp = '';
-    }
-  }
-
-  return { regexp, query };
-}
-
-export function formatQuery(selector: string, search: string): string {
-  return `${selector || ''} ${search || ''}`.trim();
+export function formatQuery(selector: string): string {
+  return `${selector || ''}`.trim();
 }
 
 /**
@@ -31,11 +9,6 @@ export function formatQuery(selector: string, search: string): string {
  * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
  */
 export function getHighlighterExpressionsFromQuery(input: string): string[] {
-  const parsed = parseQuery(input);
-  // Legacy syntax
-  if (parsed.regexp) {
-    return [parsed.regexp];
-  }
   let expression = input;
   const results = [];
   // Consume filter expression from left to right

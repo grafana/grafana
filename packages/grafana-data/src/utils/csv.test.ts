@@ -17,7 +17,7 @@ describe('read csv', () => {
     const rows = 4;
     expect(series.length).toBe(rows);
 
-    // Make sure everythign it padded properly
+    // Make sure everything is padded properly
     for (const field of series.fields) {
       expect(field.values.length).toBe(rows);
     }

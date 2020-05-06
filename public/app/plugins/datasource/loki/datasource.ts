@@ -11,7 +11,7 @@ import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { lokiResultsToTableModel, processRangeQueryResponse, lokiStreamResultToDataFrame } from './result_transformer';
-import { parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
@@ -136,7 +136,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
     const query = {
-      query: parseQuery(target.expr).query,
+      query: target.expr,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
       limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
     };
@@ -158,7 +158,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   createRangeQuery(target: LokiQuery, options: RangeQueryOptions): LokiRangeQueryRequest {
-    const { query } = parseQuery(target.expr);
+    const query = target.expr;
     let range: { start?: number; end?: number; step?: number } = {};
     if (options.range) {
       const startNs = this.getTime(options.range.from, false);
@@ -236,7 +236,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   createLiveTarget(target: LokiQuery, options: { maxDataPoints?: number }): LokiLiveTarget {
-    const { query } = parseQuery(target.expr);
+    const query = target.expr;
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query });
 
@@ -497,7 +497,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const tags: string[] = [];
       for (const field of frame.fields) {
         if (field.labels) {
-          tags.push.apply(tags, Object.values(field.labels));
+          tags.push.apply(tags, [...new Set(Object.values(field.labels).map((label: string) => label.trim()))]);
         }
       }
       const view = new DataFrameView<{ ts: string; line: string }>(frame);
