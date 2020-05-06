@@ -94,7 +94,7 @@ const row: LogRowModel = {
   raw: '4',
   logLevel: LogLevel.info,
   timeEpochMs: 4,
-  timeEpochNs: 4000000,
+  timeEpochNs: '4000000',
   timeFromNow: '',
   timeLocal: '',
   timeUtc: '',

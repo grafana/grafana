@@ -60,7 +60,9 @@ export interface LogRowModel {
   searchWords?: string[];
   timeFromNow: string;
   timeEpochMs: number;
-  timeEpochNs: number;
+  // timeEpochNs stores time with nanosecond-level precision,
+  // as millisecond-level precision is usually not enough for proper sorting of logs
+  timeEpochNs: string;
   timeLocal: string;
   timeUtc: string;
   uid: string;

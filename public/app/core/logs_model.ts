@@ -286,7 +286,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], datasourceId?: stri
     return {
       series,
       timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-      timeNanosecondField: fieldCache.hasFieldNamed('tsNs') ? fieldCache.getFieldByName('tsNs') : undefined,
+      timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+        ? fieldCache.getFieldByName('tsNs')
+        : undefined,
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),
@@ -314,8 +316,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], datasourceId?: stri
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
-      const tsNs = datasourceId === 'loki' ? timeNanosecondField.values.get(j) : undefined;
-      const timeEpochNs = Number(datasourceId === 'loki' ? tsNs : time.valueOf() + '000000');
+      const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
+      const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
       const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
