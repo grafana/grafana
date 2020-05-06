@@ -168,8 +168,6 @@
     name: Loki
   - link: /features/datasources/mssql/
     name: Microsoft SQL Server
-  - link: /features/datasources/mixed/
-    name: MixedData
   - link: /features/datasources/mysql/
     name: MySQL
   - link: /features/datasources/opentsdb/
