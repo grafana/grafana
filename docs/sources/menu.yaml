@@ -365,6 +365,8 @@
   children:
     - name: Developer resources
       link: /developers/developer-resources/
+    - link: /developers/plugins/
+      name: Plugins
     - name: Packages reference
       link: /packages_api/
     - name: Contributor License Agreement (CLA)
