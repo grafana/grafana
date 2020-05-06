@@ -8,7 +8,6 @@ import {
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  NullValueMode,
   BinaryOperationID,
   SelectableValue,
   binaryOperators,
@@ -17,23 +16,12 @@ import { Select, StatsPicker, LegacyForms, Input, FilterPill, HorizontalGroup } 
 import {
   CalculateFieldTransformerOptions,
   CalculateFieldMode,
-  getResultFieldNameForCalculateFieldTransformerOptions,
+  getNameFromOptions,
+  ReduceOptions,
+  BinaryOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 
 import defaults from 'lodash/defaults';
-
-// Copied from @grafana/data ;(  not sure how to best support his
-interface ReduceOptions {
-  include?: string; // Assume all fields
-  reducer: ReducerID;
-  nullValueMode?: NullValueMode;
-}
-
-interface BinaryOptions {
-  left: string;
-  operator: BinaryOperationID;
-  right: string;
-}
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -335,7 +323,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             <Input
               className="width-18"
               value={options.alias ?? ''}
-              placeholder={getResultFieldNameForCalculateFieldTransformerOptions(options)}
+              placeholder={getNameFromOptions(options)}
               onChange={this.onAliasChanged}
             />
           </div>
