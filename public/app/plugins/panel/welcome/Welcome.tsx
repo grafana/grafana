@@ -64,9 +64,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         padding: 0 30px 0 100px;
       }
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        padding: 0 24px 0 100px;
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        padding: 0 24px 0 44px;
         background-position: 0px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
       }
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         flex-direction: column;
@@ -98,19 +101,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         display: none;
       }
     `,
-    helpLinks: css`
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        display: none;
-      }
-    `,
+    helpLinks: css``,
     helpLink: css`
       margin-right: 8px;
       text-decoration: underline;
+      text-wrap: no-wrap;
     `,
     smallScreenHelp: css`
-      @media only screen and (min-width: ${theme.breakpoints.lg}) {
-        display: none;
-      }
+      display: none;
     `,
   };
 });
