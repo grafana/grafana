@@ -45,7 +45,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'none',
       expandTemplateVars: true,
     },
-    shouldApply: field => field.type !== FieldType.time,
+    shouldApply: () => true,
     category,
   };
 
