@@ -251,6 +251,8 @@
   children:
   - name: Overview
     link: /enterprise/
+  - name: Configuration
+    link: /enterprise/configuration/
   - name: Data source permissions
     link: /enterprise/datasource_permissions/
   - name: Enhanced LDAP
