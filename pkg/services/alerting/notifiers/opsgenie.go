@@ -110,7 +110,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		return err
 	}
 
-	customData := triggMetrString
+	customData := triggeredMetricsString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}

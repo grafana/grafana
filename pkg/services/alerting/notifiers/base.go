@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	triggMetrString = "Triggered metrics:\n\n"
+	triggeredMetricsString = "Triggered metrics:\n\n"
 )
 
 // NotifierBase is the base implementation of a notifier.
