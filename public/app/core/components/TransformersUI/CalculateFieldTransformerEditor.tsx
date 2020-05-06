@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
+
 import {
-  CalculateFieldTransformerOptions,
   DataTransformerID,
   FieldType,
   KeyValue,
@@ -13,16 +13,13 @@ import {
   SelectableValue,
   binaryOperators,
 } from '@grafana/data';
-import { StatsPicker } from '../StatsPicker/StatsPicker';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { Input } from '../Input/Input';
-import { FilterPill } from '../FilterPill/FilterPill';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Select, StatsPicker, Switch, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 import {
+  CalculateFieldTransformerOptions,
   CalculateFieldMode,
   getResultFieldNameForCalculateFieldTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
-import { Select } from '../Select/Select';
+
 import defaults from 'lodash/defaults';
 
 // Copied from @grafana/data ;(  not sure how to best support his
