@@ -109,7 +109,7 @@ func (server *HTTPServer) ReloadLDAPCfg() Response {
 	return Success("LDAP config reloaded")
 }
 
-// GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're availabe or not.
+// GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.
 func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	if !ldap.IsEnabled() {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
