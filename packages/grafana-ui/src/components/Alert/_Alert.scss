@@ -40,7 +40,7 @@
 }
 
 .alert-container {
-  z-index: 8000;
+  z-index: $zindex-tooltip;
 }
 
 .page-alert-list {
