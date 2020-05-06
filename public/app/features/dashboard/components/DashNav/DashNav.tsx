@@ -67,7 +67,7 @@ class DashNav extends PureComponent<Props> {
 
   onClose = () => {
     this.props.updateLocation({
-      query: { editPanel: null, viewPanel: null },
+      query: { viewPanel: null },
       partial: true,
     });
   };
