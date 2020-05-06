@@ -1,7 +1,7 @@
 import React, { FC, useCallback } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, IconButton, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, IconButton, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { getSectionIcon } from '../utils';
@@ -51,7 +51,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
           <IconButton name="cog" className={styles.button} />
         </a>
       )}
-      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />
+      {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
     </div>
   );
 };
