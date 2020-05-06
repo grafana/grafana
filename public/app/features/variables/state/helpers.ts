@@ -8,6 +8,7 @@ import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
 import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
+import { dashboardSelectorReducer } from './reducers';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -69,6 +70,7 @@ export const getRootReducer = () =>
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
       variables: variablesReducer,
+      getDashboardState: dashboardSelectorReducer,
     }),
   });
 
@@ -78,6 +80,7 @@ export const getTemplatingRootReducer = () =>
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
       variables: variablesReducer,
+      getDashboardState: dashboardSelectorReducer,
     }),
   });
 
@@ -87,6 +90,7 @@ export const getTemplatingAndLocationRootReducer = () =>
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
       variables: variablesReducer,
+      getDashboardState: dashboardSelectorReducer,
     }),
     location: locationReducer,
   });

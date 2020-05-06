@@ -26,6 +26,7 @@ import { getConfig } from '../../../core/config';
 import { completeDashboardTemplating, initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
+import { initDashboardSelector } from 'app/features/variables/state/reducers';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -133,7 +134,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
-      if (getState().dashboard.getModel() === null) {
+      if (dashboardCollection.selector(getState(), args.urlUid).getModel() === null) {
         dispatch(toCollectionAction(dashboardInitSlow(), args.urlUid));
       }
     }, 500);
@@ -191,6 +192,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         await variableSrv.init(dashboard);
       }
       if (getConfig().featureToggles.newVariables) {
+        dispatch(initDashboardSelector({ selector: () => dashboardCollection.selector(getState(), args.urlUid) }));
         dispatch(initDashboardTemplating(dashboard.templating.list));
         await dispatch(processVariables());
         dispatch(completeDashboardTemplating(dashboard));

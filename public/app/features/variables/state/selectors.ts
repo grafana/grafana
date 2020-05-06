@@ -2,6 +2,7 @@ import { StoreState } from '../../../types';
 import { VariableModel } from '../../templating/types';
 import { getState } from '../../../store/store';
 import { NEW_VARIABLE_ID } from './types';
+import { DashboardModel } from '../../dashboard/state';
 
 export const getVariable = <T extends VariableModel = VariableModel>(
   id: string,
@@ -36,4 +37,13 @@ export type GetVariables = typeof getVariables;
 
 export const getNewVariabelIndex = (state: StoreState = getState()): number => {
   return Object.values(state.templating.variables).length;
+};
+
+export const getDashboardModel = (state: StoreState = getState()): DashboardModel | null => {
+  const dashboardState = state.templating.getDashboardState();
+  if (!dashboardState) {
+    throw new Error('No dashboard state found.');
+  }
+
+  return dashboardState.getModel();
 };

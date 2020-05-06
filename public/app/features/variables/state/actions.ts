@@ -11,7 +11,7 @@ import {
   VariableWithOptions,
 } from '../../templating/types';
 import { StoreState, ThunkResult } from '../../../types';
-import { getVariable, getVariables } from './selectors';
+import { getDashboardModel, getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
@@ -377,7 +377,7 @@ export const variableUpdated = (
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
-        const dashboard = getState().dashboard.getModel();
+        const dashboard = getDashboardModel(getState());
         dashboard?.processRepeats();
         dispatch(updateLocation({ query: getQueryWithVariables(getState) }));
         dashboard?.startRefresh();
@@ -410,14 +410,14 @@ export const onTimeRangeUpdated = (
     await variableAdapters.get(variable.type).updateOptions(variable);
     const updatedVariable = getVariable<VariableWithOptions>(variable.id!, getState());
     if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
-      const dashboard = getState().dashboard.getModel();
+      const dashboard = getDashboardModel(getState());
       dashboard?.templateVariableValueUpdated();
     }
   });
 
   try {
     await Promise.all(promises);
-    const dashboard = getState().dashboard.getModel();
+    const dashboard = getDashboardModel(getState());
     dashboard?.startRefresh();
   } catch (error) {
     console.error(error);

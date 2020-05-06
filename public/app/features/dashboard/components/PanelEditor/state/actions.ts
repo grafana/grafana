@@ -9,7 +9,7 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
-import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
+import { cleanUpEditPanel, dashboardCollection, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
 import { toCollectionAction } from '../../../../../core/reducers/createCollection';
 
@@ -32,9 +32,9 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   };
 }
 
-export function panelEditorCleanUp(): ThunkResult<void> {
+export function panelEditorCleanUp(dashboardUid: string): ThunkResult<void> {
   return (dispatch, getStore) => {
-    const dashboard = getStore().dashboard.getModel();
+    const dashboard = dashboardCollection.selector(getStore(), dashboardUid).getModel();
     const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditor;
 
     if (!shouldDiscardChanges) {

@@ -68,7 +68,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    this.props.panelEditorCleanUp();
+    this.props.panelEditorCleanUp(this.props.dashboard.uid);
   }
 
   onPanelExit = () => {

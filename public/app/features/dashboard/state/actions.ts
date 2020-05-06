@@ -3,7 +3,12 @@ import { getBackendSrv } from '@grafana/runtime';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
-import { loadDashboardPermissions, panelModelAndPluginReady, setPanelAngularComponent } from './reducers';
+import {
+  dashboardCollection,
+  loadDashboardPermissions,
+  panelModelAndPluginReady,
+  setPanelAngularComponent,
+} from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 // Types
@@ -34,7 +39,7 @@ export function updateDashboardPermission(
   level: PermissionLevel
 ): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const { dashboard } = getStore();
+    const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -63,7 +68,7 @@ export function removeDashboardPermission(
   itemToDelete: DashboardAcl
 ): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const dashboard = getStore().dashboard;
+    const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -84,7 +89,7 @@ export function addDashboardPermission(
   newItem: NewDashboardAclItem
 ): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const { dashboard } = getStore();
+    const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -152,7 +157,7 @@ export function changePanelPlugin(dashboardUId: string, panel: PanelModel, plugi
     }
 
     // clean up angular component (scope / ctrl state)
-    const angularComponent = store.dashboard.panels[panel.id].angularComponent;
+    const angularComponent = dashboardCollection.selector(store, dashboardUId).panels[panel.id].angularComponent;
     if (angularComponent) {
       angularComponent.destroy();
       dispatch(
