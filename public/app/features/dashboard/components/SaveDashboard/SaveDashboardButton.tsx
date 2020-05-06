@@ -24,7 +24,7 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
           <Button
             onClick={() => {
               showModal(SaveDashboardModalProxy, {
-                // TODO[angular-migrations]: Remove tenary op when we migrate Dashboard Settings view to React
+                // TODO[angular-migrations]: Remove ternary op when we migrate Dashboard Settings view to React
                 dashboard: getDashboard ? getDashboard() : dashboard,
                 onSaveSuccess,
                 onDismiss: hideModal,
@@ -53,7 +53,7 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { varian
             <Button
               onClick={() => {
                 showModal(SaveDashboardAsModal, {
-                  // TODO[angular-migrations]: Remove tenary op when we migrate Dashboard Settings view to React
+                  // TODO[angular-migrations]: Remove ternary op when we migrate Dashboard Settings view to React
                   dashboard: getDashboard ? getDashboard() : dashboard,
                   onSaveSuccess,
                   onDismiss: hideModal,
