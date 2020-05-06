@@ -1,7 +1,10 @@
 package azuremonitor
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -144,13 +147,15 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
 
+	rawQuery := query.Params.Get("query")
+
 	if query.ResultFormat == "table" {
-		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Params.Get("query"))
+		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, rawQuery)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Params.Get("query"))
+		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, rawQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -238,6 +243,12 @@ func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsRespon
 		Query: query,
 	}
 
+	encQuery, err := encodeQuery(query)
+	if err != nil {
+		return nil, simplejson.NewFromAny(meta), err
+	}
+	meta.EncodedQuery = encQuery
+
 	tables := make([]*tsdb.Table, 0)
 	for _, t := range data.Tables {
 		if t.Name == "PrimaryResult" {
@@ -271,6 +282,12 @@ func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsRe
 	meta := metadata{
 		Query: query,
 	}
+
+	encQuery, err := encodeQuery(query)
+	if err != nil {
+		return nil, simplejson.NewFromAny(meta), err
+	}
+	meta.EncodedQuery = encQuery
 
 	for _, t := range data.Tables {
 		if t.Name == "PrimaryResult" {
@@ -351,4 +368,18 @@ func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsRe
 	}
 
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
+}
+
+func encodeQuery(rawQuery string) (string, error) {
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	if _, err := gz.Write([]byte(rawQuery)); err != nil {
+		return "", err
+	}
+
+	if err := gz.Close(); err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }

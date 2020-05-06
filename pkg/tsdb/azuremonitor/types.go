@@ -79,8 +79,9 @@ type AzureLogAnalyticsTable struct {
 }
 
 type metadata struct {
-	Columns []column `json:"columns"`
-	Query   string   `json:"query"`
+	Columns      []column `json:"columns"`
+	Query        string   `json:"query"`
+	EncodedQuery string   `json:"encodedQuery"`
 }
 
 type column struct {

@@ -100,7 +100,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:  require.NoError,
 		},
 		{
@@ -133,7 +133,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"ObjectName","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"ObjectName","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:  require.NoError,
 		},
 		{
@@ -150,7 +150,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"avg_CounterValue","type":"int"}],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"avg_CounterValue","type":"int"}],"query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:  require.NoError,
 		},
 		{
@@ -158,7 +158,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 			testFile: "loganalytics/4-log-analytics-response-metrics-no-time-column.json",
 			query:    "test query",
 			series:   nil,
-			meta:     `{"columns":[{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
+			meta:     `{"columns":[{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:      require.NoError,
 		},
 		{
@@ -166,7 +166,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 			testFile: "loganalytics/5-log-analytics-response-metrics-no-value-column.json",
 			query:    "test query",
 			series:   nil,
-			meta:     `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"}],"query":"test query"}`,
+			meta:     `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"}],"query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:      require.NoError,
 		},
 	}
@@ -262,7 +262,7 @@ func TestParsingAzureLogAnalyticsTableResponses(t *testing.T) {
 			},
 			meta: `{"columns":[{"name":"TenantId","type":"string"},{"name":"Computer","type":"string"},{"name":"ObjectName","type":"string"},{"name":"CounterName","type":"string"},` +
 				`{"name":"InstanceName","type":"string"},{"name":"Min","type":"real"},{"name":"Max","type":"real"},{"name":"SampleCount","type":"int"},{"name":"CounterValue","type":"real"},` +
-				`{"name":"TimeGenerated","type":"datetime"}],"query":"test query"}`,
+				`{"name":"TimeGenerated","type":"datetime"}],"query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err: require.NoError,
 		},
 	}
