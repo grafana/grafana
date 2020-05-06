@@ -6,12 +6,12 @@ import { map, filter, catchError, switchMap } from 'rxjs/operators';
 // Services & Utils
 import { DataFrame, dateMath, FieldCache } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { addLabelToSelector, keepSelectorFilters } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { lokiResultsToTableModel, processRangeQueryResponse, lokiStreamResultToDataFrame } from './result_transformer';
-import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
@@ -136,7 +136,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
     const query = {
-      query: parseQuery(target.expr).query,
+      query: target.expr,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
       limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
     };
@@ -158,7 +158,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   createRangeQuery(target: LokiQuery, options: RangeQueryOptions): LokiRangeQueryRequest {
-    const { query } = parseQuery(target.expr);
+    const query = target.expr;
     let range: { start?: number; end?: number; step?: number } = {};
     if (options.range) {
       const startNs = this.getTime(options.range.from, false);
@@ -236,7 +236,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   createLiveTarget(target: LokiQuery, options: { maxDataPoints?: number }): LokiLiveTarget {
-    const { query } = parseQuery(target.expr);
+    const query = target.expr;
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query });
 
@@ -344,27 +344,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
-    const parsed = parseQuery(query.expr || '');
-    let { query: selector } = parsed;
-    let selectorLabels, selectorFilters;
+    let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        selectorLabels = addLabelToSelector(selector, action.key, action.value);
-        selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`.trim();
+        expression = addLabelToQuery(expression, action.key, action.value);
         break;
       }
       case 'ADD_FILTER_OUT': {
-        selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
-        selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`.trim();
+        expression = addLabelToQuery(expression, action.key, action.value, '!=');
         break;
       }
       default:
         break;
     }
 
-    const expression = formatQuery(selector, parsed.regexp);
     return { ...query, expr: expression };
   }
 

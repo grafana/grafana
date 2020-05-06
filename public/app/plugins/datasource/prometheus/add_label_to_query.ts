@@ -91,12 +91,6 @@ export function addLabelToSelector(selector: string, labelKey: string, labelValu
   return `{${formatted}}`;
 }
 
-export function keepSelectorFilters(selector: string) {
-  // Remove all label-key between {} and return filters. If first character is space, remove it.
-  const filters = selector.replace(/\{(.*?)\}/g, '').replace(/^ /, '');
-  return filters;
-}
-
 function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {
   const nextSelectorStart = text.slice(position).indexOf(openChar);
   const nextSelectorEnd = text.slice(position).indexOf(closeChar);
