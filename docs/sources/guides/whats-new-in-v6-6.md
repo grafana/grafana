@@ -182,7 +182,7 @@ We recommend all users to install the Enterprise Edition of Grafana, which can b
 
 ## Stackdriver: Meta labels
 
-From now on it will be possible to utilize meta data label in group bys, filters and in the alias field. Unfortunaltey there's no API to retrieve all the labels, but the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will be possible to create filters based on it and to expand its value on the alias field.
+From now on it will be possible to utilize meta data label in group bys, filters and in the alias field. Unfortunately there's no API to retrieve all the labels, but the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will be possible to create filters based on it and to expand its value on the alias field.
 
 {{< docs-imagebox img="/img/docs/v66/metadatalabels.gif" max-width="800px" caption="Stackdriver meta labels" >}}
 
