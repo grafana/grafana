@@ -304,7 +304,7 @@ export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 /**
- * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
+ * Update state of Explores UI elements (panels visibility and deduplication  strategy)
  */
 export const updateUIStateAction = createAction<UpdateUIStatePayload>('explore/updateUIState');
 
