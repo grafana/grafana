@@ -8,7 +8,7 @@ import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
 import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { dashboardSelectorReducer } from './reducers';
+import { dashboardSelectorReducer } from './dashboardSelectorReducer';
 
 export const getVariableState = (
   noOfVariables: number,

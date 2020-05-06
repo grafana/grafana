@@ -26,7 +26,7 @@ import { getConfig } from '../../../core/config';
 import { completeDashboardTemplating, initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
-import { initDashboardSelector } from 'app/features/variables/state/reducers';
+import { initDashboardSelector } from 'app/features/variables/state/dashboardSelectorReducer';
 
 export interface InitDashboardArgs {
   $injector: any;
