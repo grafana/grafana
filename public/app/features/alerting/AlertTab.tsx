@@ -33,7 +33,7 @@ interface DispatchProps {
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
-  validatonMessage: string;
+  validationMessage: string;
   showStateHistory: boolean;
   showDeleteConfirmation: boolean;
   showTestRule: boolean;
@@ -45,7 +45,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   panelCtrl: any;
 
   state: State = {
-    validatonMessage: '',
+    validationMessage: '',
     showStateHistory: false,
     showDeleteConfirmation: false,
     showTestRule: false,
@@ -94,15 +94,15 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
     this.component = loader.load(this.element, scopeProps, template);
 
-    const validatonMessage = await getAlertingValidationMessage(
+    const validationMessage = await getAlertingValidationMessage(
       panel.transformations,
       panel.targets,
       getDataSourceSrv(),
       panel.datasource
     );
 
-    if (validatonMessage) {
-      this.setState({ validatonMessage });
+    if (validationMessage) {
+      this.setState({ validationMessage });
     }
   }
 
@@ -117,13 +117,13 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true });
   };
 
-  onToggleModal = (prop: keyof Omit<State, 'validatonMessage'>) => {
+  onToggleModal = (prop: keyof Omit<State, 'validationMessage'>) => {
     const value = this.state[prop];
     this.setState({ ...this.state, [prop]: !value });
   };
 
   renderValidationMessage = () => {
-    const { validatonMessage } = this.state;
+    const { validationMessage } = this.state;
 
     return (
       <div
@@ -132,7 +132,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
           margin: 128px auto;
         `}
       >
-        <h2>{validatonMessage}</h2>
+        <h2>{validationMessage}</h2>
         <br />
         <div className="gf-form-group">
           <Button size={'md'} variant={'secondary'} icon="arrow-left" onClick={this.switchToQueryTab}>
@@ -213,10 +213,10 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
   render() {
     const { alert, transformations } = this.props.panel;
-    const { validatonMessage } = this.state;
+    const { validationMessage } = this.state;
     const hasTransformations = transformations && transformations.length > 0;
 
-    if (!alert && validatonMessage) {
+    if (!alert && validationMessage) {
       return this.renderValidationMessage();
     }
 
@@ -253,7 +253,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
                   </Button>
                 </HorizontalGroup>
               )}
-              {!alert && !validatonMessage && <EmptyListCTA {...model} />}
+              {!alert && !validationMessage && <EmptyListCTA {...model} />}
             </div>
           </Container>
         </CustomScrollbar>
