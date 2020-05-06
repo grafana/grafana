@@ -482,6 +482,16 @@ export const getRefIds = (value: any): string[] => {
 };
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
+  if (a.timeEpochMs < b.timeEpochMs) {
+    return -1;
+  }
+
+  if (a.timeEpochMs > b.timeEpochMs) {
+    return 1;
+  }
+
+  // if milliseonds are equal, compare nanoseconds
   if (a.timeEpochNs < b.timeEpochNs) {
     return -1;
   }
@@ -494,6 +504,16 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
+  if (a.timeEpochMs > b.timeEpochMs) {
+    return -1;
+  }
+
+  if (a.timeEpochMs < b.timeEpochMs) {
+    return 1;
+  }
+
+  // if milliseonds are equal, compare nanoseconds
   if (a.timeEpochNs > b.timeEpochNs) {
     return -1;
   }
