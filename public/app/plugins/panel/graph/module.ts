@@ -162,7 +162,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onInitEditMode() {
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html');
-    this.addEditorTab('Series overides', 'public/app/plugins/panel/graph/tab_series_overrides.html');
+    this.addEditorTab('Series overrides', 'public/app/plugins/panel/graph/tab_series_overrides.html');
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds', 'public/app/plugins/panel/graph/tab_thresholds.html');
