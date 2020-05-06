@@ -164,7 +164,7 @@ libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-the
 
 ### Certificate signed by internal certificate authorities
 
-In many cases Grafana, runs on internal servers and uses certificates that have not been signed by a CA ([Certificate Authority](https://en.wikipedia.org/wiki/Certificate_authority)) known to Chrome, and therefore cannot be validated. Chrome internally uses NSS ([Network Security Services](https://en.wikipedia.org/wiki/Network_Security_Services)) for cryptogtraphic operations such as the validation of certificates.
+In many cases, Grafana runs on internal servers and uses certificates that have not been signed by a CA ([Certificate Authority](https://en.wikipedia.org/wiki/Certificate_authority)) known to Chrome, and therefore cannot be validated. Chrome internally uses NSS ([Network Security Services](https://en.wikipedia.org/wiki/Network_Security_Services)) for cryptogtraphic operations such as the validation of certificates.
 
 If you are using the Grafana Image Renderer with a Grafana server that uses a certificate signed by such a custom CA (for example a company-internal CA), rendering images will fail and you will see messages like this in the Grafana log:
 
