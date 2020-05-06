@@ -14,7 +14,9 @@ export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFi
       placeholder={item.settings?.placeholder}
       value={value || ''}
       rows={item.settings?.useTextarea && item.settings.rows}
-      onChange={(e: React.FormEvent<any>) => onChange(e.currentTarget.value)}
+      onChange={(e: React.FormEvent<any>) =>
+        onChange(e.currentTarget.value.trim() === '' ? undefined : e.currentTarget.value)
+      }
     />
   );
 };
