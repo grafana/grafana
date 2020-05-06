@@ -1,21 +1,23 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DashboardState } from '../../../types';
-import { cleanUpDashboard } from '../../dashboard/state/reducers';
+
+export type DashboardSelectorState = () => DashboardState | null;
+
+const initialState: DashboardSelectorState = () => null;
 
 const dashboardSelectorSlice = createSlice({
   name: 'templating/dashboardState',
-  initialState: () => null,
+  initialState,
   reducers: {
     initDashboardSelector: (state, action: PayloadAction<{ selector: () => DashboardState }>) => {
       return action.payload.selector;
     },
+    clearDashboardSelector: (state, action: PayloadAction<{ selector: () => DashboardState }>) => {
+      return initialState;
+    },
   },
-  extraReducers: builder =>
-    builder.addCase(cleanUpDashboard, (state, action) => {
-      return () => null;
-    }),
 });
 
-export const { initDashboardSelector } = dashboardSelectorSlice.actions;
+export const { initDashboardSelector, clearDashboardSelector } = dashboardSelectorSlice.actions;
 
 export const dashboardSelectorReducer = dashboardSelectorSlice.reducer;

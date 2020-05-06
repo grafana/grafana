@@ -4,6 +4,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
 import {
+  cleanUpDashboard,
   dashboardCollection,
   loadDashboardPermissions,
   panelModelAndPluginReady,
@@ -15,6 +16,8 @@ import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 import { PanelModel } from './PanelModel';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
+import { clearDashboardSelector } from 'app/features/variables/state/dashboardSelectorReducer';
+import { cleanUpVariables } from '../../variables/state/variablesReducer';
 
 export function getDashboardPermissions(id: number, uid: string): ThunkResult<void> {
   return async dispatch => {
@@ -170,3 +173,9 @@ export function changePanelPlugin(dashboardUId: string, panel: PanelModel, plugi
     dispatch(toCollectionAction(panelModelAndPluginReady({ panelId: panel.id, plugin }), dashboardUId));
   };
 }
+
+export const cleanUpDashboardState = (dashboardId: string): ThunkResult<void> => dispatch => {
+  dispatch(toCollectionAction(cleanUpDashboard(), dashboardId));
+  dispatch(cleanUpVariables());
+  dispatch(clearDashboardSelector());
+};

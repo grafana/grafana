@@ -2,7 +2,7 @@
 import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import classNames from 'classnames';
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -16,7 +16,7 @@ import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { cleanUpDashboard, dashboardCollection } from '../state/reducers';
+import { dashboardCollection } from '../state/reducers';
 import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
@@ -31,10 +31,15 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
 import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
-import { toCollectionAction } from '../../../core/reducers/createCollection';
-import { bindActionCreators, Dispatch } from 'redux';
+import { cleanUpDashboardState } from '../state/actions';
 
-export interface Props {
+interface OwnProps {
+  $scope: any;
+  $injector: any;
+  routeInfo: DashboardRouteInfo;
+}
+
+interface ConnectedProps {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
@@ -42,22 +47,24 @@ export interface Props {
   urlPanelId?: string;
   urlFolderId?: string;
   inspectPanelId?: string;
-  $scope: any;
-  $injector: any;
-  routeInfo: DashboardRouteInfo;
   urlEditPanelId?: string;
   urlViewPanelId?: string;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;
   initError?: DashboardInitError;
-  initDashboard: typeof initDashboard;
-  cleanUpDashboard: typeof cleanUpDashboard;
-  notifyApp: typeof notifyApp;
-  updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
   isPanelEditorOpen?: boolean;
 }
+
+interface DispatchProps {
+  initDashboard: typeof initDashboard;
+  cleanUpDashboardState: typeof cleanUpDashboardState;
+  notifyApp: typeof notifyApp;
+  updateLocation: typeof updateLocation;
+}
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export interface State {
   editPanel: PanelModel | null;
@@ -66,6 +73,7 @@ export interface State {
   updateScrollTop?: number;
   rememberScrollTop: number;
   showLoadingState: boolean;
+  prevUrlUid: string | null;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
@@ -75,9 +83,10 @@ export class DashboardPage extends PureComponent<Props, State> {
     showLoadingState: false,
     scrollTop: 0,
     rememberScrollTop: 0,
+    prevUrlUid: null,
   };
 
-  async componentDidMount() {
+  componentDidMount() {
     this.props.initDashboard({
       $injector: this.props.$injector,
       $scope: this.props.$scope,
@@ -91,8 +100,13 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.props.dashboard) {
-      this.props.cleanUpDashboard();
+    if (this.props.urlUid !== this.state.prevUrlUid && this.state.prevUrlUid !== null) {
+      this.props.cleanUpDashboardState(this.state.prevUrlUid);
+      this.setPanelFullscreenClass(false);
+    }
+
+    if (this.props.initPhase === DashboardInitPhase.Completed && this.state.prevUrlUid === null) {
+      this.props.cleanUpDashboardState(this.state.prevUrlUid);
       this.setPanelFullscreenClass(false);
     }
   }
@@ -113,6 +127,8 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
     // Can remove this condition after we switch to react router
     if (prevProps.urlUid !== urlUid) {
+      console.log(prevProps.urlUid, urlUid);
+      this.setState({ prevUrlUid: prevProps.urlUid });
       return;
     }
 
@@ -318,37 +334,35 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState, props: Props) => {
+export const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   const urlUid: string = state.location.routeParams.uid?.toString();
   const dashboard = dashboardCollection.selector(state, urlUid);
+  const { getModel, initError, initPhase, isInitSlow } = dashboard;
+  const model = getModel() as DashboardModel;
   return {
     urlUid,
-    urlSlug: state.location.routeParams.slug,
-    urlType: state.location.routeParams.type,
-    editview: state.location.query.editview,
-    urlPanelId: state.location.query.panelId,
-    urlFolderId: state.location.query.folderId,
-    urlEditPanelId: state.location.query.editPanel,
-    urlViewPanelId: state.location.query.viewPanel,
-    inspectPanelId: state.location.query.inspect,
-    initPhase: dashboard.initPhase,
-    isInitSlow: dashboard.isInitSlow,
-    initError: dashboard.initError,
-    dashboard: dashboard.getModel() as DashboardModel,
-    inspectTab: state.location.query.inspectTab,
+    urlSlug: state.location.routeParams.slug?.toString(),
+    urlType: state.location.routeParams.type?.toString(),
+    editview: state.location.query.editview?.toString(),
+    urlPanelId: state.location.query.panelId?.toString(),
+    urlFolderId: state.location.query.folderId?.toString(),
+    urlEditPanelId: state.location.query.editPanel?.toString(),
+    urlViewPanelId: state.location.query.viewPanel?.toString(),
+    inspectPanelId: state.location.query.inspect?.toString(),
+    initPhase,
+    isInitSlow,
+    initError,
+    dashboard: model,
+    inspectTab: (state.location.query.inspectTab as unknown) as InspectTab,
     isPanelEditorOpen: state.panelEditor.isOpen,
   };
 };
 
-const mapDispatchToProps = (outerDispatch: Dispatch, ownProps: any) =>
-  bindActionCreators(
-    {
-      initDashboard,
-      cleanUpDashboard: () => toCollectionAction(cleanUpDashboard(), ownProps.urlUid),
-      notifyApp,
-      updateLocation,
-    },
-    outerDispatch
-  );
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  initDashboard,
+  cleanUpDashboardState,
+  notifyApp,
+  updateLocation,
+};
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

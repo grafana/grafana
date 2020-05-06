@@ -1,5 +1,4 @@
-import { PayloadAction } from '@reduxjs/toolkit';
-import { cleanUpDashboard } from '../../dashboard/state/reducers';
+import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import { variableAdapters } from '../adapters';
 import { sharedReducer } from './sharedReducer';
 import { VariableModel } from '../../templating/types';
@@ -9,11 +8,13 @@ export interface VariablesState extends Record<string, VariableModel> {}
 
 export const initialVariablesState: VariablesState = {};
 
+export const cleanUpVariables = createAction<PayloadAction>('templating/cleanUpVariables');
+
 export const variablesReducer = (
   state: VariablesState = initialVariablesState,
   action: PayloadAction<VariablePayload>
 ): VariablesState => {
-  if (cleanUpDashboard.match(action)) {
+  if (cleanUpVariables.match(action)) {
     const globalVariables = Object.values(state).filter(v => v.global);
     if (!globalVariables) {
       return initialVariablesState;
