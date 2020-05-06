@@ -1,7 +1,7 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { getFieldState } from '../../field/fieldState';
+import { getFieldTitle } from '../../field/fieldState';
 
 export interface RenameFieldsTransformerOptions {
   renameByName: Record<string, string>;
@@ -41,8 +41,8 @@ const createRenamer = (renameByName: Record<string, string>) => (frame: DataFram
   }
 
   return frame.fields.map(field => {
-    const state = getFieldState(field, frame);
-    const renameTo = renameByName[state.title];
+    const title = getFieldTitle(field, frame);
+    const renameTo = renameByName[title];
 
     if (typeof renameTo !== 'string' || renameTo.length === 0) {
       return field;

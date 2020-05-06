@@ -21,7 +21,6 @@ import { GrafanaTheme } from '../types/theme';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
-import { getFieldState } from '../field/fieldState';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -110,7 +109,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         }
 
         const config = field.config; // already set by the prepare task
-        const state = getFieldState(field, series, options.data);
         const title = field.config.title ?? defaultTitle;
 
         const display =
@@ -140,7 +138,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
             const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, {
-              ...state.scopedVars, // series and field scoped vars
+              ...field.state?.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
 
@@ -184,7 +182,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             scopedVars[VAR_CALC] = { value: calc, text: calc };
             const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, {
-              ...state.scopedVars, // series and field scoped vars
+              ...field.state?.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
 

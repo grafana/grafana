@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldState, TIME_SERIES_FIELD_NAME, FieldType } from '../types';
+import { DataFrame, Field, TIME_SERIES_FIELD_NAME, FieldType } from '../types';
 import { formatLabels } from '../utils/labels';
 
 /**
@@ -19,7 +19,7 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   if (index === undefined) {
     return frame.fields
       .filter(f => f.type !== FieldType.time)
-      .map(f => getFieldState(f, frame).title)
+      .map(f => getFieldTitle(f, frame))
       .join(', ');
   }
 
@@ -30,36 +30,34 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
-export function getFieldState(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): FieldState {
+export function getFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   if (!field.state || !field.state.title) {
-    field.state = calculateFieldState(field, frame, allFrames);
+    field.state = {
+      ...field.state,
+      title: calculateFieldTitle(field, frame, allFrames),
+    };
   }
-  return field.state;
+
+  return field.state.title;
 }
 
 /**
  * Get an appropriate display title. If the 'title' is set, use that
  */
-function calculateFieldState(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): FieldState {
+function calculateFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.title && field.config?.title.length;
 
   let title = hasConfigTitle ? field.config!.title! : field.name;
 
   if (hasConfigTitle) {
-    return {
-      ...field.state,
-      title,
-    };
+    return title;
   }
 
   // This is an ugly exception for time field
   // For time series we should normally treat time field with same name
   // But in case it has a join source we should handle it as normal field
   if (field.type === FieldType.time && !field.labels) {
-    return {
-      ...field.state,
-      title: title ?? 'Time',
-    };
+    return title ?? 'Time';
   }
 
   let parts: string[] = [];
@@ -118,10 +116,7 @@ function calculateFieldState(field: Field, frame?: DataFrame, allFrames?: DataFr
     title = TIME_SERIES_FIELD_NAME;
   }
 
-  return {
-    ...field.state,
-    title,
-  };
+  return title;
 }
 
 /**

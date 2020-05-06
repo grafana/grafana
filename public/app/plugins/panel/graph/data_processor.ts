@@ -8,7 +8,7 @@ import {
   DataFrame,
   getTimeField,
   dateTime,
-  getFieldState,
+  getFieldTitle,
 } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
@@ -43,7 +43,7 @@ export class DataProcessor {
         if (field.type !== FieldType.number) {
           continue;
         }
-        const name = getFieldState(field, series, dataList).title;
+        const name = getFieldTitle(field, series, dataList);
         const datapoints = [];
 
         for (let r = 0; r < series.length; r++) {

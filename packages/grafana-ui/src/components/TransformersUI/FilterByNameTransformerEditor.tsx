@@ -61,7 +61,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
     for (const frame of input) {
       for (const field of frame.fields) {
-        const id = getFieldState(field, frame, input).title;
+        const id = getFieldState(field, frame, input);
         let v = byName[id];
         if (!v) {
           v = byName[id] = {
