@@ -15,8 +15,7 @@ API.txt for details.
 			timezone: null,		// "browser" for local to the client or timezone for timezone-js
 			timeformat: null,	// format string to use
 			twelveHourClock: false,	// 12 or 24 time in time mode
-			monthNames: null,	// list of names of months
-			timeFormatter: null // external formatter with timezone support
+			monthNames: null	// list of names of months
 		}
 	};
 
@@ -30,6 +29,7 @@ API.txt for details.
 	// A subset of the Open Group's strftime format is supported.
 
 	function formatDate(d, fmt, monthNames, dayNames) {
+
 		if (typeof d.strftime == "function") {
 			return d.strftime(fmt);
 		}
@@ -356,15 +356,12 @@ API.txt for details.
 					};
 
 					axis.tickFormatter = function (v, axis) {
+
 						var d = dateGenerator(v, axis.options);
 
-						// first check global formatter
-						if (typeof opts.timeFormatter === "function") {
-							return opts.timeFormatter(d.getTime(), opts.timeformat);
-						}
+						// first check global format
 
-						// second check global format
-						if (opts.timeformat != null) {							
+						if (opts.timeformat != null) {
 							return formatDate(d, opts.timeformat, opts.monthNames, opts.dayNames);
 						}
 
@@ -410,6 +407,7 @@ API.txt for details.
 						}
 
 						var rt = formatDate(d, fmt, opts.monthNames, opts.dayNames);
+
 						return rt;
 					};
 				}

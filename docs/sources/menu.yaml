@@ -289,6 +289,8 @@
       children:
         - link: /plugins/developing/development/
           name: Developer Guide
+        - link: /plugins/developing/dataframe/
+          name: Introduction to data frames
         - link: /plugins/developing/code-styleguide/
           name: Plugin Code Styleguide
         - link: /plugins/developing/plugin-review-guidelines/
@@ -350,6 +352,8 @@
       link: /http_api/playlist/
     - name: Preferences API
       link: /http_api/preferences/
+    - name: Reporting API
+      link: /http_api/reporting/
     - name: Snapshot API
       link: /http_api/snapshot/
     - name: Teams API
