@@ -4,7 +4,7 @@ const PANEL_UNDER_TEST = '2 yaxis and axis labels';
 
 e2e.scenario({
   describeName: 'Inspect drawer tests',
-  itName: 'Testes various Inspect Drawer scenarios',
+  itName: 'Tests various Inspect Drawer scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
