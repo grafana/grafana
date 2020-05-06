@@ -84,7 +84,34 @@
     </div>
   </div>
 
-  <div class="section gf-form-group" aria-label="{{ctrl.selectors.xAxisSection}}">
+  <div class="gf-form-group">
+    <h5 class="section-heading">Y-Axes</h5>
+    <gf-form-switch
+      class="gf-form"
+      label="Align Y-Axes"
+      label-class="width-6"
+      switch-class="width-5"
+      checked="ctrl.panel.yaxis.align"
+      on-change="ctrl.render()"
+    ></gf-form-switch>
+    <div class="gf-form" ng-show="ctrl.panel.yaxis.align">
+      <label class="gf-form-label width-6">
+        Level
+      </label>
+      <input
+        type="number"
+        class="gf-form-input width-6"
+        placeholder="0"
+        ng-model="ctrl.panel.yaxis.alignLevel"
+        ng-change="ctrl.render()"
+        ng-model-onblur
+        bs-tooltip="'Alignment of Y-axes are based on this value, starting from Y=0'"
+        data-placement="right"
+      />
+    </div>
+  </div>
+
+  <div class="gf-form-group" aria-label="{{ctrl.selectors.xAxisSection}}">
     <h5 class="section-heading">X-Axis</h5>
     <gf-form-switch
       class="gf-form"
@@ -158,35 +185,6 @@
           ng-model="ctrl.panel.xaxis.max"
           ng-change="ctrl.render()"
           ng-model-onblur
-        />
-      </div>
-    </div>
-
-    <div>
-      <br />
-      <h5 class="section-heading">Y-Axes</h5>
-      <gf-form-switch
-        class="gf-form"
-        label="Align"
-        tooltip="Align left and right Y-axes"
-        label-class="width-6"
-        switch-class="width-5"
-        checked="ctrl.panel.yaxis.align"
-        on-change="ctrl.render()"
-      ></gf-form-switch>
-      <div class="gf-form" ng-show="ctrl.panel.yaxis.align">
-        <label class="gf-form-label width-6">
-          Level
-        </label>
-        <input
-          type="number"
-          class="gf-form-input width-5"
-          placeholder="0"
-          ng-model="ctrl.panel.yaxis.alignLevel"
-          ng-change="ctrl.render()"
-          ng-model-onblur
-          bs-tooltip="'Alignment of Y-axes are based on this value, starting from Y=0'"
-          data-placement="right"
         />
       </div>
     </div>
