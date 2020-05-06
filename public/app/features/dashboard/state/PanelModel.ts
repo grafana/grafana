@@ -422,11 +422,8 @@ export class PanelModel implements DataConfigSource {
     clone.isEditing = true;
     const sourceQueryRunner = this.getQueryRunner();
 
-    // pipe last result to new clone query runner
-    const lastResult = sourceQueryRunner.getLastResult();
-    if (lastResult) {
-      clone.getQueryRunner().pipeDataToSubject(lastResult);
-    }
+    // Copy last query result
+    clone.getQueryRunner().useLastResultFrom(sourceQueryRunner);
 
     return clone;
   }
@@ -469,7 +466,6 @@ export class PanelModel implements DataConfigSource {
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
-      this.queryRunner = null;
     }
   }
 
