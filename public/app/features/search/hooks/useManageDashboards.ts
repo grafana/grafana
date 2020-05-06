@@ -17,7 +17,7 @@ export const useManageDashboards = (
   });
 
   const {
-    state: { results, loading, allChecked },
+    state: { results, loading, initialLoading, allChecked },
     onToggleSection,
     dispatch,
   } = useSearch<ManageDashboardsState>(query, reducer, {});
@@ -49,10 +49,12 @@ export const useManageDashboards = (
 
   const canSave = folder?.canSave;
   const hasEditPermissionInFolders = canSave ? contextSrv.hasEditPermissionInFolders : false;
+  const noFolders = canSave && folder?.id && results.length === 0 && !loading && !initialLoading;
 
   return {
     results,
     loading,
+    initialLoading,
     canSave,
     allChecked,
     hasEditPermissionInFolders,
@@ -63,5 +65,6 @@ export const useManageDashboards = (
     onToggleAllChecked,
     onDeleteItems,
     onMoveItems,
+    noFolders,
   };
 };

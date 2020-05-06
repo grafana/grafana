@@ -13,11 +13,14 @@ export interface DashboardsSearchState {
   results: DashboardSearchHit[];
   loading: boolean;
   selectedIndex: number;
+  /** Used for first time page load */
+  initialLoading: boolean;
 }
 
 export const dashboardsSearchState: DashboardsSearchState = {
   results: [],
   loading: true,
+  initialLoading: true,
   selectedIndex: 0,
 };
 
@@ -34,7 +37,7 @@ export const searchReducer = (state: DashboardsSearchState, action: SearchAction
       if (results.length > 0) {
         results[0].selected = true;
       }
-      return { ...state, results, loading: false };
+      return { ...state, results, loading: false, initialLoading: false };
     }
     case TOGGLE_SECTION: {
       const section = action.payload;

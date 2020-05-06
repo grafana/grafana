@@ -1,6 +1,6 @@
 import React, { FC, memo, useState } from 'react';
 import { css } from 'emotion';
-import { HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
+import { HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -50,6 +50,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
   const {
     results,
     loading,
+    initialLoading,
     canSave,
     allChecked,
     hasEditPermissionInFolders,
@@ -60,6 +61,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     onToggleAllChecked,
     onDeleteItems,
     onMoveItems,
+    noFolders,
   } = useManageDashboards(query, {}, folder);
 
   const onMoveTo = () => {
@@ -70,7 +72,11 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     setIsDeleteModalOpen(true);
   };
 
-  if (canSave && folderId && !hasFilters && results.length === 0 && !loading) {
+  if (initialLoading) {
+    return <Spinner className={styles.spinner} />;
+  }
+
+  if (noFolders && !hasFilters) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
@@ -152,6 +158,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex: 1;
       height: 100%;
       margin-top: ${theme.spacing.xl};
+    `,
+    spinner: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
     `,
   };
 });
