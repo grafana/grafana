@@ -112,6 +112,8 @@
     name: Dashboard list
   - link: /features/panels/text/
     name: Text
+  - link: /panels/queries/
+    name: Queries
 - name: Dashboards
   link: /features/dashboard/
   children:
