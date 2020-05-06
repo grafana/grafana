@@ -80,6 +80,8 @@ type AzureLogAnalyticsTable struct {
 
 type metadata struct {
 	Columns      []column `json:"columns"`
+	Subscription string   `json:"subscription"`
+	Workspace    string   `json:"workspace"`
 	Query        string   `json:"query"`
 	EncodedQuery string   `json:"encodedQuery"`
 }

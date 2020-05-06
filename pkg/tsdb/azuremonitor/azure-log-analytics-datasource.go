@@ -38,6 +38,7 @@ type AzureLogAnalyticsQuery struct {
 	RefID        string
 	ResultFormat string
 	URL          string
+	Model        map[string]interface{}
 	Params       url.Values
 	Target       string
 }
@@ -95,6 +96,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 			RefID:        query.RefId,
 			ResultFormat: resultFormat,
 			URL:          apiURL,
+			Model:        azureLogAnalyticsTarget,
 			Params:       params,
 			Target:       params.Encode(),
 		})
@@ -147,15 +149,13 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
 
-	rawQuery := query.Params.Get("query")
-
 	if query.ResultFormat == "table" {
-		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, rawQuery)
+		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Model, query.Params)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, rawQuery)
+		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Model, query.Params)
 		if err != nil {
 			return nil, err
 		}
@@ -238,16 +238,11 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, query string) ([]*tsdb.Table, *simplejson.Json, error) {
-	meta := metadata{
-		Query: query,
-	}
-
-	encQuery, err := encodeQuery(query)
+func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, model map[string]interface{}, params url.Values) ([]*tsdb.Table, *simplejson.Json, error) {
+	meta, err := createMetadata(model, params)
 	if err != nil {
 		return nil, simplejson.NewFromAny(meta), err
 	}
-	meta.EncodedQuery = encQuery
 
 	tables := make([]*tsdb.Table, 0)
 	for _, t := range data.Tables {
@@ -278,16 +273,11 @@ func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsRespon
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, query string) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
-	meta := metadata{
-		Query: query,
-	}
-
-	encQuery, err := encodeQuery(query)
+func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, model map[string]interface{}, params url.Values) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
+	meta, err := createMetadata(model, params)
 	if err != nil {
 		return nil, simplejson.NewFromAny(meta), err
 	}
-	meta.EncodedQuery = encQuery
 
 	for _, t := range data.Tables {
 		if t.Name == "PrimaryResult" {
@@ -368,6 +358,21 @@ func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsRe
 	}
 
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
+}
+
+func createMetadata(model map[string]interface{}, params url.Values) (metadata, error) {
+	meta := metadata{
+		Query:        params.Get("query"),
+		Subscription: fmt.Sprintf("%v", model["subscription"]),
+		Workspace:    fmt.Sprintf("%v", model["workspace"]),
+	}
+
+	encQuery, err := encodeQuery(meta.Query)
+	if err != nil {
+		return meta, err
+	}
+	meta.EncodedQuery = encQuery
+	return meta, nil
 }
 
 func encodeQuery(rawQuery string) (string, error) {
