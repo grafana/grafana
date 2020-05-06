@@ -199,10 +199,10 @@ export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
   timeZone: TimeZone,
-  isLoki?: boolean
+  datasourceId?: string
 ): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, isLoki);
+  const logsModel = logSeriesToLogsModel(logSeries, datasourceId);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
@@ -267,7 +267,7 @@ interface LogFields {
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[], isLoki?: boolean): LogsModel | undefined {
+export function logSeriesToLogsModel(logSeries: DataFrame[], datasourceId?: string): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -286,7 +286,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], isLoki?: boolean): 
     return {
       series,
       timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-      timeNanosecondField: isLoki && fieldCache.hasFieldNamed('tsNs') ? fieldCache.getFieldByName('tsNs') : undefined,
+      timeNanosecondField: fieldCache.hasFieldNamed('tsNs') ? fieldCache.getFieldByName('tsNs') : undefined,
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),
@@ -314,8 +314,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], isLoki?: boolean): 
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
-      const tsNs = isLoki ? timeNanosecondField.values.get(j) : undefined;
-      const timeEpochNs = Number(isLoki ? tsNs : time.valueOf() + '000000');
+      const tsNs = datasourceId === 'loki' ? timeNanosecondField.values.get(j) : undefined;
+      const timeEpochNs = Number(datasourceId === 'loki' ? tsNs : time.valueOf() + '000000');
 
       const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
