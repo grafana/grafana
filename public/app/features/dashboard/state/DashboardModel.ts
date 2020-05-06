@@ -712,9 +712,9 @@ export class DashboardModel {
   }
 
   removeRow(row: PanelModel, removePanels: boolean) {
-    const needToogle = (!removePanels && row.collapsed) || (removePanels && !row.collapsed);
+    const needToggle = (!removePanels && row.collapsed) || (removePanels && !row.collapsed);
 
-    if (needToogle) {
+    if (needToggle) {
       this.toggleRow(row);
     }
 
