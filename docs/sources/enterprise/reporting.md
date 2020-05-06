@@ -28,7 +28,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 Currently only Organization Admins can create reports.
 
-1. Click on the reports icon in the side menu. The Reports tab allow you to view, create, and update your reports.
+1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    * **Name -** Name of the report as you want it to appear in the Reports list.
    * **Choose dashboard -** Select the dashboard to generate the report from.
@@ -41,6 +41,19 @@ Currently only Organization Admins can create reports.
 1. **Save** the report.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+
+## Send test mail
+
+> Only available in Grafana Enterprise v7.0+.
+
+1. In the report, click **Send test mail**.
+1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
+If you want to use email addresses from the report, then select the **Use emails from report** check box.
+1. Click **Send**.
+
+The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Rendering configuration
 

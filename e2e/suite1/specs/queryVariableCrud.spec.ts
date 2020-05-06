@@ -1,7 +1,171 @@
 import { e2e } from '@grafana/e2e';
 
+// skipped scenario helper because of some perf issue upgrading cypress to 4.5.0 and splitted the whole test into smaller
+// several it functions. Very important to keep the order of these it functions because they have dependency in the order
+// https://github.com/cypress-io/cypress/issues/5987
+// https://github.com/cypress-io/cypress/issues/6023#issuecomment-574031655
+describe('Variables', () => {
+  let lastUid = '';
+  let lastData = '';
+  let variables: VariablesData[] = [
+    { name: 'query1', query: '*', label: 'query1-label', options: ['All', 'A', 'B', 'C'], selectedOption: 'A' },
+    {
+      name: 'query2',
+      query: '$query1.*',
+      label: 'query2-label',
+      options: ['All', 'AA', 'AB', 'AC'],
+      selectedOption: 'AA',
+    },
+    {
+      name: 'query3',
+      query: '$query1.$query2.*',
+      label: 'query3-label',
+      options: ['All', 'AAA', 'AAB', 'AAC'],
+      selectedOption: 'AAA',
+    },
+  ];
+
+  beforeEach(() => {
+    e2e.flows.login('admin', 'admin');
+    if (!lastUid || !lastData) {
+      e2e.flows.addDataSource();
+      e2e.flows.addDashboard();
+    } else {
+      e2e.setScenarioContext({ lastAddedDataSource: lastData, lastAddedDashboardUid: lastUid });
+    }
+
+    e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
+      e2e.flows.openDashboard(lastAddedDashboardUid);
+      lastUid = lastAddedDashboardUid;
+      lastData = lastAddedDataSource;
+    });
+  });
+
+  it(`asserts defaults`, () => {
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+
+    assertDefaultsForNewVariable();
+  });
+
+  variables.forEach((variable, index) => {
+    it(`creates variable ${variable.name}`, () => {
+      e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+      e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+
+      if (index === 0) {
+        e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
+      } else {
+        e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
+      }
+
+      const { name, label, query, options, selectedOption } = variable;
+      e2e.getScenarioContext().then(({ lastAddedDataSource }: any) => {
+        createQueryVariable({
+          dataSourceName: lastAddedDataSource,
+          name,
+          label,
+          query,
+          options,
+          selectedOption,
+        });
+      });
+
+      e2e.pages.Dashboard.Settings.General.saveDashBoard()
+        .should('be.visible')
+        .click();
+      e2e.pages.SaveDashboardModal.save()
+        .should('be.visible')
+        .click();
+      e2e.flows.assertSuccessNotification();
+
+      e2e.components.BackButton.backArrow()
+        .should('be.visible')
+        .click();
+    });
+  });
+
+  it(`asserts submenus`, () => {
+    assertVariableLabelsAndComponents(variables);
+  });
+
+  it(`asserts variable table`, () => {
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings')
+      .should('be.visible')
+      .click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables')
+      .should('be.visible')
+      .click();
+
+    assertVariableTable(variables);
+  });
+
+  it(`asserts variable selects`, () => {
+    assertSelects(variables);
+  });
+
+  it(`asserts duplicate variable`, () => {
+    // mutates variables
+    variables = assertDuplicateItem(variables);
+    e2e.flows.saveDashboard();
+  });
+
+  it(`asserts delete variable`, () => {
+    // mutates variables
+    variables = assertDeleteItem(variables);
+    e2e.flows.saveDashboard();
+  });
+
+  it(`asserts update variable`, () => {
+    // mutates variables
+    variables = assertUpdateItem(variables);
+    e2e.components.BackButton.backArrow()
+      .should('be.visible')
+      .should('be.visible')
+      .click();
+    e2e.flows.saveDashboard();
+  });
+
+  it(`asserts move variable down`, () => {
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings')
+      .should('be.visible')
+      .click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables')
+      .should('be.visible')
+      .click();
+
+    // mutates variables
+    variables = assertMoveDownItem(variables);
+    e2e.flows.saveDashboard();
+  });
+
+  it(`asserts move variable up`, () => {
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings')
+      .should('be.visible')
+      .click();
+    e2e.pages.Dashboard.Settings.General.sectionItems('Variables')
+      .should('be.visible')
+      .click();
+
+    // mutates variables
+    assertMoveUpItem(variables);
+  });
+});
+
+interface VariablesData {
+  name: string;
+  query: string;
+  label: string;
+  options: string[];
+  selectedOption: string;
+}
+
+interface CreateQueryVariableArguments extends VariablesData {
+  dataSourceName: string;
+}
+
 const assertDefaultsForNewVariable = () => {
-  logSection('Asserting defaults for new variable');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().within(input => {
     expect(input.attr('placeholder')).equals('name');
     expect(input.val()).equals('');
@@ -21,18 +185,11 @@ const assertDefaultsForNewVariable = () => {
       .should('have.text', '');
   });
 
-  e2e()
-    .window()
-    .then((win: any) => {
-      const chainer = 'have.text';
-      const value = '';
-
-      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
-        e2e()
-          .get('option:selected')
-          .should(chainer, value);
-      });
-    });
+  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
+    e2e()
+      .get('option:selected')
+      .should('have.text', '');
+  });
 
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect().within(select => {
@@ -66,32 +223,16 @@ const assertDefaultsForNewVariable = () => {
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
-  logSection('Asserting defaults for new variable, OK!');
 };
 
-interface CreateQueryVariableArguments extends QueryVariableData {
-  dataSourceName: string;
-}
-
 const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQueryVariableArguments) => {
-  logSection('Creating a Query Variable with', { name, label, dataSourceName, query });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
-  e2e()
-    .window()
-    .then((win: any) => {
-      const text = `${dataSourceName}`;
-
-      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
-        .select(text)
-        .blur();
-    });
+  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
+    .select(`${dataSourceName}`)
+    .blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
-    .within(input => {
-      expect(input.attr('placeholder')).equals('metric name or tags query');
-      expect(input.val()).equals('');
-    })
     .type(query)
     .blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
@@ -114,10 +255,34 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
     expect(input.val()).equals('');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.addButton().click();
-  logSection('Creating a Query Variable with required, OK!');
 };
 
-const assertVariableTableRow = ({ name, query }: QueryVariableData, index: number, length: number) => {
+const assertVariableLabelAndComponent = ({ label, options, selectedOption }: VariablesData) => {
+  e2e.pages.Dashboard.SubMenu.submenuItemLabels(label).should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(selectedOption)
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown().should('be.visible');
+  for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(options[optionIndex]).should('be.visible');
+  }
+};
+
+const assertVariableLabelsAndComponents = (args: VariablesData[]) => {
+  e2e.pages.Dashboard.SubMenu.submenuItem().should('have.length', args.length);
+  for (let index = 0; index < args.length; index++) {
+    e2e.pages.Dashboard.SubMenu.submenuItem()
+      .eq(index)
+      .within(() => {
+        e2e()
+          .get('label')
+          .contains(args[index].name);
+      });
+    assertVariableLabelAndComponent(args[index]);
+  }
+};
+
+const assertVariableTableRow = ({ name, query }: VariablesData, index: number, length: number) => {
   e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(name)
     .should('exist')
     .contains(name);
@@ -134,8 +299,7 @@ const assertVariableTableRow = ({ name, query }: QueryVariableData, index: numbe
   e2e.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(name).should('exist');
 };
 
-const assertVariableTable = (args: QueryVariableData[]) => {
-  logSection('Asserting variable table with', args);
+const assertVariableTable = (args: VariablesData[]) => {
   e2e.pages.Dashboard.Settings.Variables.List.table()
     .should('be.visible')
     .within(() => {
@@ -147,92 +311,197 @@ const assertVariableTable = (args: QueryVariableData[]) => {
   for (let index = 0; index < args.length; index++) {
     assertVariableTableRow(args[index], index, args.length);
   }
-
-  logSection('Asserting variable table, Ok');
 };
 
-const assertVariableLabelAndComponent = ({ label, options, selectedOption }: QueryVariableData) => {
-  e2e.pages.Dashboard.SubMenu.submenuItemLabels(label).should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(selectedOption)
+const assertSelects = (variables: VariablesData[]) => {
+  // Values in submenus should be
+  // query1: [A] query2: [AA] query3: [AAA]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
     .should('be.visible')
     .click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown().should('be.visible');
-  for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(options[optionIndex]).should('be.visible');
-  }
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar().click();
+  // Values in submenus should be
+  // query1: [B] query2: [All] query3: [All]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .should('be.visible')
+    .should('have.length', 2);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .eq(0)
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  // Values in submenus should be
+  // query1: [B] query2: [BB] query3: [All]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .eq(0)
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 0);
+  // Values in submenus should be
+  // query1: [B] query2: [BB] query3: [BBB]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB + BC')
+    .should('be.visible')
+    .should('have.length', 1);
+  // Values in submenus should be
+  // query1: [B] query2: [BB + BC] query3: [BBB]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCA').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCB').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCC').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCC')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB + BCC')
+    .should('be.visible')
+    .should('have.length', 1);
+  // Values in submenus should be
+  // query1: [B] query2: [BB + BC] query3: [BBB + BCC]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB + BC')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BA')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .should('be.visible')
+    .should('have.length', 1);
+  // Values in submenus should be
+  // query1: [B] query2: [BA] query3: [All]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A')
+    .should('be.visible')
+    .should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B')
+    .should('be.visible')
+    .should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C')
+    .should('be.visible')
+    .should('be.visible');
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .should('be.visible')
+    .should('have.length', 2);
+  // Values in submenus should be
+  // query1: [A] query2: [All] query3: [All]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .eq(0)
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .should('be.visible')
+    .should('have.length', 1);
+  // Values in submenus should be
+  // query1: [A] query2: [AA] query3: [All]
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+    .eq(0)
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAA')
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.Toolbar.navBar()
+    .should('be.visible')
+    .click();
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AAA')
+    .should('be.visible')
+    .should('have.length', 1);
+  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 0);
 };
 
-const assertVariableLabelsAndComponents = (args: QueryVariableData[]) => {
-  logSection('Asserting variable components and labels');
-  e2e.pages.Dashboard.SubMenu.submenuItem().should('have.length', args.length);
-  for (let index = 0; index < args.length; index++) {
-    e2e.pages.Dashboard.SubMenu.submenuItem()
-      .eq(index)
-      .within(() => {
-        e2e()
-          .get('label')
-          .contains(args[index].name);
-      });
-    assertVariableLabelAndComponent(args[index]);
-  }
-  logSection('Asserting variable components and labels, Ok');
-};
-
-const assertAdding3dependantQueryVariablesScenario = (queryVariables: QueryVariableData[]) => {
-  // This creates 3 variables where 2 depends on 1 and 3 depends on 2 and for each added variable
-  // we assert that the variable looks ok in the variable list and that it looks ok in the submenu in dashboard
-  for (let queryVariableIndex = 0; queryVariableIndex < queryVariables.length; queryVariableIndex++) {
-    const { name, label, query, options, selectedOption } = queryVariables[queryVariableIndex];
-    const asserts = queryVariables.slice(0, queryVariableIndex + 1);
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDataSource }) => {
-      createQueryVariable({
-        dataSourceName: lastAddedDataSource,
-        name,
-        label,
-        query,
-        options,
-        selectedOption,
-      });
-    });
-
-    assertVariableTable(asserts);
-
-    e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
-    e2e.pages.SaveDashboardModal.save().click();
-    e2e.flows.assertSuccessNotification();
-
-    e2e.components.BackButton.backArrow().click();
-
-    assertVariableLabelsAndComponents(asserts);
-
-    if (queryVariableIndex < queryVariables.length - 1) {
-      e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-      e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-      e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
-    }
-  }
-};
-
-interface QueryVariableData {
-  name: string;
-  query: string;
-  label: string;
-  options: string[];
-  selectedOption: string;
-}
-
-const logSection = (message: string, args?: any) => {
-  e2e().logToConsole('');
-  e2e().logToConsole(message, args);
-  e2e().logToConsole('===============================================================================');
-};
-
-const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
-  logSection('Asserting variable duplicate');
-
-  const itemToDuplicate = queryVariables[1];
+const assertDuplicateItem = (variables: VariablesData[]) => {
+  const itemToDuplicate = variables[1];
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
   e2e.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(itemToDuplicate.name)
@@ -243,10 +512,10 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
     .within(() => {
       e2e()
         .get('tbody > tr')
-        .should('have.length', queryVariables.length + 1);
+        .should('have.length', variables.length + 1);
     });
   const newItem = { ...itemToDuplicate, name: `copy_of_${itemToDuplicate.name}` };
-  assertVariableTableRow(newItem, queryVariables.length - 1, queryVariables.length);
+  assertVariableTableRow(newItem, variables.length - 1, variables.length);
   e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(newItem.name).click();
 
   newItem.label = `copy_of_${itemToDuplicate.label}`;
@@ -258,7 +527,9 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow()
+    .should('be.visible')
+    .click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(newItem.label).should('be.visible');
   e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(newItem.selectedOption)
@@ -270,14 +541,11 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(newItem.options[optionIndex]).should('be.visible');
   }
 
-  logSection('Asserting variable duplicate, OK!');
-  return [...queryVariables, newItem];
+  return [...variables, newItem];
 };
 
-const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
-  logSection('Asserting variable delete');
-
-  const itemToDelete = queryVariables[1];
+const assertDeleteItem = (variables: VariablesData[]) => {
+  const itemToDelete = variables[1];
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
 
@@ -287,26 +555,26 @@ const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
     .within(() => {
       e2e()
         .get('tbody > tr')
-        .should('have.length', queryVariables.length - 1);
+        .should('have.length', variables.length - 1);
     });
 
   e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
   e2e.pages.SaveDashboardModal.save().click();
   e2e.flows.assertSuccessNotification();
 
-  e2e.components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow()
+    .should('be.visible')
+    .click();
 
   e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
 
-  logSection('Asserting variable delete, OK!');
-
-  return queryVariables.filter(item => item.name !== itemToDelete.name);
+  return variables.filter(item => item.name !== itemToDelete.name);
 };
 
-const assertUpdateItem = (data: QueryVariableData[]) => {
-  const queryVariables = [...data];
+const assertUpdateItem = (data: VariablesData[]) => {
+  const variables = [...data];
   // updates an item to a constant variable instead
-  const itemToUpdate = queryVariables[1];
+  const itemToUpdate = variables[1];
   let updatedItem = {
     ...itemToUpdate,
     name: `update_of_${itemToUpdate.name}`,
@@ -316,8 +584,7 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
     selectedOption: 'undefined',
   };
 
-  logSection('Asserting variable update');
-  queryVariables[1] = updatedItem;
+  variables[1] = updatedItem;
 
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
@@ -341,33 +608,29 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
   e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
 
-  e2e.components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow()
+    .should('be.visible')
+    .click();
 
-  e2e()
-    .window()
-    .then((win: any) => {
-      queryVariables[1].selectedOption = 'A constant';
-      assertVariableLabelAndComponent(queryVariables[1]);
-    });
+  variables[1].selectedOption = 'A constant';
+  assertVariableLabelAndComponent(variables[1]);
 
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
 
-  assertVariableTableRow(queryVariables[1], 1, queryVariables.length);
+  assertVariableTableRow(variables[1], 1, variables.length);
 
-  queryVariables[1].selectedOption = 'A constant';
+  variables[1].selectedOption = 'A constant';
 
-  logSection('Asserting variable update, OK!');
-  return queryVariables;
+  return variables;
 };
 
-const assertMoveDownItem = (data: QueryVariableData[]) => {
-  logSection('Asserting variable move down');
-  const queryVariables = [...data];
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(queryVariables[0].name).click();
-  const temp = { ...queryVariables[0] };
-  queryVariables[0] = { ...queryVariables[1] };
-  queryVariables[1] = temp;
+const assertMoveDownItem = (data: VariablesData[]) => {
+  const variables = [...data];
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(variables[0].name).click();
+  const temp = { ...variables[0] };
+  variables[0] = { ...variables[1] };
+  variables[1] = temp;
   e2e.pages.Dashboard.Settings.Variables.List.table().within(() => {
     e2e()
       .get('tbody > tr')
@@ -376,11 +639,11 @@ const assertMoveDownItem = (data: QueryVariableData[]) => {
         e2e()
           .get('td')
           .eq(0)
-          .contains(queryVariables[0].name);
+          .contains(variables[0].name);
         e2e()
           .get('td')
           .eq(1)
-          .contains(queryVariables[0].query);
+          .contains(variables[0].query);
       });
     e2e()
       .get('tbody > tr')
@@ -389,130 +652,29 @@ const assertMoveDownItem = (data: QueryVariableData[]) => {
         e2e()
           .get('td')
           .eq(0)
-          .contains(queryVariables[1].name);
+          .contains(variables[1].name);
         e2e()
           .get('td')
           .eq(1)
-          .contains(queryVariables[1].query);
+          .contains(variables[1].query);
       });
   });
 
-  e2e.components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow()
+    .should('be.visible')
+    .click();
 
-  assertVariableLabelsAndComponents(queryVariables);
+  assertVariableLabelsAndComponents(variables);
 
-  logSection('Asserting variable move down, OK!');
-
-  return queryVariables;
+  return variables;
 };
 
-const assertSelects = (queryVariables: QueryVariableData[]) => {
-  // Values in submenus should be
-  // query1: [A] query2: [AA] query3: [AAA]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  // Values in submenus should be
-  // query1: [B] query2: [All] query3: [All]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 2);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
-    .eq(0)
-    .click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  // Values in submenus should be
-  // query1: [B] query2: [BB] query3: [All]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
-    .eq(0)
-    .click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 0);
-  // Values in submenus should be
-  // query1: [B] query2: [BB] query3: [BBB]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB + BC').should('have.length', 1);
-  // Values in submenus should be
-  // query1: [B] query2: [BB + BC] query3: [BBB]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCA').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCB').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCC').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCC').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB + BCC').should('have.length', 1);
-  // Values in submenus should be
-  // query1: [B] query2: [BB + BC] query3: [BBB + BCC]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB + BC').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BA').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 1);
-  // Values in submenus should be
-  // query1: [B] query2: [BA] query3: [All]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 2);
-  // Values in submenus should be
-  // query1: [A] query2: [All] query3: [All]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
-    .eq(0)
-    .click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 1);
-  // Values in submenus should be
-  // query1: [A] query2: [AA] query3: [All]
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
-    .eq(0)
-    .click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAA').click();
-  e2e.pages.Dashboard.Toolbar.navBar().click();
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AAA').should('have.length', 1);
-  e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 0);
-};
-
-const assertMoveUpItem = (data: QueryVariableData[]) => {
-  logSection('Asserting variable move up');
-  const queryVariables = [...data];
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(queryVariables[1].name).click();
-  const temp = { ...queryVariables[0] };
-  queryVariables[0] = { ...queryVariables[1] };
-  queryVariables[1] = temp;
+const assertMoveUpItem = (data: VariablesData[]) => {
+  const variables = [...data];
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(variables[1].name).click();
+  const temp = { ...variables[0] };
+  variables[0] = { ...variables[1] };
+  variables[1] = temp;
   e2e.pages.Dashboard.Settings.Variables.List.table().within(() => {
     e2e()
       .get('tbody > tr')
@@ -521,11 +683,11 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
         e2e()
           .get('td')
           .eq(0)
-          .contains(queryVariables[0].name);
+          .contains(variables[0].name);
         e2e()
           .get('td')
           .eq(1)
-          .contains(queryVariables[0].query);
+          .contains(variables[0].query);
       });
     e2e()
       .get('tbody > tr')
@@ -534,88 +696,19 @@ const assertMoveUpItem = (data: QueryVariableData[]) => {
         e2e()
           .get('td')
           .eq(0)
-          .contains(queryVariables[1].name);
+          .contains(variables[1].name);
         e2e()
           .get('td')
           .eq(1)
-          .contains(queryVariables[1].query);
+          .contains(variables[1].query);
       });
   });
 
-  e2e.components.BackButton.backArrow().click();
+  e2e.components.BackButton.backArrow()
+    .should('be.visible')
+    .click();
 
-  assertVariableLabelsAndComponents(queryVariables);
+  assertVariableLabelsAndComponents(variables);
 
-  logSection('Asserting variable move up, OK!');
-
-  return queryVariables;
+  return variables;
 };
-
-// This test should really be broken into several smaller tests
-e2e.scenario({
-  describeName: 'Variables',
-  itName: 'Query Variables CRUD',
-  addScenarioDataSource: true,
-  addScenarioDashBoard: true,
-  skipScenario: false,
-  scenario: () => {
-    // @todo remove `@ts-ignore` when possible
-    // @ts-ignore
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid }) => {
-      e2e.flows.openDashboard(lastAddedDashboardUid);
-    });
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
-
-    assertDefaultsForNewVariable();
-
-    e2e.pages.Dashboard.Settings.General.sectionItems('General').click();
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
-    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
-
-    let queryVariables: QueryVariableData[] = [
-      {
-        name: 'query1',
-        query: '*',
-        label: 'query1-label',
-        options: ['All', 'A', 'B', 'C'],
-        selectedOption: 'A',
-      },
-      {
-        name: 'query2',
-        query: '$query1.*',
-        label: 'query2-label',
-        options: ['All', 'AA', 'AB', 'AC'],
-        selectedOption: 'AA',
-      },
-      {
-        name: 'query3',
-        query: '$query1.$query2.*',
-        label: 'query3-label',
-        options: ['All', 'AAA', 'AAB', 'AAC'],
-        selectedOption: 'AAA',
-      },
-    ];
-
-    assertAdding3dependantQueryVariablesScenario(queryVariables);
-
-    // assert select updates
-    assertSelects(queryVariables);
-
-    // assert that duplicate works
-    queryVariables = assertDuplicateItem(queryVariables);
-
-    // assert that delete works
-    queryVariables = assertDeleteItem(queryVariables);
-
-    // assert that update works
-    queryVariables = assertUpdateItem(queryVariables);
-
-    // assert that move down works
-    queryVariables = assertMoveDownItem(queryVariables);
-
-    // assert that move up works
-    assertMoveUpItem(queryVariables);
-  },
-});

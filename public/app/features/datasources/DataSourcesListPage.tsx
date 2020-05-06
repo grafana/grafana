@@ -11,7 +11,7 @@ import DataSourcesList from './DataSourcesList';
 import { DataSourceSettings, NavModel } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { LayoutMode, LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 // Actions
 import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -64,7 +64,6 @@ export class DataSourcesListPage extends PureComponent<Props> {
       layoutMode,
       searchQuery,
       setDataSourcesSearchQuery,
-      setDataSourcesLayoutMode,
       hasFetched,
     } = this.props;
 
@@ -81,9 +80,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
             {hasFetched &&
               dataSourcesCount > 0 && [
                 <OrgActionBar
-                  layoutMode={layoutMode ?? LayoutModes.List}
                   searchQuery={searchQuery}
-                  onSetLayoutMode={mode => setDataSourcesLayoutMode(mode)}
                   setSearchQuery={query => setDataSourcesSearchQuery(query)}
                   linkButton={linkButton}
                   key="action-bar"

@@ -3,8 +3,9 @@ import React, { PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select } = LegacyForms;
 
-import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
 
 export interface Props {
   resourceUri: string;
@@ -23,11 +24,17 @@ const themes = [
   { value: 'light', label: 'Light' },
 ];
 
-const timezones = [
+const grafanaTimeZones = [
   { value: '', label: 'Default' },
   { value: 'browser', label: 'Local browser time' },
   { value: 'utc', label: 'UTC' },
 ];
+
+const timeZones = getTimeZoneGroups().reduce((tzs, group) => {
+  const options = group.options.map(tz => ({ value: tz, label: tz }));
+  tzs.push.apply(tzs, options);
+  return tzs;
+}, grafanaTimeZones);
 
 export class SharedPreferences extends PureComponent<Props, State> {
   backendSrv = backendSrv;
@@ -50,7 +57,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       id: 0,
       title: 'Default',
       tags: [],
-      type: '' as DashboardSearchHitType,
+      type: '' as DashboardSearchItemType,
       uid: '',
       uri: '',
       url: '',
@@ -60,6 +67,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       folderUrl: '',
       isStarred: false,
       slug: '',
+      items: [],
     };
 
     if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
@@ -90,12 +98,18 @@ export class SharedPreferences extends PureComponent<Props, State> {
     window.location.reload();
   };
 
-  onThemeChanged = (theme: string) => {
-    this.setState({ theme });
+  onThemeChanged = (theme: SelectableValue<string>) => {
+    if (!theme || !theme.value) {
+      return;
+    }
+    this.setState({ theme: theme.value });
   };
 
-  onTimeZoneChanged = (timezone: string) => {
-    this.setState({ timezone });
+  onTimeZoneChanged = (timezone: SelectableValue<string>) => {
+    if (!timezone || typeof timezone.value !== 'string') {
+      return;
+    }
+    this.setState({ timezone: timezone.value });
   };
 
   onHomeDashboardChanged = (dashboardId: number) => {
@@ -121,7 +135,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             isSearchable={false}
             value={themes.find(item => item.value === theme)}
             options={themes}
-            onChange={theme => this.onThemeChanged(theme.value ?? '')}
+            onChange={this.onThemeChanged}
             width={20}
           />
         </div>
@@ -145,10 +159,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
         <div className="gf-form">
           <label className="gf-form-label width-11">Timezone</label>
           <Select
-            isSearchable={false}
-            value={timezones.find(item => item.value === timezone)}
-            onChange={timezone => this.onTimeZoneChanged(timezone.value ?? '')}
-            options={timezones}
+            isSearchable={true}
+            value={timeZones.find(item => item.value === timezone)}
+            onChange={this.onTimeZoneChanged}
+            options={timeZones}
             width={20}
           />
         </div>

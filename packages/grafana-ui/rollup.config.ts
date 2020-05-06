@@ -1,5 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import image from '@rollup/plugin-image';
 // import sourceMaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
 
@@ -24,7 +25,7 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom', '@grafana/data', 'moment'],
+    external: ['react', 'react-dom', '@grafana/data', 'moment', '@grafana/e2e-selectors'],
     plugins: [
       commonjs({
         include: /node_modules/,
@@ -71,6 +72,7 @@ const buildCjsPackage = ({ env }) => {
       }),
       resolve(),
       // sourceMaps(),
+      image(),
       env === 'production' && terser(),
     ],
   };

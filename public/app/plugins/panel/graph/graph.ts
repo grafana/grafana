@@ -24,21 +24,22 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { ContextMenuGroup, ContextMenuItem } from '@grafana/ui';
-import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
+import { ContextMenuGroup, ContextMenuItem, graphTimeFormat, graphTimeFormatter } from '@grafana/ui';
+import { getCurrentTheme, provideTheme } from 'app/core/utils/ConfigProvider';
 import {
-  toUtc,
-  LinkModelSupplier,
+  DataFrame,
   DataFrameView,
-  getValueFormat,
   FieldDisplay,
+  FieldType,
+  formattedValueToString,
   getDisplayProcessor,
   getFlotPairsConstant,
-  PanelEvents,
-  formattedValueToString,
-  FieldType,
-  DataFrame,
   getTimeField,
+  getValueFormat,
+  hasLinks,
+  LinkModelSupplier,
+  PanelEvents,
+  toUtc,
 } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -259,7 +260,8 @@ class GraphElement {
         const dataIndex = this.getDataIndexWithNullValuesCorrection(item, dataFrame);
 
         let links: any[] = this.panel.options.dataLinks || [];
-        if (field.config.links && field.config.links.length) {
+        const hasLinksValue = hasLinks(field);
+        if (hasLinksValue) {
           // Append the configured links to the panel datalinks
           links = [...links, ...field.config.links];
         }
@@ -270,6 +272,7 @@ class GraphElement {
         const fieldDisplay = getDisplayProcessor({
           field: { config: fieldConfig, type: FieldType.number },
           theme: getCurrentTheme(),
+          timeZone: this.dashboard.getTimezone(),
         })(field.values.get(dataIndex));
         linksSupplier = links.length
           ? getFieldLinksSupplier({
@@ -279,6 +282,7 @@ class GraphElement {
               rowIndex: dataIndex,
               colIndex: item.series.fieldIndex,
               field: fieldConfig,
+              hasLinks: hasLinksValue,
             })
           : undefined;
       }
@@ -350,8 +354,15 @@ class GraphElement {
         .appendTo(this.elem);
     }
 
-    if (this.ctrl.dataWarning) {
-      $(`<div class="datapoints-warning flot-temp-elem">${this.ctrl.dataWarning.title}</div>`).appendTo(this.elem);
+    const { dataWarning } = this.ctrl;
+    if (dataWarning) {
+      const msg = $(`<div class="datapoints-warning flot-temp-elem">${dataWarning.title}</div>`);
+      if (dataWarning.action) {
+        $(`<button class="btn btn-secondary">${dataWarning.actionText}</button>`)
+          .click(dataWarning.action)
+          .appendTo(msg);
+      }
+      msg.appendTo(this.elem);
     }
 
     this.thresholdManager.draw(plot);
@@ -643,7 +654,8 @@ class GraphElement {
       max: max,
       label: 'Datetime',
       ticks: ticks,
-      timeformat: this.time_format(ticks, min, max),
+      timeformat: graphTimeFormat(ticks, min, max),
+      timeFormatter: graphTimeFormatter(this.dashboard.getTimezone()),
     };
   }
 
@@ -899,33 +911,6 @@ class GraphElement {
       }
       return formattedValueToString(formatter(val, axis.tickDecimals, axis.scaledDecimals));
     };
-  }
-
-  time_format(ticks: number, min: number | null, max: number | null) {
-    if (min && max && ticks) {
-      const range = max - min;
-      const secPerTick = range / ticks / 1000;
-      // Need have 10 millisecond margin on the day range
-      // As sometimes last 24 hour dashboard evaluates to more than 86400000
-      const oneDay = 86400010;
-      const oneYear = 31536000000;
-
-      if (secPerTick <= 45) {
-        return '%H:%M:%S';
-      }
-      if (secPerTick <= 7200 || range <= oneDay) {
-        return '%H:%M';
-      }
-      if (secPerTick <= 80000) {
-        return '%m/%d %H:%M';
-      }
-      if (secPerTick <= 2419200 || range <= oneYear) {
-        return '%m/%d';
-      }
-      return '%Y-%m';
-    }
-
-    return '%H:%M';
   }
 }
 

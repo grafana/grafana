@@ -91,11 +91,14 @@ export function SelectBase<T>({
   allowCustomValue = false,
   autoFocus = false,
   backspaceRemovesValue = true,
+  cacheOptions,
+  className,
   closeMenuOnSelect = true,
   components,
   defaultOptions,
   defaultValue,
   disabled = false,
+  filterOption,
   formatCreateLabel,
   getOptionLabel,
   getOptionValue,
@@ -105,13 +108,14 @@ export function SelectBase<T>({
   isLoading = false,
   isMulti = false,
   isOpen,
+  isOptionDisabled,
   isSearchable = true,
   loadOptions,
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
   maxVisibleValues,
-  menuPosition,
   menuPlacement = 'auto',
+  menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -127,7 +131,6 @@ export function SelectBase<T>({
   renderControl,
   showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
-  className,
   value,
   width,
 }: SelectBaseProps<T>) {
@@ -174,6 +177,7 @@ export function SelectBase<T>({
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
+    filterOption,
     getOptionLabel,
     getOptionValue,
     inputValue,
@@ -183,6 +187,7 @@ export function SelectBase<T>({
     isDisabled: disabled,
     isLoading,
     isMulti,
+    isOptionDisabled,
     isSearchable,
     maxMenuHeight,
     maxVisibleValues,
@@ -217,6 +222,7 @@ export function SelectBase<T>({
     ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
+      cacheOptions,
       defaultOptions,
     };
   }
@@ -227,22 +233,7 @@ export function SelectBase<T>({
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
-          ValueContainer: (props: any) => {
-            const { menuIsOpen } = props.selectProps;
-            if (
-              Array.isArray(props.children) &&
-              Array.isArray(props.children[0]) &&
-              maxVisibleValues !== undefined &&
-              !(showAllSelectedWhenOpen && menuIsOpen)
-            ) {
-              const [valueChildren, ...otherChildren] = props.children;
-              const truncatedValues = valueChildren.slice(0, maxVisibleValues);
-
-              return <ValueContainer {...props} children={[truncatedValues, ...otherChildren]} />;
-            }
-
-            return <ValueContainer {...props} />;
-          },
+          ValueContainer,
           Placeholder: (props: any) => (
             <div
               {...props.innerProps}
@@ -321,23 +312,30 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
+          menuPortal: ({ position, width }: any) => ({
+            position,
+            width,
+            zIndex: theme.zIndex.dropdown,
+          }),
           //These are required for the menu positioning to function
-          menu: ({ top, bottom, width, position }: any) => ({
+          menu: ({ top, bottom, position }: any) => ({
             top,
             bottom,
-            width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
-            zIndex: 9999,
+            minWidth: '100%',
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',
-            // This puts the menu above Inputs (z-index: 1)
-            zIndex: theme.zIndex.dropdown,
             width: width ? `${8 * width}px` : '100%',
           }),
+          option: (provided: any, state: any) => ({
+            ...provided,
+            opacity: state.isDisabled ? 0.5 : 1,
+          }),
         }}
-        className={cx('select-container', className)}
+        className={className}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

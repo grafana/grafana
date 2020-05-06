@@ -5,7 +5,6 @@
 title = "LogRowModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogRowModel interface

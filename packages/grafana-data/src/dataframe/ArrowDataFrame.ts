@@ -1,4 +1,5 @@
 import { DataFrame, FieldType, Field, Vector } from '../types';
+
 import {
   Table,
   ArrowType,
@@ -159,18 +160,4 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
     metadata.set('meta', JSON.stringify(data.meta));
   }
   return table;
-}
-
-export function resultsToDataFrames(rsp: any): DataFrame[] {
-  const frames: DataFrame[] = [];
-  for (const res of Object.values(rsp.results)) {
-    const r = res as any;
-    if (r.dataframes) {
-      for (const b of r.dataframes) {
-        const t = base64StringToArrowTable(b as string);
-        frames.push(arrowTableToDataFrame(t));
-      }
-    }
-  }
-  return frames;
 }

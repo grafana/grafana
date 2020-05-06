@@ -32,7 +32,7 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const category = ['Standard field options'];
+  const category = ['Standard options'];
   const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'title',
     path: 'title',
@@ -247,7 +247,7 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
+    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} />,
   };
 
   const unit: StandardEditorsRegistryItem<string> = {

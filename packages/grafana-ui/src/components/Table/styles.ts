@@ -10,8 +10,10 @@ export interface TableStyles {
   table: string;
   thead: string;
   headerCell: string;
+  headerCellLabel: string;
   tableCell: string;
   tableCellWrapper: string;
+  tableCellLink: string;
   row: string;
   theme: GrafanaTheme;
   resizeHandle: string;
@@ -52,6 +54,7 @@ export const getTableStyles = stylesFactory(
       headerCell: css`
         padding: ${padding}px 10px;
         cursor: pointer;
+        overflow: hidden;
         white-space: nowrap;
         color: ${colors.textBlue};
         border-right: 1px solid ${theme.colors.panelBg};
@@ -59,6 +62,11 @@ export const getTableStyles = stylesFactory(
         &:last-child {
           border-right: none;
         }
+      `,
+      headerCellLabel: css`
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       `,
       row: css`
         label: row;
@@ -74,6 +82,9 @@ export const getTableStyles = stylesFactory(
         &:last-child {
           border-right: none;
         }
+      `,
+      tableCellLink: css`
+        text-decoration: underline;
       `,
       tableCell: css`
         padding: ${padding}px 10px;

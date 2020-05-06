@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import md5 from 'md5';
+import { of } from 'rxjs';
 
 import {
-  parseLabels,
   FieldType,
   TimeSeries,
   Labels,
@@ -12,59 +12,29 @@ import {
   findUniqueLabels,
   FieldConfig,
   DataFrameView,
-  dateTime,
+  DataLink,
+  Field,
+  QueryResultMetaStat,
 } from '@grafana/data';
+
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
+import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
-  LokiLegacyStreamResult,
   LokiRangeQueryRequest,
   LokiResponse,
   LokiMatrixResult,
   LokiVectorResult,
   TransformerOptions,
-  LokiLegacyStreamResponse,
   LokiResultType,
   LokiStreamResult,
   LokiTailResponse,
   LokiQuery,
   LokiOptions,
+  DerivedFieldConfig,
+  LokiStreamResponse,
+  LokiStats,
 } from './types';
-
-import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import { of } from 'rxjs';
-
-/**
- * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries and older version of Loki.
- */
-export function legacyLogStreamToDataFrame(
-  stream: LokiLegacyStreamResult,
-  reverse?: boolean,
-  refId?: string
-): DataFrame {
-  let labels: Labels = stream.parsedLabels;
-  if (!labels && stream.labels) {
-    labels = parseLabels(stream.labels);
-  }
-
-  const times = new ArrayVector<string>([]);
-  const timesNs = new ArrayVector<string>([]);
-  const lines = new ArrayVector<string>([]);
-  const uids = new ArrayVector<string>([]);
-
-  for (const entry of stream.entries) {
-    const ts = entry.ts || entry.timestamp;
-    // iso string with nano precision, will be truncated but is parse-able
-    times.add(ts);
-    // So this matches new format, we are losing precision here, which sucks but no easy way to keep it and this
-    // is for old pre 1.0.0 version Loki so probably does not affect that much.
-    timesNs.add(dateTime(ts).valueOf() + '000000');
-    lines.add(entry.line);
-    uids.add(createUid(ts, stream.labels, entry.line));
-  }
-
-  return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
-}
 
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
@@ -131,40 +101,6 @@ function constructDataFrame(
  * @param response
  * @param data Needs to have ts, line, labels, id as fields
  */
-export function appendLegacyResponseToBufferedData(response: LokiLegacyStreamResponse, data: MutableDataFrame) {
-  // Should we do anything with: response.dropped_entries?
-
-  const streams: LokiLegacyStreamResult[] = response.streams;
-  if (!streams || !streams.length) {
-    return;
-  }
-
-  let baseLabels: Labels = {};
-  for (const f of data.fields) {
-    if (f.type === FieldType.string) {
-      if (f.labels) {
-        baseLabels = f.labels;
-      }
-      break;
-    }
-  }
-
-  for (const stream of streams) {
-    // Find unique labels
-    const labels = parseLabels(stream.labels);
-    const unique = findUniqueLabels(labels, baseLabels);
-
-    // Add each line
-    for (const entry of stream.entries) {
-      const ts = entry.ts || entry.timestamp;
-      data.values.ts.add(ts);
-      data.values.line.add(entry.line);
-      data.values.labels.add(unique);
-      data.values.id.add(createUid(ts, stream.labels, entry.line));
-    }
-  }
-}
-
 export function appendResponseToBufferedData(response: LokiTailResponse, data: MutableDataFrame) {
   // Should we do anything with: response.dropped_entries?
 
@@ -324,13 +260,48 @@ function getOriginalMetricName(labelData: { [key: string]: string }) {
   return `${metricName}{${labelPart}}`;
 }
 
+export function decamelize(s: string): string {
+  return s.replace(/[A-Z]/g, m => ` ${m.toLowerCase()}`);
+}
+
+// Turn loki stats { metric: value } into meta stat { title: metric, value: value }
+function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
+  const result: QueryResultMetaStat[] = [];
+  if (!stats) {
+    return result;
+  }
+  for (const section in stats) {
+    const values = stats[section];
+    for (const label in values) {
+      const value = values[label];
+      let unit;
+      if (/time/i.test(label) && value) {
+        unit = 's';
+      } else if (/bytes.*persecond/i.test(label)) {
+        unit = 'Bps';
+      } else if (/bytes/i.test(label)) {
+        unit = 'decbytes';
+      }
+      const title = `${_.capitalize(section)}: ${decamelize(label)}`;
+      result.push({ title, value, unit });
+    }
+  }
+  return result;
+}
+
 export function lokiStreamsToDataframes(
-  data: LokiStreamResult[],
+  response: LokiStreamResponse,
   target: { refId: string; expr?: string; regexp?: string },
   limit: number,
   config: LokiOptions,
   reverse = false
 ): DataFrame[] {
+  const data = limit > 0 ? response.data.result : [];
+  const stats: QueryResultMetaStat[] = lokiStatsToMetaStat(response.data.stats);
+  // Use custom mechanism to identify which stat we want to promote to label
+  const custom = {
+    lokiQueryStatKey: 'Summary: totalBytesProcessed',
+  };
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
@@ -340,38 +311,8 @@ export function lokiStreamsToDataframes(
       meta: {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
         limit,
-      },
-    };
-  });
-
-  return series;
-}
-
-export function lokiLegacyStreamsToDataframes(
-  data: LokiLegacyStreamResult | LokiLegacyStreamResponse,
-  target: { refId: string; query?: string; regexp?: string },
-  limit: number,
-  config: LokiOptions,
-  reverse = false
-): DataFrame[] {
-  if (Object.keys(data).length === 0) {
-    return [];
-  }
-
-  if (isLokiLogsStream(data)) {
-    return [legacyLogStreamToDataFrame(data, false, target.refId)];
-  }
-
-  const series: DataFrame[] = data.streams.map(stream => {
-    const dataFrame = legacyLogStreamToDataFrame(stream, reverse);
-    enhanceDataFrame(dataFrame, config);
-
-    return {
-      ...dataFrame,
-      refId: target.refId,
-      meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
-        limit,
+        stats,
+        custom,
       },
     };
   });
@@ -391,43 +332,49 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-
-  const fields = derivedFields.reduce((acc, field) => {
-    const config: FieldConfig = {};
-    if (field.url || field.datasourceUid) {
-      config.links = [
-        {
-          url: field.url,
-          title: '',
-          meta: field.datasourceUid
-            ? {
-                datasourceUid: field.datasourceUid,
-              }
-            : undefined,
-        },
-      ];
-    }
-    const dataFrameField = {
-      name: field.name,
-      type: FieldType.string,
-      config,
-      values: new ArrayVector<string>([]),
-    };
-
-    acc[field.name] = dataFrameField;
-    return acc;
-  }, {} as Record<string, any>);
+  const newFields = derivedFields.map(fieldFromDerivedFieldConfig);
+  const newFieldsMap = _.keyBy(newFields, 'name');
 
   const view = new DataFrameView(dataFrame);
   view.forEach((row: { line: string }) => {
     for (const field of derivedFields) {
       const logMatch = row.line.match(field.matcherRegex);
-      fields[field.name].values.add(logMatch && logMatch[1]);
+      newFieldsMap[field.name].values.add(logMatch && logMatch[1]);
     }
   });
 
-  dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
+  dataFrame.fields = [...dataFrame.fields, ...newFields];
 };
+
+/**
+ * Transform derivedField config into dataframe field with config that contains link.
+ */
+function fieldFromDerivedFieldConfig(derivedFieldConfig: DerivedFieldConfig): Field<any, ArrayVector> {
+  const config: FieldConfig = {};
+  if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
+    const link: Partial<DataLink> = {
+      // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+      title: '',
+      url: derivedFieldConfig.url,
+    };
+
+    // Having field.datasourceUid means it is an internal link.
+    if (derivedFieldConfig.datasourceUid) {
+      link.meta = {
+        datasourceUid: derivedFieldConfig.datasourceUid,
+      };
+    }
+
+    config.links = [link as DataLink];
+  }
+  return {
+    name: derivedFieldConfig.name,
+    type: FieldType.string,
+    config,
+    // We are adding values later on
+    values: new ArrayVector<string>([]),
+  };
+}
 
 export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
@@ -471,7 +418,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(limit > 0 ? response.data.result : [], target, limit, config, reverse),
+        data: lokiStreamsToDataframes(response as LokiStreamResponse, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 
@@ -492,10 +439,4 @@ export function processRangeQueryResponse(
     default:
       throw new Error(`Unknown result type "${(response.data as any).resultType}".`);
   }
-}
-
-export function isLokiLogsStream(
-  data: LokiLegacyStreamResult | LokiLegacyStreamResponse
-): data is LokiLegacyStreamResult {
-  return !data.hasOwnProperty('streams');
 }

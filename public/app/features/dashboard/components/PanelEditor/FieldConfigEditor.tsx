@@ -2,17 +2,20 @@ import React, { useCallback } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   DataFrame,
+  FeatureState,
   FieldConfigPropertyItem,
   FieldConfigSource,
   PanelPlugin,
   SelectableValue,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { Container, Counter, Field, fieldMatchersUI, Label, ValuePicker } from '@grafana/ui';
+import { Container, Counter, FeatureInfoBox, Field, fieldMatchersUI, Label, useTheme, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
+import { selectors } from '@grafana/e2e-selectors';
+import { css } from 'emotion';
 
 interface Props {
   plugin: PanelPlugin;
@@ -26,6 +29,8 @@ interface Props {
  * Expects the container div to have size set and will fill it 100%
  */
 export const OverrideFieldConfigEditor: React.FC<Props> = props => {
+  const theme = useTheme();
+  const { config } = props;
   const onOverrideChange = (index: number, override: any) => {
     const { config } = props;
     let overrides = cloneDeep(config.overrides);
@@ -102,7 +107,20 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   };
 
   return (
-    <div>
+    <div aria-label={selectors.components.OverridesConfigEditor.content}>
+      {config.overrides.length === 0 && (
+        <FeatureInfoBox
+          title="Overrides"
+          featureState={FeatureState.beta}
+          // url={getDocsLink(DocsId.FieldConfigOverrides)}
+          className={css`
+            margin: ${theme.spacing.md};
+          `}
+        >
+          Field options overrides give you a fine grained control over how your data is displayed.
+        </FeatureInfoBox>
+      )}
+
       {renderOverrides()}
       {renderAddOverride()}
     </div>
@@ -182,7 +200,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
 
   return (
-    <>
+    <div aria-label={selectors.components.FieldConfigEditor.content}>
       {Object.keys(groupedConfigs).map((k, i) => {
         const groupItemsCounter = countGroupItems(groupedConfigs[k], config);
 
@@ -195,6 +213,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
                 </>
               );
             }}
+            id={`${k}/${i}`}
             key={`${k}/${i}`}
           >
             {groupedConfigs[k].map(c => {
@@ -203,7 +222,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           </OptionsGroup>
         );
       })}
-    </>
+    </div>
   );
 };
 

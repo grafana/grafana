@@ -51,7 +51,7 @@ If you have a literal `$` in your value and want to avoid interpolation, `$$` ca
 
 ## Configuration Management Tools
 
-Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
+Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily rely on the expertise of the community.
 
 Tool | Project
 -----|------------
@@ -206,9 +206,9 @@ datasources:
     httpHeaderValue2: "Bearer XXXXXXXXX"
 ```
 
-### Dashboards
+## Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 

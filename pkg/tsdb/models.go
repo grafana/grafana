@@ -10,6 +10,7 @@ import (
 type TsdbQuery struct {
 	TimeRange *TimeRange
 	Queries   []*Query
+	Headers   map[string]string
 	Debug     bool
 	User      *models.SignedInUser
 }
@@ -20,6 +21,7 @@ type Query struct {
 	DataSource    *models.DataSource
 	MaxDataPoints int64
 	IntervalMs    int64
+	QueryType     string
 }
 
 type Response struct {

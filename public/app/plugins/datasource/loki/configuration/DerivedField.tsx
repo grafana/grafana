@@ -8,7 +8,6 @@ import { DataSourceSelectItem } from '@grafana/data';
 import { DerivedFieldConfig } from '../types';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { config } from 'app/core/config';
 import { usePrevious } from 'react-use';
 
 const getStyles = stylesFactory(() => ({
@@ -113,35 +112,33 @@ export const DerivedField = (props: Props) => {
         `}
       />
 
-      {config.featureToggles.tracingIntegration && (
-        <div className={styles.row}>
-          <Switch
-            label="Internal link"
-            checked={showInternalLink}
-            onChange={() => {
-              if (showInternalLink) {
-                onChange({
-                  ...value,
-                  datasourceUid: undefined,
-                });
-              }
-              setShowInternalLink(!showInternalLink);
-            }}
-          />
+      <div className={styles.row}>
+        <Switch
+          label="Internal link"
+          checked={showInternalLink}
+          onChange={() => {
+            if (showInternalLink) {
+              onChange({
+                ...value,
+                datasourceUid: undefined,
+              });
+            }
+            setShowInternalLink(!showInternalLink);
+          }}
+        />
 
-          {showInternalLink && (
-            <DataSourceSection
-              onChange={datasourceUid => {
-                onChange({
-                  ...value,
-                  datasourceUid,
-                });
-              }}
-              datasourceUid={value.datasourceUid}
-            />
-          )}
-        </div>
-      )}
+        {showInternalLink && (
+          <DataSourceSection
+            onChange={datasourceUid => {
+              onChange({
+                ...value,
+                datasourceUid,
+              });
+            }}
+            datasourceUid={value.datasourceUid}
+          />
+        )}
+      </div>
     </div>
   );
 };
@@ -155,6 +152,8 @@ const DataSourceSection = (props: DataSourceSectionProps) => {
   const { datasourceUid, onChange } = props;
   const datasources: DataSourceSelectItem[] = getDatasourceSrv()
     .getExternal()
+    // At this moment only Jaeger and Zipkin datasource is supported as the link target.
+    .filter(ds => ds.meta.tracing)
     .map(
       ds =>
         ({

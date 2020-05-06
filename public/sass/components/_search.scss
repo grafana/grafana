@@ -1,79 +1,3 @@
-.search-container {
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: ($zindex-modal-backdrop + 10);
-  position: fixed;
-  background: $dashboard-bg;
-}
-
-// Search
-.search-dropdown {
-  display: flex;
-  flex-direction: column;
-  height: calc(100% - #{$navbarHeight});
-}
-
-.search-dropdown__col_1 {
-  padding: $dashboard-padding;
-  max-width: 700px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  height: 100%; // Chrome 74 needs this to make the element scrollable
-
-  .search-item--indent {
-    margin-left: 14px;
-  }
-}
-
-.search-dropdown__col_2 {
-  flex-grow: 1;
-  height: 100%;
-  padding-top: 16px;
-  display: none;
-  flex-direction: column;
-}
-
-.search-filter-box {
-  background: $panel-bg;
-  border: $panel-border;
-  border-radius: 3px;
-  padding: $spacer * 1.5;
-  min-width: 340px;
-  margin-bottom: $spacer * 1.5;
-}
-
-.search-filter-box__header {
-  border-bottom: 1px solid $hr-border-color;
-  margin-bottom: $spacer * 1.5;
-}
-
-.search-filter-box-link {
-  display: block;
-  margin-bottom: 16px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  i,
-  img {
-    font-size: 20px;
-    margin-right: 5px;
-  }
-}
-
-.search-results-scroller {
-  display: flex;
-  position: relative;
-  min-height: 100%;
-  background: $panel-bg;
-  border: $panel-border;
-  border-radius: 3px;
-}
-
 .search-results-container {
   display: block;
   padding: $spacer;
@@ -232,49 +156,11 @@
 }
 
 @include media-breakpoint-up(md) {
-  .search-container {
-    left: $side-menu-width;
-  }
-
   .search-item__tags {
     display: flex;
     flex: 1 1 auto;
     flex-wrap: wrap;
     justify-content: flex-end;
     margin-top: -2px;
-  }
-
-  .search-dropdown__col_2 {
-    display: flex;
-    margin-bottom: $space-md;
-  }
-}
-
-@include media-breakpoint-up(md) {
-  .search-dropdown__col_2 {
-    flex-direction: row;
-    justify-content: space-between;
-    max-width: 700px;
-    height: 260px;
-    align-items: flex-start;
-  }
-
-  .search-filter-box {
-    margin: 0;
-  }
-}
-
-@include media-breakpoint-up(lg) {
-  .search-dropdown {
-    flex-direction: row;
-  }
-
-  .search-dropdown__col_2 {
-    flex-direction: column;
-  }
-
-  .search-filter-box {
-    margin-left: $spacer * 1.5;
-    margin-bottom: $spacer * 1.5;
   }
 }

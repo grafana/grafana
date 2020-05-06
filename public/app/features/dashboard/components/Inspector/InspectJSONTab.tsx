@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react';
 import { chain } from 'lodash';
-import { PanelData, SelectableValue, AppEvents } from '@grafana/data';
-import { TextArea, Button, Select, ClipboardButton, JSONFormatter, Field } from '@grafana/ui';
+import { AppEvents, PanelData, SelectableValue } from '@grafana/data';
+import { Button, ClipboardButton, Field, JSONFormatter, Select, TextArea } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { appEvents } from 'app/core/core';
-import { PanelModel, DashboardModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { getPanelInspectorStyles } from './styles';
 
 enum ShowContent {
@@ -15,7 +17,7 @@ enum ShowContent {
 const options: Array<SelectableValue<ShowContent>> = [
   {
     label: 'Panel JSON',
-    description: 'The model saved in the dashboard JSON that configures how everythign works.',
+    description: 'The model saved in the dashboard JSON that configures how everything works.',
     value: ShowContent.PanelJSON,
   },
   {
@@ -141,7 +143,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className={styles.toolbar}>
+        <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
           <Field label="Select source" className="flex-grow-1">
             <Select options={options} value={selected} onChange={this.onSelectChanged} />
           </Field>

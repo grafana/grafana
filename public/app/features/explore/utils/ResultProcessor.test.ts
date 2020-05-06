@@ -1,16 +1,6 @@
-jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
-  dateTime: (ts: any) => {
-    return {
-      valueOf: () => ts,
-      fromNow: () => 'fromNow() jest mocked',
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
-  toUtc: (ts: any) => {
-    return {
-      format: (fmt: string) => 'format() jest mocked',
-    };
-  },
+jest.mock('@grafana/data/src/datetime/formatter', () => ({
+  dateTimeFormat: () => 'format() jest mocked',
+  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
 }));
 
 import { ResultProcessor } from './ResultProcessor';
@@ -22,6 +12,9 @@ const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
     name: 'A-series',
     refId: 'A',
+    meta: {
+      preferredVisualisationType: 'graph',
+    },
     fields: [
       { name: 'time', type: FieldType.time, values: [100, 200, 300] },
       { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },
@@ -104,26 +97,24 @@ describe('ResultProcessor', () => {
         const valueField = dataFrames[0].fields[1];
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult).toEqual([
-          {
-            label: 'A-series',
-            color: '#7EB26D',
-            data: [
-              [100, 4],
-              [200, 5],
-              [300, 6],
-            ],
-            info: [],
-            isVisible: true,
-            yAxis: {
-              index: 1,
-            },
-            seriesIndex: 0,
-            timeField,
-            valueField,
-            timeStep: 100,
+        expect(theResult[0]).toEqual({
+          label: 'A-series',
+          color: '#7EB26D',
+          data: [
+            [100, 4],
+            [200, 5],
+            [300, 6],
+          ],
+          info: [],
+          isVisible: true,
+          yAxis: {
+            index: 1,
           },
-        ]);
+          seriesIndex: 0,
+          timeField,
+          valueField,
+          timeStep: 100,
+        });
       });
     });
 
@@ -131,6 +122,7 @@ describe('ResultProcessor', () => {
       it('then it should return correct table result', () => {
         const { resultProcessor } = testContext();
         let theResult = resultProcessor.getTableResult();
+
         expect(theResult?.fields[0].name).toEqual('value');
         expect(theResult?.fields[1].name).toEqual('time');
         expect(theResult?.fields[2].name).toEqual('message');

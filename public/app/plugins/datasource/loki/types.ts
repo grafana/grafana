@@ -1,15 +1,4 @@
-import { Labels, DataQuery, DataSourceJsonData } from '@grafana/data';
-
-export interface LokiLegacyQueryRequest {
-  query: string;
-  limit?: number;
-  start?: number;
-  end?: number;
-  direction?: 'BACKWARD' | 'FORWARD';
-  regexp?: string;
-
-  refId: string;
-}
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -50,6 +39,12 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
 }
 
+export interface LokiStats {
+  [component: string]: {
+    [label: string]: number;
+  };
+}
+
 export interface LokiVectorResult {
   metric: { [label: string]: string };
   value: [number, string];
@@ -60,6 +55,7 @@ export interface LokiVectorResponse {
   data: {
     resultType: LokiResultType.Vector;
     result: LokiVectorResult[];
+    stats?: LokiStats;
   };
 }
 
@@ -73,6 +69,7 @@ export interface LokiMatrixResponse {
   data: {
     resultType: LokiResultType.Matrix;
     result: LokiMatrixResult[];
+    stats?: LokiStats;
   };
 }
 
@@ -86,19 +83,8 @@ export interface LokiStreamResponse {
   data: {
     resultType: LokiResultType.Stream;
     result: LokiStreamResult[];
+    stats?: LokiStats;
   };
-}
-
-export interface LokiLegacyStreamResult {
-  labels: string;
-  entries: LokiLogsStreamEntry[];
-  search?: string;
-  parsedLabels?: Labels;
-  uniqueLabels?: Labels;
-}
-
-export interface LokiLegacyStreamResponse {
-  streams: LokiLegacyStreamResult[];
 }
 
 export interface LokiTailResponse {
@@ -109,14 +95,12 @@ export interface LokiTailResponse {
   }>;
 }
 
-export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult | LokiLegacyStreamResult;
+export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult;
 export type LokiResponse = LokiVectorResponse | LokiMatrixResponse | LokiStreamResponse;
 
 export interface LokiLogsStreamEntry {
   line: string;
   ts: string;
-  // Legacy, was renamed to ts
-  timestamp?: string;
 }
 
 export interface LokiExpression {

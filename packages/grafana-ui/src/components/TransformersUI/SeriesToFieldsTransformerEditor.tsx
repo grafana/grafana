@@ -1,11 +1,11 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   DataTransformerID,
+  SelectableValue,
+  SeriesToColumnsOptions,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  SeriesToColumnsOptions,
-  SelectableValue,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select } from '../Select/Select';
@@ -30,9 +30,9 @@ export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<Series
 
   return (
     <div className="gf-form-inline">
-      <div className="gf-form">
-        <div className="gf-form-label">Field</div>
-        <Select options={fieldNameOptions} value={options.byField} onChange={onSelectField} />
+      <div className="gf-form gf-form--grow">
+        <div className="gf-form-label width-8">Field name</div>
+        <Select options={fieldNameOptions} value={options.byField} onChange={onSelectField} isClearable />
       </div>
     </div>
   );
@@ -42,6 +42,7 @@ export const seriesToFieldsTransformerRegistryItem: TransformerRegistyItem<Serie
   id: DataTransformerID.seriesToColumns,
   editor: SeriesToFieldsTransformerEditor,
   transformation: standardTransformers.seriesToColumnsTransformer,
-  name: 'Join by field',
-  description: 'Joins many time series / data frames by a field',
+  name: 'Outer join',
+  description:
+    'Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.',
 };

@@ -5,7 +5,6 @@
 title = "UrlQueryValue"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## UrlQueryValue type

@@ -5,7 +5,6 @@
 title = "DataLink"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataLink interface

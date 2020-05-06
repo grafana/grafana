@@ -5,7 +5,6 @@
 title = "Tab"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Tab variable

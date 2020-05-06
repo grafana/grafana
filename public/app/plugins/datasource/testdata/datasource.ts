@@ -9,14 +9,17 @@ import {
   TimeSeries,
   LoadingState,
   ArrayDataFrame,
+  base64StringToArrowTable,
+  arrowTableToDataFrame,
+  DataFrame,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
-import { from, merge, Observable } from 'rxjs';
+import { from, merge, Observable, of } from 'rxjs';
 import { runStream } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
-import { getSearchFilterScopedVar } from '../../../features/templating/utils';
+import { getSearchFilterScopedVar } from 'app/features/templating/utils';
 
 type TestData = TimeSeries | TableData;
 
@@ -38,6 +41,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         streams.push(runStream(target, options));
       } else if (target.scenarioId === 'grafana_api') {
         streams.push(runGrafanaAPI(target, options));
+      } else if (target.scenarioId === 'arrow') {
+        streams.push(runArrowFile(target, options));
       } else {
         queries.push({
           ...target,
@@ -148,6 +153,22 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       }, 100);
     });
   }
+}
+
+function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+  let data: DataFrame[] = [];
+  if (target.stringInput && target.stringInput.length > 10) {
+    try {
+      const table = base64StringToArrowTable(target.stringInput);
+      data = [arrowTableToDataFrame(table)];
+    } catch (e) {
+      console.warn('Error reading saved arrow', e);
+      const error = toDataQueryError(e);
+      error.refId = target.refId;
+      return of({ state: LoadingState.Error, error, data });
+    }
+  }
+  return of({ state: LoadingState.Done, data });
 }
 
 function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {

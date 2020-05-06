@@ -7,24 +7,7 @@ import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup } from '..';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  modal: css`
-    width: 500px;
-  `,
-  modalContent: css`
-    text-align: center;
-  `,
-  modalText: css`
-    font-size: ${theme.typography.heading.h4};
-    color: ${theme.colors.link};
-    margin-bottom: calc(${theme.spacing.d} * 2);
-    padding-top: ${theme.spacing.d};
-  `,
-}));
-
-const defaultIcon: IconName = 'exclamation-triangle';
-
-interface Props {
+export interface Props {
   isOpen: boolean;
   title: string;
   body: React.ReactNode;
@@ -41,7 +24,7 @@ export const ConfirmModal: FC<Props> = ({
   body,
   confirmText,
   dismissText = 'Cancel',
-  icon,
+  icon = 'exclamation-triangle',
   onConfirm,
   onDismiss,
 }) => {
@@ -49,7 +32,7 @@ export const ConfirmModal: FC<Props> = ({
   const styles = getStyles(theme);
 
   return (
-    <Modal className={styles.modal} title={title} icon={icon || defaultIcon} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalContent}>
         <div className={styles.modalText}>{body}</div>
         <HorizontalGroup justify="center">
@@ -64,3 +47,18 @@ export const ConfirmModal: FC<Props> = ({
     </Modal>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  modal: css`
+    width: 500px;
+  `,
+  modalContent: css`
+    text-align: center;
+  `,
+  modalText: css`
+    font-size: ${theme.typography.heading.h4};
+    color: ${theme.colors.link};
+    margin-bottom: calc(${theme.spacing.d} * 2);
+    padding-top: ${theme.spacing.d};
+  `,
+}));

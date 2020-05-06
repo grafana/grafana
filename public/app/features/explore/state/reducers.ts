@@ -239,6 +239,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
 
   if (cancelQueriesAction.match(action)) {
     stopQueryState(state.querySubscription);
+
     return {
       ...state,
       loading: false,
@@ -301,7 +302,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       latency: 0,
       queryResponse: createEmptyQueryResponse(),
       loading: false,
-      queryKeys: [],
       supportedModes,
       mode: mode ?? newMode,
       originPanelId: state.urlState && state.urlState.originPanelId,

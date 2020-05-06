@@ -2,7 +2,8 @@ import React from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusCss, getPropertiesForButtonSize } from '../commonStyles';
+import { getPropertiesForButtonSize } from '../commonStyles';
+import { focusCss } from '../../../themes/mixins';
 
 export type RadioButtonSize = 'sm' | 'md';
 
@@ -17,7 +18,7 @@ export interface RadioButtonProps {
 }
 
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
-  const { fontSize, height } = getPropertiesForButtonSize({
+  const { fontSize, height, padding } = getPropertiesForButtonSize({
     theme,
     size,
     hasIcon: false,
@@ -25,17 +26,16 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
     variant: 'secondary',
   });
 
-  const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.palette;
   const textColor = theme.colors.textSemiWeak;
   const textColorHover = theme.colors.text;
-  const textColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const textColorActive = theme.colors.textBlue;
   const borderColor = theme.colors.border2;
   const borderColorHover = theme.colors.border3;
-  const borderColorActive = theme.isLight ? c.blue77 : c.blue95;
+  const borderColorActive = theme.colors.border2;
   const bg = theme.colors.bodyBg;
   const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
-  const bgActive = theme.isLight ? c.white : c.gray05;
+  const bgActive = theme.colors.bg2;
 
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
@@ -44,8 +44,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   return {
     radio: css`
       position: absolute;
-      top: 0;
-      left: -100vw;
       opacity: 0;
       z-index: -1000;
 
@@ -57,7 +55,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       }
 
       &:focus + label {
-        ${getFocusCss(theme)};
+        ${focusCss(theme)};
         z-index: 3;
       }
 
@@ -71,10 +69,11 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       display: inline-block;
       position: relative;
       font-size: ${fontSize};
-      height: ${height};
-      line-height: ${height};
+      height: ${height}px;
+      // Deduct border from line-height for perfect vertical centering on windows and linux
+      line-height: ${height - 2}px;
       color: ${textColor};
-      padding: 0 ${horizontalPadding};
+      padding: ${padding};
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};

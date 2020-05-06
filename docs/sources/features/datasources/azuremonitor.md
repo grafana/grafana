@@ -117,7 +117,7 @@ Azure Monitor Examples:
 
 ### Templating with Variables for the Azure Monitor Service
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 Note that the Azure Monitor service does not support multiple values yet. If you want to visualize multiple time series (for example, metrics for server1 and server2) then you have to add multiple queries to able to view them on the same graph or in the same table.
 
@@ -146,7 +146,7 @@ Examples:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Azure Monitor Metrics Whitelist
@@ -198,7 +198,7 @@ Examples:
 
 Use the one of the following queries in the `Query` field in the Variable edit view.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                               | Description                                                |
@@ -272,13 +272,13 @@ To make writing queries easier there are several Grafana macros that can be used
 
 There are also some Grafana variables that can be used in Azure Log Analytics queries:
 
-- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../reference/templating.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
+- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../variables/templates-and-variables.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
 ### Templating with Variables for Azure Log Analytics
 
 Any Log Analytics query that returns a list of values can be used in the `Query` field in the Variable edit view. There is also one Grafana function for Log Analytics that returns a list of workspaces.
 
-Refer to the [Variables]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Refer to the [Variables]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                                               | Description                                                                                            |
@@ -332,3 +332,34 @@ There are some important caveats to remember:
 - Currently, four default dashboard variables are supported: `$__timeFilter()`, `$__from`, `$__to`, and `$__interval`. If you're searching in timestamped data, replace the beginning of your where clause to `where $__timeFilter()`. Dashboard changes by time region are handled as you'd expect, as long as you leave the name of the `timestamp` column alone. Likewise, `$__interval` will automatically change based on the dashboard's time region _and_ the width of the chart being displayed. Use it in bins, so `bin(timestamp,$__interval)` changes into something like `bin(timestamp,1s)`. Use `$__from` and `$__to` if you just want the formatted dates to be inserted.
 
 - Templated dashboard variables are not yet supported! They will come in a future version.
+
+## Configure the data source with provisioning
+
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+
+Here are some provisioning examples for this data source.
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      appInsightsAppId: <app-insights-app-id>
+      clientId: <client-id>
+      cloudName: azuremonitor
+      subscriptionId: <subscription-id>
+      tenantId: <tenant-id>
+      logAnalyticsClientId: <log-analytics-client-id>
+      logAnalyticsDefaultWorkspace: <log-analytics-default-workspace>
+      logAnalyticsSubscriptionId: <log-analytics-subscription-id>
+      logAnalyticsTenantId: <log-analytics-tenant-id>
+    secureJsonData:
+      clientSecret: <client-secret>
+      appInsightsApiKey: <app-insights-api-key>
+      logAnalyticsClientSecret: <log-analytics-client-secret>
+    version: 1
+```

@@ -6,25 +6,28 @@ import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, TabContent, CustomScrollbar } from '@grafana/ui';
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { CustomScrollbar, Drawer, JSONFormatter, TabContent } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
   DataFrame,
-  DataSourceApi,
-  SelectableValue,
-  getDisplayProcessor,
   DataQueryError,
-  PanelData,
+  DataSourceApi,
   FieldType,
   formattedValueToString,
-  QueryResultMetaStat,
+  getDisplayProcessor,
   LoadingState,
+  PanelData,
   PanelPlugin,
+  QueryResultMetaStat,
+  SelectableValue,
+  TimeZone,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
+import { supportsDataQuery } from '../PanelEditor/utils';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -222,10 +225,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div aria-label={selectors.components.PanelInspector.Stats.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
-      </>
+      </div>
     );
   }
 
@@ -233,6 +236,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     if (!stats || !stats.length) {
       return null;
     }
+
+    const { dashboard } = this.props;
 
     return (
       <div style={{ paddingBottom: '16px' }}>
@@ -243,7 +248,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
               return (
                 <tr key={`${stat.title}-${index}`}>
                   <td>{stat.title}</td>
-                  <td style={{ textAlign: 'right' }}>{formatStat(stat)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
                 </tr>
               );
             })}
@@ -265,7 +270,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     const error = last?.error;
     const tabs = [];
 
-    if (plugin && !plugin.meta.skipDataQuery) {
+    if (supportsDataQuery(plugin)) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
       tabs.push({ label: 'Stats', value: InspectTab.Stats });
     }
@@ -280,7 +285,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
-    if (dashboard.meta.canEdit) {
+    if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
     return tabs;
@@ -307,7 +312,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
     return (
       <Drawer
-        title={panel.title || 'Panel inspect'}
+        title={`Inspect: ${panel.title}` || 'Panel inspect'}
         subtitle={this.drawerSubtitle(tabs, activeTab)}
         width={drawerWidth}
         onClose={this.onClose}
@@ -330,13 +335,14 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 }
 
-function formatStat(stat: QueryResultMetaStat): string {
+function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
   const display = getDisplayProcessor({
     field: {
       type: FieldType.number,
       config: stat,
     },
     theme: config.theme,
+    timeZone,
   });
   return formattedValueToString(display(stat.value));
 }

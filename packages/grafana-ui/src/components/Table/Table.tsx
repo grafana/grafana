@@ -40,8 +40,6 @@ interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortBySt
 function useTableStateReducer(props: Props) {
   return useCallback(
     (newState: ReactTableInternalState, action: any) => {
-      console.log(action, newState);
-
       switch (action.type) {
         case 'columnDoneResizing':
           if (props.onColumnResize) {
@@ -183,7 +181,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>
       {column.canSort && (
-        <div {...column.getSortByToggleProps()}>
+        <div {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel} title={column.render('Header')}>
           {column.render('Header')}
           {column.isSorted && (column.isSortedDesc ? <Icon name="angle-down" /> : <Icon name="angle-up" />)}
         </div>
