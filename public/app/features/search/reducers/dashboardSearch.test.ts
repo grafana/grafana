@@ -2,6 +2,7 @@ import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_S
 import { searchReducer as reducer, dashboardsSearchState } from './dashboardSearch';
 import { searchResults, sections } from '../testData';
 
+const defaultState = { selectedIndex: 0, loading: false, results: sections as any[], initialLoading: false };
 describe('Dashboard Search reducer', () => {
   it('should return the initial state', () => {
     expect(reducer(dashboardsSearchState, {} as any)).toEqual(dashboardsSearchState);
@@ -14,15 +15,9 @@ describe('Dashboard Search reducer', () => {
   });
 
   it('should toggle selected section', () => {
-    const newState = reducer(
-      { selectedIndex: 0, loading: false, results: sections as any[] },
-      { type: TOGGLE_SECTION, payload: sections[5] }
-    );
+    const newState = reducer(defaultState, { type: TOGGLE_SECTION, payload: sections[5] });
     expect(newState.results[5].expanded).toBeFalsy();
-    const newState2 = reducer(
-      { selectedIndex: 0, loading: false, results: sections as any[] },
-      { type: TOGGLE_SECTION, payload: sections[1] }
-    );
+    const newState2 = reducer(defaultState, { type: TOGGLE_SECTION, payload: sections[1] });
     expect(newState2.results[1].expanded).toBeTruthy();
   });
 
@@ -43,26 +38,20 @@ describe('Dashboard Search reducer', () => {
         isStarred: false,
       },
     ];
-    const newState = reducer(
-      { selectedIndex: 0, loading: false, results: sections as any[] },
-      {
-        type: FETCH_ITEMS,
-        payload: {
-          section: sections[2],
-          items,
-        },
-      }
-    );
+    const newState = reducer(defaultState, {
+      type: FETCH_ITEMS,
+      payload: {
+        section: sections[2],
+        items,
+      },
+    });
     expect(newState.results[2].items).toEqual(items);
   });
 
   it('should handle MOVE_SELECTION_DOWN', () => {
-    const newState = reducer(
-      { loading: false, selectedIndex: 0, results: sections as any[] },
-      {
-        type: MOVE_SELECTION_DOWN,
-      }
-    );
+    const newState = reducer(defaultState, {
+      type: MOVE_SELECTION_DOWN,
+    });
 
     expect(newState.selectedIndex).toEqual(1);
     expect(newState.results[0].items[0].selected).toBeTruthy();
@@ -76,7 +65,7 @@ describe('Dashboard Search reducer', () => {
 
     // Shouldn't go over the visible results length - 1 (9)
     const newState3 = reducer(
-      { loading: false, selectedIndex: 9, results: sections as any[] },
+      { ...defaultState, selectedIndex: 9 },
       {
         type: MOVE_SELECTION_DOWN,
       }
@@ -86,17 +75,14 @@ describe('Dashboard Search reducer', () => {
 
   it('should handle MOVE_SELECTION_UP', () => {
     // shouldn't move beyond 0
-    const newState = reducer(
-      { loading: false, selectedIndex: 0, results: sections as any[] },
-      {
-        type: MOVE_SELECTION_UP,
-      }
-    );
+    const newState = reducer(defaultState, {
+      type: MOVE_SELECTION_UP,
+    });
 
     expect(newState.selectedIndex).toEqual(0);
 
     const newState2 = reducer(
-      { loading: false, selectedIndex: 3, results: sections as any[] },
+      { ...defaultState, selectedIndex: 3 },
       {
         type: MOVE_SELECTION_UP,
       }
