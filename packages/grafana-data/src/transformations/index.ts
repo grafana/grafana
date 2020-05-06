@@ -7,6 +7,7 @@ export { FilterFieldsByNameTransformerOptions } from './transformers/filterByNam
 export { FilterFramesByRefIdTransformerOptions } from './transformers/filterByRefId';
 export { SeriesToColumnsOptions } from './transformers/seriesToColumns';
 export { ReduceTransformerOptions } from './transformers/reduce';
+export { LabelsToFieldsOptions } from './transformers/labelsToFields';
 export {
   CalculateFieldTransformerOptions,
   CalculateFieldMode,
