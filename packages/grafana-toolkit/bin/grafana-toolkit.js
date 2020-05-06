@@ -10,7 +10,7 @@ const isLinkedMode = () => {
   // rather than the present working directory.
   const pwd = process.env.CIRCLE_WORKING_DIRECTORY || process.env.PWD;
 
-  if (path.basename(pwd) === 'grafana-toolkit') {
+  if (pwd!== undefined && path.basename(pwd) === 'grafana-toolkit') {
     return true;
   }
 
