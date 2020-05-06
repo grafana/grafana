@@ -147,7 +147,7 @@ interface ModalState {
 ```typescript
 const getStyles  = = () => ({
   // bad
-  ElementWraper: css`...`,
+  ElementWrapper: css`...`,
   // bad
   ["element-wrapper"]: css`...`,
 
