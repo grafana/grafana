@@ -13,7 +13,7 @@ import {
   SelectableValue,
   binaryOperators,
 } from '@grafana/data';
-import { Select, StatsPicker, Switch, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
+import { Select, StatsPicker, LegacyForms, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 import {
   CalculateFieldTransformerOptions,
   CalculateFieldMode,
@@ -342,7 +342,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <Switch
+            <LegacyForms.Switch
               label="Replace all fields"
               labelClass="width-8"
               checked={!!options.replaceFields}
