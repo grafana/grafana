@@ -39,7 +39,7 @@ Currently only Organization Admins can create reports.
 1. Select the layout option for generated report: **Portrait** or **Landscape**.  
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
-1. **Send test mail** after saving the report to verify that the report looks like you expect it to.
+1. **Send test mail** after saving the report to verify that the whole configuration is working as expected.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -47,44 +47,35 @@ Currently only Organization Admins can create reports.
 
 Scheduled reports can be sent on a weekly, daily, or hourly basis. You may also disable scheduling for when you either want to pause a report or send it via the API.
 
-All scheduling is approximative and indicates when the reporting service will start rendering the dashboard.
+All scheduling indicates when the reporting service will start rendering the dashboard. It can take a few minutes to render a dashboard with a lot of panels.
 
 #### Hourly
 
-Hourly reports are generated once per hour and takes two arguments:
+Hourly reports are generated once per hour. All fields are required.
 
 * **At minute -** The number of minutes after full hour when the report should be generated.
 * **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
 
 #### Daily
 
-Daily reports are generated once per day and takes two arguments:
+Daily reports are generated once per day. All fields are required.
 
 * **Time -** Time of day in 24 hours format when the report should be sent.
-* **Time zone-** Time zone for the **Time** argument.
+* **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
 
-Weekly reports are generated once per week and takes three arguments:
+Weekly reports are generated once per week. All fields are required.
 
 * **Day -** Weekday which the report should be sent on.
 * **Time -** Time of day in 24 hours format when the report should be sent.
-* **Time zone-** Time zone for the **Time** argument.
+* **Time zone -** Time zone for the **Time** field.
 
 #### Never
 
 > Only available in Grafana Enterprise v7.0+.
 
-Reports which are scheduled to never be sent have no arguments and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the API.
-
-### Layout
-
-> The layout renderers are early versions undergoing heavy development. Customizations and variable sized panel layouts are on the roadmap. [Reach out to us](https://grafana.com/contact?about=grafana-enterprise) if you are interested in the future of reporting.
-
-Name | Description | Preview
----- | ----------- | -------
-Portrait | Portrait generates an A4 page in portrait mode with three panels rendered per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Landscape | (Available from 6.7+) Landscape generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Reports which are scheduled to never be sent have no parameter and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the API.
 
 ### Send test mail
 
@@ -95,34 +86,17 @@ Landscape | (Available from 6.7+) Landscape generates an A4 page in landscape mo
 If you want to use email addresses from the report, then select the **Use emails from report** check box.
 1. Click **Send**.
 
-The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report generates and is displayed as you expect.
+The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-## API
+## Send report via the API
 
-> Only available in Grafana Enterprise v7.0+.
-
-Reports can be generated with the experimental `/api/reports/email` API. To access the API you need to authenticate yourself as an organization admin. For more information about API authentication, refer to [Authentication API]({{ relref "../http_api/auth.md" }}).
-
-The `/api/reports/email` API expects a JSON object with the following arguments:
-
-* **id -** ID of the report to send (same as in the URL when editing a report, not to be confused with the ID of the dashboard). Required.
-* **emails -** Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
-* **useEmailsFromReport -** Send the report to the emails specified in the report. Required if **emails** is not present.
-
-The API queues the report for generation and returns immediately. This means that the response code is only indicative of the queueing, not the generation of the report.
-
-Example for curl:
-
-```
-$ curl -H "Authorization: Bearer <Admin API key>" https://<grafana.example.org>/api/reports/email
-    -d '{"id": "<report id>", "useEmailsFromReport": true}'
-```
+You can send reports programmatically with the [send report]({{< relref "../http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../http_api" >}}).
 
 ## Rendering configuration
 
-When generating reports by each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
+When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
@@ -138,6 +112,14 @@ concurrent_render_limit = 4
 # 4 would be better for printed material. Setting a higher value affects performance and memory
 image_scale_factor = 2
 ```
+
+## Report time range
+
+Reports use the saved time range of the dashboard. Changing the time range of the report is done by saving a modified time range to the dashboard.
+
+The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
+
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
 
 ## Troubleshoot reporting
 

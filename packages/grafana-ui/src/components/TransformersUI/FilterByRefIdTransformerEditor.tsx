@@ -39,6 +39,12 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
     this.initOptions();
   }
 
+  componentDidUpdate(oldProps: FilterByRefIdTransformerEditorProps) {
+    if (this.props.input !== oldProps.input) {
+      this.initOptions();
+    }
+  }
+
   private initOptions() {
     const { input, options } = this.props;
     const configuredOptions = options.include ? options.include.split('|') : [];
@@ -127,6 +133,7 @@ export const filterFramesByRefIdTransformRegistryItem: TransformerRegistyItem<Fi
   id: DataTransformerID.filterByRefId,
   editor: FilterByRefIdTransformerEditor,
   transformation: standardTransformers.filterFramesByRefIdTransformer,
-  name: 'Filter by refId',
-  description: 'Filter results by refId',
+  name: 'Filter data by query',
+  description:
+    'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
 };

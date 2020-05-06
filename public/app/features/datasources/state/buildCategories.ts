@@ -124,6 +124,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'New Relic',
       imgUrl: 'public/img/plugins/newrelic.svg',
     }),
+    getPhantomPlugin({
+      id: 'dlopes7-appdynamics-datasource',
+      description: 'AppDynamics integration & data source',
+      name: 'AppDynamics',
+      imgUrl: 'public/img/plugins/appdynamics.svg',
+    }),
   ];
 }
 

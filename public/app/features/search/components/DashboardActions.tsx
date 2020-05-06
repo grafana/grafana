@@ -4,7 +4,7 @@ import { HorizontalGroup, LinkButton } from '@grafana/ui';
 export interface Props {
   folderId?: number;
   isEditor: boolean;
-  canEdit: boolean;
+  canEdit?: boolean;
 }
 
 export const DashboardActions: FC<Props> = ({ folderId, isEditor, canEdit }) => {

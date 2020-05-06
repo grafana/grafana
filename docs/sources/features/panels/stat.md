@@ -27,10 +27,10 @@ background or value color using thresholds.
 * Color
   * `Value` - Color the value and graph area only.
   * `Background` - Color the background.
-** Graph
+* Graph
   * `None` - Disable the graph / sparkline
   * `Area graph` - Show area graph below value. This requires that your query returns a time column.
-** Justify
+* Justify
   * `Auto` - If only a single value is shown (no repeat) the value is centered. If multiple series or rows the value is
   * left aligned.
   * `Center` - Force center alignment.

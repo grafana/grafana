@@ -71,6 +71,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "11.0.2",
+    "@rollup/plugin-image": "2.0.4",
     "@rollup/plugin-node-resolve": "7.1.1",
     "@storybook/addon-actions": "5.3.17",
     "@storybook/addon-docs": "5.3.17",

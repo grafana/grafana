@@ -14,7 +14,6 @@ import {
   ScopedVars,
   TimeRange,
   DataFrame,
-  resultsToDataFrames,
   DataQueryResponse,
   LoadingState,
   toDataFrame,
@@ -22,7 +21,7 @@ import {
   FieldType,
   LogRowModel,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
@@ -239,8 +238,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
     const dataFrames = await this.makeLogActionRequest('DescribeLogGroups', [params]).toPromise();
 
-    const logGroupNames = dataFrames[0].fields[0].values.toArray();
-    return logGroupNames && logGroupNames.length > 0 ? logGroupNames : [];
+    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
+    return logGroupNames;
   }
 
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
@@ -496,8 +495,10 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       );
     }
 
+    const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
+
     return from(this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams)).pipe(
-      map(response => resultsToDataFrames(response)),
+      map(response => resultsToDataFrames({ data: response })),
       catchError(err => {
         if (err.data?.error) {
           throw err.data.error;

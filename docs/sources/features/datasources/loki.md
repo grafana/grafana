@@ -146,7 +146,7 @@ log message you're interested in.
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../variables/templates-and-variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Annotations
 
@@ -189,14 +189,15 @@ datasources:
     jsonData:
       maxLines: 1000
       derivedFields:
-        # Field with internal link pointing to datasource in Grafana
+        # Field with internal link pointing to data source in Grafana.
+        # Right now, Grafana supports only Jaeger and Zipkin data sources as link targets.
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           # url will be interpreted as query for the datasource
           url: "$${__value.raw}"
 
-        # Field with external link
+        # Field with external link.
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "http://localhost:16686/trace/$${__value.raw}"
