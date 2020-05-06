@@ -152,7 +152,7 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: $gray-5; // for striping
+$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
 $table-border: $gray-3; // table and cell border
 
 $table-bg-odd: $gray-6;
