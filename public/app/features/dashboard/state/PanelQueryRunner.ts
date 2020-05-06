@@ -190,11 +190,6 @@ export class PanelQueryRunner {
     });
   }
 
-  pipeDataToSubject = (data: PanelData) => {
-    this.subject.next(data);
-    this.lastResult = data;
-  };
-
   resendLastResult = () => {
     if (this.lastResult) {
       this.subject.next(this.lastResult);
@@ -212,6 +207,15 @@ export class PanelQueryRunner {
 
     if (this.subscription) {
       this.subscription.unsubscribe();
+    }
+  }
+
+  useLastResultFrom(runner: PanelQueryRunner) {
+    this.lastResult = runner.getLastResult();
+
+    if (this.lastResult) {
+      // The subject is a replay subject so anyone subscribing will get this last result
+      this.subject.next(this.lastResult);
     }
   }
 

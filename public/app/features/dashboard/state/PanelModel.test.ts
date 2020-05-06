@@ -6,8 +6,10 @@ import {
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  PanelData,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
+import { PanelQueryRunner } from './PanelQueryRunner';
 
 class TablePanelCtrl {}
 
@@ -334,6 +336,17 @@ describe('PanelModel', () => {
 
         expect(model.axes).toBeUndefined();
         expect(model.thresholds).toBeUndefined();
+      });
+    });
+
+    describe('destroy', () => {
+      it('Should still preserve last query result', () => {
+        model.getQueryRunner().useLastResultFrom({
+          getLastResult: () => ({} as PanelData),
+        } as PanelQueryRunner);
+
+        model.destroy();
+        expect(model.getQueryRunner().getLastResult()).toBeDefined();
       });
     });
   });
