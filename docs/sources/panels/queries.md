@@ -47,17 +47,18 @@ For more information about writing a query for your data source, refer to the sp
 
 ## Query tab UI
 
-The Query tab is divided into two sections.
-* Data source selection 
+The Query tab consists of the following elements:
+
+* Data source selector
 * Data source options
-* Query inspector
-* Queries list
+* Query inspector button
+* Query editor list
 
 {{< docs-imagebox img="/img/docs/queries/query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
-### Data source selection
+### Data source selector
 
-To create a query you must [add a data source](LINK). Grafana automatically selects your default data source for a query in a new panel.
+To create a query you must [add a data source](LINK). Grafana automatically selects your default data source for a query in a new panel. Click 
 
 Apart from the data sources that you have configured in your Grafana there are three special data sources available:
 --Grafana-- - Built-in data source for that generates random walk data. Useful for testing visualizations and running experiments.
