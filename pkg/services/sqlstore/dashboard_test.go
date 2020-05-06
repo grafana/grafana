@@ -9,9 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardDataAccess(t *testing.T) {
@@ -398,6 +402,33 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 2)
 			})
 		})
+	})
+}
+
+func TestDashboard_SortingOptions(t *testing.T) {
+	// insertTestDashboard uses GoConvey's assertions. Workaround.
+	Convey("test with multiple sorting options", t, func() {
+		InitTestDB(t)
+		dashB := insertTestDashboard("Beta", 1, 0, false)
+		dashA := insertTestDashboard("Alfa", 1, 0, false)
+
+		assert.NotZero(t, dashA.Id)
+		assert.Less(t, dashB.Id, dashA.Id)
+
+		q := &search.FindPersistedDashboardsQuery{
+			SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+			// adding two sorting options (silly no-op example, but it'll complicate the query)
+			Filters: []interface{}{
+				searchstore.TitleSorter{},
+				searchstore.TitleSorter{Descending: true},
+			},
+		}
+		dashboards, err := findDashboards(q)
+		require.NoError(t, err)
+
+		require.Len(t, dashboards, 2)
+		assert.Equal(t, dashA.Id, dashboards[0].Id)
+		assert.Equal(t, dashB.Id, dashboards[1].Id)
 	})
 }
 
