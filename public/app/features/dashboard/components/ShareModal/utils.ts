@@ -73,10 +73,9 @@ export function buildSoloUrl(
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
 
-  if (params.editPanel) {
-    params.viewPanel = params.editPanel;
-    delete params.editPanel;
-  }
+  params.panelId = params.editPanel ?? params.viewPanel;
+  delete params.editPanel;
+  delete params.viewPanel;
 
   return urlUtil.appendQueryToUrl(soloUrl, urlUtil.toUrlParams(params));
 }

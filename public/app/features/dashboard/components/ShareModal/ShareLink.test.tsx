@@ -106,7 +106,7 @@ describe('ShareModal', () => {
 
       const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      const params = '?from=1000&to=2000&orgId=1&viewPanel=22&width=1000&height=500&tz=UTC';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
       expect(state?.imageUrl).toContain(base + params);
     });
 
@@ -118,7 +118,7 @@ describe('ShareModal', () => {
 
       const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
-      const params = '?from=1000&to=2000&orgId=1&viewPanel=22&width=1000&height=500&tz=UTC';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
       expect(state?.imageUrl).toContain(base + params);
     });
 
@@ -147,7 +147,7 @@ describe('ShareModal', () => {
 
       const state = ctx.wrapper?.state();
       expect(state?.shareUrl).toContain('?editPanel=1&from=1000&to=2000&orgId=1');
-      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&viewPanel=1&width=1000&height=500&tz=UTC');
+      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
     it('should include template variables in url', () => {
