@@ -590,7 +590,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         const color = getColorForValue(data, data.display.numeric);
         if (color) {
           getPanelContainer().css('background-color', color);
-          elem.css('background-color', '');
+          if (scope.fullscreen) {
+            elem.css('background-color', color);
+          } else {
+            elem.css('background-color', '');
+          }
         } else {
           getPanelContainer().css('background-color', '');
           elem.css('background-color', '');
