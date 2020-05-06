@@ -9,8 +9,7 @@ export interface Props {
   model: NavModel;
 }
 
-const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
-  const { children } = main;
+const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
   if (!children || children.length === 0) {
     return null;
   }
@@ -54,9 +53,7 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
   );
 };
 
-const Navigation = ({ main }: { main: NavModelItem }) => {
-  const { children } = main;
-
+const Navigation = ({ children }: { children: NavModelItem[] }) => {
   if (!children || children.length === 0) {
     return null;
   }
@@ -71,7 +68,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
 
   return (
     <nav>
-      <SelectNav customCss="page-header__select-nav" main={main} />
+      <SelectNav customCss="page-header__select-nav" children={children} />
       <TabsBar className="page-header__tabs" hideBorder={true}>
         {children.map((child, index) => {
           return (
@@ -160,13 +157,14 @@ export default class PageHeader extends React.Component<Props, any> {
     }
 
     const main = model.main;
+    const children = main.children;
 
     return (
       <div className="page-header-canvas">
         <div className="page-container">
           <div className="page-header">
             {this.renderHeaderTitle(main)}
-            {main.children && main.children.length && <Navigation main={main} />}
+            {children && children.length && <Navigation children={children} />}
           </div>
         </div>
       </div>

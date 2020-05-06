@@ -114,7 +114,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   };
 
   getLabelKeys(): string[] {
-    return this.labelKeys ?? [];
+    return this.labelKeys;
   }
 
   /**

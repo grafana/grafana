@@ -42,7 +42,7 @@ interface Props {
 
 export default class PermissionsListItem extends PureComponent<Props> {
   onPermissionChanged = (option: SelectableValue<PermissionLevel>) => {
-    this.props.onPermissionChanged(this.props.item, option.value ?? PermissionLevel.View);
+    this.props.onPermissionChanged(this.props.item, option!.value);
   };
 
   onRemoveItem = () => {
