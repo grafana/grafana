@@ -1,23 +1,23 @@
 import { TimeZone, DefaultTimeZone } from '../types/time';
 
 /**
- * Type describing the date and time helper function options. Used for all the
- * helper functions available to parse and format date and time values.
+ * The type describing date and time options. Used for all the helper functions
+ * available to parse or format date and time values.
  *
  * @public
  */
 export interface DateTimeOptions {
   /**
-   * Specify if you want to override the timeZone used when parsing or formatting
-   * a date and time value. If no timeZone is set the default timeZone for the current
-   * user will be used.
+   * Specify this if you want to override the timeZone used when parsing or formatting
+   * a date and time value. If no timeZone is set, the default timeZone for the current
+   * user is used.
    */
   timeZone?: TimeZone;
 }
 
 /**
- * Type to describe the time zone resolver function that will be used to access
- * the default time zone of an user.
+ * The type to describe the time zone resolver function that will be used to access
+ * the default time zone of a user.
  *
  * @public
  */
@@ -37,7 +37,7 @@ export const setTimeZoneResolver = (resolver: TimeZoneResolver) => {
 
 /**
  * Used within this package to get timeZone from an options value. If timezone
- * is not set in the options a default timeZone will be resolved instead.
+ * is not set in the options, then a default timeZone is be resolved instead.
  *
  * @internal
  */

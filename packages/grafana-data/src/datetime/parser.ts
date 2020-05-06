@@ -6,7 +6,7 @@ import { parse, isValid } from './datemath';
 import { lowerCase } from 'lodash';
 
 /**
- * Type that describes options that can be passed when parsing a date and time value.
+ * The type that describes options that can be passed when parsing a date and time value.
  * @public
  */
 export interface DateTimeOptionsWhenParsing extends DateTimeOptions {
@@ -24,15 +24,15 @@ type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (value: DateT
 
 /**
  * Helper function to parse a number, text or Date to a DateTime value. If a timeZone is supplied the incoming value
- * will be parsed with that timeZone as a base. The only exception to this is if the passed value is in a UTC based
- * format. Then it will use UTC as the base. Examples on UTC based values are Unix Epoch, ISO formatted strings etc.
+ * is parsed with that timeZone as a base. The only exception to this is if the passed value is in a UTC-based
+ * format. Then it will use UTC as the base. Examples on UTC-based values are Unix epoch and ISO formatted strings.
  *
- * It can also parse the Grafana quick date and time format e.g. now-6h will be parsed as Date.now() - 6 hours and
+ * It can also parse the Grafana quick date and time format, e.g. now-6h will be parsed as Date.now() - 6 hours and
  * returned as a valid DateTime value.
  *
- * If no options is supplied default values will be used. For more details please see {@link DateTimeOptions}.
+ * If no options are supplied, then default values are used. For more details please see {@link DateTimeOptions}.
  *
- * @param value - should be a date and time parsable value
+ * @param value - should be a parsable date and time value
  * @param options
  *
  * @public
