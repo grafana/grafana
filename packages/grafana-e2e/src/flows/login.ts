@@ -1,7 +1,7 @@
 import { e2e } from '../index';
 
-export const login = (username: string, password: string) => {
-  e2e().logToConsole('Trying to login with:', { username, password });
+export const login = (username: string = 'admin', password: string = 'admin') => {
+  e2e().logToConsole('Trying to login with username:', username);
   e2e.pages.Login.visit();
   e2e.pages.Login.username()
     .should('be.visible') // prevents flakiness
@@ -14,5 +14,5 @@ export const login = (username: string, password: string) => {
   e2e()
     .get('.login-page')
     .should('not.exist');
-  e2e().logToConsole('Logged in with', { username, password });
+  e2e().logToConsole('Logged in with username:', username);
 };
