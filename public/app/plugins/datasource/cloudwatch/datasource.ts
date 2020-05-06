@@ -181,7 +181,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       );
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(queries)) {
+    if (_.isEmpty(metricQueries)) {
       return Promise.resolve({ data: [] });
     }
 
