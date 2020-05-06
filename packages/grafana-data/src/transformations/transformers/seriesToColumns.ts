@@ -8,15 +8,17 @@ export interface SeriesToColumnsOptions {
   byField?: string;
 }
 
+const DEFAULT_KEY_FIELD = 'Time';
+
 export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOptions> = {
   id: DataTransformerID.seriesToColumns,
   name: 'Series as columns',
   description: 'Groups series by field and returns values as columns',
   defaultOptions: {
-    byField: 'Time',
+    byField: DEFAULT_KEY_FIELD,
   },
   transformer: options => (data: DataFrame[]) => {
-    const keyFieldMatch = options.byField || 'Time';
+    const keyFieldMatch = options.byField || DEFAULT_KEY_FIELD;
     const allFields: FieldsToProcess[] = [];
 
     for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
@@ -45,7 +47,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
           sourceField,
           newField: {
             ...sourceField,
-            state: undefined,
+            state: null,
             values: new ArrayVector([]),
             labels,
           },

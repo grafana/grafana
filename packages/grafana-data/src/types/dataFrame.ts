@@ -17,10 +17,6 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
 }
 
-export interface FieldCalcs {
-  [key: string]: any;
-}
-
 /**
  * Every property is optional
  *
@@ -88,7 +84,7 @@ export interface Field<T = any, V = Vector<T>> {
   /**
    * Cached values with appropriate dispaly and id values
    */
-  state?: FieldState;
+  state?: FieldState | null;
 
   /**
    * Convert text to the field value
@@ -149,5 +145,7 @@ export interface DataFrameDTO extends QueryResultBase {
   name?: string;
   fields: Array<FieldDTO | Field>;
 }
+
+export interface FieldCalcs extends Record<string, any> {}
 
 export const TIME_SERIES_FIELD_NAME = 'Value';

@@ -171,7 +171,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
 
     // clear out the cached info
     for (const field of dataFrame.fields) {
-      field.state = undefined;
+      field.state = null;
     }
 
     dataFrames.push(dataFrame);
