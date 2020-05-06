@@ -25,7 +25,7 @@ All `exported` apis from the package should have a release tag to indicate its s
 
 - [`@alpha`](https://api-extractor.com/pages/tsdoc/tag_alpha/) - early draft of api and will probably change.
 - [`@beta`](https://api-extractor.com/pages/tsdoc/tag_beta/) - close to being stable but might change.
-- [`@public`](https://api-extractor.com/pages/tsdoc/tag_public/) - ready for useage in production.
+- [`@public`](https://api-extractor.com/pages/tsdoc/tag_public/) - ready for usage in production.
 - [`@internal`](https://api-extractor.com/pages/tsdoc/tag_internal/) - for internal use only.
 
 ### Main stability of APIs
