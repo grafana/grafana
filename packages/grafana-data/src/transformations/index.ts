@@ -7,7 +7,11 @@ export { FilterFieldsByNameTransformerOptions } from './transformers/filterByNam
 export { FilterFramesByRefIdTransformerOptions } from './transformers/filterByRefId';
 export { SeriesToColumnsOptions } from './transformers/seriesToColumns';
 export { ReduceTransformerOptions } from './transformers/reduce';
-export { CalculateFieldTransformerOptions } from './transformers/calculateField';
+export {
+  CalculateFieldTransformerOptions,
+  CalculateFieldMode,
+  getResultFieldNameForCalculateFieldTransformerOptions,
+} from './transformers/calculateField';
 export { OrganizeFieldsTransformerOptions } from './transformers/organize';
 export { createOrderFieldsComparer } from './transformers/order';
 export { transformDataFrame } from './transformDataFrame';
