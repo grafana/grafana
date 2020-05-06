@@ -221,7 +221,7 @@ describe('given dashboard with panel repeat in vertical direction', () => {
     dashboard.processRepeats();
   });
 
-  it('should place on items on top of each other and keep witdh', () => {
+  it('should place on items on top of each other and keep width', () => {
     expect(dashboard.panels[0].gridPos).toMatchObject({ x: 0, y: 0, h: 1, w: 24 }); // first row
 
     expect(dashboard.panels[1].gridPos).toMatchObject({ x: 5, y: 1, h: 2, w: 8 });
