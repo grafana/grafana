@@ -1,10 +1,11 @@
 package sqlstore
 
 import (
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestApiKeyDataAccess(t *testing.T) {
@@ -54,7 +55,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 			assert.True(t, *query.Result.Expires >= timeNow().Unix())
 
 			// timeNow() has been called twice since creation; once by AddApiKey and once by GetApiKeyByName
-			// therefore two seconds should be subtracted by next value retuned by timeNow()
+			// therefore two seconds should be subtracted by next value returned by timeNow()
 			// that equals the number by which timeSeed has been advanced
 			then := timeNow().Add(-2 * time.Second)
 			expected := then.Add(1 * time.Hour).UTC().Unix()

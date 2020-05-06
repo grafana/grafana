@@ -1,3 +1,4 @@
+import { e2e } from '../';
 import { Flows } from '../flows';
 import { getScenarioContext } from './scenarioContext';
 
@@ -23,7 +24,7 @@ export const e2eScenario = ({
       it.skip(itName, () => scenario());
     } else {
       beforeEach(() => {
-        Flows.login('admin', 'admin');
+        Flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
         if (addScenarioDataSource) {
           Flows.addDataSource();
         }

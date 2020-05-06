@@ -14,6 +14,7 @@
 
 import * as React from 'react';
 import { css } from 'emotion';
+import cx from 'classnames';
 
 import BreakableText from './BreakableText';
 import LoadingIndicator from './LoadingIndicator';
@@ -21,11 +22,16 @@ import { fetchedState, FALLBACK_TRACE_NAME } from '../constants';
 
 import { FetchedState, TNil } from '../types';
 import { ApiError } from '../types/api-error';
-import { createStyle } from '../Theme';
+import { createStyle, safeSize, Theme, useTheme } from '../Theme';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
+    TraceName: css`
+      label: TraceName;
+      font-size: ${safeSize(theme.components?.TraceName?.fontSize, 'unset')};
+    `,
     TraceNameError: css`
+      label: TraceNameError;
       color: #c00;
     `,
   };
@@ -42,7 +48,7 @@ export default function TraceName(props: Props) {
   const { className, error, state, traceName } = props;
   const isErred = state === fetchedState.ERROR;
   let title: string | React.ReactNode = traceName || FALLBACK_TRACE_NAME;
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   let errorCssClass = '';
   if (isErred) {
     errorCssClass = styles.TraceNameError;
@@ -61,5 +67,5 @@ export default function TraceName(props: Props) {
     const text = String(traceName || FALLBACK_TRACE_NAME);
     title = <BreakableText text={text} />;
   }
-  return <span className={`TraceName ${errorCssClass} ${className || ''}`}>{title}</span>;
+  return <span className={cx(styles.TraceName, errorCssClass, className)}>{title}</span>;
 }

@@ -67,7 +67,7 @@ class DashNav extends PureComponent<Props> {
 
   onClose = () => {
     this.props.updateLocation({
-      query: { edit: null, viewPanel: null },
+      query: { viewPanel: null },
       partial: true,
     });
   };
@@ -104,6 +104,13 @@ class DashNav extends PureComponent<Props> {
   onPlaylistStop = () => {
     this.playlistSrv.stop();
     this.forceUpdate();
+  };
+
+  onDashboardNameClick = () => {
+    this.props.updateLocation({
+      query: { search: 'open' },
+      partial: true,
+    });
   };
 
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
@@ -186,7 +193,7 @@ class DashNav extends PureComponent<Props> {
                 </a>
               </>
             )}
-            <span>{dashboard.title}</span>
+            <a onClick={this.onDashboardNameClick}>{dashboard.title}</a>
           </div>
         </div>
         <div className="navbar-buttons navbar-buttons--actions">{this.renderLeftActionsButton()}</div>

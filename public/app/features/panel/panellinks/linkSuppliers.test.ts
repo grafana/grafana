@@ -149,6 +149,7 @@ describe('getLinksFromLogsField', () => {
       rowIndex,
       colIndex,
       display: field.display!(field.values.get(rowIndex)),
+      hasLinks: true,
     };
 
     const supplier = getFieldLinksSupplier(fieldDisp);
