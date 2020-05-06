@@ -350,6 +350,8 @@
       link: /http_api/playlist/
     - name: Preferences API
       link: /http_api/preferences/
+    - name: Reporting API
+      link: /http_api/reporting/
     - name: Snapshot API
       link: /http_api/snapshot/
     - name: Teams API
