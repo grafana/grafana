@@ -339,7 +339,7 @@ const tokenizer: Grammar = {
     alias: 'function',
   },
   function: {
-    pattern: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})`, 'i'),
+    pattern: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})\\b`, 'i'),
   },
   keyword: {
     pattern: new RegExp(`(\\s+)(${KEYWORDS.join('|')})(?=\\s+)`, 'i'),
