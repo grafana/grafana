@@ -1,5 +1,5 @@
 import { DataFrame, Field, FieldState, TIME_SERIES_FIELD_NAME, FieldType } from '../types';
-import { formatLabels } from '../utils';
+import { formatLabels } from '../utils/labels';
 
 /**
  * Get an appropriate display title
