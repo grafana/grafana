@@ -291,7 +291,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
 
 export function lokiStreamsToDataframes(
   response: LokiStreamResponse,
-  target: { refId: string; expr?: string; regexp?: string },
+  target: { refId: string; expr?: string },
   limit: number,
   config: LokiOptions,
   reverse = false
@@ -309,7 +309,7 @@ export function lokiStreamsToDataframes(
       ...dataFrame,
       refId: target.refId,
       meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
+        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
         limit,
         stats,
         custom,
