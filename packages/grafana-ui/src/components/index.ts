@@ -68,7 +68,7 @@ export { GraphContextMenu } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
-export { graphTimeFormat, graphTimeFormatter } from './Graph/utils';
+export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 
 export {
   LegendOptions,

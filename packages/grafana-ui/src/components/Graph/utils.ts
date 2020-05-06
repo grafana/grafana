@@ -102,8 +102,12 @@ export const getMultiSeriesGraphHoverInfo = (
   };
 };
 
-export const graphTimeFormatter = (timeZone?: TimeZone) => (epoch: number, format: string) =>
-  dateTimeFormat(epoch, { format, timeZone });
+export const graphTickFormatter = (epoch: number, axis: any) => {
+  return dateTimeFormat(epoch, {
+    format: axis?.options?.timeformat,
+    timeZone: axis?.options?.timezone,
+  });
+};
 
 export const graphTimeFormat = (ticks: number | null, min: number | null, max: number | null): string => {
   if (min && max && ticks) {
