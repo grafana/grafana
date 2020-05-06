@@ -306,9 +306,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
       resolve: {
         component: () =>
-          SafeDynamicImport(
-            import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/UserProfileEdit')
-          ),
+          SafeDynamicImport(import(/* webPackChunkName: "UserProfileEdit" */ 'app/features/profile/UserProfileEdit')),
       },
     })
     .when('/profile/password', {
