@@ -24,7 +24,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { ContextMenuGroup, ContextMenuItem, graphTimeFormat, graphTimeFormatter } from '@grafana/ui';
+import { ContextMenuGroup, ContextMenuItem, graphTimeFormat, graphTickFormatter } from '@grafana/ui';
 import { getCurrentTheme, provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
@@ -655,7 +655,7 @@ class GraphElement {
       label: 'Datetime',
       ticks: ticks,
       timeformat: graphTimeFormat(ticks, min, max),
-      timeFormatter: graphTimeFormatter(this.dashboard.getTimezone()),
+      tickFormatter: graphTickFormatter,
     };
   }
 
