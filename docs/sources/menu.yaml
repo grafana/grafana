@@ -1,14 +1,16 @@
 - name: Getting started
-  link: /guides/
+  link: /getting-started/
   children:
     - name: What is Grafana?
-      link: /guides/what-is-grafana/
+      link: /getting-started/what-is-grafana/
     - name: Getting started
-      link: /guides/getting_started/
+      link: /getting-started/getting-started/
     - name: Intro to time series
-      link: /guides/timeseries/
+      link: /getting-started/timeseries/
+    - name: Intro to histograms
+      link: /getting-started/intro-histograms/
     - name: Glossary
-      link: /guides/glossary/
+      link: /getting-started/glossary/
 - name: Installation
   link: /installation/
   children:
@@ -265,16 +267,18 @@
       link: /enterprise/enhanced_ldap/
     - name: Reporting
       link: /enterprise/reporting/
+    - name: Export dashboard as PDF
+      link: /enterprise/export-pdf/
     - name: SAML authentication
       link: /enterprise/saml/
     - name: Team sync
       link: /enterprise/team-sync/
     - name: White labeling
       link: /enterprise/white-labeling/
+    - name: Usage insights
+      link: /enterprise/usage-insights/
     - name: License expiration
       link: /enterprise/license-expiration/
-    - name: Export dashboard as PDF
-      link: /enterprise/export-pdf/
 - name: Plugins
   link: /plugins/
   children:
@@ -285,6 +289,8 @@
       children:
         - link: /plugins/developing/development/
           name: Developer Guide
+        - link: /plugins/developing/dataframe/
+          name: Introduction to data frames
         - link: /plugins/developing/code-styleguide/
           name: Plugin Code Styleguide
         - link: /plugins/developing/plugin-review-guidelines/
@@ -346,6 +352,8 @@
       link: /http_api/playlist/
     - name: Preferences API
       link: /http_api/preferences/
+    - name: Reporting API
+      link: /http_api/reporting/
     - name: Snapshot API
       link: /http_api/snapshot/
     - name: Teams API

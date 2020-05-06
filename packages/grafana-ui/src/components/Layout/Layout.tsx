@@ -1,5 +1,5 @@
 import React, { HTMLProps } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 
@@ -24,6 +24,8 @@ export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | '
 export interface ContainerProps {
   padding?: Spacing;
   margin?: Spacing;
+  grow?: number;
+  shrink?: number;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -84,10 +86,26 @@ export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> 
   </Layout>
 );
 
-export const Container: React.FC<ContainerProps> = ({ children, padding, margin }) => {
+export const Container: React.FC<ContainerProps> = ({ children, padding, margin, grow, shrink }) => {
   const theme = useTheme();
   const styles = getContainerStyles(theme, padding, margin);
-  return <div className={styles.wrapper}>{children}</div>;
+  return (
+    <div
+      className={cx(
+        styles.wrapper,
+        grow !== undefined &&
+          css`
+            flex-grow: ${grow};
+          `,
+        shrink !== undefined &&
+          css`
+            flex-shrink: ${shrink};
+          `
+      )}
+    >
+      {children}
+    </div>
+  );
 };
 
 const getStyles = stylesFactory(

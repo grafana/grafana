@@ -29,12 +29,10 @@ export function buildParams(
     params.theme = selectedTheme;
   }
 
-  if (panel) {
-    params.panelId = panel.id;
-    params.fullscreen = true;
+  if (panel && !params.editPanel) {
+    params.viewPanel = panel.id;
   } else {
-    delete params.panelId;
-    delete params.fullscreen;
+    delete params.viewPanel;
   }
 
   return params;
@@ -74,8 +72,11 @@ export function buildSoloUrl(
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
-  delete params.fullscreen;
-  delete params.edit;
+
+  params.panelId = params.editPanel ?? params.viewPanel;
+  delete params.editPanel;
+  delete params.viewPanel;
+
   return urlUtil.appendQueryToUrl(soloUrl, urlUtil.toUrlParams(params));
 }
 
