@@ -187,7 +187,7 @@ describe('adHocVariableReducer', () => {
     });
   });
 
-  describe('when filtersRestored is dispatched on variabel with no filters', () => {
+  describe('when filtersRestored is dispatched on variable with no filters', () => {
     it('then state should be correct', () => {
       const id = '0';
       const restored = [createFilter('aa'), createFilter('bb')];

@@ -3,7 +3,7 @@ import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/typ
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
-export interface AdHocVariabelFilterUpdate {
+export interface AdHocVariableFilterUpdate {
   index: number;
   filter: AdHocVariableFilter;
 }
@@ -40,7 +40,7 @@ export const adHocVariableSlice = createSlice({
 
       instanceState.filters.splice(index, 1);
     },
-    filterUpdated: (state: VariablesState, action: PayloadAction<VariablePayload<AdHocVariabelFilterUpdate>>) => {
+    filterUpdated: (state: VariablesState, action: PayloadAction<VariablePayload<AdHocVariableFilterUpdate>>) => {
       const instanceState = getInstanceState<AdHocVariableModel>(state, action.payload.id);
       const { filter, index } = action.payload.data;
 

@@ -34,6 +34,6 @@ export const getVariables = (state: StoreState = getState(), includeNewVariable 
 
 export type GetVariables = typeof getVariables;
 
-export const getNewVariabelIndex = (state: StoreState = getState()): number => {
+export const getNewVariableIndex = (state: StoreState = getState()): number => {
   return Object.values(state.templating.variables).length;
 };
