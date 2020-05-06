@@ -1,7 +1,7 @@
 +++
 title = "Grafana Enterprise"
 description = "Grafana Enterprise overview"
-keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise"]
+keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
 type = "docs"
 [menu.docs]
 name = "Grafana Enterprise"
@@ -58,6 +58,10 @@ Supported auth providers:
 ## White labeling
 
 [White labeling]({{< relref "white-labeling.md" >}}) allows you to replace the Grafana brand and logo with your own corporate brand and logo. You can also change footer links to point to your custom resources.
+
+## Usage insights
+
+[Usage insights]({{< relref "usage-insights.md" >}}) allow you to understand how your Grafana instance is used. You can see who is looking at a dashboard, how often a dashboard is seen, and which dashboards are prone to errors. You'll also be able to discover what are the least and the most used dashboards.
 
 ## Enterprise plugins
 

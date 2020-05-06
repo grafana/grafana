@@ -16,7 +16,7 @@ There are a wide variety of styling and formatting options for each panel. Panel
 
 Panels like the [Graph]({{< relref "graph.md" >}}) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat]({{< relref "singlestat.md" >}}) require a reduction of a single query into a single number.
 
-Panels can be made more dynamic with [Dashboard Templating]({{< relref "../../reference/templating.md" >}}) variable strings within the panel configuration. The template can include queries to your data source configured in the Query Editor.
+Panels can be made more dynamic with [Dashboard Templating]({{< relref "../../variables/templates-and-variables.md" >}}) variable strings within the panel configuration. The template can include queries to your data source configured in the Query Editor.
 
 Panels can be [shared]({{< relref "../../reference/share_panel.md" >}}) easily in a variety of ways.
 

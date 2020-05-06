@@ -98,6 +98,7 @@ export function SelectBase<T>({
   defaultOptions,
   defaultValue,
   disabled = false,
+  filterOption,
   formatCreateLabel,
   getOptionLabel,
   getOptionValue,
@@ -176,6 +177,7 @@ export function SelectBase<T>({
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
+    filterOption,
     getOptionLabel,
     getOptionValue,
     inputValue,
@@ -231,22 +233,7 @@ export function SelectBase<T>({
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
-          ValueContainer: (props: any) => {
-            const { menuIsOpen } = props.selectProps;
-            if (
-              Array.isArray(props.children) &&
-              Array.isArray(props.children[0]) &&
-              maxVisibleValues !== undefined &&
-              !(showAllSelectedWhenOpen && menuIsOpen)
-            ) {
-              const [valueChildren, ...otherChildren] = props.children;
-              const truncatedValues = valueChildren.slice(0, maxVisibleValues);
-
-              return <ValueContainer {...props} children={[truncatedValues, ...otherChildren]} />;
-            }
-
-            return <ValueContainer {...props} />;
-          },
+          ValueContainer,
           Placeholder: (props: any) => (
             <div
               {...props.innerProps}
@@ -325,7 +312,9 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
-          menuPortal: () => ({
+          menuPortal: ({ position, width }: any) => ({
+            position,
+            width,
             zIndex: theme.zIndex.dropdown,
           }),
           //These are required for the menu positioning to function

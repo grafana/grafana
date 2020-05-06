@@ -67,7 +67,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
     setIsDeleteModalOpen(true);
   };
 
-  if (canSave && folderId && !hasFilters && results.length === 0) {
+  if (canSave && folderId && !hasFilters && results.length === 0 && !loading) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
@@ -100,8 +100,8 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
       <div className={styles.results}>
         <SearchResultsFilter
           allChecked={allChecked}
-          canDelete={canDelete}
-          canMove={canMove}
+          canDelete={hasEditPermissionInFolders && canDelete}
+          canMove={hasEditPermissionInFolders && canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
           onToggleAllChecked={onToggleAllChecked}
@@ -115,7 +115,7 @@ export const ManageDashboards: FC<Props> = memo(({ folderId, folderUid }) => {
         <SearchResults
           loading={loading}
           results={results}
-          editable
+          editable={hasEditPermissionInFolders}
           onTagSelected={onTagAdd}
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}

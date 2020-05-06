@@ -289,7 +289,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		err = json.Unmarshal(response.Body, &data)
 		if err != nil {
 			s.log.Error("Error decoding email addresses response", "raw_json", string(response.Body), "error", err)
-			return "", errutil.Wrap("Erro decoding email addresses response", err)
+			return "", errutil.Wrap("Error decoding email addresses response", err)
 		}
 
 		records = data.Values

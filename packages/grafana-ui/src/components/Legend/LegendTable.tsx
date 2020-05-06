@@ -4,7 +4,7 @@ import { LegendComponentProps } from './Legend';
 import { Icon } from '../Icon/Icon';
 import { ThemeContext } from '../../themes/ThemeContext';
 
-interface LegendTableProps extends LegendComponentProps {
+export interface LegendTableProps extends LegendComponentProps {
   columns: string[];
   sortBy?: string;
   sortDesc?: boolean;
