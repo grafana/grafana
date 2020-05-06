@@ -249,11 +249,11 @@ datasources:
     jsonData:
       derivedFields:
         - name: "traceID"
-          matcherRegex: "trace_id=(\\w+)"
+          matcherRegex: "traceID=(\\w+)"
           url: "$${__value.raw}"
           datasourceUid: gdev-jaeger
         - name: "traceID"
-          matcherRegex: "trace_id=(\\w+)"
+          matcherRegex: "traceID=(\\w+)"
           url: "$${__value.raw}"
           datasourceUid: gdev-zipkin
 
