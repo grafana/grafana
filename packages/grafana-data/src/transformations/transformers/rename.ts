@@ -55,7 +55,7 @@ const createRenamer = (renameByName: Record<string, string>) => (frame: DataFram
         title: renameTo,
       },
       state: {
-        ...state,
+        ...field.state,
         title: renameTo,
       },
     };

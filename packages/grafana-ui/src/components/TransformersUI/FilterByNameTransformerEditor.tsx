@@ -6,7 +6,7 @@ import {
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  getFieldState,
+  getFieldTitle,
 } from '@grafana/data';
 import { HorizontalGroup } from '../Layout/Layout';
 import { Input } from '../Input/Input';
@@ -61,7 +61,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
     for (const frame of input) {
       for (const field of frame.fields) {
-        const id = getFieldState(field, frame, input);
+        const id = getFieldTitle(field, frame, input);
         let v = byName[id];
         if (!v) {
           v = byName[id] = {

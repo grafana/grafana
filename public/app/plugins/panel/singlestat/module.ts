@@ -23,7 +23,7 @@ import {
   PanelEvents,
   formattedValueToString,
   locationUtil,
-  getFieldState,
+  getFieldTitle,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
@@ -206,7 +206,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   processField(fieldInfo: FieldInfo) {
     const { panel, dashboard } = this;
 
-    const name = getFieldState(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]).title;
+    const name = getFieldTitle(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]);
     let calc = panel.valueName;
     let calcField = fieldInfo.field;
     let val: any = undefined;
