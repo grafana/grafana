@@ -8,10 +8,8 @@ import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Step } from './components/Step';
-import { Help } from './components/Help';
 import { getSteps } from './steps';
 import { Card, SetupStep } from './types';
-import { Branding } from 'app/core/components/Branding/Branding';
 
 interface State {
   checksDone: boolean;
@@ -92,22 +90,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     return (
       <div className={styles.container}>
+        <div className={styles.dismiss}>
+          <div onClick={this.dismiss}>Remove this panel</div>
+        </div>
         {currentStep === steps.length - 1 && (
           <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
             <Button icon="angle-left" variant="secondary" />
           </div>
         )}
         <div className={styles.content}>
-          <div className={styles.header}>
-            <div className={styles.heading}>
-              <Branding.MenuLogo className={styles.headerLogo} />
-              <div>
-                <h1>{step.heading}</h1>
-                <p>{step.subheading}</p>
-              </div>
-            </div>
-            <Help />
-          </div>
           <Step step={step} />
         </div>
         {currentStep < steps.length - 1 && (
@@ -115,11 +106,6 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
             <Button icon="angle-right" variant="secondary" />
           </div>
         )}
-        <div className={styles.dismiss}>
-          <Button size="sm" variant="secondary" onClick={this.dismiss}>
-            Remove this panel
-          </Button>
-        </div>
       </div>
     );
   }
@@ -134,14 +120,12 @@ const getStyles = stylesFactory(() => {
       height: 100%;
       background: url('public/img/login_background_dark.svg') no-repeat;
       background-size: cover;
+      padding-top: ${theme.spacing.xl};
     `,
     content: css`
       label: content;
-      padding: ${theme.spacing.md};
-
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        padding: ${theme.spacing.lg};
-      }
+      display: flex;
+      justify-content: center;
     `,
     header: css`
       label: header;
@@ -175,7 +159,8 @@ const getStyles = stylesFactory(() => {
     `,
     backForwardButtons: css`
       position: absolute;
-      bottom: 150px;
+      bottom: 50%;
+      top: 50%;
       height: 50px;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
@@ -190,11 +175,11 @@ const getStyles = stylesFactory(() => {
     `,
     dismiss: css`
       display: flex;
-      justify-content: center;
-      position: absolute;
-      bottom: 16px;
-      right: 50%;
-      left: 50%;
+      justify-content: flex-end;
+      cursor: pointer;
+      text-decoration: underline;
+      width: 99%;
+      margin-bottom: ${theme.spacing.sm};
     `,
   };
 });
