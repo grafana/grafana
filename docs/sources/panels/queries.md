@@ -11,21 +11,21 @@ weight = 300
 
 _Queries_ are how Grafana panels communicate with data sources to get data for the visualization. A query is basically a question written in the query language used by the data source. Grafana asks, "Hey data source, would you send me this data, organized this way?" If the query is properly formed, than the data source responds. How often the query is sent to the data source and how many data points are collected can be adjusted in the panel data source options.
 
+Grafana supports up to 26 queries per panel.
+
 ## Query editors
 
-Query editors are forms that help you write queries. Depending on your data source, the query editor might completion, metric names or [template variables](link) suggestion.
+Query editors are forms that help you write queries. Depending on your data source, the query editor might completion, metric names, or variable suggestion.
 
-Because of the difference between query languages, data sources may have query editors that look different. Below are two examples of query editors:
+Because of the difference between query languages, data sources may have query editors that look different. Here are two examples of query editors:
 
-InfluxDB query editor:
+**InfluxDB query editor**
 
 {{< docs-imagebox img="/img/docs/queries/influxdb-query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
-Prometheus (PromQL) query editor:
+**Prometheus (PromQL) query editor**
 
 {{< docs-imagebox img="/img/docs/queries/prometheus-query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
-
-Grafana supports up to 26 queries per panel.
 
 ## Query syntax
 
@@ -37,22 +37,24 @@ Every data source has a different query language and syntax to ask for the data.
 SELECT hostname FROM host  WHERE region IN($region)
 ```
 
-**PromQL (Prometheus query language)**
+**PromQL**
 
 ```
 query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ```
 
+For more information about writing a query for your data source, refer to the specific [Grafana data source]({{< relref "../features/datasources/_index.md" >}}) documentation.
+
 ## Query tab UI
+
 The Query tab is divided into two sections.
-Data source selection 
-Data source options
-Query inspector
-Queries list
+* Data source selection 
+* Data source options
+* Query inspector
+* Queries list
 
-There is also a **Query inspector** button.
+{{< docs-imagebox img="/img/docs/queries/query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
-[IMAGE]
 ### Data source selection
 
 To create a query you must [add a data source](LINK). Grafana automatically selects your default data source for a query in a new panel.
