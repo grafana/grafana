@@ -340,6 +340,8 @@ export class HeatmapRenderer {
 
   addYAxisFromBuckets() {
     const tsBuckets = this.data.tsBuckets;
+    let ticks = Math.ceil(this.chartHeight / DEFAULT_Y_TICK_SIZE_PX);
+    let skip = Math.max(Math.floor(tsBuckets.length / ticks), 1);
 
     this.scope.yScale = this.yScale = d3
       .scaleLinear()
@@ -352,22 +354,28 @@ export class HeatmapRenderer {
     this.ctrl.decimals = decimals;
 
     const tickValueFormatter = this.tickValueFormatter.bind(this);
-    function tickFormatter(valIndex: string) {
+    function tickFormatter(valIndex: string, sparse: boolean) {
       let valueFormatted = tsBuckets[valIndex];
+      if (sparse && parseInt(valIndex, 10) % skip !== 0) {
+        valueFormatted = '';
+      }
       if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
         // Try to format numeric tick labels
         valueFormatted = tickValueFormatter(decimals)(_.toNumber(valueFormatted));
       }
       return valueFormatted;
     }
+    function sparseTickFormatter(valIndex: string) {
+      return tickFormatter(valIndex, true);
+    }
 
-    const tsBucketsFormatted = _.map(tsBuckets, (v, i) => tickFormatter(i));
+    const tsBucketsFormatted = _.map(tsBuckets, (v, i) => tickFormatter(i, false));
     this.data.tsBucketsFormatted = tsBucketsFormatted;
 
     const yAxis = d3
       .axisLeft(this.yScale)
       .tickValues(tickValues)
-      .tickFormat(tickFormatter)
+      .tickFormat(sparseTickFormatter)
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
