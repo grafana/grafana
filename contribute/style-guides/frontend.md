@@ -107,7 +107,7 @@ class DateCalculator {
 }
 class DateCalculator {
   // bad
-  calculate_timee_range () {...}
+  calculate_time_range () {...}
 }
 
 class DateCalculator {
@@ -147,7 +147,7 @@ interface ModalState {
 ```typescript
 const getStyles  = = () => ({
   // bad
-  ElementWraper: css`...`,
+  ElementWrapper: css`...`,
   // bad
   ["element-wrapper"]: css`...`,
 
