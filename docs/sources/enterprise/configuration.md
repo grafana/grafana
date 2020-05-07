@@ -22,11 +22,11 @@ Set to your company name to override application title.
 
 ### login_logo
 
-Set to complete url to override login logo.
+Set to complete URL to override login logo.
 
 ### login_background
 
-Set to complete css background expression to override login background. Example: 
+Set to complete CSS background expression to override login background. Example: 
 
 ```bash
 [white_labeling]
@@ -43,11 +43,11 @@ Set to complete url to override fav icon (icon shown in browser tab).
 
 ### apple_touch_icon
 
-Set to complete url to override apple/ios icon.
+Set to complete URL to override Apple/iOS icon.
 
 ### footer_links
 
-List the links id's to use here, Grafana will look for matching links configurations the link id's should be space separated and contain no whitespace.
+List the links IDs to use here. Grafana will look for matching links configurations the link IDs should be space-separated and contain no whitespace.
 
 ## [meta_analytics]
 
@@ -136,23 +136,23 @@ URL to fetch SAML IdP metadata. Used to verify and obtain binding locations from
 
 ### max_issue_delay
 
-Duration, since the IdP issued a response and the SP is allowed to process it. Defaults to 90 seconds.
+Time since the IdP issued a response and the SP is allowed to process it. Defaults to 90 seconds.
 
 ### metadata_valid_duration
 
-Duration, for how long the SP's metadata should be valid. Defaults to 48 hours.
+How long the SPs metadata is valid. Defaults to 48 hours.
 
 ### assertion_attribute_name
 
-Friendly name or name of the attribute within the SAML assertion to use as the user's name.
+Friendly name or name of the attribute within the SAML assertion to use as the user name.
 
 ### assertion_attribute_login
 
-Friendly name or name of the attribute within the SAML assertion to use as the user's login handle.
+Friendly name or name of the attribute within the SAML assertion to use as the user login handle.
 
 ### assertion_attribute_email
 
-Friendly name or name of the attribute within the SAML assertion to use as the user's email.
+Friendly name or name of the attribute within the SAML assertion to use as the user email.
 
 ### assertion_attribute_groups
 
@@ -168,7 +168,7 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 ### allowed_organizations
 
-List of comma- or space-separated organizations. User should be a member of at least one organization to log in.
+List of comma- or space-separated organizations. Each user must be a member of at least one organization to log in.
 
 ### org_mapping
 
@@ -176,11 +176,11 @@ List of comma- or space-separated Organization:OrgId mappings.
 
 ### role_values_editor
 
-List of comma- or space-separated roles which will be mapped into the Editor role.
+List of comma- or space-separated roles that will be mapped to the Editor role.
 
 ### role_values_admin
 
-List of comma- or space-separated roles which will be mapped into the Admin role.
+List of comma- or space-separated roles that will be mapped to the Admin role.
 
 ### role_values_grafana_admin
 
