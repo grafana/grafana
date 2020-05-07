@@ -26,7 +26,7 @@ import { getConfig } from '../../../core/config';
 import { completeDashboardTemplating, initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
-import { initDashboardId } from 'app/features/variables/state/dashboardIdReducer';
+import { setVariablesDashboardUId } from 'app/features/variables/state/dashboardIdReducer';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -192,7 +192,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         await variableSrv.init(dashboard);
       }
       if (getConfig().featureToggles.newVariables) {
-        dispatch(initDashboardId({ uid: args.urlUid }));
+        dispatch(setVariablesDashboardUId({ uid: args.urlUid }));
         dispatch(initDashboardTemplating(dashboard.templating.list));
         await dispatch(processVariables());
         dispatch(completeDashboardTemplating(dashboard));

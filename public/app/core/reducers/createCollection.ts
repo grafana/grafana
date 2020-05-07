@@ -7,12 +7,15 @@ export interface CollectionState<InstanceState extends {}> {
 }
 
 interface CollectionAction {
-  id: string;
+  id: string | undefined;
   action: PayloadAction<any>;
 }
 export const COLLECTION_UNKNOWN_ID = 'unknown-id';
 const COLLECTION_ACTION_PREFIX = 'collectionAction::';
-export const toCollectionAction = (action: PayloadAction<any>, id: string): PayloadAction<CollectionAction> => ({
+export const toCollectionAction = (
+  action: PayloadAction<any>,
+  id: string | undefined
+): PayloadAction<CollectionAction> => ({
   type: `${COLLECTION_ACTION_PREFIX}${action.type}`, // makes it easier to debug in Redux dev tools
   payload: { id, action },
 });
@@ -47,7 +50,7 @@ export const createCollection = <InstanceState extends {}>(args: {
     };
   };
 
-  const selector = (state: StoreState, id: string): InstanceState => {
+  const selector = (state: StoreState, id: string | undefined): InstanceState => {
     const collectionId = id ?? COLLECTION_UNKNOWN_ID;
     const instanceState = stateSelector(state)[collectionId] ?? instanceReducer(undefined, { type: '' });
 

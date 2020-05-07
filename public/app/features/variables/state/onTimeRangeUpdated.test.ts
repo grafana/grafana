@@ -57,7 +57,10 @@ const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean 
     .withCurrent('a constant')
     .build();
   const initialState = {
-    templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
+    templating: {
+      variables: { '0': { ...initialVariable }, '1': { ...constant } },
+      dashboard: { uid: (undefined as unknown) as string },
+    },
     dashboards: { [COLLECTION_UNKNOWN_ID]: dashboard },
   };
 
@@ -72,7 +75,10 @@ const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean 
 
   const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
   const state = {
-    templating: { variables: { 'interval-0': variable, 'constant-1': { ...constant } } },
+    templating: {
+      variables: { 'interval-0': variable, 'constant-1': { ...constant } },
+      dashboard: { uid: (undefined as unknown) as string },
+    },
     dashboards: { [COLLECTION_UNKNOWN_ID]: dashboard },
   };
   const getStateMock = jest

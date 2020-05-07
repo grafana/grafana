@@ -8,7 +8,7 @@ export interface VariablesState extends Record<string, VariableModel> {}
 
 export const initialVariablesState: VariablesState = {};
 
-export const cleanUpVariables = createAction<PayloadAction>('templating/cleanUpVariables');
+export const cleanUpVariables = createAction<undefined>('templating/cleanUpVariables');
 
 export const variablesReducer = (
   state: VariablesState = initialVariablesState,

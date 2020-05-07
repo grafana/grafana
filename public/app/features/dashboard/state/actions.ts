@@ -24,7 +24,7 @@ import {
 import { PanelModel } from './PanelModel';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
 import { cleanUpVariables } from '../../variables/state/variablesReducer';
-import { clearDashboardId } from '../../variables/state/dashboardIdReducer';
+import { clearVariablesDashboardUId } from 'app/features/variables/state/dashboardIdReducer';
 
 export function getDashboardPermissions(id: number, uid: string): ThunkResult<void> {
   return async dispatch => {
@@ -50,6 +50,10 @@ export function updateDashboardPermission(
 ): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
+    if (!dashboard.permissions) {
+      return;
+    }
+
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -79,6 +83,10 @@ export function removeDashboardPermission(
 ): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
+    if (!dashboard.permissions) {
+      return;
+    }
+
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -100,6 +108,10 @@ export function addDashboardPermission(
 ): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
+    if (!dashboard.permissions) {
+      return;
+    }
+
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -192,11 +204,13 @@ export const cleanUpUnCleanedDashboardStates = (currentDashboardId: string): Thu
     }
 
     const dashboardState = dashboardCollection.selector(getState(), uid);
-    if (dashboardState.initPhase === DashboardInitPhase.Completed) {
-      console.log('Cleaning up dashboard', uid);
-      dispatch(cleanUpVariables());
-      dispatch(clearDashboardId());
-      dispatch(toCollectionAction(cleanUpDashboard(), uid));
+    if (dashboardState.initPhase !== DashboardInitPhase.Completed) {
+      continue;
     }
+
+    console.log('Cleaning up dashboard', uid);
+    dispatch(cleanUpVariables());
+    dispatch(clearVariablesDashboardUId());
+    dispatch(toCollectionAction(cleanUpDashboard(), uid));
   }
 };

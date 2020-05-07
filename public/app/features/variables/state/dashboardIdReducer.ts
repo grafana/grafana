@@ -1,22 +1,24 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export type DashboardIdState = string | null;
+export interface DashboardIdState {
+  uid: string | undefined | null;
+}
 
-const initialState: DashboardIdState = null;
+const initialState: DashboardIdState = { uid: null };
 
 const dashboardIdSlice = createSlice({
   name: 'templating/dashboardId',
   initialState,
   reducers: {
-    initDashboardId: (state, action: PayloadAction<{ uid: string }>) => {
-      return action.payload.uid;
+    setVariablesDashboardUId: (state, action: PayloadAction<{ uid: string | undefined }>) => {
+      state.uid = action.payload.uid;
     },
-    clearDashboardId: (state, action: PayloadAction<undefined>) => {
-      return initialState;
+    clearVariablesDashboardUId: (state, action: PayloadAction<undefined>) => {
+      state.uid = null;
     },
   },
 });
 
-export const { initDashboardId, clearDashboardId } = dashboardIdSlice.actions;
+export const { setVariablesDashboardUId, clearVariablesDashboardUId } = dashboardIdSlice.actions;
 
 export const dashboardIdReducer = dashboardIdSlice.reducer;

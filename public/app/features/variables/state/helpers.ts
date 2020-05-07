@@ -70,7 +70,7 @@ export const getRootReducer = () =>
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
       variables: variablesReducer,
-      dashboardId: dashboardIdReducer,
+      dashboard: dashboardIdReducer,
     }),
   });
 
@@ -80,7 +80,7 @@ export const getTemplatingRootReducer = () =>
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
       variables: variablesReducer,
-      dashboardId: dashboardIdReducer,
+      dashboard: dashboardIdReducer,
     }),
   });
 
@@ -90,7 +90,7 @@ export const getTemplatingAndLocationRootReducer = () =>
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
       variables: variablesReducer,
-      dashboardId: dashboardIdReducer,
+      dashboard: dashboardIdReducer,
     }),
     location: locationReducer,
   });

@@ -41,8 +41,11 @@ export const getNewVariabelIndex = (state: StoreState = getState()): number => {
 };
 
 export const getDashboardModel = (state: StoreState = getState()): DashboardModel | null => {
-  const dashboardId = state.templating.dashboardId;
-  const dashboardState = dashboardCollection.selector(state, dashboardId);
+  if (state.templating.dashboard.uid === null) {
+    throw new Error('Dashboard uid not initialized.');
+  }
+
+  const dashboardState = dashboardCollection.selector(state, state.templating.dashboard.uid);
   if (!dashboardState) {
     throw new Error('No dashboard state found.');
   }

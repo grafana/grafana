@@ -19,10 +19,11 @@ import {
 } from './actions';
 import { NavigationKey } from '../types';
 import { toVariablePayload } from '../../state/types';
-import { changeVariableProp, setCurrentVariableValue, addVariable } from '../../state/sharedReducer';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 import { updateLocation } from 'app/core/actions';
+import { setVariablesDashboardUId } from '../../state/dashboardIdReducer';
 
 const datasource = {
   metricFindQuery: jest.fn(() => Promise.resolve([])),
@@ -51,6 +52,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
@@ -89,6 +91,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, false))
@@ -114,6 +117,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
@@ -139,6 +143,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
@@ -166,6 +171,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
@@ -194,6 +200,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
@@ -242,6 +249,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(filterOrSearchOptions(filter), true);
@@ -265,6 +273,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(commitChangesToVariable(), true);
@@ -299,6 +308,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
@@ -337,6 +347,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
@@ -362,6 +373,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(toggleAndFetchTag(tag), true);
@@ -389,6 +401,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(toggleAndFetchTag(tag), true);

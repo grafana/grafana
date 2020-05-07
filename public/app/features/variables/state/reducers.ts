@@ -9,7 +9,7 @@ export interface TemplatingState {
   variables: Record<string, VariableModel>;
   optionsPicker: OptionsPickerState;
   editor: VariableEditorState;
-  dashboardId: DashboardIdState;
+  dashboard: DashboardIdState;
 }
 
 export default {
@@ -17,6 +17,6 @@ export default {
     editor: variableEditorReducer,
     variables: variablesReducer,
     optionsPicker: optionsPickerReducer,
-    dashboardId: dashboardIdReducer,
+    dashboard: dashboardIdReducer,
   }),
 };

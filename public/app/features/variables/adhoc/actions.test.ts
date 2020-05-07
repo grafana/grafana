@@ -24,6 +24,7 @@ import { VariableModel } from 'app/features/templating/types';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 import { CollectionState } from '../../../core/reducers/createCollection';
+import { setVariablesDashboardUId } from '../state/dashboardIdReducer';
 
 const getMetricSources = jest.fn().mockReturnValue([]);
 const getDatasource = jest.fn().mockResolvedValue({});
@@ -69,6 +70,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
@@ -93,6 +95,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
       const variable = adHocBuilder()
@@ -130,6 +133,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
@@ -166,6 +170,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(existing))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
@@ -205,6 +210,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(changeFilter('elastic-filter', update), true);
 
@@ -241,6 +247,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(addFilter('elastic-filter', adding), true);
 
@@ -272,6 +279,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(addFilter('elastic-filter', adding), true);
 
@@ -295,6 +303,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(removeFilter('elastic-filter', 0), true);
 
@@ -325,6 +334,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(removeFilter('elastic-filter', 0), true);
 
@@ -360,6 +370,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(setFiltersFromUrl('elastic-filter', fromUrl), true);
 
@@ -421,6 +432,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
@@ -453,6 +465,7 @@ describe('adhoc actions', () => {
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);

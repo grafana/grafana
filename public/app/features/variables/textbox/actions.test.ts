@@ -7,8 +7,9 @@ import { getRootReducer } from '../state/helpers';
 import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { toVariablePayload } from '../state/types';
 import { createTextBoxOptions } from './reducer';
-import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { updateLocation } from 'app/core/actions';
+import { setVariablesDashboardUId } from '../state/dashboardIdReducer';
 
 describe('textbox actions', () => {
   variableAdapters.setInit(() => [createTextBoxVariableAdapter()]);
@@ -41,6 +42,7 @@ describe('textbox actions', () => {
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(setVariablesDashboardUId({ uid: undefined }))
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toVariablePayload(variable)), true);
 
