@@ -15,7 +15,7 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-type PreferredVisualisationType = 'graph' | 'table';
+export type PreferredVisualisationType = 'graph' | 'table';
 
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
