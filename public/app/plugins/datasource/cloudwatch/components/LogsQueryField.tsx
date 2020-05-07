@@ -1,6 +1,7 @@
 // Libraries
 import React, { ReactNode } from 'react';
 import intersection from 'lodash/intersection';
+import debounce from 'lodash/debounce';
 
 import {
   QueryField,
@@ -16,7 +17,7 @@ import {
 
 // Utils & Services
 // dom also includes Element polyfills
-import { Plugin, Node, Editor } from 'slate';
+import { Plugin, Node, Editor, Value } from 'slate';
 import syntax from '../syntax';
 
 // Types
@@ -141,9 +142,9 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     });
   };
 
-  onChangeQuery = (value: string, override?: boolean) => {
+  onChangeQuery = (value: string) => {
     // Send text change to parent
-    const { query, onChange, onRunQuery } = this.props;
+    const { query, onChange } = this.props;
     const { selectedLogGroups, selectedRegion } = this.state;
 
     if (onChange) {
@@ -154,10 +155,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         region: selectedRegion.value,
       };
       onChange(nextQuery);
-
-      if (override && onRunQuery) {
-        onRunQuery();
-      }
     }
   };
 
@@ -208,7 +205,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { datasource, exploreMode } = this.props;
+    const { datasource } = this.props;
     const { selectedLogGroups } = this.state;
 
     if (!datasource.languageProvider) {
@@ -219,29 +216,10 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     const { history, absoluteRange } = this.props;
     const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
-    const result = await cloudwatchLanguageProvider.provideCompletionItems(
+    return await cloudwatchLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
       { history, absoluteRange, logGroupNames: selectedLogGroups.map(logGroup => logGroup.value!) }
     );
-
-    const tokens = editor?.value.data.get('tokens');
-    const queryUsesStatsCommand = tokens.find(
-      (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
-    );
-
-    // TEMP: Remove when logs/metrics unification is complete
-    if (queryUsesStatsCommand && exploreMode === ExploreMode.Logs) {
-      this.setState({
-        hint: {
-          message: 'You are trying to run a stats query in Logs mode. ',
-          fix: {
-            label: 'Switch to Metrics mode.',
-            action: this.switchToMetrics,
-          },
-        },
-      });
-    }
-    return result;
   };
 
   switchToMetrics = () => {
@@ -277,6 +255,27 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       invalidLogGroups: false,
     });
   };
+
+  checkForStatsQuery = debounce((value: Value) => {
+    console.log('checkForStatsQuery');
+    const tokens = value.data.get('tokens');
+    const queryUsesStatsCommand = tokens.find(
+      (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
+    );
+
+    // TEMP: Remove when logs/metrics unification is complete
+    if (queryUsesStatsCommand && this.props.exploreMode === ExploreMode.Logs) {
+      this.setState({
+        hint: {
+          message: 'You are trying to run a stats query in Logs mode. ',
+          fix: {
+            label: 'Switch to Metrics mode.',
+            action: this.switchToMetrics,
+          },
+        },
+      });
+    }
+  }, 250);
 
   render() {
     const { ExtraFieldElement, data, query, syntaxLoaded, datasource } = this.props;
@@ -355,6 +354,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               portalOrigin="cloudwatch"
               syntaxLoaded={syntaxLoaded}
               disabled={loadingLogGroups || selectedLogGroups.length === 0}
+              onRichValueChange={this.checkForStatsQuery}
             />
           </div>
           {ExtraFieldElement}

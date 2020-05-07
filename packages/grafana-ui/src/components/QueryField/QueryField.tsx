@@ -29,6 +29,7 @@ export interface QueryFieldProps {
   onRunQuery?: () => void;
   onBlur?: () => void;
   onChange?: (value: string) => void;
+  onRichValueChange?: (value: Value) => void;
   onClick?: (event: Event, editor: CoreEditor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
@@ -121,6 +122,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   onChange = (value: Value, runQuery?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
+    if (this.props.onRichValueChange) {
+      this.props.onRichValueChange(value);
+    }
 
     // Update local state with new value and optionally change value upstream.
     this.setState({ value }, () => {
@@ -143,7 +147,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     const { onChange } = this.props;
 
     if (onChange) {
-      onChange(Plain.serialize(this.state.value));
+      onChange(Plain.serialize(this.state.value), this.state.value);
     }
   };
 
