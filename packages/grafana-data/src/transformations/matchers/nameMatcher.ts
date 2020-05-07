@@ -2,6 +2,7 @@ import { Field, DataFrame } from '../../types/dataFrame';
 import { FieldMatcherID, FrameMatcherID } from './ids';
 import { FieldMatcherInfo, FrameMatcherInfo } from '../../types/transformations';
 import { stringToJsRegex } from '../../text/string';
+import { getFieldTitle } from '../../field/fieldState';
 
 // General Field matcher
 const fieldNameMacher: FieldMatcherInfo<string> = {
@@ -18,7 +19,7 @@ const fieldNameMacher: FieldMatcherInfo<string> = {
       console.error(e);
     }
     return (field: Field) => {
-      return regex.test(field.name);
+      return regex.test(getFieldTitle(field) ?? '');
     };
   },
 
