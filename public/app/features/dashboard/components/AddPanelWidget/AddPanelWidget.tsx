@@ -10,6 +10,7 @@ import config from 'app/core/config';
 import store from 'app/core/store';
 // Store
 import { updateLocation } from 'app/core/actions';
+import { addPanel } from 'app/features/dashboard/state/reducers';
 // Types
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -25,6 +26,7 @@ export interface OwnProps {
 }
 
 export interface DispatchProps {
+  addPanel: typeof addPanel;
   updateLocation: typeof updateLocation;
 }
 
@@ -53,7 +55,7 @@ const getCopiedPanelPlugins = () => {
   return _.sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation }) => {
+export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation, addPanel }) => {
   const theme = useTheme();
 
   const onCancelAddPanel = (evt: any) => {
@@ -137,7 +139,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
   );
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel, updateLocation };
 
 export const AddPanelWidget = connect(null, mapDispatchToProps)(AddPanelWidgetUnconnected);
 
