@@ -14,21 +14,20 @@ weight = 1
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user
 permissions and org memberships.
 
-## OAuth Integrations
+Here is a table showing all supported authentication providers and the features available for them. [Team sync]({{< relref "../enterprise/team-sync.md" >}}) and active sync are features only available in Grafana Enterprise.
 
-- [Google OAuth]({{< relref "google.md" >}})
-- [GitHub OAuth]({{< relref "github.md" >}})
-- [Gitlab OAuth]({{< relref "gitlab.md" >}})
-- [Generic OAuth]({{< relref "generic-oauth.md" >}}) (Okta2, BitBucket, Azure, OneLogin, Auth0)
+Provider | Support | Role mapping | Team sync<br>*(Enterprise only)* | Active sync<br>*(Enterprise only)*
+-------- | :-----: | :----------: | :-------: | :---------: 
+[Auth Proxy]({{< relref "auth-proxy.md" >}})       | X | - | v6.3+ | - 
+[Azure AD OAuth]({{< relref "azuread.md" >}})            | v6.7+ | X | v6.7+ | - 
+[Generic OAuth]({{< relref "generic-oauth.md" >}}) | X | v6.5+ | - | - 
+[GitHub OAuth]({{< relref "github.md" >}})         | X | - | v6.3+ | -
+[GitLab OAuth]({{< relref "gitlab.md" >}})         | X | - | v6.4+ | -
+[Google OAuth]({{< relref "google.md" >}})         | X | - | - | - 
+[LDAP]({{< relref "ldap.md" >}})                   | X | X | X | X
+[Okta OAuth]({{< relref "okta.md" >}})                   | v7.0+ | v7.0+ | v7.0+ | - 
+[SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | - 
 
-## LDAP integrations
-
-- [LDAP Authentication]({{< relref "ldap.md" >}}) (OpenLDAP, ActiveDirectory, etc)
-
-## Auth proxy
-
-- [Auth Proxy]({{< relref "auth-proxy.md" >}}) If you want to handle authentication outside Grafana using a reverse
-    proxy.
 
 ## Grafana Auth
 
