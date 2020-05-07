@@ -24,7 +24,7 @@ import {
 import { PanelModel } from './PanelModel';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
 import { cleanUpVariables } from '../../variables/state/variablesReducer';
-import { clearVariablesDashboardUId } from 'app/features/variables/state/dashboardIdReducer';
+import { clearVariablesDashboardUid } from 'app/features/variables/state/dashboardIdReducer';
 
 export function getDashboardPermissions(id: number, uid: string): ThunkResult<void> {
   return async dispatch => {
@@ -210,7 +210,7 @@ export const cleanUpUnCleanedDashboardStates = (currentDashboardId: string): Thu
 
     console.log('Cleaning up dashboard', uid);
     dispatch(cleanUpVariables());
-    dispatch(clearVariablesDashboardUId());
+    dispatch(clearVariablesDashboardUid());
     dispatch(toCollectionAction(cleanUpDashboard(), uid));
   }
 };

@@ -13,7 +13,7 @@ import { createConstantVariableAdapter } from 'app/features/variables/constant/a
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
 import { DashboardModel } from './DashboardModel';
-import { setVariablesDashboardUId } from 'app/features/variables/state/dashboardIdReducer';
+import { setVariablesDashboardUid } from 'app/features/variables/state/dashboardIdReducer';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -287,6 +287,6 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     if (!getConfig().featureToggles.newVariables) {
       return expect.assertions(0);
     }
-    expect(ctx.actions[3].type).toBe(setVariablesDashboardUId.type);
+    expect(ctx.actions[3].type).toBe(setVariablesDashboardUid.type);
   });
 });

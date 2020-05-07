@@ -10,15 +10,15 @@ const dashboardIdSlice = createSlice({
   name: 'templating/dashboardId',
   initialState,
   reducers: {
-    setVariablesDashboardUId: (state, action: PayloadAction<{ uid: string | undefined }>) => {
+    setVariablesDashboardUid: (state, action: PayloadAction<{ uid: string | undefined }>) => {
       state.uid = action.payload.uid;
     },
-    clearVariablesDashboardUId: (state, action: PayloadAction<undefined>) => {
+    clearVariablesDashboardUid: (state, action: PayloadAction<undefined>) => {
       state.uid = null;
     },
   },
 });
 
-export const { setVariablesDashboardUId, clearVariablesDashboardUId } = dashboardIdSlice.actions;
+export const { setVariablesDashboardUid, clearVariablesDashboardUid } = dashboardIdSlice.actions;
 
 export const dashboardIdReducer = dashboardIdSlice.reducer;
