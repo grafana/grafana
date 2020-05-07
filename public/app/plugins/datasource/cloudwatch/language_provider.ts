@@ -126,52 +126,15 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       (token: any) =>
         token.offsets.start <= value!.selection?.start?.offset && token.offsets.end >= value!.selection?.start?.offset
     )[0];
+
     const isFirstToken = curToken.prev === null || curToken.prev === undefined;
     const prevToken = prevNonWhitespaceToken(curToken);
-    const funcsWithFieldArgs = [
-      'avg',
-      'count',
-      'count_distinct',
-      'earliest',
-      'latest',
-      'sortsFirst',
-      'sortsLast',
-      'max',
-      'min',
-      'pct',
-      'stddev',
-      'ispresent',
-      'fromMillis',
-      'toMillis',
-      'isempty',
-      'isblank',
-      'isValidIp',
-      'isValidIpV4',
-      'isValidIpV6',
-      'isIpInSubnet',
-      'isIpv4InSubnet',
-      'isIpv6InSubnet',
-    ].map(funcName => funcName.toLowerCase());
 
-    if (curToken.content === '(' && prevToken != null) {
-      if (funcsWithFieldArgs.includes(prevToken.content.toLowerCase()) && prevToken.types.includes('function')) {
-        const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
-        return suggs;
-      }
+    if (isInsideFunctionParenthesis(curToken)) {
+      return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
     }
 
-    // if (prevToken === null) {
-    //   return {
-    //     suggestions: [],
-    //   };
-    // }
-
-    // if (prevToken) {
-    //   console.log(`Previous token: '${prevToken.content}'`);
-    // }
-
     const isCommandStart = isFirstToken || (!isFirstToken && prevToken?.types.includes('command-separator'));
-    //console.log(`Is command start? ${isCommandStart}`);
     if (isCommandStart) {
       return this.getCommandCompletionItems();
     } else if (!isFirstToken) {
@@ -189,6 +152,11 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       }
 
       const commandToken = this.findCommandToken(curToken);
+
+      console.log({
+        commandToken,
+        curToken,
+      });
 
       if (commandToken !== null) {
         const typeaheadOutput = await this.handleCommand(commandToken, curToken, context);
@@ -426,4 +394,49 @@ function prevNonWhitespaceToken(token: Token): Token | null {
   }
 
   return null;
+}
+
+const funcsWithFieldArgs = [
+  'avg',
+  'count',
+  'count_distinct',
+  'earliest',
+  'latest',
+  'sortsFirst',
+  'sortsLast',
+  'max',
+  'min',
+  'pct',
+  'stddev',
+  'ispresent',
+  'fromMillis',
+  'toMillis',
+  'isempty',
+  'isblank',
+  'isValidIp',
+  'isValidIpV4',
+  'isValidIpV6',
+  'isIpInSubnet',
+  'isIpv4InSubnet',
+  'isIpv6InSubnet',
+].map(funcName => funcName.toLowerCase());
+
+function isInsideFunctionParenthesis(curToken: Token) {
+  const prevToken = prevNonWhitespaceToken(curToken);
+
+  if (!prevToken) {
+    return false;
+  }
+
+  const parenthesisToken = curToken.content === '(' ? curToken : prevToken.content === '(' ? prevToken : undefined;
+  if (parenthesisToken) {
+    const maybeFunctionToken = prevNonWhitespaceToken(parenthesisToken);
+    if (maybeFunctionToken) {
+      return (
+        funcsWithFieldArgs.includes(maybeFunctionToken.content.toLowerCase()) &&
+        maybeFunctionToken.types.includes('function')
+      );
+    }
+  }
+  return false;
 }
