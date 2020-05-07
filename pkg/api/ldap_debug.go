@@ -224,7 +224,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	err = bus.Dispatch(upsertCmd)
 
 	if err != nil {
-		return Error(http.StatusInternalServerError, "Failed to udpate the user", err)
+		return Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
 
 	return Success("User synced successfully")
