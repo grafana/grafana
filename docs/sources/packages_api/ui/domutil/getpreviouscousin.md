@@ -5,7 +5,6 @@
 title = "getPreviousCousin"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## DOMUtil.getPreviousCousin() function

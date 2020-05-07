@@ -5,7 +5,6 @@
 title = "DataSourceHttpSettings"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceHttpSettings variable

@@ -5,7 +5,6 @@
 title = "DEFAULT_FIELD_DISPLAY_VALUES_LIMIT"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DEFAULT\_FIELD\_DISPLAY\_VALUES\_LIMIT variable

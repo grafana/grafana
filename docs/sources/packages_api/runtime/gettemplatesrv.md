@@ -5,7 +5,6 @@
 title = "getTemplateSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getTemplateSrv variable

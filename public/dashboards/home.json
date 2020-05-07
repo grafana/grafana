@@ -3,10 +3,23 @@
   "panels": [
     {
       "datasource": null,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "",
+      "transparent": true,
+      "type": "welcome"
+    },
+    {
+      "datasource": null,
       "folderId": 0,
       "gridPos": {
         "h": 15,
-        "w": 11,
+        "w": 12,
         "x": 0,
         "y": 4
       },
@@ -27,8 +40,8 @@
       "datasource": null,
       "gridPos": {
         "h": 15,
-        "w": 8,
-        "x": 11,
+        "w": 12,
+        "x": 12,
         "y": 4
       },
       "id": 4,
@@ -38,20 +51,6 @@
       },
       "title": "Latest from the blog",
       "type": "news"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 15,
-        "w": 5,
-        "x": 19,
-        "y": 4
-      },
-      "id": 123124,
-      "links": [],
-      "options": {},
-      "title": "Useful links",
-      "type": "homelinks"
     }
   ],
   "schemaVersion": 22,

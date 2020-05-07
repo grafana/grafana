@@ -5,7 +5,6 @@
 title = "PluginCssOptions"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## PluginCssOptions interface

@@ -5,7 +5,6 @@
 title = "@grafana/runtime"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## @grafana/runtime package
@@ -59,7 +58,7 @@ A library containing services, configurations etc. used to interact with the Gra
 |  [MetaAnalyticsEvent](./metaanalyticsevent/) | Describes meta analytics event with predefined [EchoEventType.MetaAnalytics](./runtime/echoeventtype/metaanalytics.md) type. |
 |  [PluginCssOptions](./plugincssoptions/) | Option to specify a plugin css that should be applied for the dark and the light theme. |
 |  [SizeMeta](./sizemeta/) | Describes a size with width/height |
-|  [TemplateSrv](./templatesrv/) | Via the TemplateSrv consumers get access to all the available template variables that can be used within the current active dashboard.<!-- -->For a more in-depth description visit: https://grafana.com/docs/grafana/latest/reference/templating |
+|  [TemplateSrv](./templatesrv/) | Via the TemplateSrv consumers get access to all the available template variables that can be used within the current active dashboard.<!-- -->For a more in-depth description visit: https://grafana.com/docs/grafana/latest/variables/templates-and-variables |
 
 ## Variables
 

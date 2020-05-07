@@ -29,21 +29,22 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 		return pc, ErrPluginNotFound
 	}
 
-	var jsonData json.RawMessage
-	var decryptedSecureJSONData map[string]string
+	jsonData := json.RawMessage{}
+	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
 	ps, err := hs.getCachedPluginSettings(pluginID, user)
 	if err != nil {
+		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
+		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
 		if err != models.ErrPluginSettingNotFound {
 			return pc, errutil.Wrap("Failed to get plugin settings", err)
 		}
+	} else {
 		jsonData, err = json.Marshal(ps.JsonData)
 		if err != nil {
 			return pc, errutil.Wrap("Failed to unmarshal plugin json data", err)
 		}
-		decryptedSecureJSONData = make(map[string]string)
-	} else {
 		decryptedSecureJSONData = ps.DecryptedValues()
 		updated = ps.Updated
 	}

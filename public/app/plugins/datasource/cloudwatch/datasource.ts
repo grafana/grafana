@@ -14,7 +14,6 @@ import {
   ScopedVars,
   TimeRange,
   DataFrame,
-  resultsToDataFrames,
   DataQueryResponse,
   LoadingState,
   toDataFrame,
@@ -22,7 +21,7 @@ import {
   FieldType,
   LogRowModel,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
@@ -239,8 +238,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
     const dataFrames = await this.makeLogActionRequest('DescribeLogGroups', [params]).toPromise();
 
-    const logGroupNames = dataFrames[0].fields[0].values.toArray();
-    return logGroupNames && logGroupNames.length > 0 ? logGroupNames : [];
+    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
+    return logGroupNames;
   }
 
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
@@ -301,7 +300,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   getPeriod(target: CloudWatchMetricsQuery, options: any) {
-    let period = this.templateSrv.replace(target.period, options.scopedVars);
+    let period = this.templateSrv.replace(target.period, options.scopedVars) as any;
     if (period && period.toLowerCase() !== 'auto') {
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
@@ -471,7 +470,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   makeLogActionRequest(
     subtype: LogAction,
     queryParams: any[],
-    scopedVars?: any,
+    scopedVars?: ScopedVars,
     makeReplacements = true
   ): Observable<DataFrame[]> {
     const range = this.timeSrv.timeRange();
@@ -491,13 +490,16 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     };
 
     if (makeReplacements) {
-      requestParams.queries.forEach(
-        query => (query.region = this.replace(this.getActualRegion(this.defaultRegion), scopedVars, true, 'region'))
-      );
+      requestParams.queries.forEach(query => {
+        query.region = this.replace(query.region, scopedVars, true, 'region');
+        query.region = this.getActualRegion(query.region);
+      });
     }
 
+    const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
+
     return from(this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams)).pipe(
-      map(response => resultsToDataFrames(response)),
+      map(response => resultsToDataFrames({ data: response })),
       catchError(err => {
         if (err.data?.error) {
           throw err.data.error;
@@ -784,7 +786,12 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }, {});
   }
 
-  replace(target: string, scopedVars: ScopedVars, displayErrorIfIsMultiTemplateVariable?: boolean, fieldName?: string) {
+  replace(
+    target: string,
+    scopedVars: ScopedVars | undefined,
+    displayErrorIfIsMultiTemplateVariable?: boolean,
+    fieldName?: string
+  ) {
     if (displayErrorIfIsMultiTemplateVariable) {
       const variable = this.templateSrv
         .getVariables()

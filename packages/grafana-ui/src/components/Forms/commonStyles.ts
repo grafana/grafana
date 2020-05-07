@@ -25,12 +25,14 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     &:-webkit-autofill:hover {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
+      -webkit-text-fill-color: ${colors.formInputText} !important;
     }
 
     &:-webkit-autofill:focus {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
       box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline},
         inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
+      -webkit-text-fill-color: ${colors.formInputText} !important;
     }
 
     &:hover {

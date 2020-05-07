@@ -23,6 +23,7 @@ export interface DashboardSection {
   selected?: boolean;
   type: DashboardSearchItemType;
   slug?: string;
+  itemsFetching?: boolean;
 }
 
 export interface DashboardSectionItem {

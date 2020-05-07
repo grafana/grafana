@@ -5,7 +5,6 @@
 title = "grafanaDataFrameToArrowTable"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## grafanaDataFrameToArrowTable() function

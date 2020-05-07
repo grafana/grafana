@@ -6,6 +6,7 @@ import {
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
+  getFieldTitle,
 } from '@grafana/data';
 import { HorizontalGroup } from '../Layout/Layout';
 import { Input } from '../Input/Input';
@@ -45,6 +46,12 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     this.initOptions();
   }
 
+  componentDidUpdate(oldProps: FilterByNameTransformerEditorProps) {
+    if (this.props.input !== oldProps.input) {
+      this.initOptions();
+    }
+  }
+
   private initOptions() {
     const { input, options } = this.props;
     const configuredOptions = options.include ? options.include : [];
@@ -54,10 +61,11 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
     for (const frame of input) {
       for (const field of frame.fields) {
-        let v = byName[field.name];
+        const id = getFieldTitle(field, frame, input);
+        let v = byName[id];
         if (!v) {
-          v = byName[field.name] = {
-            name: field.name,
+          v = byName[id] = {
+            name: id,
             count: 0,
           };
           allNames.push(v);
@@ -147,7 +155,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     return (
       <div className="gf-form-inline">
         <div className="gf-form gf-form--grow">
-          <div className="gf-form-label width-8">Field name</div>
+          <div className="gf-form-label width-8">Identifier</div>
           <HorizontalGroup spacing="xs" align="flex-start" wrap>
             <Field
               invalid={!isRegexValid}
@@ -190,5 +198,5 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<Fil
   editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,
   name: 'Filter by name',
-  description: 'Filter fields by name',
+  description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
 };
