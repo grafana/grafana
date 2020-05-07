@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
+import { default as lodashDefaults } from 'lodash/defaults';
 
 import { VariableModel, VariableOption, VariableType, VariableWithOptions } from '../variable';
 import { AddVariable, ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState, VariablePayload } from './types';
@@ -16,9 +17,10 @@ const sharedReducerSlice = createSlice({
   reducers: {
     addVariable: (state: VariablesState, action: PayloadAction<VariablePayload<AddVariable>>) => {
       const uuid = action.payload.uuid ?? v4(); // for testing purposes we can call this with an uuid
+      const initialState = cloneDeep(variableAdapters.get(action.payload.type).initialState);
+      const model = cloneDeep(action.payload.data.model);
       state[uuid] = {
-        ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
-        ...action.payload.data.model,
+        ...lodashDefaults({}, model, initialState),
       };
       state[uuid].uuid = uuid;
       state[uuid].index = action.payload.data.index;

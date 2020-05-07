@@ -162,7 +162,7 @@ describe('shared actions', () => {
         ${['A', 'B', 'C']} | ${'B'}       | ${'C'}       | ${'B'}
         ${['A', 'B', 'C']} | ${'X'}       | ${undefined} | ${'A'}
         ${['A', 'B', 'C']} | ${'X'}       | ${'C'}       | ${'C'}
-        ${undefined}       | ${'B'}       | ${undefined} | ${'A'}
+        ${undefined}       | ${'B'}       | ${undefined} | ${'should not dispatch setCurrentVariableValue'}
       `('then correct actions are dispatched', async ({ withOptions, withCurrent, defaultValue, expected }) => {
         variableAdapters.set('custom', createCustomVariableAdapter());
         let custom;

@@ -242,7 +242,9 @@ export const validateVariableSelectionState = (
     // 3. use the first value
     if (variableInState.options) {
       const option = variableInState.options[0];
-      return setValue(variableInState, option);
+      if (option) {
+        return setValue(variableInState, option);
+      }
     }
 
     // 4... give up
