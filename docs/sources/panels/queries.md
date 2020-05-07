@@ -72,15 +72,15 @@ In addition to the data sources that you have configured in your Grafana, there 
   * You cannot change an existing query to use the Mixed Data Source.
 * **Dashboard -** Select this to use a result set from another panel in the same dashboard.
 
-### Panel-level data source options
+### Data source query options
 
-Click **Options** next to the data source selector to see settings for your selected data source. Changes you make here affect only this panel.
+Click **Options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made on this panel.
 
 {{< docs-imagebox img="/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="400px" >}}
 
 Grafana sets defaults that are shown in dark gray text. Changes are displayed in white text. To return a field to the default setting, delete the white text from the field.
 
-Panel data source options:
+Panel data source query options:
 
 * **Max data points -**
 * **Min interval -** 
