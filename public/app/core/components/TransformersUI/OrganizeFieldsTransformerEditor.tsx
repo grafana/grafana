@@ -8,6 +8,7 @@ import {
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
+  getFieldTitle,
 } from '@grafana/data';
 import { stylesFactory, useTheme, Input, IconButton } from '@grafana/ui';
 
@@ -69,6 +70,11 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
     },
     [onChange, fieldNames, renameByName]
   );
+
+  // Show warning that we only apply the first frame
+  if (input.length > 1) {
+    return <div>Organize fields only works with a single frame. Consider applying a join transformation first.</div>;
+  }
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -209,10 +215,11 @@ export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => 
       }
 
       return frame.fields.reduce((names, field) => {
-        names[field.name] = null;
+        const t = getFieldTitle(field, frame, input);
+        names[t] = true;
         return names;
       }, names);
-    }, {} as Record<string, null>)
+    }, {} as Record<string, boolean>)
   );
 };
 
@@ -220,7 +227,7 @@ export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<Organiz
   id: DataTransformerID.organize,
   editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,
-  name: 'Change order, hide and rename',
+  name: 'Organize fields',
   description:
-    "Allows the user to re-order, hide, or rename columns. Useful when data source doesn't allow overrides for visualizing data.",
+    "Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.",
 };
