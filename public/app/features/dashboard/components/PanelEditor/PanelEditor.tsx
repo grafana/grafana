@@ -264,7 +264,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 icon="cog"
                 onClick={this.onOpenDashboardSettings}
                 variant="secondary"
-                title="Open dashboad settings"
+                title="Open dashboard settings"
               />
               <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
                 Discard

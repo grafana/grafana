@@ -377,12 +377,12 @@ $panel-grid-placeholder-bg: lighten(${theme.palette.blue95}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue95};
 
 // logs
-$logs-color-unkown: $gray-5;
+$logs-color-unknown: $gray-5;
 
 // toggle-group
 $button-toggle-group-btn-active-bg: $brand-primary;
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $white;
-$button-toggle-group-btn-seperator-border: 1px solid $gray-6;
+$button-toggle-group-btn-separator-border: 1px solid $gray-6;
 
 $vertical-resize-handle-bg: $gray-4;
 $vertical-resize-handle-dots: $gray-3;

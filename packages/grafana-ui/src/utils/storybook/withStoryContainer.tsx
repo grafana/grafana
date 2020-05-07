@@ -47,7 +47,7 @@ export const withStoryContainer = (story: RenderFunction) => {
   const CONTAINER_GROUP = 'Container options';
   // ---
   const containerBoundary = boolean('Show container boundary', false, CONTAINER_GROUP);
-  const fullWidthContainter = boolean('Full width container', false, CONTAINER_GROUP);
+  const fullWidthContainer = boolean('Full width container', false, CONTAINER_GROUP);
   const containerWidth = number(
     'Container width',
     300,
@@ -72,7 +72,7 @@ export const withStoryContainer = (story: RenderFunction) => {
   );
   return (
     <StoryContainer
-      width={fullWidthContainter ? undefined : containerWidth}
+      width={fullWidthContainer ? undefined : containerWidth}
       height={containerHeight}
       showBoundaries={containerBoundary}
     >

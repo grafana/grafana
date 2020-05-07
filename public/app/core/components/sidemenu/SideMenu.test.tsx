@@ -35,7 +35,7 @@ const setup = (propOverrides?: object) => {
       loginUrl: '',
       user: {},
       mainLinks: [],
-      bottomeLinks: [],
+      bottomLinks: [],
       isSignedIn: false,
     },
     propOverrides

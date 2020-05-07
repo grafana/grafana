@@ -32,7 +32,7 @@
 			<gf-form-checkbox class="gf-form" label="TLS Client Auth" label-class="width-10"
 				checked="ctrl.current.jsonData.tlsAuth" switch-class="max-width-6"></gf-form-checkbox>
 			<gf-form-checkbox class="gf-form" label="With CA Cert" tooltip="Needed for
-				verifing self-signed TLS Certs" checked="ctrl.current.jsonData.tlsAuthWithCACert" label-class="width-11"
+				verifying self-signed TLS Certs" checked="ctrl.current.jsonData.tlsAuthWithCACert" label-class="width-11"
 				switch-class="max-width-6"></gf-form-checkbox>
 		</div>
 		<div class="gf-form-inline">
@@ -105,7 +105,7 @@
 			The database user should only be granted SELECT permissions on the specified database &amp; tables you want to query.
 			Grafana does not validate that queries are safe so queries can contain any SQL statement. For example, statements
 			like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect against this we
-			<strong>Highly</strong> recommmend you create a specific MySQL user with restricted permissions.
+			<strong>Highly</strong> recommend you create a specific MySQL user with restricted permissions.
 
 			Checkout the <a class="external-link" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">MySQL Data Source Docs</a> for more information.
 		</p>

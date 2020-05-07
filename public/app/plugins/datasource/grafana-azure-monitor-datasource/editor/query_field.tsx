@@ -264,8 +264,8 @@ class QueryField extends React.Component<any, any> {
     }
 
     // No suggestions or blur, remove menu
-    const hasSuggesstions = suggestions && suggestions.length > 0;
-    if (!hasSuggesstions) {
+    const hasSuggestions = suggestions && suggestions.length > 0;
+    if (!hasSuggestions) {
       menu.removeAttribute('style');
       return;
     }
@@ -299,8 +299,8 @@ class QueryField extends React.Component<any, any> {
   renderMenu = () => {
     const { portalPrefix } = this.props;
     const { suggestions } = this.state;
-    const hasSuggesstions = suggestions && suggestions.length > 0;
-    if (!hasSuggesstions) {
+    const hasSuggestions = suggestions && suggestions.length > 0;
+    if (!hasSuggestions) {
       return null;
     }
 

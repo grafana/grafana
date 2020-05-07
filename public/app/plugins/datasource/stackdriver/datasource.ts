@@ -45,16 +45,16 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         }
         const unit = this.resolvePanelUnitFromTargets(options.targets);
         queryRes.series.forEach((series: any) => {
-          let timeSerie: any = {
+          let timeSeries: any = {
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
           };
           if (unit) {
-            timeSerie = { ...timeSerie, unit };
+            timeSeries = { ...timeSeries, unit };
           }
-          result.push(timeSerie);
+          result.push(timeSeries);
         });
       });
       return { data: result };

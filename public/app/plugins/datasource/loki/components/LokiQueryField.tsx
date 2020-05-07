@@ -21,7 +21,7 @@ export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = props => {
       /**
        * setActiveOption name is intentional. Because of the way rc-cascader requests additional data
        * https://github.com/react-component/cascader/blob/master/src/Cascader.jsx#L165
-       * we are notyfing useLokiSyntax hook, what the active option is, and then it's up to the hook logic
+       * we are notifying useLokiSyntax hook, what the active option is, and then it's up to the hook logic
        * to fetch data of options that aren't fetched yet
        */
       onLoadOptions={setActiveOption}

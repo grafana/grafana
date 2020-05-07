@@ -15,13 +15,13 @@ func TestAlertingModelTest(t *testing.T) {
 
 		rule1 := &Alert{
 			Settings: json1,
-			Name:     "Namn",
+			Name:     "Name",
 			Message:  "Message",
 		}
 
 		rule2 := &Alert{
 			Settings: json2,
-			Name:     "Namn",
+			Name:     "Name",
 			Message:  "Message",
 		}
 

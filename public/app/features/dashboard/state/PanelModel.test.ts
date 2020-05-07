@@ -147,9 +147,9 @@ describe('PanelModel', () => {
     });
 
     it('should apply field config defaults', () => {
-      // default unit is overriden by model
+      // default unit is overridden by model
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
-      // default decimals are aplied
+      // default decimals are applied
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.decimals).toBe(2);
     });
 
@@ -325,7 +325,7 @@ describe('PanelModel', () => {
         expect(model.gridPos.h).toBe(10);
       });
 
-      it('Should remove old angular panel specfic props', () => {
+      it('Should remove old angular panel specific props', () => {
         model.axes = [{ prop: 1 }];
         model.thresholds = [];
 

@@ -183,7 +183,7 @@ export interface ExploreItemState {
   queryResponse: PanelData;
 
   /**
-   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
+   * Panel Id that is set if we come to explore from a panel. Used so we can get back to it and optionally modify the
    * query of that panel.
    */
   originPanelId?: number;

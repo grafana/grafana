@@ -98,7 +98,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     for (const series of data) {
       if (series.meta && series.meta.custom) {
         for (const metaItem of series.meta.custom.seriesMetaList as MetricTankSeriesMeta[]) {
-          // key is to dedupe as many series will have identitical meta
+          // key is to dedupe as many series will have identical meta
           const key = `${metaItem['schema-name']}-${metaItem['archive-read']}`;
 
           if (seriesMetas[key]) {

@@ -84,7 +84,7 @@ export const ElasticDetails = (props: Props) => {
                 <Select
                   options={esVersions}
                   onChange={option => {
-                    const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
+                    const maxConcurrentShardRequests = getMaxConcurrentShardRequestOrDefault(
                       value.jsonData.maxConcurrentShardRequests,
                       option.value
                     );
@@ -205,7 +205,7 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number, version: number): number {
+function getMaxConcurrentShardRequestOrDefault(maxConcurrentShardRequests: number, version: number): number {
   if (maxConcurrentShardRequests === 5 && version < 70) {
     return 256;
   }

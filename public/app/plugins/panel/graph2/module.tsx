@@ -20,7 +20,7 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
       })
       .addBooleanSwitch({
         path: 'graph.showPoints',
-        name: 'Show poins',
+        name: 'Show points',
         description: '',
         defaultValue: false,
       })

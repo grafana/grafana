@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { Component } from 'react';
 import { dateMath, GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';

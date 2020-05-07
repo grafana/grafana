@@ -57,8 +57,8 @@ describe('LiveLogs', () => {
   });
 });
 
-const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overides.uid || '1';
+const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
+  const uid = overrides.uid || '1';
   const entry = `log message ${uid}`;
   return {
     uid,
@@ -75,6 +75,6 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
     timeEpochNs: '1000000',
     timeLocal: '',
     timeUtc: '',
-    ...overides,
+    ...overrides,
   };
 };

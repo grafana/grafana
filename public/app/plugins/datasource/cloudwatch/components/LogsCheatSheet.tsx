@@ -27,11 +27,11 @@ const CLIQ_EXAMPLES: QueryExample[] = [
         title: 'Determine the amount of overprovisioned memory',
         expr: stripIndent`
         filter @type = "REPORT" |
-        stats max(@memorySize / 1024 / 1024) as provisonedMemoryMB,
+        stats max(@memorySize / 1024 / 1024) as provisionedMemoryMB,
               min(@maxMemoryUsed / 1024 / 1024) as smallestMemoryRequestMB,
               avg(@maxMemoryUsed / 1024 / 1024) as avgMemoryUsedMB,
               max(@maxMemoryUsed / 1024 / 1024) as maxMemoryUsedMB,
-              provisonedMemoryMB - maxMemoryUsedMB as overProvisionedMB`,
+              provisionedMemoryMB - maxMemoryUsedMB as overProvisionedMB`,
       },
       {
         title: 'Find the most expensive requests',

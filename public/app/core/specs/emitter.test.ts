@@ -5,7 +5,7 @@ const testEvent = eventFactory('test');
 
 describe('Emitter', () => {
   describe('given 2 subscribers', () => {
-    it('should notfiy subscribers', () => {
+    it('should notify subscribers', () => {
       const events = new Emitter();
       let sub1Called = false;
       let sub2Called = false;

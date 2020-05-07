@@ -102,6 +102,6 @@ export class PanelCtrl {
     this.events.emit(PanelEvents.render, payload);
   }
 
-  // overriden from react
+  // overridden from react
   onPluginTypeChange = (plugin: PanelPluginMeta) => {};
 }

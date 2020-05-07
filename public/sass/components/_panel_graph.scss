@@ -321,7 +321,7 @@
   top: 50%;
   left: 8px;
   transform: translateX(-50%) translateY(-50%) rotate(-90deg);
-  // this is needed for phantomsjs 2.1
+  // this is needed for phantomjs 2.1
   -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
 }
 
@@ -329,7 +329,7 @@
   top: 50%;
   right: 8px;
   transform: translateX(50%) translateY(-50%) rotate(90deg);
-  // this is needed for phantomsjs 2.1
+  // this is needed for phantomjs 2.1
   -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 

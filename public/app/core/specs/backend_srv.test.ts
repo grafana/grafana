@@ -8,7 +8,7 @@ import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { CoreEvents } from '../../types';
 
-const getTestContext = (overides?: object) => {
+const getTestContext = (overrides?: object) => {
   const defaults = {
     data: { test: 'hello world' },
     ok: true,
@@ -20,7 +20,7 @@ const getTestContext = (overides?: object) => {
     type: 'basic',
     url: 'http://localhost:3000/api/some-mock',
   };
-  const props = { ...defaults, ...overides };
+  const props = { ...defaults, ...overrides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
   const fromFetchMock = jest.fn().mockImplementation(() => {
     const mockedResponse = {

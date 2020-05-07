@@ -52,7 +52,7 @@ import { getDefaultVariableAdapters, variableAdapters } from './features/variabl
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
 
-// add move to lodash for backward compatabiltiy
+// add move to lodash for backward compatibility
 // @ts-ignore
 _.move = (array: [], fromIndex: number, toIndex: number) => {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
@@ -113,7 +113,7 @@ export class GrafanaApp {
         $httpProvider: angular.IHttpProvider,
         $provide: angular.auto.IProvideService
       ) => {
-        // pre assing bindings before constructor calls
+        // pre assign bindings before constructor calls
         $compileProvider.preAssignBindingsEnabled(true);
 
         if (config.buildInfo.env !== 'development') {

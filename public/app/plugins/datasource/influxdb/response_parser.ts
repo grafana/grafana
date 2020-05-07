@@ -16,8 +16,8 @@ export default class ResponseParser {
       normalizedQuery.indexOf('show field keys') >= 0 || normalizedQuery.indexOf('show retention policies') >= 0;
 
     const res = {};
-    _.each(influxResults.series, serie => {
-      _.each(serie.values, value => {
+    _.each(influxResults.series, series => {
+      _.each(series.values, value => {
         if (_.isArray(value)) {
           // In general, there are 2 possible shapes for the returned value.
           // The first one is a two-element array,

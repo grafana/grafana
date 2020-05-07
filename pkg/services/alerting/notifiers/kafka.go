@@ -64,7 +64,7 @@ type KafkaNotifier struct {
 func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	state := evalContext.Rule.State
 
-	customData := triggMetrString
+	customData := triggeredMetricsString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}

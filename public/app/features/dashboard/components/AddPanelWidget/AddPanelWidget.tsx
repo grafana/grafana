@@ -148,7 +148,7 @@ interface AddPanelWidgetHandleProps {
 }
 const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ onCancel }) => {
   const theme = useTheme();
-  const styles = getAddPanelWigetHandleStyles(theme);
+  const styles = getAddPanelWidgetHandleStyles(theme);
   return (
     <div className={cx(styles.handle, 'grid-drag-handle')}>
       <IconButton name="times" onClick={onCancel} surface="header" className="add-panel-widget__close" />
@@ -207,7 +207,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
+const getAddPanelWidgetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     handle: css`
       position: absolute;

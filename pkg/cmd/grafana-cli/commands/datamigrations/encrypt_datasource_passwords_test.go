@@ -48,7 +48,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	//run migration
 	c, err := commandstest.NewCliContext(map[string]string{})
 	require.Nil(t, err)
-	err = EncryptDatasourcePaswords(c, sqlstore)
+	err = EncryptDatasourcePasswords(c, sqlstore)
 	assert.Nil(t, err)
 
 	//verify that no datasources still have password or basic_auth

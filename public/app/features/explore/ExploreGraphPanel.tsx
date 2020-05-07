@@ -140,7 +140,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               onSeriesToggle={onSeriesToggle}
               onHorizontalRegionSelected={this.onChangeTime}
             >
-              {/* For logs we are using mulit mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
+              {/* For logs we are using multi mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
               <Chart.Tooltip mode={showBars ? 'multi' : 'single'} />
             </GraphWithLegend>
           );

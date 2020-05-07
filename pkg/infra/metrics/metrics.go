@@ -111,7 +111,7 @@ var (
 	// MDataSourceProxyReqTimer is a metric summary for dataproxy request duration
 	MDataSourceProxyReqTimer prometheus.Summary
 
-	// MAlertingExecutionTime is a metric summary of alert exeuction duration
+	// MAlertingExecutionTime is a metric summary of alert execution duration
 	MAlertingExecutionTime prometheus.Summary
 
 	// MRenderingSummary is a metric summary for image rendering request duration
@@ -162,7 +162,7 @@ var (
 	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
 
-	grafanPluginBuildInfoDesc *prometheus.GaugeVec
+	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
 )
 
 func init() {
@@ -389,7 +389,7 @@ func init() {
 
 	MAlertingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "alerting_execution_time_milliseconds",
-		Help:       "summary of alert exeuction duration",
+		Help:       "summary of alert execution duration",
 		Objectives: objectiveMap,
 		Namespace:  ExporterName,
 	})
@@ -478,7 +478,7 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
 
-	grafanPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	grafanaPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
 		Namespace: ExporterName,
@@ -496,7 +496,7 @@ func SetBuildInformation(version, revision, branch string) {
 }
 
 func SetPluginBuildInformation(pluginID, pluginType, version string) {
-	grafanPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version).Set(1)
+	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version).Set(1)
 }
 
 func initMetricVars() {
@@ -549,7 +549,7 @@ func initMetricVars() {
 		StatsTotalActiveAdmins,
 		StatsTotalDataSources,
 		grafanaBuildVersion,
-		grafanPluginBuildInfoDesc,
+		grafanaPluginBuildInfoDesc,
 	)
 
 }

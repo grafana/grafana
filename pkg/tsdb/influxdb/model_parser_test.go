@@ -91,7 +91,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
             }
           ]
         ],
-        "alias": "serie alias",
+        "alias": "series alias",
         "tags": [
           {
             "key": "datacenter",
@@ -118,7 +118,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(len(res.Tags), ShouldEqual, 2)
 			So(res.Tz, ShouldEqual, "Europe/Paris")
 			So(res.Interval, ShouldEqual, time.Second*20)
-			So(res.Alias, ShouldEqual, "serie alias")
+			So(res.Alias, ShouldEqual, "series alias")
 		})
 
 		Convey("can part raw query json model", func() {
@@ -140,7 +140,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
         ],
         "interval": ">10s",
         "policy": "default",
-        "query": "RawDummieQuery",
+        "query": "RawDummyQuery",
         "rawQuery": true,
         "refId": "A",
         "resultFormat": "time_series",
@@ -171,7 +171,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 
 			res, err := parser.Parse(modelJson, dsInfo)
 			So(err, ShouldBeNil)
-			So(res.RawQuery, ShouldEqual, "RawDummieQuery")
+			So(res.RawQuery, ShouldEqual, "RawDummyQuery")
 			So(len(res.GroupBy), ShouldEqual, 2)
 			So(len(res.Selects), ShouldEqual, 1)
 			So(len(res.Tags), ShouldEqual, 0)

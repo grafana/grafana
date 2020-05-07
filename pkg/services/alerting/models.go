@@ -36,7 +36,7 @@ type ResultLogEntry struct {
 	Data    interface{}
 }
 
-// EvalMatch represents the serie violating the threshold.
+// EvalMatch represents the series violating the threshold.
 type EvalMatch struct {
 	Value  null.Float        `json:"value"`
 	Metric string            `json:"metric"`

@@ -277,7 +277,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
       let unit;
       if (/time/i.test(label) && value) {
         unit = 's';
-      } else if (/bytes.*persecond/i.test(label)) {
+      } else if (/bytes.*perSecond/i.test(label)) {
         unit = 'Bps';
       } else if (/bytes/i.test(label)) {
         unit = 'decbytes';

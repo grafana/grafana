@@ -80,7 +80,7 @@ export const Table: FC<Props> = memo((props: Props) => {
       return buffer;
     }
 
-    // For arrow tables, the `toArray` implementation is expensive and akward *especially* for timestamps
+    // For arrow tables, the `toArray` implementation is expensive and awkward *especially* for timestamps
     return Array(data.length).fill(0);
   }, [data]);
 

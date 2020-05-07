@@ -84,7 +84,7 @@ async function link(scope: any, elem: any, attrs: any) {
 
   // Set options
   codeEditor.setOptions(editorOptions);
-  // disable depreacation warning
+  // disable depreciation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
   (codeEditor.renderer as any).setScrollMargin(10, 10);

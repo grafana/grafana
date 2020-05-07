@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { PureComponent } from 'react';
 
 // Utils & Services

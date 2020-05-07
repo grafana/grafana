@@ -152,7 +152,7 @@ describe('runRequest', () => {
       });
     });
 
-    it('should emit 3 seperate results', () => {
+    it('should emit 3 separate results', () => {
       expect(ctx.results.length).toBe(3);
     });
 

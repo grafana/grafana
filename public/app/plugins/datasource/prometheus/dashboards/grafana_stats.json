@@ -984,7 +984,7 @@
           "refId": "A",
           "step": 8,
           "target": "select metric",
-          "type": "timeserie"
+          "type": "timeseries"
         },
         {
           "expr": "sum(process_resident_memory_bytes{job=\"grafana\"})",

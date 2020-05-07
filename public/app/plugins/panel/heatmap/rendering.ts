@@ -20,7 +20,7 @@ import { CoreEvents } from 'app/types';
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
   CARD_ROUND = 0,
-  DATA_RANGE_WIDING_FACTOR = 1.2,
+  DATA_RANGE_WIDENING_FACTOR = 1.2,
   DEFAULT_X_TICK_SIZE_PX = 100,
   DEFAULT_Y_TICK_SIZE_PX = 50,
   X_AXIS_TICK_PADDING = 10,
@@ -58,7 +58,7 @@ export class HeatmapRenderer {
   selection: any;
   padding: any;
   margin: any;
-  dataRangeWidingFactor: number;
+  dataRangeWideningFactor: number;
   constructor(private scope: any, private elem: any, attrs: any, private ctrl: any) {
     // $heatmap is JQuery object, but heatmap is D3
     this.$heatmap = this.elem.find('.heatmap-panel');
@@ -72,7 +72,7 @@ export class HeatmapRenderer {
 
     this.padding = { left: 0, right: 0, top: 0, bottom: 0 };
     this.margin = { left: 25, right: 15, top: 10, bottom: 20 };
-    this.dataRangeWidingFactor = DATA_RANGE_WIDING_FACTOR;
+    this.dataRangeWideningFactor = DATA_RANGE_WIDENING_FACTOR;
 
     this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
 
@@ -246,17 +246,17 @@ export class HeatmapRenderer {
       .remove();
   }
 
-  // Wide Y values range and anjust to bucket size
+  // Wide Y values range and adjust to bucket size
   wideYAxisRange(min: number, max: number, tickInterval: number) {
-    const yWiding = (max * (this.dataRangeWidingFactor - 1) - min * (this.dataRangeWidingFactor - 1)) / 2;
+    const yWidening = (max * (this.dataRangeWideningFactor - 1) - min * (this.dataRangeWideningFactor - 1)) / 2;
     let yMin, yMax;
 
     if (tickInterval === 0) {
-      yMax = max * this.dataRangeWidingFactor;
-      yMin = min - min * (this.dataRangeWidingFactor - 1);
+      yMax = max * this.dataRangeWideningFactor;
+      yMin = min - min * (this.dataRangeWideningFactor - 1);
     } else {
-      yMax = Math.ceil((max + yWiding) / tickInterval) * tickInterval;
-      yMin = Math.floor((min - yWiding) / tickInterval) * tickInterval;
+      yMax = Math.ceil((max + yWidening) / tickInterval) * tickInterval;
+      yMin = Math.floor((min - yWidening) / tickInterval) * tickInterval;
     }
 
     // Don't wide axis below 0 if all values are positive

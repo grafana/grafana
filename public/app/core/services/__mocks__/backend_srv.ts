@@ -1,5 +1,5 @@
 /**
- * Creates a pretty bogus prom response. Definitelly needs more work but right now we do not test the contents of the
+ * Creates a pretty bogus prom response. Definitely needs more work but right now we do not test the contents of the
  * messages anyway.
  */
 function makePromResponse() {

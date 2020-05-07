@@ -166,7 +166,7 @@ export class AlertTabCtrl {
   }
 
   removeNotification(an: any) {
-    // remove notifiers refeered to by id and uid to support notifiers added
+    // remove notifiers referred to by id and uid to support notifiers added
     // before and after we added support for uid
     _.remove(this.alert.notifications, (n: any) => n.uid === an.uid);
     _.remove(this.alertNotifications, (n: any) => n.uid === an.uid);
@@ -396,7 +396,7 @@ export class AlertTabCtrl {
 
   addCondition(type: string) {
     const condition = getDefaultCondition();
-    // add to persited model
+    // add to persisted model
     this.alert.conditions.push(condition);
     // add to view model
     this.conditionModels.push(this.buildConditionModel(condition));

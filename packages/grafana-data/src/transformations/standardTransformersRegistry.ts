@@ -8,7 +8,7 @@ export interface TransformerUIProps<T> {
    */
   options: T;
   /**
-   * Pre-transform data rames
+   * Pre-transform data frames
    */
   input: DataFrame[];
   onChange: (options: T) => void;

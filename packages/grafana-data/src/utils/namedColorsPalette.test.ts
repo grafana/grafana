@@ -38,7 +38,7 @@ describe('colors', () => {
       expect(getColorByName('aruba-sunshine')).toBeUndefined();
     });
 
-    it('returns color definiton for known color', () => {
+    it('returns color definition for known color', () => {
       expect(getColorByName(SemiDarkBlue.name)).toBe(SemiDarkBlue);
     });
   });

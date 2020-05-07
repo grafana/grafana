@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { Component } from 'react';
 
 // Types

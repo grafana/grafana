@@ -13,7 +13,7 @@ interface ValueFormatTest {
 }
 
 const formatTests: ValueFormatTest[] = [
-  // Currancy
+  // Currency
   { id: 'currencyUSD', decimals: 2, value: 1532.82, result: '$1.53K' },
   { id: 'currencyKRW', decimals: 2, value: 1532.82, result: '₩1.53K' },
 

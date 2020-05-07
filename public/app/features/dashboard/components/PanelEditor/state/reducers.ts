@@ -26,7 +26,7 @@ export interface PanelEditorUIState {
 }
 
 export interface PanelEditorState {
-  /* These are functions as they are mutaded later on and redux toolkit will Object.freeze state so
+  /* These are functions as they are mutated later on and redux toolkit will Object.freeze state so
    * we need to store these using functions instead */
   getSourcePanel: () => PanelModel;
   getPanel: () => PanelModel;

@@ -177,7 +177,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: 1000 });
   };
 
-  renderTopSection(styles: QueriesTabStyls) {
+  renderTopSection(styles: QueriesTabStyles) {
     const { panel } = this.props;
     const { dataSourceItem, data, dataSource } = this.state;
 
@@ -369,4 +369,4 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-type QueriesTabStyls = ReturnType<typeof getStyles>;
+type QueriesTabStyles = ReturnType<typeof getStyles>;

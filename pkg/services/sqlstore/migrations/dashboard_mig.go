@@ -42,7 +42,7 @@ func addDashboardMigration(mg *Migrator) {
 	}
 
 	mg.AddMigration("create dashboard_tag table", NewAddTableMigration(dashboardTagV1))
-	mg.AddMigration("add unique index dashboard_tag.dasboard_id_term", NewAddIndexMigration(dashboardTagV1, dashboardTagV1.Indices[0]))
+	mg.AddMigration("add unique index dashboard_tag.dashboard_id_term", NewAddIndexMigration(dashboardTagV1, dashboardTagV1.Indices[0]))
 
 	// ---------------------
 	// account -> org changes

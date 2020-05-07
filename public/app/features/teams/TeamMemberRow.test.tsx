@@ -68,7 +68,7 @@ describe('Functions', () => {
     expect(instance.props.removeTeamMember).toHaveBeenCalledWith(1);
   });
 
-  describe('on update permision for user in team', () => {
+  describe('on update permission for user in team', () => {
     const member: TeamMember = {
       userId: 3,
       teamId: 2,
@@ -82,10 +82,10 @@ describe('Functions', () => {
     const { instance } = setup({ member });
     const permission = TeamPermissionLevel.Admin;
     const item: SelectableValue<TeamPermissionLevel> = { value: permission };
-    const expectedTeamMemeber = { ...member, permission };
+    const expectedTeamMember = { ...member, permission };
 
     instance.onPermissionChange(item, member);
 
-    expect(instance.props.updateTeamMember).toHaveBeenCalledWith(expectedTeamMemeber);
+    expect(instance.props.updateTeamMember).toHaveBeenCalledWith(expectedTeamMember);
   });
 });

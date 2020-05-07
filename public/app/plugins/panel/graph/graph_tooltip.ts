@@ -118,7 +118,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       // Highlighting multiple Points depending on the plot type
       if (series.lines.steps || series.stack) {
         // stacked and steppedLine plots can have series with different length.
-        // Stacked series can increase its length on each new stacked serie if null points found,
+        // Stacked series can increase its length on each new stacked series if null points found,
         // to speed the index search we begin always on the last found hoverIndex.
         hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
       }

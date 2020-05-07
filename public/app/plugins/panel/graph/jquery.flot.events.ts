@@ -63,7 +63,7 @@ const createEditPopover: CreatePlotOverlay = (element, event, plot) => {
 
   // mark as openend
   eventManager.editorOpened();
-  // set marker elment to attache to
+  // set marker element to attache to
   markerElementToAttachTo = element;
 
   // wait for element to be attached and positioned

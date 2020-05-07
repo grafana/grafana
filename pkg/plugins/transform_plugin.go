@@ -35,7 +35,7 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 		return err
 	}
 
-	cmd := ComposePluginStartCommmand(p.Executable)
+	cmd := ComposePluginStartCommand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
 	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
 		OnStart: p.onPluginStart,

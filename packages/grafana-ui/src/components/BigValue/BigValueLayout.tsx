@@ -364,7 +364,7 @@ export class StackedWithChartLayout extends BigValueLayout {
     // make title fontsize it's a bit smaller than valueFontSize
     this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
 
-    // make chart take up onused space
+    // make chart take up unused space
     this.chartHeight = height - this.titleFontSize * LINE_HEIGHT - this.valueFontSize * LINE_HEIGHT;
   }
 

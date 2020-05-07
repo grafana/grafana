@@ -89,7 +89,7 @@ describe('ElasticQueryDef', () => {
     });
   });
 
-  describe('pipeline aggs depending on esverison', () => {
+  describe('pipeline aggs depending on esversion', () => {
     describe('using esversion undefined', () => {
       test('should not get pipeline aggs', () => {
         expect(queryDef.getMetricAggTypes(undefined).length).toBe(10);

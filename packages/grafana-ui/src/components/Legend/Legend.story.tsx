@@ -33,7 +33,7 @@ const getStoriesKnobs = (table = false) => {
 
   const typeSpecificRenderer = table
     ? {
-        'Custom renderer(GraphLegendTablerow)': 'custom-tabe',
+        'Custom renderer(GraphLegendTablerow)': 'custom-table',
       }
     : {
         'Custom renderer(GraphLegendListItem)': 'custom-list',

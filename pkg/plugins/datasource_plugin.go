@@ -45,7 +45,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string, backend
 	}
 
 	if p.Backend {
-		cmd := ComposePluginStartCommmand(p.Executable)
+		cmd := ComposePluginStartCommand(p.Executable)
 		fullpath := path.Join(p.PluginDir, cmd)
 		descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
 			OnLegacyStart: p.onLegacyPluginStart,

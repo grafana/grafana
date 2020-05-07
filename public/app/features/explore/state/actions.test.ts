@@ -61,7 +61,7 @@ jest.mock('app/core/utils/explore', () => ({
   getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
 }));
 
-const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
+const setup = (updateOverrides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
   const eventBridge = {} as Emitter;
@@ -76,7 +76,7 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     ui,
   };
   const updateDefaults = makeInitialUpdateState();
-  const update = { ...updateDefaults, ...updateOverides };
+  const update = { ...updateDefaults, ...updateOverrides };
   const initialState = {
     user: {
       orgId: '1',

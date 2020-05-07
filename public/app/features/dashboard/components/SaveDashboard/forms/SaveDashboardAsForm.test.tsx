@@ -87,7 +87,7 @@ describe('SaveDashboardAsForm', () => {
     });
   });
 
-  describe('singestat panel', () => {
+  describe('singlestat panel', () => {
     const panel = { id: 1, type: 'singlestat', thresholds: { value: 3000 } };
 
     it('should keep thresholds', async () => {

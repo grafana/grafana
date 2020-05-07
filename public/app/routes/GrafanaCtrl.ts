@@ -4,7 +4,7 @@ import $ from 'jquery';
 // @ts-ignore
 import Drop from 'tether-drop';
 
-// Utils and servies
+// Utils and services
 import { colors } from '@grafana/ui';
 import { getTemplateSrv, setBackendSrv, setDataSourceSrv, setLegacyAngularInjector } from '@grafana/runtime';
 import config from 'app/core/config';

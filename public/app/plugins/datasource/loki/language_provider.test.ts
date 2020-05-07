@@ -117,7 +117,7 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toEqual([{ items: [{ label: 'label1' }], label: 'Labels' }]);
     });
 
-    it('returns facetted label suggestions for multipule selectors', async () => {
+    it('returns facetted label suggestions for multiple selectors', async () => {
       const datasource = makeMockLokiDatasource(
         { label1: [], label2: [] },
         { '{baz="42",foo="bar"}': [{ label2: 'label_val2' }] }

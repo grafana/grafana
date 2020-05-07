@@ -77,7 +77,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 		shouldErr require.ErrorAssertionFunc
 	}{
 		{
-			name:      "can parse singel condition",
+			name:      "can parse single condition",
 			file:      "testdata/settings/one_condition.json",
 			expected:  []int64{3},
 			shouldErr: require.NoError,

@@ -9,7 +9,7 @@ export function getSeriesValues(dataList: TimeSeries[]): number[] {
   const VALUE_INDEX = 0;
   const values = [];
 
-  // Count histogam stats
+  // Count histogram stats
   for (let i = 0; i < dataList.length; i++) {
     const series = dataList[i];
     const datapoints = series.datapoints;
@@ -51,12 +51,12 @@ export function convertValuesToHistogram(values: number[], bucketSize: number, m
     histogram[bound] = histogram[bound] + 1;
   }
 
-  const histogamSeries = _.map(histogram, (count, bound) => {
+  const histogramSeries = _.map(histogram, (count, bound) => {
     return [Number(bound), count];
   });
 
   // Sort by Y axis values
-  return _.sortBy(histogamSeries, point => point[0]);
+  return _.sortBy(histogramSeries, point => point[0]);
 }
 
 /**

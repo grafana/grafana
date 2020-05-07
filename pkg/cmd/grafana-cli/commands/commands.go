@@ -119,7 +119,7 @@ var adminCommands = []*cli.Command{
 			{
 				Name:   "encrypt-datasource-passwords",
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
-				Action: runDbCommand(datamigrations.EncryptDatasourcePaswords),
+				Action: runDbCommand(datamigrations.EncryptDatasourcePasswords),
 			},
 		},
 	},

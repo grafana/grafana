@@ -10,7 +10,7 @@ describe('store', () => {
     expect(store.get('key2')).toBe(undefined);
   });
 
-  it('check if key exixts', () => {
+  it('check if key exists', () => {
     store.set('key3', '123');
     expect(store.exists('key3')).toBe(true);
   });

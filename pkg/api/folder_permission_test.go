@@ -169,7 +169,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			})
 		})
 
-		Convey("When trying to override inherited permissions with lower presedence", func() {
+		Convey("When trying to override inherited permissions with lower precedence", func() {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,

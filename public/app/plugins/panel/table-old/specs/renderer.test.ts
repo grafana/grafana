@@ -279,7 +279,7 @@ describe('when rendering table', () => {
       expect(html).toBe('<td style="color:rgb(1,0,0)">85.0</td>');
     });
 
-    it('unformated undefined should be rendered as string', () => {
+    it('unformatted undefined should be rendered as string', () => {
       const html = renderer.renderCell(3, 0, 'value');
       expect(html).toBe('<td>value</td>');
     });

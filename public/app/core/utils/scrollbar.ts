@@ -1,4 +1,4 @@
-﻿// Slightly modified, but without dependancies:
+﻿// Slightly modified, but without dependencies:
 // https://raw.githubusercontent.com/malte-wessel/react-custom-scrollbars/master/src/utils/getScrollbarWidth.js
 let scrollbarWidth: number | null = null;
 

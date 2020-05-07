@@ -133,7 +133,7 @@ describe('TimeSeries', () => {
       expect(series.stats.range).toBe(9);
     });
 
-    it('first value should ingone nulls', () => {
+    it('first value should ignore nulls', () => {
       series = new TimeSeries(testData);
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.first).toBe(1);

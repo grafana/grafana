@@ -21,13 +21,13 @@ export function setPrismTokens(language: string, field: string | number, values:
 
 export default function PrismPlugin({ definition, language }: { definition: any; language: string }) {
   if (definition) {
-    // Don't override exising modified definitions
+    // Don't override existing modified definitions
     Prism.languages[language] = Prism.languages[language] || definition;
   }
 
   return {
     /**
-     * Render a Slate mark with appropiate CSS class names
+     * Render a Slate mark with appropriate CSS class names
      *
      * @param {Object} props
      * @return {Element}

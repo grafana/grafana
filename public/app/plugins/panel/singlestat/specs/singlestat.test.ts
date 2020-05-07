@@ -70,12 +70,12 @@ describe('SingleStatCtrl', () => {
       expect(ctx.data.value).toBe(15);
     });
 
-    it('should set formatted falue', () => {
+    it('should set formatted value', () => {
       expect(ctx.data.display!.text).toBe('15');
     });
   });
 
-  singleStatScenario('showing serie name instead of value', (ctx: TestContext) => {
+  singleStatScenario('showing series name instead of value', (ctx: TestContext) => {
     ctx.setup(() => {
       ctx.input = [
         {
@@ -372,7 +372,7 @@ describe('SingleStatCtrl', () => {
           expect(ctx.data.value).toBe(99.99999);
         });
 
-        it('should set formatted falue', () => {
+        it('should set formatted value', () => {
           expect(ctx.data.display!.text).toBe('100');
         });
       }

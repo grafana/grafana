@@ -51,7 +51,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.initPromise = makePromiseCancelable(this.init());
     this.initPromise.promise.catch(({ isCanceled }) => {
       if (isCanceled) {
-        console.warn('Azure Monitor ConfigEditor has unmounted, intialization was canceled');
+        console.warn('Azure Monitor ConfigEditor has unmounted, initialization was canceled');
       }
     });
   }

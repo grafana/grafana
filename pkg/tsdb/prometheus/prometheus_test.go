@@ -31,7 +31,7 @@ func TestPrometheus(t *testing.T) {
 			So(formatLegend(metric, query), ShouldEqual, "legend backend mobile ")
 		})
 
-		Convey("build full serie name", func() {
+		Convey("build full series name", func() {
 			metric := map[p.LabelName]p.LabelValue{
 				p.LabelName(p.MetricNameLabel): p.LabelValue("http_request_total"),
 				p.LabelName("app"):             p.LabelValue("backend"),

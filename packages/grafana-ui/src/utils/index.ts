@@ -6,6 +6,6 @@ export * from './tags';
 export * from './measureText';
 export { default as ansicolor } from './ansicolor';
 
-import * as DOMUtil from './dom'; // includes Element.closest polyfil
+import * as DOMUtil from './dom'; // includes Element.closest polyfill
 export { DOMUtil };
 export { renderOrCallToRender } from './renderOrCallToRender';

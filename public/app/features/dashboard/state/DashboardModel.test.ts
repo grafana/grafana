@@ -215,7 +215,7 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('when creating dashboard model with missing list for annoations or templating', () => {
+  describe('when creating dashboard model with missing list for annotations or templating', () => {
     let model: DashboardModel;
 
     beforeEach(() => {

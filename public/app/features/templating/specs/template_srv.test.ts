@@ -45,7 +45,7 @@ describe('templateSrv', () => {
       expect(target).toBe('hello');
     });
 
-    it('scoped vars should support objects with propert names with dot', () => {
+    it('scoped vars should support objects with property names with dot', () => {
       const target = _templateSrv.replace('${series.name} ${series.nested["field.with.dot"]}', {
         series: { value: { name: 'Server1', nested: { 'field.with.dot': 'nested' } } },
       });
@@ -594,7 +594,7 @@ describe('templateSrv', () => {
       initTemplateSrv([]);
     });
 
-    it('should be possible to fetch value with getBuilInIntervalValue', () => {
+    it('should be possible to fetch value with getBuiltInIntervalValue', () => {
       const val = _templateSrv.getBuiltInIntervalValue();
       expect(val).toBe('1s');
     });

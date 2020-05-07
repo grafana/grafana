@@ -103,10 +103,10 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"AlertPageUrl":  setting.AppUrl + "alerting",
 				"EvalMatches":   evalContext.EvalMatches,
 			},
-			To:           en.Addresses,
-			SingleEmail:  en.SingleEmail,
-			Template:     "alert_notification.html",
-			EmbededFiles: []string{},
+			To:            en.Addresses,
+			SingleEmail:   en.SingleEmail,
+			Template:      "alert_notification.html",
+			EmbeddedFiles: []string{},
 		},
 	}
 
@@ -116,7 +116,7 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		} else {
 			file, err := os.Stat(evalContext.ImageOnDiskPath)
 			if err == nil {
-				cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
+				cmd.EmbeddedFiles = []string{evalContext.ImageOnDiskPath}
 				cmd.Data["EmbeddedImage"] = file.Name()
 			}
 		}

@@ -45,7 +45,7 @@ describe('QueryVariable', () => {
       expect(model.sort).toBe(50);
     });
 
-    it('if refresh != 0 then remove options in presisted mode', () => {
+    it('if refresh != 0 then remove options in persisted mode', () => {
       const variable = new QueryVariable(
         {},
         (null as unknown) as DatasourceSrv,

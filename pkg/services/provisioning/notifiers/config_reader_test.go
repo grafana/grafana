@@ -45,8 +45,8 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Can read correct properties", func() {
 			_ = os.Setenv("TEST_VAR", "default")
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(correct_properties)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(correct_properties)
 			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
@@ -293,8 +293,8 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Skip invalid directory", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(emptyFolder)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(emptyFolder)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -302,15 +302,15 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Unknown notifier should return error", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			_, err := cfgProvifer.readConfig(unknownNotifier)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			_, err := cfgProvider.readConfig(unknownNotifier)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "Unsupported notification type")
 		})
 
 		Convey("Read incorrect properties", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			_, err := cfgProvifer.readConfig(incorrect_settings)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			_, err := cfgProvider.readConfig(incorrect_settings)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "Alert validation error: Could not find url property in settings")
 		})

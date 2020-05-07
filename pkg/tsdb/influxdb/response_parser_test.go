@@ -60,7 +60,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				So(result.Series[0].Points[2][0].Valid, ShouldBeFalse)
 			})
 
-			Convey("can format serie names", func() {
+			Convey("can format series names", func() {
 				So(result.Series[0].Name, ShouldEqual, "cpu.mean { datacenter: America }")
 				So(result.Series[1].Name, ShouldEqual, "cpu.sum { datacenter: America }")
 			})
@@ -91,10 +91,10 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 			Convey("$ alias", func() {
 				Convey("simple alias", func() {
-					query := &Query{Alias: "serie alias"}
+					query := &Query{Alias: "series alias"}
 					result := parser.Parse(response, query)
 
-					So(result.Series[0].Name, ShouldEqual, "serie alias")
+					So(result.Series[0].Name, ShouldEqual, "series alias")
 				})
 
 				Convey("measurement alias", func() {
@@ -136,10 +136,10 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 			Convey("[[]] alias", func() {
 				Convey("simple alias", func() {
-					query := &Query{Alias: "serie alias"}
+					query := &Query{Alias: "series alias"}
 					result := parser.Parse(response, query)
 
-					So(result.Series[0].Name, ShouldEqual, "serie alias")
+					So(result.Series[0].Name, ShouldEqual, "series alias")
 				})
 
 				Convey("measurement alias", func() {

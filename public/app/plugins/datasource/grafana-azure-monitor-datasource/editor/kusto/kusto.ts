@@ -335,7 +335,7 @@ export const functionTokens = [
     hint:
       'Merges tdigest results (scalar version of the aggregate version [`merge_tdigests()`](merge-tdigests-aggfunction.md)).',
   },
-  { text: 'min', hint: 'Returns the minimum value agross the group.' },
+  { text: 'min', hint: 'Returns the minimum value across the group.' },
   { text: 'min_of', hint: 'Returns the minimum value of several evaluated numeric expressions.' },
   { text: 'monthofyear', hint: 'Returns the integer number represents the month number of the given year.' },
   {
