@@ -122,7 +122,6 @@ export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
-export { default as Forms } from './Forms';
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
 export * from './Button';
