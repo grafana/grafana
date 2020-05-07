@@ -10,6 +10,7 @@ import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { VariableRefresh } from '../../templating/types';
 import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
+import { COLLECTION_UNKNOWN_ID } from '../../../core/reducers/createCollection';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
@@ -57,7 +58,7 @@ const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean 
     .build();
   const initialState = {
     templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
-    dashboard,
+    dashboards: { [COLLECTION_UNKNOWN_ID]: dashboard },
   };
 
   // updated variable state
@@ -70,7 +71,10 @@ const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean 
     .build();
 
   const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
-  const state = { templating: { variables: { 'interval-0': variable, 'constant-1': { ...constant } } }, dashboard };
+  const state = {
+    templating: { variables: { 'interval-0': variable, 'constant-1': { ...constant } } },
+    dashboards: { [COLLECTION_UNKNOWN_ID]: dashboard },
+  };
   const getStateMock = jest
     .fn()
     .mockReturnValueOnce(initialState)

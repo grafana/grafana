@@ -6,6 +6,7 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 import { cleanUpUnCleanedDashboardStates } from '../state/actions';
+import { COLLECTION_UNKNOWN_ID } from 'app/core/reducers/createCollection';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
 
@@ -243,8 +244,8 @@ describe('DashboardPage', () => {
           },
         },
         panelEditor: {},
-        dashboard: {
-          getModel: () => ({} as DashboardModel),
+        dashboards: {
+          [COLLECTION_UNKNOWN_ID]: { getModel: () => ({} as DashboardModel) },
         },
       } as any,
       ({} as unknown) as Props
@@ -263,8 +264,8 @@ describe('DashboardPage', () => {
           },
         },
         panelEditor: {},
-        dashboard: {
-          getModel: () => ({} as DashboardModel),
+        dashboards: {
+          [COLLECTION_UNKNOWN_ID]: { getModel: () => ({} as DashboardModel) },
         },
       } as any,
       ({} as unknown) as Props

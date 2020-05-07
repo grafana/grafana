@@ -7,7 +7,7 @@ import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
 import { VariableAdapter } from '../adapters';
-import { dashboardReducer } from 'app/features/dashboard/state/reducers';
+import { dashboardCollection } from 'app/features/dashboard/state/reducers';
 import { dashboardIdReducer } from './dashboardIdReducer';
 
 export const getVariableState = (
@@ -65,7 +65,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
 export const getRootReducer = () =>
   combineReducers({
     location: locationReducer,
-    dashboard: dashboardReducer,
+    dashboards: dashboardCollection.reducer,
     templating: combineReducers({
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
@@ -76,6 +76,7 @@ export const getRootReducer = () =>
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
+    dashboards: dashboardCollection.reducer,
     templating: combineReducers({
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
@@ -86,6 +87,7 @@ export const getTemplatingRootReducer = () =>
 
 export const getTemplatingAndLocationRootReducer = () =>
   combineReducers({
+    dashboards: dashboardCollection.reducer,
     templating: combineReducers({
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,

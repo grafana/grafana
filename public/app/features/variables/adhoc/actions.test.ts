@@ -23,6 +23,7 @@ import { DashboardState, LocationState } from 'app/types';
 import { VariableModel } from 'app/features/templating/types';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
+import { CollectionReducerState } from '../../../core/reducers/createCollection';
 
 const getMetricSources = jest.fn().mockReturnValue([]);
 const getDatasource = jest.fn().mockResolvedValue({});
@@ -36,7 +37,7 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
 
 type ReducersUsedInContext = {
   templating: TemplatingState;
-  dashboard: DashboardState;
+  dashboards: CollectionReducerState<DashboardState>;
   location: LocationState;
 };
 

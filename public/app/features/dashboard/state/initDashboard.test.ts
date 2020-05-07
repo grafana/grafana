@@ -10,8 +10,9 @@ import { Echo } from '../../../core/services/echo/Echo';
 import { getConfig } from 'app/core/config';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
-import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
+import { initDashboardId } from 'app/features/variables/state/dashboardIdReducer';
+import { toCollectionAction } from '../../../core/reducers/createCollection';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -134,7 +135,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         location: {
           query: {},
         },
-        dashboard: {},
+        dashboards: {},
         user: {},
         explore: {
           left: {
@@ -173,11 +174,11 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+    expect(ctx.actions[0].type).toBe(toCollectionAction(dashboardInitFetching(), undefined).type);
   });
 
   it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+    expect(ctx.actions[1].type).toBe(toCollectionAction(dashboardInitServices(), undefined).type);
   });
 
   it('Should update location with orgId query param', () => {
@@ -186,8 +187,8 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[3].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[3].payload.title).toBe('New dashboard');
+    expect(ctx.actions[4].type).toBe(toCollectionAction(dashboardInitCompleted(), undefined).type);
+    expect(ctx.actions[4].payload.action.payload.title).toBe('New dashboard');
   });
 
   it('Should initialize services', () => {
@@ -244,11 +245,11 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+    expect(ctx.actions[0].type).toBe(toCollectionAction(dashboardInitFetching(), undefined).type);
   });
 
   it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+    expect(ctx.actions[1].type).toBe(toCollectionAction(dashboardInitServices(), undefined).type);
   });
 
   it('Should update location with orgId query param', () => {
@@ -257,9 +258,9 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    const index = getConfig().featureToggles.newVariables ? 4 : 3;
-    expect(ctx.actions[index].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[index].payload.title).toBe('My cool dashboard');
+    const index = getConfig().featureToggles.newVariables ? 5 : 4;
+    expect(ctx.actions[index].type).toBe(toCollectionAction(dashboardInitCompleted(), undefined).type);
+    expect(ctx.actions[index].payload.action.payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
@@ -281,6 +282,6 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     if (!getConfig().featureToggles.newVariables) {
       return expect.assertions(0);
     }
-    expect(ctx.actions[3].type).toBe(addVariable.type);
+    expect(ctx.actions[3].type).toBe(initDashboardId.type);
   });
 });

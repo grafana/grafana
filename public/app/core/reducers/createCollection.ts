@@ -10,7 +10,7 @@ interface CollectionAction {
   id: string;
   action: PayloadAction<any>;
 }
-const COLLECTION_UNKNOWN_ID = 'unknown-id';
+export const COLLECTION_UNKNOWN_ID = 'unknown-id';
 const COLLECTION_ACTION_PREFIX = 'collectionAction::';
 export const toCollectionAction = (action: PayloadAction<any>, id: string): PayloadAction<CollectionAction> => ({
   type: `${COLLECTION_ACTION_PREFIX}${action.type}`, // makes it easier to debug in Redux dev tools

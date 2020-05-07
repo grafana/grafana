@@ -4,6 +4,7 @@ import { initPanelEditor, panelEditorCleanUp } from './actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import { DashboardModel, PanelModel } from '../../../state';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { COLLECTION_UNKNOWN_ID, toCollectionAction } from '../../../../../core/reducers/createCollection';
 
 describe('panelEditor actions', () => {
   describe('initPanelEditor', () => {
@@ -45,8 +46,10 @@ describe('panelEditor actions', () => {
 
       const dispatchedActions = await thunkTester({
         panelEditor: state,
-        dashboard: {
-          getModel: () => dashboard,
+        dashboards: {
+          [COLLECTION_UNKNOWN_ID]: {
+            getModel: () => dashboard,
+          },
         },
       })
         .givenThunk(panelEditorCleanUp)
@@ -81,15 +84,17 @@ describe('panelEditor actions', () => {
 
       const dispatchedActions = await thunkTester({
         panelEditor: state,
-        dashboard: {
-          getModel: () => dashboard,
+        dashboards: {
+          [COLLECTION_UNKNOWN_ID]: {
+            getModel: () => dashboard,
+          },
         },
       })
         .givenThunk(panelEditorCleanUp)
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(3);
-      expect(dispatchedActions[0].type).toBe(panelModelAndPluginReady.type);
+      expect(dispatchedActions[0].type).toBe(toCollectionAction(panelModelAndPluginReady(), undefined).type);
       expect(sourcePanel.plugin).toEqual(panel.plugin);
       expect(panelDestroy.mock.calls.length).toEqual(1);
     });
@@ -117,8 +122,10 @@ describe('panelEditor actions', () => {
 
       const dispatchedActions = await thunkTester({
         panelEditor: state,
-        dashboard: {
-          getModel: () => dashboard,
+        dashboards: {
+          [COLLECTION_UNKNOWN_ID]: {
+            getModel: () => dashboard,
+          },
         },
       })
         .givenThunk(panelEditorCleanUp)

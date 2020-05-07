@@ -190,7 +190,7 @@ export const cleanUpUnCleanedDashboardStates = (currentDashboardId: string): Thu
   dispatch(clearDashboardId());
   for (const uid of dashboardUIds) {
     const dashboardState = dashboardCollection.selector(getState(), uid);
-    if (dashboardState.initPhase !== DashboardInitPhase.NotStarted) {
+    if (dashboardState.initPhase === DashboardInitPhase.Completed) {
       console.log('Cleaning up dashboard', uid);
       dispatch(toCollectionAction(cleanUpDashboard(), uid));
     }
