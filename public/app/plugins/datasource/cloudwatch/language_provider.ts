@@ -64,18 +64,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
-  fetchFields = _.throttle(async (logGroups: string[]) => {
-    const results = await Promise.all(
-      logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
-    );
-
-    return [
-      ...new Set<string>(
-        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
-      ).values(),
-    ];
-  }, 30 * 1000);
-
   /**
    * Return suggestions based on input that can be then plugged into a typeahead dropdown.
    * Keep this DOM-free for testing
@@ -99,7 +87,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
         token.offsets.start <= value!.selection?.start?.offset && token.offsets.end >= value!.selection?.start?.offset
     )[0];
 
-    const isFirstToken = curToken.prev === null || curToken.prev === undefined;
+    const isFirstToken = !curToken.prev;
     const prevToken = prevNonWhitespaceToken(curToken);
 
     if (isInsideFunctionParenthesis(curToken)) {
@@ -135,6 +123,18 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       suggestions: [],
     };
   }
+
+  private fetchFields = _.throttle(async (logGroups: string[]) => {
+    const results = await Promise.all(
+      logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
+    );
+
+    return [
+      ...new Set<string>(
+        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
+      ).values(),
+    ];
+  }, 30 * 1000);
 
   private handleKeyword = async (token: Token, context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
     if (token.content.toLowerCase() === 'by') {
@@ -189,7 +189,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     let typeaheadOutput: TypeaheadOutput | null = null;
     if (
-      (commandToken.next?.types.includes('whitespace') && commandToken.next.next === null) ||
+      (commandToken.next?.types.includes('whitespace') && !commandToken.next.next) ||
       nextNonWhitespaceToken(commandToken) === curToken ||
       (curToken.content === ',' && curToken.types.includes('punctuation')) ||
       (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'))
@@ -213,7 +213,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
       if (
         (curToken.content === ',' && curToken.types.includes('punctuation')) ||
-        (commandToken.next?.types.includes('whitespace') && commandToken.next.next === null)
+        (commandToken.next?.types.includes('whitespace') && !commandToken.next.next)
       ) {
         typeaheadOutput?.suggestions.forEach(group => {
           group.skipFilter = true;
@@ -229,9 +229,9 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   private findCommandToken = (startToken: Token): Token | null => {
     let thisToken = { ...startToken };
 
-    while (thisToken.prev !== null) {
+    while (!!thisToken.prev) {
       thisToken = thisToken.prev;
-      const isFirstCommand = thisToken.types.includes('query-command') && thisToken.prev === null;
+      const isFirstCommand = thisToken.types.includes('query-command') && !thisToken.prev;
       if (thisToken.types.includes('command-separator') || isFirstCommand) {
         // next token should be command
         if (!isFirstCommand && thisToken.next?.types.includes('query-command')) {
