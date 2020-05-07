@@ -131,10 +131,6 @@
     name: Time range
   - link: /reference/export_import/
     name: Export and import
-  - link: /features/dashboard/links/
-    name: Navigation links
-  - link: /reference/datalinks/
-    name: Data links
   - link: /reference/dashboard_history/
     name: Dashboard version history
   - name: Keyboard Shortcuts
