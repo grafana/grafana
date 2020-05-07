@@ -162,16 +162,20 @@ const getStyles = stylesFactory(() => {
       bottom: 50%;
       top: 50%;
       height: 50px;
-
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        display: none;
-      }
     `,
     previous: css`
-      left: 30px;
+      left: 10px;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        left: 0;
+      }
     `,
     forward: css`
-      right: 30px;
+      right: 10px;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        right: 0;
+      }
     `,
     dismiss: css`
       display: flex;

@@ -42,6 +42,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     info: css`
       width: 172px;
       margin-right: 72px;
+
+      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        display: none;
+      }
     `,
     title: css`
       color: ${theme.palette.blue95};
