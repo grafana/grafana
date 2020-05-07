@@ -2,7 +2,7 @@ import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { KustoSchema, AzureLogsVariable } from '../types';
-import { toUtc } from '@grafana/data';
+import { toUtc, getFrameDisplayTitle } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
@@ -183,10 +183,11 @@ describe('AzureLogAnalyticsDatasource', () => {
         it('should return a list of datapoints', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data.length).toBe(1);
-            expect(results.data[0].name).toEqual('grafana-vm');
+            expect(getFrameDisplayTitle(results.data[0])).toEqual('grafana-vm');
             expect(results.data[0].fields.length).toBe(2);
+            expect(results.data[0].name).toBe('grafana-vm');
             expect(results.data[0].fields[0].name).toBe('Time');
-            expect(results.data[0].fields[1].name).toBe('grafana-vm');
+            expect(results.data[0].fields[1].name).toBe('Value');
             expect(results.data[0].fields[0].values.toArray().length).toBe(6);
             expect(results.data[0].fields[0].values.get(0)).toEqual(1587633300000);
             expect(results.data[0].fields[1].values.get(0)).toEqual(2017.25);
