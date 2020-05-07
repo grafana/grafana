@@ -19,7 +19,7 @@ import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data'
 
 import { CloudWatchDatasource } from './datasource';
 import { TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
-import { Grammar } from 'prismjs';
+import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -63,6 +63,18 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     return this.startTask;
   };
+
+  isStatsQuery(query: string): boolean {
+    const grammar = Prism.languages['cloudwatch'];
+    const tokens = Prism.tokenize(query, grammar) ?? [];
+
+    return !!tokens.find(
+      token =>
+        typeof token !== 'string' &&
+        token.content.toString().toLowerCase() === 'stats' &&
+        token.type === 'query-command'
+    );
+  }
 
   /**
    * Return suggestions based on input that can be then plugged into a typeahead dropdown.

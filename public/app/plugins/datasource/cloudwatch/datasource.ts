@@ -132,6 +132,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
               queryId: dataFrame.fields[0].values.get(0),
               region: dataFrame.meta?.custom?.['Region'] ?? 'default',
               refId: dataFrame.refId,
+              groupResults: this.languageProvider.isStatsQuery(
+                options.targets.find(target => target.refId === dataFrame.refId).expression
+              ),
             }))
           )
         ),
@@ -196,7 +199,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     return this.performTimeSeriesQuery(request, options.range);
   }
 
-  logsQuery(queryParams: Array<{ queryId: string; limit?: number; region: string }>): Observable<DataQueryResponse> {
+  logsQuery(
+    queryParams: Array<{ queryId: string; limit?: number; region: string; groupResults?: boolean }>
+  ): Observable<DataQueryResponse> {
     this.logQueries.clear();
     queryParams.forEach(param => this.logQueries.add({ id: param.queryId, region: param.region }));
     let prevRecordsMatched: Record<string, number> = {};

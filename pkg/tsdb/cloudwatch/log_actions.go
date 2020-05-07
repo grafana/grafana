@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -27,6 +28,27 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 			dataframe, err := e.executeLogAction(ectx, queryContext, query)
 			if err != nil {
 				return err
+			}
+
+			if query.Model.Get("groupResults").MustBool() && len(dataframe.Fields) > 0 {
+				groupingFields := findGroupingFields(dataframe.Fields)
+
+				groupedFrames, err := groupResults(dataframe, groupingFields)
+				if err != nil {
+					return err
+				}
+
+				encodedFrames := make([][]byte, 0)
+				for _, frame := range groupedFrames {
+					dataframeEnc, err := frame.MarshalArrow()
+					if err != nil {
+						return err
+					}
+					encodedFrames = append(encodedFrames, dataframeEnc)
+				}
+
+				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: encodedFrames}
+				return nil
 			}
 
 			dataframeEnc, err := dataframe.MarshalArrow()
@@ -54,6 +76,23 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 	}
 
 	return response, nil
+}
+
+func findGroupingFields(fields []*data.Field) []string {
+	groupingFields := make([]string, 0)
+	for _, field := range fields {
+		if field.Type().Numeric() || field.Type() == data.FieldTypeNullableTime || field.Type() == data.FieldTypeTime {
+			continue
+		}
+
+		if _, err := strconv.ParseFloat(*field.At(0).(*string), 64); err == nil {
+			continue
+		}
+
+		groupingFields = append(groupingFields, field.Name)
+	}
+
+	return groupingFields
 }
 
 func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext *tsdb.TsdbQuery, query *tsdb.Query) (*data.Frame, error) {
