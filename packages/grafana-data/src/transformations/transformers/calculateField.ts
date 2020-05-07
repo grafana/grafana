@@ -16,13 +16,13 @@ export enum CalculateFieldMode {
   BinaryOperation = 'binary',
 }
 
-interface ReduceOptions {
+export interface ReduceOptions {
   include?: string; // Assume all fields
   reducer: ReducerID;
   nullValueMode?: NullValueMode;
 }
 
-interface BinaryOptions {
+export interface BinaryOptions {
   left: string;
   operator: BinaryOperationID;
   right: string;
@@ -99,7 +99,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       }
 
       const field = {
-        name: getResultFieldNameForCalculateFieldTransformerOptions(options),
+        name: getNameFromOptions(options),
         type: FieldType.number,
         config: {},
         values,
@@ -229,7 +229,7 @@ function findConsistentTimeFieldName(data: DataFrame[]): string | undefined {
   return name;
 }
 
-export function getResultFieldNameForCalculateFieldTransformerOptions(options: CalculateFieldTransformerOptions) {
+export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   if (options.alias?.length) {
     return options.alias;
   }
