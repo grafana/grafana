@@ -416,7 +416,11 @@ const funcsWithFieldArgs = [
   'isIpv6InSubnet',
 ].map(funcName => funcName.toLowerCase());
 
-function isInsideFunctionParenthesis(curToken: Token) {
+/**
+ * Returns true if cursor is currently inside a function parenthesis for example `count(|)` or `count(@mess|)` should
+ * return true.
+ */
+function isInsideFunctionParenthesis(curToken: Token): boolean {
   const prevToken = prevNonWhitespaceToken(curToken);
 
   if (!prevToken) {
