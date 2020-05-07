@@ -72,7 +72,7 @@ In addition to the data sources that you have configured in your Grafana, there 
   * You cannot change an existing query to use the Mixed Data Source.
 * **Dashboard -** Select this to use a result set from another panel in the same dashboard.
 
-### Data source options
+### Panel-level data source options
 
 Click **Options** next to the data source selector to see settings for your selected data source. Changes you make here affect only this panel.
 
