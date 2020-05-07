@@ -29,7 +29,7 @@ echo "creating new branch ${_branch}"
 git checkout -b "${_branch}"
 
 # building grafana packages
-echo "bulding grafana packages..."
+echo "building grafana packages..."
 yarn packages:build
 
 # extract packages api documentation json
