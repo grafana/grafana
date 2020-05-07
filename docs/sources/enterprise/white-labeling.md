@@ -26,10 +26,9 @@ You can change the following elements:
 - Side menu top logo
 - Footer and help menu links
 - Fav icon (shown in browser tab)
-  > Only available in Grafana Enterprise v7.0+
-- Login title (Will not appear if a login logo is set)
-- Login subtitle (Will not appear if a login logo is set)
-- Login box background
+- Login title (will not appear if a login logo is set, Grafana v7.0+)
+- Login subtitle (will not appear if a login logo is set, Grafana v7.0+)
+- Login box background (Grafana v7.0+)
 
 > You will have to host your logo and other images used by the white labeling feature separately. Make sure Grafana can access the URL where the assets are stored.
 
@@ -52,11 +51,11 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 # Set to complete URL to override login logo
 ;login_logo =
 
-# Set to complete css background expression to override login background
+# Set to complete CSS background expression to override login background
 # example: login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg)
 ;login_background =
 
-# Set to complete css background expression to override login box background
+# Set to complete CSS background expression to override login box background
 ;login_box_background =
 
 # Set to complete URL to override menu logo
