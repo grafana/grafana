@@ -151,8 +151,11 @@ describe('AzureLogAnalyticsDatasource', () => {
           refId: 'A',
           meta: {
             columns: ['TimeGenerated', 'Computer', 'avg_CounterValue'],
+            subscription: 'xxx',
+            workspace: 'aaaa-1111-bbbb-2222',
             query:
               'Perf\r\n| where ObjectName == "Memory" and CounterName == "Available MBytes Memory"\n| where TimeGenerated >= datetime(\'2020-04-23T09:15:20Z\') and TimeGenerated <= datetime(\'2020-04-23T09:20:20Z\')\n| where  1 == 1\n| summarize avg(CounterValue) by bin(TimeGenerated, 1m), Computer \n| order by TimeGenerated asc',
+            encodedQuery: 'gzipped_base64_encoded_query',
           },
           series: [
             {
@@ -171,12 +174,30 @@ describe('AzureLogAnalyticsDatasource', () => {
       },
     };
 
+    const workspacesResponse = {
+      value: [
+        {
+          properties: {
+            customerId: 'aaaa-1111-bbbb-2222',
+          },
+          id:
+            '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourcegroups/defaultresourcegroup/providers/microsoft.operationalinsights/workspaces/aworkspace',
+          name: 'aworkspace',
+          type: 'Microsoft.OperationalInsights/workspaces',
+        },
+      ],
+    };
+
     describe('in time series format', () => {
       describe('and the data is valid (has time, metric and value columns)', () => {
         beforeEach(() => {
           datasourceRequestMock.mockImplementation((options: { url: string }) => {
-            expect(options.url).toContain('/api/tsdb/query');
-            return Promise.resolve({ data: response, status: 200 });
+            if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > 0) {
+              return Promise.resolve({ data: workspacesResponse, status: 200 });
+            } else {
+              expect(options.url).toContain('/api/tsdb/query');
+              return Promise.resolve({ data: response, status: 200 });
+            }
           });
         });
 
@@ -193,6 +214,11 @@ describe('AzureLogAnalyticsDatasource', () => {
             expect(results.data[0].fields[1].values.get(0)).toEqual(2017.25);
             expect(results.data[0].fields[0].values.get(1)).toEqual(1587633360000);
             expect(results.data[0].fields[1].values.get(1)).toEqual(2048);
+            expect(results.data[0].fields[0].config.links[0].title).toEqual('View in Azure Portal');
+            expect(results.data[0].fields[0].config.links[0].targetBlank).toBe(true);
+            expect(results.data[0].fields[0].config.links[0].url).toEqual(
+              'https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2Fxxx%2Fresourcegroups%2Fdefaultresourcegroup%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2Faworkspace%22%7D%5D%7D/query/gzipped_base64_encoded_query/isQueryBase64Compressed/true/timespanInIsoFormat/P1D'
+            );
           });
         });
       });
