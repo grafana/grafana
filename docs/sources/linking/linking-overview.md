@@ -1,13 +1,15 @@
 +++
-title = "Inspect a panel"
+title = "Linking overview"
 type = "docs"
+keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
 [menu.docs]
-identifier = "inspect-a-panel"
+aliases = ["/docs/grafana/latest/features/navigation-links/"]
+identifier = "linking-overview"
 parent = "linking"
 weight = 400
 +++
 
-# About linking in Grafana
+# Linking overview
 
 You can use links to navigate between commonly-used dashboards or to connect others to your visualizations. Links let you create shortcuts to other dashboards, panels, and even external websites.
 

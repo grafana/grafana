@@ -202,6 +202,15 @@
       name: Advanced variable formats
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
+- name: Linking
+  link: /linking/
+  children:
+    - name: Overview
+      link: /linking/linking-overview/
+    - name: Link dashboards
+      link: /linking/link-dashboards/
+    - name: Link panels
+      link: /linking/link-panels/
 - name: What's new in Grafana
   link: /whatsnew/
   children:
