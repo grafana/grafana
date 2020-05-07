@@ -58,7 +58,7 @@ const getIssues = async (client: any, page: string) => {
 const cherryPickRunner: TaskRunner<CherryPickOptions> = async ({ enterprise }) => {
   const githubClient = new GithubClient({ enterprise });
   const client = githubClient.client;
-  let results = await getIssues(client, '1');
+  const results = await getIssues(client, '1');
 
   // sort by closed date ASC
   results.sort((a: any, b: any) => {
