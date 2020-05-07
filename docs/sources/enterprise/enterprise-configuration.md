@@ -75,7 +75,7 @@ Timeout for writing dashboard usage stats buffer to database.
 
 ### rollup_interval
 
-Interval for trying to rollup per dashboard usage summary only rolled up at most once per day.
+Interval for trying to roll up per dashboard usage summary. Only rolled up at most once per day.
 
 ### rollup_timeout
 
@@ -84,6 +84,7 @@ Timeout for trying to rollup per dashboard usage summary.
 ## [analytics.views]
 
 ### recent_users_age
+
 Age for recent active users.
 
 ## [reporting]
@@ -184,4 +185,4 @@ List of comma- or space-separated roles that will be mapped to the Admin role.
 
 ### role_values_grafana_admin
 
-List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role.
+List of comma- or space-separated roles that will be mapped to the Grafana Admin (Super Admin) role.
