@@ -13,12 +13,24 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   item,
 }) => {
   const { settings } = item;
+
   const onValueChange = useCallback(
-    (value: string) => {
-      onChange(settings?.integer ? toIntegerOrUndefined(value) : toFloatOrUndefined(value));
+    (e: React.SyntheticEvent) => {
+      if (e.hasOwnProperty('key')) {
+        // handling keyboard event
+        if ((e as React.KeyboardEvent).key === 'Enter') {
+          onChange((e as React.KeyboardEvent).currentTarget.value.trim() === '' ? undefined : e.currentTarget.value);
+        }
+      } else {
+        // handling form event
+        onChange(
+          (e as React.FormEvent<HTMLInputElement>).currentTarget.value.trim() === '' ? undefined : e.currentTarget.value
+        );
+      }
     },
     [onChange]
   );
+
   return (
     <Input
       defaultValue={isNaN(value) ? '' : value.toString()}
@@ -27,14 +39,8 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
       type="number"
       step={settings?.step}
       placeholder={settings?.placeholder}
-      onBlur={e => {
-        onValueChange(e.currentTarget.value);
-      }}
-      onKeyDown={e => {
-        if (e.key === 'Enter') {
-          onValueChange(e.currentTarget.value);
-        }
-      }}
+      onBlur={onValueChange}
+      onKeyDown={onValueChange}
     />
   );
 };
