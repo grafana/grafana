@@ -46,6 +46,15 @@ We have yet to migrate all core panels to this new architecute so in 7.0 there w
 
 Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling and column resize. Paired with the new `Organize fields` transformation detailed above you can reorder, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
 
+### Improved time zone support
+
+Starting in version 7.0, you can override the time zone used to display date and time values in a dashboard. 
+
+With this feature, you can specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
+
+We have also extended the time zone options so you can select any of the standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+
+
 # 7.0.0-beta1 (2020-04-28)
 
 ## Breaking changes
