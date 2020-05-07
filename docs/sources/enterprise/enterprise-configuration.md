@@ -157,15 +157,15 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 ### assertion_attribute_groups
 
-Friendly name or name of the attribute within the SAML assertion to use as the user's groups.
+Friendly name or name of the attribute within the SAML assertion to use as the user groups.
 
 ### assertion_attribute_role
 
-Friendly name or name of the attribute within the SAML assertion to use as the user's roles.
+Friendly name or name of the attribute within the SAML assertion to use as the user roles.
 
 ### assertion_attribute_org
 
-Friendly name or name of the attribute within the SAML assertion to use as the user's organization.
+Friendly name or name of the attribute within the SAML assertion to use as the user organization.
 
 ### allowed_organizations
 

@@ -52,9 +52,9 @@ The table below describes all SAML configuration options. Continue reading below
 | `assertion_attribute_name`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user name         | `displayName` |
 | `assertion_attribute_login`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user login handle | `mail`        |
 | `assertion_attribute_email`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user email        | `mail`        |
-| `assertion_attribute_groups`                                | No  | Friendly name or name of the attribute within the SAML assertion to use as the user's groups     |               |
-| `assertion_attribute_role`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user's roles      |               |
-| `assertion_attribute_org`                                   | No  | Friendly name or name of the attribute within the SAML assertion to use as the user's organization |             |
+| `assertion_attribute_groups`                                | No  | Friendly name or name of the attribute within the SAML assertion to use as the user groups     |               |
+| `assertion_attribute_role`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user roles      |               |
+| `assertion_attribute_org`                                   | No  | Friendly name or name of the attribute within the SAML assertion to use as the user organization |             |
 | `allowed_organizations`                                     | No  | List of comma- or space-separated organizations. User should be a member of at least one organization to log in. |               |
 | `org_mapping`                                               | No  | List of comma- or space-separated Organization:OrgId mappings                                  |               |
 | `role_values_editor`                                        | No  | List of comma- or space-separated roles which will be mapped into the Editor role               |               |
