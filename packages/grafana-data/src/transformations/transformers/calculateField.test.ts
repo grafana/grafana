@@ -43,18 +43,18 @@ describe('calculateField transformer w/ timeseries', () => {
     expect(rows).toMatchInlineSnapshot(`
       Array [
         Object {
-          "A {0}": 1,
-          "B {1}": 2,
-          "C {1}": 3,
-          "D {1}": "first",
+          "A": 1,
+          "B": 2,
+          "C": 3,
+          "D": "first",
           "The Total": 6,
           "TheTime": 1000,
         },
         Object {
-          "A {0}": 100,
-          "B {1}": 200,
-          "C {1}": 300,
-          "D {1}": "second",
+          "A": 100,
+          "B": 200,
+          "C": 300,
+          "D": "second",
           "The Total": 600,
           "TheTime": 2000,
         },
