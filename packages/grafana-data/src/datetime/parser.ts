@@ -11,10 +11,10 @@ import { lowerCase } from 'lodash';
  */
 export interface DateTimeOptionsWhenParsing extends DateTimeOptions {
   /**
-   * If the input is a Grafana quick date e.g. now-6h you can specify this to control
-   * if the last part of the date and time value should be included or excluded.
+   * If the input is a Grafana quick date, e.g. now-6h, then you can specify this to control
+   * whether the last part of the date and time value is included or excluded.
    *
-   * As an example now-6h and the current time is 12:20:00 if roundUp is set to true
+   * Example: now-6h and the current time is 12:20:00 if roundUp is set to true
    * the returned DateTime value will be 06:00:00.
    */
   roundUp?: boolean;
