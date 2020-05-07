@@ -147,7 +147,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     const { onChange } = this.props;
 
     if (onChange) {
-      onChange(Plain.serialize(this.state.value), this.state.value);
+      onChange(Plain.serialize(this.state.value));
     }
   };
 

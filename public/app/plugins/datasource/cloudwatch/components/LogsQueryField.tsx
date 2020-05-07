@@ -257,7 +257,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   checkForStatsQuery = debounce((value: Value) => {
-    console.log('checkForStatsQuery');
     const tokens = value.data.get('tokens');
     const queryUsesStatsCommand = tokens.find(
       (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
