@@ -19,8 +19,6 @@ import {
 } from '../../plugins/env';
 import { aggregateWorkflowInfo, aggregateCoverageInfo, aggregateTestInfo } from '../../plugins/workflow';
 import { PluginPackageDetails, PluginBuildReport } from '../../plugins/types';
-import { manifestTask } from './manifest';
-import { execTask } from '../utils/execTask';
 import rimrafCallback from 'rimraf';
 import { promisify } from 'util';
 const rimraf = promisify(rimrafCallback);
@@ -165,7 +163,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 
   // Write a manifest.txt file in the dist folder
   try {
-    await execTask(manifestTask)({ folder: distContentDir });
+    await execa('grabpl', ['build-plugin-manifest', distContentDir]);
   } catch (err) {
     console.warn(`Error signing manifest: ${distContentDir}`, err);
   }

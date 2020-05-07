@@ -31,7 +31,7 @@ e2e.scenario({
       .should('be.visible')
       .click();
 
-    e2e.components.Drawer.General.title(PANEL_UNDER_TEST)
+    e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
       .should('be.visible')
       .within(() => {
         e2e.components.Tab.title('Query').should('be.visible');
@@ -44,7 +44,7 @@ e2e.scenario({
 });
 
 const expectDrawerTabsAndContent = () => {
-  e2e.components.Drawer.General.title(PANEL_UNDER_TEST)
+  e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
     .should('be.visible')
     .within(() => {
       e2e.components.Tab.title('Data').should('be.visible');
@@ -87,7 +87,7 @@ const expectDrawerTabsAndContent = () => {
 const expectDrawerClose = () => {
   // close using close button
   e2e.components.Drawer.General.close().click();
-  e2e.components.Drawer.General.title(PANEL_UNDER_TEST).should('not.be.visible');
+  e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`).should('not.be.visible');
 };
 
 const expectDrawerExpandAndContract = (viewPortWidth: number) => {

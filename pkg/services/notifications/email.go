@@ -5,13 +5,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// AttachedFile is struct representating email attached files
+// AttachedFile struct represents email attached files.
 type AttachedFile struct {
 	Name    string
 	Content []byte
 }
 
-// Message is representation of the email message
+// Message is representation of the email message.
 type Message struct {
 	To            []string
 	SingleEmail   bool

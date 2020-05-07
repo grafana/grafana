@@ -27,6 +27,7 @@ import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
+import { supportsDataQuery } from '../PanelEditor/utils';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -269,7 +270,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     const error = last?.error;
     const tabs = [];
 
-    if (plugin && !plugin.meta.skipDataQuery) {
+    if (supportsDataQuery(plugin)) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
       tabs.push({ label: 'Stats', value: InspectTab.Stats });
     }
@@ -284,7 +285,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
-    if (dashboard.meta.canEdit) {
+    if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
     return tabs;
@@ -311,7 +312,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
     return (
       <Drawer
-        title={panel.title || 'Panel inspect'}
+        title={`Inspect: ${panel.title}` || 'Panel inspect'}
         subtitle={this.drawerSubtitle(tabs, activeTab)}
         width={drawerWidth}
         onClose={this.onClose}

@@ -452,7 +452,11 @@ export class ElasticResponse {
         this.nameSeries(tmpSeriesList, target);
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
-          const series = toDataFrame(tmpSeriesList[y]);
+          let series = toDataFrame(tmpSeriesList[y]);
+
+          // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
+          series = addPreferredVisualisationType(series, 'graph');
+
           dataFrame.push(series);
         }
       }
@@ -567,4 +571,15 @@ const createEmptyDataFrame = (
   }
 
   return series;
+};
+
+const addPreferredVisualisationType = (series: any, type: string) => {
+  let s = series;
+  s.meta
+    ? (s.meta.preferredVisualisationType = type)
+    : (s.meta = {
+        preferredVisualisationType: type,
+      });
+
+  return s;
 };

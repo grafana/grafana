@@ -156,6 +156,9 @@ var (
 	// StatsTotalActiveAdmins is a metric total amount of active admins
 	StatsTotalActiveAdmins prometheus.Gauge
 
+	// StatsTotalDataSources is a metric total number of defined datasources, labeled by pluginId
+	StatsTotalDataSources *prometheus.GaugeVec
+
 	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
 
@@ -463,6 +466,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	StatsTotalDataSources = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "stat_totals_datasource",
+		Help:      "total number of defined datasources, labeled by pluginId",
+		Namespace: ExporterName,
+	}, []string{"plugin_id"})
+
 	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "build_info",
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
@@ -538,6 +547,7 @@ func initMetricVars() {
 		StatsTotalActiveViewers,
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
+		StatsTotalDataSources,
 		grafanaBuildVersion,
 		grafanaPluginBuildInfoDesc,
 	)

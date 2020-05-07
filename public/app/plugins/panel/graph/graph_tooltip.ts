@@ -150,7 +150,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
   };
 
   elem.mouseleave(() => {
-    if (panel.tooltip.shared) {
+    if (panel.tooltip?.shared) {
       const plot = elem.data().plot;
       if (plot) {
         $tooltip.detach();

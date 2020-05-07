@@ -840,6 +840,10 @@ is false. This settings was introduced in Grafana v6.0.
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
 
+### allow_loading_unsigned_plugins
+
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature. 
+
 ## [feature_toggles]
 ### enable
 

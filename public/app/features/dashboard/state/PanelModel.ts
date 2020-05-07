@@ -18,11 +18,8 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
-
 import config from 'app/core/config';
-
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -425,11 +422,8 @@ export class PanelModel implements DataConfigSource {
     clone.isEditing = true;
     const sourceQueryRunner = this.getQueryRunner();
 
-    // pipe last result to new clone query runner
-    sourceQueryRunner
-      .getData()
-      .pipe(take(1))
-      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
+    // Copy last query result
+    clone.getQueryRunner().useLastResultFrom(sourceQueryRunner);
 
     return clone;
   }
@@ -467,11 +461,11 @@ export class PanelModel implements DataConfigSource {
   }
 
   destroy() {
+    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
-      this.queryRunner = null;
     }
   }
 

@@ -10,10 +10,17 @@ Grafana Labs uses a minimal home grown solution built on top of Cypress for our 
 - `yarn e2e:debug` Same as above but runs the tests in chrome and does not shutdown after completion.
 - `yarn e2e:dev` Same as above but does not run any tests on startup. It lets you pick a test first.
 
+If you already have a Grafana instance running, you can provide a specific URL by setting the `BASE_URL` environment variable:
+
+```
+BASE_URL=http://172.0.10.2:3333 yarn e2e
+```
+
 The above commands use some utils scripts under `<repo-root>/e2e` that can also be used for more control.
 
 - `./e2e/start-server` This creates a fresh new grafana server working dir, setup's config and starts the server. It
   will also kill any previously started server that is still running using pid file at `<repo-root>/e2e/tmp/pid`.
+- `./e2e/wait-for-grafana` waits for `$HOST` and `$PORT` to be available. Per default localhost and 3001.
 - `./e2e/run-suite <debug|dev|noarg>` Starts cypress in different modes.
 
 ## Test Suites

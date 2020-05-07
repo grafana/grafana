@@ -80,12 +80,14 @@ const dashboardSlice = createSlice({
       updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
     },
     cleanUpEditPanel: (state, action: PayloadAction) => {
+      // TODO: refactor, since the state should be mutated by copying only
       delete state.panels[EDIT_PANEL_ID];
     },
     setPanelAngularComponent: (state: DashboardState, action: PayloadAction<SetPanelAngularComponentPayload>) => {
       updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
     },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
+      // TODO: refactor, since the state should be mutated by copying only
       state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
   },

@@ -39,7 +39,7 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.15
+      - image: grafana/build-container:1.2.16
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -54,7 +54,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.2.12
+            VERSION=0.4.4
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -192,7 +192,13 @@ jobs:
       - run:
           name: Build internal Grafana plug-ins
           command: |
-            /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # This is a forked PR, so don't sign as it requires an API secret
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+            else
+              export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
+            fi
       - run:
           name: Move artifacts
           command: |
@@ -622,8 +628,12 @@ jobs:
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
-            else
+            elif [[ -n $CIRCLE_TAG ]]; then
+              # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
+            else
+              # TODO: Don't ignore errors, temporary workaround until we fix #22955
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
             fi
       - run:
           name: CI job failed
@@ -663,6 +673,9 @@ jobs:
           name: Start grafana-server
           command: ./e2e/start-server
           background: true
+      - run:
+          name: "Wait for Grafana to start"
+          command: './e2e/wait-for-grafana'
       - run:
           name: Run end-to-end tests
           command: ./e2e/run-suite
@@ -858,7 +871,8 @@ jobs:
       - run:
           name: Build Grafana docs website
           command: |
-            IMAGE=grafana/docs-base@sha256:63758b74e3990ab61e274f5e98da092d5c38378829dad0488aa97c59f0144f34
+            # Use latest revision here, since we want to catch if it breaks
+            IMAGE=grafana/docs-base:latest
 
             # In order to copy sources into the remote container, we need to employ a trick of creating a container
             # with a volume, that we copy the sources into. Then, we launch the build container, with the volume
