@@ -116,6 +116,27 @@ describe('Prometheus Result Transformer', () => {
     });
   });
 
+  describe('When resultFormat is time series and instant = true', () => {
+    const response = {
+      status: 'success',
+      data: {
+        resultType: 'vector',
+        result: [
+          {
+            metric: { __name__: 'test', job: 'testjob' },
+            value: [1443454528, '3846'],
+          },
+        ],
+      },
+    };
+
+    it('should return time series', () => {
+      const timeSeries = ctx.resultTransformer.transform({ data: response }, {});
+      expect(timeSeries[0].target).toBe('test{job="testjob"}');
+      expect(timeSeries[0].title).toBe('test{job="testjob"}');
+    });
+  });
+
   describe('When resultFormat is heatmap', () => {
     const response = {
       status: 'success',
