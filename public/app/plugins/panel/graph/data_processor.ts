@@ -8,6 +8,7 @@ import {
   DataFrame,
   getTimeField,
   dateTime,
+  getFieldTitle,
 } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
@@ -31,27 +32,24 @@ export class DataProcessor {
     for (let i = 0; i < dataList.length; i++) {
       const series = dataList[i];
       const { timeField } = getTimeField(series);
+
       if (!timeField) {
         continue;
       }
 
-      const seriesName = series.name ? series.name : series.refId;
       for (let j = 0; j < series.fields.length; j++) {
         const field = series.fields[j];
+
         if (field.type !== FieldType.number) {
           continue;
         }
-
-        let name = field.config && field.config.title ? field.config.title : field.name;
-
-        if (seriesName && dataList.length > 0 && name !== seriesName) {
-          name = seriesName + ' ' + name;
-        }
-
+        const name = getFieldTitle(field, series, dataList);
         const datapoints = [];
+
         for (let r = 0; r < series.length; r++) {
           datapoints.push([field.values.get(r), dateTime(timeField.values.get(r)).valueOf()]);
         }
+
         list.push(this.toTimeSeries(field, name, i, j, datapoints, list.length, range));
       }
     }
@@ -60,9 +58,11 @@ export class DataProcessor {
     if (this.panel.xaxis.mode === 'histogram' && !this.panel.stack && list.length > 1) {
       const first = list[0];
       first.alias = first.aliasEscaped = 'Count';
+
       for (let i = 1; i < list.length; i++) {
         first.datapoints = first.datapoints.concat(list[i].datapoints);
       }
+
       return [first];
     }
 

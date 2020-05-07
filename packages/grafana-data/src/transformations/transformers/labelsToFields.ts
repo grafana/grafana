@@ -73,21 +73,12 @@ function getFramesWithOnlyValueFields(data: DataFrame[]): DataFrame[] {
 
     for (let i = 0; i < series.fields.length; i++) {
       const field = series.fields[i];
+
       if (field.type !== FieldType.number) {
         continue;
       }
 
-      // When we transform a time series to DataFrame we put series name in field name.
-      // This casues problems for this transformer that want all time series values in a Value column
-      // So here we change field names that have same name as DataFrame to just Value
-      if (field.name === series.name) {
-        fields.push({
-          ...field,
-          name: 'Value',
-        });
-      } else {
-        fields.push(field);
-      }
+      fields.push(field);
     }
 
     if (!fields.length) {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { Table, Select } from '@grafana/ui';
-import { FieldMatcherID, PanelProps, DataFrame, SelectableValue } from '@grafana/data';
+import { FieldMatcherID, PanelProps, DataFrame, SelectableValue, getFrameDisplayTitle } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
 import { config } from 'app/core/config';
@@ -101,7 +101,7 @@ export class TablePanel extends Component<Props> {
       const currentIndex = this.getCurrentFrameIndex();
       const names = data.series.map((frame, index) => {
         return {
-          label: `${frame.name ?? 'Series'}`,
+          label: getFrameDisplayTitle(frame),
           value: index,
         };
       });
