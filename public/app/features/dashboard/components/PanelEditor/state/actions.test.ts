@@ -4,7 +4,7 @@ import { initPanelEditor, panelEditorCleanUp } from './actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import { DashboardModel, PanelModel } from '../../../state';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { COLLECTION_UNKNOWN_ID, toCollectionAction } from '../../../../../core/reducers/createCollection';
+import { toCollectionAction } from '../../../../../core/reducers/createCollection';
 
 describe('panelEditor actions', () => {
   describe('initPanelEditor', () => {
@@ -47,10 +47,11 @@ describe('panelEditor actions', () => {
       const dispatchedActions = await thunkTester({
         panelEditor: state,
         dashboards: {
-          [COLLECTION_UNKNOWN_ID]: {
+          ['xMsQdBfWz']: {
             getModel: () => dashboard,
           },
         },
+        location: { path: '/d/xMsQdBfWz', routeParams: { uid: 'xMsQdBfWz' } },
       })
         .givenThunk(panelEditorCleanUp)
         .whenThunkIsDispatched();
@@ -85,10 +86,11 @@ describe('panelEditor actions', () => {
       const dispatchedActions = await thunkTester({
         panelEditor: state,
         dashboards: {
-          [COLLECTION_UNKNOWN_ID]: {
+          ['xMsQdBfWz']: {
             getModel: () => dashboard,
           },
         },
+        location: { path: '/d/xMsQdBfWz', routeParams: { uid: 'xMsQdBfWz' } },
       })
         .givenThunk(panelEditorCleanUp)
         .whenThunkIsDispatched();
@@ -123,10 +125,11 @@ describe('panelEditor actions', () => {
       const dispatchedActions = await thunkTester({
         panelEditor: state,
         dashboards: {
-          [COLLECTION_UNKNOWN_ID]: {
+          ['xMsQdBfWz']: {
             getModel: () => dashboard,
           },
         },
+        location: { path: '/d/xMsQdBfWz', routeParams: { uid: 'xMsQdBfWz' } },
       })
         .givenThunk(panelEditorCleanUp)
         .whenThunkIsDispatched();

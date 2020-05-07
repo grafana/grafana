@@ -14,6 +14,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
 import { dashboardCollection } from '../state/reducers';
+import { getDashboardUid } from '../utils/getDashboardUid';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -51,7 +52,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.initDashboardPanel(this.props.dashboard.uid, this.props.panel);
+    this.props.initDashboardPanel(this.props.panel);
   }
 
   componentDidUpdate() {
@@ -139,7 +140,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
+  const dashboardUid = getDashboardUid(state);
+  const dashboardState = dashboardCollection.selector(state, dashboardUid);
   const panelState = dashboardState.panels[props.panel.id];
   if (!panelState) {
     return { plugin: null };

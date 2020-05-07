@@ -175,11 +175,11 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(toCollectionAction(dashboardInitFetching(), '').type);
+    expect(ctx.actions[0].type).toBe(toCollectionAction(dashboardInitFetching(), undefined).type);
   });
 
   it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(toCollectionAction(dashboardInitServices(), '').type);
+    expect(ctx.actions[1].type).toBe(toCollectionAction(dashboardInitServices(), undefined).type);
   });
 
   it('Should update location with orgId query param', () => {
@@ -189,7 +189,7 @@ describeInitScenario('Initializing new dashboard', ctx => {
 
   it('Should send action dashboardInitCompleted', () => {
     expect(ctx.actions[4].type).toBe(
-      toCollectionAction(dashboardInitCompleted(({} as unknown) as DashboardModel), '').type
+      toCollectionAction(dashboardInitCompleted(({} as unknown) as DashboardModel), undefined).type
     );
     expect(ctx.actions[4].payload.action.payload.title).toBe('New dashboard');
   });
@@ -248,11 +248,11 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(toCollectionAction(dashboardInitFetching(), '').type);
+    expect(ctx.actions[0].type).toBe(toCollectionAction(dashboardInitFetching(), undefined).type);
   });
 
   it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(toCollectionAction(dashboardInitServices(), '').type);
+    expect(ctx.actions[1].type).toBe(toCollectionAction(dashboardInitServices(), undefined).type);
   });
 
   it('Should update location with orgId query param', () => {
@@ -263,7 +263,7 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   it('Should send action dashboardInitCompleted', () => {
     const index = getConfig().featureToggles.newVariables ? 5 : 4;
     expect(ctx.actions[index].type).toBe(
-      toCollectionAction(dashboardInitCompleted(({} as unknown) as DashboardModel), '').type
+      toCollectionAction(dashboardInitCompleted(({} as unknown) as DashboardModel), undefined).type
     );
     expect(ctx.actions[index].payload.action.payload.title).toBe('My cool dashboard');
   });

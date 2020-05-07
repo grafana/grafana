@@ -32,6 +32,7 @@ import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspect
 import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpUnCleanedDashboardStates } from '../state/actions';
+import { getDashboardUid } from '../utils/getDashboardUid';
 
 interface OwnProps {
   $scope: any;
@@ -322,7 +323,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 }
 
 export const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
-  const urlUid: string = state.location.routeParams.uid?.toString();
+  const urlUid = getDashboardUid(state);
   const dashboardState = dashboardCollection.selector(state, urlUid);
   const { getModel, initError, initPhase, isInitSlow } = dashboardState;
   const model = getModel() as DashboardModel;

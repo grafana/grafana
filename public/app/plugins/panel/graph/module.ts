@@ -261,7 +261,7 @@ class GraphCtrl extends MetricsPanelCtrl {
               actionText: 'Switch to table view',
               action: () => {
                 console.log('Change from graph to table');
-                dispatch(changePanelPlugin(this.dashboard.uid, this.panel, 'table'));
+                dispatch(changePanelPlugin(this.panel, 'table'));
               },
             };
           }

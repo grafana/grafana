@@ -14,10 +14,10 @@ import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { dashboardCollection } from '../../state/reducers';
+import { getDashboardUid } from '../../utils/getDashboardUid';
 
 export interface Props {
   dashboardId: number;
-  dashboardUId: string;
   folder?: FolderInfo;
   permissions: DashboardAcl[];
   getDashboardPermissions: typeof getDashboardPermissions;
@@ -40,7 +40,7 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.getDashboardPermissions(this.props.dashboardId, this.props.dashboardUId);
+    this.props.getDashboardPermissions(this.props.dashboardId);
   }
 
   onOpenAddPermissions = () => {
@@ -48,15 +48,15 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   };
 
   onRemoveItem = (item: DashboardAcl) => {
-    this.props.removeDashboardPermission(this.props.dashboardId, this.props.dashboardUId, item);
+    this.props.removeDashboardPermission(this.props.dashboardId, item);
   };
 
   onPermissionChanged = (item: DashboardAcl, level: PermissionLevel) => {
-    this.props.updateDashboardPermission(this.props.dashboardId, this.props.dashboardUId, item, level);
+    this.props.updateDashboardPermission(this.props.dashboardId, item, level);
   };
 
   onAddPermission = (newItem: NewDashboardAclItem) => {
-    return this.props.addDashboardPermission(this.props.dashboardId, this.props.dashboardUId, newItem);
+    return this.props.addDashboardPermission(this.props.dashboardId, newItem);
   };
 
   onCancelAddPermission = () => {
@@ -96,9 +96,13 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState, props: Props) => ({
-  permissions: dashboardCollection.selector(state, props.dashboardUId).permissions,
-});
+const mapStateToProps = (state: StoreState) => {
+  const dashboardUid = getDashboardUid(state);
+  const dashboardState = dashboardCollection.selector(state, dashboardUid);
+  return {
+    permissions: dashboardState.permissions,
+  };
+};
 
 const mapDispatchToProps = {
   getDashboardPermissions,

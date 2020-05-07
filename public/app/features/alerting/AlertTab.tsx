@@ -17,6 +17,7 @@ import { AppNotificationSeverity, StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
 import { dashboardCollection } from '../dashboard/state/reducers';
+import { getDashboardUid } from '../dashboard/utils/getDashboardUid';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -268,7 +269,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
+  const dashboardUid = getDashboardUid(state);
+  const dashboardState = dashboardCollection.selector(state, dashboardUid);
   return {
     angularPanelComponent: dashboardState.panels[props.panel.id].angularComponent,
   };

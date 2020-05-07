@@ -10,7 +10,6 @@ import { filterPluginList, getAllPanelPluginMeta, VizTypePicker } from '../../pa
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
-  dashboardUid: string;
   panel: PanelModel;
 }
 
@@ -25,7 +24,7 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
-  ({ panel, plugin, changePanelPlugin, dashboardUid }, ref) => {
+  ({ panel, plugin, changePanelPlugin }, ref) => {
     const [searchQuery, setSearchQuery] = useState('');
     const theme = useTheme();
     const styles = getStyles(theme);
@@ -35,7 +34,7 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     }
 
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
-      changePanelPlugin(dashboardUid, panel, meta.id);
+      changePanelPlugin(panel, meta.id);
     };
 
     const onKeyPress = useCallback(

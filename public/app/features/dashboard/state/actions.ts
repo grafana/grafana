@@ -9,6 +9,7 @@ import {
   loadDashboardPermissions,
   panelModelAndPluginReady,
   setPanelAngularComponent,
+  SetPanelAngularComponentPayload,
 } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
@@ -25,11 +26,13 @@ import { PanelModel } from './PanelModel';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
 import { cleanUpVariables } from '../../variables/state/variablesReducer';
 import { clearVariablesDashboardUid } from 'app/features/variables/state/dashboardIdReducer';
+import { getDashboardUid } from '../utils/getDashboardUid';
 
-export function getDashboardPermissions(id: number, uid: string): ThunkResult<void> {
-  return async dispatch => {
+export function getDashboardPermissions(id: number): ThunkResult<void> {
+  return async (dispatch, getStore) => {
     const permissions = await getBackendSrv().get(`/api/dashboards/id/${id}/permissions`);
-    dispatch(toCollectionAction(loadDashboardPermissions(permissions), uid));
+    const dashboardUid = getDashboardUid(getStore());
+    dispatch(toCollectionAction(loadDashboardPermissions(permissions), dashboardUid));
   };
 }
 
@@ -44,12 +47,12 @@ function toUpdateItem(item: DashboardAcl): DashboardAclUpdateDTO {
 
 export function updateDashboardPermission(
   dashboardId: number,
-  dashboardUId: string,
   itemToUpdate: DashboardAcl,
   level: PermissionLevel
 ): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
+    const dashboardUid = getDashboardUid(getStore());
+    const dashboard = dashboardCollection.selector(getStore(), dashboardUid);
     if (!dashboard.permissions) {
       return;
     }
@@ -72,17 +75,14 @@ export function updateDashboardPermission(
     }
 
     await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
-    await dispatch(getDashboardPermissions(dashboardId, dashboardUId));
+    await dispatch(getDashboardPermissions(dashboardId));
   };
 }
 
-export function removeDashboardPermission(
-  dashboardId: number,
-  dashboardUId: string,
-  itemToDelete: DashboardAcl
-): ThunkResult<void> {
+export function removeDashboardPermission(dashboardId: number, itemToDelete: DashboardAcl): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
+    const dashboardUid = getDashboardUid(getStore());
+    const dashboard = dashboardCollection.selector(getStore(), dashboardUid);
     if (!dashboard.permissions) {
       return;
     }
@@ -97,17 +97,14 @@ export function removeDashboardPermission(
     }
 
     await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
-    await dispatch(getDashboardPermissions(dashboardId, dashboardUId));
+    await dispatch(getDashboardPermissions(dashboardId));
   };
 }
 
-export function addDashboardPermission(
-  dashboardId: number,
-  dashboardUId: string,
-  newItem: NewDashboardAclItem
-): ThunkResult<void> {
+export function addDashboardPermission(dashboardId: number, newItem: NewDashboardAclItem): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const dashboard = dashboardCollection.selector(getStore(), dashboardUId);
+    const dashboardUid = getDashboardUid(getStore());
+    const dashboard = dashboardCollection.selector(getStore(), dashboardUid);
     if (!dashboard.permissions) {
       return;
     }
@@ -129,7 +126,7 @@ export function addDashboardPermission(
     });
 
     await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
-    await dispatch(getDashboardPermissions(dashboardId, dashboardUId));
+    await dispatch(getDashboardPermissions(dashboardId));
   };
 }
 
@@ -148,7 +145,7 @@ export function removeDashboard(uri: string): ThunkResult<void> {
   };
 }
 
-export function initDashboardPanel(dashboardUid: string, panel: PanelModel): ThunkResult<void> {
+export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
     let plugin = getStore().plugins.panels[panel.type];
 
@@ -160,11 +157,12 @@ export function initDashboardPanel(dashboardUid: string, panel: PanelModel): Thu
       panel.pluginLoaded(plugin);
     }
 
+    const dashboardUid = getDashboardUid(getStore());
     dispatch(toCollectionAction(panelModelAndPluginReady({ panelId: panel.id, plugin }), dashboardUid));
   };
 }
 
-export function changePanelPlugin(dashboardUId: string, panel: PanelModel, pluginId: string): ThunkResult<void> {
+export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     // ignore action is no change
     if (panel.type === pluginId) {
@@ -179,19 +177,28 @@ export function changePanelPlugin(dashboardUId: string, panel: PanelModel, plugi
     }
 
     // clean up angular component (scope / ctrl state)
-    const angularComponent = dashboardCollection.selector(store, dashboardUId).panels[panel.id].angularComponent;
+    const dashboardUid = getDashboardUid(store);
+    const angularComponent = dashboardCollection.selector(store, dashboardUid).panels[panel.id].angularComponent;
     if (angularComponent) {
       angularComponent.destroy();
       dispatch(
-        toCollectionAction(setPanelAngularComponent({ panelId: panel.id, angularComponent: null }), dashboardUId)
+        toCollectionAction(setPanelAngularComponent({ panelId: panel.id, angularComponent: null }), dashboardUid)
       );
     }
 
     panel.changePlugin(plugin);
 
-    dispatch(toCollectionAction(panelModelAndPluginReady({ panelId: panel.id, plugin }), dashboardUId));
+    dispatch(toCollectionAction(panelModelAndPluginReady({ panelId: panel.id, plugin }), dashboardUid));
   };
 }
+
+export const setAngularPanelComponent = (payload: SetPanelAngularComponentPayload): ThunkResult<void> => (
+  dispatch,
+  getState
+) => {
+  const dashboardUid = getDashboardUid(getState());
+  dispatch(toCollectionAction(setPanelAngularComponent(payload), dashboardUid));
+};
 
 export const cleanUpUnCleanedDashboardStates = (currentDashboardId: string): ThunkResult<void> => (
   dispatch,

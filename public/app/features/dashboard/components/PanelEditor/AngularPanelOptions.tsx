@@ -11,6 +11,7 @@ import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
 import { dashboardCollection } from '../../state/reducers';
+import { getDashboardUid } from '../../utils/getDashboardUid';
 
 interface OwnProps {
   panel: PanelModel;
@@ -60,7 +61,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
   }
 
   loadAngularOptions() {
-    const { panel, angularPanelComponent, changePanelPlugin, dashboard } = this.props;
+    const { panel, angularPanelComponent, changePanelPlugin } = this.props;
 
     if (!this.element || !angularPanelComponent || this.angularOptions) {
       return;
@@ -79,7 +80,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
     const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     panelCtrl.initEditMode();
     panelCtrl.onPluginTypeChange = (plugin: PanelPluginMeta) => {
-      changePanelPlugin(dashboard.uid, panel, plugin.id);
+      changePanelPlugin(panel, plugin.id);
     };
 
     let template = '';
@@ -121,7 +122,8 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
+  const dashboardUid = getDashboardUid(state);
+  const dashboardState = dashboardCollection.selector(state, dashboardUid);
   return {
     angularPanelComponent: dashboardState.panels[props.panel.id].angularComponent,
   };

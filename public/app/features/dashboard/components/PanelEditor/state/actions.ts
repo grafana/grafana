@@ -12,6 +12,7 @@ import {
 import { cleanUpEditPanel, dashboardCollection, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
 import { toCollectionAction } from '../../../../../core/reducers/createCollection';
+import { getDashboardUid } from '../../../utils/getDashboardUid';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
@@ -32,8 +33,9 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   };
 }
 
-export function panelEditorCleanUp(dashboardUid: string): ThunkResult<void> {
+export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
+    const dashboardUid = getDashboardUid(getStore());
     const dashboard = dashboardCollection.selector(getStore(), dashboardUid).getModel();
     const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditor;
 
@@ -54,10 +56,7 @@ export function panelEditorCleanUp(dashboardUid: string): ThunkResult<void> {
 
       if (panelTypeChanged) {
         dispatch(
-          toCollectionAction(
-            panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }),
-            dashboard.uid
-          )
+          toCollectionAction(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }), dashboardUid)
         );
       }
 

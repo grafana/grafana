@@ -29,6 +29,7 @@ import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
 import { dashboardCollection } from '../../state/reducers';
 import { supportsDataQuery } from '../PanelEditor/utils';
+import { getDashboardUid } from '../../utils/getDashboardUid';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -349,7 +350,8 @@ function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
+  const dashboardUid = getDashboardUid(state);
+  const dashboardState = dashboardCollection.selector(state, dashboardUid);
   const panelState = dashboardState.panels[props.panel.id];
   if (!panelState) {
     return { plugin: null };

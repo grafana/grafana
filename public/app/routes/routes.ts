@@ -10,8 +10,8 @@ import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
 import { ILocationProvider, route } from 'angular';
 // Types
-import { DashboardRouteInfo } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
+import { routeInfoFromPath } from '../features/dashboard/utils/getDashboardUid';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -28,7 +28,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       //@ts-ignore
       pageClass: 'page-dashboard',
-      routeInfo: DashboardRouteInfo.Home,
+      routeInfo: routeInfoFromPath('/'),
       reloadOnSearch: false,
       resolve: {
         component: importDashboardPage,
@@ -37,7 +37,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/d/:uid/:slug', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
-      routeInfo: DashboardRouteInfo.Normal,
+      routeInfo: routeInfoFromPath('/d/:uid/:slug'),
       reloadOnSearch: false,
       resolve: {
         component: importDashboardPage,
@@ -47,7 +47,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       pageClass: 'page-dashboard',
       reloadOnSearch: false,
-      routeInfo: DashboardRouteInfo.Normal,
+      routeInfo: routeInfoFromPath('/d/:uid'),
       resolve: {
         component: importDashboardPage,
       },
@@ -55,7 +55,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/dashboard/:type/:slug', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
-      routeInfo: DashboardRouteInfo.Normal,
+      routeInfo: routeInfoFromPath('/dashboard/:type/:slug'),
       reloadOnSearch: false,
       resolve: {
         component: importDashboardPage,
@@ -64,7 +64,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/dashboard/new', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
-      routeInfo: DashboardRouteInfo.New,
+      routeInfo: routeInfoFromPath('/dashboard/new'),
       reloadOnSearch: false,
       resolve: {
         component: importDashboardPage,
@@ -73,7 +73,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/d-solo/:uid/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
-      routeInfo: DashboardRouteInfo.Normal,
+      routeInfo: routeInfoFromPath('/d-solo/:uid/:slug'),
       reloadOnSearch: false,
       resolve: {
         component: () =>
@@ -85,7 +85,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/d-solo/:uid', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
-      routeInfo: DashboardRouteInfo.Normal,
+      routeInfo: routeInfoFromPath('/d-solo/:uid'),
       reloadOnSearch: false,
       resolve: {
         component: () =>
@@ -97,7 +97,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
-      routeInfo: DashboardRouteInfo.Normal,
+      routeInfo: routeInfoFromPath('/dashboard-solo/:type/:slug'),
       reloadOnSearch: false,
       resolve: {
         component: () =>

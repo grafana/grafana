@@ -33,6 +33,7 @@ import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { selectors } from '@grafana/e2e-selectors';
 import { dashboardCollection } from '../../state/reducers';
+import { getDashboardUid } from '../../utils/getDashboardUid';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -68,7 +69,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    this.props.panelEditorCleanUp(this.props.dashboard.uid);
+    this.props.panelEditorCleanUp();
   }
 
   onPanelExit = () => {
@@ -343,9 +344,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   const panel = state.panelEditor.getPanel();
-  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
+  const dashboardUid = getDashboardUid(state);
+  const dashboardState = dashboardCollection.selector(state, dashboardUid);
   const { plugin } = getPanelStateById(dashboardState, panel.id);
 
   return {

@@ -15,4 +15,4 @@ import DashboardPermissions from './components/DashboardPermissions/DashboardPer
 // angular wrappers
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 
-react2AngularDirective('dashboardPermissions', DashboardPermissions, ['dashboardId', 'dashboardUId', 'folder']);
+react2AngularDirective('dashboardPermissions', DashboardPermissions, ['dashboardId', 'folder']);
