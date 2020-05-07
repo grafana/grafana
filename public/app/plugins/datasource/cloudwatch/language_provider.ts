@@ -15,19 +15,11 @@ import syntax, {
 
 // Types
 import { CloudWatchQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
 
 import { CloudWatchDatasource } from './datasource';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
+import { TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
 import { Grammar } from 'prismjs';
-
-const HISTORY_ITEM_COUNT = 10;
-const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
-const NS_IN_MS = 1000000;
-export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
-
-const wrapLabel = (label: string) => ({ label });
-export const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -37,26 +29,7 @@ type TypeaheadContext = {
   logGroupNames?: string[];
 };
 
-export function addHistoryMetadata(item: CompletionItem, history: CloudWatchHistoryItem[]): CompletionItem {
-  const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter(h => h.ts > cutoffTs && h.query.expression === item.label);
-  let hint = `Queried ${historyForItem.length} times in the last 24h.`;
-  const recent = historyForItem[0];
-
-  if (recent) {
-    const lastQueried = dateTime(recent.ts).fromNow();
-    hint = `${hint} Last queried ${lastQueried}.`;
-  }
-
-  return {
-    ...item,
-    documentation: hint,
-  };
-}
-
 export class CloudWatchLanguageProvider extends LanguageProvider {
-  logLabelOptions: any[];
-  logLabelFetchTs?: number;
   started: boolean;
   initialRange: AbsoluteTimeRange;
   datasource: CloudWatchDatasource;
@@ -112,7 +85,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
    * @param context.history Optional used only in getEmptyCompletionItems
    */
   async provideCompletionItems(input: TypeaheadInput, context?: TypeaheadContext): Promise<TypeaheadOutput> {
-    //console.log('Providing completion items...');
     const { value } = input;
 
     // Get tokens
@@ -182,10 +154,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     const queryCommand = commandToken.content.toLowerCase();
     const prevToken = prevNonWhitespaceToken(curToken);
     const currentTokenIsFirstArg = prevToken === commandToken;
-
-    // console.log(
-    //   `Query Command: '${queryCommand}'. Previous token: '${prevToken}'. First arg? ${currentTokenIsFirstArg}`
-    // );
 
     if (queryCommand === 'sort') {
       if (currentTokenIsFirstArg) {
@@ -273,40 +241,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return null;
   };
 
-  getBeginningCompletionItems = (context: TypeaheadContext): TypeaheadOutput => {
-    return {
-      suggestions: [
-        ...this.getEmptyCompletionItems(context).suggestions,
-        ...this.getCommandCompletionItems().suggestions,
-      ],
-    };
-  };
-
-  getEmptyCompletionItems(context: TypeaheadContext): TypeaheadOutput {
-    const history = context?.history;
-    const suggestions = [];
-
-    if (history?.length) {
-      const historyItems = _.chain(history)
-        .map(h => h.query.expression)
-        .filter()
-        .uniq()
-        .take(HISTORY_ITEM_COUNT)
-        .map(wrapLabel)
-        .map((item: CompletionItem) => addHistoryMetadata(item, history))
-        .value();
-
-      suggestions.push({
-        prefixMatch: true,
-        skipSort: true,
-        label: 'History',
-        items: historyItems,
-      });
-    }
-
-    return { suggestions };
-  }
-
   getCommandCompletionItems = (): TypeaheadOutput => {
     return { suggestions: [{ prefixMatch: true, label: 'Commands', items: QUERY_COMMANDS }] };
   };
@@ -344,10 +278,8 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   };
 
   getFieldCompletionItems = async (logGroups: string[]): Promise<TypeaheadOutput> => {
-    //console.log(`Fetching fields... ${logGroups}`);
     const fields = await this.fetchFields(logGroups);
 
-    //console.log(fields);
     return {
       suggestions: [
         {
