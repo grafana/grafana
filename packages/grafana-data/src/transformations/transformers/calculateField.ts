@@ -7,7 +7,7 @@ import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
 import { seriesToColumnsTransformer } from './seriesToColumns';
-import { getTimeField } from '../../dataframe';
+import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 
@@ -16,13 +16,13 @@ export enum CalculateFieldMode {
   BinaryOperation = 'binary',
 }
 
-interface ReduceOptions {
+export interface ReduceOptions {
   include?: string; // Assume all fields
   reducer: ReducerID;
   nullValueMode?: NullValueMode;
 }
 
-interface BinaryOptions {
+export interface BinaryOptions {
   left: string;
   operator: BinaryOperationID;
   right: string;
@@ -99,7 +99,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       }
 
       const field = {
-        name: getResultFieldNameForCalculateFieldTransformerOptions(options),
+        name: getNameFromOptions(options),
         type: FieldType.number,
         config: {},
         values,
@@ -168,7 +168,6 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
 
     for (let i = 0; i < frame.length; i++) {
       iter.rowIndex = i;
-      row.calcs = undefined; // bust the cache (just in case)
       const val = reducer(row, ignoreNulls, nullAsZero)[options.reducer];
       vals.push(val);
     }
@@ -230,7 +229,7 @@ function findConsistentTimeFieldName(data: DataFrame[]): string | undefined {
   return name;
 }
 
-export function getResultFieldNameForCalculateFieldTransformerOptions(options: CalculateFieldTransformerOptions) {
+export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   if (options.alias?.length) {
     return options.alias;
   }
