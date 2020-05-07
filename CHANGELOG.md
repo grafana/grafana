@@ -2468,7 +2468,7 @@ Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
 ### Enhancements
 
 - **Login**: Adds option to disable username/password logins, closes [#4674](https://github.com/grafana/grafana/issues/4674)
-- **SingleStat**: Add seriesname as option in singlestat panel, closes [#4740](https://github.com/grafana/grafana/issues/4740)
+- **SingleStat**: Add seriesName as option in singlestat panel, closes [#4740](https://github.com/grafana/grafana/issues/4740)
 - **Localization**: Week start day now dependent on browser locale setting, closes [#3003](https://github.com/grafana/grafana/issues/3003)
 - **Templating**: Update panel repeats for variables that change on time refresh, closes [#5021](https://github.com/grafana/grafana/issues/5021)
 - **Templating**: Add support for numeric and alphabetical sorting of variable values, closes [#2839](https://github.com/grafana/grafana/issues/2839)
