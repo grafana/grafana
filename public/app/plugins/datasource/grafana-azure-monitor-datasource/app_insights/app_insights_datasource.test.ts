@@ -1,5 +1,5 @@
 import Datasource from '../datasource';
-import { DataFrame, toUtc } from '@grafana/data';
+import { DataFrame, toUtc, getFrameDisplayTitle } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
@@ -175,7 +175,7 @@ describe('AppInsightsDatasource', () => {
         return ctx.ds.query(options).then((results: any) => {
           expect(results.data.length).toBe(1);
           const data = results.data[0] as DataFrame;
-          expect(data.name).toEqual('PrimaryResult');
+          expect(getFrameDisplayTitle(data)).toEqual('PrimaryResult');
           expect(data.fields[0].values.length).toEqual(1);
           expect(data.fields[0].values.get(0)).toEqual(1558278660000);
           expect(data.fields[1].values.get(0)).toEqual(2.2075);
@@ -218,7 +218,7 @@ describe('AppInsightsDatasource', () => {
         return ctx.ds.query(options).then((results: any) => {
           expect(results.data.length).toBe(1);
           const data = results.data[0] as DataFrame;
-          expect(data.name).toEqual('paritionA');
+          expect(getFrameDisplayTitle(data)).toEqual('paritionA');
           expect(data.fields[0].values.length).toEqual(1);
           expect(data.fields[0].values.get(0)).toEqual(1558278660000);
           expect(data.fields[1].values.get(0)).toEqual(2.2075);
@@ -279,7 +279,7 @@ describe('AppInsightsDatasource', () => {
         return ctx.ds.query(options).then((results: any) => {
           expect(results.data.length).toBe(1);
           const data = results.data[0] as DataFrame;
-          expect(data.name).toEqual('exceptions/server');
+          expect(getFrameDisplayTitle(data)).toEqual('exceptions/server');
           expect(data.fields[0].values.get(0)).toEqual(1558278660000);
           expect(data.fields[1].values.get(0)).toEqual(2.2075);
         });
@@ -322,7 +322,7 @@ describe('AppInsightsDatasource', () => {
         return ctx.ds.query(options).then((results: any) => {
           expect(results.data.length).toBe(1);
           const data = results.data[0] as DataFrame;
-          expect(data.name).toEqual('exceptions/server');
+          expect(getFrameDisplayTitle(data)).toEqual('exceptions/server');
           expect(data.fields[0].values.length).toEqual(2);
           expect(data.fields[0].values.get(0)).toEqual(1504108800000);
           expect(data.fields[1].values.get(0)).toEqual(3);
@@ -376,14 +376,14 @@ describe('AppInsightsDatasource', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data.length).toBe(2);
             let data = results.data[0] as DataFrame;
-            expect(data.name).toEqual('exceptions/server{client/city="Miami"}');
+            expect(getFrameDisplayTitle(data)).toEqual('exceptions/server{client/city="Miami"}');
             expect(data.fields[1].values.length).toEqual(2);
             expect(data.fields[0].values.get(0)).toEqual(1504108800000);
             expect(data.fields[1].values.get(0)).toEqual(10);
             expect(data.fields[0].values.get(1)).toEqual(1504112400000);
             expect(data.fields[1].values.get(1)).toEqual(20);
             data = results.data[1] as DataFrame;
-            expect(data.name).toEqual('exceptions/server{client/city="San Antonio"}');
+            expect(getFrameDisplayTitle(data)).toEqual('exceptions/server{client/city="San Antonio"}');
             expect(data.fields[1].values.length).toEqual(2);
             expect(data.fields[0].values.get(0)).toEqual(1504108800000);
             expect(data.fields[1].values.get(0)).toEqual(1);
