@@ -101,8 +101,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const datasourceId = this.state.datasourceInstance?.meta?.id;
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, datasourceId);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;

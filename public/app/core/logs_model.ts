@@ -198,11 +198,10 @@ function isLogsData(series: DataFrame) {
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
-  timeZone: TimeZone,
-  datasourceId?: string
+  timeZone: TimeZone
 ): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, datasourceId);
+  const logsModel = logSeriesToLogsModel(logSeries);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
@@ -267,7 +266,7 @@ interface LogFields {
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[], datasourceId?: string): LogsModel | undefined {
+export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
