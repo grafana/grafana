@@ -1,4 +1,4 @@
-import { expandRecordingRules, parseSelector } from './language_utils';
+import { expandRecordingRules, fixSummariesMetadata, parseSelector } from './language_utils';
 
 describe('parseSelector()', () => {
   let parsed;
@@ -67,6 +67,33 @@ describe('parseSelector()', () => {
 
     parsed = parseSelector('bar:metric:1m{}', 14);
     expect(parsed.selector).toBe('{__name__="bar:metric:1m"}');
+  });
+});
+
+describe('fixSummariesMetadata', () => {
+  it('returns empty metadata', () => {
+    expect(fixSummariesMetadata({})).toEqual({});
+  });
+
+  it('returns unchanged metadata if no summary is present', () => {
+    const metadata = {
+      foo: [{ type: 'not_a_summary', help: 'foo help' }],
+    };
+    expect(fixSummariesMetadata(metadata)).toEqual(metadata);
+  });
+
+  it('returns metadata with added count and sum for a summary', () => {
+    const metadata = {
+      foo: [{ type: 'not_a_summary', help: 'foo help' }],
+      bar: [{ type: 'summary', help: 'bar help' }],
+    };
+    const expected = {
+      foo: [{ type: 'not_a_summary', help: 'foo help' }],
+      bar: [{ type: 'summary', help: 'bar help' }],
+      bar_count: [{ type: 'counter', help: 'Count of events that have been observed for the base metric (bar help)' }],
+      bar_sum: [{ type: 'counter', help: 'Total sum of all observed values for the base metric (bar help)' }],
+    };
+    expect(fixSummariesMetadata(metadata)).toEqual(expected);
   });
 });
 
