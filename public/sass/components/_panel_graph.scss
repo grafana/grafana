@@ -171,7 +171,7 @@
     overflow: hidden;
   }
 
-  .graph-legend-series:nth-child(odd) {
+  .graph-legend-series:nth-child(even) {
     background: $table-bg-accent;
   }
 
