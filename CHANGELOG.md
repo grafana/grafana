@@ -68,13 +68,13 @@ We have also extended the time zone options so you can select any of the standar
 
 **Deprecation warnings**
 
-- Scripted dashboards is now deprecated. The feature is not removed but will be in a future release. We hope to address the underlying requirement of dynamic dashboards in a different way. [#24059](https://github.com/grafana/grafana/issues/24059)
+- Scripted dashboards are now deprecated. The feature is not removed but will be in a future release. We hope to address the underlying requirement of dynamic dashboards in a different way. [#24059](https://github.com/grafana/grafana/issues/24059)
 
 ### Features / Enhancements
 
 * **CloudWatch**: Adds more examples to CloudWatch Logs cheatsheet. [#24288](https://github.com/grafana/grafana/pull/24288), [@kaydelaney](https://github.com/kaydelaney)
 * **Elasticsearch**: Changes terms min_doc_count default from 1 to 0. [#24204](https://github.com/grafana/grafana/pull/24204), [@Estrax](https://github.com/Estrax)
-* **LoginPage**: New design. [#23892](https://github.com/grafana/grafana/pull/23892), [@torkelo](https://github.com/torkelo)
+* **Login Page**: New design. [#23892](https://github.com/grafana/grafana/pull/23892), [@torkelo](https://github.com/torkelo)
 * **Logs**: Add log level Fatal. [#24185](https://github.com/grafana/grafana/pull/24185), [@davkal](https://github.com/davkal)
 * **Loki**: Show loki datasource stats in panel inspector. [#24190](https://github.com/grafana/grafana/pull/24190), [@davkal](https://github.com/davkal)
 * **Migration**: Dashboard links. [#23553](https://github.com/grafana/grafana/pull/23553), [@peterholmberg](https://github.com/peterholmberg)
@@ -82,7 +82,7 @@ We have also extended the time zone options so you can select any of the standar
 * **Prometheus**: Add off switch for metric/label name lookup. [#24034](https://github.com/grafana/grafana/pull/24034), [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w)
 * **Search**: Bring back open search by clicking dashboard name. [#24151](https://github.com/grafana/grafana/pull/24151), [@torkelo](https://github.com/torkelo)
 * **Tracing**: Header updates. [#24153](https://github.com/grafana/grafana/pull/24153), [@aocenas](https://github.com/aocenas)
-* **Transformations**: Improve timeseries support. [#23978](https://github.com/grafana/grafana/pull/23978), [@ryantxu](https://github.com/ryantxu)
+* **Transformations**: Improve time series support. [#23978](https://github.com/grafana/grafana/pull/23978), [@ryantxu](https://github.com/ryantxu)
 
 ### Bug Fixes
 
@@ -101,7 +101,7 @@ We have also extended the time zone options so you can select any of the standar
 * **Graph**: Fixed issue with x-axis labels showing "MM/DD" after viewing dashboard with pie chart. [#24341](https://github.com/grafana/grafana/pull/24341), [@mckn](https://github.com/mckn)
 * **Jaeger**: Fix how label is created in cascader. [#24164](https://github.com/grafana/grafana/pull/24164), [@aocenas](https://github.com/aocenas)
 * **Loki**: Fix label matcher for log metrics queries. [#24238](https://github.com/grafana/grafana/pull/24238), [@ivanahuckova](https://github.com/ivanahuckova)
-* **PanelInspector**: hides Query tab for plugins without Query ability. [#24216](https://github.com/grafana/grafana/pull/24216), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Panel inspect**: hides Query tab for plugins without Query ability. [#24216](https://github.com/grafana/grafana/pull/24216), [@hugohaggmark](https://github.com/hugohaggmark)
 * **Prometheus**: Refresh query field metrics on data source change. [#24116](https://github.com/grafana/grafana/pull/24116), [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w)
 * **Select**: Fixes so component loses focus on selecting value or pressing outside of input. [#24008](https://github.com/grafana/grafana/pull/24008), [@mckn](https://github.com/mckn)
 * **Stat/Gauge/BarGauge**: Shows default cursor when missing links. [#24284](https://github.com/grafana/grafana/pull/24284), [@hugohaggmark](https://github.com/hugohaggmark)
