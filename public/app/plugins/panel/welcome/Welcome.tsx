@@ -83,6 +83,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
       @media only screen and (max-width: ${theme.breakpoints.md}) {
         font-size: ${theme.typography.heading.h2};
+        margin-bottom: ${theme.spacing.sm};
       }
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         font-size: ${theme.typography.heading.h3};
