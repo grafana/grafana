@@ -31,7 +31,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
 import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
-import { cleanUpDashboardState } from '../state/actions';
+import { cleanUpUnCleanedDashboardStates } from '../state/actions';
 
 interface OwnProps {
   $scope: any;
@@ -59,9 +59,9 @@ interface ConnectedProps {
 
 interface DispatchProps {
   initDashboard: typeof initDashboard;
-  cleanUpDashboardState: typeof cleanUpDashboardState;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
+  cleanUpUnCleanedDashboardStates: typeof cleanUpUnCleanedDashboardStates;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -73,7 +73,6 @@ export interface State {
   updateScrollTop?: number;
   rememberScrollTop: number;
   showLoadingState: boolean;
-  prevUrlUid: string | null;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
@@ -83,7 +82,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     showLoadingState: false,
     scrollTop: 0,
     rememberScrollTop: 0,
-    prevUrlUid: null,
   };
 
   componentDidMount() {
@@ -100,15 +98,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.props.urlUid !== this.state.prevUrlUid && this.state.prevUrlUid !== null) {
-      this.props.cleanUpDashboardState(this.state.prevUrlUid);
-      this.setPanelFullscreenClass(false);
-    }
-
-    if (this.props.initPhase === DashboardInitPhase.Completed && this.state.prevUrlUid === null) {
-      this.props.cleanUpDashboardState(this.state.prevUrlUid);
-      this.setPanelFullscreenClass(false);
-    }
+    this.props.cleanUpUnCleanedDashboardStates(this.props.urlUid);
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -127,8 +117,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
     // Can remove this condition after we switch to react router
     if (prevProps.urlUid !== urlUid) {
-      console.log(prevProps.urlUid, urlUid);
-      this.setState({ prevUrlUid: prevProps.urlUid });
       return;
     }
 
@@ -359,9 +347,9 @@ export const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreSta
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initDashboard,
-  cleanUpDashboardState,
   notifyApp,
   updateLocation,
+  cleanUpUnCleanedDashboardStates,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

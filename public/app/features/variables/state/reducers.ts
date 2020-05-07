@@ -3,13 +3,13 @@ import { optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPick
 import { variableEditorReducer, VariableEditorState } from '../editor/reducer';
 import { variablesReducer } from './variablesReducer';
 import { VariableModel } from '../../templating/types';
-import { dashboardSelectorReducer, DashboardSelectorState } from './dashboardSelectorReducer';
+import { dashboardIdReducer, DashboardIdState } from './dashboardIdReducer';
 
 export interface TemplatingState {
   variables: Record<string, VariableModel>;
   optionsPicker: OptionsPickerState;
   editor: VariableEditorState;
-  getDashboardState: DashboardSelectorState;
+  dashboardId: DashboardIdState;
 }
 
 export default {
@@ -17,6 +17,6 @@ export default {
     editor: variableEditorReducer,
     variables: variablesReducer,
     optionsPicker: optionsPickerReducer,
-    getDashboardState: dashboardSelectorReducer,
+    dashboardId: dashboardIdReducer,
   }),
 };

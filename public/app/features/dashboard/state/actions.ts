@@ -13,11 +13,18 @@ import {
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 // Types
-import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
+import {
+  DashboardAcl,
+  DashboardAclUpdateDTO,
+  DashboardInitPhase,
+  NewDashboardAclItem,
+  PermissionLevel,
+  ThunkResult,
+} from 'app/types';
 import { PanelModel } from './PanelModel';
 import { toCollectionAction } from '../../../core/reducers/createCollection';
-import { clearDashboardSelector } from 'app/features/variables/state/dashboardSelectorReducer';
 import { cleanUpVariables } from '../../variables/state/variablesReducer';
+import { clearDashboardId } from '../../variables/state/dashboardIdReducer';
 
 export function getDashboardPermissions(id: number, uid: string): ThunkResult<void> {
   return async dispatch => {
@@ -174,8 +181,18 @@ export function changePanelPlugin(dashboardUId: string, panel: PanelModel, plugi
   };
 }
 
-export const cleanUpDashboardState = (dashboardId: string): ThunkResult<void> => dispatch => {
-  dispatch(toCollectionAction(cleanUpDashboard(), dashboardId));
+export const cleanUpUnCleanedDashboardStates = (currentDashboardId: string): ThunkResult<void> => (
+  dispatch,
+  getState
+) => {
+  const dashboardUIds = Object.keys(getState().dashboards).filter(key => key !== currentDashboardId);
   dispatch(cleanUpVariables());
-  dispatch(clearDashboardSelector());
+  dispatch(clearDashboardId());
+  for (const uid of dashboardUIds) {
+    const dashboardState = dashboardCollection.selector(getState(), uid);
+    if (dashboardState.initPhase !== DashboardInitPhase.NotStarted) {
+      console.log('Cleaning up dashboard', uid);
+      dispatch(toCollectionAction(cleanUpDashboard(), uid));
+    }
+  }
 };

@@ -5,12 +5,12 @@ import { DashboardModel } from '../state';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
-import { cleanUpDashboardState } from '../state/actions';
+import { cleanUpUnCleanedDashboardStates } from '../state/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
 
 interface ScenarioContext {
-  cleanUpDashboardMock: typeof cleanUpDashboardState;
+  cleanUpUnCleanedDashboardStatesMock: typeof cleanUpUnCleanedDashboardStates;
   dashboard?: DashboardModel | null;
   setDashboardProp: (overrides?: any, metaOverrides?: any) => void;
   wrapper?: ShallowWrapper<Props, State, DashboardPage>;
@@ -43,7 +43,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
     let setupFn: () => void;
 
     const ctx: ScenarioContext = {
-      cleanUpDashboardMock: jest.fn(),
+      cleanUpUnCleanedDashboardStatesMock: jest.fn(),
       setup: fn => {
         setupFn = fn;
       },
@@ -63,7 +63,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           initDashboard: jest.fn(),
           updateLocation: mockToolkitActionCreator(updateLocation),
           notifyApp: mockToolkitActionCreator(notifyApp),
-          cleanUpDashboardState: ctx.cleanUpDashboardMock,
+          cleanUpUnCleanedDashboardStates: ctx.cleanUpUnCleanedDashboardStatesMock,
           dashboard: null,
         };
 
@@ -229,7 +229,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should call clean up action', () => {
-      expect(ctx.cleanUpDashboardMock).toHaveBeenCalledTimes(1);
+      expect(ctx.cleanUpUnCleanedDashboardStatesMock).toHaveBeenCalledTimes(1);
     });
   });
 

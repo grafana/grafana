@@ -3,6 +3,7 @@ import { VariableModel } from '../../templating/types';
 import { getState } from '../../../store/store';
 import { NEW_VARIABLE_ID } from './types';
 import { DashboardModel } from '../../dashboard/state';
+import { dashboardCollection } from '../../dashboard/state/reducers';
 
 export const getVariable = <T extends VariableModel = VariableModel>(
   id: string,
@@ -40,7 +41,8 @@ export const getNewVariabelIndex = (state: StoreState = getState()): number => {
 };
 
 export const getDashboardModel = (state: StoreState = getState()): DashboardModel | null => {
-  const dashboardState = state.templating.getDashboardState();
+  const dashboardId = state.templating.dashboardId;
+  const dashboardState = dashboardCollection.selector(state, dashboardId);
   if (!dashboardState) {
     throw new Error('No dashboard state found.');
   }
