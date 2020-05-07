@@ -38,7 +38,7 @@ type AzureLogAnalyticsQuery struct {
 	RefID        string
 	ResultFormat string
 	URL          string
-	Model        map[string]interface{}
+	Model        *simplejson.Json
 	Params       url.Values
 	Target       string
 }
@@ -81,7 +81,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 		}
 
 		urlComponents := map[string]string{}
-		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
 		urlComponents["workspace"] = fmt.Sprintf("%v", azureLogAnalyticsTarget["workspace"])
 		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
 
@@ -96,7 +95,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 			RefID:        query.RefId,
 			ResultFormat: resultFormat,
 			URL:          apiURL,
-			Model:        azureLogAnalyticsTarget,
+			Model:        query.Model,
 			Params:       params,
 			Target:       params.Encode(),
 		})
@@ -238,7 +237,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, model map[string]interface{}, params url.Values) ([]*tsdb.Table, *simplejson.Json, error) {
+func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) ([]*tsdb.Table, *simplejson.Json, error) {
 	meta, err := createMetadata(model, params)
 	if err != nil {
 		return nil, simplejson.NewFromAny(meta), err
@@ -273,7 +272,7 @@ func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsRespon
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, model map[string]interface{}, params url.Values) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
+func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
 	meta, err := createMetadata(model, params)
 	if err != nil {
 		return nil, simplejson.NewFromAny(meta), err
@@ -360,11 +359,11 @@ func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsRe
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
 }
 
-func createMetadata(model map[string]interface{}, params url.Values) (metadata, error) {
+func createMetadata(model *simplejson.Json, params url.Values) (metadata, error) {
 	meta := metadata{
 		Query:        params.Get("query"),
-		Subscription: fmt.Sprintf("%v", model["subscription"]),
-		Workspace:    fmt.Sprintf("%v", model["workspace"]),
+		Subscription: model.Get("subscriptionId").MustString(),
+		Workspace:    model.Get("azureLogAnalytics").Get("workspace").MustString(),
 	}
 
 	encQuery, err := encodeQuery(meta.Query)
