@@ -136,7 +136,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   }
 
-  handleKeyword = async (token: Token, context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
+  private handleKeyword = async (token: Token, context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
     if (token.content.toLowerCase() === 'by') {
       const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
       const functionSuggestions = [
@@ -150,7 +150,11 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return null;
   };
 
-  handleCommand = async (commandToken: Token, curToken: Token, context: TypeaheadContext): Promise<TypeaheadOutput> => {
+  private handleCommand = async (
+    commandToken: Token,
+    curToken: Token,
+    context: TypeaheadContext
+  ): Promise<TypeaheadOutput> => {
     const queryCommand = commandToken.content.toLowerCase();
     const prevToken = prevNonWhitespaceToken(curToken);
     const currentTokenIsFirstArg = prevToken === commandToken;
@@ -222,7 +226,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return { suggestions: [] };
   };
 
-  findCommandToken = (startToken: Token): Token | null => {
+  private findCommandToken = (startToken: Token): Token | null => {
     let thisToken = { ...startToken };
 
     while (thisToken.prev !== null) {
@@ -241,19 +245,19 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return null;
   };
 
-  getCommandCompletionItems = (): TypeaheadOutput => {
+  private getCommandCompletionItems = (): TypeaheadOutput => {
     return { suggestions: [{ prefixMatch: true, label: 'Commands', items: QUERY_COMMANDS }] };
   };
 
-  getFunctionCompletionItems = (): TypeaheadOutput => {
+  private getFunctionCompletionItems = (): TypeaheadOutput => {
     return { suggestions: [{ prefixMatch: true, label: 'Functions', items: FUNCTIONS }] };
   };
 
-  getStatsAggCompletionItems = (): TypeaheadOutput => {
+  private getStatsAggCompletionItems = (): TypeaheadOutput => {
     return { suggestions: [{ prefixMatch: true, label: 'Functions', items: AGGREGATION_FUNCTIONS_STATS }] };
   };
 
-  getBoolFuncCompletionItems = (): TypeaheadOutput => {
+  private getBoolFuncCompletionItems = (): TypeaheadOutput => {
     return {
       suggestions: [
         {
@@ -265,7 +269,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   };
 
-  getNumericFuncCompletionItems = (): TypeaheadOutput => {
+  private getNumericFuncCompletionItems = (): TypeaheadOutput => {
     return {
       suggestions: [
         {
@@ -277,7 +281,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   };
 
-  getFieldCompletionItems = async (logGroups: string[]): Promise<TypeaheadOutput> => {
+  private getFieldCompletionItems = async (logGroups: string[]): Promise<TypeaheadOutput> => {
     const fields = await this.fetchFields(logGroups);
 
     return {
