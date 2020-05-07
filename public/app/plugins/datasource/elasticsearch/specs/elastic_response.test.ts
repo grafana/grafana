@@ -929,9 +929,10 @@ describe('ElasticResponse', () => {
       const hist: KeyValue<number> = {};
       const histogramResults = new MutableDataFrame(result.data[1]);
       rows = new DataFrameView(histogramResults);
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows.get(i);
-        hist[row.Time] = row.Count;
+        hist[row.Time] = row.Value;
       }
 
       response.responses[0].aggregations['2'].buckets.forEach((bucket: any) => {

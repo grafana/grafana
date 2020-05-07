@@ -111,6 +111,10 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 
 export interface TimeSeries extends QueryResultBase {
   target: string;
+  /**
+   * If name is manually configured via an alias / legend pattern
+   */
+  title?: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
   tags?: Labels;

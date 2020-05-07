@@ -57,8 +57,13 @@ export class QueryEditorRows extends PureComponent<Props> {
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onChangeQueries } = this.props;
 
-    // ensure refId is maintained
-    query.refId = queries[index].refId;
+    const old = queries[index];
+
+    // ensure refId & datasource are maintained
+    query.refId = old.refId;
+    if (old.datasource) {
+      query.datasource = old.datasource;
+    }
 
     // update query in array
     onChangeQueries(
