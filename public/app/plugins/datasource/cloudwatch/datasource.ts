@@ -300,7 +300,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   getPeriod(target: CloudWatchMetricsQuery, options: any) {
-    let period = this.templateSrv.replace(target.period, options.scopedVars);
+    let period = this.templateSrv.replace(target.period, options.scopedVars) as any;
     if (period && period.toLowerCase() !== 'auto') {
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
@@ -470,7 +470,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   makeLogActionRequest(
     subtype: LogAction,
     queryParams: any[],
-    scopedVars?: any,
+    scopedVars?: ScopedVars,
     makeReplacements = true
   ): Observable<DataFrame[]> {
     const range = this.timeSrv.timeRange();
@@ -490,9 +490,10 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     };
 
     if (makeReplacements) {
-      requestParams.queries.forEach(
-        query => (query.region = this.replace(this.getActualRegion(this.defaultRegion), scopedVars, true, 'region'))
-      );
+      requestParams.queries.forEach(query => {
+        query.region = this.replace(query.region, scopedVars, true, 'region');
+        query.region = this.getActualRegion(query.region);
+      });
     }
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
@@ -785,7 +786,12 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }, {});
   }
 
-  replace(target: string, scopedVars: ScopedVars, displayErrorIfIsMultiTemplateVariable?: boolean, fieldName?: string) {
+  replace(
+    target: string,
+    scopedVars: ScopedVars | undefined,
+    displayErrorIfIsMultiTemplateVariable?: boolean,
+    fieldName?: string
+  ) {
     if (displayErrorIfIsMultiTemplateVariable) {
       const variable = this.templateSrv
         .getVariables()

@@ -317,7 +317,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): any {
+  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string {
     if (!target) {
       return target;
     }
