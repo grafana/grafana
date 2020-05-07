@@ -74,7 +74,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
 
   // Show warning that we only apply the first frame
   if (input.length > 1) {
-    return <div>Organize fields only works with a sigle frame. Consider applying a join transformation first.</div>;
+    return <div>Organize fields only works with a single frame. Consider applying a join transformation first.</div>;
   }
 
   return (
