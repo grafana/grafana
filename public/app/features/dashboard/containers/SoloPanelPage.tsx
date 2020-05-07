@@ -98,7 +98,9 @@ const mapStateToProps = (state: StoreState, props: Props) => ({
   urlSlug: state.location.routeParams.slug,
   urlType: state.location.routeParams.type,
   urlPanelId: state.location.query.panelId,
-  dashboard: dashboardCollection.selector(state, props.urlUid).getModel() as DashboardModel,
+  dashboard: dashboardCollection
+    .selector(state, state.location.routeParams.uid?.toString())
+    .getModel() as DashboardModel,
 });
 
 const mapDispatchToProps = {
