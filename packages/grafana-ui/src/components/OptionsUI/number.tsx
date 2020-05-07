@@ -18,13 +18,21 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
     (e: React.SyntheticEvent) => {
       if (e.hasOwnProperty('key')) {
         // handling keyboard event
-        if ((e as React.KeyboardEvent).key === 'Enter') {
-          onChange((e as React.KeyboardEvent).currentTarget.value.trim() === '' ? undefined : e.currentTarget.value);
+        const evt = e as React.KeyboardEvent<HTMLInputElement>;
+        if (evt.key === 'Enter') {
+          onChange(
+            settings?.integer
+              ? toIntegerOrUndefined(evt.currentTarget.value)
+              : toFloatOrUndefined(evt.currentTarget.value)
+          );
         }
       } else {
         // handling form event
+        const evt = e as React.FormEvent<HTMLInputElement>;
         onChange(
-          (e as React.FormEvent<HTMLInputElement>).currentTarget.value.trim() === '' ? undefined : e.currentTarget.value
+          settings?.integer
+            ? toIntegerOrUndefined(evt.currentTarget.value)
+            : toFloatOrUndefined(evt.currentTarget.value)
         );
       }
     },
