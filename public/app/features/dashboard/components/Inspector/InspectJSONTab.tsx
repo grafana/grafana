@@ -104,7 +104,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   onClipboardCopied = () => {
     appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-    alert('TODO... the notice is behind the inspector!');
   };
 
   onApplyPanelModel = () => {

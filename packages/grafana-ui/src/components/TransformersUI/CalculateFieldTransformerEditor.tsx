@@ -12,16 +12,15 @@ import {
   BinaryOperationID,
   SelectableValue,
   binaryOperators,
+  CalculateFieldMode,
+  getResultFieldNameForCalculateFieldTransformerOptions,
+  getFieldTitle,
 } from '@grafana/data';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Input } from '../Input/Input';
 import { FilterPill } from '../FilterPill/FilterPill';
 import { HorizontalGroup } from '../Layout/Layout';
-import {
-  CalculateFieldMode,
-  getResultFieldNameForCalculateFieldTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/calculateField';
 import { Select } from '../Select/Select';
 import defaults from 'lodash/defaults';
 
@@ -82,14 +81,18 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
     const allNames: string[] = [];
     const byName: KeyValue<boolean> = {};
+
     for (const frame of input) {
       for (const field of frame.fields) {
         if (field.type !== FieldType.number) {
           continue;
         }
-        if (!byName[field.name]) {
-          byName[field.name] = true;
-          allNames.push(field.name);
+
+        const title = getFieldTitle(field, frame, input);
+
+        if (!byName[title]) {
+          byName[title] = true;
+          allNames.push(title);
         }
       }
     }
@@ -97,6 +100,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     if (configuredOptions.length) {
       const options: string[] = [];
       const selected: string[] = [];
+
       for (const v of allNames) {
         if (configuredOptions.includes(v)) {
           selected.push(v);
