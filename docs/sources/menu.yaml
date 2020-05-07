@@ -198,6 +198,8 @@
       name: Overview
     - link: /variables/global-variables/
       name: Global variables
+    - link: /variables/url-variables/
+      name: URL variables
     - link: /variables/advanced-variable-format-options/
       name: Advanced variable formats
     - link: /variables/repeat-panels-or-rows/
