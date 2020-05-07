@@ -57,7 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background-size: cover;
       height: 100%;
       align-items: center;
-      padding: 0 50px 0 140px;
+      padding: 0 16px;
       justify-content: space-between;
 
       @media only screen and (max-width: ${theme.breakpoints.xl}) {
@@ -79,6 +79,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     title: css`
+      margin-bottom: 0;
+
       @media only screen and (max-width: ${theme.breakpoints.md}) {
         font-size: ${theme.typography.heading.h2};
       }
@@ -92,6 +94,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     helpText: css`
       margin-right: ${theme.spacing.md};
+      margin-bottom: 0;
 
       @media only screen and (max-width: ${theme.breakpoints.md}) {
         font-size: ${theme.typography.heading.h4};
