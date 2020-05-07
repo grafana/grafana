@@ -17,7 +17,7 @@ Grafana supports up to 26 queries per panel.
 
 ## Query editors
 
-Query editors are forms that help you write queries. Depending on your data source, the query editor might completion, metric names, or variable suggestion.
+Query editors are forms that help you write queries. Depending on your data source, the query editor might provide auto-completion, metric names, or variable suggestion.
 
 Because of the difference between query languages, data sources may have query editors that look different. Here are two examples of query editors:
 
