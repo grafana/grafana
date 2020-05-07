@@ -120,7 +120,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
             }))
           )
         ),
-        map(response => this.addDataLinksToResponse(response, options))
+        map(response => this.addDataLinksToLogsResponse(response, options))
       );
     }
 
@@ -226,7 +226,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     );
   }
 
-  private addDataLinksToResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
+  private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
     for (const dataFrame of response.data as DataFrame[]) {
       const range = this.timeSrv.timeRange();
       const start = range.from.toISOString();
@@ -245,7 +245,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
       const encodedUrl = encodeUrl(
         urlProps,
-        this.replace(this.getActualRegion(curTarget.region), options.scopedVars, true, 'region')
+        this.getActualRegion(this.replace(curTarget.region, options.scopedVars, true, 'region'))
       );
 
       for (const field of dataFrame.fields) {
@@ -267,7 +267,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       this.makeLogActionRequest(
         'StopQuery',
         [...this.logQueries.values()].map(logQuery => ({ queryId: logQuery.id, region: logQuery.region })),
-        null,
+        undefined,
         false
       ).pipe(finalize(() => this.logQueries.clear()));
     }
