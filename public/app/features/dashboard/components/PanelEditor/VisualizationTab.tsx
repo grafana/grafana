@@ -1,12 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
+import { useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { filterPluginList, getAllPanelPluginMeta, VizTypePicker } from '../../panel_editor/VizTypePicker';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../../panel_editor/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
