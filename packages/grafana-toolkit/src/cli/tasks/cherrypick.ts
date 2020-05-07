@@ -30,7 +30,7 @@ const pagingParser = (linkStr: string): { prev?: string; next?: string; last?: s
 };
 
 const getIssues = async (client: any, page: string) => {
-  let result = await client.get('/issues', {
+  const result = await client.get('/issues', {
     params: {
       state: 'closed',
       per_page: 100,
