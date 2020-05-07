@@ -1,14 +1,11 @@
 +++
-title = "Developing Datasource Plugins"
+title = "Legacy data source plugins"
 keywords = ["grafana", "plugins", "documentation"]
 type = "docs"
-[menu.docs]
-name = "Developing Datasource Plugins"
-parent = "developing"
-weight = 5
+aliases = ["/docs/grafana/latest/plugins/developing/datasources/"]
 +++
 
-# Data Sources
+# Legacy data source plugins
 
 Data source plugins enable people to develop plugins for any database that
 communicates over HTTP. Its up to the plugin to transform the data into

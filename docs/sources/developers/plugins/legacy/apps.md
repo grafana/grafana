@@ -1,14 +1,11 @@
 +++
-title = "Developing App Plugins"
+title = "Legacy app plugins"
 keywords = ["grafana", "plugins", "documentation"]
 type = "docs"
-[menu.docs]
-name = "Developing App Plugins"
-parent = "developing"
-weight = 4
+aliases = ["/docs/grafana/latest/plugins/developing/apps/"]
 +++
 
-# Grafana Apps
+# Legacy app plugins
 
 App plugins are a Grafana plugin that can bundle data source and panel plugins within one package. They also enable the plugin author to create custom pages within Grafana. The custom pages enable the plugin author to include things like documentation, sign-up forms, or to control other services with HTTP requests.
 

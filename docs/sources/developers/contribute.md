@@ -1,19 +1,14 @@
 +++
-title = "Developer resources"
-description = "Resources for Grafana developers"
+title = "Contribute to Grafana"
 keywords = ["grafana", "documentation", "developers", "resources"]
 type = "docs"
-[menu.docs]
-name = "Grafana resources"
-identifier = "Developer resources"
-weight = 30
 +++
 
-# Developer resources
+# Contribute to Grafana
 
 This page lists resources for developers who want to contribute to the Grafana software ecosystem or build plugins for Grafana.
 
-## 
+##
 General resources
 These resources are useful for all developers.
 

@@ -1,14 +1,11 @@
 +++
-title = "Developing Backend Plugins"
+title = "Backend plugins"
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
 type = "docs"
-[menu.docs]
-name = "Developing Backend Plugins"
-parent = "developing"
-weight = 5
+aliases = ["/docs/grafana/latest/plugins/developing/backend-plugins-guide/"]
 +++
 
-# Backend Plugins
+# Backend plugins
 
 Grafana added support for plugins in Grafana 3.0 and this enabled the Grafana community to create panel plugins and data source plugins. It was wildly successful and has made Grafana much more useful as you can integrate it with anything and do any type of custom visualization that you want. However, these plugin hooks are on the frontend only and we also want to provide hooks into the Grafana backend to allow the community to extend and improve Grafana in new ways.
 

@@ -1,14 +1,12 @@
 +++
-title = "Developer Guide"
+title = "Legacy plugins"
 type = "docs"
-aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/plugins/datasources/", "/docs/grafana/latest/plugins/apps/", "/docs/grafana/latest/plugins/panels/"]
-[menu.docs]
-name = "Developer Guide"
-parent = "developing"
-weight = 1
+aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/plugins/datasources/", "/docs/grafana/latest/plugins/apps/", "/docs/grafana/latest/plugins/panels/", "/docs/grafana/latest/plugins/developing/development/"]
 +++
 
-# Developer Guide
+# Legacy plugins
+
+> **Note**: Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../_index.md" >}}).
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
@@ -47,20 +45,20 @@ Grafana that can impact your plugin.
 
 ## Metadata
 
-See the [coding styleguide]({{< relref "code-styleguide.md" >}}) for details on the metadata.
+See the [coding styleguide]({{< relref "style-guide.md" >}}) for details on the metadata.
 
 ## module.(js|ts)
 
 This is the entry point for every plugin. This is the place where you should export
 your plugin implementation. Depending on what kind of plugin you are developing you
-will be expected to export different things. You can find what's expected for [datasource]({{< relref "datasources.md" >}}), [panels]({{< relref "panels.md" >}})
+will be expected to export different things. You can find what's expected for [datasource]({{< relref "data-sources.md" >}}), [panels]({{< relref "panels.md" >}})
 and [apps]({{< relref "apps.md" >}}) plugins in the documentation.
 
 The Grafana SDK is quite small so far and can be found here:
 
 - [SDK file in Grafana](https://github.com/grafana/grafana/blob/master/public/app/plugins/sdk.ts)
 
-The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "datasources.md" >}}).
+The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "data-sources.md" >}}).
 
 Example:
 
@@ -128,7 +126,7 @@ We have three different examples that you can fork/download to get started devel
 
 - [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode.md" >}})
 - [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode.md" >}})
-- [Grafana Plugin Code Styleguide]({{< relref "code-styleguide.md" >}})
+- [Grafana Plugin Code Styleguide]({{< relref "style-guide.md" >}})
 - [Grafana Apps]({{< relref "apps.md" >}})
-- [Grafana Data Sources]({{< relref "datasources.md" >}})
-- [plugin.json Schema]({{< relref "plugin.json.md" >}})
+- [Grafana Data Sources]({{< relref "data-sources.md" >}})
+- [plugin.json Schema]({{< relref "metadata.md" >}})
