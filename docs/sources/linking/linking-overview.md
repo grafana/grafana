@@ -6,7 +6,7 @@ keywords = ["grafana", "linking", "create links", "link panels", "link dashboard
 aliases = ["/docs/grafana/latest/features/navigation-links/"]
 identifier = "linking-overview"
 parent = "linking"
-weight = 400
+weight = 100
 +++
 
 # Linking overview

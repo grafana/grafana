@@ -1,13 +1,12 @@
 +++
-title = "Add navigation links"
+title = "Panel links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
 type = "docs"
 aliases = ["/docs/grafana/latest/features/navigation-links/"]
 [menu.docs]
-identifier = "dashboards"
-parent = "features"
-weight = 1
+parent = "linking"
+weight = 300
 +++
 
 # Panel links

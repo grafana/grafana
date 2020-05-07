@@ -83,6 +83,39 @@
     link: /tutorials/ha_setup/
   - name: Troubleshooting
     link: /installation/troubleshooting/
+- name: Data sources
+  link: /features/datasources/
+  children:
+  - link: /features/datasources/add-a-data-source/
+    name: Add data source
+  - link: /features/datasources/cloudwatch/
+    name: AWS Cloudwatch
+  - link: /features/datasources/azuremonitor/
+    name: Azure Monitor
+  - link: /features/datasources/elasticsearch/
+    name: Elasticsearch
+  - link: /features/datasources/stackdriver/
+    name: Google Stackdriver
+  - link: /features/datasources/graphite/
+    name: Graphite
+  - link: /features/datasources/influxdb/
+    name: InfluxDB
+  - link: /features/datasources/loki/
+    name: Loki
+  - link: /features/datasources/mssql/
+    name: Microsoft SQL Server
+  - link: /features/datasources/mixed/
+    name: MixedData
+  - link: /features/datasources/mysql/
+    name: MySQL
+  - link: /features/datasources/opentsdb/
+    name: OpenTSDB
+  - link: /features/datasources/postgres/
+    name: PostgreSQL
+  - link: /features/datasources/prometheus/
+    name: Prometheus
+  - link: /features/datasources/testdata/
+    name: TestData DB
 - name: Panels
   link: /features/panels/
   children:
@@ -141,39 +174,6 @@
     name: JSON Model
   - link: /reference/scripting/
     name: Scripted dashboards
-- name: Data sources
-  link: /features/datasources/
-  children:
-  - link: /features/datasources/add-a-data-source/
-    name: Add data source
-  - link: /features/datasources/cloudwatch/
-    name: AWS Cloudwatch
-  - link: /features/datasources/azuremonitor/
-    name: Azure Monitor
-  - link: /features/datasources/elasticsearch/
-    name: Elasticsearch
-  - link: /features/datasources/stackdriver/
-    name: Google Stackdriver
-  - link: /features/datasources/graphite/
-    name: Graphite
-  - link: /features/datasources/influxdb/
-    name: InfluxDB
-  - link: /features/datasources/loki/
-    name: Loki
-  - link: /features/datasources/mssql/
-    name: Microsoft SQL Server
-  - link: /features/datasources/mixed/
-    name: MixedData
-  - link: /features/datasources/mysql/
-    name: MySQL
-  - link: /features/datasources/opentsdb/
-    name: OpenTSDB
-  - link: /features/datasources/postgres/
-    name: PostgreSQL
-  - link: /features/datasources/prometheus/
-    name: Prometheus
-  - link: /features/datasources/testdata/
-    name: TestData DB
 - name: Explore
   link: /features/explore/
 - name: Alerting
@@ -187,7 +187,16 @@
     name: Notifications
 - name: Image rendering
   link: /administration/image_rendering/
-- name: Templates and variables
+- name: Linking
+  link: /linking/
+  children:
+    - name: Overview
+      link: /linking/linking-overview/
+    - name: Dashboard links
+      link: /linking/dashboard-links/
+    - name: Panel links
+      link: /linking/panel-links/
+  - name: Templates and variables
   link: /variables/
   children:
     - link: /variables/templates-and-variables/
@@ -200,15 +209,6 @@
       name: Advanced variable formats
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
-- name: Linking
-  link: /linking/
-  children:
-    - name: Overview
-      link: /linking/linking-overview/
-    - name: Link dashboards
-      link: /linking/link-dashboards/
-    - name: Link panels
-      link: /linking/link-panels/
 - name: What's new in Grafana
   link: /whatsnew/
   children:
