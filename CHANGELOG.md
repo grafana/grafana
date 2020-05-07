@@ -107,6 +107,7 @@ We have also extended the time zone options so you can select any of the standar
 * **Stat/Gauge/BarGauge**: Shows default cursor when missing links. [#24284](https://github.com/grafana/grafana/pull/24284), [@hugohaggmark](https://github.com/hugohaggmark)
 * **Tracing**: Fix view bounds after trace change. [#23994](https://github.com/grafana/grafana/pull/23994), [@aocenas](https://github.com/aocenas)
 * **Variables**: Migrates old tags format for consistency. [#24276](https://github.com/grafana/grafana/pull/24276), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Reporting**: Update report schedule as soon as a report is updated (Enterprise)
 
 # 7.0.0-beta1 (2020-04-28)
 
@@ -212,12 +213,12 @@ We have also extended the time zone options so you can select any of the standar
 - **grafana/ui**: Add basic horizontal and vertical layout components. [#22303](https://github.com/grafana/grafana/pull/22303), [@dprokop](https://github.com/dprokop)
 - **Auth** SAML Role and Team Sync (Enterprise)
 - **Presence Indicators**: Display the avatars of active users on dashboards (Enterprise)
-- **Reporting**: makes it possible to disable the scheduler (Enterprise)
+- **Reporting**: Makes it possible to disable the scheduler (Enterprise)
 - **Dashboard**: Dashboard usage view (Enterprise)
-- **Reporting** makes it possible to trigger report emails without scheduler (Enterprise)
-- **Search**: sorting based on dashboard views and errors (Enterprise)
-- **Reporting**: improved landscape mode and panel image quality (Enterprise)
-- **Reporting**: adds config setting for image_scale_factor of panel images (Enterprise)
+- **Reporting** Makes it possible to trigger report emails without scheduler (Enterprise)
+- **Search**: Sorting based on dashboard views and errors (Enterprise)
+- **Reporting**: Improved landscape mode and panel image quality (Enterprise)
+- **Reporting**: Adds config setting for image_scale_factor of panel images (Enterprise)
 
 ### Bug Fixes
 
