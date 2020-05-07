@@ -341,10 +341,41 @@ export class HeatmapRenderer {
   addYAxisFromBuckets() {
     const tsBuckets = this.data.tsBuckets;
     let ticks = Math.ceil(this.chartHeight / DEFAULT_Y_TICK_SIZE_PX);
+    let vmax: number = _.max(_.map(tsBuckets, (b, i) => (b !== '' ? _.toNumber(b) : 0)));
+    let vmin: number = _.min(_.map(tsBuckets, (b, i) => (b !== '' ? _.toNumber(b) : vmax)));
+
+    vmax = this.panel.yAxis.max !== null ? this.panel.yAxis.max : vmax;
+    vmin = this.panel.yAxis.min !== null ? this.panel.yAxis.min : vmin;
+
+    let domain = [0, tsBuckets.length - 1];
+    let range = [this.chartHeight, 0];
+
+    if (this.panel.yAxis.logBase !== 1) {
+      if (vmin <= 0) {
+        vmin = _.min(_.map(tsBuckets, (b, i) => (b !== '' && _.toNumber(b) > 0 ? _.toNumber(b) : vmax)));
+      }
+    }
+
+    if (vmin >= 0 && vmax > vmin) {
+      domain = [];
+      range = [];
+      for (let index = 0; index < tsBuckets.length; index++) {
+        let v = tsBuckets[index] === '' ? vmax : _.toNumber(tsBuckets[index]);
+        if (v >= vmin) {
+          domain.push(index);
+          range.push(this.chartHeight * ((vmax - v) / (vmax - vmin)));
+        }
+      }
+    }
 
     this.scope.yScale = this.yScale = d3
       .scaleLinear()
-      .domain([0, tsBuckets.length - 1])
+      .domain(domain)
+      .range(range);
+
+    this.scope.yAxisScale = d3
+      .scaleLinear()
+      .domain([vmin, vmax])
       .range([this.chartHeight, 0]);
 
     const tickValues = _.map(tsBuckets, (b, i) => i);
@@ -366,8 +397,7 @@ export class HeatmapRenderer {
     this.data.tsBucketsFormatted = tsBucketsFormatted;
 
     const yAxis = d3
-      .axisLeft(this.yScale)
-      .tickFormat(tickFormatter)
+      .axisLeft(this.scope.yAxisScale)
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
@@ -375,8 +405,10 @@ export class HeatmapRenderer {
       (tickValues && tickValues.length <= ticks) ||
       (this.panel.yBucketBound === 'middle' && tickValues && tickValues.length)
     ) {
+      yAxis.tickFormat(tickFormatter);
       yAxis.tickValues(tickValues);
     } else {
+      yAxis.tickFormat(tickValueFormatter(decimals));
       yAxis.ticks(ticks);
     }
 
@@ -600,7 +632,7 @@ export class HeatmapRenderer {
 
   setCardSize() {
     const xGridSize = Math.floor(this.xScale(this.data.xBucketSize) - this.xScale(0));
-    let yGridSize = Math.floor(this.yScale(this.yScale.invert(0) - this.data.yBucketSize));
+    let yGridSize = Math.floor(this.yScale(0) - this.yScale(this.data.yBucketSize));
 
     if (this.panel.yAxis.logBase !== 1) {
       const base = this.panel.yAxis.logBase;
@@ -655,7 +687,7 @@ export class HeatmapRenderer {
 
   getCardHeight(d: { y: number }) {
     const y = this.yScale(d.y) + this.chartTop - this.cardHeight - this.cardPadding;
-    let h = this.cardHeight;
+    let h = Math.max(this.yScale(d.y) - this.yScale(d.y + 1), this.cardHeight);
 
     if (this.panel.yAxis.logBase !== 1 && d.y === 0) {
       return this.cardHeight;
