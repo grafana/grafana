@@ -42,7 +42,7 @@ interface Props {
 
 export default class PermissionsListItem extends PureComponent<Props> {
   onPermissionChanged = (option: SelectableValue<PermissionLevel>) => {
-    this.props.onPermissionChanged(this.props.item, option.value);
+    this.props.onPermissionChanged(this.props.item, option!.value);
   };
 
   onRemoveItem = () => {
@@ -55,7 +55,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
     const currentPermissionLevel = dashboardPermissionLevels.find(dp => dp.value === item.permission);
 
     return (
-      <tr className={setClassNameHelper(item.inherited)}>
+      <tr className={setClassNameHelper(Boolean(item?.inherited))}>
         <td style={{ width: '1%' }}>
           <ItemAvatar item={item} />
         </td>
