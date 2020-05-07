@@ -151,8 +151,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       const nextQuery = {
         ...query,
         expression: value,
-        logGroupNames: selectedLogGroups?.map(logGroupName => logGroupName.value) ?? [],
-        region: selectedRegion.value,
+        logGroupNames: selectedLogGroups?.map(logGroupName => logGroupName.value!) ?? [],
+        region: selectedRegion.value!,
       };
       onChange(nextQuery);
     }
@@ -168,7 +168,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     if (onChange) {
       const nextQuery = {
         ...query,
-        logGroupNames: v.map(logGroupName => logGroupName.value) ?? [],
+        logGroupNames: v.map(logGroupName => logGroupName.value!) ?? [],
       };
 
       onChange(nextQuery);
@@ -190,8 +190,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       if (onChange) {
         const nextQuery = {
           ...query,
-          region: v.value,
-          logGroupNames: selectedLogGroups.map(group => group.value),
+          region: v.value!,
+          logGroupNames: selectedLogGroups.map(group => group.value!),
         };
 
         onChange(nextQuery);
