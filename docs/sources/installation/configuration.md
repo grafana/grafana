@@ -307,7 +307,7 @@ Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
 
 - `addr` is the host `:` port of the redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to redis.
-- `db` (optional) is the number indentifer of the redis database you want to use.
+- `db` (optional) is the number identifier of the redis database you want to use.
 - `ssl` (optional) is if SSL should be used to connect to redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
 
 #### Memcache
