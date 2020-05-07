@@ -31,7 +31,7 @@ Because of the difference between query languages, data sources may have query e
 
 ## Query syntax
 
-Every data source has a different query language and syntax to ask for the data. Here are two query examples:
+Data sources have different query languages and syntaxes to ask for the data. Here are two query examples:
 
 **PostgreSQL**
 
