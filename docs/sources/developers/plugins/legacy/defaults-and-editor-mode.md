@@ -1,13 +1,10 @@
 +++
-title = "Plugin Defaults and Editor Mode"
+title = "Legacy defaults and editor mode"
 type = "docs"
-[menu.docs]
-name = "Plugin Defaults and Editor Mode"
-parent = "developing"
-weight = 3
+aliases = ["/docs/grafana/latest/plugins/developing/defaults-and-editor-mode/"]
 +++
 
-# Plugin Defaults and Editor Mode
+# Legacy defaults and editor mode
 
 Most plugins allow users to customize the behavior by changing settings on an editor tab. These setting fields are saved in the dashboard json.
 
@@ -59,7 +56,7 @@ If you want your users to be able to change these panel values then you need to 
 
 ## Editor Mode
 
-Editor mode is when a user clicks Edit on a panel. Every panel has a general tab where you change the title and width and some panels have more inbuilt tabs like the Metrics tab or Time Range tab. A panel plugin can add its own tab(s) so that a user can customize the panel. 
+Editor mode is when a user clicks Edit on a panel. Every panel has a general tab where you change the title and width and some panels have more inbuilt tabs like the Metrics tab or Time Range tab. A panel plugin can add its own tab(s) so that a user can customize the panel.
 
 Grafana conventions mean all you need to do is to hook up an Angular template with input fields and Grafana will automatically save the values to the dashboard json and load them on dashboard load.
 
