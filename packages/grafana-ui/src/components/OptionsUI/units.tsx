@@ -7,5 +7,5 @@ export const UnitValueEditor: React.FC<FieldConfigEditorProps<string, UnitFieldC
   value,
   onChange,
 }) => {
-  return <UnitPicker value={value} onChange={onChange} useNewForms />;
+  return <UnitPicker value={value} onChange={onChange} />;
 };
