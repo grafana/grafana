@@ -19,6 +19,7 @@ import { Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getFieldTitle } from './fieldState';
 
 const property1 = {
   id: 'custom.property1', // Match field properties
@@ -156,16 +157,19 @@ describe('applyFieldOverrides', () => {
       min: 0,
       max: 100,
     };
+
     const f1 = {
       unit: 'ms',
       dateFormat: '', // should be ignored
       max: parseFloat('NOPE'), // should be ignored
       min: null, // should alo be ignored!
+      title: 'newTitle',
     };
 
     const f: DataFrame = toDataFrame({
       fields: [{ type: FieldType.number, name: 'x', config: field, values: [] }],
     });
+
     const processed = applyFieldOverrides({
       data: [f],
       fieldConfig: {
@@ -176,11 +180,13 @@ describe('applyFieldOverrides', () => {
       replaceVariables: v => v,
       theme: {} as GrafanaTheme,
     })[0];
-    const out = processed.fields[0].config;
 
-    expect(out.min).toEqual(0);
-    expect(out.max).toEqual(100);
-    expect(out.unit).toEqual('ms');
+    const outField = processed.fields[0];
+
+    expect(outField.config.min).toEqual(0);
+    expect(outField.config.max).toEqual(100);
+    expect(outField.config.unit).toEqual('ms');
+    expect(getFieldTitle(outField, f)).toEqual('newTitle');
   });
 
   it('will apply field overrides', () => {
@@ -304,10 +310,8 @@ describe('setDynamicConfigValue', () => {
   it('applies dynamic config values', () => {
     const config = {
       title: 'test',
-      // custom: {
-      //   property1: 1,
-      // },
     };
+
     setDynamicConfigValue(
       config,
       {

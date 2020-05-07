@@ -103,7 +103,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       __series: { text: 'Series', value: { name: getFrameDisplayTitle(frame, index) } }, // might be missing
     };
 
-    const fields: Field[] = frame.fields.map((field, fieldIndex) => {
+    const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const fieldScopedVars = { ...scopedVars };
       const title = getFieldTitle(field, frame, options.data);
@@ -192,6 +192,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         ...field,
         config,
         type,
+        state: {
+          ...field.state,
+          title: null,
+        },
       };
 
       // and set the display processor using it

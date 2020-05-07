@@ -106,7 +106,7 @@ export interface FieldState {
   /**
    * An appropriate name for the field (does not include frame info)
    */
-  title: string;
+  title?: string | null;
 
   /**
    * Cache of reduced values
