@@ -282,6 +282,8 @@
 - name: Plugins
   link: /plugins/
   children:
+    - name: Overview
+      link: /plugins/
     - name: Install plugins
       link: /plugins/installation/
     - name: Develop plugins
@@ -365,6 +367,8 @@
   children:
     - name: Developer resources
       link: /developers/developer-resources/
+    - link: /developers/plugins/
+      name: Plugins
     - name: Packages reference
       link: /packages_api/
     - name: Contributor License Agreement (CLA)
