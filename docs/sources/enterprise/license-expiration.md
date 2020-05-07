@@ -52,3 +52,7 @@ Enterprise plugins might stop working.
 ## White labeling
 
 The white labeling feature is turned off, meaning that any white labeling options will not have any effect.
+
+## Usage insights
+
+All the usage insights features are turned off, meaning that you won't be able to look at dashboard usage, presence indicator or to use improved search. Usage data will continue to be collected and you will have access to them as soon as you update your license.
