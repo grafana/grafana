@@ -139,7 +139,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = dashboardCollection.selector(state, props.dashboard.uid).panels[props.panel.id];
+  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
+  const panelState = dashboardState.panels[props.panel.id];
   if (!panelState) {
     return { plugin: null };
   }

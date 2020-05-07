@@ -121,9 +121,9 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
   return {
-    angularPanelComponent: dashboardCollection.selector(state, props.dashboard.uid).panels[props.panel.id]
-      .angularComponent,
+    angularPanelComponent: dashboardState.panels[props.panel.id].angularComponent,
   };
 };
 

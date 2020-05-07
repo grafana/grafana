@@ -345,7 +345,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   const panel = state.panelEditor.getPanel();
-  const { plugin } = getPanelStateById(dashboardCollection.selector(state, props.dashboard.uid), panel.id);
+  const dashboardState = dashboardCollection.selector(state, props.dashboard.uid);
+  const { plugin } = getPanelStateById(dashboardState, panel.id);
 
   return {
     location: state.location,

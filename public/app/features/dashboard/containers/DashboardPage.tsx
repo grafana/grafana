@@ -323,8 +323,8 @@ export class DashboardPage extends PureComponent<Props, State> {
 
 export const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   const urlUid: string = state.location.routeParams.uid?.toString();
-  const dashboard = dashboardCollection.selector(state, urlUid);
-  const { getModel, initError, initPhase, isInitSlow } = dashboard;
+  const dashboardState = dashboardCollection.selector(state, urlUid);
+  const { getModel, initError, initPhase, isInitSlow } = dashboardState;
   const model = getModel() as DashboardModel;
   return {
     urlUid,
