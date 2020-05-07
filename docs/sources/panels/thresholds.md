@@ -37,6 +37,7 @@ You can add as many thresholds to a panel as you want. Grafana automatically sor
 > **Note:** These instructions apply only to the Stat, Gauge, Bar gauge, and Table visualizations. 
 
 1. Navigate to the panel you want to add a threshold to.
+1. Click the panel title and then click **Edit** or press **e**.
 1. Click the **Field** tab.
 1. Click **Add threshold**. 
 1. Grafana adds a threshold with suggested numerical and color values.
@@ -51,6 +52,7 @@ You can add as many thresholds to a panel as you want. Grafana automatically sor
 In the Graph panel visualization, thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when the graph crosses a particular threshold.
 
 1. Navigate to the graph panel you want to add a threshold to.
+1. Click the panel title and then click **Edit** or press **e**.
 1. On the Panel tab, click **Thresholds**.
 1. Click **Add threshold**.
 1. Fill in as many fields as you want. Only the **T1** fields are required.
@@ -70,6 +72,7 @@ In the Graph panel visualization, thresholds allow you to add arbitrary lines or
 ## Delete a threshold
 
 1. Navigate to the panel you want to add a threshold to.
+1. Click the panel title and then click **Edit** or press **e**.
 1. Click the **Field** tab. (Or **Panel** tab for a graph panel.)
 1. Click the trash can icon next to the threshold you want to remove.
 1. Click **Save** to save the changes in the dashboard.
