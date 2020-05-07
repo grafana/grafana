@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   FieldConfigEditorProps,
   toIntegerOrUndefined,
@@ -13,18 +13,27 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   item,
 }) => {
   const { settings } = item;
+  const onValueChange = useCallback(
+    (value: string) => {
+      onChange(settings?.integer ? toIntegerOrUndefined(value) : toFloatOrUndefined(value));
+    },
+    [onChange]
+  );
   return (
     <Input
-      value={isNaN(value) ? '' : value}
+      defaultValue={isNaN(value) ? '' : value.toString()}
       min={settings?.min}
       max={settings?.max}
       type="number"
       step={settings?.step}
       placeholder={settings?.placeholder}
-      onChange={e => {
-        onChange(
-          settings?.integer ? toIntegerOrUndefined(e.currentTarget.value) : toFloatOrUndefined(e.currentTarget.value)
-        );
+      onBlur={e => {
+        onValueChange(e.currentTarget.value);
+      }}
+      onKeyDown={e => {
+        if (e.key === 'Enter') {
+          onValueChange(e.currentTarget.value);
+        }
       }}
     />
   );
