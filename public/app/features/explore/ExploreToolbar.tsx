@@ -32,7 +32,6 @@ import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
-import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 
 const { ButtonSelect } = LegacyForms;
 
@@ -83,7 +82,6 @@ interface DispatchProps {
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
   updateLocation: typeof updateLocation;
-  setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
   setCollectionDashboardQueriesToUpdateOnLoad: typeof setCollectionDashboardQueriesToUpdateOnLoad;
 }
 
@@ -130,10 +128,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     if (withChanges) {
       this.props.setCollectionDashboardQueriesToUpdateOnLoad(dash.uid, {
-        panelId: originPanelId,
-        queries: this.cleanQueries(queries),
-      });
-      this.props.setDashboardQueriesToUpdateOnLoad({
         panelId: originPanelId,
         queries: this.cleanQueries(queries),
       });
@@ -417,7 +411,6 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
   syncTimes,
   changeMode: changeMode,
-  setDashboardQueriesToUpdateOnLoad,
   setCollectionDashboardQueriesToUpdateOnLoad,
 };
 

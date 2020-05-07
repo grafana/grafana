@@ -76,7 +76,6 @@ export const getRootReducer = () =>
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
-    dashboards: dashboardCollection.reducer,
     templating: combineReducers({
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
@@ -87,7 +86,6 @@ export const getTemplatingRootReducer = () =>
 
 export const getTemplatingAndLocationRootReducer = () =>
   combineReducers({
-    dashboards: dashboardCollection.reducer,
     templating: combineReducers({
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
