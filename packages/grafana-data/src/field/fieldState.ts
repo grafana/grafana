@@ -31,14 +31,19 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
 }
 
 export function getFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
-  if (!field.state || !field.state.title) {
-    field.state = {
-      ...field.state,
-      title: calculateFieldTitle(field, frame, allFrames),
-    };
+  const existingTitle = field.state?.title;
+
+  if (existingTitle) {
+    return existingTitle;
   }
 
-  return field.state.title;
+  const title = calculateFieldTitle(field, frame, allFrames);
+  field.state = {
+    ...field.state,
+    title,
+  };
+
+  return title;
 }
 
 /**
