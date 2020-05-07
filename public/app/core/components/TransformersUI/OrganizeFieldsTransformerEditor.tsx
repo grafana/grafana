@@ -2,19 +2,18 @@ import React, { useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
-  createOrderFieldsComparer,
   DataFrame,
   DataTransformerID,
   GrafanaTheme,
-  OrganizeFieldsTransformerOptions,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
   getFieldTitle,
 } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
-import { Input } from '../Input/Input';
-import { IconButton } from '../IconButton/IconButton';
+import { stylesFactory, useTheme, Input, IconButton } from '@grafana/ui';
+
+import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
+import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 

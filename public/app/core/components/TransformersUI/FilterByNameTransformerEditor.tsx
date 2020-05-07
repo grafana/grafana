@@ -1,18 +1,15 @@
 import React from 'react';
 import {
   DataTransformerID,
-  FilterFieldsByNameTransformerOptions,
   KeyValue,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
   getFieldTitle,
 } from '@grafana/data';
-import { HorizontalGroup } from '../Layout/Layout';
-import { Input } from '../Input/Input';
-import { FilterPill } from '../FilterPill/FilterPill';
-import { Field } from '../Forms/Field';
+import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 import { css } from 'emotion';
+import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
