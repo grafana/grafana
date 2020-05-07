@@ -19,7 +19,7 @@ import { PanelEditorState } from '../features/dashboard/components/PanelEditor/s
 import { ApiKeysState } from './apiKeys';
 import { TemplatingState } from '../features/variables/state/reducers';
 import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
-import { CollectionReducerState } from '../core/reducers/createCollection';
+import { CollectionState } from '../core/reducers/createCollection';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -28,7 +28,7 @@ export interface StoreState {
   teams: TeamsState;
   team: TeamState;
   folder: FolderState;
-  dashboards: CollectionReducerState<DashboardState>;
+  dashboards: CollectionState<DashboardState>;
   panelEditor: PanelEditorState;
   dataSources: DataSourcesState;
   dataSourceSettings: DataSourceSettingsState;

@@ -2,7 +2,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { StoreState } from '../../types';
 import { Reducer } from 'redux';
 
-export interface CollectionReducerState<InstanceState extends {}> {
+export interface CollectionState<InstanceState extends {}> {
   [key: string]: InstanceState;
 }
 
@@ -19,15 +19,15 @@ export const toCollectionAction = (action: PayloadAction<any>, id: string): Payl
 
 export const createCollection = <InstanceState extends {}>(args: {
   instanceReducer: Reducer<InstanceState>;
-  stateSelector: (state: StoreState) => CollectionReducerState<InstanceState>;
+  stateSelector: (state: StoreState) => CollectionState<InstanceState>;
 }) => {
   const { instanceReducer, stateSelector } = args;
 
   // there might be a better redux toolkit way to create HOC reducer but I couldn't find anything
   const reducer = (
-    state: CollectionReducerState<InstanceState> = {},
+    state: CollectionState<InstanceState> = {},
     collectionAction: PayloadAction<CollectionAction>
-  ): CollectionReducerState<InstanceState> => {
+  ): CollectionState<InstanceState> => {
     if (collectionAction.type.indexOf(COLLECTION_ACTION_PREFIX) !== 0) {
       return state;
     }
