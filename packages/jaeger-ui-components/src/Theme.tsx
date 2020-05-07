@@ -72,6 +72,11 @@ export type Theme = {
   type: ThemeType;
   servicesColorPalette: string[];
   borderStyle: string;
+  components?: {
+    TraceName?: {
+      fontSize?: number | string;
+    };
+  };
 };
 
 export const defaultTheme: Theme = {
@@ -197,5 +202,21 @@ export function autoColor(theme: Theme, hex: string, base?: string) {
     color.l = 1 - color.l;
     const newColor = tinycolor(color);
     return newColor.isLight() ? newColor.darken(5).toHex8String() : newColor.lighten(5).toHex8String();
+  }
+}
+
+/**
+ * With theme overrides you can use both number or string (for things like rem units) so this makes sure we convert
+ * the value accordingly or use fallback if not set
+ */
+export function safeSize(size: number | string | undefined, fallback: string): string {
+  if (!size) {
+    return fallback;
+  }
+
+  if (typeof size === 'string') {
+    return size;
+  } else {
+    return `${size}px`;
   }
 }

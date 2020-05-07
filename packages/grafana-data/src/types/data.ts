@@ -15,6 +15,8 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+type PreferredVisualisationType = 'graph' | 'table';
+
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
@@ -27,6 +29,9 @@ export interface QueryResultMeta {
 
   /** Used to track transformation ids that where part of the processing */
   transformations?: string[];
+
+  /** Currently used to show results in Explore only in preferred visualisation option */
+  preferredVisualisationType?: PreferredVisualisationType;
 
   /**
    * Legacy data source specific, should be moved to custom
@@ -106,6 +111,10 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 
 export interface TimeSeries extends QueryResultBase {
   target: string;
+  /**
+   * If name is manually configured via an alias / legend pattern
+   */
+  title?: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
   tags?: Labels;

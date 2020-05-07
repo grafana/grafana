@@ -10,7 +10,7 @@
     "build": "grunt build",
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
-    "e3e:debug": "./e2e/start-and-run-suite debug",
+    "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "jest": "jest --notify --watch",
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit --maxWorkers 2",
@@ -53,12 +53,10 @@
   },
   "lint-staged": {
     "*.{ts,tsx,json,scss}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "*pkg/**/*.go": [
-      "gofmt -w -s",
-      "git add"
+      "gofmt -w -s"
     ]
   },
   "devDependencies": {

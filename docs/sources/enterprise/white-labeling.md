@@ -16,7 +16,7 @@ White labeling allows you to replace the Grafana brand and logo with your own co
 
 > Only available in Grafana Enterprise v6.6+.
 
-Grafana Enterprise has white labeling options in the `grafana.ini` file. As with all configuration options, you can also be set set them with environment variables.
+Grafana Enterprise has white labeling options in the `grafana.ini` file. As with all configuration options, you can also set them with environment variables.
 
 You can change the following elements:
 
@@ -26,6 +26,9 @@ You can change the following elements:
 - Side menu top logo
 - Footer and help menu links
 - Fav icon (shown in browser tab)
+- Login title (will not appear if a login logo is set, Grafana v7.0+)
+- Login subtitle (will not appear if a login logo is set, Grafana v7.0+)
+- Login box background (Grafana v7.0+)
 
 > You will have to host your logo and other images used by the white labeling feature separately. Make sure Grafana can access the URL where the assets are stored.
 
@@ -39,12 +42,21 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 # Set to your company name to override application title
 ;app_title =
 
+# Set to main title on the login page (Will not appear if a login logo is set)
+;login_title =
+
+# Set to login subtitle (Will not appear if a login logo is set)
+;login_subtitle =
+
 # Set to complete URL to override login logo
 ;login_logo =
 
-# Set to complete css background expression to override login background
+# Set to complete CSS background expression to override login background
 # example: login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg)
 ;login_background =
+
+# Set to complete CSS background expression to override login box background
+;login_box_background =
 
 # Set to complete URL to override menu logo
 ;menu_logo =
@@ -73,5 +85,5 @@ GF_WHITE_LABELING_FOOTER_LINKS=support guides
 GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_TEXT=Support
 GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_URL=http://your.support.site
 GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_TEXT=Guides
-GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_URL=http://your.guides.site 
+GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_URL=http://your.guides.site
 ```

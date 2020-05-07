@@ -3,7 +3,6 @@ package search
 import (
 	"sort"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -49,7 +48,7 @@ type FindPersistedDashboardsQuery struct {
 	Page         int64
 	Permission   models.PermissionType
 
-	SortBy searchstore.FilterOrderBy
+	Filters []interface{}
 
 	Result HitList
 }
@@ -86,7 +85,9 @@ func (s *SearchService) searchHandler(query *Query) error {
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
-		dashboardQuery.SortBy = sortOpt.Filter
+		for _, filter := range sortOpt.Filter {
+			dashboardQuery.Filters = append(dashboardQuery.Filters, filter)
+		}
 	}
 
 	if err := bus.Dispatch(&dashboardQuery); err != nil {
