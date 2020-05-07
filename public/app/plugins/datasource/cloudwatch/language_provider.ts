@@ -153,11 +153,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
       const commandToken = this.findCommandToken(curToken);
 
-      console.log({
-        commandToken,
-        curToken,
-      });
-
       if (commandToken !== null) {
         const typeaheadOutput = await this.handleCommand(commandToken, curToken, context);
         return typeaheadOutput;
