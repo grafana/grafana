@@ -320,12 +320,23 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
   <div
     className="dashboard-loading__text"
   >
-    <Icon
-      className="fa-spin"
-      name="fa fa-spinner"
-    />
-     
-    Fetching
+    <Component
+      spacing="md"
+    >
+      <Component
+        align="center"
+        justify="center"
+        spacing="xs"
+      >
+        <Icon
+          className="fa-spin"
+          name="fa fa-spinner"
+        />
+         
+        Fetching
+      </Component>
+       
+    </Component>
   </div>
 </div>
 `;
