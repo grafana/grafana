@@ -6,7 +6,7 @@ type = "docs"
 
 # URL variables
 
-You can use variables in URLs to link to specific portions of your visualizations. For more information about linking, refer to [Dashboard links]({{< relref "../linking/dashboard-links.md" >}}) and [Panel links]({{< relref "../linking/panel-links.md" >}}).
+You can use variables in data links to link to specific portions of your visualizations. For more information about data links, refer to [Data links]({{< relref "../linking/data-links.md" >}}).
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana please use the version picker to select
 docs for an older version of Grafana.
@@ -37,6 +37,7 @@ Field specific variables are available under ``__field`` namespace:
 * ``__field.name`` - field name to the URL
 
 ## Value variables
+
 Value specific variables are available under ``__value`` namespace:
 
 * ``__value.time`` - value's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
