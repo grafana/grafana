@@ -6,6 +6,7 @@ type = "docs"
 name = "Text"
 parent = "panels"
 weight = 950
+draft = "true"
 +++
 
 # Plugin list
