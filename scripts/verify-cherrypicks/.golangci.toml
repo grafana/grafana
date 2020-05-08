@@ -1,0 +1,46 @@
+[run]
+skip-files = ["data/.*\\.gen\\.go", "data/generic_nullable_vector\\.go", "data/generic_vector\\.go"]
+
+[linters-settings.golint]
+min-confidence = 1
+
+[linters-settings.goconst]
+min-len = 2
+min-occurrences = 2
+
+[linters]
+disable-all = true
+enable = [
+  "bodyclose",
+  "deadcode",
+  "depguard",
+  "dogsled",
+  "errcheck",
+  "gochecknoinits",
+  "goconst",
+  "gocritic",
+  "goimports",
+  "golint",
+  "goprintffuncname",
+  "gosec",
+  "gosimple",
+  "govet",
+  "ineffassign",
+  "interfacer",
+  "misspell",
+  "nakedret",
+  "rowserrcheck",
+  "scopelint",
+  "staticcheck",
+  "structcheck",
+  "stylecheck",
+  "typecheck",
+  "unconvert",
+  "unused",
+  "varcheck",
+  "whitespace",
+]
+
+# Disabled linters (might want them later)
+# "gocyclo",
+# "unparam"
