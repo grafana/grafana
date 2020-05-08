@@ -36,6 +36,10 @@ describe('CloudWatchLanguageProvider', () => {
     await runSuggestionTest('fields \\', [fields, FUNCTIONS.map(v => v.label)]);
   });
 
+  it('should suggest fields and functions after comma', async () => {
+    await runSuggestionTest('fields field1, \\', [fields, FUNCTIONS.map(v => v.label)]);
+  });
+
   it('should suggest fields and functions after display command', async () => {
     await runSuggestionTest('display \\', [fields, FUNCTIONS.map(v => v.label)]);
   });
@@ -61,6 +65,10 @@ describe('CloudWatchLanguageProvider', () => {
 
   it('should suggest fields directly after sort', async () => {
     await runSuggestionTest('sort \\', [fields]);
+  });
+
+  it('should suggest fields directly after sort after a pipe', async () => {
+    await runSuggestionTest('fields field1 | sort \\', [fields]);
   });
 
   it('should suggest sort order after sort command and field', async () => {

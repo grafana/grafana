@@ -90,33 +90,26 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     const isFirstToken = !curToken.prev;
     const prevToken = prevNonWhitespaceToken(curToken);
 
+    const isCommandStart = isFirstToken || (!isFirstToken && prevToken?.types.includes('command-separator'));
+    if (isCommandStart) {
+      return this.getCommandCompletionItems();
+    }
+
     if (isInsideFunctionParenthesis(curToken)) {
       return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
     }
 
-    const isCommandStart = isFirstToken || (!isFirstToken && prevToken?.types.includes('command-separator'));
-    if (isCommandStart) {
-      return this.getCommandCompletionItems();
-    } else if (!isFirstToken) {
-      if (prevToken?.types.includes('keyword')) {
-        return this.handleKeyword(prevToken, context);
-      }
+    if (isAfterKeyword('by', curToken)) {
+      return this.handleKeyword(context);
+    }
 
-      if (prevToken?.types.includes('comparison-operator')) {
-        const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
-        const boolFuncSuggs = this.getBoolFuncCompletionItems();
-        const numFuncSuggs = this.getNumericFuncCompletionItems();
+    if (prevToken?.types.includes('comparison-operator')) {
+      return this.handleComparison(context);
+    }
 
-        suggs.suggestions.push(...boolFuncSuggs.suggestions, ...numFuncSuggs.suggestions);
-        return suggs;
-      }
-
-      const commandToken = this.findCommandToken(curToken);
-
-      if (commandToken !== null) {
-        const typeaheadOutput = await this.handleCommand(commandToken, curToken, context);
-        return typeaheadOutput;
-      }
+    const commandToken = previousCommandToken(curToken);
+    if (commandToken) {
+      return await this.handleCommand(commandToken, curToken, context);
     }
 
     return {
@@ -136,18 +129,14 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     ];
   }, 30 * 1000);
 
-  private handleKeyword = async (token: Token, context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
-    if (token.content.toLowerCase() === 'by') {
-      const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
-      const functionSuggestions = [
-        { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
-      ];
-      suggs.suggestions.push(...functionSuggestions);
+  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
+    const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+    const functionSuggestions = [
+      { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
+    ];
+    suggs.suggestions.push(...functionSuggestions);
 
-      return suggs;
-    }
-
-    return null;
+    return suggs;
   };
 
   private handleCommand = async (
@@ -160,25 +149,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     const currentTokenIsFirstArg = prevToken === commandToken;
 
     if (queryCommand === 'sort') {
-      if (currentTokenIsFirstArg) {
-        return await this.getFieldCompletionItems(context.logGroupNames ?? []);
-      } else if (prevToken?.types.includes('field-name')) {
-        // suggest sort options
-        return {
-          suggestions: [
-            {
-              prefixMatch: true,
-              label: 'Sort Order',
-              items: [
-                {
-                  label: 'asc',
-                },
-                { label: 'desc' },
-              ],
-            },
-          ],
-        };
-      }
+      return this.handleSortCommand(currentTokenIsFirstArg, curToken, context);
     }
 
     if (queryCommand === 'parse') {
@@ -187,62 +158,81 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       }
     }
 
-    let typeaheadOutput: TypeaheadOutput | null = null;
-    if (
-      (commandToken.next?.types.includes('whitespace') && !commandToken.next.next) ||
-      nextNonWhitespaceToken(commandToken) === curToken ||
-      (curToken.content === ',' && curToken.types.includes('punctuation')) ||
-      (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'))
-    ) {
-      if (['display', 'fields'].includes(queryCommand)) {
-        // Current token comes straight after command OR after comma
-        typeaheadOutput = await this.getFieldCompletionItems(context.logGroupNames ?? []);
-        typeaheadOutput.suggestions.push(...this.getFunctionCompletionItems().suggestions);
+    const currentTokenIsAfterCommandAndEmpty =
+      commandToken.next?.types.includes('whitespace') && !commandToken.next.next;
+    const currentTokenIsAfterCommand =
+      currentTokenIsAfterCommandAndEmpty || nextNonWhitespaceToken(commandToken) === curToken;
 
-        return typeaheadOutput;
-      } else if (queryCommand === 'stats') {
-        typeaheadOutput = this.getStatsAggCompletionItems();
-      } else if (queryCommand === 'filter') {
-        if (currentTokenIsFirstArg) {
-          const sugg = await this.getFieldCompletionItems(context.logGroupNames ?? []);
-          const boolFuncs = this.getBoolFuncCompletionItems();
-          sugg.suggestions.push(...boolFuncs.suggestions);
-          return sugg;
-        }
-      }
+    const currentTokenIsComma = curToken.content === ',' && curToken.types.includes('punctuation');
+    const currentTokenIsCommaOrAfterComma =
+      currentTokenIsComma || (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'));
 
-      if (
-        (curToken.content === ',' && curToken.types.includes('punctuation')) ||
-        (commandToken.next?.types.includes('whitespace') && !commandToken.next.next)
-      ) {
+    // We only show suggestions if we are after a command or after a comma which is a field separator
+    if (!(currentTokenIsAfterCommand || currentTokenIsCommaOrAfterComma)) {
+      return { suggestions: [] };
+    }
+
+    if (['display', 'fields'].includes(queryCommand)) {
+      const typeaheadOutput = await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      typeaheadOutput.suggestions.push(...this.getFunctionCompletionItems().suggestions);
+
+      return typeaheadOutput;
+    }
+
+    if (queryCommand === 'stats') {
+      const typeaheadOutput = this.getStatsAggCompletionItems();
+      if (currentTokenIsComma || currentTokenIsAfterCommandAndEmpty) {
         typeaheadOutput?.suggestions.forEach(group => {
           group.skipFilter = true;
         });
       }
-
-      return typeaheadOutput!;
+      return typeaheadOutput;
     }
 
+    if (queryCommand === 'filter' && currentTokenIsFirstArg) {
+      const sugg = await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      const boolFuncs = this.getBoolFuncCompletionItems();
+      sugg.suggestions.push(...boolFuncs.suggestions);
+      return sugg;
+    }
     return { suggestions: [] };
   };
 
-  private findCommandToken = (startToken: Token): Token | null => {
-    let thisToken = { ...startToken };
-
-    while (!!thisToken.prev) {
-      thisToken = thisToken.prev;
-      const isFirstCommand = thisToken.types.includes('query-command') && !thisToken.prev;
-      if (thisToken.types.includes('command-separator') || isFirstCommand) {
-        // next token should be command
-        if (!isFirstCommand && thisToken.next?.types.includes('query-command')) {
-          return thisToken.next;
-        } else {
-          return thisToken;
-        }
-      }
+  private async handleSortCommand(
+    isFirstArgument: boolean,
+    curToken: Token,
+    context: TypeaheadContext
+  ): Promise<TypeaheadOutput> {
+    if (isFirstArgument) {
+      return await this.getFieldCompletionItems(context.logGroupNames ?? []);
+    } else if (prevNonWhitespaceToken(curToken)?.types.includes('field-name')) {
+      // suggest sort options
+      return {
+        suggestions: [
+          {
+            prefixMatch: true,
+            label: 'Sort Order',
+            items: [
+              {
+                label: 'asc',
+              },
+              { label: 'desc' },
+            ],
+          },
+        ],
+      };
     }
 
-    return null;
+    return { suggestions: [] };
+  }
+
+  private handleComparison = async (context?: TypeaheadContext) => {
+    const fieldsSuggestions = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+    const boolFuncSuggestions = this.getBoolFuncCompletionItems();
+    const numFuncSuggestions = this.getNumericFuncCompletionItems();
+
+    fieldsSuggestions.suggestions.push(...boolFuncSuggestions.suggestions, ...numFuncSuggestions.suggestions);
+    return fieldsSuggestions;
   };
 
   private getCommandCompletionItems = (): TypeaheadOutput => {
@@ -327,6 +317,20 @@ function prevNonWhitespaceToken(token: Token): Token | null {
   return null;
 }
 
+function previousCommandToken(startToken: Token): Token | null {
+  let thisToken = startToken;
+  while (!!thisToken.prev) {
+    thisToken = thisToken.prev;
+    if (
+      thisToken.types.includes('query-command') &&
+      (!thisToken.prev || prevNonWhitespaceToken(thisToken)?.types.includes('command-separator'))
+    ) {
+      return thisToken;
+    }
+  }
+  return null;
+}
+
 const funcsWithFieldArgs = [
   'avg',
   'count',
@@ -374,4 +378,9 @@ function isInsideFunctionParenthesis(curToken: Token): boolean {
     }
   }
   return false;
+}
+
+function isAfterKeyword(keyword: string, token: Token): boolean {
+  const prevToken = prevNonWhitespaceToken(token);
+  return prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by';
 }
