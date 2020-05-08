@@ -77,6 +77,11 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async ({ enterprise }) =
       continue;
     }
     const issueDetails = await client.get(item.pull_request.url);
+
+    if (!issueDetails.data.merged) {
+      continue;
+    }
+
     console.log(`* ${item.title}, (#${item.number}), merge-sha: ${issueDetails.data.merge_commit_sha}`);
     commands += `git cherry-pick -x ${issueDetails.data.merge_commit_sha}\n`;
   }
