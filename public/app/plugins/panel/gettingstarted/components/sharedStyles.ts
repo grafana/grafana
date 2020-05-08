@@ -34,6 +34,10 @@ export const cardStyle = stylesFactory((theme: GrafanaTheme, complete: boolean) 
 export const iconStyle = stylesFactory(
   (theme: GrafanaTheme, complete: boolean) => css`
     color: ${complete ? theme.palette.blue95 : theme.colors.textWeak};
+
+    @media only screen and (max-width: ${theme.breakpoints.sm}) {
+      display: none;
+    }
   `
 );
 
