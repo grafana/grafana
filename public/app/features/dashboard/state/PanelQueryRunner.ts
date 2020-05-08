@@ -94,7 +94,7 @@ export class PanelQueryRunner {
           if (transformations && transformations.length > 0) {
             processedData = {
               ...processedData,
-              series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
+              series: transformDataFrame(transformations, data.series),
             };
           }
         }

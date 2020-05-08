@@ -49,7 +49,7 @@ interface State {
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv = backendSrv;
-  querySubscription: Unsubscribable;
+  querySubscription: Unsubscribable | null;
 
   state: State = {
     isLoadingHelp: false,
