@@ -52,7 +52,7 @@ For more information about writing a query for your data source, refer to the sp
 The Query tab consists of the following elements:
 
 * Data source selector
-* Data source options
+* Query options
 * Query inspector button
 * Query editor list
 
@@ -72,9 +72,9 @@ In addition to the data sources that you have configured in your Grafana, there 
   * You cannot change an existing query to use the Mixed Data Source.
 * **Dashboard -** Select this to use a result set from another panel in the same dashboard.
 
-### Data source query options
+### Query options
 
-Click **Options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made on this panel.
+Click **Query options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made in this panel.
 
 {{< docs-imagebox img="/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="400px" >}}
 
