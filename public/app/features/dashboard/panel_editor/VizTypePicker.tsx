@@ -87,7 +87,12 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
   return (
     <div className={styles.grid}>
       {hasResults ? (
-        renderList.map((plugin, index) => renderVizPlugin(plugin, index))
+        renderList.map((plugin, index) => {
+          if (plugin.state === PluginState.deprecated) {
+            return null;
+          }
+          return renderVizPlugin(plugin, index);
+        })
       ) : (
         <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
       )}
