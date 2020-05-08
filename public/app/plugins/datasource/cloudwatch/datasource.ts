@@ -47,6 +47,7 @@ import { CloudWatchLanguageProvider } from './language_provider';
 const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
 import { VariableWithMultiSupport } from 'app/features/templating/types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { AwsUrl, encodeUrl } from './aws_url';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -118,7 +119,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
               refId: dataFrame.refId,
             }))
           )
-        )
+        ),
+        map(response => this.addDataLinksToLogsResponse(response, options))
       );
     }
 
@@ -224,12 +226,48 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     );
   }
 
+  private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
+    for (const dataFrame of response.data as DataFrame[]) {
+      const range = this.timeSrv.timeRange();
+      const start = range.from.toISOString();
+      const end = range.to.toISOString();
+
+      const curTarget = options.targets.find(target => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
+      const urlProps: AwsUrl = {
+        end,
+        start,
+        timeType: 'ABSOLUTE',
+        tz: 'UTC',
+        editorString: curTarget.expression,
+        isLiveTail: false,
+        source: curTarget.logGroupNames,
+      };
+
+      const encodedUrl = encodeUrl(
+        urlProps,
+        this.getActualRegion(this.replace(curTarget.region, options.scopedVars, true, 'region'))
+      );
+
+      for (const field of dataFrame.fields) {
+        field.config.links = [
+          {
+            url: encodedUrl,
+            title: 'View in CloudWatch console',
+            targetBlank: true,
+          },
+        ];
+      }
+    }
+
+    return response;
+  }
+
   stopQueries() {
     if (this.logQueries.size > 0) {
       this.makeLogActionRequest(
         'StopQuery',
         [...this.logQueries.values()].map(logQuery => ({ queryId: logQuery.id, region: logQuery.region })),
-        null,
+        undefined,
         false
       ).pipe(finalize(() => this.logQueries.clear()));
     }
