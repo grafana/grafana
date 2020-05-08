@@ -2,19 +2,15 @@ import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
-import { cleanUpDashboard } from '../state/reducers';
-import {
-  mockToolkitActionCreator,
-  mockToolkitActionCreatorWithoutPayload,
-  ToolkitActionCreatorWithoutPayloadMockType,
-} from 'test/core/redux/mocks';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
+import { cleanUpDashboardAndVariables } from '../state/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
 
 interface ScenarioContext {
-  cleanUpDashboardMock: ToolkitActionCreatorWithoutPayloadMockType;
+  cleanUpDashboardAndVariablesMock: typeof cleanUpDashboardAndVariables;
   dashboard?: DashboardModel | null;
   setDashboardProp: (overrides?: any, metaOverrides?: any) => void;
   wrapper?: ShallowWrapper<Props, State, DashboardPage>;
@@ -47,7 +43,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
     let setupFn: () => void;
 
     const ctx: ScenarioContext = {
-      cleanUpDashboardMock: mockToolkitActionCreatorWithoutPayload(cleanUpDashboard),
+      cleanUpDashboardAndVariablesMock: jest.fn(),
       setup: fn => {
         setupFn = fn;
       },
@@ -67,7 +63,8 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           initDashboard: jest.fn(),
           updateLocation: mockToolkitActionCreator(updateLocation),
           notifyApp: mockToolkitActionCreator(notifyApp),
-          cleanUpDashboard: ctx.cleanUpDashboardMock,
+          cleanUpDashboardAndVariables: ctx.cleanUpDashboardAndVariablesMock,
+          cancelVariables: jest.fn(),
           dashboard: null,
         };
 
@@ -233,7 +230,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should call clean up action', () => {
-      expect(ctx.cleanUpDashboardMock).toHaveBeenCalledTimes(1);
+      expect(ctx.cleanUpDashboardAndVariablesMock).toHaveBeenCalledTimes(1);
     });
   });
 

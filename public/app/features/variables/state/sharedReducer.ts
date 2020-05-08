@@ -35,10 +35,22 @@ const sharedReducerSlice = createSlice({
     },
     resolveInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id!);
+
+      if (!instanceState) {
+        // we might have cancelled a batch so then this state has been removed
+        return;
+      }
+
       instanceState.initLock?.resolve();
     },
     removeInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id!);
+
+      if (!instanceState) {
+        // we might have cancelled a batch so then this state has been removed
+        return;
+      }
+
       instanceState.initLock = null;
     },
     removeVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ reIndex: boolean }>>) => {

@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
-  DashboardInitPhase,
-  DashboardState,
   DashboardAclDTO,
   DashboardInitError,
+  DashboardInitPhase,
+  DashboardState,
   PanelState,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
@@ -37,6 +37,12 @@ const dashbardSlice = createSlice({
     },
     dashboardInitServices: (state, action: PayloadAction) => {
       state.initPhase = DashboardInitPhase.Services;
+    },
+    dashboardSlowVariables: (state, action: PayloadAction) => {
+      state.initPhase = DashboardInitPhase.Variables;
+    },
+    dashboardCancelVariables: (state, action: PayloadAction) => {
+      state.initPhase = DashboardInitPhase.VariablesCancel;
     },
     dashboardInitSlow: (state, action: PayloadAction) => {
       state.isInitSlow = true;
@@ -118,6 +124,8 @@ export const {
   dashboardInitSlow,
   dashboardInitCompleted,
   dashboardInitServices,
+  dashboardSlowVariables,
+  dashboardCancelVariables,
   cleanUpDashboard,
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,

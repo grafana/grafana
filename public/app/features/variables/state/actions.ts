@@ -14,7 +14,7 @@ import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
-import { updateLocation } from 'app/core/actions';
+import { notifyApp, updateLocation } from 'app/core/actions';
 import {
   addInitLock,
   addVariable,
@@ -31,6 +31,13 @@ import { alignCurrentWithMulti } from '../shared/multiOptions';
 import { isMulti } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { getConfig } from '../../../core/config';
+import { createErrorNotification } from '../../../core/copy/appNotification';
+import { VariableSrv } from '../../templating/variable_srv';
+import { BatchStatus, variablesClearBatch, variablesCompleteBatch, variablesInitBatch } from './batchStateReducer';
+import { getBackendSrv } from '../../../core/services/backend_srv';
+import { cleanVariables } from './variablesReducer';
+import { dashboardCancelVariables, dashboardSlowVariables } from '../../dashboard/state/reducers';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -447,4 +454,69 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   }
 
   return queryParamsNew;
+};
+
+export const initVariablesBatch = (
+  dashboardUid: string,
+  dashboard: DashboardModel,
+  variableSrv: VariableSrv
+): ThunkResult<void> => async (dispatch, getState) => {
+  // Detect slow loading / initializing variables
+  // This is in order to show loading indication for slow variables queries
+  setTimeout(() => {
+    if (getState().templating.batch.status === BatchStatus.Fetching) {
+      dispatch(dashboardSlowVariables());
+    }
+  }, 2000);
+
+  // Detect very slow loading / initializing variables
+  // This is in order to enable cancel for very slow running queries
+  setTimeout(() => {
+    if (getState().templating.batch.status === BatchStatus.Fetching) {
+      dispatch(dashboardCancelVariables());
+    }
+  }, 10000);
+
+  try {
+    const batchState = getState().templating.batch;
+    if (batchState.status === BatchStatus.Fetching) {
+      // previous dashboard is still fetching variables, cancel all requests
+      dispatch(cancelVariables({ redirectToHome: false }));
+    }
+
+    dispatch(variablesInitBatch({ uid: dashboardUid }));
+
+    const newVariables = getConfig().featureToggles.newVariables;
+
+    if (!newVariables) {
+      await variableSrv.init(dashboard);
+    }
+
+    if (newVariables) {
+      dispatch(initDashboardTemplating(dashboard.templating.list));
+      await dispatch(processVariables());
+      dispatch(completeDashboardTemplating(dashboard));
+    }
+
+    dispatch(variablesCompleteBatch({ uid: dashboardUid }));
+  } catch (err) {
+    dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
+    console.log(err);
+  }
+};
+
+export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
+  dispatch(cleanVariables());
+  dispatch(variablesClearBatch());
+};
+
+export const cancelVariables = ({ redirectToHome }: { redirectToHome?: boolean }): ThunkResult<void> => dispatch => {
+  getBackendSrv().cancelAllDataSourceRequests();
+
+  if (redirectToHome) {
+    window.location.href = getConfig().appSubUrl + '/';
+    return;
+  }
+
+  dispatch(cleanUpVariables());
 };
