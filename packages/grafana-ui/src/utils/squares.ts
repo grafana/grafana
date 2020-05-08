@@ -43,3 +43,7 @@ function calculateSizeOfChild(parentWidth: number, parentHeight: number, numberO
 
   return parentWidth / parts;
 }
+
+import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
+
+console.log(labelsToFieldsTransformer);

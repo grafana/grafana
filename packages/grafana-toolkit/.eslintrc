@@ -1,6 +1,8 @@
 {
   "extends": ["@grafana/eslint-config"],
   "rules": {
-    "no-restricted-imports": [2, "^@grafana/runtime.*"]
+    "no-restricted-imports": [ "error", {
+      "paths": ["@grafana/runtime"]
+    }]
   }
 }
