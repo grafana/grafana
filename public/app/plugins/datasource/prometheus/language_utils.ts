@@ -1,3 +1,5 @@
+import { PromMetricsMetadata } from './types';
+
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
 export const processHistogramLabels = (labels: string[]) => {
@@ -110,4 +112,35 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
   const ruleNames = Object.keys(mapping);
   const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
   return query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
+}
+
+/**
+ * Adds metadata for synthetic metrics for which the API does not provide metadata.
+ * See https://github.com/grafana/grafana/issues/22337 for details.
+ *
+ * @param metadata HELP and TYPE metadata from /api/v1/metadata
+ */
+export function fixSummariesMetadata(metadata: PromMetricsMetadata): PromMetricsMetadata {
+  if (!metadata) {
+    return metadata;
+  }
+  const summaryMetadata: PromMetricsMetadata = {};
+  for (const metric in metadata) {
+    const item = metadata[metric][0];
+    if (item.type === 'summary') {
+      summaryMetadata[`${metric}_count`] = [
+        {
+          type: 'counter',
+          help: `Count of events that have been observed for the base metric (${item.help})`,
+        },
+      ];
+      summaryMetadata[`${metric}_sum`] = [
+        {
+          type: 'counter',
+          help: `Total sum of all observed values for the base metric (${item.help})`,
+        },
+      ];
+    }
+  }
+  return { ...metadata, ...summaryMetadata };
 }
