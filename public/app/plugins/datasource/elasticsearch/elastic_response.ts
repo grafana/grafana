@@ -378,43 +378,7 @@ export class ElasticResponse {
     return result;
   }
 
-  getTimeSeries() {
-    const seriesList = [];
-
-    for (let i = 0; i < this.response.responses.length; i++) {
-      const response = this.response.responses[i];
-      if (response.error) {
-        throw this.getErrorFromElasticResponse(this.response, response.error);
-      }
-
-      if (response.hits && response.hits.hits.length > 0) {
-        this.processHits(response.hits, seriesList);
-      }
-
-      if (response.aggregations) {
-        const aggregations = response.aggregations;
-        const target = this.targets[i];
-        const tmpSeriesList: any[] = [];
-        const table = new TableModel();
-
-        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
-        this.trimDatapoints(tmpSeriesList, target);
-        this.nameSeries(tmpSeriesList, target);
-
-        for (let y = 0; y < tmpSeriesList.length; y++) {
-          seriesList.push(tmpSeriesList[y]);
-        }
-
-        if (table.rows.length > 0) {
-          seriesList.push(table);
-        }
-      }
-    }
-
-    return { data: seriesList };
-  }
-
-  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+  processResponse(isLogsRequest: boolean, logMessageField?: string, logLevelField?: string): DataQueryResponse {
     const dataFrame: DataFrame[] = [];
 
     for (let n = 0; n < this.response.responses.length; n++) {
@@ -455,7 +419,9 @@ export class ElasticResponse {
           let series = toDataFrame(tmpSeriesList[y]);
 
           // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
-          series = addPreferredVisualisationType(series, 'graph');
+          if (isLogsRequest) {
+            series = addPreferredVisualisationType(series, 'graph');
+          }
 
           dataFrame.push(series);
         }
@@ -463,6 +429,14 @@ export class ElasticResponse {
     }
 
     return { data: dataFrame };
+  }
+
+  getTimeSeries(): DataQueryResponse {
+    return this.processResponse(false);
+  }
+
+  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+    return this.processResponse(true, logMessageField, logLevelField);
   }
 }
 
