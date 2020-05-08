@@ -10,8 +10,8 @@ import { Echo } from '../../../core/services/echo/Echo';
 import { getConfig } from 'app/core/config';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
-import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
+import { BatchStatus, variablesInitBatch } from '../../variables/state/batchStateReducer';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -116,6 +116,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     const ctx: ScenarioContext = {
       args: {
+        urlUid: 'DGmvKKxZz',
         $injector: injectorMock,
         $scope: {},
         fixUrl: false,
@@ -144,6 +145,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         },
         templating: {
           variables: {},
+          batch: { uid: 'DGmvKKxZz', status: BatchStatus.Completed },
         },
       },
       setup: (fn: () => void) => {
@@ -186,8 +188,8 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[3].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[3].payload.title).toBe('New dashboard');
+    expect(ctx.actions[5].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[5].payload.title).toBe('New dashboard');
   });
 
   it('Should initialize services', () => {
@@ -257,7 +259,7 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    const index = getConfig().featureToggles.newVariables ? 4 : 3;
+    const index = getConfig().featureToggles.newVariables ? 6 : 5;
     expect(ctx.actions[index].type).toBe(dashboardInitCompleted.type);
     expect(ctx.actions[index].payload.title).toBe('My cool dashboard');
   });
@@ -281,6 +283,6 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     if (!getConfig().featureToggles.newVariables) {
       return expect.assertions(0);
     }
-    expect(ctx.actions[3].type).toBe(addVariable.type);
+    expect(ctx.actions[3].type).toBe(variablesInitBatch.type);
   });
 });

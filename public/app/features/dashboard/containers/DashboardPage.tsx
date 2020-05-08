@@ -13,7 +13,7 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Icon } from '@grafana/ui';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Icon, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp, updateLocation } from 'app/core/actions';
@@ -215,18 +215,23 @@ export class DashboardPage extends PureComponent<Props, State> {
     return (
       <div className="dashboard-loading">
         <div className="dashboard-loading__text">
-          <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
-          {this.props.initPhase === DashboardInitPhase.VariablesCancel && (
-            <HorizontalGroup align="center" justify="center" spacing="md">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => this.props.cancelVariables({ redirectToHome: true })}
-              >
-                Cancel
-              </Button>
-            </HorizontalGroup>
-          )}
+          <VerticalGroup spacing="md">
+            <HorizontalGroup align="center" justify="center" spacing="xs">
+              <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+            </HorizontalGroup>{' '}
+            {this.props.initPhase === DashboardInitPhase.VariablesCancel && (
+              <HorizontalGroup align="center" justify="center">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  icon="repeat"
+                  onClick={() => this.props.cancelVariables({ redirectToHome: true })}
+                >
+                  Cancel and return to Home
+                </Button>
+              </HorizontalGroup>
+            )}
+          </VerticalGroup>
         </div>
       </div>
     );

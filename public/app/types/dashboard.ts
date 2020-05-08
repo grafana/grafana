@@ -52,7 +52,7 @@ export enum DashboardInitPhase {
   Fetching = 'Fetching',
   Services = 'Services',
   Variables = 'Loading variables',
-  VariablesCancel = 'Loading variables...',
+  VariablesCancel = 'Loading variables is taking a while',
   Failed = 'Failed',
   Completed = 'Completed',
 }

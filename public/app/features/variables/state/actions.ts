@@ -456,6 +456,9 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   return queryParamsNew;
 };
 
+export const DASHBOARD_SLOW_VARIABLES_TIMEOUT = 2000;
+export const DASHBOARD_CANCEL_SLOW_VARIABLES_TIMEOUT = 10000;
+
 export const initVariablesBatch = (
   dashboardUid: string,
   dashboard: DashboardModel,
@@ -467,7 +470,7 @@ export const initVariablesBatch = (
     if (getState().templating.batch.status === BatchStatus.Fetching) {
       dispatch(dashboardSlowVariables());
     }
-  }, 2000);
+  }, DASHBOARD_SLOW_VARIABLES_TIMEOUT);
 
   // Detect very slow loading / initializing variables
   // This is in order to enable cancel for very slow running queries
@@ -475,7 +478,7 @@ export const initVariablesBatch = (
     if (getState().templating.batch.status === BatchStatus.Fetching) {
       dispatch(dashboardCancelVariables());
     }
-  }, 10000);
+  }, DASHBOARD_CANCEL_SLOW_VARIABLES_TIMEOUT);
 
   try {
     const batchState = getState().templating.batch;
