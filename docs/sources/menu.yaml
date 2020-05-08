@@ -360,6 +360,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Variables
+          link: /developers/plugins/variables/
         - name: Authentication
           link: /developers/plugins/authentication/
         - name: Backend plugins
