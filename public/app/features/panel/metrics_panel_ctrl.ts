@@ -16,7 +16,6 @@ import {
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { CoreEvents } from 'app/types';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -204,7 +203,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     try {
-      this.events.emit(CoreEvents.dataFramesReceived, data);
+      this.events.emit(PanelEvents.dataFramesReceived, data);
     } catch (err) {
       this.processDataError(err);
     }
