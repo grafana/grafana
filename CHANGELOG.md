@@ -55,6 +55,17 @@ With this feature, you can specify the local time zone of the service or system 
 
 We have also extended the time zone options so you can select any of the standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 
+# 7.0.0-beta3 (2020-05-08)
+
+### Features / Enhancements
+* **Docker**: Upgrade to Alpine 3.11. [#24056](https://github.com/grafana/grafana/pull/24056), [@aknuds1](https://github.com/aknuds1)
+* **Forms**: Remove Forms namespace [BREAKING]. Will cause all `Forms` imports to stop working. See migration guide in [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)[#24378](https://github.com/grafana/grafana/pull/24378), [@tskarhed](https://github.com/tskarhed)
+
+### Bug Fixes
+* **CloudWatch**: Fix error with expression only query. [#24362](https://github.com/grafana/grafana/pull/24362), [@aocenas](https://github.com/aocenas)
+* **Elasticsearch**: Fix building of raw document queries resulting in error Unknown BaseAggregationBuilder error. [#24403](https://github.com/grafana/grafana/pull/24403), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Prometheus**: Fix for prometheus legend formats for instant time series queries. [#24407](https://github.com/grafana/grafana/pull/24407), [@torkelo](https://github.com/torkelo)
+
 # 7.0.0-beta2 (2020-05-07)
 
 ## Breaking changes
