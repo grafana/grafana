@@ -131,9 +131,15 @@ describe('enhanceDataFrame', () => {
           name: 'trace2',
           datasourceUid: 'uid',
         },
+        {
+          matcherRegex: 'trace2=(\\w+)',
+          name: 'trace2',
+          datasourceUid: 'uid2',
+        },
       ],
     });
     expect(df.fields.length).toBe(3);
+    console.log(df.fields);
     const fc = new FieldCache(df);
     expect(fc.getFieldByName('trace1').values.toArray()).toEqual([null, '1234', null]);
     expect(fc.getFieldByName('trace1').config.links[0]).toEqual({
@@ -142,9 +148,14 @@ describe('enhanceDataFrame', () => {
     });
 
     expect(fc.getFieldByName('trace2').values.toArray()).toEqual([null, null, 'foo']);
+    expect(fc.getFieldByName('trace2').config.links.length).toBe(2);
     expect(fc.getFieldByName('trace2').config.links[0]).toEqual({
       title: '',
       meta: { datasourceUid: 'uid' },
+    });
+    expect(fc.getFieldByName('trace2').config.links[1]).toEqual({
+      title: '',
+      meta: { datasourceUid: 'uid2' },
     });
   });
 });

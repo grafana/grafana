@@ -5,7 +5,7 @@ import { serializeStateToUrlParam } from '../../../core/utils/explore';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 /**
- * Get links from the filed of a dataframe that was given to as and in addition check if there is associated
+ * Get links from the field of a dataframe and in addition check if there is associated
  * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
  * that we just supply datasource name and field value and Explore split window will know how to render that
  * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
