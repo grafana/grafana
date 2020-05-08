@@ -13,6 +13,7 @@ export interface Card {
   info?: string;
   // For local storage
   key?: string;
+  learnHref?: string;
 }
 
 export interface SetupStep {

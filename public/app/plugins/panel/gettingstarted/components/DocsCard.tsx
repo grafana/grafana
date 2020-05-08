@@ -14,18 +14,20 @@ export const DocsCard: FC<Props> = ({ card }) => {
   const styles = getStyles(theme, card.done);
 
   return (
-    <a href={card.href} className={styles.card} target="_blank">
+    <div className={styles.card}>
       <div className={cardContent}>
-        <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
-        <h4 className={styles.title}>{card.title}</h4>
-        <div>
-          <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
-        </div>
+        <a href={card.href}>
+          <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
+          <h4 className={styles.title}>{card.title}</h4>
+          <div>
+            <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
+          </div>
+        </a>
       </div>
-      <div className={styles.url}>
+      <a href={card.learnHref} className={styles.url} target="_blank">
         Learn how in the docs <Icon name="external-link-alt" />
-      </div>
-    </a>
+      </a>
+    </div>
   );
 };
 

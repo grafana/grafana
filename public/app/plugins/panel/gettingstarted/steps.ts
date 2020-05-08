@@ -40,7 +40,8 @@ export const getSteps = (): SetupStep[] => [
         title: 'Add your first data source',
         heading: 'data sources',
         icon: 'database',
-        href: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source/',
+        learnHref: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source/',
+        href: 'datasources/new?gettingstarted',
         check: () => {
           return new Promise(resolve => {
             resolve(
@@ -59,7 +60,8 @@ export const getSteps = (): SetupStep[] => [
         heading: 'dashboards',
         title: 'Create your first dashboard',
         icon: 'apps',
-        href: 'https://grafana.com/docs/grafana/latest/guides/getting_started/#create-a-dashboard',
+        href: 'dashboard/new?gettingstarted',
+        learnHref: 'https://grafana.com/docs/grafana/latest/guides/getting_started/#create-a-dashboard',
         check: async () => {
           const result = await getBackendSrv().search({ limit: 1 });
           return result.length > 0;
@@ -91,7 +93,8 @@ export const getSteps = (): SetupStep[] => [
         type: 'docs',
         heading: 'plugins',
         title: 'Find and install plugins',
-        href: 'https://grafana.com/docs/grafana/latest/plugins/installation/',
+        learnHref: 'https://grafana.com/docs/grafana/latest/plugins/installation/',
+        href: 'plugins',
         icon: 'plug',
         check: async () => {
           const plugins = await getBackendSrv().get('/api/plugins', { embedded: 0, core: 0 });
