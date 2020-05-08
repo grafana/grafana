@@ -54,8 +54,8 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setPanelOptions(builder => {
     builder.addBooleanSwitch({
       path: 'showHeader',
-      name: 'Show header',
-      description: "To display table's header or not to display",
+      name: 'Show column titles',
+      description: 'Show or hide column header cells',
       defaultValue: true,
     });
   });
