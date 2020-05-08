@@ -8,9 +8,18 @@ export const login = (username: string = 'admin', password: string = 'admin') =>
     .type(username);
   e2e.pages.Login.password().type(password);
   e2e.pages.Login.submit().click();
-  e2e.pages.Login.skip()
-    .should('be.visible')
-    .click();
+
+  // Local tests will have insecure credentials
+  e2e()
+    .url()
+    .then(url => {
+      if (/^https?:\/\/localhost/.test(url)) {
+        e2e.pages.Login.skip()
+          .should('be.visible')
+          .click();
+      }
+    });
+
   e2e()
     .get('.login-page')
     .should('not.exist');
