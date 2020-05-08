@@ -23,7 +23,8 @@ The next step is to figure out which link type is right for your workflow. Even 
 
 - If the link relates to most if not all of the panels in the dashboard, use [dashboard links]({{< relref "dashboard-links.md" >}}).
 - If you want to drill down into specific panels, use [panel links]({{< relref "panel-links.md" >}}).
-- If you want to link to an external site, you can use either type of link.
+- If you want to link to an external site, you can use either a dashboard link or a panel link.
+- If you want to drill down into a specific series, or even a single measurement, use [data links]({{< relref "data-links.md" >}}).
 
 ## Controlling time range using URL
 
