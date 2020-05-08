@@ -11,17 +11,6 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       width: 100%;
       flex: 1 1 0;
     `,
-    toolbar: css`
-      display: flex;
-      width: 100%;
-      flex-grow: 0;
-      align-items: center;
-      justify-content: flex-end;
-      margin-bottom: ${config.theme.spacing.sm};
-    `,
-    toolbarItem: css`
-      margin-left: ${config.theme.spacing.md};
-    `,
     content: css`
       flex-grow: 1;
       padding-bottom: 16px;

@@ -7,18 +7,14 @@ export const DefaultCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles, row } = props;
   let link: LinkModel<any> | undefined;
 
-  if (!field.display) {
-    return null;
-  }
-
-  const displayValue = field.display(cell.value);
+  const displayValue = field.display ? field.display(cell.value) : cell.value;
 
   if (field.getLinks) {
     link = field.getLinks({
       valueRowIndex: row.index,
     })[0];
   }
-  const value = formattedValueToString(displayValue);
+  const value = field.display ? formattedValueToString(displayValue) : displayValue;
 
   return (
     <div className={tableStyles.tableCell}>

@@ -8,18 +8,35 @@ import {
   transformDataFrame,
   getFrameDisplayTitle,
 } from '@grafana/data';
-import { Button, Field, Icon, Select, Table } from '@grafana/ui';
+import {
+  Button,
+  Container,
+  Field,
+  HorizontalGroup,
+  Icon,
+  LegacyForms,
+  Select,
+  Table,
+  VerticalGroup,
+} from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
-import { cx } from 'emotion';
+import { css } from 'emotion';
+import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { QueryOperationRow } from '../../../../core/components/QueryOperationRow/QueryOperationRow';
+import { PanelModel } from '../../state';
+const { Switch } = LegacyForms;
 
 interface Props {
+  panel: PanelModel;
   data: DataFrame[];
   isLoading: boolean;
+  options: GetDataOptions;
+  onOptionsChange: (options: GetDataOptions) => void;
 }
 
 interface State {
@@ -67,6 +84,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const currentTransform = transformationOptions.find(item => item.value === transformId);
 
+    console.log(data);
     if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
       return transformDataFrame([currentTransform.transformer], data);
     }
@@ -74,10 +92,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   getProcessedData(): DataFrame[] {
+    if (this.state.transformId === DataTransformerID.noop) {
+      console.log(this.props.data);
+      return this.props.data;
+    }
+    const data = this.getTransformedData();
+
+    // We need to apply field config even though it was already applied in the PanelQueryRunner.
+    // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
-      data: this.getTransformedData(),
+      data,
       theme: config.theme,
-      fieldConfig: { defaults: {}, overrides: [] },
+      fieldConfig: this.props.options.applyFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
       replaceVariables: (value: string) => {
         return value;
       },
@@ -85,7 +111,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isLoading, data } = this.props;
+    const { isLoading, data, options, onOptionsChange } = this.props;
     const { dataFrameIndex, transformId, transformationOptions } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -110,25 +136,76 @@ export class InspectDataTab extends PureComponent<Props, State> {
       };
     });
 
+    const panelTransformations = this.props.panel.getTransformations();
+
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <div className={styles.toolbar}>
-          {data.length > 1 && (
-            <Field label="Transformer" className="flex-grow-1">
-              <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />
-            </Field>
-          )}
-          {choices.length > 1 && (
-            <Field label="Select result" className={cx(styles.toolbarItem, 'flex-grow-1')}>
-              <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
-            </Field>
-          )}
-          <div className={styles.downloadCsv}>
-            <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
-              Download CSV
-            </Button>
-          </div>
-        </div>
+        <Container>
+          <VerticalGroup spacing={'md'}>
+            <HorizontalGroup justify={'space-between'} align={'flex-end'} wrap>
+              <HorizontalGroup>
+                {data.length > 1 && (
+                  <Container grow={1}>
+                    <Field
+                      label="Transformer"
+                      className={css`
+                        margin-bottom: 0;
+                      `}
+                    >
+                      <Select
+                        options={transformationOptions}
+                        value={transformId}
+                        onChange={this.onTransformationChange}
+                        width={15}
+                      />
+                    </Field>
+                  </Container>
+                )}
+                {choices.length > 1 && (
+                  <Container grow={1}>
+                    <Field
+                      label="Select result"
+                      className={css`
+                        margin-bottom: 0;
+                      `}
+                    >
+                      <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
+                    </Field>
+                  </Container>
+                )}
+              </HorizontalGroup>
+
+              <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
+                Download CSV
+              </Button>
+            </HorizontalGroup>
+            <Container grow={1}>
+              <QueryOperationRow title={'Data display options'} isOpen={false}>
+                {panelTransformations && panelTransformations.length > 0 && (
+                  <div className="gf-form-inline">
+                    <Switch
+                      tooltip="Data shown in the table will be transformed using transformations defined in the panel"
+                      label="Apply panel transformations"
+                      labelClass="width-12"
+                      checked={options.transform}
+                      onChange={() => onOptionsChange({ ...options, transform: !options.transform })}
+                    />
+                  </div>
+                )}
+                <div className="gf-form-inline">
+                  <Switch
+                    tooltip="Data shown in the table will have panel field configuration applied, for example units or title"
+                    label="Apply field configuration"
+                    labelClass="width-12"
+                    checked={options.applyFieldConfig}
+                    onChange={() => onOptionsChange({ ...options, applyFieldConfig: !options.applyFieldConfig })}
+                  />
+                </div>
+              </QueryOperationRow>
+            </Container>
+          </VerticalGroup>
+        </Container>
+
         <div style={{ flexGrow: 1 }}>
           <AutoSizer>
             {({ width, height }) => {
