@@ -7,7 +7,7 @@ type = "docs"
 name = "Dashboard and Folder"
 identifier = "dashboard-folder-permissions"
 parent = "permissions"
-weight = 3
+weight = 40
 +++
 
 # Dashboard and Folder Permissions
