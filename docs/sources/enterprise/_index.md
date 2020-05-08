@@ -45,6 +45,7 @@ Supported auth providers:
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 * [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 * [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+* [SAML]({{< relref "saml.md#configure-team-sync" >}})
 
 ## Reporting
 
