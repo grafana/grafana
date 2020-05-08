@@ -35,7 +35,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     const listenToRunner = listenToPanel.getQueryRunner();
-    const subscription = listenToRunner.getData(false).subscribe({
+    const subscription = listenToRunner.getData({ transform: false }).subscribe({
       next: (data: PanelData) => {
         subscriber.next(data);
       },
