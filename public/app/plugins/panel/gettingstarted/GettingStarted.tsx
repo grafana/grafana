@@ -113,12 +113,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
 const getStyles = stylesFactory(() => {
   const { theme } = config;
+  const backgroundImage = theme.isDark
+    ? 'public/img/Onboarding_Panel_dark.svg'
+    : 'public/img/Onboarding_Panel_light.svg';
   return {
     container: css`
       display: flex;
       flex-direction: column;
       height: 100%;
-      background: url('public/img/login_background_dark.svg') no-repeat;
+      background: url(${backgroundImage}) no-repeat;
       background-size: cover;
       padding-top: ${theme.spacing.xl};
     `,
