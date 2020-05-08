@@ -23,7 +23,6 @@ export const JSONViewCell: FC<TableCellProps> = props => {
       <Tooltip placement="auto" content={content} theme={'info'}>
         <div
           className={css`
-            width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
           `}
