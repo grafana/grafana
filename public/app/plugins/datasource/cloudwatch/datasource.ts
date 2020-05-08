@@ -133,7 +133,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
               region: dataFrame.meta?.custom?.['Region'] ?? 'default',
               refId: dataFrame.refId,
               groupResults: this.languageProvider.isStatsQuery(
-                options.targets.find(target => target.refId === dataFrame.refId).expression
+                options.targets.find(target => target.refId === dataFrame.refId)!.expression
               ),
             }))
           )
