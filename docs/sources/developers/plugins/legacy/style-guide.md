@@ -1,13 +1,10 @@
 +++
-title = "Plugin Code Styleguide"
+title = "Legacy code style guide"
 type = "docs"
-[menu.docs]
-name = "Plugin Code Styleguide"
-parent = "developing"
-weight = 2
+aliases = ["/docs/grafana/latest/plugins/developing/code-styleguide/"]
 +++
 
-# Grafana Plugin Code Styleguide
+# Legacy code style guide
 
 This guide has two parts. The first part describes the metadata and the second part is a styleguide for HTML/CSS and JavaScript in Grafana plugins and applies if you are using ES6 in your plugin. If using TypeScript then the [Angular TypeScript styleguide](https://angular.io/styleguide) is recommended.
 
@@ -30,7 +27,7 @@ grafana-piechart-panel
 mtanda-histogram-panel
 ```
 
-The full file format for plugin.json is described [here]({{< relref "plugin.json.md" >}}).
+The full file format for plugin.json is described [here]({{< relref "metadata.md" >}}).
 
 Minimal plugin.json:
 

@@ -1,14 +1,9 @@
 +++
-title = "Introduction Data frames"
+title = "Data frames"
 type = "docs"
-[menu.docs]
-name = "Data frames"
-parent = "developing"
-weight = 9
-draft = true
 +++
 
-## Introduction to data frames
+# Data frames
 
 Grafana supports a variety of different data sources, each with its own data model. To make this possible, Grafana consolidates the query results from each of these data sources into one unified data structure called a _data frame_.
 
@@ -18,7 +13,7 @@ The data frame structure is a concept that's borrowed from data analysis tools l
 
 This document gives an overview of the data frame structure, and of how data is handled within Grafana.
 
-### The data frame
+## The data frame
 
 A data frame is a columnar-oriented table structure, which means it stores data by column and not by row. To understand what this means, let’s look at the TypeScript definition used by Grafana:
 
@@ -62,25 +57,25 @@ Each field has three values, and each value in a field must share the same type.
 
 One restriction on data frames is that all fields in the frame must be of the same length to be a valid data frame.
 
-#### Field configuration
+### Field configuration
 
 Each field in a data frame contains optional information about the values in the field, such as units, scaling, and so on.
 
 By adding field configurations to a data frame, Grafana can configure visualizations automatically. For example, you could configure Grafana to automatically set the unit provided by the data source.
 
-### Transformations
+## Transformations
 
 Along with the type information, field configs enables _data transformations_ within Grafana.
 
 A data transformation is any function that accepts a data frame as input, and returns another data frame as output. By using data frames in your plugin, you get a range of transformations for free.
 
-### Data frames as time series
+## Data frames as time series
 
 A data frame with at least one time field is considered a _time series_.
 
 For more information on time series, refer to our [Introduction to time series](https://grafana.com/docs/grafana/latest/guides/timeseries/).
 
-#### Wide format
+### Wide format
 
 When a collection of time series share the same _time index_—the time fields in each time series are identical—they can be stored together, in a _wide_ format. By reusing the time field, we can reduce the amount of data being sent to the browser.
 
@@ -127,7 +122,7 @@ Dimensions: 2 fields by 2 rows
 
 The wide format can typically be used when multiple time series are collected by the same process. In this case, every measurement is made at the same interval and will therefore share the same time values.
 
-#### Long format
+### Long format
 
 Some data sources return data in a _long_ format (also called _narrow_ format). This is common format returned by, for example, SQL databases.
 

@@ -1,7 +1,7 @@
 import '../datasource';
 import { CloudWatchDatasource } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataSourceInstanceSettings, dateMath } from '@grafana/data';
+import { DataSourceInstanceSettings, dateMath, getFrameDisplayTitle } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
@@ -44,6 +44,65 @@ describe('CloudWatchDatasource', () => {
   beforeEach(() => {
     ctx.ds = new CloudWatchDatasource(instanceSettings, templateSrv, timeSrv);
     jest.clearAllMocks();
+  });
+
+  describe('When getting log groups', () => {
+    beforeEach(() => {
+      datasourceRequestMock.mockImplementation(() =>
+        Promise.resolve({
+          data: {
+            results: {
+              A: {
+                dataframes: [
+                  'QVJST1cxAAD/////GAEAABAAAAAAAAoADgAMAAsABAAKAAAAFAAAAAAAAAEDAAoADAAAAAgABAAKAAAACAAAAFgAAAACAAAAKAAAAAQAAAB8////CAAAAAwAAAAAAAAAAAAAAAUAAAByZWZJZAAAAJz///8IAAAAFAAAAAkAAABsb2dHcm91cHMAAAAEAAAAbmFtZQAAAAABAAAAGAAAAAAAEgAYABQAEwASAAwAAAAIAAQAEgAAABQAAABMAAAAUAAAAAAABQFMAAAAAQAAAAwAAAAIAAwACAAEAAgAAAAIAAAAGAAAAAwAAABsb2dHcm91cE5hbWUAAAAABAAAAG5hbWUAAAAAAAAAAAQABAAEAAAADAAAAGxvZ0dyb3VwTmFtZQAAAAD/////mAAAABQAAAAAAAAADAAWABQAEwAMAAQADAAAAGAGAAAAAAAAFAAAAAAAAAMDAAoAGAAMAAgABAAKAAAAFAAAAEgAAAAhAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAiAAAAAAAAACIAAAAAAAAANgFAAAAAAAAAAAAAAEAAAAhAAAAAAAAAAAAAAAAAAAAAAAAADIAAABiAAAAkQAAALwAAADuAAAAHwEAAFQBAACHAQAAtQEAAOoBAAAbAgAASgIAAHQCAAClAgAA1QIAABADAABEAwAAdgMAAKMDAADXAwAACQQAAEAEAAB3BAAAlwQAAK0EAAC8BAAA+wQAAEIFAABhBQAAeAUAAJIFAAC0BQAA1gUAAC9hd3MvY29udGFpbmVyaW5zaWdodHMvZGV2MzAzLXdvcmtzaG9wL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvZGF0YXBsYW5lL2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvZmxvd2xvZ3MvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2RldjMwMy13b3Jrc2hvcC9ob3N0L2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2RldjMwMy13b3Jrc2hvcC9wcm9tZXRoZXVzL2F3cy9jb250YWluZXJpbnNpZ2h0cy9lY29tbWVyY2Utc29ja3Nob3AvYXBwbGljYXRpb24vYXdzL2NvbnRhaW5lcmluc2lnaHRzL2Vjb21tZXJjZS1zb2Nrc2hvcC9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2Vjb21tZXJjZS1zb2Nrc2hvcC9ob3N0L2F3cy9jb250YWluZXJpbnNpZ2h0cy9lY29tbWVyY2Utc29ja3Nob3AvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcGVyZi9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL2hvc3QvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL3BlcmZvcm1hbmNlL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcGVyZi9wcm9tZXRoZXVzL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcHJvZC11cy1lYXN0LTEvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tc3RhZ2luZy9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL2hvc3QvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL3BlcmZvcm1hbmNlL2F3cy9lY3MvY29udGFpbmVyaW5zaWdodHMvYnVnYmFzaC1lYzIvcGVyZm9ybWFuY2UvYXdzL2Vjcy9jb250YWluZXJpbnNpZ2h0cy9lY3MtZGVtb3dvcmtzaG9wL3BlcmZvcm1hbmNlL2F3cy9lY3MvY29udGFpbmVyaW5zaWdodHMvZWNzLXdvcmtzaG9wLWRldi9wZXJmb3JtYW5jZS9hd3MvZWtzL2RldjMwMy13b3Jrc2hvcC9jbHVzdGVyL2F3cy9ldmVudHMvY2xvdWR0cmFpbC9hd3MvZXZlbnRzL2Vjcy9hd3MvbGFtYmRhL2N3c3luLW15Y2FuYXJ5LWZhYzk3ZGVkLWYxMzQtNDk5YS05ZDcxLTRjM2JlMWY2MzE4Mi9hd3MvbGFtYmRhL2N3c3luLXdhdGNoLWxpbmtjaGVja3MtZWY3ZWYyNzMtNWRhMi00NjYzLWFmNTQtZDJmNTJkNTViMDYwL2Vjcy9lY3MtY3dhZ2VudC1kYWVtb24tc2VydmljZS9lY3MvZWNzLWRlbW8tbGltaXRUYXNrQ2xvdWRUcmFpbC9EZWZhdWx0TG9nR3JvdXBjb250YWluZXItaW5zaWdodHMtcHJvbWV0aGV1cy1iZXRhY29udGFpbmVyLWluc2lnaHRzLXByb21ldGhldXMtZGVtbwAAEAAAAAwAFAASAAwACAAEAAwAAAAQAAAALAAAADwAAAAAAAMAAQAAACgBAAAAAAAAoAAAAAAAAABgBgAAAAAAAAAAAAAAAAAAAAAAAAAACgAMAAAACAAEAAoAAAAIAAAAWAAAAAIAAAAoAAAABAAAAHz///8IAAAADAAAAAAAAAAAAAAABQAAAHJlZklkAAAAnP///wgAAAAUAAAACQAAAGxvZ0dyb3VwcwAAAAQAAABuYW1lAAAAAAEAAAAYAAAAAAASABgAFAATABIADAAAAAgABAASAAAAFAAAAEwAAABQAAAAAAAFAUwAAAABAAAADAAAAAgADAAIAAQACAAAAAgAAAAYAAAADAAAAGxvZ0dyb3VwTmFtZQAAAAAEAAAAbmFtZQAAAAAAAAAABAAEAAQAAAAMAAAAbG9nR3JvdXBOYW1lAAAAAEgBAABBUlJPVzE=',
+                ],
+                refId: 'A',
+              },
+            },
+          },
+        })
+      );
+    });
+
+    it('should return log groups as an array of strings', async () => {
+      const logGroups = await ctx.ds.describeLogGroups();
+      const expectedLogGroups = [
+        '/aws/containerinsights/dev303-workshop/application',
+        '/aws/containerinsights/dev303-workshop/dataplane',
+        '/aws/containerinsights/dev303-workshop/flowlogs',
+        '/aws/containerinsights/dev303-workshop/host',
+        '/aws/containerinsights/dev303-workshop/performance',
+        '/aws/containerinsights/dev303-workshop/prometheus',
+        '/aws/containerinsights/ecommerce-sockshop/application',
+        '/aws/containerinsights/ecommerce-sockshop/dataplane',
+        '/aws/containerinsights/ecommerce-sockshop/host',
+        '/aws/containerinsights/ecommerce-sockshop/performance',
+        '/aws/containerinsights/watchdemo-perf/application',
+        '/aws/containerinsights/watchdemo-perf/dataplane',
+        '/aws/containerinsights/watchdemo-perf/host',
+        '/aws/containerinsights/watchdemo-perf/performance',
+        '/aws/containerinsights/watchdemo-perf/prometheus',
+        '/aws/containerinsights/watchdemo-prod-us-east-1/performance',
+        '/aws/containerinsights/watchdemo-staging/application',
+        '/aws/containerinsights/watchdemo-staging/dataplane',
+        '/aws/containerinsights/watchdemo-staging/host',
+        '/aws/containerinsights/watchdemo-staging/performance',
+        '/aws/ecs/containerinsights/bugbash-ec2/performance',
+        '/aws/ecs/containerinsights/ecs-demoworkshop/performance',
+        '/aws/ecs/containerinsights/ecs-workshop-dev/performance',
+        '/aws/eks/dev303-workshop/cluster',
+        '/aws/events/cloudtrail',
+        '/aws/events/ecs',
+        '/aws/lambda/cwsyn-mycanary-fac97ded-f134-499a-9d71-4c3be1f63182',
+        '/aws/lambda/cwsyn-watch-linkchecks-ef7ef273-5da2-4663-af54-d2f52d55b060',
+        '/ecs/ecs-cwagent-daemon-service',
+        '/ecs/ecs-demo-limitTask',
+        'CloudTrail/DefaultLogGroup',
+        'container-insights-prometheus-beta',
+        'container-insights-prometheus-demo',
+      ];
+      expect(logGroups).toEqual(expectedLogGroups);
+    });
   });
 
   describe('When performing CloudWatch metrics query', () => {
@@ -174,7 +233,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
@@ -190,7 +249,7 @@ describe('CloudWatchDatasource', () => {
       it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
         response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
@@ -205,7 +264,7 @@ describe('CloudWatchDatasource', () => {
           { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
         ];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
@@ -217,7 +276,7 @@ describe('CloudWatchDatasource', () => {
       it('should be built correctly if the query is a metric stat query', done => {
         response.results['A'].meta.gmdMeta = [{ Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
@@ -458,7 +517,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
@@ -741,7 +800,6 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should call __GetDimensions and return result', () => {
-      console.log({ a: scenario.requestResponse.results });
       expect(scenario.result[0].text).toBe('InstanceId');
       expect(scenario.request.queries[0].type).toBe('metricFindQuery');
       expect(scenario.request.queries[0].subtype).toBe('dimension_keys');

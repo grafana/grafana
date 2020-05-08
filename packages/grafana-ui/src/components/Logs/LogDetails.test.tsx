@@ -15,6 +15,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
       logLevel: 'error' as LogLevel,
       timeFromNow: '',
       timeEpochMs: 1546297200000,
+      timeEpochNs: '1546297200000000000',
       timeLocal: '',
       timeUtc: '',
       hasAnsi: false,
