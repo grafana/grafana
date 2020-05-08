@@ -1,3 +1,8 @@
+# 7.0.0-beta3 (2020-05-08)
+
+### Features / Enhancements
+* **Forms**: Remove Forms namespace [BREAKING]. [#24378](https://github.com/grafana/grafana/pull/24378), [@tskarhed](https://github.com/tskarhed)
+
 # 7.0.0-beta.2 (2020-05-07)
 
 ### Bug Fixes
