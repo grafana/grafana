@@ -16,7 +16,10 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         description: 'Color either the value or the background',
         defaultValue: 'value',
         settings: {
-          options: [{ value: 'value', label: 'Value' }, { value: 'background', label: 'Background' }],
+          options: [
+            { value: 'value', label: 'Value' },
+            { value: 'background', label: 'Background' },
+          ],
         },
       })
       .addRadio({
@@ -25,7 +28,10 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         description: 'Stat panel graph / sparkline mode',
         defaultValue: 'area',
         settings: {
-          options: [{ value: 'none', label: 'None' }, { value: 'area', label: 'Area' }],
+          options: [
+            { value: 'none', label: 'None' },
+            { value: 'area', label: 'Area' },
+          ],
         },
       })
       .addRadio({
@@ -34,7 +40,10 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         description: 'Value & title posititioning',
         defaultValue: 'auto',
         settings: {
-          options: [{ value: 'auto', label: 'Auto' }, { value: 'center', label: 'Center' }],
+          options: [
+            { value: 'auto', label: 'Auto' },
+            { value: 'center', label: 'Center' },
+          ],
         },
       });
   })
