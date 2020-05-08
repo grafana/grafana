@@ -360,6 +360,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Add support for annotations
+          link: /developers/plugins/add-support-for-annotations/
         - name: Authentication
           link: /developers/plugins/authentication/
         - name: Backend plugins
