@@ -1,14 +1,27 @@
 import '../datasource';
-import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataSourceInstanceSettings, dateMath, getFrameDisplayTitle, DataQueryResponse } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  dateMath,
+  getFrameDisplayTitle,
+  DataFrame,
+  DataQueryResponse,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchLogsQueryStatus, LogAction } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
+import { of } from 'rxjs';
+
+jest.mock('rxjs/operators', () => {
+  const operators = jest.requireActual('rxjs/operators');
+  operators.delay = jest.fn(() => (s: any) => s);
+  return operators;
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -155,6 +168,85 @@ describe('CloudWatchDatasource', () => {
           },
         ],
       });
+    });
+    it('should stop querying when no more data retrieved past max attempts', async () => {
+      const fakeFrames = genMockFrames(10);
+      for (let i = 7; i < fakeFrames.length; i++) {
+        fakeFrames[i].meta.custom['Statistics']['RecordsMatched'] =
+          fakeFrames[6].meta.custom['Statistics']['RecordsMatched'];
+      }
+
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+
+      const expectedData = [
+        {
+          ...fakeFrames[MAX_ATTEMPTS - 1],
+          meta: { custom: { ...fakeFrames[MAX_ATTEMPTS - 1].meta.custom, Status: 'Complete' } },
+        },
+      ];
+      expect(myResponse).toEqual({
+        data: expectedData,
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(MAX_ATTEMPTS);
+    });
+
+    it('should continue querying as long as new data is being received', async () => {
+      const fakeFrames = genMockFrames(15);
+
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+      expect(myResponse).toEqual({
+        data: [fakeFrames[fakeFrames.length - 1]],
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(15);
+    });
+
+    it('should stop querying when results come back with status "Complete"', async () => {
+      const fakeFrames = genMockFrames(3);
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+
+      expect(myResponse).toEqual({
+        data: [fakeFrames[2]],
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(3);
     });
   });
 
@@ -925,3 +1017,25 @@ describe('CloudWatchDatasource', () => {
     }
   );
 });
+
+function genMockFrames(numResponses: number): DataFrame[] {
+  const recordIncrement = 50;
+  const mockFrames: DataFrame[] = [];
+
+  for (let i = 0; i < numResponses; i++) {
+    mockFrames.push({
+      fields: [],
+      meta: {
+        custom: {
+          Status: i === numResponses - 1 ? CloudWatchLogsQueryStatus.Complete : CloudWatchLogsQueryStatus.Running,
+          Statistics: {
+            RecordsMatched: (i + 1) * recordIncrement,
+          },
+        },
+      },
+      length: 0,
+    });
+  }
+
+  return mockFrames;
+}

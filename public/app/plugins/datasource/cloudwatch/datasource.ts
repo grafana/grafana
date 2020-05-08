@@ -65,7 +65,7 @@ const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
 
 // TODO: Temporary times here, could just change to some fixed number.
-const MAX_ATTEMPTS = 8;
+export const MAX_ATTEMPTS = 8;
 const POLLING_TIMES = [100, 200, 500, 1000];
 
 export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
@@ -199,15 +199,35 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   logsQuery(queryParams: Array<{ queryId: string; limit?: number; region: string }>): Observable<DataQueryResponse> {
     this.logQueries.clear();
     queryParams.forEach(param => this.logQueries.add({ id: param.queryId, region: param.region }));
+    let prevRecordsMatched: Record<string, number> = {};
 
     return withTeardown(
       this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
         expand((dataFrames, i) => {
-          return dataFrames.every(
+          const allFramesCompleted = dataFrames.every(
             dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
-          ) || i >= MAX_ATTEMPTS
+          );
+          return allFramesCompleted
             ? empty()
             : this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
+                map(frames => {
+                  let moreRecordsMatched = false;
+                  for (const frame of frames) {
+                    const recordsMatched = frame.meta?.custom?.['Statistics']['RecordsMatched'];
+                    if (recordsMatched > (prevRecordsMatched[frame.refId] ?? 0)) {
+                      moreRecordsMatched = true;
+                    }
+                    prevRecordsMatched[frame.refId] = recordsMatched;
+                  }
+                  const noProgressMade = i >= MAX_ATTEMPTS - 2 && !moreRecordsMatched;
+                  if (noProgressMade) {
+                    for (const frame of frames) {
+                      frame.meta.custom['Status'] = CloudWatchLogsQueryStatus.Complete;
+                    }
+                  }
+
+                  return frames;
+                }),
                 delay(POLLING_TIMES[Math.min(i, POLLING_TIMES.length - 1)])
               );
         }),
