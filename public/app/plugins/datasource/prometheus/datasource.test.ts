@@ -736,7 +736,7 @@ describe('PrometheusDatasource', () => {
       const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
       expect(frame.name).toBe('test{job="testjob"}');
-      expect(getFieldTitle(frame.fields[1])).toBe('Value');
+      expect(getFieldTitle(frame.fields[1])).toBe('test{job="testjob"}');
     });
   });
 
