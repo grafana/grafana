@@ -14,7 +14,7 @@ import { toDataQueryResponse } from './queryResponse';
 const ExpressionDatasourceID = '__expr__';
 
 /**
- * Describes the current healt status of a data source plugin.
+ * Describes the current health status of a data source plugin.
  *
  * @public
  */

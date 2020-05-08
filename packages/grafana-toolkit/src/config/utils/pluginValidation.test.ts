@@ -1,6 +1,6 @@
 import { getPluginJson, validatePluginJson } from './pluginValidation';
 
-describe('pluginValdation', () => {
+describe('pluginValidation', () => {
   describe('plugin.json', () => {
     test('missing plugin.json file', () => {
       expect(() => getPluginJson(`${__dirname}/mocks/missing-plugin.json`)).toThrowError();

@@ -175,7 +175,7 @@ export class TimeSrvStub {
 }
 
 export class ContextSrvStub {
-  isGrafanaVisibile = jest.fn();
+  isGrafanaVisible = jest.fn();
 
   getValidInterval() {
     return '10s';

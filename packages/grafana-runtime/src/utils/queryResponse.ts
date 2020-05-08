@@ -69,7 +69,7 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
 
 /**
  * Convert an object into a DataQueryError -- if this is an HTTP response,
- * it will put the correct values in the error filds
+ * it will put the correct values in the error field
  */
 export function toDataQueryError(err: any): DataQueryError {
   const error = (err || {}) as DataQueryError;
