@@ -172,8 +172,9 @@ describe('CloudWatchDatasource', () => {
     it('should stop querying when no more data retrieved past max attempts', async () => {
       const fakeFrames = genMockFrames(10);
       for (let i = 7; i < fakeFrames.length; i++) {
-        fakeFrames[i].meta.custom['Statistics']['RecordsMatched'] =
-          fakeFrames[6].meta.custom['Statistics']['RecordsMatched'];
+        fakeFrames[i].meta!.custom!['Statistics']['RecordsMatched'] = fakeFrames[6].meta!.custom!['Statistics'][
+          'RecordsMatched'
+        ];
       }
 
       let i = 0;
@@ -192,7 +193,7 @@ describe('CloudWatchDatasource', () => {
       const expectedData = [
         {
           ...fakeFrames[MAX_ATTEMPTS - 1],
-          meta: { custom: { ...fakeFrames[MAX_ATTEMPTS - 1].meta.custom, Status: 'Complete' } },
+          meta: { custom: { ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom, Status: 'Complete' } },
         },
       ];
       expect(myResponse).toEqual({
