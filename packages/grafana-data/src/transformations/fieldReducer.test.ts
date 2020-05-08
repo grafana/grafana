@@ -66,7 +66,7 @@ describe('Stats Calculators', () => {
   });
 
   it('should support a single stat also', () => {
-    basicTable.fields[0].calcs = undefined; // clear the cache
+    basicTable.fields[0].state = undefined; // clear the cache
     const stats = reduceField({
       field: basicTable.fields[0],
       reducers: ['first'],

@@ -61,7 +61,7 @@ Grafana generates a CSV file in your default browser download location. You can 
  
 ### Inspect query performance
 
-The Stats tab displays statistics that tell you how long your query takes, how many queries you send, and the number of rows returned. This information can help you troubleshoot your queries, especially if any of the numbers is unexpectedly high or low.
+The Stats tab displays statistics that tell you how long your query takes, how many queries you send, and the number of rows returned. This information can help you troubleshoot your queries, especially if any of the numbers are unexpectedly high or low.
 
 1. Open the panel inspector.
 1. Navigate to the Stats tab. 

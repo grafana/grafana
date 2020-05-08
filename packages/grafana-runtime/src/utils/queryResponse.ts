@@ -37,12 +37,17 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
 
         if (dr.dataframes) {
           for (const b64 of dr.dataframes) {
-            const t = base64StringToArrowTable(b64);
-            const f = arrowTableToDataFrame(t);
-            if (!f.refId) {
-              f.refId = refId;
+            try {
+              const t = base64StringToArrowTable(b64);
+              const f = arrowTableToDataFrame(t);
+              if (!f.refId) {
+                f.refId = refId;
+              }
+              rsp.data.push(f);
+            } catch (err) {
+              rsp.state = LoadingState.Error;
+              rsp.error = toDataQueryError(err);
             }
-            rsp.data.push(f);
           }
         }
       }

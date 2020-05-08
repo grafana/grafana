@@ -432,9 +432,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
-      templateUrl: 'public/app/features/manage-dashboards/partials/snapshot_list.html',
-      controller: 'SnapshotListCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
+          ),
+      },
     })
     .when('/plugins', {
       template: '<react-container />',

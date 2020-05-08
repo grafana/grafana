@@ -291,7 +291,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
 
 export function lokiStreamsToDataframes(
   response: LokiStreamResponse,
-  target: { refId: string; expr?: string; regexp?: string },
+  target: { refId: string; expr?: string },
   limit: number,
   config: LokiOptions,
   reverse = false
@@ -300,7 +300,7 @@ export function lokiStreamsToDataframes(
   const stats: QueryResultMetaStat[] = lokiStatsToMetaStat(response.data.stats);
   // Use custom mechanism to identify which stat we want to promote to label
   const custom = {
-    lokiQueryStatKey: 'Summary: totalBytesProcessed',
+    lokiQueryStatKey: 'Summary: total bytes processed',
   };
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
@@ -309,7 +309,7 @@ export function lokiStreamsToDataframes(
       ...dataFrame,
       refId: target.refId,
       meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
+        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
         limit,
         stats,
         custom,

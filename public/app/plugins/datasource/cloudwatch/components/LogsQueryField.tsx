@@ -186,22 +186,25 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     const logGroups = await this.fetchLogGroupOptions(v.value!);
 
-    this.setState(state => ({
-      availableLogGroups: logGroups,
-      selectedLogGroups: intersection(state.selectedLogGroups, logGroups),
-      loadingLogGroups: false,
-    }));
+    this.setState(state => {
+      const selectedLogGroups = intersection(state.selectedLogGroups, logGroups);
 
-    const { onChange, query } = this.props;
+      const { onChange, query } = this.props;
+      if (onChange) {
+        const nextQuery = {
+          ...query,
+          region: v.value,
+          logGroupNames: selectedLogGroups.map(group => group.value),
+        };
 
-    if (onChange) {
-      const nextQuery = {
-        ...query,
-        region: v.value,
+        onChange(nextQuery);
+      }
+      return {
+        availableLogGroups: logGroups,
+        selectedLogGroups: selectedLogGroups,
+        loadingLogGroups: false,
       };
-
-      onChange(nextQuery);
-    }
+    });
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
