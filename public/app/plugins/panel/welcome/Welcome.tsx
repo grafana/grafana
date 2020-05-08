@@ -59,31 +59,28 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       padding: 0 16px;
       justify-content: space-between;
-
-      @media only screen and (max-width: ${theme.breakpoints.xl}) {
-        padding: 0 30px 0 100px;
-      }
+      padding: 0 ${theme.spacing.lg};
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        padding: 0 24px 0 44px;
         background-position: 0px;
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
       }
+
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: flex-start;
-        padding: ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.md} 48px;
+        padding: 0 ${theme.spacing.sm};
       }
     `,
     title: css`
       margin-bottom: 0;
 
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        margin-bottom: ${theme.spacing.sm};
+      }
+
       @media only screen and (max-width: ${theme.breakpoints.md}) {
         font-size: ${theme.typography.heading.h2};
-        margin-bottom: ${theme.spacing.sm};
       }
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         font-size: ${theme.typography.heading.h3};
@@ -105,11 +102,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         display: none;
       }
     `,
-    helpLinks: css``,
+    helpLinks: css`
+      display: flex;
+      flex-wrap: wrap;
+    `,
     helpLink: css`
-      margin-right: 8px;
+      margin-right: ${theme.spacing.md};
       text-decoration: underline;
       text-wrap: no-wrap;
+
+      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        margin-right: 8px;
+      }
     `,
     smallScreenHelp: css`
       display: none;
