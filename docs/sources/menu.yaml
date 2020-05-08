@@ -118,6 +118,19 @@
     name: Prometheus
   - link: /features/datasources/testdata/
     name: TestData DB
+- name: Manage users
+  link: /manage-users
+  children:
+  - link: /manage-users/
+    name: Overview
+  - link: /manage-users/add-or-remove-user/
+    name: Add or remove a user
+  - link: /manage-users/enable-or-disable-user/
+    name: Enable or disable a user
+  - link: /manage-users/create-or-remove-team/
+    name: Create or remove a team
+  - link: /manage-users/add-or-remove-user-from-team/
+    name: Add or remove user from team
 - name: Panels
   link: /features/panels/
   children:
