@@ -29,7 +29,8 @@ import {
 } from 'app/types';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
+import { InspectTab } from '../components/Inspector/types';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 

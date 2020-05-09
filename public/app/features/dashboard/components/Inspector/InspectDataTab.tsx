@@ -33,7 +33,7 @@ const { Switch } = LegacyForms;
 
 interface Props {
   panel: PanelModel;
-  data: DataFrame[];
+  data?: DataFrame[];
   isLoading: boolean;
   options: GetDataOptions;
   onOptionsChange: (options: GetDataOptions) => void;
@@ -93,7 +93,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   getProcessedData(): DataFrame[] {
     if (this.state.transformId === DataTransformerID.noop) {
-      console.log(this.props.data);
       return this.props.data;
     }
     const data = this.getTransformedData();
@@ -206,7 +205,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
           </VerticalGroup>
         </Container>
 
-        <div style={{ flexGrow: 1 }}>
+        <Container grow={1}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -220,7 +219,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               );
             }}
           </AutoSizer>
-        </div>
+        </Container>
       </div>
     );
   }

@@ -35,13 +35,13 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
-  const [currentData, hasSeries] = usePanelLatestData(panel);
+  const [currentData] = usePanelLatestData(panel, plugin);
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig || !hasSeries) {
+      if (!fieldConfig || !(currentData && currentData.series)) {
         return null;
       }
 
@@ -61,7 +61,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig || !hasSeries) {
+      if (!fieldConfig || !(currentData && currentData.series)) {
         return null;
       }
 
