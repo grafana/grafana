@@ -57,7 +57,7 @@ Max age for data files before they get deleted.
 
 ### max_data_directory_size
 
-Max size in megabytes of the data files directory before files gets deleted.
+Max size in megabytes of the data files directory before files get deleted.
 
 ### data_path
 
