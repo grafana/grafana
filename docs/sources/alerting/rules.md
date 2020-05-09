@@ -86,7 +86,7 @@ What Grafana does not do currently is track alert rule state **per series**. Thi
 in the scenario below.
 
 - Alert condition with query that returns 2 series: **server1** and **server2**
-- **server1** series cause the alert rule to fire and switch to state `Alerting`
+- **server1** series causes the alert rule to fire and switch to state `Alerting`
 - Notifications are sent out with message:  _load peaking (server1)_
 - In a subsequence evaluation of the same alert rule the **server2** series also cause the alert rule to fire
 - No new notifications are sent as the alert rule is already in state `Alerting`.
