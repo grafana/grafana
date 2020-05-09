@@ -31,7 +31,7 @@ export function addStandardDataReduceOptions(
   builder.addRadio({
     path: 'reduceOptions.values',
     name: 'Show',
-    description: 'Calculate a single value per colum or series or show each row',
+    description: 'Calculate a single value per column or series or show each row',
     settings: {
       options: [
         { value: false, label: 'Calculate' },
@@ -51,7 +51,7 @@ export function addStandardDataReduceOptions(
       min: 1,
       max: 5000,
     },
-    showIf: options => options.reduceOptions.values,
+    showIf: options => options.reduceOptions.values === true,
   });
 
   builder.addCustomEditor({

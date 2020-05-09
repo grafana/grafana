@@ -60,6 +60,10 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     return getAllPanelPluginMeta();
   }, []);
 
+  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
+    return filterPluginList(pluginsList, searchQuery, current);
+  }, [searchQuery]);
+
   const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
     const isCurrent = plugin.id === current.id;
     const filteredPluginList = getFilteredPluginList();
@@ -67,7 +71,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     const matchesQuery = filteredPluginList.indexOf(plugin) > -1;
     return (
       <VizTypePickerPlugin
-        disabled={!matchesQuery}
+        disabled={!matchesQuery && !!searchQuery}
         key={plugin.id}
         isCurrent={isCurrent}
         plugin={plugin}
@@ -76,10 +80,6 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
     );
   };
 
-  const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
-    return filterPluginList(pluginsList, searchQuery, current);
-  }, [searchQuery]);
-
   const filteredPluginList = getFilteredPluginList();
   const hasResults = filteredPluginList.length > 0;
   const renderList = filteredPluginList.concat(pluginsList.filter(p => filteredPluginList.indexOf(p) === -1));
@@ -87,7 +87,12 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
   return (
     <div className={styles.grid}>
       {hasResults ? (
-        renderList.map((plugin, index) => renderVizPlugin(plugin, index))
+        renderList.map((plugin, index) => {
+          if (plugin.state === PluginState.deprecated) {
+            return null;
+          }
+          return renderVizPlugin(plugin, index);
+        })
       ) : (
         <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
       )}
@@ -103,7 +108,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       max-width: 100%;
       display: grid;
       grid-gap: ${theme.spacing.md};
-      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
     `,
   };
 });

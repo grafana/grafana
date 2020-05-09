@@ -1,9 +1,8 @@
 import React from 'react';
-import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
-import { stylesFactory, useTheme, styleMixins } from '@grafana/ui';
+import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
+import { Badge, BadgeProps, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelPluginBadge } from '../../plugins/PluginSignatureBadge';
 
 interface Props {
   isCurrent: boolean;
@@ -17,7 +16,7 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
   const styles = getStyles(theme);
   const cssClass = cx({
     [styles.item]: true,
-    [styles.disabled]: disabled,
+    [styles.disabled]: disabled || plugin.state === PluginState.deprecated,
     [styles.current]: isCurrent,
   });
 
@@ -32,7 +31,7 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
           <img className={styles.img} src={plugin.info.logos.small} />
         </div>
       </div>
-      <div className={styles.badge}>
+      <div className={cx(styles.badge, disabled && styles.disabled)}>
         <PanelPluginBadge plugin={plugin} />
       </div>
     </div>
@@ -126,3 +125,36 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export default VizTypePickerPlugin;
+
+interface PanelPluginBadgeProps {
+  plugin: PanelPluginMeta;
+}
+const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
+  const display = getPanelStateBadgeDisplayModel(plugin);
+
+  if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
+    return null;
+  }
+  return <Badge color={display.color} text={display.text} icon={display.icon} tooltip={display.tooltip} />;
+};
+
+function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps {
+  switch (panel.state) {
+    case PluginState.deprecated:
+      return {
+        text: 'Deprecated',
+        icon: 'exclamation-triangle',
+        color: 'red',
+        tooltip: `${panel.name} panel is deprecated`,
+      };
+  }
+
+  return {
+    text: 'Alpha',
+    icon: 'rocket',
+    color: 'blue',
+    tooltip: `${panel.name} panel is experimental`,
+  };
+}
+
+PanelPluginBadge.displayName = 'PanelPluginBadge';

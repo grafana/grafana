@@ -11,7 +11,7 @@ export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
     builder
       .addBooleanSwitch({
         path: 'showThresholdLabels',
-        name: 'Show threshold Labels',
+        name: 'Show threshold labels',
         description: 'Render the threshold values around the gauge bar',
         defaultValue: false,
       })

@@ -7,11 +7,13 @@ import {
   DataFrame,
   DisplayValue,
   DisplayValueAlignmentFactors,
+  Field,
   FieldConfig,
   FieldConfigSource,
   FieldType,
   InterpolateFunction,
   LinkModel,
+  TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -35,35 +37,17 @@ export interface ReduceDataOptions {
 // TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series.name';
 export const VAR_FIELD_NAME = '__field.name';
+export const VAR_FIELD_LABELS = '__field.labels';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
-function getTitleTemplate(title: string | undefined, stats: string[], data?: DataFrame[]): string {
-  // If the title exists, use it as a template variable
-  if (title) {
-    return title;
-  }
-  if (!data || !data.length) {
-    return 'No Data';
-  }
-
-  let fieldCount = 0;
-  for (const field of data[0].fields) {
-    if (field.type === FieldType.number) {
-      fieldCount++;
-    }
-  }
-
+function getTitleTemplate(stats: string[]): string {
   const parts: string[] = [];
   if (stats.length > 1) {
     parts.push('${' + VAR_CALC + '}');
   }
-  if (data.length > 1) {
-    parts.push('${' + VAR_SERIES_NAME + '}');
-  }
-  if (fieldCount > 1 || !parts.length) {
-    parts.push('${' + VAR_FIELD_NAME + '}');
-  }
+
+  parts.push('${' + VAR_FIELD_NAME + '}');
 
   return parts.join(' ');
 }
@@ -79,6 +63,7 @@ export interface FieldDisplay {
   colIndex?: number; // The field column index
   rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
   getLinks?: () => LinkModel[];
+  hasLinks: boolean;
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -89,12 +74,13 @@ export interface GetFieldDisplayValuesOptions {
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
   autoMinMax?: boolean;
+  timeZone?: TimeZone;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, fieldConfig } = options;
+  const { replaceVariables, reduceOptions, fieldConfig, timeZone } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -104,8 +90,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     const data = options.data;
     let hitLimit = false;
     const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
-    const defaultTitle = getTitleTemplate(fieldConfig.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
+    const defaultTitle = getTitleTemplate(calcs);
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
       const series = data[s]; // Name is already set
@@ -116,20 +102,23 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = series.fields[i];
         const fieldLinksSupplier = field.getLinks;
-        // Show all number fields
+
+        // To filter out time field, need an option for this
         if (field.type !== FieldType.number) {
           continue;
         }
+
         const config = field.config; // already set by the prepare task
+        const title = field.config.title ?? defaultTitle;
 
         const display =
           field.display ??
           getDisplayProcessor({
             field,
             theme: options.theme,
+            timeZone,
           });
 
-        const title = config.title ? config.title : defaultTitle;
         // Show all rows
         if (reduceOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
@@ -146,9 +135,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                 };
               }
             }
+
             const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, {
-              ...field.config.scopedVars, // series and field scoped vars
+              ...field.state?.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
 
@@ -165,6 +155,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                       valueRowIndex: j,
                     })
                 : () => [],
+              hasLinks: hasLinks(field),
             });
 
             if (values.length >= limit) {
@@ -191,9 +182,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             scopedVars[VAR_CALC] = { value: calc, text: calc };
             const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, {
-              ...field.config.scopedVars, // series and field scoped vars
+              ...field.state?.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
+
             values.push({
               name: calc,
               field: config,
@@ -207,6 +199,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                       calculatedValue: displayValue,
                     })
                 : () => [],
+              hasLinks: hasLinks(field),
             });
           }
         }
@@ -223,6 +216,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   return values;
 };
+
+export function hasLinks(field: Field): boolean {
+  return field.config?.links?.length ? field.config.links.length > 0 : false;
+}
 
 export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): DisplayValueAlignmentFactors {
   const info: DisplayValueAlignmentFactors = {
@@ -259,7 +256,7 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
   const displayName = 'No data';
-  const { fieldConfig } = options;
+  const { fieldConfig, timeZone } = options;
   const { defaults } = fieldConfig;
 
   const displayProcessor = getDisplayProcessor({
@@ -268,6 +265,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
       config: defaults,
     },
     theme: options.theme,
+    timeZone,
   });
 
   const display = displayProcessor(null);
@@ -283,6 +281,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
       numeric: 0,
       color: display.color,
     },
+    hasLinks: false,
   };
 }
 

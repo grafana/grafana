@@ -510,7 +510,7 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 > Only available in Grafana v6.7+.
 
-When set, this will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is not set/unrestricted.
+This will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
 ## [dashboards.json]
@@ -822,6 +822,11 @@ URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, 
 
 If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
 
+### concurrent_render_request_limit
+
+Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
+which this setting can help protect against by only allowing a certain amount of concurrent requests.
+
 ## [panels]
 
 ### disable_sanitize_html
@@ -834,6 +839,10 @@ is false. This settings was introduced in Grafana v6.0.
 ### enable_alpha
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+### allow_loading_unsigned_plugins
+
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature. 
 
 ## [feature_toggles]
 ### enable

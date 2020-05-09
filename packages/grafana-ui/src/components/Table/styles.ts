@@ -17,6 +17,7 @@ export interface TableStyles {
   row: string;
   theme: GrafanaTheme;
   resizeHandle: string;
+  overflow: string;
 }
 
 export const getTableStyles = stylesFactory(
@@ -54,6 +55,8 @@ export const getTableStyles = stylesFactory(
       headerCell: css`
         padding: ${padding}px 10px;
         cursor: pointer;
+        overflow: hidden;
+        white-space: nowrap;
         color: ${colors.textBlue};
         border-right: 1px solid ${theme.colors.panelBg};
 
@@ -89,6 +92,10 @@ export const getTableStyles = stylesFactory(
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+      `,
+      overflow: css`
+        overflow: hidden;
+        text-overflow: ellipsis;
       `,
       resizeHandle: css`
         label: resizeHandle;

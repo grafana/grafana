@@ -24,6 +24,7 @@ import {
   ScopedVars,
   applyFieldOverrides,
   DataConfigSource,
+  TimeZone,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -37,8 +38,7 @@ export interface QueryRunnerOptions<
   timezone?: string;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
-  widthPixels: number;
-  maxDataPoints: number | undefined | null;
+  maxDataPoints: number;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
@@ -56,6 +56,7 @@ export class PanelQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
+  private timeZone?: TimeZone;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -90,6 +91,7 @@ export class PanelQueryRunner {
           processedData = {
             ...processedData,
             series: applyFieldOverrides({
+              timeZone: this.timeZone,
               autoMinMax: true,
               data: processedData.series,
               ...fieldConfig,
@@ -112,11 +114,12 @@ export class PanelQueryRunner {
       timeRange,
       timeInfo,
       cacheTimeout,
-      widthPixels,
       maxDataPoints,
       scopedVars,
       minInterval,
     } = options;
+
+    this.timeZone = timezone;
 
     if (isSharedDashboardQuery(datasource)) {
       this.pipeToSubject(runSharedRequest(options));
@@ -134,7 +137,7 @@ export class PanelQueryRunner {
       interval: '',
       intervalMs: 0,
       targets: cloneDeep(queries),
-      maxDataPoints: maxDataPoints || widthPixels,
+      maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
@@ -155,7 +158,7 @@ export class PanelQueryRunner {
       });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
+      const norm = kbn.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -187,11 +190,6 @@ export class PanelQueryRunner {
     });
   }
 
-  pipeDataToSubject = (data: PanelData) => {
-    this.subject.next(data);
-    this.lastResult = data;
-  };
-
   resendLastResult = () => {
     if (this.lastResult) {
       this.subject.next(this.lastResult);
@@ -209,6 +207,15 @@ export class PanelQueryRunner {
 
     if (this.subscription) {
       this.subscription.unsubscribe();
+    }
+  }
+
+  useLastResultFrom(runner: PanelQueryRunner) {
+    this.lastResult = runner.getLastResult();
+
+    if (this.lastResult) {
+      // The subject is a replay subject so anyone subscribing will get this last result
+      this.subject.next(this.lastResult);
     }
   }
 

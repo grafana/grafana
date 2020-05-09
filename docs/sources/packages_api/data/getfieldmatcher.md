@@ -5,7 +5,6 @@
 title = "getFieldMatcher"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getFieldMatcher() function

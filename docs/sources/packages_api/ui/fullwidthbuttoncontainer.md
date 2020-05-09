@@ -5,7 +5,6 @@
 title = "FullWidthButtonContainer"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## FullWidthButtonContainer variable

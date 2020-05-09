@@ -4,6 +4,7 @@ import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
 import { appEvents } from '../../../core/core';
+import { Span, TraceData } from '@jaegertracing/jaeger-ui-components';
 
 const ALL_OPERATIONS_KEY = '__ALL__';
 const NO_TRACES_KEY = '__NO_TRACES__';
@@ -13,11 +14,14 @@ interface State {
   serviceOptions: CascaderOption[];
 }
 
-function getLabelFromTrace(trace: any): string {
-  // TODO: seems like the spans are not ordered so this may not be actually a root span
-  const firstSpan = trace.spans && trace.spans[0];
-  if (firstSpan) {
-    return `${firstSpan.operationName} [${firstSpan.duration} ms]`;
+function findRootSpan(spans: Span[]): Span | undefined {
+  return spans.find(s => !s.references?.length);
+}
+
+function getLabelFromTrace(trace: TraceData & { spans: Span[] }): string {
+  const rootSpan = findRootSpan(trace.spans);
+  if (rootSpan) {
+    return `${rootSpan.operationName} [${rootSpan.duration} ms]`;
   }
   return trace.traceID;
 }

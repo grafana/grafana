@@ -83,6 +83,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
+  lookupsDisabled: boolean;
   resultTransformer: ResultTransformer;
   customQueryParameters: any;
 
@@ -101,6 +102,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
+    this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
   }
 
@@ -189,6 +191,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       responseListLength,
       refId: target.refId,
       valueWithRefId: target.valueWithRefId,
+      meta: {
+        /** Fix for showing of Prometheus results in Explore table. We want to show result of instant query in table and the rest of time series in graph */
+        preferredVisualisationType: query.instant ? 'table' : 'graph',
+      },
     };
     const series = this.resultTransformer.transform(response, transformerOptions);
 

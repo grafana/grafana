@@ -1,5 +1,5 @@
 import toNumber from 'lodash/toNumber';
-import { DataFrame, DisplayValue, GrafanaTheme } from '../types';
+import { DataFrame, DisplayValue, GrafanaTheme, TimeZone } from '../types';
 import { getDisplayProcessor } from './displayProcessor';
 import { formattedValueToString } from '../valueFormats';
 
@@ -15,6 +15,7 @@ export function getFieldDisplayValuesProxy(
   rowIndex: number,
   options: {
     theme: GrafanaTheme;
+    timeZone?: TimeZone;
   }
 ): Record<string, DisplayValue> {
   return new Proxy({} as Record<string, DisplayValue>, {
@@ -38,6 +39,7 @@ export function getFieldDisplayValuesProxy(
         field.display = getDisplayProcessor({
           field,
           theme: options.theme,
+          timeZone: options.timeZone,
         });
       }
       const raw = field.values.get(rowIndex);

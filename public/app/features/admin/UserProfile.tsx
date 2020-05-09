@@ -272,6 +272,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
               onBlur={this.onInputBlur}
               onChange={this.onInputChange}
               ref={this.setInputElem}
+              width={30}
             />
           ) : (
             <span>{this.props.value}</span>

@@ -6,6 +6,7 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
+  getFrameDisplayTitle,
 } from '@grafana/data';
 import { Button, Field, Icon, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -84,7 +85,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isLoading } = this.props;
+    const { isLoading, data } = this.props;
     const { dataFrameIndex, transformId, transformationOptions } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -105,16 +106,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const choices = dataFrames.map((frame, index) => {
       return {
         value: index,
-        label: `${frame.name} (${index})`,
+        label: `${getFrameDisplayTitle(frame)} (${index})`,
       };
     });
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
         <div className={styles.toolbar}>
-          <Field label="Transformer" className="flex-grow-1">
-            <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />
-          </Field>
+          {data.length > 1 && (
+            <Field label="Transform data" className="flex-grow-1">
+              <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />
+            </Field>
+          )}
           {choices.length > 1 && (
             <Field label="Select result" className={cx(styles.toolbarItem, 'flex-grow-1')}>
               <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />

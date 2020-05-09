@@ -5,7 +5,6 @@
 title = "PanelModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelModel interface
@@ -24,13 +23,15 @@ import { PanelModel } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> |  |
-|  [id](#id-property) | <code>number</code> |  |
-|  [options](#options-property) | <code>TOptions</code> |  |
-|  [pluginVersion](#pluginversion-property) | <code>string</code> |  |
+|  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> | Field options configuration |
+|  [id](#id-property) | <code>number</code> | ID of the panel within the current dashboard |
+|  [options](#options-property) | <code>TOptions</code> | Panel options |
+|  [pluginVersion](#pluginversion-property) | <code>string</code> | Version of the panel plugin |
 |  [scopedVars](#scopedvars-property) | <code>ScopedVars</code> |  |
 
 ### fieldConfig property
+
+Field options configuration
 
 <b>Signature</b>
 
@@ -40,6 +41,8 @@ fieldConfig: FieldConfigSource;
 
 ### id property
 
+ID of the panel within the current dashboard
+
 <b>Signature</b>
 
 ```typescript
@@ -48,6 +51,8 @@ id: number;
 
 ### options property
 
+Panel options
+
 <b>Signature</b>
 
 ```typescript
@@ -55,6 +60,8 @@ options: TOptions;
 ```
 
 ### pluginVersion property
+
+Version of the panel plugin
 
 <b>Signature</b>
 

@@ -16,7 +16,8 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   GraphSeriesXY,
-  toUtc,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
   NullValueMode,
   toDataFrame,
   FieldCache,
@@ -31,6 +32,7 @@ import { getThemeColor } from 'app/core/utils/colors';
 
 import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
+import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -250,13 +252,12 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   return { logSeries, metricSeries };
 }
 
-const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-
 interface LogFields {
   series: DataFrame;
 
   timeField: FieldWithIndex;
   stringField: FieldWithIndex;
+  timeNanosecondField?: FieldWithIndex;
   logLevelField?: FieldWithIndex;
   idField?: FieldWithIndex;
 }
@@ -284,6 +285,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     return {
       series,
       timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+      timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+        ? fieldCache.getFieldByName('tsNs')
+        : undefined,
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),
@@ -296,7 +300,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
-    const { timeField, stringField, logLevelField, idField, series } = info;
+    const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
     const labels = stringField.labels;
     const uniqueLabels = findUniqueLabels(labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
@@ -311,6 +315,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
+      const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
+      const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
       const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
@@ -327,16 +333,16 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       } else {
         logLevel = getLogLevel(message);
       }
-
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
         dataFrame: series,
         logLevel,
-        timeFromNow: time.fromNow(),
+        timeFromNow: dateTimeFormatTimeAgo(ts),
         timeEpochMs: time.valueOf(),
-        timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(time.valueOf()).format(logTimeFormat),
+        timeEpochNs,
+        timeLocal: dateTimeFormat(ts, { timeZone: 'browser' }),
+        timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
         hasAnsi,
         searchWords,
@@ -372,6 +378,26 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     meta.push({
       label: 'Limit',
       value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
+      kind: LogsMetaKind.String,
+    });
+  }
+
+  // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
+  let totalBytes = 0;
+  for (const series of logSeries) {
+    const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
+    if (totalBytesKey && series.meta.stats) {
+      const byteStat = series.meta.stats.find(stat => stat.title === totalBytesKey);
+      if (byteStat) {
+        totalBytes += byteStat.value;
+      }
+    }
+  }
+  if (totalBytes > 0) {
+    const { text, suffix } = decimalSIPrefix('B')(totalBytes);
+    meta.push({
+      label: 'Total bytes processed',
+      value: `${text} ${suffix}`,
       kind: LogsMetaKind.String,
     });
   }

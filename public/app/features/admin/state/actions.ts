@@ -1,6 +1,6 @@
 import { updateLocation } from 'app/core/actions';
 import config from 'app/core/config';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { ThunkResult, LdapUser, UserSession, UserDTO } from 'app/types';
 
@@ -141,8 +141,8 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
       return {
         id: session.id,
         isActive: session.isActive,
-        seenAt: dateTime(session.seenAt).fromNow(),
-        createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+        seenAt: dateTimeFormatTimeAgo(session.seenAt),
+        createdAt: dateTimeFormat(session.createdAt, { format: 'MMMM DD, YYYY' }),
         clientIp: session.clientIp,
         browser: session.browser,
         browserVersion: session.browserVersion,

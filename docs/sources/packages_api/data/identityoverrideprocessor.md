@@ -5,7 +5,6 @@
 title = "identityOverrideProcessor"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## identityOverrideProcessor variable

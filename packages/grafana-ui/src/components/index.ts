@@ -29,6 +29,7 @@ export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
 export { Tag } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
+export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
@@ -68,6 +69,7 @@ export { GraphContextMenu } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
+export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 
 export {
   LegendOptions,
@@ -98,6 +100,7 @@ export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
+export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -120,7 +123,6 @@ export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
-export { default as Forms } from './Forms';
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
 export * from './Button';
@@ -137,6 +139,7 @@ export * from './Select/Select';
 export { ButtonSelect } from './Select/ButtonSelect';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
+export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';

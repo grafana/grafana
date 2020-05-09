@@ -7,7 +7,7 @@ Array [
     href="/"
     key="logo"
   >
-    <Component />
+    <MenuLogo />
   </a>,
   <div
     className="sidemenu__logo_small_breakpoint"

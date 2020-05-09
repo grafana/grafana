@@ -1,11 +1,10 @@
 // Libraries
-import React from 'react';
+import React, { FC } from 'react';
 import { css } from 'emotion';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-import { AsyncSelect, stylesFactory } from '@grafana/ui';
-import { resetSelectStyles, Icon } from '@grafana/ui';
-import { escapeStringForRegex } from '@grafana/data';
+import { AsyncSelect, stylesFactory, useTheme, resetSelectStyles, Icon } from '@grafana/ui';
+import { escapeStringForRegex, GrafanaTheme } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
@@ -31,17 +30,20 @@ const filterOption = (option: any, searchQuery: string) => {
   return regex.test(option.value);
 };
 
-export class TagFilter extends React.Component<Props, any> {
-  static defaultProps = {
-    placeholder: 'Tags',
-  };
+export const TagFilter: FC<Props> = ({
+  hideValues,
+  isClearable,
+  onChange,
+  placeholder = 'Filter by tag',
+  tagOptions,
+  tags,
+  width,
+}) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
 
-  constructor(props: Props) {
-    super(props);
-  }
-
-  onLoadOptions = (query: string) => {
-    return this.props.tagOptions().then(options => {
+  const onLoadOptions = (query: string) => {
+    return tagOptions().then(options => {
       return options.map(option => ({
         value: option.term,
         label: option.term,
@@ -50,68 +52,83 @@ export class TagFilter extends React.Component<Props, any> {
     });
   };
 
-  onChange = (newTags: any[]) => {
+  const onTagChange = (newTags: any[]) => {
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
     // https://github.com/JedWatson/react-select/issues/3632
-    this.props.onChange((newTags || []).map(tag => tag.value));
+    onChange((newTags || []).map(tag => tag.value));
   };
 
-  render() {
-    const styles = getStyles();
+  const value = tags.map(tag => ({ value: tag, label: tag, count: 0 }));
 
-    const tags = this.props.tags.map(tag => ({ value: tag, label: tag, count: 0 }));
-    const { width, placeholder, hideValues, isClearable } = this.props;
-
-    const selectOptions = {
-      defaultOptions: true,
-      filterOption,
-      getOptionLabel: (i: any) => i.label,
-      getOptionValue: (i: any) => i.value,
-      isClearable,
-      isMulti: true,
-      loadOptions: this.onLoadOptions,
-      loadingMessage: 'Loading...',
-      noOptionsMessage: 'No tags found',
-      onChange: this.onChange,
-      placeholder,
-      styles: resetSelectStyles(),
-      value: tags,
-      width,
-      components: {
-        Option: TagOption,
-        MultiValueLabel: (): any => {
-          return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
-        },
-        MultiValueRemove: (props: any) => {
-          const { data } = props;
-
-          return (
-            <components.MultiValueRemove {...props}>
-              <TagBadge key={data.label} label={data.label} removeIcon={true} count={data.count} />
-            </components.MultiValueRemove>
-          );
-        },
-        MultiValueContainer: hideValues ? (): any => null : components.MultiValueContainer,
+  const selectOptions = {
+    defaultOptions: true,
+    filterOption,
+    getOptionLabel: (i: any) => i.label,
+    getOptionValue: (i: any) => i.value,
+    isMulti: true,
+    loadOptions: onLoadOptions,
+    loadingMessage: 'Loading...',
+    noOptionsMessage: 'No tags found',
+    onChange: onTagChange,
+    placeholder,
+    styles: resetSelectStyles(),
+    value,
+    width,
+    components: {
+      Option: TagOption,
+      MultiValueLabel: (): any => {
+        return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
-    };
+      MultiValueRemove: (props: any) => {
+        const { data } = props;
 
-    return (
-      <div className={styles.tagFilter}>
-        <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
-      </div>
-    );
-  }
-}
+        return (
+          <components.MultiValueRemove {...props}>
+            <TagBadge key={data.label} label={data.label} removeIcon={true} count={data.count} />
+          </components.MultiValueRemove>
+        );
+      },
+      MultiValueContainer: hideValues ? (): any => null : components.MultiValueContainer,
+    },
+  };
 
-const getStyles = stylesFactory(() => {
+  return (
+    <div className={styles.tagFilter}>
+      {isClearable && tags.length > 0 && (
+        <span className={styles.clear} onClick={() => onTagChange([])}>
+          Clear tags
+        </span>
+      )}
+      <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
+    </div>
+  );
+};
+
+TagFilter.displayName = 'TagFilter';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tagFilter: css`
+      position: relative;
       min-width: 180px;
       flex-grow: 1;
 
       .label-tag {
         margin-left: 6px;
         cursor: pointer;
+      }
+    `,
+    clear: css`
+      text-decoration: underline;
+      font-size: 12px;
+      position: absolute;
+      top: -22px;
+      right: 0;
+      cursor: pointer;
+      color: ${theme.colors.textWeak};
+
+      &:hover {
+        color: ${theme.colors.textStrong};
       }
     `,
   };

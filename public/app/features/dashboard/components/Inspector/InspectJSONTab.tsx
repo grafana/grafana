@@ -17,7 +17,7 @@ enum ShowContent {
 const options: Array<SelectableValue<ShowContent>> = [
   {
     label: 'Panel JSON',
-    description: 'The model saved in the dashboard JSON that configures how everythign works.',
+    description: 'The model saved in the dashboard JSON that configures how everything works.',
     value: ShowContent.PanelJSON,
   },
   {
@@ -104,7 +104,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   onClipboardCopied = () => {
     appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-    alert('TODO... the notice is behind the inspector!');
   };
 
   onApplyPanelModel = () => {

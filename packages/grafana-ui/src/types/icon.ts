@@ -112,7 +112,9 @@ export type IconName =
   | 'heart-break'
   | 'ellipsis-v'
   | 'favorite'
-  | 'sort-amount-down';
+  | 'line-alt'
+  | 'sort-amount-down'
+  | 'cloud';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
@@ -225,4 +227,5 @@ export const getAvailableIcons = (): IconName[] => [
   'ellipsis-v',
   'favorite',
   'sort-amount-down',
+  'cloud',
 ];

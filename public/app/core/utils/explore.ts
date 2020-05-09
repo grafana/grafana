@@ -9,7 +9,6 @@ import {
   DataQueryRequest,
   DataSourceApi,
   dateMath,
-  DefaultTimeZone,
   HistoryItem,
   IntervalValues,
   LogRowModel,
@@ -22,6 +21,7 @@ import {
   toUtc,
   ExploreMode,
   urlUtil,
+  DefaultTimeZone,
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
@@ -115,7 +115,8 @@ export function buildQueryTransaction(
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
-  scanning: boolean
+  scanning: boolean,
+  timeZone?: TimeZone
 ): QueryTransaction {
   const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
@@ -135,7 +136,7 @@ export function buildQueryTransaction(
     app: CoreApp.Explore,
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
-    timezone: DefaultTimeZone,
+    timezone: timeZone || DefaultTimeZone,
     startTime: Date.now(),
     interval,
     intervalMs,
@@ -481,6 +482,7 @@ export const getRefIds = (value: any): string[] => {
 };
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
   if (a.timeEpochMs < b.timeEpochMs) {
     return -1;
   }
@@ -489,15 +491,34 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
     return 1;
   }
 
+  // if milliseonds are equal, compare nanoseconds
+  if (a.timeEpochNs < b.timeEpochNs) {
+    return -1;
+  }
+
+  if (a.timeEpochNs > b.timeEpochNs) {
+    return 1;
+  }
+
   return 0;
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
   if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
   }
 
   if (a.timeEpochMs < b.timeEpochMs) {
+    return 1;
+  }
+
+  // if milliseonds are equal, compare nanoseconds
+  if (a.timeEpochNs > b.timeEpochNs) {
+    return -1;
+  }
+
+  if (a.timeEpochNs < b.timeEpochNs) {
     return 1;
   }
 

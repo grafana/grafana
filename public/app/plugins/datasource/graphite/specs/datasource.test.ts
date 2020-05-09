@@ -2,7 +2,7 @@ import { GraphiteDatasource } from '../datasource';
 import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { dateTime } from '@grafana/data';
+import { dateTime, getFrameDisplayTitle } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
@@ -58,8 +58,8 @@ describe('graphiteDatasource', () => {
                   'aggnum-rc': 7,
                   'archive-interval': 3600,
                   'archive-read': 1,
-                  'consolidate-normfetch': 'AverageConsolidator',
-                  'consolidate-rc': 'AverageConsolidator',
+                  'consolidator-normfetch': 'AverageConsolidator',
+                  'consolidator-rc': 'AverageConsolidator',
                   count: 1,
                   'schema-name': 'wpUsageMetrics',
                   'schema-retentions': '1h:35d:6h:2,2h:2y:6h:2',
@@ -74,8 +74,8 @@ describe('graphiteDatasource', () => {
                   'aggnum-rc': 0,
                   'archive-interval': 3600,
                   'archive-read': 0,
-                  'consolidate-normfetch': 'AverageConsolidator',
-                  'consolidate-rc': 'NoneConsolidator',
+                  'consolidator-normfetch': 'AverageConsolidator',
+                  'consolidator-rc': 'NoneConsolidator',
                   count: 1,
                   'schema-name': 'wpUsageMetrics',
                   'schema-retentions': '1h:35d:6h:2,2h:2y:6h:2',
@@ -91,8 +91,8 @@ describe('graphiteDatasource', () => {
       });
 
       expect(result.data.length).toBe(2);
-      expect(result.data[0].name).toBe('seriesA');
-      expect(result.data[1].name).toBe('seriesB');
+      expect(getFrameDisplayTitle(result.data[0])).toBe('seriesA');
+      expect(getFrameDisplayTitle(result.data[1])).toBe('seriesB');
       expect(result.data[0].length).toBe(2);
       expect(result.data[0].meta.notices.length).toBe(1);
       expect(result.data[0].meta.notices[0].text).toBe('Data is rolled up, aggregated over 2h using Average function');
