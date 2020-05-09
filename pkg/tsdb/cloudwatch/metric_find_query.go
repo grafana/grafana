@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var metricsMap map[string][]string
@@ -398,7 +399,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		dsInfo.Namespace = namespace
 
 		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
-			return nil, errors.New("Unable to call AWS API")
+			return nil, err
 		}
 	}
 	sort.Strings(dimensionValues)
@@ -652,7 +653,7 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call ec2:DescribeInstances")
+		return nil, errutil.Wrap("failed to call ec2:DescribeInstances", err)
 	}
 
 	return &resp, nil
@@ -679,7 +680,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call tags:GetResources")
+		return nil, errutil.Wrap("failed to call tags:GetResources", err)
 	}
 
 	return &resp, nil
@@ -711,11 +712,10 @@ func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 }
 
 func (e *CloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string, error) {
-	dsInfo := e.getDSInfo(region)
-
 	e.metricsCacheLock.Lock()
 	defer e.metricsCacheLock.Unlock()
 
+	dsInfo := e.getDSInfo(region)
 	if _, ok := e.customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		e.customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
 	}

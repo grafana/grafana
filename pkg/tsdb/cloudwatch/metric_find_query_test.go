@@ -41,7 +41,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			},
 		}
-		metrics, _ := executor.getMetricsForCustomMetrics("us-east-1")
+		metrics, err := executor.getMetricsForCustomMetrics("us-east-1")
+		So(err, ShouldBeNil)
 
 		Convey("Should contain Test_MetricName", func() {
 			So(metrics, ShouldContain, "Test_MetricName")
@@ -70,7 +71,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			},
 		}
-		dimensionKeys, _ := executor.getDimensionsForCustomMetrics("us-east-1")
+		dimensionKeys, err := executor.getDimensionsForCustomMetrics("us-east-1")
+		So(err, ShouldBeNil)
 
 		Convey("Should contain Test_DimensionName", func() {
 			So(dimensionKeys, ShouldContain, "Test_DimensionName")
@@ -99,7 +101,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 			SecureJsonData: securejsondata.SecureJsonData{},
 		}
 
-		result, _ := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
+		result, err := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
+		So(err, ShouldBeNil)
 
 		Convey("Should return regions", func() {
 			So(result[0].Text, ShouldEqual, "ap-east-1")
@@ -140,7 +143,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 		filters := make(map[string]interface{})
 		filters["tag:Environment"] = []string{"production"}
 		json.Set("filters", filters)
-		result, _ := executor.handleGetEc2InstanceAttribute(context.Background(), json, &tsdb.TsdbQuery{})
+		result, err := executor.handleGetEc2InstanceAttribute(context.Background(), json, &tsdb.TsdbQuery{})
+		So(err, ShouldBeNil)
 
 		Convey("Should equal production InstanceId", func() {
 			So(result[0].Text, ShouldEqual, "i-12345678")
@@ -200,7 +204,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 		json := simplejson.New()
 		json.Set("region", "us-east-1")
 		json.Set("instanceId", "{i-1, i-2, i-3, i-4}")
-		result, _ := executor.handleGetEbsVolumeIds(context.Background(), json, &tsdb.TsdbQuery{})
+		result, err := executor.handleGetEbsVolumeIds(context.Background(), json, &tsdb.TsdbQuery{})
+		So(err, ShouldBeNil)
 
 		Convey("Should return all 8 VolumeIds", func() {
 			So(len(result), ShouldEqual, 8)
@@ -254,7 +259,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 		tags := make(map[string]interface{})
 		tags["Environment"] = []string{"production"}
 		json.Set("tags", tags)
-		result, _ := executor.handleGetResourceArns(context.Background(), json, &tsdb.TsdbQuery{})
+		result, err := executor.handleGetResourceArns(context.Background(), json, &tsdb.TsdbQuery{})
+		So(err, ShouldBeNil)
 
 		Convey("Should return all two instances", func() {
 			So(result[0].Text, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567")

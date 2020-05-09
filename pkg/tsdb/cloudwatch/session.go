@@ -23,7 +23,7 @@ import (
 )
 
 // clientCache represents the interface a CloudWatchExecutor needs to access
-// AWS service-specific clients in order to perform API requests
+// AWS service-specific clients in order to perform API requests.
 type clientCache interface {
 	cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error)
 	ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error)
@@ -33,10 +33,10 @@ type clientCache interface {
 
 // sessionCache is an implementation of clientCache that caches sessions
 // per-region in order to provide AWS API service clients on-demand while
-// loading configuration options as few times as possible
+// loading configuration options as few times as possible.
 type sessionCache struct {
-	// awsRegionSessions holds sessions for the different aws regions and which
-	// AuthType was used to generate them
+	// awsRegionSessions holds sessions for the different AWS regions and which
+	// AuthType was used to generate them.
 	awsRegionSessions map[string]*session.Session
 	lock              sync.RWMutex
 }
@@ -85,10 +85,10 @@ func (s *sessionCache) newAwsSession(dsInfo *DatasourceInfo) (*session.Session, 
 		return session.NewSession(regionConfiguration)
 	}
 
-	return nil, fmt.Errorf(`%q is not a valid authentication type. Expected "arn", "credentials", "keys" or "sdk"`, dsInfo.AuthType)
+	return nil, fmt.Errorf(`%q is not a valid authentication type - expected "arn", "credentials", "keys" or "sdk"`, dsInfo.AuthType)
 }
 
-// session return an appropriate session.Session for the configuration given in the
+// session returns an appropriate session.Session for the configuration given in the
 // DataSourceInfo. This method is primarily used internally by the API-specific
 // methods such as `cloudWatchClient`.
 func (s *sessionCache) session(dsInfo *DatasourceInfo) (*session.Session, error) {
@@ -164,29 +164,4 @@ func (s *sessionCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.C
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 	})
 	return client, nil
-}
-
-// mockClients is an implenentation of the clientCache interface that enables users to
-// mock the AWS API by providing mock implementations of the respective APIs.
-type mockClients struct {
-	cloudWatch cloudwatchiface.CloudWatchAPI
-	ec2        ec2iface.EC2API
-	rgta       resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	logs       cloudwatchlogsiface.CloudWatchLogsAPI
-}
-
-func (m *mockClients) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
-	return m.cloudWatch, nil
-}
-
-func (m *mockClients) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) {
-	return m.ec2, nil
-}
-
-func (m *mockClients) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
-	return m.rgta, nil
-}
-
-func (m *mockClients) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	return m.logs, nil
 }
