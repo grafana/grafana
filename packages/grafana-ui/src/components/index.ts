@@ -29,6 +29,7 @@ export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
 export { Tag } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
+export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
@@ -68,7 +69,7 @@ export { GraphContextMenu } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
-export { graphTimeFormat, graphTimeFormatter } from './Graph/utils';
+export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 
 export {
   LegendOptions,
@@ -122,7 +123,6 @@ export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
-export { default as Forms } from './Forms';
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
 export * from './Button';

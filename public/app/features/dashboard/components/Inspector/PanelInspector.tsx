@@ -241,7 +241,6 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
     return (
       <div style={{ paddingBottom: '16px' }}>
-        <div className="section-heading">{name}</div>
         <table className="filter-table width-30">
           <tbody>
             {stats.map((stat, index) => {

@@ -69,7 +69,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
-    this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
+    this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
   }
 
   _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
@@ -497,7 +497,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const tags: string[] = [];
       for (const field of frame.fields) {
         if (field.labels) {
-          tags.push.apply(tags, Object.values(field.labels));
+          tags.push.apply(tags, [...new Set(Object.values(field.labels).map((label: string) => label.trim()))]);
         }
       }
       const view = new DataFrameView<{ ts: string; line: string }>(frame);

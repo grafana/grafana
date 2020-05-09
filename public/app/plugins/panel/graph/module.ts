@@ -156,7 +156,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
-    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
@@ -167,7 +167,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onInitEditMode() {
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html');
-    this.addEditorTab('Series overides', 'public/app/plugins/panel/graph/tab_series_overrides.html');
+    this.addEditorTab('Series overrides', 'public/app/plugins/panel/graph/tab_series_overrides.html');
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds', 'public/app/plugins/panel/graph/tab_thresholds.html');

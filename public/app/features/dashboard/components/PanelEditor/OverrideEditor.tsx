@@ -82,14 +82,18 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   const onDynamicConfigValueAdd = useCallback(
     (id: string) => {
+      const registryItem = registry.get(id);
       const propertyConfig: DynamicConfigValue = {
         id,
+        value: registryItem.defaultValue,
       };
+
       if (override.properties) {
         override.properties.push(propertyConfig);
       } else {
         override.properties = [propertyConfig];
       }
+
       onChange(override);
     },
     [override, onChange]

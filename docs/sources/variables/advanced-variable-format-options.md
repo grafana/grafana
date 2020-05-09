@@ -26,7 +26,7 @@ An alternative syntax (that might be deprecated in the future) is `[[var_name:op
 
 ## CSV
 
-Formats multi-value variable as a comma-separated string.
+Formats variables with multiple values as a comma-separated string.
 
 ```bash
 servers = ['test1', 'test2']
@@ -36,7 +36,7 @@ Interpolation result: 'test1,test2'
 
 ## Distributed - OpenTSDB
 
-Formats multi-value variable in custom format for OpenTSDB.
+Formats variables with multiple values in custom format for OpenTSDB.
 
 ```bash
 servers = ['test1', 'test2']
@@ -56,7 +56,7 @@ Interpolation result: '"test1","test2"'
 
 ## Glob - Graphite
 
-Formats multi-value variable into a glob (for Graphite queries).
+Formats variables with multiple values into a glob (for Graphite queries).
 
 ```bash
 servers = ['test1', 'test2']
@@ -66,7 +66,7 @@ Interpolation result: '{test1,test2}'
 
 ## JSON
 
-Formats multi-value variable as a comma-separated string.
+Formats variables with multiple values as a comma-separated string.
 
 ```bash
 servers = ['test1', 'test2']
@@ -76,7 +76,7 @@ Interpolation result: '["test1", "test2"]'
 
 ## Lucene - Elasticsearch
 
-Formats multi-value variable in Lucene format for Elasticsearch.
+Formats variables with multiple values in Lucene format for Elasticsearch.
 
 ```bash
 servers = ['test1', 'test2']
@@ -96,7 +96,7 @@ Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 
 ## Pipe
 
-Formats multi-value variable into a pipe-separated string.
+Formats variables with multiple values into a pipe-separated string.
 
 ```bash
 servers = ['test1.', 'test2']
@@ -116,7 +116,7 @@ Interpolation result: '{test.1,test2}'
 
 ## Regex
 
-Formats multi-value variable into a regex string.
+Formats variables with multiple values into a regex string.
 
 ```bash
 servers = ['test1.', 'test2']
