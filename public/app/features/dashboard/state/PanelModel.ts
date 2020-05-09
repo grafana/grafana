@@ -161,6 +161,10 @@ export class PanelModel implements DataConfigSource {
         continue;
       }
 
+      if (!model[property]) {
+        model[property] = false;
+      }
+
       if (mustKeepProps[property]) {
         continue;
       }
