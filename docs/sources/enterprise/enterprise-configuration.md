@@ -47,7 +47,7 @@ Set to complete URL to override Apple/iOS icon.
 
 ### footer_links
 
-List the links IDs to use here. Grafana will look for matching links configurations and the link IDs should be space-separated and contain no whitespace.
+List the link IDs to use here. Grafana will look for matching link configurations, the link IDs should be space-separated and contain no whitespace.
 
 ## [meta_analytics]
 
