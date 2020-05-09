@@ -112,7 +112,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, parameters 
 		queryRequest.SetEndTime(endTime)
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	logsClient, err := e.clients.logsClient(e.getDSInfo(cloudWatchDefaultRegion))
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, parame
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	logsClient, err := e.clients.logsClient(e.getDSInfo(cloudWatchDefaultRegion))
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, parameters *
 		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	logsClient, err := e.clients.logsClient(e.getDSInfo(cloudWatchDefaultRegion))
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, parameters *s
 		QueryId: aws.String(parameters.Get("queryId").MustString()),
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	logsClient, err := e.clients.logsClient(e.getDSInfo(cloudWatchDefaultRegion))
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +270,7 @@ func (e *CloudWatchExecutor) executeGetQueryResults(ctx context.Context, paramet
 		QueryId: aws.String(parameters.Get("queryId").MustString()),
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	logsClient, err := e.clients.logsClient(e.getDSInfo(cloudWatchDefaultRegion))
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +302,7 @@ func (e *CloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, parame
 		Time:         aws.Int64(parameters.Get("time").MustInt64()),
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(CLOUDWATCH_DEFAULT_REGION))
+	logsClient, err := e.clients.logsClient(e.getDSInfo(cloudWatchDefaultRegion))
 	if err != nil {
 		return nil, err
 	}

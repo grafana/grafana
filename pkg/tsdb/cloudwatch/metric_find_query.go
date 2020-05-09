@@ -283,7 +283,7 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	dsInfo := e.getDsInfo(CLOUDWATCH_DEFAULT_REGION)
+	dsInfo := e.getDSInfo(cloudWatchDefaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -365,7 +365,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 		}
 	} else {
 		var err error
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
 		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region); err != nil {
@@ -394,7 +394,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		}
 	} else {
 		var err error
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
 		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
@@ -600,7 +600,7 @@ func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 }
 
 func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	svc, err := e.clients.cloudWatchClient(e.getDsInfo(region))
+	svc, err := e.clients.cloudWatchClient(e.getDSInfo(region))
 	if err != nil {
 		return nil, err
 	}
@@ -637,7 +637,7 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.clients.ec2Client(e.getDsInfo(region))
+	client, err := e.clients.ec2Client(e.getDSInfo(region))
 	if err != nil {
 		return nil, err
 	}
@@ -664,7 +664,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 		TagFilters:          filters,
 	}
 
-	client, err := e.clients.rgtaClient(e.getDsInfo(region))
+	client, err := e.clients.rgtaClient(e.getDSInfo(region))
 	if err != nil {
 		return nil, err
 	}
@@ -686,7 +686,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 
 	svc, err := e.clients.cloudWatchClient(dsInfo)
 	if err != nil {
@@ -711,7 +711,7 @@ func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 }
 
 func (e *CloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string, error) {
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 
 	e.metricsCacheLock.Lock()
 	defer e.metricsCacheLock.Unlock()
@@ -749,7 +749,7 @@ func (e *CloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string
 }
 
 func (e *CloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]string, error) {
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 
 	e.dimensionsCacheLock.Lock()
 	defer e.dimensionsCacheLock.Unlock()

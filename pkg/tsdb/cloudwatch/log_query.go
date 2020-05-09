@@ -22,7 +22,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
 				}
 
-				parsedTime, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value)
+				parsedTime, err := time.Parse(cloudWatchTSFormat, *resultField.Value)
 				if err != nil {
 					return nil, err
 				}
@@ -31,7 +31,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			} else {
 				if _, exists := fieldValues[*resultField.Field]; !exists {
 					// Check if field is time field
-					if _, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value); err == nil {
+					if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
 						fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
 					} else {
 						fieldValues[*resultField.Field] = make([]*string, rowCount)
@@ -39,7 +39,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				}
 
 				if timeField, ok := fieldValues[*resultField.Field].([]*time.Time); ok {
-					parsedTime, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value)
+					parsedTime, err := time.Parse(cloudWatchTSFormat, *resultField.Value)
 					if err != nil {
 						return nil, err
 					}

@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	CLOUDWATCH_DEFAULT_REGION = "default"
+	cloudWatchDefaultRegion = "default"
 
-	CLOUDWATCH_TS_FORMAT = "2006-01-02 15:04:05.000"
+	cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 )
 
 var (
@@ -31,9 +31,9 @@ var (
 )
 
 // CloudWatchExecutor represents a struct holding enough information to execute
-// cloudwatch queries for a specific datasource. It caches AWS SDK Sessions on
-// a region basis for each datasource version in order to load configuration as
-// seldom as possible.
+// CloudWatch queries for a specific datasource. It caches AWS SDK Sessions on
+// a regional basis for each datasource version in order to load configuration as
+// seldomly as possible.
 type CloudWatchExecutor struct {
 	*models.DataSource
 
@@ -46,29 +46,6 @@ type CloudWatchExecutor struct {
 	metricsCacheLock           sync.Mutex
 	customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
 	dimensionsCacheLock        sync.Mutex
-}
-
-// getExecutor finds the appropriate CloudWatchExecutor for the given
-// datasource using a global cache protected by a mutex. If there is none
-// cached a new one will be created.
-func getExecutor(dsInfo *models.DataSource) *CloudWatchExecutor {
-	executorLock.Lock()
-	defer executorLock.Unlock()
-
-	// If the version has been updated we want to break the cache
-	if exec := executors[dsInfo.Id]; exec != nil && exec.DataSource.Version >= dsInfo.Version {
-		return exec
-	}
-
-	exec := &CloudWatchExecutor{
-		DataSource:                 dsInfo,
-		clients:                    newSessionCache(),
-		customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
-		customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
-	}
-
-	executors[dsInfo.Id] = exec
-	return exec
 }
 
 type DatasourceInfo struct {
@@ -84,8 +61,26 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
-func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return getExecutor(dsInfo), nil
+// NewCloudWatchExecutor finds the appropriate CloudWatchExecutor for the given
+// datasource, using a global cache protected by a mutex. If there is none
+// cached, a new one will be created.
+func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	executorLock.Lock()
+	defer executorLock.Unlock()
+
+	// If the version has been updated we want to break the cache
+	if exec := executors[datasource.Id]; exec != nil && exec.DataSource.Version >= datasource.Version {
+		return exec, nil
+	}
+
+	exec := &CloudWatchExecutor{
+		DataSource:                 datasource,
+		clients:                    newSessionCache(),
+		customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+		customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+	}
+	executors[datasource.Id] = exec
+	return exec, nil
 }
 
 var (
@@ -171,11 +166,11 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	return result, err
 }
 
-// getDsInfo gets the CloudWatchExecutor's region-specific DataSourceInfo from
-// the embedded models.DataSource. Given CLOUDWATCH_DEFAULT_REGION it will fall
+// getDSInfo gets the CloudWatchExecutor's region-specific DataSourceInfo from
+// the embedded models.DataSource. Given cloudWatchDefaultRegion it will fall
 // back to the region configured as default for the datasource.
-func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	if region == CLOUDWATCH_DEFAULT_REGION {
+func (e *CloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
+	if region == cloudWatchDefaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
 
@@ -203,7 +198,7 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
 
-	dsInfo := e.getDsInfo(queryParams.Get("region").MustString(CLOUDWATCH_DEFAULT_REGION))
+	dsInfo := e.getDSInfo(queryParams.Get("region").MustString(cloudWatchDefaultRegion))
 	queryParams.Set("region", dsInfo.Region)
 
 	logsClient, err := e.clients.logsClient(dsInfo)
@@ -257,7 +252,7 @@ func queryResultsToDataframe(results *cloudwatchlogs.GetQueryResultsOutput) (*da
 			}
 
 			if _, exists := fieldValues[*resultField.Field]; !exists {
-				if _, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value); err == nil {
+				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
 				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
 					fieldValues[*resultField.Field] = make([]*float64, rowCount)
@@ -267,7 +262,7 @@ func queryResultsToDataframe(results *cloudwatchlogs.GetQueryResultsOutput) (*da
 			}
 
 			if timeField, ok := fieldValues[*resultField.Field].([]*time.Time); ok {
-				parsedTime, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value)
+				parsedTime, err := time.Parse(cloudWatchTSFormat, *resultField.Value)
 				if err != nil {
 					return nil, err
 				}
