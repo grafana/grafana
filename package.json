@@ -237,7 +237,7 @@
     "hoist-non-react-statics": "3.3.0",
     "immutable": "3.8.2",
     "is-hotkey": "0.1.6",
-    "jquery": "3.4.1",
+    "jquery": "3.5.1",
     "jsurl": "^0.1.5",
     "lodash": "4.17.15",
     "lru-cache": "^5.1.1",
