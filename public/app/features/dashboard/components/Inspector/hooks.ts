@@ -13,7 +13,7 @@ export const useDatasourceMetadata = (data?: PanelData) => {
   const state = useAsync<DataSourceApi | undefined>(async () => {
     const targets = data?.request?.targets || [];
 
-    if (data.series && targets.length) {
+    if (data && data.series && targets.length) {
       for (const frame of data.series) {
         if (frame.meta && frame.meta.custom) {
           // get data source from first query

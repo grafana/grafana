@@ -21,7 +21,7 @@ interface Props {
   defaultTab: InspectTab;
   tabs: Array<{ label: string; value: InspectTab }>;
   // The last raw response
-  data: PanelData | null;
+  data?: PanelData;
   isDataLoading: boolean;
   dataOptions: GetDataOptions;
   onDataOptionsChange: (options: GetDataOptions) => void;
@@ -69,7 +69,7 @@ export const InspectContent: React.FC<Props> = ({
         <InspectSubtitle
           tabs={tabs}
           tab={activeTab}
-          panelData={data}
+          data={data}
           onSelectTab={item => setCurrentTab(item.value || InspectTab.Data)}
         />
       }

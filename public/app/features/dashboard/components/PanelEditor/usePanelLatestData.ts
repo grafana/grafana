@@ -11,16 +11,15 @@ export const usePanelLatestData = (
   panel: PanelModel,
   plugin: PanelPlugin,
   options?: GetDataOptions
-): [PanelData | null, boolean, DataQueryError | undefined] => {
+): [PanelData | undefined, boolean, DataQueryError | undefined] => {
   const querySubscription = useRef<Unsubscribable>(null);
-  const [latestData, setLatestData] = useState<PanelData | null>(null);
+  const [latestData, setLatestData] = useState<PanelData>();
 
   useEffect(() => {
     /**
      * This init process where we do not have a plugin to start with is to handle full page reloads with inspect url parameter
      */
     if (plugin && !plugin.meta.skipDataQuery) {
-      console.log(options);
       querySubscription.current = panel
         .getQueryRunner()
         .getData(options)
@@ -30,7 +29,6 @@ export const usePanelLatestData = (
 
       return () => {
         if (querySubscription.current) {
-          console.log('unsubscribing');
           querySubscription.current.unsubscribe();
         }
       };
