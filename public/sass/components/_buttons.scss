@@ -113,7 +113,7 @@
 
 // Info appears as a neutral blue
 .btn-secondary {
-  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl, $text-color);
   // Inverse appears as dark gray
 }
 .btn-inverse {
