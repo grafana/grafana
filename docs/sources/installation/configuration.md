@@ -355,7 +355,6 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
-
 ### disable_brute_force_login_protection
 
 Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
