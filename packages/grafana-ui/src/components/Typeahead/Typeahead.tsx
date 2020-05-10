@@ -20,7 +20,7 @@ interface Props {
   isOpen?: boolean;
 }
 
-interface State {
+export interface State {
   allItems: CompletionItem[];
   listWidth: number;
   listHeight: number;
