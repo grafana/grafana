@@ -86,6 +86,8 @@ describe('PanelModel', () => {
 
       modelJson = {
         type: 'table',
+        maxDataPoints: 100,
+        interval: '5m',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: persistedOptionsMock,
@@ -223,6 +225,14 @@ describe('PanelModel', () => {
 
       it('should keep editSourceId', () => {
         expect(model.editSourceId).toBe(1001);
+      });
+
+      it('should keep maxDataPoints', () => {
+        expect(model.maxDataPoints).toBe(100);
+      });
+
+      it('should keep interval', () => {
+        expect(model.interval).toBe('5m');
       });
 
       it('should apply next panel option defaults', () => {

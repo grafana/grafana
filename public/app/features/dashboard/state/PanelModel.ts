@@ -82,6 +82,8 @@ const mustKeepProps: { [str: string]: boolean } = {
   transformations: true,
   fieldConfig: true,
   editSourceId: true,
+  maxDataPoints: true,
+  interval: true,
 };
 
 const defaults: any = {
