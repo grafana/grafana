@@ -26,7 +26,6 @@ export interface LokiQuery extends DataQuery {
   expr: string;
   liveStreaming?: boolean;
   query?: string;
-  regexp?: string;
   format?: string;
   reverse?: boolean;
   legendFormat?: string;
@@ -39,6 +38,12 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
 }
 
+export interface LokiStats {
+  [component: string]: {
+    [label: string]: number;
+  };
+}
+
 export interface LokiVectorResult {
   metric: { [label: string]: string };
   value: [number, string];
@@ -49,6 +54,7 @@ export interface LokiVectorResponse {
   data: {
     resultType: LokiResultType.Vector;
     result: LokiVectorResult[];
+    stats?: LokiStats;
   };
 }
 
@@ -62,6 +68,7 @@ export interface LokiMatrixResponse {
   data: {
     resultType: LokiResultType.Matrix;
     result: LokiMatrixResult[];
+    stats?: LokiStats;
   };
 }
 
@@ -75,6 +82,7 @@ export interface LokiStreamResponse {
   data: {
     resultType: LokiResultType.Stream;
     result: LokiStreamResult[];
+    stats?: LokiStats;
   };
 }
 

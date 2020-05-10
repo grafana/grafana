@@ -2,7 +2,7 @@
 import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react';
 
 // Utils
-import { rangeUtil, DataSourceSelectItem, PanelData } from '@grafana/data';
+import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 
 // Components
 import {
@@ -41,7 +41,7 @@ const emptyToNull = (value: string) => {
 
 interface Props {
   panel: PanelModel;
-  datasource: DataSourceSelectItem;
+  dataSource: DataSourceApi;
   data: PanelData;
 }
 
@@ -125,12 +125,12 @@ export class QueryOptions extends PureComponent<Props, State> {
   };
 
   renderCacheTimeoutOption() {
-    const { datasource } = this.props;
+    const { dataSource } = this.props;
     const { cacheTimeout } = this.state;
     const tooltip = `If your time series store has a query cache this option can override the default cache timeout. Specify a
     numeric value in seconds.`;
 
-    if (!datasource.meta.queryOptions?.maxDataPoints) {
+    if (!dataSource.meta.queryOptions?.cacheTimeout) {
       return null;
     }
 
@@ -197,9 +197,10 @@ export class QueryOptions extends PureComponent<Props, State> {
   }
 
   renderIntervalOption() {
-    const { data } = this.props;
+    const { data, dataSource } = this.props;
     const { interval } = this.state;
     const realInterval = data.request?.interval;
+    const minIntervalOnDs = dataSource.interval ?? 'No limit';
 
     return (
       <>
@@ -220,7 +221,7 @@ export class QueryOptions extends PureComponent<Props, State> {
             <Input
               type="text"
               className="width-6"
-              placeholder={`${realInterval}`}
+              placeholder={`${minIntervalOnDs}`}
               name={name}
               spellCheck={false}
               onBlur={this.onDataSourceOptionBlur('interval')}
@@ -292,7 +293,7 @@ export class QueryOptions extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
-        title="Options"
+        title="Query options"
         headerElement={this.renderCollapsedText(styles)}
         isOpen={isOpen}
         onOpen={this.onOpenOptions}
