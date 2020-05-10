@@ -313,18 +313,6 @@ describe('PanelModel', () => {
         expect(model.someProperty).toBeUndefined();
       });
 
-      it('Should preserve must keep properties', () => {
-        model.id = 10;
-        model.gridPos = { x: 0, y: 0, h: 10, w: 10 };
-        model.restoreModel({
-          title: 'New title',
-          options: {},
-        });
-
-        expect(model.id).toBe(10);
-        expect(model.gridPos.h).toBe(10);
-      });
-
       it('Should remove old angular panel specfic props', () => {
         model.axes = [{ prop: 1 }];
         model.thresholds = [];
@@ -336,6 +324,13 @@ describe('PanelModel', () => {
 
         expect(model.axes).toBeUndefined();
         expect(model.thresholds).toBeUndefined();
+      });
+
+      it('Should be able to set defaults back to default', () => {
+        model.transparent = true;
+
+        model.restoreModel({});
+        expect(model.transparent).toBe(false);
       });
     });
 
