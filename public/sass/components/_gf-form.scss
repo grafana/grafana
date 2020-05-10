@@ -237,6 +237,9 @@ $input-border: 1px solid $input-border-color;
 
   &--dropdown {
     padding-right: $space-lg;
+    position: relative;
+    display: flex;
+    align-items: center;
 
     &::after {
       position: absolute;
