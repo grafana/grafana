@@ -256,7 +256,7 @@ describe('SeriesToColumns Transformer', () => {
         {
           name: 'time',
           state: {
-            title: 'time',
+            displayName: 'time',
           },
           type: FieldType.time,
           values: new ArrayVector([1000, 2000, 3000, 4000]),
@@ -269,14 +269,14 @@ describe('SeriesToColumns Transformer', () => {
           values: new ArrayVector([1, 3, 5, 7]),
           config: {},
           state: {
-            title: 'temperature temperature',
+            displayName: 'temperature temperature',
           },
           labels: { name: 'temperature' },
         },
         {
           name: 'temperature',
           state: {
-            title: 'temperature B',
+            displayName: 'temperature B',
           },
           type: FieldType.number,
           values: new ArrayVector([2, 4, 6, 8]),

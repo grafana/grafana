@@ -36,8 +36,8 @@ export const getStandardFieldConfigs = () => {
   const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'title',
     path: 'title',
-    name: 'Title',
-    description: "Field's title",
+    name: 'Display name',
+    description: 'Change the field or series name',
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
     process: stringOverrideProcessor,

@@ -19,7 +19,7 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   if (index === undefined) {
     return frame.fields
       .filter(f => f.type !== FieldType.time)
-      .map(f => getFieldTitle(f, frame))
+      .map(f => getFieldDisplayName(f, frame))
       .join(', ');
   }
 
@@ -30,39 +30,39 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
-export function getFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
-  const existingTitle = field.state?.title;
+export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+  const existingTitle = field.state?.displayName;
 
   if (existingTitle) {
     return existingTitle;
   }
 
-  const title = calculateFieldTitle(field, frame, allFrames);
+  const displayName = calculateFieldDisplayName(field, frame, allFrames);
   field.state = {
     ...field.state,
-    title,
+    displayName,
   };
 
-  return title;
+  return displayName;
 }
 
 /**
- * Get an appropriate display title. If the 'title' is set, use that
+ * Get an appropriate display name. If the 'title' is set, use that
  */
-function calculateFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.title && field.config?.title.length;
 
-  let title = hasConfigTitle ? field.config!.title! : field.name;
+  let displayName = hasConfigTitle ? field.config!.title! : field.name;
 
   if (hasConfigTitle) {
-    return title;
+    return displayName;
   }
 
   // This is an ugly exception for time field
   // For time series we should normally treat time field with same name
   // But in case it has a join source we should handle it as normal field
   if (field.type === FieldType.time && !field.labels) {
-    return title ?? 'Time';
+    return displayName ?? 'Time';
   }
 
   let parts: string[] = [];
@@ -114,14 +114,14 @@ function calculateFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFr
   }
 
   if (parts.length) {
-    title = parts.join(' ');
+    displayName = parts.join(' ');
   } else if (field.name) {
-    title = field.name;
+    displayName = field.name;
   } else {
-    title = TIME_SERIES_FIELD_NAME;
+    displayName = TIME_SERIES_FIELD_NAME;
   }
 
-  return title;
+  return displayName;
 }
 
 /**

@@ -2,7 +2,7 @@ import { DataFrame, DataTransformerInfo, Field } from '../../types';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
 import { ArrayVector } from '../../vector';
-import { getFieldTitle } from '../../field/fieldState';
+import { getFieldDisplayName } from '../../field/fieldState';
 
 export interface SeriesToColumnsOptions {
   byField?: string;
@@ -71,7 +71,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
       resultFrame.addField(item.newField);
     }
 
-    const keyFieldTitle = getFieldTitle(resultFrame.fields[0], resultFrame);
+    const keyFieldTitle = getFieldDisplayName(resultFrame.fields[0], resultFrame);
     const byKeyField: { [key: string]: { [key: string]: any } } = {};
 
     /*    
@@ -92,7 +92,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
 
     for (let fieldIndex = 0; fieldIndex < allFields.length; fieldIndex++) {
       const { sourceField, keyField, newField } = allFields[fieldIndex];
-      const newFieldTitle = getFieldTitle(newField, resultFrame);
+      const newFieldTitle = getFieldDisplayName(newField, resultFrame);
 
       for (let valueIndex = 0; valueIndex < sourceField.values.length; valueIndex++) {
         const value = sourceField.values.get(valueIndex);
@@ -112,7 +112,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
 
       for (let fieldIndex = 0; fieldIndex < resultFrame.fields.length; fieldIndex++) {
         const field = resultFrame.fields[fieldIndex];
-        const otherColumnName = getFieldTitle(field, resultFrame);
+        const otherColumnName = getFieldDisplayName(field, resultFrame);
         const value = byKeyField[keyValueAsString][otherColumnName] ?? null;
         field.values.add(value);
       }
@@ -126,7 +126,7 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
   for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
     const field = frame.fields[fieldIndex];
 
-    if (matchTitle === getFieldTitle(field)) {
+    if (matchTitle === getFieldDisplayName(field)) {
       return field;
     }
   }

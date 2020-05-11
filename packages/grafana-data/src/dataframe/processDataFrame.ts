@@ -21,7 +21,7 @@ import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { getFieldTitle } from '../field/fieldState';
+import { getFieldDisplayName } from '../field/fieldState';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -332,7 +332,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
 
       return {
         alias: frame.name,
-        target: getFieldTitle(valueField, frame),
+        target: getFieldDisplayName(valueField, frame),
         datapoints: rows,
         unit: fields[0].config ? fields[0].config.unit : undefined,
         refId: frame.refId,

@@ -19,7 +19,7 @@ import { Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
-import { getFieldTitle } from './fieldState';
+import { getFieldDisplayName } from './fieldState';
 
 const property1 = {
   id: 'custom.property1', // Match field properties
@@ -186,7 +186,7 @@ describe('applyFieldOverrides', () => {
     expect(outField.config.min).toEqual(0);
     expect(outField.config.max).toEqual(100);
     expect(outField.config.unit).toEqual('ms');
-    expect(getFieldTitle(outField, f)).toEqual('newTitle');
+    expect(getFieldDisplayName(outField, f)).toEqual('newTitle');
   });
 
   it('will apply field overrides', () => {

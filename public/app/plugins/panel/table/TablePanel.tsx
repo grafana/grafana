@@ -7,7 +7,7 @@ import {
   DataFrame,
   SelectableValue,
   getFrameDisplayTitle,
-  getFieldTitle,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
@@ -34,7 +34,7 @@ export class TablePanel extends Component<Props> {
       return;
     }
 
-    const fieldDisplayName = getFieldTitle(field, frame, data.series);
+    const fieldDisplayName = getFieldDisplayName(field, frame, data.series);
     const matcherId = FieldMatcherID.byName;
     const propId = 'custom.width';
 
