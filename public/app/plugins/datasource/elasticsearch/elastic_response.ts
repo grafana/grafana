@@ -387,22 +387,24 @@ export class ElasticResponse {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
-      const { propNames, docs } = flattenHits(response.hits.hits);
-      if (docs.length > 0) {
-        const series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
+      if (response.hits && response.hits.hits.length > 0) {
+        const { propNames, docs } = flattenHits(response.hits.hits);
+        if (docs.length > 0) {
+          const series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
 
-        // Add a row for each document
-        for (const doc of docs) {
-          if (logLevelField) {
-            // Remap level field based on the datasource config. This field is then used in explore to figure out the
-            // log level. We may rewrite some actual data in the level field if they are different.
-            doc['level'] = doc[logLevelField];
+          // Add a row for each document
+          for (const doc of docs) {
+            if (logLevelField) {
+              // Remap level field based on the datasource config. This field is then used in explore to figure out the
+              // log level. We may rewrite some actual data in the level field if they are different.
+              doc['level'] = doc[logLevelField];
+            }
+
+            series.add(doc);
           }
 
-          series.add(doc);
+          dataFrame.push(series);
         }
-
-        dataFrame.push(series);
       }
 
       if (response.aggregations) {
@@ -414,6 +416,10 @@ export class ElasticResponse {
         this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
         this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
+
+        if (table.rows.length > 0) {
+          dataFrame.push(toDataFrame(table));
+        }
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
           let series = toDataFrame(tmpSeriesList[y]);
