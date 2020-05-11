@@ -360,8 +360,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
-        - name: Variables
-          link: /developers/plugins/variables/
+        - name: Add support for variables
+          link: /developers/plugins/add-support-for-variables/
         - name: Authentication
           link: /developers/plugins/authentication/
         - name: Backend plugins
