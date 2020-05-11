@@ -342,6 +342,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             onClickExample={this.onClickExample}
                             datasource={datasourceInstance}
                             exploreMode={mode}
+                            exploreId={exploreId}
                           />
                         </div>
                       )}
