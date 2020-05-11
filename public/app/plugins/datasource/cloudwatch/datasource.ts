@@ -39,6 +39,7 @@ import {
   GetLogGroupFieldsResponse,
   LogAction,
   GetLogEventsRequest,
+  MetricQuery,
 } from './types';
 import { from, empty, Observable } from 'rxjs';
 import { delay, expand, map, mergeMap, tap, finalize, catchError } from 'rxjs/operators';
@@ -64,7 +65,7 @@ const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
 
 // TODO: Temporary times here, could just change to some fixed number.
-const MAX_ATTEMPTS = 8;
+export const MAX_ATTEMPTS = 8;
 const POLLING_TIMES = [100, 200, 500, 1000];
 
 export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
@@ -97,13 +98,27 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     this.languageProvider = new CloudWatchLanguageProvider(this);
   }
 
-  query(options: DataQueryRequest<CloudWatchQuery>) {
+  query(options: DataQueryRequest<CloudWatchQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
     options = angular.copy(options);
 
     const firstTarget = options.targets[0];
 
+    let queries = options.targets.filter(item => item.id !== '' || item.hide !== true);
+
     if (firstTarget.queryMode === 'Logs') {
-      const queryParams = options.targets.map((target: CloudWatchLogsQuery) => ({
+      const logQueries: CloudWatchLogsQuery[] = queries.filter(item => item.queryMode === 'Logs') as any;
+
+      const validLogQueries = logQueries.filter(item => item.logGroupNames?.length);
+      if (logQueries.length > validLogQueries.length) {
+        return Promise.resolve({ data: [], error: { message: 'Log group is required' } });
+      }
+
+      // No valid targets, return the empty result to save a round trip.
+      if (_.isEmpty(validLogQueries)) {
+        return Promise.resolve({ data: [] });
+      }
+
+      const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
         queryString: target.expression,
         refId: target.refId,
         logGroupNames: target.logGroupNames,
@@ -124,57 +139,58 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       );
     }
 
-    const queries = options.targets
+    const metricQueries: MetricQuery[] = options.targets
       .filter(
         item =>
-          (item.id !== '' || item.hide !== true) &&
           item.queryMode !== 'Logs' &&
           ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
             item.expression?.length > 0)
       )
-      .map((item: CloudWatchMetricsQuery) => {
-        item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
-        item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
-        item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
-        item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-        item.statistics = item.statistics.map(stat => this.replace(stat, options.scopedVars, true, 'statistics'));
-        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-        item.id = this.templateSrv.replace(item.id, options.scopedVars);
-        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+      .map(
+        (item: CloudWatchMetricsQuery): MetricQuery => {
+          item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
+          item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
+          item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
+          item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
+          item.statistics = item.statistics.map(stat => this.replace(stat, options.scopedVars, true, 'statistics'));
+          item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+          item.id = this.templateSrv.replace(item.id, options.scopedVars);
+          item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
 
-        // valid ExtendedStatistics is like p90.00, check the pattern
-        const hasInvalidStatistics = item.statistics.some(s => {
-          if (s.indexOf('p') === 0) {
-            const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
-            return !matches || matches[0] !== s;
+          // valid ExtendedStatistics is like p90.00, check the pattern
+          const hasInvalidStatistics = item.statistics.some(s => {
+            if (s.indexOf('p') === 0) {
+              const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
+              return !matches || matches[0] !== s;
+            }
+
+            return false;
+          });
+
+          if (hasInvalidStatistics) {
+            throw { message: 'Invalid extended statistics' };
           }
 
-          return false;
-        });
-
-        if (hasInvalidStatistics) {
-          throw { message: 'Invalid extended statistics' };
+          return {
+            refId: item.refId,
+            intervalMs: options.intervalMs,
+            maxDataPoints: options.maxDataPoints,
+            datasourceId: this.id,
+            type: 'timeSeriesQuery',
+            ...item,
+          };
         }
-
-        return {
-          refId: item.refId,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.id,
-          type: 'timeSeriesQuery',
-          ...item,
-        };
-      });
+      );
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(queries)) {
+    if (_.isEmpty(metricQueries)) {
       return Promise.resolve({ data: [] });
     }
 
     const request = {
       from: options?.range?.from.valueOf().toString(),
       to: options?.range?.to.valueOf().toString(),
-      queries: queries,
+      queries: metricQueries,
     };
 
     return this.performTimeSeriesQuery(request, options.range);
@@ -183,15 +199,35 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   logsQuery(queryParams: Array<{ queryId: string; limit?: number; region: string }>): Observable<DataQueryResponse> {
     this.logQueries.clear();
     queryParams.forEach(param => this.logQueries.add({ id: param.queryId, region: param.region }));
+    let prevRecordsMatched: Record<string, number> = {};
 
     return withTeardown(
       this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
         expand((dataFrames, i) => {
-          return dataFrames.every(
+          const allFramesCompleted = dataFrames.every(
             dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
-          ) || i >= MAX_ATTEMPTS
+          );
+          return allFramesCompleted
             ? empty()
             : this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
+                map(frames => {
+                  let moreRecordsMatched = false;
+                  for (const frame of frames) {
+                    const recordsMatched = frame.meta?.custom?.['Statistics']['RecordsMatched'];
+                    if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
+                      moreRecordsMatched = true;
+                    }
+                    prevRecordsMatched[frame.refId!] = recordsMatched;
+                  }
+                  const noProgressMade = i >= MAX_ATTEMPTS - 2 && !moreRecordsMatched;
+                  if (noProgressMade) {
+                    for (const frame of frames) {
+                      _.set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Complete);
+                    }
+                  }
+
+                  return frames;
+                }),
                 delay(POLLING_TIMES[Math.min(i, POLLING_TIMES.length - 1)])
               );
         }),
