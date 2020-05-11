@@ -1,7 +1,7 @@
 import '../datasource';
 import { CloudWatchDatasource } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataSourceInstanceSettings, dateMath, getFrameDisplayTitle } from '@grafana/data';
+import { DataSourceInstanceSettings, dateMath, getFrameDisplayTitle, DataQueryResponse } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
@@ -28,7 +28,7 @@ describe('CloudWatchDatasource', () => {
   const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
   const timeSrv = {
-    time: { from: 'now-1h', to: 'now' },
+    time: { from: '2016-12-31 15:00:00', to: '2016-12-31 16:00:00' },
     timeRange: () => {
       return {
         from: dateMath.parse(timeSrv.time.from, false),
@@ -102,6 +102,59 @@ describe('CloudWatchDatasource', () => {
         'container-insights-prometheus-demo',
       ];
       expect(logGroups).toEqual(expectedLogGroups);
+    });
+  });
+
+  describe('When performing CloudWatch logs query', () => {
+    it('should add data links to response', () => {
+      const mockResponse: DataQueryResponse = {
+        data: [
+          {
+            fields: [
+              {
+                config: {
+                  links: [],
+                },
+              },
+            ],
+            refId: 'A',
+          },
+        ],
+      };
+
+      const mockOptions = {
+        targets: [
+          {
+            refId: 'A',
+            expression: 'stats count(@message) by bin(1h)',
+            logGroupNames: ['fake-log-group-one', 'fake-log-group-two'],
+            region: 'default',
+          },
+        ],
+      };
+
+      const saturatedResponse = ctx.ds.addDataLinksToLogsResponse(mockResponse, mockOptions);
+      expect(saturatedResponse).toMatchObject({
+        data: [
+          {
+            fields: [
+              {
+                config: {
+                  links: [
+                    {
+                      url:
+                        "https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'stats*20count*28*40message*29*20by*20bin*281h*29~isLiveTail~false~source~(~'fake-log-group-one~'fake-log-group-two))",
+                      title: 'View in CloudWatch console',
+                      targetBlank: true,
+                    },
+                  ],
+                },
+              },
+            ],
+            refId: 'A',
+          },
+        ],
+      });
     });
   });
 

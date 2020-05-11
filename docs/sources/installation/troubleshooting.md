@@ -27,14 +27,14 @@ For more on the query inspector read the Grafana Community article [Using Grafan
 
 ## Logging
 
-If you encounter an error or problem, then you can check the Grafana server log. Usually located at `/var/log/grafana/grafana.log` on Unix systems or in `<grafana_install_dir>/data/log` on other platforms and manual installs.
+If you encounter an error or problem, then you can check the Grafana server log. Usually located at `/var/log/grafana/grafana.log` on Unix systems or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
 
 You can enable more logging by changing log level in the Grafana configuration file.
 
 ## Diagnostics
 
 The `grafana-server` process can be instructed to enable certain diagnostics when it starts. This can be helpful
-when investigating certain performance problems. It's *not* recommended to have these enabled per default.
+when investigating certain performance problems. It's *not* recommended to have these enabled by default.
 
 ### Profiling
 
