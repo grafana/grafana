@@ -165,7 +165,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     const currentTokenIsComma = curToken.content === ',' && curToken.types.includes('punctuation');
     const currentTokenIsCommaOrAfterComma =
-      currentTokenIsComma || (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'));
+      currentTokenIsComma || (prevToken?.content === ',' && prevToken?.types.includes('punctuation'));
 
     // We only show suggestions if we are after a command or after a comma which is a field separator
     if (!(currentTokenIsAfterCommand || currentTokenIsCommaOrAfterComma)) {
