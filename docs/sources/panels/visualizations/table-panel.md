@@ -25,7 +25,7 @@ Tables visualizations allow you to apply:
 
 - Data transformations
 - Field configurations
-- Field overrides
+- Field option overrides
 
 ## Display options
 - **Show header -** Show or hide column names imported from your data source..
