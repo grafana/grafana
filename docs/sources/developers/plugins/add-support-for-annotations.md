@@ -93,7 +93,6 @@ Let users write custom annotation queries to only display the annotation events 
 
      annotation: any;
 
-     /** @ngInject */
      constructor() {
        this.annotation.rawQuery = this.annotation.rawQuery || '';
      }
