@@ -79,7 +79,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       data: [],
       currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
-      transform: false,
+      transform: true,
       applyFieldConfig: false,
     };
   }
