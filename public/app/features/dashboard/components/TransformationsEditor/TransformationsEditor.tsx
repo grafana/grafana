@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Button,
-  Container,
-  CustomScrollbar,
-  FeatureInfoBox,
-  stylesFactory,
-  useTheme,
-  ValuePicker,
-  VerticalGroup,
-} from '@grafana/ui';
+import { Button, Container, FeatureInfoBox, stylesFactory, useTheme, ValuePicker, VerticalGroup } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
@@ -179,8 +170,6 @@ const TransformationCard: React.FC<CardProps> = props => {
   const styles = getTransformationCardStyles(theme);
   return <Card {...props} className={styles.card} />;
 };
-
-const scrollBarStyles = (theme: GrafanaTheme) => css``;
 
 const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
