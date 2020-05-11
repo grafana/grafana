@@ -4,6 +4,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { hasFilters } from 'app/features/search/utils';
+import { SECTION_STORAGE_KEY } from 'app/features/search/constants';
 import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
 import { backendSrv } from './backend_srv';
 
@@ -16,8 +17,8 @@ export class SearchSrv {
   starredIsOpen: boolean;
 
   constructor() {
-    this.recentIsOpen = store.getBool('search.sections.recent', true);
-    this.starredIsOpen = store.getBool('search.sections.starred', true);
+    this.recentIsOpen = store.getBool(`${SECTION_STORAGE_KEY}.recent`, true);
+    this.starredIsOpen = store.getBool(`${SECTION_STORAGE_KEY}.starred`, true);
   }
 
   private getRecentDashboards(sections: DashboardSection[] | any) {
