@@ -16,7 +16,7 @@ parent = "http_api"
 Query parameters:
 
 - **limit** - Maximum number of results to return
-- **start** - Version to start from when returning queries
+- **start** - Version to start from, when returning queries
 
 `GET /api/dashboards/id/:dashboardId/versions`
 
