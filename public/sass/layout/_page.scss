@@ -33,11 +33,13 @@
   min-height: 100%;
   flex-direction: column;
   width: 100%;
+  height: 100%;
 }
 
 .page-container {
   flex-grow: 1;
   width: 100%;
+  height: 100%;
   margin-left: auto;
   margin-right: auto;
   padding-left: $spacer * 2;
