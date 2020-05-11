@@ -27,7 +27,10 @@ If there is no primary action, all `Button` components should be secondary.
 
 ## Secondary
 
-The secondary `Button` can trigger various actions. When next to the primary `Button`, it can for example be used for "Cancel" or "Abort" actions. Apart from that, the secondary variant is the main `Button` variant in Grafana and is used for most buttons except when there is an important main action. Secondary is the default `Button` style.
+The secondary `Button` is the default button style and can trigger various actions. How it is used depends on its surroundings:
+
+1. When next to the primary `Button`, the Secondary style can for example be used for "Cancel" or "Abort" actions. 
+2. When there is no main important action on a given page, all `Button` components should use the secondary style.
 
 <Preview>
   <div>
@@ -45,7 +48,7 @@ The secondary `Button` can trigger various actions. When next to the primary `Bu
 
 ## Destructive
 
-Used for "call to action", i.e. triggering the main action, when that main action is removing or deleting something. Because of its dominant coloring, it should be used sparingly. If you need multiple Destrucutive `Button` components in one view, maybe use a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm. Just like the primary variant, the Destructive `Button` can be juxtaposed with secondary buttons like "Cancel" or "Abort".
+Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm.
 
 <Preview>
   <div>
