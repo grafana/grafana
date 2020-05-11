@@ -360,6 +360,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Add support for annotations
+          link: /developers/plugins/add-support-for-annotations/
         - name: Build a logs data source
           link: /developers/plugins/build-a-logs-data-source/
         - name: Authentication
