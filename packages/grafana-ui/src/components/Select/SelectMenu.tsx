@@ -43,13 +43,14 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     const styles = getSelectStyles(theme);
     const { children, innerProps, data, renderOptionLabel, isSelected, isFocused } = props;
 
+    const containerStyles = cx(
+      styles.option,
+      isFocused && styles.optionFocused,
+      data.description && styles.optionWithDescription
+    );
+
     return (
-      <div
-        ref={ref}
-        className={cx(styles.option, isFocused && styles.optionFocused)}
-        {...innerProps}
-        aria-label="Select option"
-      >
+      <div ref={ref} className={containerStyles} {...innerProps} aria-label="Select option">
         {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} />}
         <div className={styles.optionBody}>
           <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>

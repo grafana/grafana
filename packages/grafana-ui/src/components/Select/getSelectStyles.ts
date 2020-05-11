@@ -29,6 +29,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
         background: ${optionBgHover};
       }
     `,
+    optionWithDescription: css`
+      min-height: 55px;
+    `,
     optionImage: css`
       width: 16px;
       margin-right: 10px;
