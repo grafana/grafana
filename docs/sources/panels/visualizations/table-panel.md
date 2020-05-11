@@ -18,7 +18,7 @@ tables, annotation, and raw JSON data. This panel also provides date formatting,
 
 <img class="screenshot" src="/assets/img/features/table-panel.png">
 
-To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](https://play.grafana.org/dashboard/db/table-panel-showcase).
+To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](ADD LINK TEXT).
 
 ## Data and field options
 Tables visualizations allow you to apply:
