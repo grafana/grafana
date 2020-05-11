@@ -25,7 +25,6 @@ class PluginListCtrl extends PanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.isAdmin = contextSrv.hasRole('Admin');
-    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.pluginList = [];
     this.viewModel = [
       { header: 'Installed Apps', list: [], type: 'app' },
@@ -34,10 +33,6 @@ class PluginListCtrl extends PanelCtrl {
     ];
 
     this.update();
-  }
-
-  onInitEditMode() {
-    this.addEditorTab('Options', 'public/app/plugins/panel/pluginlist/editor.html');
   }
 
   gotoPlugin(plugin: { id: any }, evt: any) {
