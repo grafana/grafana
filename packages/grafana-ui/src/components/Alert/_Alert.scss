@@ -39,6 +39,10 @@
   background: $alert-warning-bg;
 }
 
+.alert-container {
+  z-index: $zindex-tooltip;
+}
+
 .page-alert-list {
   z-index: 8000;
   min-width: 400px;

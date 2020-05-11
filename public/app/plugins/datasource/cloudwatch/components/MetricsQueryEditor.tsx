@@ -53,6 +53,12 @@ export const normalizeQuery = ({
 export class MetricsQueryEditor extends PureComponent<Props, State> {
   state: State = { showMeta: false };
 
+  componentDidMount(): void {
+    const metricsQuery = this.props.query as CloudWatchMetricsQuery;
+    const query = normalizeQuery(metricsQuery);
+    this.props.onChange(query);
+  }
+
   onChange(query: CloudWatchMetricsQuery) {
     const { onChange, onRunQuery } = this.props;
     onChange(query);
