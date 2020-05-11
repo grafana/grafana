@@ -3,11 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"regexp"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var datasourceLogger = log.New("datasource")
@@ -133,22 +131,10 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 	return Success("Data source deleted")
 }
 
-// reURL is a regexp to detect if a URL specifies the protocol. We match also strings where the actual protocol is missing
-// (i.e., "://"), in order to catch these as invalid when parsing.
-var reURL = regexp.MustCompile("^[^:]*://")
-
 func validateURL(u string) Response {
 	if u != "" {
-		// Make sure the URL starts with a protocol specifier, so parsing is unambiguous
-		if !reURL.MatchString(u) {
-			datasourceLogger.Debug(
-				"Data source URL doesn't specify protocol, so prepending it with http:// in order to make it unambiguous")
-			u = fmt.Sprintf("http://%s", u)
-		}
-		_, err := url.Parse(u)
-		if err != nil {
-			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), errutil.Wrapf(err,
-				"invalid data source URL %q", u))
+		if _, err := datasource.ValidateURL(u); err != nil {
+			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
 		}
 	}
 

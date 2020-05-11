@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/bus"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -31,20 +31,6 @@ var (
 	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
 )
-
-type URLValidationError struct {
-	error
-
-	url string
-}
-
-func (e URLValidationError) Error() string {
-	return fmt.Sprintf("Validation of URL %q failed: %s", e.url, e.error.Error())
-}
-
-func (e URLValidationError) Unwrap() error {
-	return e.error
-}
 
 type DataSourceProxy struct {
 	ds        *models.DataSource
@@ -84,23 +70,12 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// reURL is a regexp to detect if a URL specifies the protocol. We match also strings where the actual protocol is missing
-// (i.e., "://"), in order to catch these as invalid when parsing.
-var reURL = regexp.MustCompile("^[^:]*://")
-
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
-	u := ds.Url
-	// Make sure the URL starts with a protocol specifier, so parsing is unambiguous
-	if !reURL.MatchString(u) {
-		logger.Debug(
-			"Data source URL doesn't specify protocol, so prepending it with http:// in order to make it unambiguous")
-		u = fmt.Sprintf("http://%s", u)
-	}
-	targetURL, err := url.Parse(u)
+	targetURL, err := datasource.ValidateURL(ds.Url)
 	if err != nil {
-		return nil, URLValidationError{error: err, url: ds.Url}
+		return nil, err
 	}
 
 	return &DataSourceProxy{
