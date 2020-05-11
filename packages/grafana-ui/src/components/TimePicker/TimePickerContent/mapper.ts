@@ -1,7 +1,7 @@
 import { TimeOption, TimeRange, TimeZone, rangeUtil, dateTimeFormat, dateTimeFormatISO } from '@grafana/data';
 
-export const mapOptionToTimeRange = (option: TimeOption): TimeRange => {
-  return rangeUtil.convertRawToRange({ from: option.from, to: option.to });
+export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): TimeRange => {
+  return rangeUtil.convertRawToRange({ from: option.from, to: option.to }, timeZone);
 };
 
 export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): TimeOption => {
