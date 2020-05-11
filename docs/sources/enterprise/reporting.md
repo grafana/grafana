@@ -82,7 +82,7 @@ Reports which are scheduled to never be sent have no parameter and will not be s
 > We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise) if you would like to get involved in the design process.
 
 Name | Introduced | Description | Preview
----- | ------------- | ----------- | -------
+---- | ---------- | ----------- | -------
 Portrait | 6.4 | Portrait generates an A4 page in portrait mode with three panels rendered per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
 Landscape | 6.7 | Landscape generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
