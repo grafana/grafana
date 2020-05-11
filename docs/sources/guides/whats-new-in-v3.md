@@ -141,7 +141,7 @@ detailed information can be presented to the user.
 
 ## Data source variables
 
-This has been a top requested feature for very long we are exited to finally provide
+This has been a top requested feature for very long we are excited to finally provide
 this feature. You can now add a new `Data source` type variable. That will
 automatically be filled with instance names of your data sources.
 
