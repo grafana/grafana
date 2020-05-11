@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -83,10 +84,19 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// reURL is a regexp to detect if a URL specifies the protocol. We match also strings where the actual protocol is missing
+// (i.e., "://"), in order to catch these as invalid when parsing.
+var reURL = regexp.MustCompile("^[^:]*://")
+
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
-	targetURL, err := url.Parse(ds.Url)
+	u := ds.Url
+	// Make sure the URL starts with a protocol specifier, so parsing is unambiguous
+	if !reURL.MatchString(u) {
+		u = fmt.Sprintf("http://%s", u)
+	}
+	targetURL, err := url.Parse(u)
 	if err != nil {
 		return nil, URLValidationError{error: err, url: ds.Url}
 	}
