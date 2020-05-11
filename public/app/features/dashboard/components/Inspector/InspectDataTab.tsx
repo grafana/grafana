@@ -84,7 +84,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const currentTransform = transformationOptions.find(item => item.value === transformId);
 
-    console.log(data);
     if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
       return transformDataFrame([currentTransform.transformer], data);
     }
