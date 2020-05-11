@@ -584,6 +584,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	cfg := setting.Cfg{}
 	plugin := plugins.DataSourcePlugin{}
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+
 	require.NoError(t, err)
 }
 

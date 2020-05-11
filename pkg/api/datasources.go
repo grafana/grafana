@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var datasourceLogger = log.New("datasource")
+var datasourceLogger = log.New("datasources")
 
 func GetDataSources(c *models.ReqContext) Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId}

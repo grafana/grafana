@@ -58,7 +58,7 @@ func TestDataSourcesProxy(t *testing.T) {
 	})
 }
 
-// Invalid URLs should lead to an error.
+// Adding data sources with invalid URLs should lead to an error.
 func TestAddDataSource_InvalidURL(t *testing.T) {
 	defer bus.ClearBusHandlers()
 
@@ -78,7 +78,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	assert.Equal(t, 400, sc.resp.Code)
 }
 
-// URLs not specifying protocol should work.
+// Adding data sources with URLs not specifying protocol should work.
 func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	defer bus.ClearBusHandlers()
 
@@ -110,7 +110,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	assert.Equal(t, 200, sc.resp.Code)
 }
 
-// Invalid URLs should lead to an error.
+// Updating data sources with invalid URLs should lead to an error.
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	defer bus.ClearBusHandlers()
 
@@ -130,7 +130,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	assert.Equal(t, 400, sc.resp.Code)
 }
 
-// URLs not specifying protocol should work.
+// Updating data sources with URLs not specifying protocol should work.
 func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	defer bus.ClearBusHandlers()
 
