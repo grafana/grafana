@@ -319,7 +319,7 @@ Perf
 
 {{< docs-imagebox img="/img/docs/v70/azure-log-analytics-deep-linking.png" max-width="500px" class="docs-image--right" caption="Azure Log Analytics deep linking" >}}
 
-Left clicking a time series in the panel shows a context menu with a link to `View in Azure Portal`. Clicking that link will open a new tab that will take you to the Azure Log Analytics query editor in the Azure Portal and runs the query from the Grafana panel there. If you're not currently logged in to the Azure Portal, the link will forward you to the login page. The provided link is valid for any account but will only display the query if your account has rights for the Azure Log Analytics workspace specified in the query.
+Click on a time series in the panel to see a context menu with a link to `View in Azure Portal`. Clicking that link opens the Azure Log Analytics query editor in the Azure Portal and runs the query from the Grafana panel there. If you're not currently logged in to the Azure Portal, then the link opens the login page. The provided link is valid for any account, but it only displays the query if your account has access to the Azure Log Analytics workspace specified in the query.
 
 <div class="clearfix"></div>
 
@@ -327,7 +327,7 @@ Left clicking a time series in the panel shows a context menu with a link to `Vi
 
 > Only available in Grafana v7.0+.
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "../../alerting/rules.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../../alerting/rules.md" >}}).
 
 ### Writing Analytics Queries For the Application Insights Service
 
