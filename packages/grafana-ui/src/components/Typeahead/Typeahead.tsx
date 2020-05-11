@@ -20,13 +20,13 @@ interface Props {
   isOpen?: boolean;
 }
 
-interface State {
+export interface State {
   allItems: CompletionItem[];
   listWidth: number;
   listHeight: number;
   itemHeight: number;
   hoveredItem: number | null;
-  typeaheadIndex: number;
+  typeaheadIndex: number | null;
 }
 
 export class Typeahead extends React.PureComponent<Props, State> {
@@ -34,7 +34,14 @@ export class Typeahead extends React.PureComponent<Props, State> {
   context!: React.ContextType<typeof ThemeContext>;
   listRef = createRef<FixedSizeList>();
 
-  state: State = { hoveredItem: null, typeaheadIndex: 1, allItems: [], listWidth: -1, listHeight: -1, itemHeight: -1 };
+  state: State = {
+    hoveredItem: null,
+    typeaheadIndex: null,
+    allItems: [],
+    listWidth: -1,
+    listHeight: -1,
+    itemHeight: -1,
+  };
 
   componentDidMount = () => {
     if (this.props.menuRef) {
@@ -63,7 +70,12 @@ export class Typeahead extends React.PureComponent<Props, State> {
   };
 
   componentDidUpdate = (prevProps: Readonly<Props>, prevState: Readonly<State>) => {
-    if (prevState.typeaheadIndex !== this.state.typeaheadIndex && this.listRef && this.listRef.current) {
+    if (
+      this.state.typeaheadIndex !== null &&
+      prevState.typeaheadIndex !== this.state.typeaheadIndex &&
+      this.listRef &&
+      this.listRef.current
+    ) {
       if (this.state.typeaheadIndex === 1) {
         this.listRef.current.scrollToItem(0); // special case for handling the first group label
         return;
@@ -75,7 +87,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
       const allItems = flattenGroupItems(this.props.groupedItems);
       const longestLabel = calculateLongestLabel(allItems);
       const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context, allItems, longestLabel);
-      this.setState({ listWidth, listHeight, itemHeight, allItems });
+      this.setState({ listWidth, listHeight, itemHeight, allItems, typeaheadIndex: null });
     }
   };
 
@@ -95,7 +107,8 @@ export class Typeahead extends React.PureComponent<Props, State> {
     const itemCount = this.state.allItems.length;
     if (itemCount) {
       // Select next suggestion
-      let newTypeaheadIndex = modulo(this.state.typeaheadIndex + moveAmount, itemCount);
+      const typeaheadIndex = this.state.typeaheadIndex || 0;
+      let newTypeaheadIndex = modulo(typeaheadIndex + moveAmount, itemCount);
 
       if (this.state.allItems[newTypeaheadIndex].kind === CompletionItemKind.GroupTitle) {
         newTypeaheadIndex = modulo(newTypeaheadIndex + moveAmount, itemCount);
@@ -110,7 +123,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
   };
 
   insertSuggestion = () => {
-    if (this.props.onSelectSuggestion) {
+    if (this.props.onSelectSuggestion && this.state.typeaheadIndex !== null) {
       this.props.onSelectSuggestion(this.state.allItems[this.state.typeaheadIndex]);
     }
   };
@@ -144,6 +157,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
     const { allItems, listWidth, listHeight, itemHeight, hoveredItem, typeaheadIndex } = this.state;
 
     const showDocumentation = hoveredItem || typeaheadIndex;
+    const documentationItem = allItems[hoveredItem ? hoveredItem : typeaheadIndex || 0];
 
     return (
       <Portal origin={origin} isOpen={isOpen} style={this.menuPosition}>
@@ -169,7 +183,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
               return (
                 <TypeaheadItem
                   onClickItem={() => (this.props.onSelectSuggestion ? this.props.onSelectSuggestion(item) : {})}
-                  isSelected={allItems[typeaheadIndex] === item}
+                  isSelected={typeaheadIndex === null ? false : allItems[typeaheadIndex] === item}
                   item={item}
                   prefix={prefix}
                   style={style}
@@ -181,9 +195,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
           </FixedSizeList>
         </ul>
 
-        {showDocumentation && (
-          <TypeaheadInfo height={listHeight} item={allItems[hoveredItem ? hoveredItem : typeaheadIndex]} />
-        )}
+        {showDocumentation && <TypeaheadInfo height={listHeight} item={documentationItem} />}
       </Portal>
     );
   }
