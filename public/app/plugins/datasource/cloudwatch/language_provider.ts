@@ -165,7 +165,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return fields;
   };
 
-  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
+  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput> => {
     const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
     const functionSuggestions = [
       { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
@@ -418,5 +418,5 @@ function isInsideFunctionParenthesis(curToken: Token): boolean {
 
 function isAfterKeyword(keyword: string, token: Token): boolean {
   const prevToken = prevNonWhitespaceToken(token);
-  return prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by';
+  return !!(prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by');
 }
