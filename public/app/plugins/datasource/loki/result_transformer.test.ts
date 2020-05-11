@@ -139,7 +139,6 @@ describe('enhanceDataFrame', () => {
       ],
     });
     expect(df.fields.length).toBe(3);
-    console.log(df.fields);
     const fc = new FieldCache(df);
     expect(fc.getFieldByName('trace1').values.toArray()).toEqual([null, '1234', null]);
     expect(fc.getFieldByName('trace1').config.links[0]).toEqual({
