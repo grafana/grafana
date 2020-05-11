@@ -96,16 +96,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
     const data = this.getTransformedData();
 
-    // We need to apply field config even though it was already applied in the PanelQueryRunner.
-    // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
-    return applyFieldOverrides({
-      data,
-      theme: config.theme,
-      fieldConfig: this.props.options.applyFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
-      replaceVariables: (value: string) => {
-        return value;
-      },
-    });
+    return this.props.options.applyFieldConfig
+      ? applyFieldOverrides({
+          data,
+          theme: config.theme,
+          fieldConfig: this.props.panel.fieldConfig,
+          replaceVariables: (value: string) => {
+            return value;
+          },
+        })
+      : data;
   }
 
   render() {
