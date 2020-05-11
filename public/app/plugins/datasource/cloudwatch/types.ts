@@ -298,7 +298,7 @@ export interface MetricRequest {
   debug?: boolean;
 }
 
-interface MetricQuery {
+export interface MetricQuery {
   [key: string]: any;
   datasourceId: number;
   refId?: string;
