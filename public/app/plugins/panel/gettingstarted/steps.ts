@@ -29,7 +29,7 @@ export const getSteps = (): SetupStep[] => [
         title: step1TutorialTitle,
         info:
           'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
-        href: 'https://grafana.com/tutorials/grafana-fundamentals/#0',
+        href: 'https://grafana.com/tutorials/grafana-fundamentals?utm_source=grafana_gettingstarted',
         icon: 'grafana',
         check: () => Promise.resolve(store.get(step1Key)),
         key: step1Key,
@@ -40,8 +40,9 @@ export const getSteps = (): SetupStep[] => [
         title: 'Add your first data source',
         heading: 'data sources',
         icon: 'database',
-        learnHref: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source/',
-        href: 'datasources/new?gettingstarted',
+        learnHref:
+          'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source?utm_source=grafana_gettingstarted',
+        href: 'datasources/new?utm_source=grafana_gettingstarted',
         check: () => {
           return new Promise(resolve => {
             resolve(
@@ -60,8 +61,9 @@ export const getSteps = (): SetupStep[] => [
         heading: 'dashboards',
         title: 'Create your first dashboard',
         icon: 'apps',
-        href: 'dashboard/new?gettingstarted',
-        learnHref: 'https://grafana.com/docs/grafana/latest/guides/getting_started/#create-a-dashboard',
+        href: 'dashboard/new?utm_source=grafana_gettingstarted',
+        learnHref:
+          'https://grafana.com/docs/grafana/latest/guides/getting_started/#create-a-dashboard?utm_source=grafana_gettingstarted',
         check: async () => {
           const result = await getBackendSrv().search({ limit: 1 });
           return result.length > 0;
@@ -83,7 +85,7 @@ export const getSteps = (): SetupStep[] => [
         heading: 'Users',
         title: 'Create users and teams',
         info: 'Learn to organize your users in teams and manage resource access and roles.',
-        href: 'https://grafana.com/tutorials/create-users-and-teams/#0',
+        href: 'https://grafana.com/tutorials/create-users-and-teams?utm_source=grafana_gettingstarted',
         icon: 'users-alt',
         key: step2Key,
         check: () => Promise.resolve(store.get(step2Key)),
@@ -93,7 +95,7 @@ export const getSteps = (): SetupStep[] => [
         type: 'docs',
         heading: 'plugins',
         title: 'Find and install plugins',
-        learnHref: 'https://grafana.com/docs/grafana/latest/plugins/installation/',
+        learnHref: 'https://grafana.com/docs/grafana/latest/plugins/installation?utm_source=grafana_gettingstarted',
         href: 'plugins',
         icon: 'plug',
         check: async () => {
