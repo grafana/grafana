@@ -97,7 +97,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   applyTimeFormatting = (data: DataFrame[]): DataFrame[] => {
     for (const frame of data) {
       for (const field of frame.fields) {
-        if (field.type == FieldType.time) {
+        if (field.type === FieldType.time) {
           field.display = getDisplayProcessor({
             field,
             theme: config.theme,
