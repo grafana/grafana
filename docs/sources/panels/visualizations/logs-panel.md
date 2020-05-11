@@ -18,7 +18,7 @@ The logs panel visualization shows log lines from data sources that support logs
 
 <img class="screenshot" src="/img/docs/v64/logs-panel.png">
 
-The logs panel shows the result of queries that entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
+The logs panel shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
 
 To limit the number of lines rendered, you can use the **Max data points** setting in the **Query options**. If it is not set, then the data source will usually enforce a default limit.
 
