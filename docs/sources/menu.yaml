@@ -134,30 +134,32 @@
 - name: Panels
   link: /features/panels/
   children:
-    - link: /features/panels/panels/
-      name: Overview
-    - link: /features/panels/graph/
-      name: Graph
-    - link: /features/panels/table_panel/
-      name: Table
-    - link: /features/panels/stat/
-      name: Stat
-    - link: /features/panels/gauge/
-      name: Gauge
-    - link: /features/panels/bar_gauge/
-      name: Bar gauge
-    - link: /features/panels/logs/
-      name: Logs
-    - link: /features/panels/singlestat/
-      name: Singlestat
-    - link: /features/panels/heatmap/
-      name: Heatmap
-    - link: /features/panels/alertlist/
-      name: Alert list
-    - link: /features/panels/dashlist/
-      name: Dashboard list
-    - link: /features/panels/text/
-      name: Text
+  - link: /features/panels/panels/
+    name: Overview
+  - link: /features/panels/graph/
+    name: Graph
+  - link: /features/panels/table_panel/
+    name: Table
+  - link: /features/panels/stat/
+    name: Stat
+  - link: /features/panels/gauge/
+    name: Gauge
+  - link: /features/panels/bar_gauge/
+    name: Bar gauge
+  - link: /features/panels/logs/
+    name: Logs
+  - link: /features/panels/singlestat/
+    name: Singlestat
+  - link: /features/panels/heatmap/
+    name: Heatmap
+  - link: /features/panels/alertlist/
+    name: Alert list
+  - link: /features/panels/dashlist/
+    name: Dashboard list
+  - link: /features/panels/text/
+    name: Text
+  - link: /panels/queries/
+    name: Queries
 - name: Dashboards
   link: /features/dashboard/
   children:
@@ -179,6 +181,10 @@
     name: Time range
   - link: /reference/export_import/
     name: Export and import
+  - link: /features/dashboard/links/
+    name: Navigation links
+  - link: /reference/datalinks/
+    name: Data links
   - link: /reference/dashboard_history/
     name: Dashboard version history
   - name: Keyboard Shortcuts
@@ -211,8 +217,8 @@
       link: /linking/dashboard-links/
     - name: Panel links
       link: /linking/panel-links/
-  - name: Templates and variables
-  link: /variables/
+    - name: Templates and variables
+      link: /variables/
   children:
     - link: /variables/templates-and-variables/
       name: Overview
@@ -367,6 +373,12 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Add support for variables
+          link: /developers/plugins/add-support-for-variables/
+        - name: Add support for annotations
+          link: /developers/plugins/add-support-for-annotations/
+        - name: Build a logs data source
+          link: /developers/plugins/build-a-logs-data-source/
         - name: Authentication
           link: /developers/plugins/authentication/
         - name: Backend plugins
