@@ -42,10 +42,15 @@ describe('ElasticResponse', () => {
 
     it('should return 1 series', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].target).toBe('Count');
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0][0]).toBe(10);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
+      expect(result.data[0].name).toBe('Count');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(10);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(15);
     });
   });
 
@@ -91,13 +96,26 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0][0]).toBe(10);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
 
-      expect(result.data[1].target).toBe('Average value');
-      expect(result.data[1].datapoints[0][0]).toBe(88);
-      expect(result.data[1].datapoints[1][0]).toBe(99);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('Count');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(10);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(15);
+
+      expect(result.data[1].length).toBe(2);
+      expect(result.data[1].name).toBe('Average value');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(2);
+      expect(result.data[1].fields[1].values.length).toBe(2);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(88);
+      expect(result.data[1].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[1].fields[1].values.get(1)).toBe(99);
     });
   });
 
@@ -153,9 +171,26 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1');
-      expect(result.data[1].target).toBe('server2');
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('server1');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(1);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(3);
+
+      expect(result.data[1].length).toBe(2);
+      expect(result.data[1].name).toBe('server2');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(2);
+      expect(result.data[1].fields[1].values.length).toBe(2);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(2);
+      expect(result.data[1].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[1].fields[1].values.get(1)).toBe(8);
     });
   });
 
@@ -214,11 +249,46 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(4);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1 Count');
-      expect(result.data[1].target).toBe('server1 Average @value');
-      expect(result.data[2].target).toBe('server2 Count');
-      expect(result.data[3].target).toBe('server2 Average @value');
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('server1 Count');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(1);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(3);
+
+      expect(result.data[1].length).toBe(2);
+      expect(result.data[1].name).toBe('server1 Average @value');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(2);
+      expect(result.data[1].fields[1].values.length).toBe(2);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(10);
+      expect(result.data[1].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[1].fields[1].values.get(1)).toBe(12);
+
+      expect(result.data[2].length).toBe(2);
+      expect(result.data[2].name).toBe('server2 Count');
+      expect(result.data[2].fields.length).toBe(2);
+      expect(result.data[2].fields[0].values.length).toBe(2);
+      expect(result.data[2].fields[1].values.length).toBe(2);
+      expect(result.data[2].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[2].fields[1].values.get(0)).toBe(1);
+      expect(result.data[2].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[2].fields[1].values.get(1)).toBe(3);
+
+      expect(result.data[3].length).toBe(2);
+      expect(result.data[3].name).toBe('server2 Average @value');
+      expect(result.data[3].fields.length).toBe(2);
+      expect(result.data[3].fields[0].values.length).toBe(2);
+      expect(result.data[3].fields[1].values.length).toBe(2);
+      expect(result.data[3].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[3].fields[1].values.get(0)).toBe(20);
+      expect(result.data[3].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[3].fields[1].values.get(1)).toBe(32);
     });
   });
 
@@ -261,12 +331,26 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('p75');
-      expect(result.data[1].target).toBe('p90');
-      expect(result.data[0].datapoints[0][0]).toBe(3.3);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
-      expect(result.data[1].datapoints[1][0]).toBe(4.5);
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('p75');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(3.3);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(2.3);
+
+      expect(result.data[1].length).toBe(2);
+      expect(result.data[1].name).toBe('p90');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(2);
+      expect(result.data[1].fields[1].values.length).toBe(2);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(5.5);
+      expect(result.data[1].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[1].fields[1].values.get(1)).toBe(4.5);
     });
   });
 
@@ -340,12 +424,38 @@ describe('ElasticResponse', () => {
 
     it('should return 4 series', () => {
       expect(result.data.length).toBe(4);
-      expect(result.data[0].datapoints.length).toBe(1);
-      expect(result.data[0].target).toBe('server1 Max');
-      expect(result.data[1].target).toBe('server1 Std Dev Upper');
 
-      expect(result.data[0].datapoints[0][0]).toBe(10.2);
-      expect(result.data[1].datapoints[0][0]).toBe(3);
+      expect(result.data[0].length).toBe(1);
+      expect(result.data[0].name).toBe('server1 Max');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(1);
+      expect(result.data[0].fields[1].values.length).toBe(1);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(10.2);
+
+      expect(result.data[1].length).toBe(1);
+      expect(result.data[1].name).toBe('server1 Std Dev Upper');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(1);
+      expect(result.data[1].fields[1].values.length).toBe(1);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(3);
+
+      expect(result.data[2].length).toBe(1);
+      expect(result.data[2].name).toBe('server2 Max');
+      expect(result.data[2].fields.length).toBe(2);
+      expect(result.data[2].fields[0].values.length).toBe(1);
+      expect(result.data[2].fields[1].values.length).toBe(1);
+      expect(result.data[2].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[2].fields[1].values.get(0)).toBe(10.2);
+
+      expect(result.data[3].length).toBe(1);
+      expect(result.data[3].name).toBe('server2 Std Dev Upper');
+      expect(result.data[3].fields.length).toBe(2);
+      expect(result.data[3].fields[0].values.length).toBe(1);
+      expect(result.data[3].fields[1].values.length).toBe(1);
+      expect(result.data[3].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[3].fields[1].values.get(0)).toBe(3);
     });
   });
 
@@ -412,10 +522,36 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(3);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1 Count and {{not_exist}} server1');
-      expect(result.data[1].target).toBe('server2 Count and {{not_exist}} server2');
-      expect(result.data[2].target).toBe('0 Count and {{not_exist}} 0');
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('server1 Count and {{not_exist}} server1');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(1);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(3);
+
+      expect(result.data[1].length).toBe(2);
+      expect(result.data[1].name).toBe('server2 Count and {{not_exist}} server2');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(2);
+      expect(result.data[1].fields[1].values.length).toBe(2);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(2);
+      expect(result.data[1].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[1].fields[1].values.get(1)).toBe(8);
+
+      expect(result.data[2].length).toBe(2);
+      expect(result.data[2].name).toBe('0 Count and {{not_exist}} 0');
+      expect(result.data[2].fields.length).toBe(2);
+      expect(result.data[2].fields[0].values.length).toBe(2);
+      expect(result.data[2].fields[1].values.length).toBe(2);
+      expect(result.data[2].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[2].fields[1].values.get(0)).toBe(2);
+      expect(result.data[2].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[2].fields[1].values.get(1)).toBe(8);
     });
   });
 
@@ -450,8 +586,20 @@ describe('ElasticResponse', () => {
     });
 
     it('should return table with byte and count', () => {
-      expect(result.data[0].rows.length).toBe(3);
-      expect(result.data[0].columns).toEqual([{ text: 'bytes', filterable: true }, { text: 'Count' }]);
+      expect(result.data.length).toBe(1);
+
+      expect(result.data[0].length).toBe(3);
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].name).toBe('bytes');
+      expect(result.data[0].fields[0].values.length).toBe(3);
+      expect(result.data[0].fields[1].name).toBe('Count');
+      expect(result.data[0].fields[0].values.length).toBe(3);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(1);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(3);
+      expect(result.data[0].fields[0].values.get(2)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(2)).toBe(2);
     });
   });
 
@@ -509,9 +657,26 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('@metric:cpu');
-      expect(result.data[1].target).toBe('@metric:logins.count');
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('@metric:cpu');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(1);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(3);
+
+      expect(result.data[1].length).toBe(2);
+      expect(result.data[1].name).toBe('@metric:logins.count');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(2);
+      expect(result.data[1].fields[1].values.length).toBe(2);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(2);
+      expect(result.data[1].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[1].fields[1].values.get(1)).toBe(8);
     });
   });
 
@@ -565,7 +730,22 @@ describe('ElasticResponse', () => {
 
     it('should remove first and last value', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(1);
+
+      expect(result.data[0].length).toBe(1);
+      expect(result.data[0].name).toBe('Average');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(1);
+      expect(result.data[0].fields[1].values.length).toBe(1);
+      expect(result.data[0].fields[0].values.get(0)).toBe(2);
+      expect(result.data[0].fields[1].values.get(0)).toBe(2000);
+
+      expect(result.data[1].length).toBe(1);
+      expect(result.data[1].name).toBe('Count');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(1);
+      expect(result.data[1].fields[1].values.length).toBe(1);
+      expect(result.data[1].fields[0].values.get(0)).toBe(2);
+      expect(result.data[1].fields[1].values.get(0)).toBe(200);
     });
   });
 
@@ -607,14 +787,21 @@ describe('ElasticResponse', () => {
 
     it('should return table', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][0]).toBe('server-1');
-      expect(result.data[0].rows[0][1]).toBe(1000);
-      expect(result.data[0].rows[0][2]).toBe(369);
 
-      expect(result.data[0].rows[1][0]).toBe('server-2');
-      expect(result.data[0].rows[1][1]).toBe(2000);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].fields.length).toBe(3);
+      expect(result.data[0].fields[0].name).toBe('host');
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].name).toBe('Average');
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[2].name).toBe('Count');
+      expect(result.data[0].fields[2].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe('server-1');
+      expect(result.data[0].fields[1].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[2].values.get(0)).toBe(369);
+      expect(result.data[0].fields[0].values.get(1)).toBe('server-2');
+      expect(result.data[0].fields[1].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[2].values.get(1)).toBe(200);
     });
   });
 
@@ -657,17 +844,21 @@ describe('ElasticResponse', () => {
 
     it('should return table', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].columns[0].text).toBe('id');
-      expect(result.data[0].columns[1].text).toBe('p75 value');
-      expect(result.data[0].columns[2].text).toBe('p90 value');
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][0]).toBe('id1');
-      expect(result.data[0].rows[0][1]).toBe(3.3);
-      expect(result.data[0].rows[0][2]).toBe(5.5);
-      expect(result.data[0].rows[1][0]).toBe('id2');
-      expect(result.data[0].rows[1][1]).toBe(2.3);
-      expect(result.data[0].rows[1][2]).toBe(4.5);
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].fields.length).toBe(3);
+      expect(result.data[0].fields[0].name).toBe('id');
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].name).toBe('p75 value');
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[2].name).toBe('p90 value');
+      expect(result.data[0].fields[2].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe('id1');
+      expect(result.data[0].fields[1].values.get(0)).toBe(3.3);
+      expect(result.data[0].fields[2].values.get(0)).toBe(5.5);
+      expect(result.data[0].fields[0].values.get(1)).toBe('id2');
+      expect(result.data[0].fields[1].values.get(1)).toBe(2.3);
+      expect(result.data[0].fields[2].values.get(1)).toBe(4.5);
     });
   });
 
@@ -707,9 +898,19 @@ describe('ElasticResponse', () => {
     });
 
     it('should include field in metric name', () => {
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].rows[0][1]).toBe(1000);
-      expect(result.data[0].rows[0][2]).toBe(3000);
+      expect(result.data.length).toBe(1);
+
+      expect(result.data[0].length).toBe(1);
+      expect(result.data[0].fields.length).toBe(3);
+      expect(result.data[0].fields[0].name).toBe('host');
+      expect(result.data[0].fields[0].values.length).toBe(1);
+      expect(result.data[0].fields[1].name).toBe('Average test');
+      expect(result.data[0].fields[1].values.length).toBe(1);
+      expect(result.data[0].fields[2].name).toBe('Average test2');
+      expect(result.data[0].fields[2].values.length).toBe(1);
+      expect(result.data[0].fields[0].values.get(0)).toBe('server-1');
+      expect(result.data[0].fields[1].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[2].values.get(0)).toBe(3000);
     });
   });
 
@@ -750,11 +951,45 @@ describe('ElasticResponse', () => {
 
     it('should return docs', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('docs');
-      expect(result.data[0].total).toBe(100);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0].sourceProp).toBe('asd');
-      expect(result.data[0].datapoints[0].fieldProp).toBe('field');
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].fields.length).toBe(6);
+
+      expect(result.data[0].fields[0].name).toBe('Time');
+      expect(result.data[0].fields[0].type).toBe('time');
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(null);
+      expect(result.data[0].fields[0].values.get(1)).toBe(null);
+
+      expect(result.data[0].fields[1].name).toBe('_source');
+      expect(result.data[0].fields[1].type).toBe('string');
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.get(0).sourceProp).toBe('asd');
+      expect(result.data[0].fields[1].values.get(1).sourceProp).toBe('asd2');
+
+      expect(result.data[0].fields[2].name).toBe('_id');
+      expect(result.data[0].fields[2].type).toBe('string');
+      expect(result.data[0].fields[2].values.length).toBe(2);
+      expect(result.data[0].fields[2].values.get(0)).toBe('1');
+      expect(result.data[0].fields[2].values.get(1)).toBe(null);
+
+      expect(result.data[0].fields[3].name).toBe('_index');
+      expect(result.data[0].fields[3].type).toBe('string');
+      expect(result.data[0].fields[3].values.length).toBe(2);
+      expect(result.data[0].fields[3].values.get(0)).toBe('index');
+      expect(result.data[0].fields[3].values.get(1)).toBe(null);
+
+      expect(result.data[0].fields[4].name).toBe('_type');
+      expect(result.data[0].fields[4].type).toBe('string');
+      expect(result.data[0].fields[4].values.length).toBe(2);
+      expect(result.data[0].fields[4].values.get(0)).toBe('type');
+      expect(result.data[0].fields[4].values.get(1)).toBe(null);
+
+      expect(result.data[0].fields[5].name).toBe('sourceProp');
+      expect(result.data[0].fields[5].type).toBe('string');
+      expect(result.data[0].fields[5].values.length).toBe(2);
+      expect(result.data[0].fields[5].values.get(0)).toBe('asd');
+      expect(result.data[0].fields[5].values.get(1)).toBe('asd2');
     });
   });
 
@@ -814,16 +1049,36 @@ describe('ElasticResponse', () => {
 
     it('should return 3 series', () => {
       expect(result.data.length).toBe(3);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('Sum @value');
-      expect(result.data[1].target).toBe('Max @value');
-      expect(result.data[2].target).toBe('Sum @value * Max @value');
-      expect(result.data[0].datapoints[0][0]).toBe(2);
-      expect(result.data[1].datapoints[0][0]).toBe(3);
-      expect(result.data[2].datapoints[0][0]).toBe(6);
-      expect(result.data[0].datapoints[1][0]).toBe(3);
-      expect(result.data[1].datapoints[1][0]).toBe(4);
-      expect(result.data[2].datapoints[1][0]).toBe(12);
+
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('Sum @value');
+      expect(result.data[0].fields.length).toBe(2);
+      expect(result.data[0].fields[0].values.length).toBe(2);
+      expect(result.data[0].fields[1].values.length).toBe(2);
+      expect(result.data[0].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[0].fields[1].values.get(0)).toBe(2);
+      expect(result.data[0].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[0].fields[1].values.get(1)).toBe(3);
+
+      expect(result.data[1].length).toBe(2);
+      expect(result.data[1].name).toBe('Max @value');
+      expect(result.data[1].fields.length).toBe(2);
+      expect(result.data[1].fields[0].values.length).toBe(2);
+      expect(result.data[1].fields[1].values.length).toBe(2);
+      expect(result.data[1].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[1].fields[1].values.get(0)).toBe(3);
+      expect(result.data[1].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[1].fields[1].values.get(1)).toBe(4);
+
+      expect(result.data[2].length).toBe(2);
+      expect(result.data[2].name).toBe('Sum @value * Max @value');
+      expect(result.data[2].fields.length).toBe(2);
+      expect(result.data[2].fields[0].values.length).toBe(2);
+      expect(result.data[2].fields[1].values.length).toBe(2);
+      expect(result.data[2].fields[0].values.get(0)).toBe(1000);
+      expect(result.data[2].fields[1].values.get(0)).toBe(6);
+      expect(result.data[2].fields[0].values.get(1)).toBe(2000);
+      expect(result.data[2].fields[1].values.get(1)).toBe(12);
     });
   });
 
