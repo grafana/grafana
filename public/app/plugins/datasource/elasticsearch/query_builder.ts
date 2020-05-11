@@ -205,14 +205,21 @@ export class ElasticQueryBuilder {
 
     this.addAdhocFilters(query, adhocFilters);
 
-    // handle document query
+    // If target doesn't have bucketAggs and type is not raw_document, it is invalid query.
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
       if (!metric || metric.type !== 'raw_document') {
         throw { message: 'Invalid query' };
       }
+    }
 
-      const size = (metric.settings && metric.settings.size) || 500;
+    /* Handle document query:
+     * Check if metric type is raw_document. If metric doesn't have size (or size is 0), update size to 500.
+     * Otherwise it will not be a valid query and error will be thrown.
+     */
+    if (target.metrics[0].type === 'raw_document') {
+      metric = target.metrics[0];
+      const size = (metric.settings && metric.settings.size !== 0 && metric.settings.size) || 500;
       return this.documentQuery(query, size);
     }
 

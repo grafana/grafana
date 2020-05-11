@@ -1,10 +1,7 @@
 +++
-title = "Authentication for Datasource Plugins"
+title = "Authentication for data source plugins"
 type = "docs"
-[menu.docs]
-name = "Authentication for Datasource Plugins"
-parent = "developing"
-weight = 3
+aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/"]
 +++
 
 # Authentication for data source plugins

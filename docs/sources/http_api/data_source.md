@@ -226,7 +226,7 @@ Content-Type: application/json
 }
 ```
 
-> NOTE: `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../plugins/developing/auth-for-datasources.md/#encrypting-sensitive-data">}}) documentation for more details.
+> NOTE: `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../developers/plugins/authentication.md/#encrypting-sensitive-data">}}) documentation for more details.
 
 **Example Graphite Request with basic auth enabled**:
 
@@ -376,7 +376,7 @@ Content-Type: application/json
 }
 ```
 
-> NOTE: Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../plugins/developing/auth-for-datasources.md/#encrypting-sensitive-data">}}) documentation for more details.
+> NOTE: Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../developers/plugins/authentication.md/#encrypting-sensitive-data">}}) documentation for more details.
 
 ## Delete an existing data source by id
 
