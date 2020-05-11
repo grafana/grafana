@@ -29,6 +29,7 @@ export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
 export { Tag } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
+export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
@@ -122,7 +123,6 @@ export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
-export { default as Forms } from './Forms';
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
 export * from './Button';

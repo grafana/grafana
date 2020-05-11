@@ -355,6 +355,10 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
+### disable_brute_force_login_protection
+
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
+
 ### cookie_samesite
 
 Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF),  [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.

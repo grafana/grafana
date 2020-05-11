@@ -114,7 +114,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
         <div className={styles.toolbar}>
           {data.length > 1 && (
-            <Field label="Transformer" className="flex-grow-1">
+            <Field label="Transform data" className="flex-grow-1">
               <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />
             </Field>
           )}
