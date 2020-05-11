@@ -18,14 +18,14 @@ Here is a table showing all supported authentication providers and the features 
 
 Provider | Support | Role mapping | Team sync<br>*(Enterprise only)* | Active sync<br>*(Enterprise only)*
 -------- | :-----: | :----------: | :-------: | :---------: 
-[Auth Proxy]({{< relref "auth-proxy.md" >}})       | X | - | v6.3+ | - 
-[Azure AD OAuth]({{< relref "azuread.md" >}})            | v6.7+ | X | v6.7+ | - 
-[Generic OAuth]({{< relref "generic-oauth.md" >}}) | X | v6.5+ | - | - 
-[GitHub OAuth]({{< relref "github.md" >}})         | X | - | v6.3+ | -
-[GitLab OAuth]({{< relref "gitlab.md" >}})         | X | - | v6.4+ | -
-[Google OAuth]({{< relref "google.md" >}})         | X | - | - | - 
-[LDAP]({{< relref "ldap.md" >}})                   | X | X | X | X
-[Okta OAuth]({{< relref "okta.md" >}})                   | v7.0+ | v7.0+ | v7.0+ | - 
+[Auth Proxy]({{< relref "auth-proxy.md" >}})       | v2.1+ | - | v6.3+ | - 
+[Azure AD OAuth]({{< relref "azuread.md" >}})      | v6.7+ | (v6.7+) | v6.7+ | - 
+[Generic OAuth]({{< relref "generic-oauth.md" >}}) | v4.0+ | v6.5+ | - | - 
+[GitHub OAuth]({{< relref "github.md" >}})         | v2.0+ | - | v6.3+ | -
+[GitLab OAuth]({{< relref "gitlab.md" >}})         | v5.3+ | - | v6.4+ | -
+[Google OAuth]({{< relref "google.md" >}})         | v2.0+ | - | - | - 
+[LDAP]({{< relref "ldap.md" >}})                   | v2.1+ | v2.1+ | (v6.3+) | v6.3+
+[Okta OAuth]({{< relref "okta.md" >}})             | v7.0+ | v7.0+ | v7.0+ | - 
 [SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | - 
 
 
