@@ -65,7 +65,7 @@ const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
 
 // TODO: Temporary times here, could just change to some fixed number.
-const MAX_ATTEMPTS = 8;
+export const MAX_ATTEMPTS = 8;
 const POLLING_TIMES = [100, 200, 500, 1000];
 
 export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
@@ -76,7 +76,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   datasourceName: string;
   debouncedAlert: (datasourceName: string, region: string) => void;
   debouncedCustomAlert: (title: string, message: string) => void;
-  logQueries: Set<{ id: string; region: string }>;
+  logQueries: Record<string, { id: string; region: string }>;
   languageProvider: CloudWatchLanguageProvider;
 
   /** @ngInject */
@@ -93,7 +93,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     this.standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
     this.debouncedAlert = memoizedDebounce(displayAlert, AppNotificationTimeout.Error);
     this.debouncedCustomAlert = memoizedDebounce(displayCustomError, AppNotificationTimeout.Error);
-    this.logQueries = new Set<{ id: string; region: string }>();
+    this.logQueries = {};
 
     this.languageProvider = new CloudWatchLanguageProvider(this);
   }
@@ -131,7 +131,10 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
             dataFrames.map(dataFrame => ({
               queryId: dataFrame.fields[0].values.get(0),
               region: dataFrame.meta?.custom?.['Region'] ?? 'default',
-              refId: dataFrame.refId,
+              refId: dataFrame.refId!,
+              groupResults: this.languageProvider.isStatsQuery(
+                options.targets.find(target => target.refId === dataFrame.refId)!.expression
+              ),
             }))
           )
         ),
@@ -196,18 +199,42 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     return this.performTimeSeriesQuery(request, options.range);
   }
 
-  logsQuery(queryParams: Array<{ queryId: string; limit?: number; region: string }>): Observable<DataQueryResponse> {
-    this.logQueries.clear();
-    queryParams.forEach(param => this.logQueries.add({ id: param.queryId, region: param.region }));
+  logsQuery(
+    queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; groupResults?: boolean }>
+  ): Observable<DataQueryResponse> {
+    this.logQueries = {};
+    queryParams.forEach(param => {
+      this.logQueries[param.refId] = { id: param.queryId, region: param.region };
+    });
+    let prevRecordsMatched: Record<string, number> = {};
 
     return withTeardown(
       this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
         expand((dataFrames, i) => {
-          return dataFrames.every(
+          const allFramesCompleted = dataFrames.every(
             dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
-          ) || i >= MAX_ATTEMPTS
+          );
+          return allFramesCompleted
             ? empty()
             : this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
+                map(frames => {
+                  let moreRecordsMatched = false;
+                  for (const frame of frames) {
+                    const recordsMatched = frame.meta?.custom?.['Statistics']['RecordsMatched'];
+                    if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
+                      moreRecordsMatched = true;
+                    }
+                    prevRecordsMatched[frame.refId!] = recordsMatched;
+                  }
+                  const noProgressMade = i >= MAX_ATTEMPTS - 2 && !moreRecordsMatched;
+                  if (noProgressMade) {
+                    for (const frame of frames) {
+                      _.set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Complete);
+                    }
+                  }
+
+                  return frames;
+                }),
                 delay(POLLING_TIMES[Math.min(i, POLLING_TIMES.length - 1)])
               );
         }),
@@ -218,9 +245,10 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
                 CloudWatchLogsQueryStatus.Complete,
                 CloudWatchLogsQueryStatus.Cancelled,
                 CloudWatchLogsQueryStatus.Failed,
-              ].includes(dataframe.meta?.custom?.['Status'])
+              ].includes(dataframe.meta?.custom?.['Status']) &&
+              this.logQueries.hasOwnProperty(dataframe.refId!)
             ) {
-              this.logQueries.delete({ id: queryParams[i].queryId, region: queryParams[i].region });
+              delete this.logQueries[dataframe.refId!];
             }
           });
         }),
@@ -279,13 +307,17 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   stopQueries() {
-    if (this.logQueries.size > 0) {
+    if (Object.keys(this.logQueries).length > 0) {
       this.makeLogActionRequest(
         'StopQuery',
-        [...this.logQueries.values()].map(logQuery => ({ queryId: logQuery.id, region: logQuery.region })),
+        Object.values(this.logQueries).map(logQuery => ({ queryId: logQuery.id, region: logQuery.region })),
         undefined,
         false
-      ).pipe(finalize(() => this.logQueries.clear()));
+      ).pipe(
+        finalize(() => {
+          this.logQueries = {};
+        })
+      );
     }
   }
 
