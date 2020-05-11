@@ -3,10 +3,12 @@ import {
   applyFieldOverrides,
   DataFrame,
   DataTransformerID,
+  FieldType,
+  getDisplayProcessor,
+  getFrameDisplayTitle,
   SelectableValue,
   toCSV,
   transformDataFrame,
-  getFrameDisplayTitle,
 } from '@grafana/data';
 import {
   Button,
@@ -27,11 +29,13 @@ import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
-import { QueryOperationRow } from '../../../../core/components/QueryOperationRow/QueryOperationRow';
-import { PanelModel } from '../../state';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+
 const { Switch } = LegacyForms;
 
 interface Props {
+  dashboard: DashboardModel;
   panel: PanelModel;
   data: DataFrame[];
   isLoading: boolean;
@@ -90,12 +94,29 @@ export class InspectDataTab extends PureComponent<Props, State> {
     return data;
   }
 
+  applyTimeFormatting = (data: DataFrame[]): DataFrame[] => {
+    for (const frame of data) {
+      for (const field of frame.fields) {
+        if (field.type == FieldType.time) {
+          field.display = getDisplayProcessor({
+            field,
+            theme: config.theme,
+          });
+        }
+      }
+    }
+
+    return data;
+  };
   getProcessedData(): DataFrame[] {
     if (this.state.transformId === DataTransformerID.noop) {
-      return this.props.data;
+      return this.applyTimeFormatting(this.props.data);
     }
+
     const data = this.getTransformedData();
 
+    // We need to apply field config even though it was already applied in the PanelQueryRunner.
+    // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return this.props.options.applyFieldConfig
       ? applyFieldOverrides({
           data,
@@ -105,7 +126,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             return value;
           },
         })
-      : data;
+      : this.applyTimeFormatting(data);
   }
 
   render() {

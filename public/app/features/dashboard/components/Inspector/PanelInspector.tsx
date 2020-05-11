@@ -189,6 +189,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     const { last, isLoading, transform, applyFieldConfig } = this.state;
     return (
       <InspectDataTab
+        dashboard={this.props.dashboard}
         panel={this.props.panel}
         data={last.series}
         isLoading={isLoading}
