@@ -15,19 +15,11 @@ import syntax, {
 
 // Types
 import { CloudWatchQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
 
 import { CloudWatchDatasource } from './datasource';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
+import { TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
 import { Grammar } from 'prismjs';
-
-const HISTORY_ITEM_COUNT = 10;
-const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
-const NS_IN_MS = 1000000;
-export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
-
-const wrapLabel = (label: string) => ({ label });
-export const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -37,26 +29,7 @@ type TypeaheadContext = {
   logGroupNames?: string[];
 };
 
-export function addHistoryMetadata(item: CompletionItem, history: CloudWatchHistoryItem[]): CompletionItem {
-  const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter(h => h.ts > cutoffTs && h.query.expression === item.label);
-  let hint = `Queried ${historyForItem.length} times in the last 24h.`;
-  const recent = historyForItem[0];
-
-  if (recent) {
-    const lastQueried = dateTime(recent.ts).fromNow();
-    hint = `${hint} Last queried ${lastQueried}.`;
-  }
-
-  return {
-    ...item,
-    documentation: hint,
-  };
-}
-
 export class CloudWatchLanguageProvider extends LanguageProvider {
-  logLabelOptions: any[];
-  logLabelFetchTs?: number;
   started: boolean;
   initialRange: AbsoluteTimeRange;
   datasource: CloudWatchDatasource;
@@ -91,18 +64,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
-  fetchFields = _.throttle(async (logGroups: string[]) => {
-    const results = await Promise.all(
-      logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
-    );
-
-    return [
-      ...new Set<string>(
-        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
-      ).values(),
-    ];
-  }, 30 * 1000);
-
   /**
    * Return suggestions based on input that can be then plugged into a typeahead dropdown.
    * Keep this DOM-free for testing
@@ -112,7 +73,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
    * @param context.history Optional used only in getEmptyCompletionItems
    */
   async provideCompletionItems(input: TypeaheadInput, context?: TypeaheadContext): Promise<TypeaheadOutput> {
-    //console.log('Providing completion items...');
     const { value } = input;
 
     // Get tokens
@@ -126,74 +86,30 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       (token: any) =>
         token.offsets.start <= value!.selection?.start?.offset && token.offsets.end >= value!.selection?.start?.offset
     )[0];
-    const isFirstToken = curToken.prev === null || curToken.prev === undefined;
+
+    const isFirstToken = !curToken.prev;
     const prevToken = prevNonWhitespaceToken(curToken);
-    const funcsWithFieldArgs = [
-      'avg',
-      'count',
-      'count_distinct',
-      'earliest',
-      'latest',
-      'sortsFirst',
-      'sortsLast',
-      'max',
-      'min',
-      'pct',
-      'stddev',
-      'ispresent',
-      'fromMillis',
-      'toMillis',
-      'isempty',
-      'isblank',
-      'isValidIp',
-      'isValidIpV4',
-      'isValidIpV6',
-      'isIpInSubnet',
-      'isIpv4InSubnet',
-      'isIpv6InSubnet',
-    ].map(funcName => funcName.toLowerCase());
-
-    if (curToken.content === '(' && prevToken != null) {
-      if (funcsWithFieldArgs.includes(prevToken.content.toLowerCase()) && prevToken.types.includes('function')) {
-        const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
-        return suggs;
-      }
-    }
-
-    // if (prevToken === null) {
-    //   return {
-    //     suggestions: [],
-    //   };
-    // }
-
-    // if (prevToken) {
-    //   console.log(`Previous token: '${prevToken.content}'`);
-    // }
 
     const isCommandStart = isFirstToken || (!isFirstToken && prevToken?.types.includes('command-separator'));
-    //console.log(`Is command start? ${isCommandStart}`);
     if (isCommandStart) {
       return this.getCommandCompletionItems();
-    } else if (!isFirstToken) {
-      if (prevToken?.types.includes('keyword')) {
-        return this.handleKeyword(prevToken, context);
-      }
+    }
 
-      if (prevToken?.types.includes('comparison-operator')) {
-        const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
-        const boolFuncSuggs = this.getBoolFuncCompletionItems();
-        const numFuncSuggs = this.getNumericFuncCompletionItems();
+    if (isInsideFunctionParenthesis(curToken)) {
+      return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+    }
 
-        suggs.suggestions.push(...boolFuncSuggs.suggestions, ...numFuncSuggs.suggestions);
-        return suggs;
-      }
+    if (isAfterKeyword('by', curToken)) {
+      return this.handleKeyword(context);
+    }
 
-      const commandToken = this.findCommandToken(curToken);
+    if (prevToken?.types.includes('comparison-operator')) {
+      return this.handleComparison(context);
+    }
 
-      if (commandToken !== null) {
-        const typeaheadOutput = await this.handleCommand(commandToken, curToken, context);
-        return typeaheadOutput;
-      }
+    const commandToken = previousCommandToken(curToken);
+    if (commandToken) {
+      return await this.handleCommand(commandToken, curToken, context);
     }
 
     return {
@@ -201,49 +117,39 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   }
 
-  handleKeyword = async (token: Token, context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
-    if (token.content.toLowerCase() === 'by') {
-      const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
-      const functionSuggestions = [
-        { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
-      ];
-      suggs.suggestions.push(...functionSuggestions);
+  private fetchFields = _.throttle(async (logGroups: string[]) => {
+    const results = await Promise.all(
+      logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
+    );
 
-      return suggs;
-    }
+    return [
+      ...new Set<string>(
+        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
+      ).values(),
+    ];
+  }, 30 * 1000);
 
-    return null;
+  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
+    const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+    const functionSuggestions = [
+      { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
+    ];
+    suggs.suggestions.push(...functionSuggestions);
+
+    return suggs;
   };
 
-  handleCommand = async (commandToken: Token, curToken: Token, context: TypeaheadContext): Promise<TypeaheadOutput> => {
+  private handleCommand = async (
+    commandToken: Token,
+    curToken: Token,
+    context: TypeaheadContext
+  ): Promise<TypeaheadOutput> => {
     const queryCommand = commandToken.content.toLowerCase();
     const prevToken = prevNonWhitespaceToken(curToken);
     const currentTokenIsFirstArg = prevToken === commandToken;
 
-    // console.log(
-    //   `Query Command: '${queryCommand}'. Previous token: '${prevToken}'. First arg? ${currentTokenIsFirstArg}`
-    // );
-
     if (queryCommand === 'sort') {
-      if (currentTokenIsFirstArg) {
-        return await this.getFieldCompletionItems(context.logGroupNames ?? []);
-      } else if (prevToken?.types.includes('field-name')) {
-        // suggest sort options
-        return {
-          suggestions: [
-            {
-              prefixMatch: true,
-              label: 'Sort Order',
-              items: [
-                {
-                  label: 'asc',
-                },
-                { label: 'desc' },
-              ],
-            },
-          ],
-        };
-      }
+      return this.handleSortCommand(currentTokenIsFirstArg, curToken, context);
     }
 
     if (queryCommand === 'parse') {
@@ -252,111 +158,96 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       }
     }
 
-    let typeaheadOutput: TypeaheadOutput | null = null;
-    if (
-      (commandToken.next?.types.includes('whitespace') && commandToken.next.next === null) ||
-      nextNonWhitespaceToken(commandToken) === curToken ||
-      (curToken.content === ',' && curToken.types.includes('punctuation')) ||
-      (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'))
-    ) {
-      if (['display', 'fields'].includes(queryCommand)) {
-        // Current token comes straight after command OR after comma
-        typeaheadOutput = await this.getFieldCompletionItems(context.logGroupNames ?? []);
-        typeaheadOutput.suggestions.push(...this.getFunctionCompletionItems().suggestions);
+    const currentTokenIsAfterCommandAndEmpty =
+      commandToken.next?.types.includes('whitespace') && !commandToken.next.next;
+    const currentTokenIsAfterCommand =
+      currentTokenIsAfterCommandAndEmpty || nextNonWhitespaceToken(commandToken) === curToken;
 
-        return typeaheadOutput;
-      } else if (queryCommand === 'stats') {
-        typeaheadOutput = this.getStatsAggCompletionItems();
-      } else if (queryCommand === 'filter') {
-        if (currentTokenIsFirstArg) {
-          const sugg = await this.getFieldCompletionItems(context.logGroupNames ?? []);
-          const boolFuncs = this.getBoolFuncCompletionItems();
-          sugg.suggestions.push(...boolFuncs.suggestions);
-          return sugg;
-        }
-      }
+    const currentTokenIsComma = curToken.content === ',' && curToken.types.includes('punctuation');
+    const currentTokenIsCommaOrAfterComma =
+      currentTokenIsComma || (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'));
 
-      if (
-        (curToken.content === ',' && curToken.types.includes('punctuation')) ||
-        (commandToken.next?.types.includes('whitespace') && commandToken.next.next === null)
-      ) {
+    // We only show suggestions if we are after a command or after a comma which is a field separator
+    if (!(currentTokenIsAfterCommand || currentTokenIsCommaOrAfterComma)) {
+      return { suggestions: [] };
+    }
+
+    if (['display', 'fields'].includes(queryCommand)) {
+      const typeaheadOutput = await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      typeaheadOutput.suggestions.push(...this.getFunctionCompletionItems().suggestions);
+
+      return typeaheadOutput;
+    }
+
+    if (queryCommand === 'stats') {
+      const typeaheadOutput = this.getStatsAggCompletionItems();
+      if (currentTokenIsComma || currentTokenIsAfterCommandAndEmpty) {
         typeaheadOutput?.suggestions.forEach(group => {
           group.skipFilter = true;
         });
       }
-
-      return typeaheadOutput!;
+      return typeaheadOutput;
     }
 
+    if (queryCommand === 'filter' && currentTokenIsFirstArg) {
+      const sugg = await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      const boolFuncs = this.getBoolFuncCompletionItems();
+      sugg.suggestions.push(...boolFuncs.suggestions);
+      return sugg;
+    }
     return { suggestions: [] };
   };
 
-  findCommandToken = (startToken: Token): Token | null => {
-    let thisToken = { ...startToken };
-
-    while (thisToken.prev !== null) {
-      thisToken = thisToken.prev;
-      const isFirstCommand = thisToken.types.includes('query-command') && thisToken.prev === null;
-      if (thisToken.types.includes('command-separator') || isFirstCommand) {
-        // next token should be command
-        if (!isFirstCommand && thisToken.next?.types.includes('query-command')) {
-          return thisToken.next;
-        } else {
-          return thisToken;
-        }
-      }
+  private async handleSortCommand(
+    isFirstArgument: boolean,
+    curToken: Token,
+    context: TypeaheadContext
+  ): Promise<TypeaheadOutput> {
+    if (isFirstArgument) {
+      return await this.getFieldCompletionItems(context.logGroupNames ?? []);
+    } else if (prevNonWhitespaceToken(curToken)?.types.includes('field-name')) {
+      // suggest sort options
+      return {
+        suggestions: [
+          {
+            prefixMatch: true,
+            label: 'Sort Order',
+            items: [
+              {
+                label: 'asc',
+              },
+              { label: 'desc' },
+            ],
+          },
+        ],
+      };
     }
 
-    return null;
-  };
-
-  getBeginningCompletionItems = (context: TypeaheadContext): TypeaheadOutput => {
-    return {
-      suggestions: [
-        ...this.getEmptyCompletionItems(context).suggestions,
-        ...this.getCommandCompletionItems().suggestions,
-      ],
-    };
-  };
-
-  getEmptyCompletionItems(context: TypeaheadContext): TypeaheadOutput {
-    const history = context?.history;
-    const suggestions = [];
-
-    if (history?.length) {
-      const historyItems = _.chain(history)
-        .map(h => h.query.expression)
-        .filter()
-        .uniq()
-        .take(HISTORY_ITEM_COUNT)
-        .map(wrapLabel)
-        .map((item: CompletionItem) => addHistoryMetadata(item, history))
-        .value();
-
-      suggestions.push({
-        prefixMatch: true,
-        skipSort: true,
-        label: 'History',
-        items: historyItems,
-      });
-    }
-
-    return { suggestions };
+    return { suggestions: [] };
   }
 
-  getCommandCompletionItems = (): TypeaheadOutput => {
+  private handleComparison = async (context?: TypeaheadContext) => {
+    const fieldsSuggestions = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+    const boolFuncSuggestions = this.getBoolFuncCompletionItems();
+    const numFuncSuggestions = this.getNumericFuncCompletionItems();
+
+    fieldsSuggestions.suggestions.push(...boolFuncSuggestions.suggestions, ...numFuncSuggestions.suggestions);
+    return fieldsSuggestions;
+  };
+
+  private getCommandCompletionItems = (): TypeaheadOutput => {
     return { suggestions: [{ prefixMatch: true, label: 'Commands', items: QUERY_COMMANDS }] };
   };
 
-  getFunctionCompletionItems = (): TypeaheadOutput => {
+  private getFunctionCompletionItems = (): TypeaheadOutput => {
     return { suggestions: [{ prefixMatch: true, label: 'Functions', items: FUNCTIONS }] };
   };
 
-  getStatsAggCompletionItems = (): TypeaheadOutput => {
+  private getStatsAggCompletionItems = (): TypeaheadOutput => {
     return { suggestions: [{ prefixMatch: true, label: 'Functions', items: AGGREGATION_FUNCTIONS_STATS }] };
   };
 
-  getBoolFuncCompletionItems = (): TypeaheadOutput => {
+  private getBoolFuncCompletionItems = (): TypeaheadOutput => {
     return {
       suggestions: [
         {
@@ -368,7 +259,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   };
 
-  getNumericFuncCompletionItems = (): TypeaheadOutput => {
+  private getNumericFuncCompletionItems = (): TypeaheadOutput => {
     return {
       suggestions: [
         {
@@ -380,11 +271,9 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   };
 
-  getFieldCompletionItems = async (logGroups: string[]): Promise<TypeaheadOutput> => {
-    //console.log(`Fetching fields... ${logGroups}`);
+  private getFieldCompletionItems = async (logGroups: string[]): Promise<TypeaheadOutput> => {
     const fields = await this.fetchFields(logGroups);
 
-    //console.log(fields);
     return {
       suggestions: [
         {
@@ -426,4 +315,72 @@ function prevNonWhitespaceToken(token: Token): Token | null {
   }
 
   return null;
+}
+
+function previousCommandToken(startToken: Token): Token | null {
+  let thisToken = startToken;
+  while (!!thisToken.prev) {
+    thisToken = thisToken.prev;
+    if (
+      thisToken.types.includes('query-command') &&
+      (!thisToken.prev || prevNonWhitespaceToken(thisToken)?.types.includes('command-separator'))
+    ) {
+      return thisToken;
+    }
+  }
+  return null;
+}
+
+const funcsWithFieldArgs = [
+  'avg',
+  'count',
+  'count_distinct',
+  'earliest',
+  'latest',
+  'sortsFirst',
+  'sortsLast',
+  'max',
+  'min',
+  'pct',
+  'stddev',
+  'ispresent',
+  'fromMillis',
+  'toMillis',
+  'isempty',
+  'isblank',
+  'isValidIp',
+  'isValidIpV4',
+  'isValidIpV6',
+  'isIpInSubnet',
+  'isIpv4InSubnet',
+  'isIpv6InSubnet',
+].map(funcName => funcName.toLowerCase());
+
+/**
+ * Returns true if cursor is currently inside a function parenthesis for example `count(|)` or `count(@mess|)` should
+ * return true.
+ */
+function isInsideFunctionParenthesis(curToken: Token): boolean {
+  const prevToken = prevNonWhitespaceToken(curToken);
+
+  if (!prevToken) {
+    return false;
+  }
+
+  const parenthesisToken = curToken.content === '(' ? curToken : prevToken.content === '(' ? prevToken : undefined;
+  if (parenthesisToken) {
+    const maybeFunctionToken = prevNonWhitespaceToken(parenthesisToken);
+    if (maybeFunctionToken) {
+      return (
+        funcsWithFieldArgs.includes(maybeFunctionToken.content.toLowerCase()) &&
+        maybeFunctionToken.types.includes('function')
+      );
+    }
+  }
+  return false;
+}
+
+function isAfterKeyword(keyword: string, token: Token): boolean {
+  const prevToken = prevNonWhitespaceToken(token);
+  return prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by';
 }
