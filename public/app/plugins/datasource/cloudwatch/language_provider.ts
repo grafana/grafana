@@ -117,17 +117,41 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   }
 
-  private fetchFields = _.throttle(async (logGroups: string[]) => {
+  private fetchedFieldsCache:
+    | {
+        time: number;
+        logGroups: string[];
+        fields: string[];
+      }
+    | undefined;
+
+  private fetchFields = async (logGroups: string[]): Promise<string[]> => {
+    if (
+      this.fetchedFieldsCache &&
+      Date.now() - this.fetchedFieldsCache.time < 30 * 1000 &&
+      _.sortedUniq(this.fetchedFieldsCache.logGroups).join('|') === _.sortedUniq(logGroups).join('|')
+    ) {
+      return this.fetchedFieldsCache.fields;
+    }
+
     const results = await Promise.all(
       logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
     );
 
-    return [
+    const fields = [
       ...new Set<string>(
         results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
       ).values(),
     ];
-  }, 30 * 1000);
+
+    this.fetchedFieldsCache = {
+      time: Date.now(),
+      logGroups,
+      fields,
+    };
+
+    return fields;
+  };
 
   private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
     const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
