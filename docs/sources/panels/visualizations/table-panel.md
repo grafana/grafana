@@ -24,7 +24,7 @@ To view table panels in action and test different configurations with sample dat
 Tables visualizations allow you to apply:
 
 - Data transformations
-- Field configurations
+- Field options
 - Field option overrides
 
 ## Display options
