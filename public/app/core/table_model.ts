@@ -18,7 +18,7 @@ export default class TableModel implements TableData {
   type: string;
   columnMap: any;
   refId: string;
-  meta: QueryResultMeta;
+  meta?: QueryResultMeta;
 
   constructor(table?: any) {
     this.columns = [];
