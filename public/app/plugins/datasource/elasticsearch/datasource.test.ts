@@ -159,7 +159,7 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should resolve the alias variable for the alias/target in the result', () => {
-      expect(result.data[0].target).toEqual('resolvedVariable');
+      expect(result.data[0].name).toEqual('resolvedVariable');
     });
 
     it('should json escape lucene query', () => {
