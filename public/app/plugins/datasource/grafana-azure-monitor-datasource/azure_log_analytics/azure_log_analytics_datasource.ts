@@ -15,6 +15,7 @@ export default class AzureLogAnalyticsDatasource {
   azureMonitorUrl: string;
   defaultOrFirstWorkspace: string;
   subscriptionId: string;
+  cache: Map<string, any>;
 
   /** @ngInject */
   constructor(
@@ -22,6 +23,7 @@ export default class AzureLogAnalyticsDatasource {
     private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
+    this.cache = new Map();
 
     switch (this.instanceSettings.jsonData.cloudName) {
       case 'govazuremonitor': // Azure US Government
@@ -57,7 +59,7 @@ export default class AzureLogAnalyticsDatasource {
       const azureCloud = this.instanceSettings.jsonData.cloudName || 'azuremonitor';
       this.azureMonitorUrl = `/${azureCloud}/subscriptions`;
     } else {
-      this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId;
+      this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
 
       switch (this.instanceSettings.jsonData.cloudName) {
         case 'govazuremonitor': // Azure US Government
@@ -75,19 +77,23 @@ export default class AzureLogAnalyticsDatasource {
     }
   }
 
-  getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
+  async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
+    const response = await this.getWorkspaceList(subscription);
+
+    return (
+      _.map(response.data.value, (val: any) => {
+        return { text: val.name, value: val.properties.customerId };
+      }) || []
+    );
+  }
+
+  getWorkspaceList(subscription: string): Promise<any> {
     const subscriptionId = this.templateSrv.replace(subscription || this.subscriptionId);
 
     const workspaceListUrl =
       this.azureMonitorUrl +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    return this.doRequest(workspaceListUrl).then((response: any) => {
-      return (
-        _.map(response.data.value, val => {
-          return { text: val.name, value: val.properties.customerId };
-        }) || []
-      );
-    });
+    return this.doRequest(workspaceListUrl, true);
   }
 
   getSchema(workspace: string) {
@@ -148,24 +154,85 @@ export default class AzureLogAnalyticsDatasource {
 
     const result: DataQueryResponseData[] = [];
     if (data.results) {
-      Object.values(data.results).forEach((queryRes: any) => {
-        queryRes.series?.forEach((series: any) => {
+      const results: any[] = Object.values(data.results);
+      for (let queryRes of results) {
+        for (let series of queryRes.series || []) {
           const timeSeries: TimeSeries = {
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
           };
-          result.push(toDataFrame(timeSeries));
-        });
+          const df = toDataFrame(timeSeries);
 
-        queryRes.tables?.forEach((table: any) => {
+          if (queryRes.meta.encodedQuery && queryRes.meta.encodedQuery.length > 0) {
+            const url = await this.buildDeepLink(queryRes);
+
+            if (url.length > 0) {
+              for (const field of df.fields) {
+                field.config.links = [
+                  {
+                    url: url,
+                    title: 'View in Azure Portal',
+                    targetBlank: true,
+                  },
+                ];
+              }
+            }
+          }
+
+          result.push(df);
+        }
+
+        for (let table of queryRes.tables || []) {
           result.push(toDataFrame(table));
-        });
-      });
+        }
+      }
     }
 
     return result;
+  }
+
+  private async buildDeepLink(queryRes: any) {
+    const base64Enc = encodeURIComponent(queryRes.meta.encodedQuery);
+    const workspaceId = queryRes.meta.workspace;
+    const subscription = queryRes.meta.subscription;
+
+    const details = await this.getWorkspaceDetails(workspaceId);
+    if (!details.workspace || !details.resourceGroup) {
+      return '';
+    }
+
+    const url =
+      `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
+      `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
+      `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
+      `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
+      `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`;
+    return url;
+  }
+
+  async getWorkspaceDetails(workspaceId: string) {
+    const response = await this.getWorkspaceList(this.subscriptionId);
+
+    const details = response.data.value.find((o: any) => {
+      return o.properties.customerId === workspaceId;
+    });
+
+    if (!details) {
+      return {};
+    }
+
+    const regex = /.*resourcegroups\/(.*)\/providers.*/;
+    const results = regex.exec(details.id);
+    if (!results || results.length < 2) {
+      return {};
+    }
+
+    return {
+      workspace: details.name,
+      resourceGroup: results[1],
+    };
   }
 
   metricFindQuery(query: string) {
@@ -290,19 +357,29 @@ export default class AzureLogAnalyticsDatasource {
     });
   }
 
-  doRequest(url: string, maxRetries = 1): Promise<any> {
-    return getBackendSrv()
-      .datasourceRequest({
+  async doRequest(url: string, useCache = false, maxRetries = 1): Promise<any> {
+    try {
+      if (useCache && this.cache.has(url)) {
+        return this.cache.get(url);
+      }
+
+      const res = await getBackendSrv().datasourceRequest({
         url: this.url + url,
         method: 'GET',
-      })
-      .catch((error: any) => {
-        if (maxRetries > 0) {
-          return this.doRequest(url, maxRetries - 1);
-        }
-
-        throw error;
       });
+
+      if (useCache) {
+        this.cache.set(url, res);
+      }
+
+      return res;
+    } catch (error) {
+      if (maxRetries > 0) {
+        return this.doRequest(url, useCache, maxRetries - 1);
+      }
+
+      throw error;
+    }
   }
 
   testDatasource() {
