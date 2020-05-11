@@ -1,9 +1,9 @@
 import { DataFrame, DataTransformerInfo, FieldType, Field } from '../../types';
 import { DataTransformerID } from './ids';
-import { MutableDataFrame } from '../../dataframe';
 import { ArrayVector } from '../../vector';
 import { filterFieldsTransformer } from './filter';
 import { FieldMatcherID } from '..';
+import { MutableField } from '../../dataframe';
 
 export interface LabelsToFieldsOptions {}
 type MapItem = { type: FieldType; values: Record<string, any>; isValue: boolean };
@@ -28,10 +28,10 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
     }
 
     const columnsMap = createColumnsMap(framesWithTimeField, framesWithoutTimeField);
-    const processed = createFields(columnsMap);
+    const fields = createFields(columnsMap);
     const values: Record<string, any[]> = {};
 
-    const timeColumnItem = columnsMap[processed.fields[0].name];
+    const timeColumnItem = columnsMap[fields[0].name];
     const seriesIndexStrings = Object.keys(timeColumnItem);
     for (const seriesIndexString of seriesIndexStrings) {
       const seriesItem = timeColumnItem[seriesIndexString];
@@ -41,9 +41,9 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
         if (!values[timeValueString]) {
           values[timeValueString] = [];
         }
-        let row = new Array(processed.fields.length);
-        for (let index = 0; index < processed.fields.length; index++) {
-          const field = processed.fields[index];
+        let row = new Array(fields.length);
+        for (let index = 0; index < fields.length; index++) {
+          const field = fields[index];
           const valueItem = columnsMap[field.name][seriesIndexString];
           const value = valueItem ? valueItem.values[timeValueString] ?? null : null;
           row[index] = value;
@@ -55,13 +55,18 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
     const timestamps = Object.values(values);
     for (const timestamp of timestamps) {
       for (const row of timestamp) {
-        for (let fieldIndex = 0; fieldIndex < processed.fields.length; fieldIndex++) {
-          processed.fields[fieldIndex].values.add(row[fieldIndex]);
+        for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+          fields[fieldIndex].values.add(row[fieldIndex]);
         }
       }
     }
 
-    return [processed];
+    return [
+      {
+        fields,
+        length: fields[0].values.length,
+      },
+    ];
   },
 };
 
@@ -145,9 +150,9 @@ function createColumnsMap(framesWithTimeField: DataFrame[], framesWithoutTimeFie
   return map;
 }
 
-function createFields(columnsMap: Map) {
+function createFields(columnsMap: Map): MutableField[] {
   const columns = Object.keys(columnsMap);
-  const processed = new MutableDataFrame();
+  const fields: MutableField[] = [];
   const valueColumns: string[] = [];
 
   for (const column of columns) {
@@ -156,13 +161,13 @@ function createFields(columnsMap: Map) {
       valueColumns.push(column);
       continue;
     }
-    processed.addField({ type: columnItem.type, values: new ArrayVector(), name: column });
+    fields.push({ type: columnItem.type, values: new ArrayVector(), name: column, config: {} });
   }
 
   for (const column of valueColumns) {
     const columnItem = Object.values<MapItem>(columnsMap[column])[0];
-    processed.addField({ type: columnItem.type, values: new ArrayVector(), name: column });
+    fields.push({ type: columnItem.type, values: new ArrayVector(), name: column, config: {} });
   }
 
-  return processed;
+  return fields;
 }
