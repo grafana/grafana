@@ -86,6 +86,8 @@ describe('PanelModel', () => {
 
       modelJson = {
         type: 'table',
+        maxDataPoints: 100,
+        interval: '5m',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: persistedOptionsMock,
@@ -225,6 +227,14 @@ describe('PanelModel', () => {
         expect(model.editSourceId).toBe(1001);
       });
 
+      it('should keep maxDataPoints', () => {
+        expect(model.maxDataPoints).toBe(100);
+      });
+
+      it('should keep interval', () => {
+        expect(model.interval).toBe('5m');
+      });
+
       it('should apply next panel option defaults', () => {
         expect(model.getOptions().showThresholdLabels).toBeFalsy();
         expect(model.getOptions().showThresholds).toBeUndefined();
@@ -313,18 +323,6 @@ describe('PanelModel', () => {
         expect(model.someProperty).toBeUndefined();
       });
 
-      it('Should preserve must keep properties', () => {
-        model.id = 10;
-        model.gridPos = { x: 0, y: 0, h: 10, w: 10 };
-        model.restoreModel({
-          title: 'New title',
-          options: {},
-        });
-
-        expect(model.id).toBe(10);
-        expect(model.gridPos.h).toBe(10);
-      });
-
       it('Should remove old angular panel specfic props', () => {
         model.axes = [{ prop: 1 }];
         model.thresholds = [];
@@ -336,6 +334,13 @@ describe('PanelModel', () => {
 
         expect(model.axes).toBeUndefined();
         expect(model.thresholds).toBeUndefined();
+      });
+
+      it('Should be able to set defaults back to default', () => {
+        model.transparent = true;
+
+        model.restoreModel({});
+        expect(model.transparent).toBe(false);
       });
     });
 
