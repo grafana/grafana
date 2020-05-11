@@ -364,6 +364,8 @@
           link: /developers/plugins/add-support-for-variables/
         - name: Add support for annotations
           link: /developers/plugins/add-support-for-annotations/
+        - name: Add support for Explore queries
+          link: /developers/plugins/add-support-for-explore-queries
         - name: Build a logs data source
           link: /developers/plugins/build-a-logs-data-source/
         - name: Authentication
