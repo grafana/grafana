@@ -1,13 +1,14 @@
 import React from 'react';
-import { StatsPicker } from '../StatsPicker/StatsPicker';
+import { StatsPicker } from '@grafana/ui';
 import {
-  ReduceTransformerOptions,
   DataTransformerID,
   ReducerID,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
 } from '@grafana/data';
+
+import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransformerOptions>> = ({

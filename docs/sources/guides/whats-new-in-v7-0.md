@@ -58,15 +58,13 @@ The [Google Sheets data source](https://grafana.com/grafana/plugins/grafana-goog
 
 **Transformations shipping in 7.0**
 
-- **Reduce:** Reduce many rows / data points to a single value
-- **Filter by name:** Filter fields by name or regex
-- **Filter by refId:** Filter by query letter
-- **Organize fields:** Reorder, rename and hide fields.
-- **Labels to fields:** Transform time series with labels into a table where labels get converted to fields and the result is joined by time
-- **Join by field:** Join many result sets (series) together using for example the time field. Useful for transforming time series into a table with a shared time column and where each series get it's own column.
-- **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Examples:
-  - Calculate the difference between two series or fields and add the result to a new field
-  - Multiply one field with another another and add the result to a new field
+- **Reduce:** Reduce all rows or data points to a single value using a function like max, min, mean or last.
+- **Filter by name:** Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.
+- **Filter data by query** Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.
+- **Organize fields:** Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.
+- **Labels to fields:** Groups series by time and return labels or tags as fields. Useful for showing time series with labels in a table where each label key becomes a separate column.
+- **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
+- **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another another and add the result to a new field.
 
 ## Field overrides
 

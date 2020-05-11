@@ -156,7 +156,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
-    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));

@@ -1,3 +1,8 @@
+# 7.0.0-beta3 (2020-05-08)
+
+### Features / Enhancements
+* **Forms**: Remove Forms namespace [BREAKING]. Will cause all `Forms` imports to stop working. See migration guide below. [#24378](https://github.com/grafana/grafana/pull/24378), [@tskarhed](https://github.com/tskarhed)
+
 # 7.0.0-beta.2 (2020-05-07)
 
 ### Bug Fixes
@@ -92,4 +97,3 @@ Version update to 6.0.0 to keep @grafana/ui version in sync with [Grafana](https
 
 # 1.0.0-alpha.0 (2019-02-21)
 First public release
-

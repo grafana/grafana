@@ -1,13 +1,13 @@
 <div class="edit-tab-content" ng-repeat="style in editor.panel.styles">
-  <div class="section gf-form-group">
+  <div class="gf-form-group">
     <h5 class="section-heading">Options</h5>
     <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label width-12">Apply to columns named</label>
+      <div class="gf-form gf-form--grow">
+        <label class="gf-form-label width-8">Name pattern</label>
         <input
           type="text"
           placeholder="Name or regex"
-          class="gf-form-input width-13"
+          class="gf-form-input max-width-15"
           ng-model="style.pattern"
           bs-tooltip="'Specify regex using /my.*regex/ syntax'"
           bs-typeahead="editor.getColumnNames"
@@ -19,11 +19,11 @@
         />
       </div>
     </div>
-    <div class="gf-form" ng-if="style.type !== 'hidden'">
-      <label class="gf-form-label width-12">Column Header</label>
+    <div class="gf-form gf-form--grow" ng-if="style.type !== 'hidden'">
+      <label class="gf-form-label width-8">Column Header</label>
       <input
         type="text"
-        class="gf-form-input width-12"
+        class="gf-form-input max-width-15"
         ng-model="style.alias"
         ng-change="editor.render()"
         ng-model-onblur
@@ -32,18 +32,18 @@
     </div>
     <gf-form-switch
       class="gf-form"
-      label-class="width-12"
+      label-class="width-8"
       label="Render value as link"
       checked="style.link"
       on-change="editor.render()"
     ></gf-form-switch>
   </div>
 
-  <div class="section gf-form-group">
+  <div class="gf-form-group">
     <h5 class="section-heading">Type</h5>
 
-    <div class="gf-form">
-      <label class="gf-form-label width-10">Type</label>
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label width-8">Type</label>
       <div class="gf-form-select-wrapper width-16">
         <select
           class="gf-form-input"
@@ -53,8 +53,8 @@
         ></select>
       </div>
     </div>
-    <div class="gf-form" ng-if="style.type === 'date'">
-      <label class="gf-form-label width-10">Date Format</label>
+    <div class="gf-form gf-form--grow" ng-if="style.type === 'date'">
+      <label class="gf-form-label width-8">Date Format</label>
       <gf-form-dropdown
         model="style.dateFormat"
         css-class="gf-form-input width-16"
@@ -69,7 +69,7 @@
     <div ng-if="style.type === 'string'">
       <gf-form-switch
         class="gf-form"
-        label-class="width-10"
+        label-class="width-8"
         ng-if="style.type === 'string'"
         label="Sanitize HTML"
         checked="style.sanitize"
@@ -78,11 +78,11 @@
     </div>
 
     <div ng-if="style.type !== 'hidden'">
-      <div class="gf-form">
-        <label class="gf-form-label width-10">Align</label>
+      <div class="gf-form gf-form--grow">
+        <label class="gf-form-label width-8">Align</label>
         <gf-form-dropdown
           model="style.align"
-          css-class="gf-form-input width-16"
+          css-class="gf-form-input"
           lookup-text="true"
           get-options="editor.alignTypes"
           allow-custom="false"
@@ -105,11 +105,11 @@
 
     <div ng-if="style.type === 'number'">
       <div class="gf-form">
-        <label class="gf-form-label width-10">Unit</label>
+        <label class="gf-form-label width-8">Unit</label>
         <unit-picker onChange="editor.setUnitFormat(style)" value="style.unit" width="16"></unit-picker>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label width-10">Decimals</label>
+        <label class="gf-form-label width-8">Decimals</label>
         <input
           type="number"
           class="gf-form-input width-4"
@@ -122,7 +122,7 @@
     </div>
   </div>
 
-  <div class="section gf-form-group" ng-if="style.type === 'string'">
+  <div class="gf-form-group" ng-if="style.type === 'string'">
     <h5 class="section-heading">Value Mappings</h5>
     <div class="editor-row">
       <div class="gf-form-group">
@@ -190,7 +190,7 @@
     </div>
   </div>
 
-  <div class="section gf-form-group" ng-if="['number', 'string'].indexOf(style.type) !== -1">
+  <div class="gf-form-group" ng-if="['number', 'string'].indexOf(style.type) !== -1">
     <h5 class="section-heading">Thresholds</h5>
     <div class="gf-form">
       <label class="gf-form-label width-8"
@@ -300,8 +300,6 @@
   <hr />
 </div>
 
-<div class="gf-form-button-row">
-  <button class="btn btn-inverse" ng-click="editor.addColumnStyle()">
-    <icon name="'plus'"></icon>&nbsp;Add column style
-  </button>
-</div>
+<button class="btn btn-inverse" ng-click="editor.addColumnStyle()">
+  <icon name="'plus'"></icon>&nbsp;Add column style
+</button>
