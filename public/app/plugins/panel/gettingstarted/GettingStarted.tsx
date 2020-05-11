@@ -8,6 +8,8 @@ import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Step } from './components/Step';
+import imageDark from './img/Onboarding_Panel_dark.svg';
+import imageLight from './img/Onboarding_Panel_light.svg';
 import { getSteps } from './steps';
 import { Card, SetupStep } from './types';
 
@@ -113,9 +115,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
 const getStyles = stylesFactory(() => {
   const { theme } = config;
-  const backgroundImage = theme.isDark
-    ? 'public/img/Onboarding_Panel_dark.svg'
-    : 'public/img/Onboarding_Panel_light.svg';
+  const backgroundImage = theme.isDark ? imageDark : imageLight;
   return {
     container: css`
       display: flex;
