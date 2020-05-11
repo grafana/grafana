@@ -28,7 +28,12 @@ Use these settings to refine your visualization.
 - **Sort order -** Select how to order the alerts displayed:
   - **Alphabetical (asc) -** Alphabetical order.
   - **Alphabetical (desc) -** Reverse alphabetical order.
-  - **Importance -** By importance.
+  - **Importance -** By importance according to the following values, with 1 being the highest:
+    - alerting: 1
+    - no_data: 2
+    - pending: 3
+    - ok: 4
+    - paused: 5
 - **Alerts from this dashboard -** Shows alerts only from the dashboard the alert list is in.
 
 ### Filter
