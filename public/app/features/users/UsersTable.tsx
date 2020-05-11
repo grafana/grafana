@@ -31,16 +31,20 @@ const UsersTable: FC<Props> = props => {
         {users.map((user, index) => {
           return (
             <tr key={`${user.userId}-${index}`}>
-              <td className="width-4 text-center">
+              <td className="width-2 text-center">
                 <img className="filter-table__avatar" src={user.avatarUrl} />
               </td>
-              <td>{user.login}</td>
+              <td className="max-width-6">
+                <span className="ellipsis">{user.login}</span>
+              </td>
 
-              <td>
+              <td className="max-width-5">
                 <span className="ellipsis">{user.email}</span>
               </td>
-              <td>{user.name}</td>
-              <td>{user.lastSeenAtAge}</td>
+              <td className="max-width-5">
+                <span className="ellipsis">{user.name}</span>
+              </td>
+              <td className="width-1">{user.lastSeenAtAge}</td>
 
               <td className="width-8">
                 <OrgRolePicker value={user.role} onChange={newRole => onRoleChange(newRole, user)} />
