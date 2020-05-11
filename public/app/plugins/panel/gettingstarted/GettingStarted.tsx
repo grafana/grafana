@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { PanelProps } from '@grafana/data';
-import { Button, stylesFactory } from '@grafana/ui';
+import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { css, cx } from 'emotion';
 import { contextSrv } from 'app/core/core';
@@ -82,31 +82,35 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
   render() {
     const { checksDone, currentStep, steps } = this.state;
-
-    if (!checksDone) {
-      return <div>checking...</div>;
-    }
-
     const styles = getStyles();
     const step = steps[currentStep];
 
     return (
       <div className={styles.container}>
-        <div className={styles.dismiss}>
-          <div onClick={this.dismiss}>Remove this panel</div>
-        </div>
-        {currentStep === steps.length - 1 && (
-          <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
-            <Button icon="angle-left" variant="secondary" />
+        {!checksDone ? (
+          <div className={styles.loading}>
+            <div className={styles.loadingText}>Checking completed setup steps</div>
+            <Spinner size={24} inline />
           </div>
-        )}
-        <div className={styles.content}>
-          <Step step={step} />
-        </div>
-        {currentStep < steps.length - 1 && (
-          <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
-            <Button icon="angle-right" variant="secondary" />
-          </div>
+        ) : (
+          <>
+            <div className={styles.dismiss}>
+              <div onClick={this.dismiss}>Remove this panel</div>
+            </div>
+            {currentStep === steps.length - 1 && (
+              <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
+                <Button icon="angle-left" variant="secondary" />
+              </div>
+            )}
+            <div className={styles.content}>
+              <Step step={step} />
+            </div>
+            {currentStep < steps.length - 1 && (
+              <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
+                <Button icon="angle-right" variant="secondary" />
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -187,6 +191,15 @@ const getStyles = stylesFactory(() => {
       text-decoration: underline;
       width: 99%;
       margin-bottom: ${theme.spacing.sm};
+    `,
+    loading: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    `,
+    loadingText: css`
+      margin-right: ${theme.spacing.sm};
     `,
   };
 });
