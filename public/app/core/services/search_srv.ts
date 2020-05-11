@@ -78,7 +78,7 @@ export class SearchSrv {
     if (query.layout === SearchLayout.List) {
       return backendSrv
         .search({ ...query, type: DashboardSearchItemType.DashDB })
-        .then(results => (results.length ? [{ items: results }] : []));
+        .then(results => (results.length ? [{ title: '', items: results }] : []));
     }
 
     if (!filters) {
