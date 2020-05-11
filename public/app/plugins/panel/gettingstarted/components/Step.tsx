@@ -55,6 +55,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow-y: hidden;
       width: 100%;
       display: flex;
+      justify-content: center;
+
+      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
+        justify-content: flex-start;
+      }
     `,
   };
 });

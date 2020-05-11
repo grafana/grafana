@@ -11,13 +11,16 @@ export const cardStyle = stylesFactory((theme: GrafanaTheme, complete: boolean) 
 
   return `
       background-color: ${theme.colors.bg1};
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing.xl};
       border: 1px solid ${theme.colors.border1};
       border-bottom-left-radius: ${theme.border.radius.md};
       border-bottom-right-radius: ${theme.border.radius.md};
       position: relative;
       max-height: 230px;
 
+      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
+        margin-right: ${theme.spacing.md};
+      }
       &::before {
         display: block;
         content: ' ';
