@@ -19,7 +19,7 @@ import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data'
 
 import { CloudWatchDatasource } from './datasource';
 import { TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
-import { Grammar } from 'prismjs';
+import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -63,6 +63,18 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     return this.startTask;
   };
+
+  isStatsQuery(query: string): boolean {
+    const grammar = this.getSyntax();
+    const tokens = Prism.tokenize(query, grammar) ?? [];
+
+    return !!tokens.find(
+      token =>
+        typeof token !== 'string' &&
+        token.content.toString().toLowerCase() === 'stats' &&
+        token.type === 'query-command'
+    );
+  }
 
   /**
    * Return suggestions based on input that can be then plugged into a typeahead dropdown.
@@ -153,7 +165,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return fields;
   };
 
-  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
+  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput> => {
     const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
     const functionSuggestions = [
       { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
@@ -406,5 +418,5 @@ function isInsideFunctionParenthesis(curToken: Token): boolean {
 
 function isAfterKeyword(keyword: string, token: Token): boolean {
   const prevToken = prevNonWhitespaceToken(token);
-  return prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by';
+  return !!(prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by');
 }

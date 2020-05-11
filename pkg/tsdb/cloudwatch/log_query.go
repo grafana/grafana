@@ -73,3 +73,48 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	return frame, nil
 }
+
+func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Frame, error) {
+	groupingFields := make([]*data.Field, 0)
+
+	for _, field := range results.Fields {
+		for _, groupingField := range groupingFieldNames {
+			if field.Name == groupingField {
+				groupingFields = append(groupingFields, field)
+			}
+		}
+	}
+
+	rowLength, err := results.RowLen()
+	if err != nil {
+		return nil, err
+	}
+
+	groupedDataFrames := make(map[string]*data.Frame)
+	for i := 0; i < rowLength; i++ {
+		groupKey := generateGroupKey(groupingFields, i)
+		if _, exists := groupedDataFrames[groupKey]; !exists {
+			newFrame := results.EmptyCopy()
+			newFrame.Name = groupKey
+			groupedDataFrames[groupKey] = newFrame
+		}
+
+		groupedDataFrames[groupKey].AppendRow(results.RowCopy(i)...)
+	}
+
+	newDataFrames := make([]*data.Frame, 0, len(groupedDataFrames))
+	for _, dataFrame := range groupedDataFrames {
+		newDataFrames = append(newDataFrames, dataFrame)
+	}
+
+	return newDataFrames, nil
+}
+
+func generateGroupKey(fields []*data.Field, row int) string {
+	groupKey := ""
+	for _, field := range fields {
+		groupKey += *field.At(row).(*string)
+	}
+
+	return groupKey
+}
