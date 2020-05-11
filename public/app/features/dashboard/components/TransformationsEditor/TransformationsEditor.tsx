@@ -163,15 +163,13 @@ export class TransformationsEditor extends React.PureComponent<Props> {
   render() {
     const hasTransformationsConfigured = this.props.transformations.length > 0;
     return (
-      <CustomScrollbar autoHeightMin="100%">
-        <Container padding="md">
-          <div aria-label={selectors.components.TransformTab.content}>
-            {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
-            {hasTransformationsConfigured && this.renderTransformationEditors()}
-            {hasTransformationsConfigured && this.renderTransformationSelector()}
-          </div>
-        </Container>
-      </CustomScrollbar>
+      <Container padding="md">
+        <div aria-label={selectors.components.TransformTab.content}>
+          {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
+          {hasTransformationsConfigured && this.renderTransformationEditors()}
+          {hasTransformationsConfigured && this.renderTransformationSelector()}
+        </div>
+      </Container>
     );
   }
 }
@@ -181,6 +179,8 @@ const TransformationCard: React.FC<CardProps> = props => {
   const styles = getTransformationCardStyles(theme);
   return <Card {...props} className={styles.card} />;
 };
+
+const scrollBarStyles = (theme: GrafanaTheme) => css``;
 
 const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
