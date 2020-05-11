@@ -94,6 +94,8 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 	u := ds.Url
 	// Make sure the URL starts with a protocol specifier, so parsing is unambiguous
 	if !reURL.MatchString(u) {
+		logger.Debug(
+			"Data source URL doesn't specify protocol, so prepending it with http:// in order to make it unambiguous")
 		u = fmt.Sprintf("http://%s", u)
 	}
 	targetURL, err := url.Parse(u)

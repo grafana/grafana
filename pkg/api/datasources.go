@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -17,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var datasourceLogger = log.New("datasource")
 
 func GetDataSources(c *models.ReqContext) Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId}
@@ -138,6 +141,8 @@ func validateURL(u string) Response {
 	if u != "" {
 		// Make sure the URL starts with a protocol specifier, so parsing is unambiguous
 		if !reURL.MatchString(u) {
+			datasourceLogger.Debug(
+				"Data source URL doesn't specify protocol, so prepending it with http:// in order to make it unambiguous")
 			u = fmt.Sprintf("http://%s", u)
 		}
 		_, err := url.Parse(u)
