@@ -50,7 +50,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__menu {
   background: $menu-dropdown-bg;
-  box-shadow: $menu-dropdown-shadow;
+  box-shadow: none;
   position: absolute;
   z-index: $zindex-dropdown;
   min-width: 100%;
@@ -99,8 +99,6 @@ $select-input-bg-disabled: $input-bg-disabled;
 
   &.gf-form-select-box__option--is-focused {
     color: $dropdownLinkColorHover;
-    background: $menu-dropdown-hover-bg;
-    @include left-brand-border-gradient();
   }
 
   &.gf-form-select-box__option--is-selected {
