@@ -11,7 +11,7 @@ For more information on the types of plugins you can build, refer to the [Plugin
 
 The easiest way to start developing Grafana plugins is to use the [Grafana Toolkit](https://www.npmjs.com/package/@grafana/toolkit).
 
-Open the terminal, and run the following command in your [plugin directory]({{< relref "../../installation/configuration/_index.md#plugins" >}}):
+Open the terminal, and run the following command in your [plugin directory]({{< relref "../../installation/configuration.md#plugins" >}}):
 
 ```bash
 npx @grafana/toolkit plugin:create my-grafana-plugin
