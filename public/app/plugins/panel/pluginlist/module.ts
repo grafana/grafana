@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 import { auto, IScope } from 'angular';
-import { PanelEvents } from '@grafana/data';
 import { ContextSrv } from '../../../core/services/context_srv';
 import { CoreEvents } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
