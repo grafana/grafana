@@ -9,15 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-var datasourceLogger = log.New("datasources")
 
 func GetDataSources(c *models.ReqContext) Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId}
