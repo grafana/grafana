@@ -340,6 +340,7 @@ export interface ExploreStartPageProps {
   datasource?: DataSourceApi;
   exploreMode: ExploreMode;
   onClickExample: (query: DataQuery) => void;
+  exploreId?: any;
 }
 
 /**
