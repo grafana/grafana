@@ -9,6 +9,7 @@ interface FeatureInfoBox extends Omit<InfoBoxProps, 'branded' | 'title' | 'urlTi
   title: string;
   featureState?: FeatureState;
 }
+
 export const FeatureInfoBox = React.memo(
   React.forwardRef<HTMLDivElement, FeatureInfoBox>(({ title, featureState, ...otherProps }, ref) => {
     const theme = useTheme();

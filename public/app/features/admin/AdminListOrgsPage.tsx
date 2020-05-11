@@ -3,7 +3,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
-import { LinkButton } from '@grafana/ui';
+import { LinkButton, InfoBox, Badge, VerticalGroup } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
 import { AdminOrgsTable } from './AdminOrgsTable';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
@@ -29,6 +29,22 @@ export const AdminListOrgsPages: FC = () => {
       <Page.Contents>
         <>
           <div className="page-action-bar">
+            <InfoBox branded>
+              <VerticalGroup spacing="xs">
+                <Badge text="Info" color="blue" icon="info-circle" />
+                <p>
+                  Organizations is a feature that only 1% of Grafana users are utilizing, and we feel that most of those
+                  users would have a better experience using Teams instead. As such, we are considering de-emphasizing
+                  and eventually deprecating Organizations in future Grafana releases. If you would like to provide
+                  feedback or describe your use case, please do so{' '}
+                  <a className="external-link" href="https://github.com/grafana/grafana/issues/xxx">
+                    here
+                  </a>
+                  .
+                </p>
+              </VerticalGroup>
+            </InfoBox>
+
             <div className="page-action-bar__spacer"></div>
             <LinkButton icon="plus" href="org/new">
               New org
