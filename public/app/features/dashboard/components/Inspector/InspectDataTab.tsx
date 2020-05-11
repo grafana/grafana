@@ -93,7 +93,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   getProcessedData(): DataFrame[] {
     if (this.state.transformId === DataTransformerID.noop) {
-      console.log(this.props.data);
       return this.props.data;
     }
     const data = this.getTransformedData();
