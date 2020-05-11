@@ -119,7 +119,6 @@
 }
 
 .graph-legend-table {
-  padding-bottom: 1px;
   padding-right: 5px;
   padding-left: 5px;
 
@@ -171,7 +170,7 @@
     overflow: hidden;
   }
 
-  .graph-legend-series:nth-child(odd) {
+  .graph-legend-series:nth-child(even) {
     background: $table-bg-accent;
   }
 

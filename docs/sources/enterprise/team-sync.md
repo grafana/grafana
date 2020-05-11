@@ -14,8 +14,7 @@ weight = 600
 
 {{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
-Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP or GitHub OAuth users who are members
-of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
+Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP, OAuth, or SAML users who are members of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
 
 > Only available in Grafana Enterprise.
 
