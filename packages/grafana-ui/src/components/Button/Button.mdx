@@ -9,6 +9,8 @@ import { Button } from './Button';
 
 Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If you need multiple buttons for different actions, decide which action is the most important and make that the primary `Button`. All other `Button` components should be secondary.
 
+If there is no primary action, all `Button` components should be secondary.
+
 <Preview>
   <div>
     <Button variant="primary" size="sm" renderAs="button" style={{ margin: '5px' }}>
@@ -25,7 +27,7 @@ Used for "call to action", i.e. triggering the main action. There should never b
 
 ## Secondary
 
-The secondary `Button` can trigger various actions. When next to the primary `Button`, it can for example be used for "Cancel" or "Abort" actions. Apart from that, the secondary variant is the main `Button` variant in Grafana and is used for most buttons except when there is an important main action.
+The secondary `Button` can trigger various actions. When next to the primary `Button`, it can for example be used for "Cancel" or "Abort" actions. Apart from that, the secondary variant is the main `Button` variant in Grafana and is used for most buttons except when there is an important main action. Secondary is the default `Button` style.
 
 <Preview>
   <div>
