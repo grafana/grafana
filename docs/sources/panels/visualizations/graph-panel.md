@@ -29,12 +29,12 @@ Use these settings to refine your visualization.
 - **Line width -** The width of the line for a series. (default 1).
 - **Staircase -** Draws adjacent points as staircase.
 - **Area fill -** Amount of color fill for a series. (default 1, 0 is none)
-- **Fill gradient -**
+- **Fill gradient -** XXX
 - **Points -** Display points for values.
 - **Point radius -** Controls how large the points are.
 
 ### Hover tooltip
-
+XXX - this entire section
 - **Mode**
   - **All series -**
   - **Single -**
@@ -48,9 +48,9 @@ Use these settings to refine your visualization.
 - **Stack -** Each series is stacked on top of another.
 - **Percent -** Available when **Stack** is selected. Each series is drawn as a percentage of the total of all series.
 - **Null value -** How null values are displayed.
-  - **connected -**
-  - **null -**
-  - **null as zero -**
+  - **connected -** XXX
+  - **null -** XXX
+  - **null as zero -** XXX
 
 ## Series overrides
 
@@ -76,18 +76,17 @@ Options are identical for both Y-axes.
 - **Align -** Select to align left and right Y-axes by value. (default unchecked/false)
 - **Level -** Available when **Align** is selected. Value to use for alignment of left and right Y-axes, starting from Y=0. (default 0)
 
-
 ### X-Axis
 
 - **Show -** Click to show or hide the axis.
-- **Mode -**
+- **Mode -** XXX
   - **Time -** (default) The X-axis represents time and that the data is grouped by time (for example, by hour, or by minute).
   - **Series -** The data is grouped by series and not by time. The Y-axis still represents the value.
-    - **Value -** 
+    - **Value -**  XXX
   - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
-    - **Buckets -**
-    - **X-Min -**
-    - **X-Max -**
+    - **Buckets -** XXX
+    - **X-Min -** XXX
+    - **X-Max -** XXX
 	
 ## Legend
 
