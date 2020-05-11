@@ -119,8 +119,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       field.state = {
         ...field.state,
-        displayName: displayName,
         scopedVars: fieldScopedVars,
+        displayName,
       };
 
       const config: FieldConfig = { ...field.config };

@@ -1,4 +1,4 @@
-import { DataFrame, Field, TIME_SERIES_FIELD_NAME, FieldType } from '../types';
+import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
 import { formatLabels } from '../utils/labels';
 
 /**
@@ -62,7 +62,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   // For time series we should normally treat time field with same name
   // But in case it has a join source we should handle it as normal field
   if (field.type === FieldType.time && !field.labels) {
-    return displayName ?? 'Time';
+    return displayName ?? TIME_SERIES_TIME_FIELD_NAME;
   }
 
   let parts: string[] = [];
@@ -86,7 +86,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
     frameNameAdded = true;
   }
 
-  if (field.name && field.name !== TIME_SERIES_FIELD_NAME) {
+  if (field.name && field.name !== TIME_SERIES_VALUE_FIELD_NAME) {
     parts.push(field.name);
   }
 
@@ -106,7 +106,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   }
 
   // if we have not added frame name and no labels, and field name = Value, we should add frame name
-  if (frame && !frameNameAdded && !labelsAdded && field.name === TIME_SERIES_FIELD_NAME) {
+  if (frame && !frameNameAdded && !labelsAdded && field.name === TIME_SERIES_VALUE_FIELD_NAME) {
     if (frame.name && frame.name.length > 0) {
       parts.push(frame.name);
       frameNameAdded = true;
@@ -118,7 +118,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   } else if (field.name) {
     displayName = field.name;
   } else {
-    displayName = TIME_SERIES_FIELD_NAME;
+    displayName = TIME_SERIES_VALUE_FIELD_NAME;
   }
 
   return displayName;

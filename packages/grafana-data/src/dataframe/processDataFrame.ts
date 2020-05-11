@@ -14,7 +14,8 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
-  TIME_SERIES_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  TIME_SERIES_TIME_FIELD_NAME,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -71,13 +72,13 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   const fields = [
     {
-      name: 'Time',
+      name: TIME_SERIES_TIME_FIELD_NAME,
       type: FieldType.time,
       config: {},
       values: new ArrayVector<number>(times),
     },
     {
-      name: TIME_SERIES_FIELD_NAME,
+      name: TIME_SERIES_VALUE_FIELD_NAME,
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
@@ -118,13 +119,13 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
     name: graphSeries.label,
     fields: [
       {
-        name: graphSeries.label || TIME_SERIES_FIELD_NAME,
+        name: graphSeries.label || TIME_SERIES_VALUE_FIELD_NAME,
         type: FieldType.number,
         config: {},
         values: x,
       },
       {
-        name: 'Time',
+        name: TIME_SERIES_TIME_FIELD_NAME,
         type: FieldType.time,
         config: {
           unit: 'dateTimeAsIso',

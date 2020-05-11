@@ -148,4 +148,5 @@ export interface DataFrameDTO extends QueryResultBase {
 
 export interface FieldCalcs extends Record<string, any> {}
 
-export const TIME_SERIES_FIELD_NAME = 'Value';
+export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
+export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
