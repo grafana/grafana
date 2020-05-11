@@ -61,6 +61,8 @@ export function addStandardDataReduceOptions(
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
     defaultValue: [ReducerID.mean],
+    // Hides it when all values mode is on
+    showIf: currentConfig => currentConfig.reduceOptions.values === false,
   });
 
   if (includeOrientation) {
