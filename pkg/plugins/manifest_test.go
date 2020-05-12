@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestManifestParsing(t *testing.T) {
+func TestReadPluginManifest(t *testing.T) {
 	txt := `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
 
@@ -42,15 +43,14 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 	t.Run("valid manifest", func(t *testing.T) {
 		manifest, err := readPluginManifest([]byte(txt))
 
-		assert.Nil(t, err)
-		assert.NotNil(t, manifest)
-		assert.Equal(t, manifest.Plugin, "grafana-googlesheets-datasource")
+		require.NoError(t, err)
+		require.NotNil(t, manifest)
+		assert.Equal(t, "grafana-googlesheets-datasource", manifest.Plugin)
 	})
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		manifest, err := readPluginManifest([]byte(modified))
-		assert.NotNil(t, err)
-		assert.Nil(t, manifest)
+		_, err := readPluginManifest([]byte(modified))
+		require.Error(t, err)
 	})
 }

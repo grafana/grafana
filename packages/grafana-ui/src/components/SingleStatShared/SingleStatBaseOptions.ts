@@ -202,6 +202,15 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     delete options.fieldOptions;
   }
 
+  if (previousVersion < 7.1) {
+    // move title to displayName
+    const oldTitle = (panel.fieldConfig.defaults as any).title;
+    if (oldTitle !== undefined && oldTitle !== null) {
+      panel.fieldConfig.defaults.displayName = oldTitle;
+      delete (panel.fieldConfig.defaults as any).title;
+    }
+  }
+
   return options as SingleStatBaseOptions;
 }
 
