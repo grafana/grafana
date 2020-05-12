@@ -15,7 +15,7 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-type PreferredVisualisationType = 'graph' | 'table';
+export type PreferredVisualisationType = 'graph' | 'table';
 
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
@@ -46,7 +46,7 @@ export interface QueryResultMeta {
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
-  title: string;
+  displayName: string;
   value: number;
 }
 
@@ -111,6 +111,10 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 
 export interface TimeSeries extends QueryResultBase {
   target: string;
+  /**
+   * If name is manually configured via an alias / legend pattern
+   */
+  title?: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
   tags?: Labels;

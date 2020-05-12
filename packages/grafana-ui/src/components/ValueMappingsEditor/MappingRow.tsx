@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
 import { IconButton, Label, RadioButtonGroup } from '../index';
 import { Field } from '../Forms/Field';
@@ -19,24 +19,30 @@ const MAPPING_OPTIONS: Array<SelectableValue<MappingType>> = [
 export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, removeValueMapping }) => {
   const { type } = valueMapping;
 
-  const onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, value: event.target.value });
+  const onMappingValueChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, value: value });
   };
 
-  const onMappingFromChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, from: event.target.value });
+  const onMappingFromChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, from: value });
   };
 
-  const onMappingToChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, to: event.target.value });
+  const onMappingToChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, to: value });
   };
 
-  const onMappingTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, text: event.target.value });
+  const onMappingTextChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, text: value });
   };
 
   const onMappingTypeChange = (mappingType: MappingType) => {
     updateValueMapping({ ...valueMapping, type: mappingType });
+  };
+
+  const onKeyDown = (handler: (value: string) => void) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handler(e.currentTarget.value);
+    }
   };
 
   const renderRow = () => {
@@ -45,15 +51,29 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
         <>
           <HorizontalGroup>
             <Field label="From">
-              <Input type="number" defaultValue={(valueMapping as RangeMap).from!} onBlur={onMappingFromChange} />
+              <Input
+                type="number"
+                defaultValue={(valueMapping as RangeMap).from!}
+                onBlur={e => onMappingFromChange(e.currentTarget.value)}
+                onKeyDown={onKeyDown(onMappingFromChange)}
+              />
             </Field>
             <Field label="To">
-              <Input type="number" defaultValue={(valueMapping as RangeMap).to} onBlur={onMappingToChange} />
+              <Input
+                type="number"
+                defaultValue={(valueMapping as RangeMap).to}
+                onBlur={e => onMappingToChange(e.currentTarget.value)}
+                onKeyDown={onKeyDown(onMappingToChange)}
+              />
             </Field>
           </HorizontalGroup>
 
           <Field label="Text">
-            <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
+            <Input
+              defaultValue={valueMapping.text}
+              onBlur={e => onMappingTextChange(e.currentTarget.value)}
+              onKeyDown={onKeyDown(onMappingTextChange)}
+            />
           </Field>
         </>
       );
@@ -62,11 +82,20 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
     return (
       <>
         <Field label="Value">
-          <Input type="number" defaultValue={(valueMapping as ValueMap).value} onBlur={onMappingValueChange} />
+          <Input
+            type="number"
+            defaultValue={(valueMapping as ValueMap).value}
+            onBlur={e => onMappingValueChange(e.currentTarget.value)}
+            onKeyDown={onKeyDown(onMappingValueChange)}
+          />
         </Field>
 
         <Field label="Text">
-          <Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
+          <Input
+            defaultValue={valueMapping.text}
+            onBlur={e => onMappingTextChange(e.currentTarget.value)}
+            onKeyDown={onKeyDown(onMappingTextChange)}
+          />
         </Field>
       </>
     );

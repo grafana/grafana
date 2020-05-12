@@ -11,7 +11,6 @@ import {
   BracesPlugin,
   Select,
   MultiSelect,
-  Token,
 } from '@grafana/ui';
 
 // Utils & Services
@@ -143,15 +142,37 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { query, onChange, onRunQuery } = this.props;
+    const { query, onChange, onRunQuery, datasource, exploreMode } = this.props;
     const { selectedLogGroups, selectedRegion } = this.state;
+
+    // TEMP: Remove when logs/metrics unification is complete
+    if (datasource.languageProvider && exploreMode === ExploreMode.Logs) {
+      const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
+      const queryUsesStatsCommand = cloudwatchLanguageProvider.isStatsQuery(query.expression);
+
+      if (queryUsesStatsCommand) {
+        this.setState({
+          hint: {
+            message: 'You are trying to run a stats query in Logs mode. ',
+            fix: {
+              label: 'Switch to Metrics mode.',
+              action: this.switchToMetrics,
+            },
+          },
+        });
+      } else {
+        this.setState({
+          hint: undefined,
+        });
+      }
+    }
 
     if (onChange) {
       const nextQuery = {
         ...query,
         expression: value,
-        logGroupNames: selectedLogGroups?.map(logGroupName => logGroupName.value) ?? [],
-        region: selectedRegion.value,
+        logGroupNames: selectedLogGroups?.map(logGroupName => logGroupName.value!) ?? [],
+        region: selectedRegion.value ?? 'default',
       };
       onChange(nextQuery);
 
@@ -171,7 +192,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     if (onChange) {
       const nextQuery = {
         ...query,
-        logGroupNames: v.map(logGroupName => logGroupName.value) ?? [],
+        logGroupNames: v.map(logGroupName => logGroupName.value!) ?? [],
       };
 
       onChange(nextQuery);
@@ -186,26 +207,29 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     const logGroups = await this.fetchLogGroupOptions(v.value!);
 
-    this.setState(state => ({
-      availableLogGroups: logGroups,
-      selectedLogGroups: intersection(state.selectedLogGroups, logGroups),
-      loadingLogGroups: false,
-    }));
+    this.setState(state => {
+      const selectedLogGroups = intersection(state.selectedLogGroups, logGroups);
 
-    const { onChange, query } = this.props;
+      const { onChange, query } = this.props;
+      if (onChange) {
+        const nextQuery = {
+          ...query,
+          region: v.value ?? 'default',
+          logGroupNames: selectedLogGroups.map(group => group.value!),
+        };
 
-    if (onChange) {
-      const nextQuery = {
-        ...query,
-        region: v.value,
+        onChange(nextQuery);
+      }
+      return {
+        availableLogGroups: logGroups,
+        selectedLogGroups: selectedLogGroups,
+        loadingLogGroups: false,
       };
-
-      onChange(nextQuery);
-    }
+    });
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { datasource, exploreMode } = this.props;
+    const { datasource } = this.props;
     const { selectedLogGroups } = this.state;
 
     if (!datasource.languageProvider) {
@@ -221,23 +245,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       { history, absoluteRange, logGroupNames: selectedLogGroups.map(logGroup => logGroup.value!) }
     );
 
-    const tokens = editor?.value.data.get('tokens');
-    const queryUsesStatsCommand = tokens.find(
-      (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
-    );
-
-    // TEMP: Remove when logs/metrics unification is complete
-    if (queryUsesStatsCommand && exploreMode === ExploreMode.Logs) {
-      this.setState({
-        hint: {
-          message: 'You are trying to run a stats query in Logs mode. ',
-          fix: {
-            label: 'Switch to Metrics mode.',
-            action: this.switchToMetrics,
-          },
-        },
-      });
-    }
     return result;
   };
 

@@ -31,7 +31,7 @@ The singlestat panel has a normal query editor to allow you define your exact me
    * **first** - The first value in the series
    * **delta** - The total incremental increase (of a counter) in the series. An attempt is made to account for counter resets, but this will only be accurate for single instance metrics. Used to show total counter increase in time series.
    * **diff** - The difference between 'current' (last value) and 'first'.
-   * **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
+   * **range** - The difference between 'min' and 'max'. Useful to show the range of change for a gauge.
 2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear *before/after* the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
 3. **Units**: Units are appended to the Singlestat  within the panel, and will respect the color and threshold settings for the value.
 4. **Decimals**: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.

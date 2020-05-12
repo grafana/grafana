@@ -67,6 +67,10 @@ export class FieldCache {
     return !!this.fieldByName[name];
   }
 
+  hasFieldWithNameAndType(name: string, type: FieldType): boolean {
+    return !!this.fieldByName[name] && this.fieldByType[type].filter(field => field.name === name).length > 0;
+  }
+
   /**
    * Returns the first field with the given name.
    */

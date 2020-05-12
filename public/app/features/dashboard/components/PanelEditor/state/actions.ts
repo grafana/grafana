@@ -58,10 +58,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       // Resend last query result on source panel query runner
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
-        const lastResult = panel.getQueryRunner().getLastResult();
-        if (lastResult) {
-          sourcePanel.getQueryRunner().pipeDataToSubject(lastResult);
-        }
+        sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
       }, 20);
     }
 

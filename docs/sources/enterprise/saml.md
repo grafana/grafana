@@ -43,15 +43,23 @@ The table below describes all SAML configuration options. Continue reading below
 
 | Setting                                                     | Required | Description                                                                                        | Default       |
 | ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
-| `enabled`                                                   | No       | Whether SAML authentication is allowed                                                             | `false`       |
-| `certificate` or `certificate_path`                         | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
-| `private_key` or `private_key_path`                         | Yes      | Base64-encoded string or Path for the SP private key                                               |               |
-| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
-| `max_issue_delay`                                           | No       | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
-| `metadata_valid_duration`                                   | No       | Duration, for how long the SP metadata is valid                                                  | `48h`         |
-| `assertion_attribute_name`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name         | `displayName` |
-| `assertion_attribute_login`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle | `mail`        |
-| `assertion_attribute_email`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email        | `mail`        |
+| `enabled`                                                   | No  | Whether SAML authentication is allowed                                                             | `false`       |
+| `certificate` or `certificate_path`                         | Yes | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
+| `private_key` or `private_key_path`                         | Yes | Base64-encoded string or Path for the SP private key                                               |               |
+| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url`  | Yes | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
+| `max_issue_delay`                                           | No  | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
+| `metadata_valid_duration`                                   | No  | Duration, for how long the SP metadata is valid                                                  | `48h`         |
+| `assertion_attribute_name`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user name         | `displayName` |
+| `assertion_attribute_login`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user login handle | `mail`        |
+| `assertion_attribute_email`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user email        | `mail`        |
+| `assertion_attribute_groups`                                | No  | Friendly name or name of the attribute within the SAML assertion to use as the user groups     |               |
+| `assertion_attribute_role`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user roles      |               |
+| `assertion_attribute_org`                                   | No  | Friendly name or name of the attribute within the SAML assertion to use as the user organization |             |
+| `allowed_organizations`                                     | No  | List of comma- or space-separated organizations. User should be a member of at least one organization to log in. |               |
+| `org_mapping`                                               | No  | List of comma- or space-separated Organization:OrgId mappings                                  |               |
+| `role_values_editor`                                        | No  | List of comma- or space-separated roles which will be mapped into the Editor role               |               |
+| `role_values_admin`                                         | No  | List of comma- or space-separated roles which will be mapped into the Admin role                |               |
+| `role_values_grafana_admin`                                 | No  | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role |               |
 
 ### Enable SAML authentication
 
@@ -109,6 +117,69 @@ Grafana provides configuration options that let you modify which keys to look at
 
 An example is `assertion_attribute_name = "givenName"` where Grafana looks within the assertion for an attribute with a friendly name or name of `givenName`. Both, the friendly name (e.g. `givenName`) or the name (e.g. `urn:oid:2.5.4.42`) can be used interchangeably as the value for the configuration option.
 
+### Configure team sync
+
+> Team sync support for SAML only available in Grafana v7.0+
+
+To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "./enterprise-configuration.md#assertion-attribute-groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
+
+[Learn more about Team Sync]({{< relref "../enterprise/team-sync.md" >}})
+
+### Configure role sync
+
+> Only available in Grafana v7.0+
+
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for [Editor]({{< relref "../permissions/organization_roles.md#editor-role" >}}), [Admin]({{< relref "../permissions/organization_roles.md#admin-role" >}}) and [Grafana Admin]({{< relref "../permissions/overview.md#grafana-admin" >}}) roles.
+
+1. In the configuration file, set [`assertion_attribute_role`]({{< relref "./enterprise-configuration.md#assertion-attribute-role" >}}) option to the attribute name where the role information will be extracted from.
+1. Set the [`role_values_editor`]({{< relref "./enterprise-configuration.md#role-values-editor" >}}) option to the values mapped to the `Editor` role.
+1. Set the [`role_values_admin`]({{< relref "./enterprise-configuration.md#role-values-admin" >}}) option to the values mapped to the organization `Admin` role.
+1. Set the [`role_values_grafana_admin`]({{< relref "./enterprise-configuration.md#role-values-grafana-admin" >}}) option to the values mapped to the `Grafana Admin` role.
+
+If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
+
+Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
+
+Example configuration:
+
+```bash
+[auth.saml]
+assertion_attribute_role = role
+role_values_editor = editor, developer
+role_values_admin = admin, operator
+role_values_grafana_admin = superadmin
+```
+
+**Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
+
+### Configure organization mapping
+
+> Only available in Grafana v7.0+
+
+Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider. 
+
+1. In configuration file, set [`assertion_attribute_org`]({{< relref "./enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in.
+1. Set [`org_mapping`]({{< relref "./enterprise-configuration.md#org-mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id.
+
+For example, use following config to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
+
+```bash
+[auth.saml]
+assertion_attribute_org = Org
+org_mapping = Engineering:2, Sales:3
+```
+
+You can specify multiple organizations both for the IdP and Grafana:
+
+* `org_mapping = Engineering:2, Sales:2` to map users from `Engineering` and `Sales` to `2` in Grafana.
+* `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
+
+### Configure allowed organizations
+
+> Only available in Grafana v7.0+
+
+With the [`allowed_organizations`]({{< relref "./enterprise-configuration.md#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+
 ## Example SAML configuration
 
 ```bash
@@ -122,6 +193,15 @@ metadata_valid_duration = 48h
 assertion_attribute_name = displayName
 assertion_attribute_login = mail
 assertion_attribute_email = mail
+
+assertion_attribute_groups = Group
+assertion_attribute_role = Role
+assertion_attribute_org = Org
+role_values_editor = editor, developer
+role_values_admin = admin, operator
+role_values_grafana_admin = superadmin
+org_mapping = Engineering:2, Sales:3
+allowed_organizations = Engineering, Sales
 ```
 
 ## Troubleshoot SAML authentication

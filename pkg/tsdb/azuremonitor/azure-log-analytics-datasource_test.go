@@ -57,8 +57,15 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					RefID:        "A",
 					ResultFormat: "time_series",
 					URL:          "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
-					Params:       url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
-					Target:       "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"azureLogAnalytics": map[string]interface{}{
+							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": "time_series",
+							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+						},
+					}),
+					Params: url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
+					Target: "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
 				},
 			},
 			Err: require.NoError,
@@ -69,7 +76,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			queries, err := datasource.buildQueries(tt.queryModel, tt.timeRange)
 			tt.Err(t, err)
-			if diff := cmp.Diff(tt.azureLogAnalyticsQueries, queries, cmpopts.EquateNaNs()); diff != "" {
+			if diff := cmp.Diff(tt.azureLogAnalyticsQueries, queries, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -100,7 +107,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"subscription":"1234","workspace":"aworkspace","query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:  require.NoError,
 		},
 		{
@@ -133,7 +140,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"ObjectName","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"ObjectName","type":"string"},{"name":"avg_CounterValue","type":"real"}],"subscription":"1234","workspace":"aworkspace","query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:  require.NoError,
 		},
 		{
@@ -150,7 +157,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 					},
 				},
 			},
-			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"avg_CounterValue","type":"int"}],"query":"test query"}`,
+			meta: `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"avg_CounterValue","type":"int"}],"subscription":"1234","workspace":"aworkspace","query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:  require.NoError,
 		},
 		{
@@ -158,7 +165,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 			testFile: "loganalytics/4-log-analytics-response-metrics-no-time-column.json",
 			query:    "test query",
 			series:   nil,
-			meta:     `{"columns":[{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"query":"test query"}`,
+			meta:     `{"columns":[{"name":"Computer","type":"string"},{"name":"avg_CounterValue","type":"real"}],"subscription":"1234","workspace":"aworkspace","query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:      require.NoError,
 		},
 		{
@@ -166,7 +173,7 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 			testFile: "loganalytics/5-log-analytics-response-metrics-no-value-column.json",
 			query:    "test query",
 			series:   nil,
-			meta:     `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"}],"query":"test query"}`,
+			meta:     `{"columns":[{"name":"TimeGenerated","type":"datetime"},{"name":"Computer","type":"string"}],"subscription":"1234","workspace":"aworkspace","query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err:      require.NoError,
 		},
 	}
@@ -175,7 +182,15 @@ func TestParsingAzureLogAnalyticsResponses(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			data, _ := loadLogAnalyticsTestFile(tt.testFile)
 
-			series, meta, err := datasource.parseToTimeSeries(data, tt.query)
+			model := simplejson.NewFromAny(map[string]interface{}{
+				"subscriptionId": "1234",
+				"azureLogAnalytics": map[string]interface{}{
+					"workspace": "aworkspace",
+				},
+			})
+			params := url.Values{}
+			params.Add("query", tt.query)
+			series, meta, err := datasource.parseToTimeSeries(data, model, params)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.series, series, cmpopts.EquateNaNs()); diff != "" {
@@ -262,7 +277,7 @@ func TestParsingAzureLogAnalyticsTableResponses(t *testing.T) {
 			},
 			meta: `{"columns":[{"name":"TenantId","type":"string"},{"name":"Computer","type":"string"},{"name":"ObjectName","type":"string"},{"name":"CounterName","type":"string"},` +
 				`{"name":"InstanceName","type":"string"},{"name":"Min","type":"real"},{"name":"Max","type":"real"},{"name":"SampleCount","type":"int"},{"name":"CounterValue","type":"real"},` +
-				`{"name":"TimeGenerated","type":"datetime"}],"query":"test query"}`,
+				`{"name":"TimeGenerated","type":"datetime"}],"subscription":"1234","workspace":"aworkspace","query":"test query","encodedQuery":"H4sIAAAAAAAA/ypJLS5RKCxNLaoEBAAA///0rBfVCgAAAA=="}`,
 			Err: require.NoError,
 		},
 	}
@@ -271,7 +286,15 @@ func TestParsingAzureLogAnalyticsTableResponses(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			data, _ := loadLogAnalyticsTestFile(tt.testFile)
 
-			tables, meta, err := datasource.parseToTables(data, tt.query)
+			model := simplejson.NewFromAny(map[string]interface{}{
+				"subscriptionId": "1234",
+				"azureLogAnalytics": map[string]interface{}{
+					"workspace": "aworkspace",
+				},
+			})
+			params := url.Values{}
+			params.Add("query", tt.query)
+			tables, meta, err := datasource.parseToTables(data, model, params)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.tables, tables, cmpopts.EquateNaNs()); diff != "" {

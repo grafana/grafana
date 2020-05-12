@@ -18,7 +18,7 @@ interface State {
   stats: string[];
 }
 
-export class WrapperWithState extends PureComponent<any, State> {
+class WrapperWithState extends PureComponent<any, State> {
   constructor(props: any) {
     super(props);
     this.state = {

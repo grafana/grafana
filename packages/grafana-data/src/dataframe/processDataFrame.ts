@@ -14,12 +14,15 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  TIME_SERIES_TIME_FIELD_NAME,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
+import { getFieldDisplayName } from '../field/fieldState';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -61,6 +64,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const times: number[] = [];
   const values: TimeSeriesValue[] = [];
+
   for (const point of timeSeries.datapoints) {
     values.push(point[0]);
     times.push(point[1] as number);
@@ -68,13 +72,13 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   const fields = [
     {
-      name: 'Time',
+      name: TIME_SERIES_TIME_FIELD_NAME,
       type: FieldType.time,
       config: {},
       values: new ArrayVector<number>(times),
     },
     {
-      name: timeSeries.target || 'Value',
+      name: TIME_SERIES_VALUE_FIELD_NAME,
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
@@ -83,6 +87,10 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       labels: timeSeries.tags,
     },
   ];
+
+  if (timeSeries.title) {
+    (fields[1].config as FieldConfig).displayName = timeSeries.title;
+  }
 
   return {
     name: timeSeries.target,
@@ -111,13 +119,13 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
     name: graphSeries.label,
     fields: [
       {
-        name: graphSeries.label || 'Value',
+        name: graphSeries.label || TIME_SERIES_VALUE_FIELD_NAME,
         type: FieldType.number,
         config: {},
         values: x,
       },
       {
-        name: 'Time',
+        name: TIME_SERIES_TIME_FIELD_NAME,
         type: FieldType.time,
         config: {
           unit: 'dateTimeAsIso',
@@ -312,18 +320,20 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
     const { timeField, timeIndex } = getTimeField(frame);
     if (timeField) {
       const valueIndex = timeIndex === 0 ? 1 : 0;
+      const valueField = fields[valueIndex];
+      const timeField = fields[timeIndex!];
 
       // Make sure it is [value,time]
       for (let i = 0; i < rowCount; i++) {
         rows.push([
-          fields[valueIndex].values.get(i), // value
-          fields[timeIndex!].values.get(i), // time
+          valueField.values.get(i), // value
+          timeField.values.get(i), // time
         ]);
       }
 
       return {
-        alias: fields[valueIndex].name || frame.name,
-        target: fields[valueIndex].name || frame.name,
+        alias: frame.name,
+        target: getFieldDisplayName(valueField, frame),
         datapoints: rows,
         unit: fields[0].config ? fields[0].config.unit : undefined,
         refId: frame.refId,
@@ -432,18 +442,6 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
   };
 }
 
-export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
-  for (let i = 0; i < series.fields.length; i++) {
-    if (series.fields[i].type === FieldType.time) {
-      return {
-        timeField: series.fields[i],
-        timeIndex: i,
-      };
-    }
-  }
-  return {};
-};
-
 /**
  * Wrapper to get an array from each field value
  */
@@ -487,3 +485,15 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
     name: data.name,
   };
 }
+
+export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      return {
+        timeField: series.fields[i],
+        timeIndex: i,
+      };
+    }
+  }
+  return {};
+};

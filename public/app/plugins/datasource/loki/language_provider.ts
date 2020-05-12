@@ -56,7 +56,7 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 }
 
 export default class LokiLanguageProvider extends LanguageProvider {
-  labelKeys?: string[];
+  labelKeys: string[];
   logLabelOptions: any[];
   logLabelFetchTs?: number;
   started: boolean;
@@ -129,7 +129,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const { wrapperClasses, value, prefix, text } = input;
 
     // Local text properties
-    const empty = value.document.text.length === 0;
+    const empty = value?.document.text.length === 0;
     const selectedLines = value.document.getTextsAtRange(value.selection);
     const currentLine = selectedLines.size === 1 ? selectedLines.first().getText() : null;
 
@@ -235,6 +235,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
   ): Promise<TypeaheadOutput> {
     let context = 'context-labels';
     const suggestions: CompletionItemGroup[] = [];
+    if (!value) {
+      return { context, suggestions: [] };
+    }
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
@@ -467,7 +470,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     } else {
       this.logLabelOptions = this.addLabelValuesToOptions(key, value);
     }
-    return value;
+    return value ?? [];
   }
 
   private addLabelValuesToOptions = (labelKey: string, values: string[]) => {
