@@ -126,11 +126,11 @@ func (ss *SqlStore) logOrgsNotice() error {
 
 		if resp[0].Count > 1 {
 			ss.log.Warn(`[Deprecation notice]`)
-			ss.log.Warn(`Organizations is a feature that only 1% of Grafana users are utilizing, and we feel that most of those`)
+			ss.log.Warn(`Fewer than 1% of Grafana installations use organizations, and we feel that most of those`)
 			ss.log.Warn(`users would have a better experience using Teams instead. As such, we are considering de-emphasizing`)
-			ss.log.Warn(`and eventually deprecating Organizations in future Grafana releases. If you would like to provide`)
-			ss.log.Warn(`feedback or describe your use case, please do so in the issue linked below`)
-			ss.log.Warn(`https://github.com/grafana/grafana/issues/xxx`)
+			ss.log.Warn(`and eventually deprecating Organizations in a future Grafana release. If you would like to provide`)
+			ss.log.Warn(`feedback or describe your need, please do so in the issue linked below`)
+			ss.log.Warn(`https://github.com/grafana/grafana/issues/24588`)
 		}
 
 		return nil

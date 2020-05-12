@@ -31,16 +31,15 @@ export const AdminListOrgsPages: FC = () => {
           <div className="page-action-bar">
             <InfoBox branded>
               <VerticalGroup spacing="xs">
-                <Badge text="Info" color="blue" icon="info-circle" />
                 <p>
-                  Organizations is a feature that only 1% of Grafana users are utilizing, and we feel that most of those
-                  users would have a better experience using Teams instead. As such, we are considering de-emphasizing
-                  and eventually deprecating Organizations in future Grafana releases. If you would like to provide
-                  feedback or describe your use case, please do so{' '}
-                  <a className="external-link" href="https://github.com/grafana/grafana/issues/xxx">
+                  Fewer than 1% of Grafana installations use organizations, and we think that most of those would have a
+                  better experience with Teams instead. As such, we are considering de-emphasizing and eventually
+                  deprecating Organizations in a future Grafana release. If you would like to provide feedback or
+                  describe your need, please do so{' '}
+                  <a className="external-link" href="https://github.com/grafana/grafana/issues/24588">
                     here
                   </a>
-                  .
+                  .{' '}
                 </p>
               </VerticalGroup>
             </InfoBox>
