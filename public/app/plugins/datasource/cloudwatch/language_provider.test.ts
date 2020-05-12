@@ -40,6 +40,10 @@ describe('CloudWatchLanguageProvider', () => {
     await runSuggestionTest('fields field1, \\', [fields, FUNCTIONS.map(v => v.label)]);
   });
 
+  it('should suggest fields and functions after comma with prefix', async () => {
+    await runSuggestionTest('fields field1, @mess\\', [fields, FUNCTIONS.map(v => v.label)]);
+  });
+
   it('should suggest fields and functions after display command', async () => {
     await runSuggestionTest('display \\', [fields, FUNCTIONS.map(v => v.label)]);
   });

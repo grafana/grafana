@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, FieldType, Labels, formatLabels } from '@grafana/data';
+import { TimeSeries, FieldType, Labels, formatLabels, QueryResultMeta } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class ResultTransformer {
@@ -15,6 +15,7 @@ export class ResultTransformer {
           prometheusResult,
           options.responseListLength,
           options.refId,
+          options.meta,
           options.valueWithRefId
         ),
       ];
@@ -81,9 +82,16 @@ export class ResultTransformer {
     };
   }
 
-  transformMetricDataToTable(md: any, resultCount: number, refId: string, valueWithRefId?: boolean): TableModel {
+  transformMetricDataToTable(
+    md: any,
+    resultCount: number,
+    refId: string,
+    meta: QueryResultMeta,
+    valueWithRefId?: boolean
+  ): TableModel {
     const table = new TableModel();
     table.refId = refId;
+    table.meta = meta;
 
     let i: number, j: number;
     const metricLabels: { [key: string]: number } = {};

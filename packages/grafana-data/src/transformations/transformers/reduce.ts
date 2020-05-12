@@ -59,7 +59,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             type: FieldType.other, // UNKNOWN until after we call the functions
             values: values[values.length - 1],
             config: {
-              title: info.name,
+              displayName: info.name,
               // UNIT from original field?
             },
           });

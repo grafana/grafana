@@ -106,7 +106,6 @@ export const OptionsPaneContent: React.FC<Props> = ({
                   dashboard={dashboard}
                   data={currentData}
                   onPanelConfigChange={onPanelConfigChange}
-                  onFieldConfigsChange={onFieldConfigsChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
                 />
               ) : (

@@ -991,172 +991,146 @@ workflows:
           variant: armv6
           name: build-oss-backend-armv6
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-frontend:
           filters: *filter-all
           name: build-oss-frontend
           edition: oss
-          requires:
-            - test-backend
-            - test-frontend
       - build-plugins:
           filters: *filter-all
           name: build-oss-plugins
           edition: oss
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv6
           edition: enterprise
           variant: armv6
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7
           edition: enterprise
           variant: armv7
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7-musl
           edition: enterprise
           variant: armv7-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64
           edition: enterprise
           variant: arm64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64-musl
           edition: enterprise
           variant: arm64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-frontend:
           filters: *filter-all
           name: build-enterprise-frontend
           edition: enterprise
-          requires:
-            - test-backend
-            - test-frontend
       - build-plugins:
           filters: *filter-all
           name: build-enterprise-plugins
           edition: enterprise
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:

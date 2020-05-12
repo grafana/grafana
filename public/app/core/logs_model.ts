@@ -387,7 +387,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
     if (totalBytesKey && series.meta.stats) {
-      const byteStat = series.meta.stats.find(stat => stat.title === totalBytesKey);
+      const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
       if (byteStat) {
         totalBytes += byteStat.value;
       }

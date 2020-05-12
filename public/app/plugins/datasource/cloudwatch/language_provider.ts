@@ -19,7 +19,7 @@ import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data'
 
 import { CloudWatchDatasource } from './datasource';
 import { TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
-import { Grammar } from 'prismjs';
+import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -63,6 +63,18 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     return this.startTask;
   };
+
+  isStatsQuery(query: string): boolean {
+    const grammar = this.getSyntax();
+    const tokens = Prism.tokenize(query, grammar) ?? [];
+
+    return !!tokens.find(
+      token =>
+        typeof token !== 'string' &&
+        token.content.toString().toLowerCase() === 'stats' &&
+        token.type === 'query-command'
+    );
+  }
 
   /**
    * Return suggestions based on input that can be then plugged into a typeahead dropdown.
@@ -117,19 +129,43 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   }
 
-  private fetchFields = _.throttle(async (logGroups: string[]) => {
+  private fetchedFieldsCache:
+    | {
+        time: number;
+        logGroups: string[];
+        fields: string[];
+      }
+    | undefined;
+
+  private fetchFields = async (logGroups: string[]): Promise<string[]> => {
+    if (
+      this.fetchedFieldsCache &&
+      Date.now() - this.fetchedFieldsCache.time < 30 * 1000 &&
+      _.sortedUniq(this.fetchedFieldsCache.logGroups).join('|') === _.sortedUniq(logGroups).join('|')
+    ) {
+      return this.fetchedFieldsCache.fields;
+    }
+
     const results = await Promise.all(
       logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
     );
 
-    return [
+    const fields = [
       ...new Set<string>(
         results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
       ).values(),
     ];
-  }, 30 * 1000);
 
-  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput | null> => {
+    this.fetchedFieldsCache = {
+      time: Date.now(),
+      logGroups,
+      fields,
+    };
+
+    return fields;
+  };
+
+  private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput> => {
     const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
     const functionSuggestions = [
       { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
@@ -165,7 +201,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     const currentTokenIsComma = curToken.content === ',' && curToken.types.includes('punctuation');
     const currentTokenIsCommaOrAfterComma =
-      currentTokenIsComma || (curToken.prev?.content === ',' && curToken.prev.types.includes('punctuation'));
+      currentTokenIsComma || (prevToken?.content === ',' && prevToken?.types.includes('punctuation'));
 
     // We only show suggestions if we are after a command or after a comma which is a field separator
     if (!(currentTokenIsAfterCommand || currentTokenIsCommaOrAfterComma)) {
@@ -382,5 +418,5 @@ function isInsideFunctionParenthesis(curToken: Token): boolean {
 
 function isAfterKeyword(keyword: string, token: Token): boolean {
   const prevToken = prevNonWhitespaceToken(token);
-  return prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by';
+  return !!(prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by');
 }

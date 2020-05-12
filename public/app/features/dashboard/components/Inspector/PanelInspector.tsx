@@ -211,10 +211,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       dataRows += frame.length;
     }
 
-    stats.push({ title: 'Total request time', value: requestTime, unit: 'ms' });
-    stats.push({ title: 'Data processing time', value: processingTime, unit: 'ms' });
-    stats.push({ title: 'Number of queries', value: request.targets.length });
-    stats.push({ title: 'Total number rows', value: dataRows });
+    stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
+    stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+    stats.push({ displayName: 'Number of queries', value: request.targets.length });
+    stats.push({ displayName: 'Total number rows', value: dataRows });
 
     let dataStats: QueryResultMetaStat[] = [];
 
@@ -245,8 +245,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
           <tbody>
             {stats.map((stat, index) => {
               return (
-                <tr key={`${stat.title}-${index}`}>
-                  <td>{stat.title}</td>
+                <tr key={`${stat.displayName}-${index}`}>
+                  <td>{stat.displayName}</td>
                   <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
                 </tr>
               );
