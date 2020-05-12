@@ -13,3 +13,20 @@ This topic lists and defines calculations used in Grafana.
 
 Among other places, these calculations are used in the Transform tab and the bar gauge, gauge, and stat visualizations.
 
+| Calculation   | Description   |
+|:---|:---|
+| All nulls |    |
+| All zeros |    |
+| Change count |    |
+| Count |    |
+| Delta |    |
+| Difference |    |
+| Distinct count |    |
+| First (not null) |    |
+| Max |    |
+| Mean |    |
+| Min |    |
+| Min (above zero) |    |
+| Range |    |
+| Step |    |
+| Total |    |

@@ -9,7 +9,7 @@ weight = 300
 
 # Transformations
 
-> **Note:** This documentation refers to a Grafana 7.0 beta feature.
+> **Note:** This documentation refers to a Grafana 7.0 beta feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
 
 This page explains what transformations in Grafana are and how to use them.
 
@@ -28,7 +28,8 @@ The order can make a huge difference in how your results look. For example, if y
 ## Prerequisites
 
 Before you apply transformations, all of the following must be true:
-- You have entered a query and returned data from a data source. For more information about queries, refer to [Queries](ADD LINK TO QUERIES.MD).
+
+- You have entered a query and returned data from a data source. For more information about queries, refer to [Queries]({{< relref "queries.md" >}}).
 - You have applied a visualization that supports queries, such as:
   - Graph
   - Stat
@@ -71,6 +72,20 @@ Grafana comes with the following transformations:
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions for how to use them.
 
 ### Reduce
+
+Apply a _Reduce_ transformation when you want to simplify your results down to one value. Reduce basically removes time component. If visualized as a table, it reduces a column down to one row (value).
+
+In the **Calculations** field, enter one or more calculation types. Click to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "calculations-list.md" >}}).
+
+Once you select at least one calculation, Grafana reduces the results down to one value using the calculation you select. If you select more than one calculation, then more than one value is displayed.
+
+Here's an example of a table with time series data. Before I apply the transformation, you can see all the data organized by time.
+
+{{< docs-imagebox img="/img/docs/transformations/reduce-before-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
+
+After I apply the transformation, there is no time value and each column has been reduced to one row showing the results of the calculations that I chose.
+
+{{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
 
 ## Debug transformations
 
