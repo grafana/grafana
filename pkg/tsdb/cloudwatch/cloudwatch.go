@@ -24,15 +24,15 @@ const (
 )
 
 var (
-	// In order to properly cache sessions per-datasource we need to
-	// keep a state for each datasource.
+	// In order to properly cache sessions per data source we need to
+	// keep a state for each data source.
 	executors    = make(map[int64]*CloudWatchExecutor)
 	executorLock = sync.Mutex{}
 )
 
 // CloudWatchExecutor represents a structure holding enough information to execute
-// CloudWatch queries for a specific datasource. It caches AWS SDK Sessions on
-// a regional basis for each datasource version in order to load configuration as
+// CloudWatch queries for a specific data source. It caches AWS SDK Sessions on
+// a regional basis for each data source version in order to load configuration as
 // seldomly as possible.
 type CloudWatchExecutor struct {
 	*models.DataSource
@@ -40,7 +40,7 @@ type CloudWatchExecutor struct {
 	// clients is our interface to access AWS service-specific API clients
 	clients clientCache
 
-	// We cache custom metrics and dimensions on a per-datasource per-version basis
+	// We cache custom metrics and dimensions on a per data source, per version basis
 	// These are of type (profile -> region -> namespace)
 	customMetricsMetricsMap    map[string]map[string]map[string]*CustomMetricsCache
 	metricsCacheLock           sync.Mutex
@@ -62,7 +62,7 @@ type DatasourceInfo struct {
 }
 
 // NewCloudWatchExecutor finds the appropriate CloudWatchExecutor for the given
-// datasource, using a global cache protected by a mutex. If there is none
+// data source, using a global cache protected by a mutex. If there is none
 // cached, a new one will be created.
 func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	executorLock.Lock()
@@ -168,7 +168,7 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 
 // getDSInfo gets the CloudWatchExecutor's region-specific DataSourceInfo from
 // the embedded models.DataSource. Given cloudWatchDefaultRegion it will fall
-// back to the region configured as default for the datasource.
+// back to the region configured as default for the data source.
 func (e *CloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
 	if region == cloudWatchDefaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
