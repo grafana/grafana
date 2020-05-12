@@ -1,7 +1,7 @@
 import { parse, SearchParserResult } from 'search-query-parser';
 import { IconName } from '@grafana/ui';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
-import { NO_ID_SECTIONS } from './constants';
+import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 /**
@@ -216,4 +216,15 @@ export const getSectionIcon = (section: DashboardSection): IconName => {
   }
 
   return section.expanded ? 'folder-open' : 'folder';
+};
+
+/**
+ * Get storage key for a dashboard folder by its title
+ * @param title
+ */
+export const getSectionStorageKey = (title: string) => {
+  if (!title) {
+    return '';
+  }
+  return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
 };

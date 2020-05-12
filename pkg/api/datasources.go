@@ -3,10 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func GetDataSources(c *models.ReqContext) Response {
@@ -131,10 +130,8 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 
 func validateURL(u string) Response {
 	if u != "" {
-		_, err := url.Parse(u)
-		if err != nil {
-			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), errutil.Wrapf(err,
-				"invalid data source URL %q", u))
+		if _, err := datasource.ValidateURL(u); err != nil {
+			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
 		}
 	}
 
