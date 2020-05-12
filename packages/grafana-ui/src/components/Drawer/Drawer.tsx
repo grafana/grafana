@@ -63,6 +63,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
       flex-grow: 1;
       overflow: ${!scollableContent ? 'hidden' : 'auto'};
       z-index: 0;
+      height: 100%;
     `,
   };
 });
