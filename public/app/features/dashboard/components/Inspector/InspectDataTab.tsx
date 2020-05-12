@@ -8,24 +8,14 @@ import {
   toCSV,
   transformDataFrame,
 } from '@grafana/data';
-import {
-  Button,
-  Container,
-  Field,
-  HorizontalGroup,
-  Icon,
-  LegacyForms,
-  Select,
-  Table,
-  VerticalGroup,
-} from '@grafana/ui';
+import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -142,46 +132,37 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <Container>
-          <VerticalGroup spacing={'md'}>
-            <HorizontalGroup justify={'space-between'} align={'flex-end'} wrap>
-              <HorizontalGroup>
-                {data.length > 1 && (
-                  <Container grow={1}>
-                    <Field
-                      label="Transformer"
-                      className={css`
-                        margin-bottom: 0;
-                      `}
-                    >
-                      <Select
-                        options={transformationOptions}
-                        value={transformId}
-                        onChange={this.onTransformationChange}
-                        width={15}
-                      />
-                    </Field>
-                  </Container>
-                )}
-                {choices.length > 1 && (
-                  <Container grow={1}>
-                    <Field
-                      label="Select result"
-                      className={css`
-                        margin-bottom: 0;
-                      `}
-                    >
-                      <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
-                    </Field>
-                  </Container>
-                )}
-              </HorizontalGroup>
+        <div className={styles.actionsWrapper}>
+          <div className={styles.leftActions}>
+            <div className={styles.selects}>
+              {data.length > 1 && (
+                <Field
+                  label="Transformer"
+                  className={css`
+                    margin-bottom: 0;
+                  `}
+                >
+                  <Select
+                    options={transformationOptions}
+                    value={transformId}
+                    onChange={this.onTransformationChange}
+                    width={15}
+                  />
+                </Field>
+              )}
+              {choices.length > 1 && (
+                <Field
+                  label="Select result"
+                  className={css`
+                    margin-bottom: 0;
+                  `}
+                >
+                  <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
+                </Field>
+              )}
+            </div>
 
-              <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
-                Download CSV
-              </Button>
-            </HorizontalGroup>
-            <Container grow={1}>
+            <div className={cx(styles.options, styles.dataDisplayOptions)}>
               <QueryOperationRow title={'Data display options'} isOpen={false}>
                 {panelTransformations && panelTransformations.length > 0 && (
                   <div className="gf-form-inline">
@@ -204,9 +185,15 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   />
                 </div>
               </QueryOperationRow>
-            </Container>
-          </VerticalGroup>
-        </Container>
+            </div>
+          </div>
+
+          <div className={styles.options}>
+            <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
+              Download CSV
+            </Button>
+          </div>
+        </div>
 
         <div style={{ flexGrow: 1 }}>
           <AutoSizer>
