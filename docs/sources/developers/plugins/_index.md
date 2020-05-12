@@ -26,17 +26,6 @@ If you want a more guided introduction to plugin development, check out our tuto
 
 Learn more about specific areas of plugin development.
 
-### Concepts
-
-Deepen your knowledge through a series of high-level overviews of plugin concepts.
-
-- [Data frames]({{< relref "data-frames.md" >}})
-- [Authentication for data source plugins]({{< relref "authentication.md" >}})
-
-### UI library
-
-Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
-
 ### Tutorials
 
 If you're looking to build your first plugin, check out these introductory tutorials:
@@ -47,6 +36,25 @@ If you're looking to build your first plugin, check out these introductory tutor
 Ready to learn more? Check out our other tutorials:
 
 - [Build a panel plugin with D3.js]({{< relref "../../../../../tutorials/build-a-panel-plugin-with-d3.md" >}})
+
+### Guides
+
+Improve an existing plugin with one of our guides:
+
+- [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
+- [Add support for variables]({{< relref "add-support-for-variables.md" >}})
+- [Build a logs data source]({{< relref "build-a-logs-data-source.md" >}})
+
+### Concepts
+
+Deepen your knowledge through a series of high-level overviews of plugin concepts:
+
+- [Data frames]({{< relref "data-frames.md" >}})
+- [Authentication for data source plugins]({{< relref "authentication.md" >}})
+
+### UI library
+
+Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
 
 ### API reference
 
