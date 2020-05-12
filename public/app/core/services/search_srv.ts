@@ -13,14 +13,6 @@ interface Sections {
 }
 
 export class SearchSrv {
-  recentIsOpen: boolean;
-  starredIsOpen: boolean;
-
-  constructor() {
-    this.recentIsOpen = store.getBool(`${SECTION_STORAGE_KEY}.recent`, true);
-    this.starredIsOpen = store.getBool(`${SECTION_STORAGE_KEY}.starred`, true);
-  }
-
   private getRecentDashboards(sections: DashboardSection[] | any) {
     return this.queryForRecentDashboards().then((result: any[]) => {
       if (result.length > 0) {
@@ -28,7 +20,7 @@ export class SearchSrv {
           title: 'Recent',
           icon: 'clock-nine',
           score: -1,
-          expanded: this.recentIsOpen,
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.recent`, true),
           items: result,
           type: DashboardSearchItemType.DashFolder,
         };
@@ -60,7 +52,7 @@ export class SearchSrv {
           title: 'Starred',
           icon: 'star',
           score: -2,
-          expanded: this.starredIsOpen,
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.starred`, true),
           items: result,
           type: DashboardSearchItemType.DashFolder,
         };
