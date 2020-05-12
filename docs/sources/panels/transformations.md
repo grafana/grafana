@@ -18,6 +18,13 @@ Transformations allow you to rename fields, join separate time series together, 
 
 > **Note:** Transformations sometimes result in data that cannot be graphed. When that happens, Grafana displays a suggestion on the visualization that you can click to switch to table visualization. This often helps you better understand what the transformation is doing to your data.
 
+## Transformation execution order
+
+Grafana applies transformations in the sequence that they are listed on the screen. Every transformation creates a new result set that is passed to the next transformation in the pipeline.
+
+The order can make a huge difference in how your results look. For example, if you use a Reduce transformation to condense all the results of one column to a single value, then you can only apply transformations to that single value.
+
+
 ## Prerequisites
 
 Before you apply transformations, all of the following must be true:
@@ -31,15 +38,43 @@ Before you apply transformations, all of the following must be true:
   - Heatmap
   - Logs
 
-## Types of Transformations
+## Apply a transformation
+
+Transformations are available from the Transform tab in the bottom pane of the Panel Editor, next to the Queries tab.
+
+1. Navigate to the panel that you want to add transformations, click the panel title and then click **Edit**.
+1. Click the **Transform** tab.
+1. Click a transformation to select it. 
+  
+   A transformation row appears that allows you to configure the transformation options.
+
+   Click **Add transformation** to apply another transformation. Keep in mind that the next transformation acts on the result set returned by the previous transformation.
+
+   If you have trouble, click the bug icon to [debug your transformations](#debug-transformations).
+
+   Click the trash can icon to permanently remove a transformation.
+
+
+## Transformation types and options
 
 Grafana comes with the following transformations:
-Reduce - Reduce all rows or data points to a single value using a function like max, min, mean, or last.
-Filter by name - Filter a result set’s fields by name. This might be useful when you want to show only part of your result set.
-Filter by query - Filter a result set by the refId of the query. This might be useful when your result set consists of multiple time series and you want to show only some of them.
-Organize fields - Order, filter, and rename the fields in a result set. This transformation is useful when your result set contains for instance non human-readable field names or when you want to display a table and alter the order of the columns. 
-Join by field - Join multiple time series from a result set by field.
-Add field from calculation - Create new fields that are the result of result set row calculation.
-Labels to fields - Group a series by time and return labels as fields.
 
+- Reduce - Reduce all rows or data points to a single value using a function like max, min, mean, or last.
+- Filter by name - Filter a result set’s fields by name. This might be useful when you want to show only part of your result set.
+- Filter by query - Filter a result set by the refId of the query. This might be useful when your result set consists of multiple time series and you want to show only some of them.
+- Organize fields - Order, filter, and rename the fields in a result set. This transformation is useful when your result set contains for instance non human-readable field names or when - you want to display a table and alter the order of the columns. 
+- Join by field - Join multiple time series from a result set by field.
+- Add field from calculation - Create new fields that are the result of result set row calculation.
+- Labels to fields - Group a series by time and return labels as fields.
 
+Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions for how to use them.
+
+### Reduce
+
+## Debug transformations
+
+To see the input and the output result sets of the transformation, click the bug icon on the right side of the transformation row.
+
+Grafana displays the transformation debug view below the transformation row.
+
+{{< docs-imagebox img="/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
