@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. e2e/variables
+
+SUITE=verify ./e2e/run-suite
