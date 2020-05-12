@@ -295,8 +295,8 @@ const handleTypeahead = async (
           }
         }
 
-        // Filter out the already typed value (prefix) unless it inserts custom text
-        newGroup.items = newGroup.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
+        // Filter out the already typed value (prefix) unless it inserts custom text not matching the prefix
+        newGroup.items = newGroup.items.filter(c => !(c.insertText === prefix || (c.filterText ?? c.label) === prefix));
       }
 
       if (!group.skipSort) {
