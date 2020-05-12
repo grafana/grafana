@@ -10,7 +10,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 // import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime, DateTime, rangeUtil } from '@grafana/data';
+import { DateTime, rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme } from '../../themes/ThemeContext';
@@ -120,8 +120,6 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     const {
       selectOptions: selectTimeOptions,
       value,
-      onMoveBackward,
-      onMoveForward,
       onZoom,
       timeZone,
       timeSyncButton,
@@ -153,16 +151,10 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     ) : (
       ''
     );
-    const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
     return (
       <div className="time-picker" ref={this.pickerTriggerRef}>
         <div className="time-picker-buttons">
-          {hasAbsolute && (
-            <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
-              <i className="fa fa-chevron-left" />
-            </button>
-          )}
           <ButtonSelect
             className={classNames('time-picker-button-select', {
               ['explore-active-button-glow']: timeSyncButton && isSynced,
@@ -178,23 +170,11 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
 
           {timeSyncButton}
 
-          {hasAbsolute && (
-            <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
-              <i className="fa fa-chevron-right" />
-            </button>
-          )}
-
           <Tooltip content={defaultZoomOutTooltip} placement="bottom">
             <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
               <i className="fa fa-search-minus" />
             </button>
           </Tooltip>
-
-          {/*{isCustomOpen && (*/}
-          {/*  <ClickOutsideWrapper onClick={this.onCloseCustom}>*/}
-          {/*    <TimePickerPopover value={value} timeZone={timeZone} onChange={this.onCustomChange} />*/}
-          {/*  </ClickOutsideWrapper>*/}
-          {/*)}*/}
         </div>
       </div>
     );

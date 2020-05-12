@@ -89,7 +89,6 @@ class GraphElement {
     appEvents.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
     appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
-    this.elem.bind('plotclick', this.onPlotClick.bind(this));
 
     // get graph legend element
     if (this.elem && this.elem.parent) {

@@ -157,7 +157,6 @@ export class PanelHeader extends Component<Props, State> {
           />
           <div
             className="panel-title-container"
-            onClick={this.onMenuToggle}
             onMouseDown={this.onMouseDown}
             aria-label={selectors.components.Panels.Panel.title(title)}
           >
