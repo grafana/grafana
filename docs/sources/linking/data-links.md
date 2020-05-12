@@ -8,8 +8,6 @@ type = "docs"
 
 Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization showed four servers, you could add a data link to one or two of them.
 
-For graph panels, click directly on the panel to see the data link. It appears on the context menu under **Add annotation**.
-
 The link itself is accessible in different ways depending on the visualization. For the graph you need to click on a data point or line, for a panel like
 Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
 
@@ -22,7 +20,9 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 1. Expand Data links and then click **Add link**.
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
 1. Enter the **URL** you want to link to.
-  Data links support multiple different variables, including template variables defined in your dashboard. Press Ctrl+Space or Cmd+Space and click in the **URL** field to see the available variables. By adding variables to your data link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [URL variables](../variables/url-variables.md)
+   
+   You can even add one of the template variables defined in the dashboard. Press Ctrl+Space or Cmd+Space and click in the **URL** field to see the available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [URL variables](../variables/url-variables.md)
+   
 1. If you want the link to open in a new tab, then select **Open in a new tab**.
 1. Click **Save** to save changes and close the window.
 1. Click **Save** in the upper right to save your changes to the dashboard.
