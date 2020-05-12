@@ -39,6 +39,8 @@ type DatasourceInfo struct {
 }
 
 const CLOUDWATCH_TS_FORMAT = "2006-01-02 15:04:05.000"
+const LOG_IDENTIFIER_INTERNAL = "__log_grafana_internal__"
+const LOGSTREAM_IDENTIFIER_INTERNAL = "__logstream__grafana_internal__"
 
 func (e *CloudWatchExecutor) getLogsClient(region string) (*cloudwatchlogs.CloudWatchLogs, error) {
 	e.mux.Lock()
