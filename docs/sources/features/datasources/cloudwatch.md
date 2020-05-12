@@ -86,33 +86,24 @@ Here is a minimal policy example:
 
 ### AWS credentials
 
-There are four different authentication providers available. The `AWS SDK
-Default` provider will do no custom configuration at all and instead use the
-[default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
-as specified by the AWS SDK for Go. This requires you to configure your AWS
-credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html),
-if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html),
+There are four different authentication providers available. The `AWS SDK Default` provider will do no custom configuration at all and instead use the
+[default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go. This requires you to configure
+your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if
+you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html),
 [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)
 or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
-The `Assume Role` authentication provider works similarly, but it will instead use the
-`AWS SDK Default` authentication provider to assume the specified role, which it will
-then use to query the CloudWatch API.
+The `Assume Role` authentication provider works similarly, but it will instead use the `AWS SDK Default` authentication provider to assume the specified role,
+which it will then use to query the CloudWatch API.
 
 The `Credentials file` authentication provider corresponds directly to the
 [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider)
-provider in the go sdk. In short, it will read the aws shared credentials file
-and find the given profile. While `AWS SDK Default` will also find the shared
-credentials file (on account of the SharedCredentialsProvider being part of the
-default chain) this option allows you to specify which profile to use without
-messing with environment variables. This option will not do any implicit
-fallbacks to other providers. If the SharedCredentialsProvider fails
-authentication will fail.
+provider in the go sdk. In short, it will read the aws shared credentials file and find the given profile. While `AWS SDK Default` will also find the shared
+credentials file (on account of the SharedCredentialsProvider being part of the default chain) this option allows you to specify which profile to use without
+messing with environment variables. This option will not do any implicit fallbacks to other providers. If the SharedCredentialsProvider fails authentication will fail.
 
-The `Access & secret key` corresponds to the
-[StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider)
-and will use the given access key id and the secret key to authenticate. If
-this provider fails for whatever reason the authentication will fail. No
-implicit fallbacks exist.
+The `Access & secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider)
+and will use the given access key id and the secret key to authenticate. If this provider fails for whatever reason the authentication will fail.
+No implicit fallbacks exist.
 
 ### AWS credentials file
 
