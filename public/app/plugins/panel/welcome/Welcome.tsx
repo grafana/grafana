@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonSelect, stylesFactory, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme } from '@grafana/ui';
 import lightBackground from './img/background_light.svg';
 
 const helpOptions = [
@@ -19,19 +19,14 @@ export const WelcomeBanner: FC = () => {
       <h1 className={styles.title}>Welcome to Grafana</h1>
       <div className={styles.help}>
         <h3 className={styles.helpText}>Need help?</h3>
-        <div className={styles.smallScreenHelp}>
-          <ButtonSelect
-            defaultValue={helpOptions[0]}
-            variant="secondary"
-            size="sm"
-            onChange={onHelpLinkClick}
-            options={helpOptions}
-          />
-        </div>
         <div className={styles.helpLinks}>
           {helpOptions.map((option, index) => {
             return (
-              <a key={`${option.label}-${index}`} className={styles.helpLink} href={option.href}>
+              <a
+                key={`${option.label}-${index}`}
+                className={styles.helpLink}
+                href={`${option.href}?utm_source=grafana_gettingstarted`}
+              >
                 {option.label}
               </a>
             );
@@ -40,10 +35,6 @@ export const WelcomeBanner: FC = () => {
       </div>
     </div>
   );
-};
-
-const onHelpLinkClick = (option: { label: string; href: string }) => {
-  window.open(`${option.href}?utm_source=grafana_gettingstarted`, '_blank');
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -113,9 +104,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         margin-right: 8px;
       }
-    `,
-    smallScreenHelp: css`
-      display: none;
     `,
   };
 });
