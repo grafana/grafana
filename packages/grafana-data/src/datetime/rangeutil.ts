@@ -68,7 +68,7 @@ const hiddenRangeOptions = [
   { from: 'now', to: 'now+5m', display: 'Next 5 minutes', section: 3 },
   { from: 'now', to: 'now+15m', display: 'Next 15 minutes', section: 3 },
   { from: 'now', to: 'now+30m', display: 'Next 30 minutes', section: 3 },
-  { from: 'now', to: 'now+1h', display: 'Next 1 hour', section: 3 },
+  { from: 'now', to: 'now+1h', display: 'Next hour', section: 3 },
   { from: 'now', to: 'now+3h', display: 'Next 3 hours', section: 3 },
   { from: 'now', to: 'now+6h', display: 'Next 6 hours', section: 3 },
   { from: 'now', to: 'now+12h', display: 'Next 12 hours', section: 3 },
@@ -78,7 +78,7 @@ const hiddenRangeOptions = [
   { from: 'now', to: 'now+30d', display: 'Next 30 days', section: 0 },
   { from: 'now', to: 'now+90d', display: 'Next 90 days', section: 0 },
   { from: 'now', to: 'now+6M', display: 'Next 6 months', section: 0 },
-  { from: 'now', to: 'now+1y', display: 'Next 1 year', section: 0 },
+  { from: 'now', to: 'now+1y', display: 'Next year', section: 0 },
   { from: 'now', to: 'now+2y', display: 'Next 2 years', section: 0 },
   { from: 'now', to: 'now+5y', display: 'Next 5 years', section: 0 },
 ];
@@ -214,5 +214,10 @@ export const describeTimeRangeAbbrevation = (range: TimeRange, timeZone?: TimeZo
 export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
   const from = dateTimeParse(raw.from, { roundUp: false, timeZone });
   const to = dateTimeParse(raw.to, { roundUp: true, timeZone });
-  return { from, to, raw };
+
+  if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
+    return { from, to, raw };
+  }
+
+  return { from, to, raw: { from, to } };
 };
