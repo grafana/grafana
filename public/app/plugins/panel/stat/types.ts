@@ -31,7 +31,7 @@ export function addStandardDataReduceOptions(
   builder.addRadio({
     path: 'reduceOptions.values',
     name: 'Show',
-    description: 'Calculate a single value per colum or series or show each row',
+    description: 'Calculate a single value per column or series or show each row',
     settings: {
       options: [
         { value: false, label: 'Calculate' },
@@ -61,6 +61,8 @@ export function addStandardDataReduceOptions(
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
     defaultValue: [ReducerID.mean],
+    // Hides it when all values mode is on
+    showIf: currentConfig => currentConfig.reduceOptions.values === false,
   });
 
   if (includeOrientation) {

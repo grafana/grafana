@@ -37,7 +37,7 @@ export class MetricSelect extends React.Component<Props, State> {
   }
 
   UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.options.length > 0 || nextProps.variables.length) {
+    if (nextProps.options.length > 0 || nextProps.variables?.length) {
       this.setState({ options: this.buildOptions(nextProps) });
     }
   }
@@ -54,7 +54,7 @@ export class MetricSelect extends React.Component<Props, State> {
   getVariablesGroup() {
     return {
       label: 'Template Variables',
-      options: this.props.variables.map(v => ({
+      options: this.props.variables?.map(v => ({
         label: `$${v.name}`,
         value: `$${v.name}`,
       })),
@@ -77,7 +77,7 @@ export class MetricSelect extends React.Component<Props, State> {
         isMulti={false}
         isClearable={false}
         backspaceRemovesValue={false}
-        onChange={item => onChange(item.value)}
+        onChange={item => onChange(item.value ?? '')}
         options={options}
         isSearchable={isSearchable}
         maxMenuHeight={500}

@@ -1,70 +1,81 @@
-import { DataFrame, DataTransformerInfo } from '../../types';
+import { DataFrame, DataTransformerInfo, Field } from '../../types';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
-import { filterFieldsByNameTransformer } from './filterByName';
 import { ArrayVector } from '../../vector';
+import { getFieldTitle } from '../../field/fieldState';
 
 export interface SeriesToColumnsOptions {
   byField?: string;
 }
+
+const DEFAULT_KEY_FIELD = 'Time';
 
 export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOptions> = {
   id: DataTransformerID.seriesToColumns,
   name: 'Series as columns',
   description: 'Groups series by field and returns values as columns',
   defaultOptions: {
-    byField: 'Time',
+    byField: DEFAULT_KEY_FIELD,
   },
   transformer: options => (data: DataFrame[]) => {
-    const optionsArray = options.byField ? [options.byField] : [];
-    // not sure if I should use filterFieldsByNameTransformer to get the key field
-    const keyDataFrames = filterFieldsByNameTransformer.transformer({
-      include: optionsArray,
-    })(data);
-    if (!keyDataFrames.length) {
-      // for now we only parse data frames with 2 fields
-      return data;
-    }
+    const keyFieldMatch = options.byField || DEFAULT_KEY_FIELD;
+    const allFields: FieldsToProcess[] = [];
 
-    // not sure if I should use filterFieldsByNameTransformer to get the other fields
-    const otherDataFrames = filterFieldsByNameTransformer.transformer({
-      exclude: optionsArray,
-    })(data);
-    if (!otherDataFrames.length) {
-      // for now we only parse data frames with 2 fields
-      return data;
-    }
+    for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
+      const frame = data[frameIndex];
+      const keyField = findKeyField(frame, keyFieldMatch);
 
-    const processed = new MutableDataFrame();
-    const origins: string[] = [];
-    for (let frameIndex = 0; frameIndex < keyDataFrames.length; frameIndex++) {
-      const frame = keyDataFrames[frameIndex];
-      const origin = getOrigin(frame, frameIndex);
-      origins.push(origin);
-    }
+      if (!keyField) {
+        return data;
+      }
 
-    processed.addField({
-      ...keyDataFrames[0].fields[0],
-      values: new ArrayVector([]),
-      labels: { origin: origins.join(',') },
-    });
-
-    for (let frameIndex = 0; frameIndex < otherDataFrames.length; frameIndex++) {
-      const frame = otherDataFrames[frameIndex];
       for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
-        const field = frame.fields[fieldIndex];
-        const origin = getOrigin(frame, frameIndex);
-        const name = getColumnName(otherDataFrames, frameIndex, fieldIndex, false);
-        if (processed.fields.find(field => field.name === name)) {
+        const sourceField = frame.fields[fieldIndex];
+
+        if (sourceField === keyField) {
           continue;
         }
-        processed.addField({ ...field, name, values: new ArrayVector([]), labels: { origin } });
+
+        let labels = sourceField.labels ?? {};
+
+        if (frame.name) {
+          labels = { ...labels, name: frame.name };
+        }
+
+        allFields.push({
+          keyField,
+          sourceField,
+          newField: {
+            ...sourceField,
+            state: null,
+            values: new ArrayVector([]),
+            labels,
+          },
+        });
       }
     }
 
+    // if no key fields or more than one value field
+    if (allFields.length <= 1) {
+      return data;
+    }
+
+    const resultFrame = new MutableDataFrame();
+
+    resultFrame.addField({
+      ...allFields[0].keyField,
+      values: new ArrayVector([]),
+    });
+
+    for (const item of allFields) {
+      resultFrame.addField(item.newField);
+    }
+
+    const keyFieldTitle = getFieldTitle(resultFrame.fields[0], resultFrame);
     const byKeyField: { [key: string]: { [key: string]: any } } = {};
-    // this loop creates a dictionary object that groups the key fields values
-    /*
+
+    /*    
+    this loop creates a dictionary object that groups the key fields values 
     {
       "key field first value as string" : {
         "key field name": key field first value,
@@ -77,26 +88,20 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
         "other series n name": other series n value
       }
     }
-     */
-    for (let seriesIndex = 0; seriesIndex < keyDataFrames.length; seriesIndex++) {
-      const keyDataFrame = keyDataFrames[seriesIndex];
-      const keyField = keyDataFrame.fields[0];
-      const keyColumnName = getColumnName(keyDataFrames, seriesIndex, 0, true);
-      const keyValues = keyField.values;
-      for (let valueIndex = 0; valueIndex < keyValues.length; valueIndex++) {
-        const keyValue = keyValues.get(valueIndex);
-        const keyValueAsString = keyValue.toString();
-        if (!byKeyField[keyValueAsString]) {
-          byKeyField[keyValueAsString] = { [keyColumnName]: keyValue };
-        }
-        const otherDataFrame = otherDataFrames[seriesIndex];
-        for (let otherIndex = 0; otherIndex < otherDataFrame.fields.length; otherIndex++) {
-          const otherColumnName = getColumnName(otherDataFrames, seriesIndex, otherIndex, false);
-          const otherField = otherDataFrame.fields[otherIndex];
-          const otherValue = otherField.values.get(valueIndex);
-          if (!byKeyField[keyValueAsString][otherColumnName]) {
-            byKeyField[keyValueAsString] = { ...byKeyField[keyValueAsString], [otherColumnName]: otherValue };
-          }
+    */
+
+    for (let fieldIndex = 0; fieldIndex < allFields.length; fieldIndex++) {
+      const { sourceField, keyField, newField } = allFields[fieldIndex];
+      const newFieldTitle = getFieldTitle(newField, resultFrame);
+
+      for (let valueIndex = 0; valueIndex < sourceField.values.length; valueIndex++) {
+        const value = sourceField.values.get(valueIndex);
+        const keyValue = keyField.values.get(valueIndex);
+
+        if (!byKeyField[keyValue]) {
+          byKeyField[keyValue] = { [newFieldTitle]: value, [keyFieldTitle]: keyValue };
+        } else {
+          byKeyField[keyValue][newFieldTitle] = value;
         }
       }
     }
@@ -104,27 +109,33 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     const keyValueStrings = Object.keys(byKeyField);
     for (let rowIndex = 0; rowIndex < keyValueStrings.length; rowIndex++) {
       const keyValueAsString = keyValueStrings[rowIndex];
-      for (let fieldIndex = 0; fieldIndex < processed.fields.length; fieldIndex++) {
-        const field = processed.fields[fieldIndex];
-        const value = byKeyField[keyValueAsString][field.name] ?? null;
+
+      for (let fieldIndex = 0; fieldIndex < resultFrame.fields.length; fieldIndex++) {
+        const field = resultFrame.fields[fieldIndex];
+        const otherColumnName = getFieldTitle(field, resultFrame);
+        const value = byKeyField[keyValueAsString][otherColumnName] ?? null;
         field.values.add(value);
       }
     }
 
-    return [processed];
+    return [resultFrame];
   },
 };
 
-const getColumnName = (frames: DataFrame[], frameIndex: number, fieldIndex: number, isKeyField = false) => {
-  const frame = frames[frameIndex];
-  const field = frame.fields[fieldIndex];
-  const frameName = frame.name || `${frameIndex}`;
-  const fieldName = field.name;
-  const seriesName = isKeyField ? fieldName : fieldName === frameName ? fieldName : `${fieldName} {${frameName}}`;
+function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
+  for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+    const field = frame.fields[fieldIndex];
 
-  return seriesName;
-};
+    if (matchTitle === getFieldTitle(field)) {
+      return field;
+    }
+  }
 
-const getOrigin = (frame: DataFrame, index: number) => {
-  return frame.name || `${index}`;
-};
+  return null;
+}
+
+interface FieldsToProcess {
+  newField: Field;
+  sourceField: Field;
+  keyField: Field;
+}

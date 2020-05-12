@@ -293,7 +293,7 @@ export class QueryOptions extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
-        title="Options"
+        title="Query options"
         headerElement={this.renderCollapsedText(styles)}
         isOpen={isOpen}
         onOpen={this.onOpenOptions}

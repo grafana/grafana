@@ -1,7 +1,14 @@
 import React, { Component } from 'react';
 
 import { Table, Select } from '@grafana/ui';
-import { FieldMatcherID, PanelProps, DataFrame, SelectableValue } from '@grafana/data';
+import {
+  FieldMatcherID,
+  PanelProps,
+  DataFrame,
+  SelectableValue,
+  getFrameDisplayTitle,
+  getFieldTitle,
+} from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
 import { config } from 'app/core/config';
@@ -27,12 +34,12 @@ export class TablePanel extends Component<Props> {
       return;
     }
 
-    const fieldName = field.name;
+    const fieldDisplayName = getFieldTitle(field, frame, data.series);
     const matcherId = FieldMatcherID.byName;
     const propId = 'custom.width';
 
     // look for existing override
-    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldName);
+    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
 
     if (override) {
       // look for existing property
@@ -44,7 +51,7 @@ export class TablePanel extends Component<Props> {
       }
     } else {
       overrides.push({
-        matcher: { id: matcherId, options: fieldName },
+        matcher: { id: matcherId, options: fieldDisplayName },
         properties: [{ id: propId, value: width }],
       });
     }
@@ -101,7 +108,7 @@ export class TablePanel extends Component<Props> {
       const currentIndex = this.getCurrentFrameIndex();
       const names = data.series.map((frame, index) => {
         return {
-          label: `${frame.name ?? 'Series'}`,
+          label: getFrameDisplayTitle(frame),
           value: index,
         };
       });

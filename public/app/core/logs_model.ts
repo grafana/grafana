@@ -257,6 +257,7 @@ interface LogFields {
 
   timeField: FieldWithIndex;
   stringField: FieldWithIndex;
+  timeNanosecondField?: FieldWithIndex;
   logLevelField?: FieldWithIndex;
   idField?: FieldWithIndex;
 }
@@ -284,6 +285,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     return {
       series,
       timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+      timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+        ? fieldCache.getFieldByName('tsNs')
+        : undefined,
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),
@@ -296,7 +300,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
-    const { timeField, stringField, logLevelField, idField, series } = info;
+    const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
     const labels = stringField.labels;
     const uniqueLabels = findUniqueLabels(labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
@@ -311,6 +315,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
+      const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
+      const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
       const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
@@ -327,7 +333,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       } else {
         logLevel = getLogLevel(message);
       }
-
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
@@ -335,6 +340,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         logLevel,
         timeFromNow: dateTimeFormatTimeAgo(ts),
         timeEpochMs: time.valueOf(),
+        timeEpochNs,
         timeLocal: dateTimeFormat(ts, { timeZone: 'browser' }),
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,

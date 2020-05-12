@@ -69,7 +69,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
-    this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
+    this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
   }
 
   _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
