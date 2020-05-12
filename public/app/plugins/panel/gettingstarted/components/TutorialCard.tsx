@@ -15,11 +15,7 @@ export const TutorialCard: FC<Props> = ({ card }) => {
   const styles = getStyles(theme, card.done);
 
   return (
-    <a
-      className={styles.card}
-      target="_blank"
-      onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}
-    >
+    <a className={styles.card} onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}>
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
