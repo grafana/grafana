@@ -8,7 +8,7 @@ import {
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  getFieldTitle,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { stylesFactory, useTheme, Input, IconButton } from '@grafana/ui';
 
@@ -215,7 +215,7 @@ export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => 
       }
 
       return frame.fields.reduce((names, field) => {
-        const t = getFieldTitle(field, frame, input);
+        const t = getFieldDisplayName(field, frame, input);
         names[t] = true;
         return names;
       }, names);

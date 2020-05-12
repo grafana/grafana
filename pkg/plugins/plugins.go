@@ -140,7 +140,7 @@ func (pm *PluginManager) Init() error {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
 		} else {
-			p.Signature = GetPluginSignatureState(p)
+			p.Signature = getPluginSignatureState(pm.log, p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
@@ -282,9 +282,9 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
 
 	// For the time being, we choose to only require back-end plugins to be signed
-	// NOTE: the state is calculated again for when setting metadata on the object
+	// NOTE: the state is calculated again when setting metadata on the object
 	if pluginCommon.Backend && scanner.requireSigned {
-		sig := GetPluginSignatureState(&pluginCommon)
+		sig := getPluginSignatureState(scanner.log, &pluginCommon)
 		if sig != PluginSignatureValid {
 			scanner.log.Debug("Invalid Plugin Signature", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir, "state", sig)
 			if sig == PluginSignatureUnsigned {

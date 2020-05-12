@@ -1,5 +1,5 @@
 import { SingleStatCtrl, ShowData } from '../module';
-import { dateTime, ReducerID, getFieldTitle } from '@grafana/data';
+import { dateTime, ReducerID, getFieldDisplayName } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { LegacyResponseData } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -90,8 +90,8 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should use series avg as default main value', () => {
-      const title = getFieldTitle(ctx.data.field);
-      expect(title).toBe('test.cpu1');
+      const name = getFieldDisplayName(ctx.data.field);
+      expect(name).toBe('test.cpu1');
     });
 
     it('should set formatted value', () => {

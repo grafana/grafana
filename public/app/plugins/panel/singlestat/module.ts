@@ -23,7 +23,7 @@ import {
   PanelEvents,
   formattedValueToString,
   locationUtil,
-  getFieldTitle,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
@@ -205,7 +205,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   processField(fieldInfo: FieldInfo) {
     const { panel, dashboard } = this;
 
-    const name = getFieldTitle(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]);
+    const name = getFieldDisplayName(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]);
     let calc = panel.valueName;
     let calcField = fieldInfo.field;
     let val: any = undefined;
@@ -734,7 +734,7 @@ function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
         if (!distinct.first) {
           distinct.first = f;
         }
-        let t = field.config.title;
+        let t = field.config.displayName;
         if (t && !distinct.byName[t]) {
           distinct.byName[t] = f;
           distinct.names.push(t);

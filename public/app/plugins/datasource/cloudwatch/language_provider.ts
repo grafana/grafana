@@ -317,7 +317,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
           label: 'Fields',
           items: fields.map(field => ({
             label: field,
-            insertText: field.match(/@?[_a-zA-Z]+[_.0-9a-zA-Z]*/) ? field : `\`${field}\``,
+            insertText: field.match(/@?[_a-zA-Z]+[_.0-9a-zA-Z]*/) ? undefined : `\`${field}\``,
           })),
         },
       ],

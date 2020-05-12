@@ -3,10 +3,10 @@ import {
   applyFieldOverrides,
   DataFrame,
   DataTransformerID,
-  getFrameDisplayTitle,
   SelectableValue,
   toCSV,
   transformDataFrame,
+  getFrameDisplayName,
 } from '@grafana/data';
 import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -124,7 +124,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const choices = dataFrames.map((frame, index) => {
       return {
         value: index,
-        label: `${getFrameDisplayTitle(frame)} (${index})`,
+        label: `${getFrameDisplayName(frame)} (${index})`,
       };
     });
 

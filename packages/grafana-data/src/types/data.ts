@@ -46,7 +46,7 @@ export interface QueryResultMeta {
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
-  title: string;
+  displayName: string;
   value: number;
 }
 
