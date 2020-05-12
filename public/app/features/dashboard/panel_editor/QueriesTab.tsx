@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryOptions } from './QueryOptions';
-import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory, Field } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -37,6 +37,7 @@ interface Props {
 interface State {
   dataSource?: DataSourceApi;
   dataSourceItem: DataSourceSelectItem;
+  dataSourceError?: string;
   helpContent: JSX.Element;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
@@ -74,8 +75,14 @@ export class QueriesTab extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
-    const ds = await getDataSourceSrv().get(panel.datasource);
-    this.setState({ dataSource: ds });
+    try {
+      const ds = await getDataSourceSrv().get(panel.datasource);
+      this.setState({ dataSource: ds });
+    } catch (error) {
+      const ds = await getDataSourceSrv().get();
+      const dataSourceItem = this.findCurrentDataSource(ds.name);
+      this.setState({ dataSource: ds, dataSourceError: error?.message, dataSourceItem });
+    }
   }
 
   componentWillUnmount() {
@@ -89,9 +96,8 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ data });
   }
 
-  findCurrentDataSource(): DataSourceSelectItem {
-    const { panel } = this.props;
-    return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
+  findCurrentDataSource(dataSourceName: string = this.props.panel.datasource): DataSourceSelectItem {
+    return this.datasources.find(datasource => datasource.value === dataSourceName) || this.datasources[0];
   }
 
   onChangeDataSource = async (newDsItem: DataSourceSelectItem) => {
@@ -132,6 +138,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       {
         dataSourceItem: newDsItem,
         dataSource: dataSource,
+        dataSourceError: undefined,
       },
       () => panel.refresh()
     );
@@ -179,7 +186,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderTopSection(styles: QueriesTabStyls) {
     const { panel } = this.props;
-    const { dataSourceItem, data, dataSource } = this.state;
+    const { dataSourceItem, data, dataSource, dataSourceError } = this.state;
 
     if (!dataSource) {
       return null;
@@ -189,11 +196,13 @@ export class QueriesTab extends PureComponent<Props, State> {
       <div>
         <div className={styles.dataSourceRow}>
           <div className={styles.dataSourceRowItem}>
-            <DataSourcePicker
-              datasources={this.datasources}
-              onChange={this.onChangeDataSource}
-              current={dataSourceItem}
-            />
+            <Field invalid={!!dataSourceError} error={dataSourceError}>
+              <DataSourcePicker
+                datasources={this.datasources}
+                onChange={this.onChangeDataSource}
+                current={dataSourceItem}
+              />
+            </Field>
           </div>
           <div className={styles.dataSourceRowItem}>
             <Button
