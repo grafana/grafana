@@ -3,8 +3,6 @@ import {
   applyFieldOverrides,
   DataFrame,
   DataTransformerID,
-  FieldType,
-  getDisplayProcessor,
   getFrameDisplayTitle,
   SelectableValue,
   toCSV,
