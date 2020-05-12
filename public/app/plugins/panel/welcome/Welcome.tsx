@@ -4,14 +4,10 @@ import { GrafanaTheme } from '@grafana/data';
 import { ButtonSelect, stylesFactory, useTheme } from '@grafana/ui';
 
 const helpOptions = [
-  {
-    value: 0,
-    label: 'Documentation',
-    href: 'https://grafana.com/docs/grafana/latest?utm_source=grafana_gettingstarted',
-  },
-  { value: 1, label: 'Tutorials', href: 'https://grafana.com/tutorials?utm_source=grafana_gettingstarted' },
-  { value: 2, label: 'Community', href: 'https://community.grafana.com?utm_source=grafana_gettingstarted' },
-  { value: 3, label: 'Public Slack', href: 'http://slack.grafana.com?utm_source=grafana_gettingstarted' },
+  { value: 0, label: 'Documentation', href: 'https://grafana.com/docs/grafana/latest' },
+  { value: 1, label: 'Tutorials', href: 'https://grafana.com/tutorials' },
+  { value: 2, label: 'Community', href: 'https://community.grafana.com' },
+  { value: 3, label: 'Public Slack', href: 'http://slack.grafana.com' },
 ];
 
 export const WelcomeBanner: FC = () => {
@@ -46,7 +42,7 @@ export const WelcomeBanner: FC = () => {
 };
 
 const onHelpLinkClick = (option: { label: string; href: string }) => {
-  window.open(option.href, '_blank');
+  window.open(`${option.href}?utm_source=grafana_gettingstarted`, '_blank');
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

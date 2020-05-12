@@ -37,7 +37,7 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Card) =
   if (!isSet) {
     store.set(card.key, true);
   }
-  window.open(card.href, '_blank');
+  window.open(`${card.href}?utm_source=grafana_gettingstarted`, '_blank');
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {

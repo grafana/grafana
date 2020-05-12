@@ -16,7 +16,7 @@ export const DocsCard: FC<Props> = ({ card }) => {
   return (
     <div className={styles.card}>
       <div className={cardContent}>
-        <a href={card.href}>
+        <a href={`${card.href}?utm_source=grafana_gettingstarted`}>
           <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
           <h4 className={styles.title}>{card.title}</h4>
           <div>
@@ -24,7 +24,7 @@ export const DocsCard: FC<Props> = ({ card }) => {
           </div>
         </a>
       </div>
-      <a href={card.learnHref} className={styles.url} target="_blank">
+      <a href={`${card.learnHref}?utm_source=grafana_gettingstarted`} className={styles.url} target="_blank">
         Learn how in the docs <Icon name="external-link-alt" />
       </a>
     </div>
