@@ -45,16 +45,15 @@ The panel inspector pane opens on the right side of the screen.
 View raw query results in a table. This is the data returned by the query with transformations applied and before the panel applies field options or options overrides. 
 
 1. Open the panel inspector and then click the **Data** tab or in the panel menu click **Inspect > Data**.
-
-2. If your panel contains multiple queries or queries multiple nodes, then you have additional options.
+1. If your panel contains multiple queries or queries multiple nodes, then you have additional options.
 * **Select result -** Choose which result set data you want to view.
 * **Transform data**
   * **Join by time -** View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.
   
   View raw query results in a table with field options and options overrides applied:
   1. Open the **Data** tab in panel inspector.
-  2. Click on **Data display options** above the table.
-  3. Click on **Apply field configuration** toggle button.
+  1. Click on **Data display options** above the table.
+  1. Click on **Apply field configuration** toggle button.
 
 ### Download raw query results as CSV
 
