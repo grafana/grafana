@@ -2,7 +2,7 @@ import React, { FC, useCallback } from 'react';
 import { css, cx } from 'emotion';
 import { useLocalStorage } from 'react-use';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, IconButton, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { getSectionIcon, getSectionStorageKey } from '../utils';
@@ -51,7 +51,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       <span className={styles.text}>{section.title}</span>
       {section.url && (
         <a href={section.url} className={styles.link}>
-          <IconButton name="cog" className={styles.button} />
+          <Icon name="cog" />
         </a>
       )}
       {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
@@ -96,9 +96,6 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       color: ${theme.colors.textWeak};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
-    `,
-    button: css`
-      margin-top: 3px;
     `,
   };
 });

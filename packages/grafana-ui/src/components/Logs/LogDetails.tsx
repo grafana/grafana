@@ -106,6 +106,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
     );
   });
 
+  /**
+   * Returns all fields for log row which consists of fields we parse from the message itself and any derived fields
+   * setup in data source config.
+   */
   getAllFields = memoizeOne((row: LogRowModel) => {
     const fields = this.parseMessage(row.entry);
     const derivedFields = this.getDerivedFields(row);
@@ -121,18 +125,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
       }
       return acc;
     }, {} as { [key: string]: FieldDef });
+
     const allFields = Object.values(fieldsMap);
-    allFields.sort((fieldA, fieldB) => {
-      if (fieldA.links?.length && !fieldB.links?.length) {
-        return -1;
-      }
+    allFields.sort(sortFieldsLinkFirst);
 
-      if (!fieldA.links?.length && fieldB.links?.length) {
-        return 1;
-      }
-
-      return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
-    });
     return allFields;
   });
 
@@ -231,6 +227,16 @@ class UnThemedLogDetails extends PureComponent<Props> {
       </tr>
     );
   }
+}
+
+function sortFieldsLinkFirst(fieldA: FieldDef, fieldB: FieldDef) {
+  if (fieldA.links?.length && !fieldB.links?.length) {
+    return -1;
+  }
+  if (!fieldA.links?.length && fieldB.links?.length) {
+    return 1;
+  }
+  return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
 }
 
 export const LogDetails = withTheme(UnThemedLogDetails);

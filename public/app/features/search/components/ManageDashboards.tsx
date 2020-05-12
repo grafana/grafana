@@ -119,6 +119,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           query={query}
           hideLayout={!!folderUid}
           onLayoutChange={onLayoutChange}
+          editable={hasEditPermissionInFolders}
         />
         <SearchResults
           loading={loading}
