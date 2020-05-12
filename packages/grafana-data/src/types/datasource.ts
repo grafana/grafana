@@ -296,6 +296,25 @@ export interface MetadataInspectorProps<
   data: DataFrame[];
 }
 
+export interface ExploreQueryFieldProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> extends QueryEditorProps<DSType, TQuery, TOptions> {
+  history: any[];
+  onBlur?: () => void;
+  absoluteRange?: AbsoluteTimeRange;
+  exploreMode?: ExploreMode;
+  exploreId?: any;
+}
+
+export interface ExploreStartPageProps {
+  datasource?: DataSourceApi;
+  exploreMode: ExploreMode;
+  onClickExample: (query: DataQuery) => void;
+  exploreId?: any;
+}
+
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -311,7 +330,6 @@ export interface QueryEditorProps<
   data?: PanelData;
   exploreMode?: ExploreMode;
   exploreId?: any;
-  history?: HistoryItem[];
 }
 
 export enum DataSourceStatus {

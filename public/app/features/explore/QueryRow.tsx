@@ -6,7 +6,7 @@ import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
 // Components
-import QueryEditor from './QueryEditor';
+import AngularQueryEditor from './QueryEditor';
 import { QueryRowActions } from './QueryRowActions';
 // Actions
 import { changeQuery, modifyQueries, runQueries } from './state/actions';
@@ -101,7 +101,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
-  setQueryField = () => {
+  setExploreQueryField = () => {
     const { mode, datasourceInstance } = this.props;
     let QueryField;
 
@@ -109,10 +109,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       QueryField = datasourceInstance.components.ExploreMetricsQueryField;
     } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
       QueryField = datasourceInstance.components.ExploreLogsQueryField;
-    } else if (datasourceInstance.components?.ExploreQueryField) {
-      QueryField = datasourceInstance.components?.ExploreQueryField;
     } else {
-      QueryField = datasourceInstance.components?.QueryEditor;
+      QueryField = datasourceInstance.components?.ExploreQueryField;
     }
 
     return QueryField;
@@ -145,14 +143,15 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
-    const QueryField = this.setQueryField();
+    const ExploreQueryField = this.setExploreQueryField();
+    const QueryEditor = datasourceInstance.components?.QueryEditor;
 
     return (
       <>
         <div className="query-row">
           <div className="query-row-field flex-shrink-1">
-            {QueryField ? (
-              <QueryField
+            {ExploreQueryField && (
+              <ExploreQueryField
                 datasource={datasourceInstance}
                 query={query}
                 history={history}
@@ -164,8 +163,20 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
                 exploreMode={mode}
                 exploreId={exploreId}
               />
-            ) : (
+            )}
+            {!ExploreQueryField && QueryEditor && (
               <QueryEditor
+                datasource={datasourceInstance}
+                query={query}
+                onRunQuery={this.onRunQuery}
+                onChange={this.onChange}
+                data={queryResponse}
+                exploreMode={mode}
+                exploreId={exploreId}
+              />
+            )}
+            {!ExploreQueryField && !QueryEditor && (
+              <AngularQueryEditor
                 error={queryErrors}
                 datasource={datasourceInstance}
                 onQueryChange={this.onChange}
