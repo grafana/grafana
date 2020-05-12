@@ -1,6 +1,7 @@
 // Libraries
 import React, { ReactNode } from 'react';
 import intersection from 'lodash/intersection';
+import debounce from 'lodash/debounce';
 
 import {
   QueryField,
@@ -12,10 +13,11 @@ import {
   Select,
   MultiSelect,
 } from '@grafana/ui';
+import Plain from 'slate-plain-serializer';
 
 // Utils & Services
 // dom also includes Element polyfills
-import { Plugin, Node, Editor } from 'slate';
+import { Plugin, Node, Editor, Value } from 'slate';
 import syntax from '../syntax';
 
 // Types
@@ -140,32 +142,10 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     });
   };
 
-  onChangeQuery = (value: string, override?: boolean) => {
+  onChangeQuery = (value: string) => {
     // Send text change to parent
-    const { query, onChange, onRunQuery, datasource, exploreMode } = this.props;
+    const { query, onChange } = this.props;
     const { selectedLogGroups, selectedRegion } = this.state;
-
-    // TEMP: Remove when logs/metrics unification is complete
-    if (datasource.languageProvider && exploreMode === ExploreMode.Logs) {
-      const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
-      const queryUsesStatsCommand = cloudwatchLanguageProvider.isStatsQuery(query.expression);
-
-      if (queryUsesStatsCommand) {
-        this.setState({
-          hint: {
-            message: 'You are trying to run a stats query in Logs mode. ',
-            fix: {
-              label: 'Switch to Metrics mode.',
-              action: this.switchToMetrics,
-            },
-          },
-        });
-      } else {
-        this.setState({
-          hint: undefined,
-        });
-      }
-    }
 
     if (onChange) {
       const nextQuery = {
@@ -175,10 +155,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         region: selectedRegion.value ?? 'default',
       };
       onChange(nextQuery);
-
-      if (override && onRunQuery) {
-        onRunQuery();
-      }
     }
   };
 
@@ -240,12 +216,10 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     const { history, absoluteRange } = this.props;
     const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
-    const result = await cloudwatchLanguageProvider.provideCompletionItems(
+    return await cloudwatchLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
       { history, absoluteRange, logGroupNames: selectedLogGroups.map(logGroup => logGroup.value!) }
     );
-
-    return result;
   };
 
   switchToMetrics = () => {
@@ -281,6 +255,34 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       invalidLogGroups: false,
     });
   };
+
+  /**
+   * Check if query is stats query in logs mode and shows a hint to switch to metrics mode. Needs to be done
+   * on update of the rich Value because standard onChange is not called on load for example.
+   */
+  checkForStatsQuery = debounce((value: Value) => {
+    const { datasource } = this.props;
+    // TEMP: Remove when logs/metrics unification is complete
+    if (datasource.languageProvider && this.props.exploreMode === ExploreMode.Logs) {
+      const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
+      const queryUsesStatsCommand = cloudwatchLanguageProvider.isStatsQuery(Plain.serialize(value));
+      if (queryUsesStatsCommand) {
+        this.setState({
+          hint: {
+            message: 'You are trying to run a stats query in Logs mode. ',
+            fix: {
+              label: 'Switch to Metrics mode.',
+              action: this.switchToMetrics,
+            },
+          },
+        });
+      } else {
+        this.setState({
+          hint: undefined,
+        });
+      }
+    }
+  }, 250);
 
   render() {
     const { ExtraFieldElement, data, query, syntaxLoaded, datasource } = this.props;
@@ -359,6 +361,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               portalOrigin="cloudwatch"
               syntaxLoaded={syntaxLoaded}
               disabled={loadingLogGroups || selectedLogGroups.length === 0}
+              onRichValueChange={this.checkForStatsQuery}
             />
           </div>
           {ExtraFieldElement}
