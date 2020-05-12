@@ -1,11 +1,25 @@
++++
+title = "Add a panel"
+type = "docs"
+[menu.docs]
+identifier = "add-a-panel"
+parent = "panels"
+weight = 100
+draft = "true"
++++
+
 # Add a panel
+
 Panels allow you to show your data in visual form. This topic walks you through the most basic steps to build a panel.
 
 ## 1. Add a panel to a dashboard
 
-Navigate to the dashboard you want to add a panel to.
-Click the **Add panel** icon.
-Click **Add new panel**.
+1. Navigate to the dashboard you want to add a panel to.
+1. Click the **Add panel** icon.
+   
+   ![](/img/docs/panels/add-panel-icon-7-0.png)
+
+2. Click **Add new panel**.
 
 Grafana creates an empty graph panel with your default data source selected.
 
