@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonSelect, stylesFactory, useTheme } from '@grafana/ui';
+import lightBackground from './img/background_light.svg';
 
 const helpOptions = [
   { value: 0, label: 'Documentation', href: 'https://grafana.com/docs/grafana/latest' },
@@ -46,9 +47,7 @@ const onHelpLinkClick = (option: { label: string; href: string }) => {
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backgroundImage = theme.isDark
-    ? 'public/img/login_background_dark.svg'
-    : 'public/img/login_background_light.svg';
+  const backgroundImage = theme.isDark ? 'public/img/login_background_dark.svg' : lightBackground;
 
   return {
     container: css`
