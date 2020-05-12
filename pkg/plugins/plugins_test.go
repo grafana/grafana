@@ -119,7 +119,8 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Empty(t, pm.scanningErrors)
+		assert.Equal(t, []string{"test"}, fm.registeredPlugins)
 	})
 
 	t.Run("Transform plugins should be ignored when expressions feature is off", func(t *testing.T) {

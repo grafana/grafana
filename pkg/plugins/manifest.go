@@ -109,6 +109,12 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 		fp := path.Join(plugin.PluginDir, p)
 		f, err := os.Open(fp)
 		if err != nil {
+			if os.IsNotExist(err) {
+				// We are tolerant with files missing from the plug-in
+				log.Debug("Plug-in is missing file from manifest, ignoring this", "plugin", plugin.Id, "filename", p)
+				continue
+			}
+
 			return PluginSignatureModified
 		}
 		defer f.Close()
