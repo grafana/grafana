@@ -46,7 +46,7 @@ describe('Rename Transformer', () => {
           labels: undefined,
           name: 'time',
           state: {
-            title: 'Total time',
+            displayName: 'Total time',
           },
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
@@ -58,7 +58,7 @@ describe('Rename Transformer', () => {
           labels: undefined,
           name: 'temperature',
           state: {
-            title: 'how cold is it?',
+            displayName: 'how cold is it?',
           },
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
@@ -70,7 +70,7 @@ describe('Rename Transformer', () => {
           name: 'humidity',
           labels: undefined,
           state: {
-            title: 'Moistiness',
+            displayName: 'Moistiness',
           },
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
@@ -111,7 +111,7 @@ describe('Rename Transformer', () => {
           name: 'time',
           labels: undefined,
           state: {
-            title: 'ttl',
+            displayName: 'ttl',
           },
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
@@ -121,7 +121,7 @@ describe('Rename Transformer', () => {
           labels: undefined,
           name: 'pressure',
           state: {
-            title: 'pressure',
+            displayName: 'pressure',
           },
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
@@ -133,7 +133,7 @@ describe('Rename Transformer', () => {
           labels: undefined,
           name: 'humidity',
           state: {
-            title: 'hum',
+            displayName: 'hum',
           },
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
