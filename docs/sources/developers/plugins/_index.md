@@ -47,7 +47,7 @@ Improve an existing plugin with one of our guides:
 
 ### Concepts
 
-Deepen your knowledge through a series of high-level overviews of plugin concepts.
+Deepen your knowledge through a series of high-level overviews of plugin concepts:
 
 - [Data frames]({{< relref "data-frames.md" >}})
 - [Authentication for data source plugins]({{< relref "authentication.md" >}})
