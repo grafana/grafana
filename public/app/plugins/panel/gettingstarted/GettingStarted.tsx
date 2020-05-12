@@ -189,7 +189,7 @@ const getStyles = stylesFactory(() => {
       justify-content: flex-end;
       cursor: pointer;
       text-decoration: underline;
-      width: 99%;
+      margin-right: ${theme.spacing.md};
       margin-bottom: ${theme.spacing.sm};
     `,
     loading: css`
