@@ -20,7 +20,7 @@ export interface Props {
   onTagFilterChange: onSelectChange;
   onToggleAllChecked: () => void;
   query: DashboardQuery;
-  editable: boolean;
+  editable?: boolean;
 }
 
 export const SearchResultsFilter: FC<Props> = ({
