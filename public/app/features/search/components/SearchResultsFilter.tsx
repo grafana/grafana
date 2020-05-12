@@ -20,6 +20,7 @@ export interface Props {
   onTagFilterChange: onSelectChange;
   onToggleAllChecked: () => void;
   query: DashboardQuery;
+  editable?: boolean;
 }
 
 export const SearchResultsFilter: FC<Props> = ({
@@ -35,6 +36,7 @@ export const SearchResultsFilter: FC<Props> = ({
   onTagFilterChange,
   onToggleAllChecked,
   query,
+  editable,
 }) => {
   const showActions = canDelete || canMove;
   const theme = useTheme();
@@ -42,7 +44,7 @@ export const SearchResultsFilter: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      <Checkbox value={allChecked} onChange={onToggleAllChecked} />
+      {editable && <Checkbox value={allChecked} onChange={onToggleAllChecked} />}
       {showActions ? (
         <HorizontalGroup spacing="md">
           <Button disabled={!canMove} onClick={moveTo} icon="exchange-alt" variant="secondary">
