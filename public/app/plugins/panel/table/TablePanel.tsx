@@ -6,7 +6,7 @@ import {
   PanelProps,
   DataFrame,
   SelectableValue,
-  getFrameDisplayTitle,
+  getFrameDisplayName,
   getFieldDisplayName,
 } from '@grafana/data';
 import { Options } from './types';
@@ -108,7 +108,7 @@ export class TablePanel extends Component<Props> {
       const currentIndex = this.getCurrentFrameIndex();
       const names = data.series.map((frame, index) => {
         return {
-          label: getFrameDisplayTitle(frame),
+          label: getFrameDisplayName(frame),
           value: index,
         };
       });

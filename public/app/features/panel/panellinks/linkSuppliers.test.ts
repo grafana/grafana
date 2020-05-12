@@ -41,11 +41,11 @@ describe('getLinksFromLogsField', () => {
       config: {
         links: [
           {
-            displayName: 'title1',
+            title: 'title1',
             url: 'http://domain.com/${__value.raw}',
           },
           {
-            displayName: 'title2',
+            title: 'title2',
             url: 'http://anotherdomain.sk/${__value.raw}',
           },
         ],

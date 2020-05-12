@@ -4,7 +4,7 @@ import { formatLabels } from '../utils/labels';
 /**
  * Get an appropriate display title
  */
-export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
+export function getFrameDisplayName(frame: DataFrame, index?: number) {
   if (frame.name) {
     return frame.name;
   }

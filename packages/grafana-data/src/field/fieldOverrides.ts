@@ -31,7 +31,7 @@ import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
-import { getFrameDisplayTitle, getFieldDisplayName } from './fieldState';
+import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 
 interface OverrideProps {
@@ -100,7 +100,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
   return options.data.map((frame, index) => {
     const scopedVars: ScopedVars = {
-      __series: { text: 'Series', value: { name: getFrameDisplayTitle(frame, index) } }, // might be missing
+      __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
 
     const fields: Field[] = frame.fields.map(field => {
