@@ -5,7 +5,7 @@ type = "docs"
 
 # Add support for Explore queries
 
-This guide explains how to add support for [Explore]({{< relref "../../features/explore.md" >}}) to an existing data source.
+This guide explains how to add support for [Explore]({{< relref "../../features/explore.md" >}}) to an existing data source plugin.
 
 This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
 
@@ -13,11 +13,9 @@ By adding support for Explore to your data source, users can make ad-hoc queries
 
 To support Explore, your plugin needs to define a _query editor_ for Explore. Optionally, your plugin can also define a _start page_ for Explore.
 
-## Add a query editor
+## Add a query editor for Explore
 
 The query editor for Explore is similar to the query editor for the data source itself. In fact, you'll probably reuse the same components for both query editors.
-
-To create a query editor for Explore:
 
 1. Create a file `ExploreQueryEditor.tsx` in the `src` directory of your plugin, with the following content:
 
@@ -88,11 +86,9 @@ To create a query editor for Explore:
    };
    ```
 
-## Add a start page
+## Add a start page for Explore
 
 By adding an Explore start page for your plugin, you can for example create "cheat sheets" with commonly used queries. When the user clicks on one of the examples, it automatically updates the query editor, and runs the query. It's a great way to increase productivity for your users.
-
-To add a start page to your plugin:
 
 1. Create a file `ExploreStartPage.tsx` in the `src` directory of your plugin, with the following content:
 
