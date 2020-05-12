@@ -94,39 +94,24 @@ export class InspectDataTab extends PureComponent<Props, State> {
     return data;
   }
 
-  applyTimeFormatting = (data: DataFrame[]): DataFrame[] => {
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        if (field.type === FieldType.time) {
-          field.display = getDisplayProcessor({
-            field,
-            theme: config.theme,
-          });
-        }
-      }
-    }
-
-    return data;
-  };
   getProcessedData(): DataFrame[] {
-    if (this.state.transformId === DataTransformerID.noop) {
-      return this.applyTimeFormatting(this.props.data);
-    }
+    const { options } = this.props;
+    let data = this.props.data;
 
-    const data = this.getTransformedData();
+    if (this.state.transformId !== DataTransformerID.noop) {
+      data = this.getTransformedData();
+    }
 
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
-    return this.props.options.applyFieldConfig
-      ? applyFieldOverrides({
-          data,
-          theme: config.theme,
-          fieldConfig: this.props.panel.fieldConfig,
-          replaceVariables: (value: string) => {
-            return value;
-          },
-        })
-      : this.applyTimeFormatting(data);
+    return applyFieldOverrides({
+      data,
+      theme: config.theme,
+      fieldConfig: options.applyFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
+      replaceVariables: (value: string) => {
+        return value;
+      },
+    });
   }
 
   render() {
