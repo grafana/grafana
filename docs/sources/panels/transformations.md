@@ -25,7 +25,6 @@ Grafana applies transformations in the sequence that they are listed on the scre
 
 The order can make a huge difference in how your results look. For example, if you use a Reduce transformation to condense all the results of one column to a single value, then you can only apply transformations to that single value.
 
-
 ## Prerequisites
 
 Before you apply transformations, all of the following must be true:
@@ -55,6 +54,7 @@ Transformations are available from the Transform tab in the bottom pane of the P
 
    Click the trash can icon to permanently remove a transformation.
 
+{{< docs-imagebox img="/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
 
 ## Transformation types and options
 
