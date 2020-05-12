@@ -42,7 +42,7 @@ The panel inspector pane opens on the right side of the screen.
 
 ### Inspect raw query results
 
-View raw query results in a table. This is the data returned by the query with transformations applied and before the panel applies field options or options overrides. 
+View raw query results in a table. This is the data returned by the query with transformations applied and before the panel applies field options or field option overrides. 
 
 1. Open the panel inspector and then click the **Data** tab or in the panel menu click **Inspect > Data**.
 
