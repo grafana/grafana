@@ -35,14 +35,20 @@ const UsersTable: FC<Props> = props => {
                 <img className="filter-table__avatar" src={user.avatarUrl} />
               </td>
               <td className="max-width-6">
-                <span className="ellipsis">{user.login}</span>
+                <span className="ellipsis" title={user.login}>
+                  {user.login}
+                </span>
               </td>
 
               <td className="max-width-5">
-                <span className="ellipsis">{user.email}</span>
+                <span className="ellipsis" title={user.email}>
+                  {user.email}
+                </span>
               </td>
               <td className="max-width-5">
-                <span className="ellipsis">{user.name}</span>
+                <span className="ellipsis" title={user.name}>
+                  {user.name}
+                </span>
               </td>
               <td className="width-1">{user.lastSeenAtAge}</td>
 
