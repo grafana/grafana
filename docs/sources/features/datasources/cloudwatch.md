@@ -30,9 +30,7 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 | _Default_                  | Default data source means that it will be pre-selected for new panels.                                  |
 | _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                  |
 | _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                      |
-| _Auth Provider_            | Specify the provider to get credentials.                                                                |
-| _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default. |
-| _Assume Role Arn_          | Specify the ARN of the role to assume                                                                   |
+| _Authentication Provider_  | Specify which method Grafana will use to find the AWS credentials.                                      |
 
 ## Authentication
 
@@ -88,14 +86,33 @@ Here is a minimal policy example:
 
 ### AWS credentials
 
-If Auth Provider is `Credentials file`, Grafana tries to get credentials in the following order.
+There are four different authentication providers available. The `AWS SDK
+Default` provider will do no custom configuration at all and instead use the
+[default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
+as specified by the AWS SDK for Go. This requires you to configure your AWS
+credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html),
+if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html),
+[in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)
+or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+The `Assume Role` authentication provider works similarly, but it will instead use the
+`AWS SDK Default` authentication provider to assume the specified role, which it will
+then use to query the CloudWatch API.
 
-- Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
-- Hard-code credentials.
-- Shared credentials file.
-- IAM role for Amazon EC2.
+The `Credentials file` authentication provider corresponds directly to the
+[SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider)
+provider in the go sdk. In short, it will read the aws shared credentials file
+and find the given profile. While `AWS SDK Default` will also find the shared
+credentials file (on account of the SharedCredentialsProvider being part of the
+default chain) this option allows you to specify which profile to use without
+messing with environment variables. This option will not do any implicit
+fallbacks to other providers. If the SharedCredentialsProvider fails
+authentication will fail.
 
-See the AWS documentation on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
+The `Access & secret key` corresponds to the
+[StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider)
+and will use the given access key id and the secret key to authenticate. If
+this provider fails for whatever reason the authentication will fail. No
+implicit fallbacks exist.
 
 ### AWS credentials file
 
@@ -317,6 +334,19 @@ Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.co
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
+
+### Using AWS SDK Default
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: sdk
+      defaultRegion: eu-west-2
+```
 
 ### Using a credentials file
 
