@@ -83,7 +83,7 @@ describe('getLinksFromLogsField', () => {
               config: {
                 unit: 'kW',
                 decimals: 3,
-                title: 'TheTitle',
+                displayName: 'TheTitle',
               },
             },
             {
