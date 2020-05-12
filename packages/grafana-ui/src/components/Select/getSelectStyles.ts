@@ -25,6 +25,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       white-space: nowrap;
       cursor: pointer;
       border-left: 2px solid transparent;
+      min-height: 36px;
       &:hover {
         background: ${optionBgHover};
       }
