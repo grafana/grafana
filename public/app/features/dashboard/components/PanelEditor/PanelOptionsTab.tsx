@@ -63,7 +63,7 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   elements.push(
-    <OptionsGroup title="Visualisation" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
+    <OptionsGroup title="Visualization" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
       <VisualizationTab panel={panel} ref={visTabInputRef} />
     </OptionsGroup>
   );
