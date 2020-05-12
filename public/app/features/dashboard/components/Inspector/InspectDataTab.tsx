@@ -105,7 +105,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     return applyFieldOverrides({
       data,
       theme: config.theme,
-      fieldConfig: options.applyFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
+      fieldConfig: options.withFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
       replaceVariables: (value: string) => {
         return value;
       },
@@ -189,8 +189,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
                       tooltip="Data shown in the table will be transformed using transformations defined in the panel"
                       label="Apply panel transformations"
                       labelClass="width-12"
-                      checked={!!options.transform}
-                      onChange={() => onOptionsChange({ ...options, transform: !options.transform })}
+                      checked={!!options.withTransforms}
+                      onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
                     />
                   </div>
                 )}
@@ -199,8 +199,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
                     tooltip="Data shown in the table will have panel field configuration applied, for example units or title"
                     label="Apply field configuration"
                     labelClass="width-12"
-                    checked={!!options.applyFieldConfig}
-                    onChange={() => onOptionsChange({ ...options, applyFieldConfig: !options.applyFieldConfig })}
+                    checked={!!options.withFieldConfig}
+                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
                   />
                 </div>
               </QueryOperationRow>
