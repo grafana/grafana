@@ -23,7 +23,7 @@ export enum FieldType {
  * Plugins may extend this with additional properties. Something like series overrides
  */
 export interface FieldConfig<TOptions extends object = any> {
-  title?: string; // The display value for this field.  This supports template variables blank is auto
+  displayName?: string; // The display value for this field.  This supports template variables blank is auto
   filterable?: boolean;
 
   // Numeric Options
@@ -106,7 +106,7 @@ export interface FieldState {
   /**
    * An appropriate name for the field (does not include frame info)
    */
-  title?: string | null;
+  displayName?: string | null;
 
   /**
    * Cache of reduced values
@@ -148,4 +148,5 @@ export interface DataFrameDTO extends QueryResultBase {
 
 export interface FieldCalcs extends Record<string, any> {}
 
-export const TIME_SERIES_FIELD_NAME = 'Value';
+export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
+export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
