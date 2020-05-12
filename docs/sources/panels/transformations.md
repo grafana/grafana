@@ -55,13 +55,13 @@ Transformations are available from the Transform tab in the bottom pane of the P
 
    Click the trash can icon to permanently remove a transformation.
 
-{{< docs-imagebox img="/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
+{{< docs-imagebox img="/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Transformation types and options
 
 Grafana comes with the following transformations:
 
-- Reduce - Reduce all rows or data points to a single value using a function like max, min, mean, or last.
+- [Reduce](#reduce) - Reduce all rows or data points to a single value using a function like max, min, mean, or last.
 - Filter by name - Filter a result set’s fields by name. This might be useful when you want to show only part of your result set.
 - Filter by query - Filter a result set by the refId of the query. This might be useful when your result set consists of multiple time series and you want to show only some of them.
 - Organize fields - Order, filter, and rename the fields in a result set. This transformation is useful when your result set contains for instance non human-readable field names or when - you want to display a table and alter the order of the columns. 
@@ -81,11 +81,108 @@ Once you select at least one calculation, Grafana reduces the results down to on
 
 Here's an example of a table with time series data. Before I apply the transformation, you can see all the data organized by time.
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-before-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
+{{< docs-imagebox img="/img/docs/transformations/reduce-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 After I apply the transformation, there is no time value and each column has been reduced to one row showing the results of the calculations that I chose.
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
+{{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Filter by name
+
+Use this transformation to remove portions of the query results.
+
+Grafana displays the **Identifier** field, followed by the fields returned by your query.
+
+You can apply filters in one of two ways:
+
+- Enter a regex expression.
+- Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
+
+In the example below, I removed the Min field from the results.
+
+Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
+
+{{< docs-imagebox img="/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Here is the table after I applied the transformation to remove the Min field.
+
+{{< docs-imagebox img="/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Here is the same query using a Stat visualization.
+
+{{< docs-imagebox img="/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Filter data by query
+
+Use this transformation in panels that have multiple queries if you want to hide one or more of the queries.
+
+Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
+
+In the example below, the panel has three queries (A, B, C). I removed the B query from the visualization.
+
+{{< docs-imagebox img="/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Organize fields
+
+Use this transformation to rename, reorder, or hide fields returned by the query.
+
+> **Note:** This transformation only works in panels with a single query. If your panel has multiple queries, then you must either apply an Outer join transformation or remove the extra queries.
+
+Grafana displays a list of fields returned by the query. You can:
+
+- Change field order by hovering your cursor over a field. The cursor turns into a hand and then you can drag the field to its new place.
+- Hide or show a field by clicking the eye icon next to the field name. 
+- Rename fields by typing a new name in the **Rename <field>** box.
+
+In the example below, I hid the value field and renamed Max and Min.
+
+{{< docs-imagebox img="/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Outer join
+
+Use this transformation to join multiple time series from a result set by field.
+
+This transformation is especially useful if you want to combine queries so that you can calculate results from the fields.
+
+In the example below, I have two queries displaying streaming data in a table visualization. I can only view the results of one query at a time.
+
+{{< docs-imagebox img="/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
+
+{{< docs-imagebox img="/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Add field from calculation
+
+Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
+
+- **Mode -** Select a mode:
+  - **Reduce row -** NEED DEFINITION
+  - **Binary option -** NEED DEFINITION
+- **Field name -** Select the names of fields you want to use in the calculation for the new field.
+- **Calculation -** Select a calculation to use when Grafana creates the new field. Click in the field to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "calculations-list.md" >}}).
+- **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
+- **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+
+In the example below, I added two fields together and named them Sum.
+
+{{< docs-imagebox img="/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Labels to fields
+
+Use this transformation to group series by time and return labels or tags as fields.
+
+> **Note:** In order to apply this transformation, you must have a query to a data source that returns labeled fields.
+
+When you select this transformation, Grafana automatically transforms all labeled data into fields.
+
+For this example, I manually defined labels in the Random Walk visualization of TestData DB.
+
+{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+After I apply the transformation, my labels appear in the table as fields.
+
+{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Debug transformations
 
@@ -93,4 +190,4 @@ To see the input and the output result sets of the transformation, click the bug
 
 Grafana displays the transformation debug view below the transformation row.
 
-{{< docs-imagebox img="/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1000px" >}}
+{{< docs-imagebox img="/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
