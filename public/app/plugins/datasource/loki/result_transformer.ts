@@ -10,7 +10,6 @@ import {
   ArrayVector,
   MutableDataFrame,
   findUniqueLabels,
-  FieldConfig,
   DataFrameView,
   DataLink,
   Field,
@@ -332,14 +331,15 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-  const newFields = derivedFields.map(fieldFromDerivedFieldConfig);
-  const newFieldsMap = _.keyBy(newFields, 'name');
+  const derivedFieldsGrouped = _.groupBy(derivedFields, 'name');
+
+  const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
   const view = new DataFrameView(dataFrame);
   view.forEach((row: { line: string }) => {
-    for (const field of derivedFields) {
-      const logMatch = row.line.match(field.matcherRegex);
-      newFieldsMap[field.name].values.add(logMatch && logMatch[1]);
+    for (const field of newFields) {
+      const logMatch = row.line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
+      field.values.add(logMatch && logMatch[1]);
     }
   });
 
@@ -349,28 +349,30 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 /**
  * Transform derivedField config into dataframe field with config that contains link.
  */
-function fieldFromDerivedFieldConfig(derivedFieldConfig: DerivedFieldConfig): Field<any, ArrayVector> {
-  const config: FieldConfig = {};
-  if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
-    const link: Partial<DataLink> = {
-      // We do not know what title to give here so we count on presentation layer to create a title from metadata.
-      title: '',
-      url: derivedFieldConfig.url,
-    };
-
-    // Having field.datasourceUid means it is an internal link.
-    if (derivedFieldConfig.datasourceUid) {
-      link.meta = {
-        datasourceUid: derivedFieldConfig.datasourceUid,
-      };
+function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+  const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
+    if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
+      acc.push({
+        // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+        title: '',
+        url: derivedFieldConfig.url,
+        // Having field.datasourceUid means it is an internal link.
+        meta: derivedFieldConfig.datasourceUid
+          ? {
+              datasourceUid: derivedFieldConfig.datasourceUid,
+            }
+          : undefined,
+      });
     }
+    return acc;
+  }, [] as DataLink[]);
 
-    config.links = [link as DataLink];
-  }
   return {
-    name: derivedFieldConfig.name,
+    name: derivedFieldConfigs[0].name,
     type: FieldType.string,
-    config,
+    config: {
+      links: dataLinks,
+    },
     // We are adding values later on
     values: new ArrayVector<string>([]),
   };
