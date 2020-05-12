@@ -154,8 +154,10 @@
     name: Alert list
   - link: /features/panels/dashlist/
     name: Dashboard list
-  - link: /features/panels/text/
+  - link: /panels/text-panel/
     name: Text
+  - link: /panels/news-panel/
+    name: News
   - link: /panels/queries/
     name: Queries
   - link: /panels/transformations/
