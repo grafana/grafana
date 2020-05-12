@@ -225,8 +225,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           const target = result.data[i];
 
           for (let y = 0; y < target.length; y++) {
-            const time = target.fields[1].values.get(y);
-            const value = target.fields[0].values.get(y);
+            const time = target.fields[0].values.get(y);
+            const value = target.fields[1].values.get(y);
 
             if (!value) {
               continue;

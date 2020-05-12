@@ -18,6 +18,7 @@ export const Components = {
     Panel: {
       title: (title: string) => `Panel header title item ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
+      containerByTitle: (title: string) => `Panel container title ${title}`,
     },
     Visualization: {
       Graph: {
@@ -27,6 +28,9 @@ export const Components = {
         Legend: {
           legendItemAlias: (name: string) => `gpl alias ${name}`,
           showLegendSwitch: 'gpl show legend',
+        },
+        xAxis: {
+          labels: () => 'div.flot-x-axis > div.flot-tick-label',
         },
       },
     },
@@ -109,6 +113,7 @@ export const Components = {
   Select: {
     option: 'Select option',
     input: () => 'input[id*="react-select-"]',
+    singleValue: () => 'div[class*="-singleValue"]',
   },
   FieldConfigEditor: {
     content: 'Field config editor content',
@@ -118,5 +123,8 @@ export const Components = {
   },
   FolderPicker: {
     container: 'Folder picker select container',
+  },
+  TimeZonePicker: {
+    container: 'Time zone picker select container',
   },
 };
