@@ -91,7 +91,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     let hitLimit = false;
     const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const scopedVars: ScopedVars = {};
-    const defaultTitle = getTitleTemplate(calcs);
+    const defaultDisplayName = getTitleTemplate(calcs);
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
       const series = data[s]; // Name is already set
@@ -109,7 +109,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         }
 
         const config = field.config; // already set by the prepare task
-        const title = field.config.title ?? defaultTitle;
+        const title = field.config.displayName ?? defaultDisplayName;
 
         const display =
           field.display ??
@@ -209,7 +209,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push(createNoValuesFieldDisplay(options));
-  } else if (values.length === 1 && !fieldConfig.defaults.title) {
+  } else if (values.length === 1 && !fieldConfig.defaults.displayName) {
     // Don't show title for single item
     values[0].display.title = undefined;
   }

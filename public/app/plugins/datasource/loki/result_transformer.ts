@@ -77,10 +77,10 @@ function constructDataFrame(
   const dataFrame = {
     refId,
     fields: [
-      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
+      { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
       { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
       { name: 'id', type: FieldType.string, config: {}, values: uids },
-      { name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' }, values: timesNs }, // Time
+      { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
     ],
     length: times.length,
   };
@@ -283,7 +283,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
         unit = 'decbytes';
       }
       const title = `${_.capitalize(section)}: ${decamelize(label)}`;
-      result.push({ title, value, unit });
+      result.push({ displayName: title, value, unit });
     }
   }
   return result;

@@ -210,7 +210,7 @@ describe('applyFieldOverrides', () => {
     expect(config.unit).toEqual('xyz');
 
     // The default value applied
-    expect(config.title).toEqual('Kittens');
+    expect(config.displayName).toEqual('Kittens');
 
     // The override applied
     expect(config.decimals).toEqual(1);

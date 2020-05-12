@@ -734,7 +734,7 @@ function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
         if (!distinct.first) {
           distinct.first = f;
         }
-        let t = field.config.title;
+        let t = field.config.displayName;
         if (t && !distinct.byName[t]) {
           distinct.byName[t] = f;
           distinct.names.push(t);

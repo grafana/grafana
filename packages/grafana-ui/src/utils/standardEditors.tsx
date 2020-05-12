@@ -33,9 +33,9 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  */
 export const getStandardFieldConfigs = () => {
   const category = ['Standard options'];
-  const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-    id: 'title',
-    path: 'title',
+  const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+    id: 'displayName',
+    path: 'displayName',
     name: 'Display name',
     description: 'Change the field or series name',
     editor: standardEditorsRegistry.get('text').editor as any,
@@ -206,7 +206,7 @@ export const getStandardFieldConfigs = () => {
   //   category: ['Color & thresholds'],
   // };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
 };
 
 /**
