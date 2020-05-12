@@ -55,13 +55,18 @@ type PluginStartFuncs struct {
 	OnStart       StartFunc
 }
 
-// PluginDescriptor descriptor used for registering backend plugins.
+// PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
 	pluginID         string
 	executablePath   string
 	managed          bool
 	versionedPlugins map[int]goplugin.PluginSet
 	startFns         PluginStartFuncs
+}
+
+// PluginID returns the plugin ID.
+func (pd PluginDescriptor) PluginID() string {
+	return pd.pluginID
 }
 
 // getV2PluginSet returns list of plugins supported on v2.
