@@ -30,7 +30,7 @@ var (
 	executorLock = sync.Mutex{}
 )
 
-// CloudWatchExecutor represents a struct holding enough information to execute
+// CloudWatchExecutor represents a structure holding enough information to execute
 // CloudWatch queries for a specific datasource. It caches AWS SDK Sessions on
 // a regional basis for each datasource version in order to load configuration as
 // seldomly as possible.
