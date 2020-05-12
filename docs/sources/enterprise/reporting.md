@@ -43,6 +43,15 @@ Currently only Organization Admins can create reports.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
+### Layout
+
+> We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=the+reporting+layout+options+design+process) if you would like to get involved in the design process.
+
+Name | Support | Description | Preview
+---- | ------- | ----------- | -------
+Portrait | v6.4+ | Portrait generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Landscape | v6.7+ | Landscape generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ### Scheduling
 
 Scheduled reports can be sent on a weekly, daily, or hourly basis. You may also disable scheduling for when you either want to pause a report or send it via the API.
@@ -76,15 +85,6 @@ Weekly reports are generated once per week. All fields are required.
 > Only available in Grafana Enterprise v7.0+.
 
 Reports which are scheduled to never be sent have no parameter and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the API.
-
-### Layout
-
-> We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise) if you would like to get involved in the design process.
-
-Name | Introduced | Description | Preview
----- | ---------- | ----------- | -------
-Portrait | 6.4 | Portrait generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Landscape | 6.7 | Landscape generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Send test mail
 
