@@ -254,7 +254,7 @@ describe('PanelQueryRunner', () => {
       it('should not apply transformations when transform option is false', async () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
         spy.mockClear();
-        ctx.runner.getData({ transform: false }).subscribe({
+        ctx.runner.getData({ withTransforms: false }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
@@ -266,7 +266,7 @@ describe('PanelQueryRunner', () => {
       it('should not apply field config when applyFieldConfig option is false', async () => {
         const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
         spy.mockClear();
-        ctx.runner.getData({ applyFieldConfig: false }).subscribe({
+        ctx.runner.getData({ withFieldConfig: false }).subscribe({
           next: (data: PanelData) => {
             return data;
           },

@@ -63,8 +63,8 @@ interface State {
   metaDS?: DataSourceApi;
   // drawer width
   drawerWidth: string;
-  transform: boolean;
-  applyFieldConfig: boolean;
+  withTransforms: boolean;
+  withFieldConfig: boolean;
 }
 
 export class PanelInspectorUnconnected extends PureComponent<Props, State> {
@@ -79,8 +79,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       data: [],
       currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
-      transform: true,
-      applyFieldConfig: false,
+      withTransforms: true,
+      withFieldConfig: false,
     };
   }
 
@@ -95,8 +95,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   componentDidUpdate(prevProps: Props, prevState: State) {
     if (
       prevProps.plugin !== this.props.plugin ||
-      this.state.transform !== prevState.transform ||
-      this.state.applyFieldConfig !== prevState.applyFieldConfig
+      this.state.withTransforms !== prevState.withTransforms ||
+      this.state.withFieldConfig !== prevState.withFieldConfig
     ) {
       this.init();
     }
@@ -108,11 +108,12 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
    */
   init() {
     const { plugin, panel } = this.props;
+    const { withTransforms, withFieldConfig } = this.state;
 
     if (plugin && !plugin.meta.skipDataQuery) {
       this.querySubscription = panel
         .getQueryRunner()
-        .getData({ transform: this.state.transform, applyFieldConfig: this.state.applyFieldConfig })
+        .getData({ withTransforms, withFieldConfig })
         .subscribe({
           next: data => this.onUpdateData(data),
         });
@@ -174,7 +175,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     this.setState({ currentTab: item.value || InspectTab.Data });
   };
   onDataTabOptionsChange = (options: GetDataOptions) => {
-    this.setState({ transform: !!options.transform, applyFieldConfig: !!options.applyFieldConfig });
+    this.setState({ withTransforms: !!options.withTransforms, withFieldConfig: !!options.withFieldConfig });
   };
 
   renderMetadataInspector() {
@@ -186,7 +187,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { last, isLoading, transform, applyFieldConfig } = this.state;
+    const { last, isLoading, withFieldConfig, withTransforms } = this.state;
     return (
       <InspectDataTab
         dashboard={this.props.dashboard}
@@ -194,8 +195,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
         data={last.series}
         isLoading={isLoading}
         options={{
-          transform,
-          applyFieldConfig,
+          withFieldConfig,
+          withTransforms,
         }}
         onOptionsChange={this.onDataTabOptionsChange}
       />
