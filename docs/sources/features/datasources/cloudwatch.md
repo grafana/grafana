@@ -99,10 +99,10 @@ The `Credentials file` authentication provider corresponds directly to the
 [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider)
 provider in the go sdk. In short, it will read the aws shared credentials file and find the given profile. While `AWS SDK Default` will also find the shared
 credentials file (on account of the SharedCredentialsProvider being part of the default chain) this option allows you to specify which profile to use without
-messing with environment variables. This option will not do any implicit fallbacks to other providers. If the SharedCredentialsProvider fails authentication will fail.
+messing with environment variables. This option will not do any implicit fallbacks to other providers. If the SharedCredentialsProvider fails, then authentication will fail.
 
 The `Access & secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider)
-and will use the given access key id and the secret key to authenticate. If this provider fails for whatever reason the authentication will fail.
+and will use the given access key id and the secret key to authenticate. If this provider fails for whatever reason, then the authentication will fail.
 No implicit fallbacks exist.
 
 ### AWS credentials file
