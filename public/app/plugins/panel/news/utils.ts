@@ -26,7 +26,7 @@ export function feedToDataFrame(feed: RssFeed): DataFrame {
 
   return {
     fields: [
-      { name: 'date', type: FieldType.time, config: { title: 'Date' }, values: date },
+      { name: 'date', type: FieldType.time, config: { displayName: 'Date' }, values: date },
       { name: 'title', type: FieldType.string, config: {}, values: title },
       { name: 'link', type: FieldType.string, config: {}, values: link },
       { name: 'content', type: FieldType.string, config: {}, values: content },

@@ -47,7 +47,7 @@ Set to complete URL to override Apple/iOS icon.
 
 ### footer_links
 
-List the links IDs to use here. Grafana will look for matching links configurations the link IDs should be space-separated and contain no whitespace.
+List the link IDs to use here. Grafana will look for matching link configurations, the link IDs should be space-separated and contain no whitespace.
 
 ## [meta_analytics]
 
@@ -57,7 +57,7 @@ Max age for data files before they get deleted.
 
 ### max_data_directory_size
 
-Max size in megabytes of the data files directory before files gets deleted.
+Max size in megabytes of the data files directory before files get deleted.
 
 ### data_path
 

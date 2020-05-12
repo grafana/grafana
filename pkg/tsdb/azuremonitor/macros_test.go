@@ -29,11 +29,18 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 		Err       require.ErrorAssertionFunc
 	}{
 		{
-			name:     "invalid macro should throw error",
+			name:     "invalid macro should be ignored",
 			query:    &tsdb.Query{},
 			kql:      "$__invalid()",
-			expected: "",
-			Err:      require.Error,
+			expected: "$__invalid()",
+			Err:      require.NoError,
+		},
+		{
+			name:     "Kusto variables should be ignored",
+			query:    &tsdb.Query{},
+			kql:      ") on $left.b == $right.y",
+			expected: ") on $left.b == $right.y",
+			Err:      require.NoError,
 		},
 		{
 			name:     "$__contains macro with a multi template variable that has multiple selected values as a parameter should build in clause",
