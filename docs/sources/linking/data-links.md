@@ -8,7 +8,7 @@ type = "docs"
 
 Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization showed four servers, you could add a data link to one or two of them.
 
-Click directly on the panel to see the data link. It appears on the context menu under **Add annotation**.
+For graph panels, click directly on the panel to see the data link. It appears on the context menu under **Add annotation**.
 
 The link itself is accessible in different ways depending on the visualization. For the graph you need to click on a data point or line, for a panel like
 Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
