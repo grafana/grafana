@@ -45,7 +45,7 @@ Currently only Organization Admins can create reports.
 
 ### Layout
 
-> We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=the+reporting+layout+options+design+process) if you would like to get involved in the design process.
+> We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=design-process&value=reporting) if you would like to get involved in the design process.
 
 Name | Support | Description | Preview
 ---- | ------- | ----------- | -------
