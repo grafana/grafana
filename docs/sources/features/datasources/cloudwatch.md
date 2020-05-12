@@ -30,7 +30,7 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 | _Default_                  | Default data source means that it will be pre-selected for new panels.                                  |
 | _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                  |
 | _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                      |
-| _Authentication Provider_  | Specify which method Grafana will use to find the AWS credentials.                                      |
+| _Authentication Provider_  | Specify which method Grafana uses to find the AWS credentials.                                          |
 
 ## Authentication
 
