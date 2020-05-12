@@ -54,7 +54,36 @@ XXX - this entire section
 
 ## Series overrides
 
-For more information about series overrides, refer to [Add series overrides](ADD LINK WHEN TOPIC IS MERGED).
+Series overrides allows a series in a graph panel to be rendered differently from the others. You can customize display options on a per-series bases or by using regex rules. For example, one series can have a thicker line width to make it stand out or be moved to the right Y-axis.
+
+You can add multiple series overrides.
+
+**Add a series override**
+
+1. Click **Add series override**.
+1. In **Alias or regex** Type or select a series. Click in the field to see a list of available series.
+1. Click **+** and then select a style to apply to the series. You can add multiple styles to each entry.
+  - **Bars -** Show series as a bar graph.
+  - **Lines -** Show series as line graph.
+  - **Line fill -** Show line graph with area fill.
+  - **Fill gradient -** Area fill gradient amount.
+  - **Line width -** Set line width.
+  - **Null point mode -** Option to ignore null values or replace with zero. Important if you want to ignore gaps in your data.
+  - **Fill below to -** Fill area between two series.
+  - **Staircase line -** Show series as a staircase line .
+  - **Dashes -** Show line with dashes.
+  - **Hidden Series -** Hide the series.
+  - **Dash Length -** Dashed line length.
+  - **Dash Space -** Dashed line spacing.
+  - **Points -** Show series as separate points.
+  - **Point Radius -** Radius for point rendering.
+  - **Stack -** Set stack group for series.
+  - **Color -** Set series color.
+  - **Y-axis -** Set series y-axis.
+  - **Z-index -** Set series z-index (rendering order). Important when overlaying different styles (bar charts, area charts).
+  - **Transform -** Transform value to negative to render below the y-axis.
+  - **Legend -** Control if a series is shown in legend.
+  - **Hide in tooltip -** Control if a series is shown in graph tooltip.
 
 ## Axes
 
