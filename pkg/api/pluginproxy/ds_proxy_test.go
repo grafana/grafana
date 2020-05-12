@@ -567,7 +567,25 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	plugin := plugins.DataSourcePlugin{}
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 	require.Error(t, err)
-	assert.True(t, strings.HasPrefix(err.Error(), `Validation of URL "://host/root" failed`))
+	assert.True(t, strings.HasPrefix(err.Error(), `Validation of data source URL "://host/root" failed`))
+}
+
+func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
+	ctx := models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{},
+		},
+		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+	}
+	ds := models.DataSource{
+		Type: "test",
+		Url:  "127.0.01:5432",
+	}
+	cfg := setting.Cfg{}
+	plugin := plugins.DataSourcePlugin{}
+	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+
+	require.NoError(t, err)
 }
 
 type CloseNotifierResponseRecorder struct {

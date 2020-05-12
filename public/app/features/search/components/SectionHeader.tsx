@@ -1,10 +1,11 @@
 import React, { FC, useCallback } from 'react';
 import { css, cx } from 'emotion';
+import { useLocalStorage } from 'react-use';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, IconButton, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
-import { getSectionIcon } from '../utils';
+import { getSectionIcon, getSectionStorageKey } from '../utils';
 
 interface SectionHeaderProps {
   editable?: boolean;
@@ -21,8 +22,10 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
 }) => {
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected, editable);
+  const setSectionExpanded = useLocalStorage(getSectionStorageKey(section.title), true)[1];
 
   const onSectionExpand = () => {
+    setSectionExpanded(!section.expanded);
     onSectionClick(section);
   };
 
