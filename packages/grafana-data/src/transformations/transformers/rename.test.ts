@@ -41,7 +41,7 @@ describe('Rename Transformer', () => {
       expect(renamed.fields).toEqual([
         {
           config: {
-            title: 'Total time',
+            displayName: 'Total time',
           },
           labels: undefined,
           name: 'time',
@@ -53,7 +53,7 @@ describe('Rename Transformer', () => {
         },
         {
           config: {
-            title: 'how cold is it?',
+            displayName: 'how cold is it?',
           },
           labels: undefined,
           name: 'temperature',
@@ -65,7 +65,7 @@ describe('Rename Transformer', () => {
         },
         {
           config: {
-            title: 'Moistiness',
+            displayName: 'Moistiness',
           },
           name: 'humidity',
           labels: undefined,
@@ -106,7 +106,7 @@ describe('Rename Transformer', () => {
       expect(renamed.fields).toEqual([
         {
           config: {
-            title: 'ttl',
+            displayName: 'ttl',
           },
           name: 'time',
           labels: undefined,
@@ -128,7 +128,7 @@ describe('Rename Transformer', () => {
         },
         {
           config: {
-            title: 'hum',
+            displayName: 'hum',
           },
           labels: undefined,
           name: 'humidity',

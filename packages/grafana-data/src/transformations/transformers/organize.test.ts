@@ -57,7 +57,7 @@ describe('OrganizeFields Transformer', () => {
         },
         {
           config: {
-            title: 'renamed_humidity',
+            displayName: 'renamed_humidity',
           },
           labels: undefined,
           name: 'humidity',
@@ -105,7 +105,7 @@ describe('OrganizeFields Transformer', () => {
         {
           labels: undefined,
           config: {
-            title: 'renamed_time',
+            displayName: 'renamed_time',
           },
           name: 'time',
           state: {

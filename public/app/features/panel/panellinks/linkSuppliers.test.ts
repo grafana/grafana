@@ -41,11 +41,11 @@ describe('getLinksFromLogsField', () => {
       config: {
         links: [
           {
-            title: 'title1',
+            displayName: 'title1',
             url: 'http://domain.com/${__value.raw}',
           },
           {
-            title: 'title2',
+            displayName: 'title2',
             url: 'http://anotherdomain.sk/${__value.raw}',
           },
         ],
@@ -83,7 +83,7 @@ describe('getLinksFromLogsField', () => {
               config: {
                 unit: 'kW',
                 decimals: 3,
-                title: 'TheTitle',
+                displayName: 'TheTitle',
               },
             },
             {
