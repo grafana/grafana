@@ -48,7 +48,7 @@ export const useManageDashboards = (
   ]);
 
   const canSave = folder?.canSave;
-  const hasEditPermissionInFolders = canSave ? contextSrv.hasEditPermissionInFolders : false;
+  const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
   const noFolders = canSave && folder?.id && results.length === 0 && !loading && !initialLoading;
 
   return {

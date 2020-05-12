@@ -1,5 +1,5 @@
-import { DataFrame, TIME_SERIES_FIELD_NAME, FieldType } from '../types';
-import { getFieldTitle } from './fieldState';
+import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType } from '../types';
+import { getFieldDisplayName } from './fieldState';
 import { toDataFrame } from '../dataframe';
 
 interface TitleScenario {
@@ -11,10 +11,10 @@ interface TitleScenario {
 function checkScenario(scenario: TitleScenario): string {
   const frame = scenario.frames[scenario.frameIndex ?? 0];
   const field = frame.fields[scenario.fieldIndex ?? 0];
-  return getFieldTitle(field, frame, scenario.frames);
+  return getFieldDisplayName(field, frame, scenario.frames);
 }
 
-describe('Check field state calculations (title and id)', () => {
+describe('Check field state calculations (displayName and id)', () => {
   it('should use field name if no frame name', () => {
     const title = checkScenario({
       frames: [
@@ -92,23 +92,23 @@ describe('Check field state calculations (title and id)', () => {
     expect(title).toEqual('{mode="B", server="Server A"}');
   });
 
-  it('should use field name even when it is TIME_SERIES_FIELD_NAME if there are no labels', () => {
+  it('should use field name even when it is TIME_SERIES_VALUE_FIELD_NAME if there are no labels', () => {
     const title = checkScenario({
       frames: [
         toDataFrame({
-          fields: [{ name: TIME_SERIES_FIELD_NAME, labels: {} }],
+          fields: [{ name: TIME_SERIES_VALUE_FIELD_NAME, labels: {} }],
         }),
       ],
     });
     expect(title).toEqual('Value');
   });
 
-  it('should use series name when field name is TIME_SERIES_FIELD_NAME and there are no labels ', () => {
+  it('should use series name when field name is TIME_SERIES_VALUE_FIELD_NAME and there are no labels ', () => {
     const title = checkScenario({
       frames: [
         toDataFrame({
           name: 'Series A',
-          fields: [{ name: TIME_SERIES_FIELD_NAME, labels: {} }],
+          fields: [{ name: TIME_SERIES_VALUE_FIELD_NAME, labels: {} }],
         }),
       ],
     });

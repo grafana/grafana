@@ -12,8 +12,8 @@ import {
   BracesPlugin,
   Select,
   MultiSelect,
-  Token,
 } from '@grafana/ui';
+import Plain from 'slate-plain-serializer';
 
 // Utils & Services
 // dom also includes Element polyfills
@@ -152,7 +152,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         ...query,
         expression: value,
         logGroupNames: selectedLogGroups?.map(logGroupName => logGroupName.value!) ?? [],
-        region: selectedRegion.value!,
+        region: selectedRegion.value ?? 'default',
       };
       onChange(nextQuery);
     }
@@ -190,7 +190,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       if (onChange) {
         const nextQuery = {
           ...query,
-          region: v.value!,
+          region: v.value ?? 'default',
           logGroupNames: selectedLogGroups.map(group => group.value!),
         };
 
@@ -256,23 +256,31 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     });
   };
 
+  /**
+   * Check if query is stats query in logs mode and shows a hint to switch to metrics mode. Needs to be done
+   * on update of the rich Value because standard onChange is not called on load for example.
+   */
   checkForStatsQuery = debounce((value: Value) => {
-    const tokens = value.data.get('tokens');
-    const queryUsesStatsCommand = tokens.find(
-      (token: Token) => token.types.includes('query-command') && token.content.toLowerCase() === 'stats'
-    );
-
+    const { datasource } = this.props;
     // TEMP: Remove when logs/metrics unification is complete
-    if (queryUsesStatsCommand && this.props.exploreMode === ExploreMode.Logs) {
-      this.setState({
-        hint: {
-          message: 'You are trying to run a stats query in Logs mode. ',
-          fix: {
-            label: 'Switch to Metrics mode.',
-            action: this.switchToMetrics,
+    if (datasource.languageProvider && this.props.exploreMode === ExploreMode.Logs) {
+      const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
+      const queryUsesStatsCommand = cloudwatchLanguageProvider.isStatsQuery(Plain.serialize(value));
+      if (queryUsesStatsCommand) {
+        this.setState({
+          hint: {
+            message: 'You are trying to run a stats query in Logs mode. ',
+            fix: {
+              label: 'Switch to Metrics mode.',
+              action: this.switchToMetrics,
+            },
           },
-        },
-      });
+        });
+      } else {
+        this.setState({
+          hint: undefined,
+        });
+      }
     }
   }, 250);
 

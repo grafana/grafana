@@ -1,9 +1,21 @@
+# 7.0.0-beta3 (2020-05-08)
+
+### Features / Enhancements
+* **Forms**: Remove Forms namespace [BREAKING]. Will cause all `Forms` imports to stop working. See migration guide below. [#24378](https://github.com/grafana/grafana/pull/24378), [@tskarhed](https://github.com/tskarhed)
+
+# 7.0.0-beta.2 (2020-05-07)
+
+### Bug Fixes
+
+* **Dashboard**: Fix for folder picker menu not being visible outside modal when saving dashboard. [#24296](https://github.com/grafana/grafana/pull/24296), [@tskarhed](https://github.com/tskarhed)
+* **Select**: Fixes so component loses focus on selecting value or pressing outside of input. [#24008](https://github.com/grafana/grafana/pull/24008), [@mckn](https://github.com/mckn)
+
 # 7.0.0-beta.1 (2020-04-28)
 
 ## Breaking changes
 
 ### @grafana/ui forms migration notice
-In Grafana 7 we have migrated from our old form components to `LegacyForms` namespace. The new components were previously available under the `Forms` namespace. 
+In Grafana 7 we have migrated from our old form components to `LegacyForms` namespace. The new components were previously available under the `Forms` namespace.
 
 All the following components were moved to the LegacyForms namespace, and some replaced with the new form components:
 
@@ -32,7 +44,7 @@ import { LegacyForms } from '@grafana/ui';
 <LegacyForms.Switch ... />
 ```
 
-If you were previously using the new form styles under the `Forms` namespace, change from this: 
+If you were previously using the new form styles under the `Forms` namespace, change from this:
 
 ```jsx
 import { Forms } from '@grafana/ui';
@@ -49,6 +61,7 @@ import { Switch} from '@grafana/ui';
 To see the new form components visit [our Storybook](https://developers.grafana.com/ui)
 
 ### Features / Enhancements
+
 * **@grafana/ui**: Create Icon component and replace icons. [#23402](https://github.com/grafana/grafana/pull/23402), [@ivanahuckova](https://github.com/ivanahuckova)
 * **@grafana/ui**: Create slider component. [#22275](https://github.com/grafana/grafana/pull/22275), [@ivanahuckova](https://github.com/ivanahuckova)
 * **@grafana/ui**: Remove ColorPallete component. [#23592](https://github.com/grafana/grafana/pull/23592), [@ivanahuckova](https://github.com/ivanahuckova)
@@ -63,6 +76,7 @@ To see the new form components visit [our Storybook](https://developers.grafana.
 * **grafana/ui**: Add basic horizontal and vertical layout components. [#22303](https://github.com/grafana/grafana/pull/22303), [@dprokop](https://github.com/dprokop)
 
 ### Bug Fixes
+
 * **@grafana/ui**: Fix time range when only partial datetime is provided. [#23122](https://github.com/grafana/grafana/pull/23122), [@ivanahuckova](https://github.com/ivanahuckova)
 
 # 6.6.0-beta.1.0 (2020-01-20)
@@ -83,4 +97,3 @@ Version update to 6.0.0 to keep @grafana/ui version in sync with [Grafana](https
 
 # 1.0.0-alpha.0 (2019-02-21)
 First public release
-
