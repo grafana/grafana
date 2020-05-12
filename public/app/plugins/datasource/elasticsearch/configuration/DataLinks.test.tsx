@@ -32,7 +32,7 @@ describe('DataLinks', () => {
       wrapper = await mount(<DataLinks value={testValue} onChange={() => {}} />);
     });
 
-    expect(wrapper.find(Button).filterWhere(button => button.contains('Add')).length).toBe(1);
+    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Add')).length).toBe(1);
     expect(wrapper.find(DataLink).length).toBe(2);
   });
 
@@ -42,7 +42,7 @@ describe('DataLinks', () => {
     await act(async () => {
       wrapper = await mount(<DataLinks onChange={onChangeMock} />);
     });
-    const addButton = wrapper.find(Button).filterWhere(button => button.contains('Add'));
+    const addButton = wrapper.find(Button).filterWhere((button: any) => button.contains('Add'));
     addButton.simulate('click');
     expect(onChangeMock.mock.calls[0][0].length).toBe(1);
   });

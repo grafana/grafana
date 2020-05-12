@@ -32,8 +32,10 @@ describe('DerivedFields', () => {
       wrapper = await mount(<DerivedFields value={testValue} onChange={() => {}} />);
     });
 
-    expect(wrapper.find(Button).filterWhere(button => button.contains('Add')).length).toBe(1);
-    expect(wrapper.find(Button).filterWhere(button => button.contains('Show example log message')).length).toBe(1);
+    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Add')).length).toBe(1);
+    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Show example log message')).length).toBe(
+      1
+    );
     expect(wrapper.find(DerivedField).length).toBe(2);
   });
 
@@ -43,7 +45,7 @@ describe('DerivedFields', () => {
     await act(async () => {
       wrapper = await mount(<DerivedFields onChange={onChangeMock} />);
     });
-    const addButton = wrapper.find(Button).filterWhere(button => button.contains('Add'));
+    const addButton = wrapper.find(Button).filterWhere((button: any) => button.contains('Add'));
     addButton.simulate('click');
     expect(onChangeMock.mock.calls[0][0].length).toBe(1);
   });
