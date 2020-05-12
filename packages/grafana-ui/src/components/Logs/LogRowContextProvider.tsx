@@ -198,6 +198,6 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     },
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),
-    limit: limit,
+    limit,
   });
 };
