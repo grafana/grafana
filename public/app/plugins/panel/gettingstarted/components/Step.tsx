@@ -37,12 +37,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     setup: css`
       display: flex;
-      width: 90%;
+      width: 95%;
     `,
     info: css`
       width: 172px;
-      margin-right: 72px;
+      margin-right: 5%;
 
+      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
+        margin-right: ${theme.spacing.xl};
+      }
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         display: none;
       }

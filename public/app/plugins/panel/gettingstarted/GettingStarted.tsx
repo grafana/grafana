@@ -127,12 +127,17 @@ const getStyles = stylesFactory(() => {
       height: 100%;
       background: url(${backgroundImage}) no-repeat;
       background-size: cover;
-      padding-top: ${theme.spacing.xl};
+      padding: ${theme.spacing.xl} ${theme.spacing.md} 0;
     `,
     content: css`
       label: content;
       display: flex;
       justify-content: center;
+
+      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
+        margin-left: ${theme.spacing.lg};
+        justify-content: flex-start;
+      }
     `,
     header: css`
       label: header;
