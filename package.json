@@ -98,6 +98,7 @@
     "@types/prismjs": "1.16.0",
     "@types/puppeteer-core": "2.0.0",
     "@types/react": "16.8.16",
+    "@types/react-beautiful-dnd": "12.1.2",
     "@types/react-dom": "16.8.4",
     "@types/react-grid-layout": "0.16.7",
     "@types/react-redux": "7.1.7",

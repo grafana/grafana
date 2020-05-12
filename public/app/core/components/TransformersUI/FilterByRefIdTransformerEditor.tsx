@@ -1,14 +1,14 @@
 import React from 'react';
 import {
   DataTransformerID,
-  FilterFramesByRefIdTransformerOptions,
   KeyValue,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { HorizontalGroup } from '../Layout/Layout';
-import { FilterPill } from '../FilterPill/FilterPill';
+import { HorizontalGroup, FilterPill } from '@grafana/ui';
+
+import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
 
 interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
 

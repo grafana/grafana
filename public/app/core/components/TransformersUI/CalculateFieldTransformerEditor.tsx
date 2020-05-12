@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
+
 import {
-  CalculateFieldTransformerOptions,
   DataTransformerID,
   FieldType,
   KeyValue,
@@ -8,34 +8,21 @@ import {
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  NullValueMode,
   BinaryOperationID,
   SelectableValue,
   binaryOperators,
-  CalculateFieldMode,
-  getResultFieldNameForCalculateFieldTransformerOptions,
-  getFieldTitle,
+  getFieldDisplayName,
 } from '@grafana/data';
-import { StatsPicker } from '../StatsPicker/StatsPicker';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { Input } from '../Input/Input';
-import { FilterPill } from '../FilterPill/FilterPill';
-import { HorizontalGroup } from '../Layout/Layout';
-import { Select } from '../Select/Select';
+import { Select, StatsPicker, LegacyForms, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
+import {
+  CalculateFieldTransformerOptions,
+  CalculateFieldMode,
+  getNameFromOptions,
+  ReduceOptions,
+  BinaryOptions,
+} from '@grafana/data/src/transformations/transformers/calculateField';
+
 import defaults from 'lodash/defaults';
-
-// Copied from @grafana/data ;(  not sure how to best support his
-interface ReduceOptions {
-  include?: string; // Assume all fields
-  reducer: ReducerID;
-  nullValueMode?: NullValueMode;
-}
-
-interface BinaryOptions {
-  left: string;
-  operator: BinaryOperationID;
-  right: string;
-}
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -88,11 +75,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           continue;
         }
 
-        const title = getFieldTitle(field, frame, input);
+        const displayName = getFieldDisplayName(field, frame, input);
 
-        if (!byName[title]) {
-          byName[title] = true;
-          allNames.push(title);
+        if (!byName[displayName]) {
+          byName[displayName] = true;
+          allNames.push(displayName);
         }
       }
     }
@@ -342,14 +329,14 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             <Input
               className="width-18"
               value={options.alias ?? ''}
-              placeholder={getResultFieldNameForCalculateFieldTransformerOptions(options)}
+              placeholder={getNameFromOptions(options)}
               onChange={this.onAliasChanged}
             />
           </div>
         </div>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <Switch
+            <LegacyForms.Switch
               label="Replace all fields"
               labelClass="width-8"
               checked={!!options.replaceFields}

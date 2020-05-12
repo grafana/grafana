@@ -5,6 +5,7 @@ import { getTimeZoneGroups, TimeZone, rangeUtil, SelectableValue } from '@grafan
 import { config } from '@grafana/runtime';
 import kbn from 'app/core/utils/kbn';
 import isEmpty from 'lodash/isEmpty';
+import { selectors } from '@grafana/e2e-selectors';
 
 const grafanaTimeZones = [
   { value: '', label: 'Default' },
@@ -112,7 +113,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
       <div className="editor-row">
         <h5 className="section-heading">Time Options</h5>
         <div className="gf-form-group">
-          <div className="gf-form">
+          <div className="gf-form" aria-label={selectors.components.TimeZonePicker.container}>
             <label className="gf-form-label width-7">Timezone</label>
             <Select isSearchable={true} value={value} onChange={this.onTimeZoneChange} options={timeZones} width={40} />
           </div>

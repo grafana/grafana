@@ -39,9 +39,10 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
     [onChange]
   );
 
+  const defaultValue = value === undefined || value === null || isNaN(value) ? '' : value.toString();
   return (
     <Input
-      defaultValue={isNaN(value) ? '' : value.toString()}
+      defaultValue={defaultValue}
       min={settings?.min}
       max={settings?.max}
       type="number"
