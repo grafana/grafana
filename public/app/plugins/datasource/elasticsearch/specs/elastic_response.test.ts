@@ -8,7 +8,7 @@ describe('ElasticResponse', () => {
   let result: any;
 
   describe('simple query and count', () => {
-    beforeEach(() => {
+    it('should return 1 series', () => {
       targets = [
         {
           refId: 'A',
@@ -38,9 +38,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 1 series', () => {
       expect(result.data.length).toBe(1);
       expect(result.data[0].name).toBe('Count');
       expect(result.data[0].length).toBe(2);
@@ -55,9 +52,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple query count & avg aggregation', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 2 series', () => {
       targets = [
         {
           refId: 'A',
@@ -92,9 +87,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
 
       expect(result.data[0].length).toBe(2);
@@ -120,9 +112,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query one metric', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 2 series', () => {
       targets = [
         {
           refId: 'A',
@@ -167,9 +157,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
 
       expect(result.data[0].length).toBe(2);
@@ -195,9 +182,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query two metrics', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 2 series', () => {
       targets = [
         {
           refId: 'A',
@@ -245,9 +230,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 2 series', () => {
       expect(result.data.length).toBe(4);
 
       expect(result.data[0].length).toBe(2);
@@ -293,9 +275,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with percentiles ', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 2 series', () => {
       targets = [
         {
           refId: 'A',
@@ -327,9 +307,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
 
       expect(result.data[0].length).toBe(2);
@@ -355,9 +332,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with extended_stats', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 4 series', () => {
       targets = [
         {
           refId: 'A',
@@ -420,9 +395,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 4 series', () => {
       expect(result.data.length).toBe(4);
 
       expect(result.data[0].length).toBe(1);
@@ -460,9 +432,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by with alias pattern', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 2 series', () => {
       targets = [
         {
           refId: 'A',
@@ -518,9 +488,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 2 series', () => {
       expect(result.data.length).toBe(3);
 
       expect(result.data[0].length).toBe(2);
@@ -556,9 +523,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('histogram response', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return table with byte and count', () => {
       targets = [
         {
           refId: 'A',
@@ -583,9 +548,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return table with byte and count', () => {
       expect(result.data.length).toBe(1);
 
       expect(result.data[0].length).toBe(3);
@@ -604,9 +566,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with two filters agg', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 2 series', () => {
       targets = [
         {
           refId: 'A',
@@ -653,9 +613,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
 
       expect(result.data[0].length).toBe(2);
@@ -681,7 +638,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with dropfirst and last aggregation', () => {
-    beforeEach(() => {
+    it('should remove first and last value', () => {
       targets = [
         {
           refId: 'A',
@@ -726,9 +683,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should remove first and last value', () => {
       expect(result.data.length).toBe(2);
 
       expect(result.data[0].length).toBe(1);
@@ -750,7 +704,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('No group by time', () => {
-    beforeEach(() => {
+    it('should return table', () => {
       targets = [
         {
           refId: 'A',
@@ -783,9 +737,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return table', () => {
       expect(result.data.length).toBe(1);
 
       expect(result.data[0].length).toBe(2);
@@ -806,9 +757,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('No group by time with percentiles ', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return table', () => {
       targets = [
         {
           refId: 'A',
@@ -840,9 +789,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return table', () => {
       expect(result.data.length).toBe(1);
 
       expect(result.data[0].length).toBe(2);
@@ -863,7 +809,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('Multiple metrics of same type', () => {
-    beforeEach(() => {
+    it('should include field in metric name', () => {
       targets = [
         {
           refId: 'A',
@@ -895,9 +841,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should include field in metric name', () => {
       expect(result.data.length).toBe(1);
 
       expect(result.data[0].length).toBe(1);
@@ -915,7 +858,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('Raw documents query', () => {
-    beforeEach(() => {
+    it('should return docs', () => {
       targets = [
         {
           refId: 'A',
@@ -947,9 +890,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return docs', () => {
       expect(result.data.length).toBe(1);
 
       expect(result.data[0].length).toBe(2);
@@ -994,9 +934,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with bucket_script ', () => {
-    let result: any;
-
-    beforeEach(() => {
+    it('should return 3 series', () => {
       targets = [
         {
           refId: 'A',
@@ -1045,9 +983,6 @@ describe('ElasticResponse', () => {
       };
 
       result = new ElasticResponse(targets, response).getTimeSeries();
-    });
-
-    it('should return 3 series', () => {
       expect(result.data.length).toBe(3);
 
       expect(result.data[0].length).toBe(2);
@@ -1083,7 +1018,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple logs query and count', () => {
-    const targets: any = [
+    const targets = [
       {
         refId: 'A',
         metrics: [{ type: 'count', id: '1' }],
