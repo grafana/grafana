@@ -32,7 +32,7 @@ describe('FieldDisplay', () => {
       fieldConfig: {
         overrides: [],
         defaults: {
-          title: '$__cell_0 * $__field_name * $__series_name',
+          displayName: '$__cell_0 * $__field_name * $__series_name',
         },
       },
     });

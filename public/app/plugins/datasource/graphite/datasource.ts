@@ -174,7 +174,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         unit = 'ms';
       }
 
-      stats.push({ title: key, value: meta.stats[key], unit });
+      stats.push({ displayName: key, value: meta.stats[key], unit });
     }
 
     return stats;

@@ -13,7 +13,7 @@ describe('getFieldDisplayValuesProxy', () => {
             name: 'power',
             values: [100, 200, 300],
             config: {
-              title: 'The Power',
+              displayName: 'The Power',
             },
           },
           {
@@ -54,7 +54,7 @@ describe('getFieldDisplayValuesProxy', () => {
     expect(time2.toString()).toEqual(time.toString());
   });
 
-  it('Lookup by name, index, or title', () => {
+  it('Lookup by name, index, or displayName', () => {
     const p = getFieldDisplayValuesProxy(data, 2, {
       theme: {} as GrafanaTheme,
     });
