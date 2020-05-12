@@ -17,9 +17,9 @@ Panels allow you to show your data in visual form. This topic walks you through 
 1. Navigate to the dashboard you want to add a panel to.
 1. Click the **Add panel** icon.
    
-     ![](/img/docs/panels/add-panel-icon-7-0.png)
+   ![](/img/docs/panels/add-panel-icon-7-0.png)
 
-1. Click **Add new panel**.
+2. Click **Add new panel**.
 
 Grafana creates an empty graph panel with your default data source selected.
 
@@ -27,7 +27,7 @@ Grafana creates an empty graph panel with your default data source selected.
 
 While not required, we recommend that you add a helpful title and description to your panel. You can use variables you have defined in either field, but not global variables.
 
-![](/img/docs/panels/panel-settings-7-0.png)
+[Panel settings screenshot]
 
 **Panel title -** Text entered in this field is displayed at the top of your panel in the Panel editor and in the dashboard.
 
@@ -35,30 +35,27 @@ While not required, we recommend that you add a helpful title and description to
 
 ## 3. Write a query
 
-Each panel needs at least one query to display a visualization. You write queries in the Query tab of the Panel editor. For more information about the Query tab, refer to [Queries]({{< relref "queries.md" >}}).
+Each panel needs at least one query to display a visualization. You write queries in the Query tab of the Panel editor. 
+Choose a data source. In the first line of the Query tab, click the drop-down list to see all available data sources. This list includes all data sources you added.
+Write or construct a query in the query language of your data source. Options will vary. Refer to your specific [data source documentation](LINK) for specific guidelines.
 
-1. Choose a data source. In the first line of the Query tab, click the drop-down list to see all available data sources. This list includes all data sources you added. Refer to [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}) if you need instructions.
-1. Write or construct a query in the query language of your data source. Options will vary. Refer to your specific [data source documentation]({{< relref "../features/datasources/_index.md" >}}) for specific guidelines.
+For more information about the Query tab, refer to [Queries](LINK).
 
 ## 4. Choose a visualization type
 
-In the Visualization section, click a visualization type. Grafana displays a preview of your query with that visualization applied. 
-
-For more information about individual visualizations, refer to [Visualizations](ADD LINK)
+Preview visualizations, filter, don’t use deprecated. Link to wherever we have panel types. Mention display options, they are different depending on panel type.
 
 ## 5. Apply changes and save
 
-Save the dashboard. Either press Ctrl/Cmd+S or click **Save** in the upper right corner of the screen.
-
-Your options vary depending on the changes you made and whether or not it is a new dashboard. We recommend you add a note to describe your changes before you click **Save**. Notes are very helpful if you need to revert the dashboard to a previous version.
+Explain importance of applying changes and saving dashboard.
 
 ## What next?
 
 Our Grafana Fundamentals tutorial is a great place to start, or you can learn more about Grafana by reading one of the documentation topics linked below:
 
-- Learn more Panel editor options.
-- Add more queries.
-- Transform your data.
-- Change how your results are displayed in the visualization.
-- Set up an alert.
-- Create templates and variables.
+Learn more Panel editor options.
+Add more queries.
+Transform your data.
+Change how your data are displayed in the visualization.
+Set up an alert.
+Create templates and variables.
