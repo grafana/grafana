@@ -28,7 +28,7 @@ func (cfg *Cfg) readSmtpSettings() {
 	cfg.Smtp.FromAddress = sec.Key("from_address").String()
 	cfg.Smtp.FromName = sec.Key("from_name").String()
 	cfg.Smtp.EhloIdentity = sec.Key("ehlo_identity").String()
-	cfg.Smtp.EhloIdentity = sec.Key("startTLS_policy").String()
+	cfg.Smtp.StartTLSPolicy = sec.Key("startTLS_policy").String()
 	cfg.Smtp.SkipVerify = sec.Key("skip_verify").MustBool(false)
 
 	emails := cfg.Raw.Section("emails")
