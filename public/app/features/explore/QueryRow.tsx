@@ -101,6 +101,23 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
+  setQueryField = () => {
+    const { mode, datasourceInstance } = this.props;
+    let QueryField;
+
+    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
+      QueryField = datasourceInstance.components.ExploreMetricsQueryField;
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
+      QueryField = datasourceInstance.components.ExploreLogsQueryField;
+    } else if (datasourceInstance.components?.ExploreQueryField) {
+      QueryField = datasourceInstance.components?.ExploreQueryField;
+    } else {
+      QueryField = datasourceInstance.components?.QueryEditor;
+    }
+
+    return QueryField;
+  };
+
   updateLogsHighlights = debounce((value: DataQuery) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
@@ -128,15 +145,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
-    let QueryField;
-
-    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
-      QueryField = datasourceInstance.components.ExploreMetricsQueryField;
-    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
-      QueryField = datasourceInstance.components.ExploreLogsQueryField;
-    } else {
-      QueryField = datasourceInstance.components?.ExploreQueryField;
-    }
+    const QueryField = this.setQueryField();
 
     return (
       <>

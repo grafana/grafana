@@ -311,6 +311,7 @@ export interface QueryEditorProps<
   data?: PanelData;
   exploreMode?: ExploreMode;
   exploreId?: any;
+  history?: HistoryItem[];
 }
 
 export enum DataSourceStatus {
