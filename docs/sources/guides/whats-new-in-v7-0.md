@@ -23,8 +23,8 @@ The Grafana 7.0 stable release is scheduled for the 18th of May. In the meantime
 The main highlights are:
 
 - [**New Panel Editor** Redesign based on community feedback.]({{< relref "#new-panel-editor" >}})
-- [**Explore:** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
-- [**Enterprise** Usage Analytics and Presence.]({{< relref "#grafana-enterprise" >}})
+- [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
+- [**Enterprise** Usage Analytics, Presence and Auth Improvements.]({{< relref "#grafana-enterprise" >}})
 - [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
 - [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-overrides" >}})
 - [**Table** New Table panel.]({{< relref "#table-panel" >}})
@@ -185,6 +185,14 @@ This includes problems like:
 This release includes a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage and errors. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
 
 {{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence Indicator" >}}
+
+### SAML Role and Team Sync
+
+SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [documentation]({{< relref "../enterprise/saml.md#configure-team-sync" >}}).
+
+### Okta OAuth Team Sync
+
+Okta gets its own provider which adds support for Team Sync. Read more about using Okta in the [documentation]({{< relref "../auth/okta.md" >}}).
 
 ## Upgrading
 
