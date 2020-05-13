@@ -194,14 +194,12 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       }
     }
 
-    const currentTokenIsAfterCommandAndEmpty =
-      commandToken.next?.types.includes('whitespace') && !commandToken.next.next;
+    const currentTokenIsAfterCommandAndEmpty = isTokenType(commandToken.next, 'whitespace') && !commandToken.next.next;
     const currentTokenIsAfterCommand =
       currentTokenIsAfterCommandAndEmpty || nextNonWhitespaceToken(commandToken) === curToken;
 
-    const currentTokenIsComma = curToken.content === ',' && curToken.types.includes('punctuation');
-    const currentTokenIsCommaOrAfterComma =
-      currentTokenIsComma || (prevToken?.content === ',' && prevToken?.types.includes('punctuation'));
+    const currentTokenIsComma = isTokenType(curToken, 'punctuation', ',');
+    const currentTokenIsCommaOrAfterComma = currentTokenIsComma || isTokenType(prevToken, 'punctuation', ',');
 
     // We only show suggestions if we are after a command or after a comma which is a field separator
     if (!(currentTokenIsAfterCommand || currentTokenIsCommaOrAfterComma)) {
@@ -241,7 +239,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   ): Promise<TypeaheadOutput> {
     if (isFirstArgument) {
       return await this.getFieldCompletionItems(context.logGroupNames ?? []);
-    } else if (prevNonWhitespaceToken(curToken)?.types.includes('field-name')) {
+    } else if (isTokenType(prevNonWhitespaceToken(curToken), 'field-name')) {
       // suggest sort options
       return {
         suggestions: [
@@ -341,7 +339,7 @@ function prevNonWhitespaceToken(token: Token): Token | null {
   let curToken = token;
 
   while (curToken.prev) {
-    if (curToken.prev.types.includes('whitespace')) {
+    if (isTokenType(curToken.prev, 'whitespace')) {
       curToken = curToken.prev;
     } else {
       return curToken.prev;
@@ -357,7 +355,7 @@ function previousCommandToken(startToken: Token): Token | null {
     thisToken = thisToken.prev;
     if (
       thisToken.types.includes('query-command') &&
-      (!thisToken.prev || prevNonWhitespaceToken(thisToken)?.types.includes('command-separator'))
+      (!thisToken.prev || isTokenType(prevNonWhitespaceToken(thisToken), 'command-separator'))
     ) {
       return thisToken;
     }
@@ -415,6 +413,52 @@ function isInsideFunctionParenthesis(curToken: Token): boolean {
 }
 
 function isAfterKeyword(keyword: string, token: Token): boolean {
-  const prevToken = prevNonWhitespaceToken(token);
-  return !!(prevToken?.types.includes('keyword') && prevToken?.content.toLowerCase() === 'by');
+  const maybeKeyword = getPreviousTokenExcluding(token, [
+    'whitespace',
+    'function',
+    'punctuation',
+    'field-name',
+    'number',
+  ]);
+  if (isTokenType(maybeKeyword, 'keyword', 'by')) {
+    const prev = getPreviousTokenExcluding(token, ['whitespace']);
+    if (prev === maybeKeyword || isTokenType(prev, 'punctuation', ',')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isTokenType(token: Token | undefined | null, type: string, content?: string): boolean {
+  if (!token?.types.includes(type)) {
+    return false;
+  }
+  if (content) {
+    if (token?.content.toLowerCase() !== content) {
+      return false;
+    }
+  }
+  return true;
+}
+
+type TokenDef = string | { type: string; value: string };
+function getPreviousTokenExcluding(token: Token, exclude: TokenDef[]): Token | undefined | null {
+  let curToken = token.prev;
+  main: while (curToken) {
+    for (const item of exclude) {
+      if (typeof item === 'string') {
+        if (curToken.types.includes(item)) {
+          curToken = curToken.prev;
+          continue main;
+        }
+      } else {
+        if (curToken.types.includes(item.type) && curToken.content.toLowerCase() === item.value) {
+          curToken = curToken.prev;
+          continue main;
+        }
+      }
+    }
+    break;
+  }
+  return curToken;
 }
