@@ -41,7 +41,7 @@ Before you apply transformations, all of the following must be true:
 
 ## Apply a transformation
 
-Transformations are available from the Transform tab in the bottom pane of the Panel Editor, next to the Queries tab.
+Transformations are available from the Transform tab in the bottom pane of the panel editor, next to the Queries tab.
 
 1. Navigate to the panel that you want to add transformations, click the panel title and then click **Edit**.
 1. Click the **Transform** tab.
