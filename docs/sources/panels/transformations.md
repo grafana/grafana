@@ -15,7 +15,7 @@ This page explains what transformations in Grafana are and how to use them.
 
 Transformations process the result set before it’s passed to the visualization. You access transformations in the Transform tab of the Grafana panel editor.
 
-Transformations allow you to rename fields, join separate time series together, do math across queries, and more. For users\, with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain.
+Transformations allow you to rename fields, join separate time series together, do math across queries, and more. For users, with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain.
 
 > **Note:** Transformations sometimes result in data that cannot be graphed. When that happens, Grafana displays a suggestion on the visualization that you can click to switch to table visualization. This often helps you better understand what the transformation is doing to your data.
 
@@ -53,7 +53,7 @@ Transformations are available from the Transform tab in the bottom pane of the p
 
    If you have trouble, click the bug icon to [debug your transformations](#debug-transformations).
 
-   Click the trash can icon to permanently remove a transformation.
+   Click the trash can icon to remove a transformation.
 
 {{< docs-imagebox img="/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
@@ -157,8 +157,8 @@ I applied a transformation to join the query results using the time field. Now I
 Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
 - **Mode -** Select a mode:
-  - **Reduce row -** NEED DEFINITION
-  - **Binary option -** NEED DEFINITION
+  - **Reduce row -** Apply selected calculation on each row of selected fields independently.
+  - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** Select a calculation to use when Grafana creates the new field. Click in the field to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "calculations-list.md" >}}).
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
