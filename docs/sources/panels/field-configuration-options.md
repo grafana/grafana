@@ -1,12 +1,12 @@
 +++
-title = "Field configuration"
+title = "Field configuration options"
 type = "docs"
 [menu.docs]
 parent = "panels"
 weight = 300
 +++
 
-# Field configuration
+# Field configuration options
 
 This page explains what field configurations and field overrides in Grafana are and how to use them. It also includes [examples](#examples) if you need an idea of how this feature might be useful in the real world.
 
