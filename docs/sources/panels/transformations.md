@@ -157,7 +157,7 @@ I applied a transformation to join the query results using the time field. Now I
 Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
 - **Mode -** Select a mode:
-  - **Reduce row -** NEED DEFINITION
+  - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary option -** NEED DEFINITION
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** Select a calculation to use when Grafana creates the new field. Click in the field to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "calculations-list.md" >}}).
