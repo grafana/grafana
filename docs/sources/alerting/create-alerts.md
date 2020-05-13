@@ -11,8 +11,7 @@ weight = 200
 
 # Create alerts
 
-Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard,
-Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
+Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
 
 {{< imgbox max-width="1000px" img="/img/docs/alerting/drag_handles_gif.gif" caption="Alerting overview" >}}
 
@@ -117,7 +116,7 @@ If you have an unreliable time series store from which queries sometime timeout 
 In alert tab you can also specify alert rule notifications along with a detailed message about the alert rule. The message can contain anything, information about how you might solve the issue, link to runbook, and so on.
 
 The actual notifications are configured and shared between multiple alerts. Read
-[Alert notifications]({{< relref "notifications.md" >}}) guide for how to configure and set up notifications.
+[Alert notifications]({{< relref "notifications.md" >}}) for information on how to configure and set up notifications.
 
 - **Send to -** Select an alert notification channel if you have one set up.
 - **Message -** Enter a message to be sent on the notification channel. The message can be in text, markdown, or HTML format. It can include links and variables as well.

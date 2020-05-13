@@ -1,23 +1,23 @@
 +++
-title = "Alerting Notifications"
-description = "Alerting Notifications Guide"
+title = "Alert notifications"
+description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
 type = "docs"
 [menu.docs]
 name = "Notifications"
 parent = "alerting"
-weight = 2
+weight = 200
 +++
 
 
-# Alert Notifications
-
-> Alerting is only available in Grafana v4.0 and above.
+# Alert notifications
 
 When an alert changes state, it sends out notifications. Each alert rule can have
 multiple notifications. In order to add a notification to an alert rule you first need
 to add and configure a `notification` channel (can be email, PagerDuty or other integration).
 This is done from the Notification Channels page.
+
+> **Note:** Alerting is only available in Grafana v4.0 and above.
 
 ## Notification Channel Setup
 

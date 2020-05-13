@@ -23,7 +23,7 @@ Currently only the graph panel visualization supports alerts.
 
 You can perform the following tasks for alerts:
 
-- Add an alert notification channel
+- [Add or edit an alert notification channel]({{< relref "notifications.md" >}})
 - [Create an alert rule]({{< relref "create-alerts.md" >}})
 - [View existing alert rules and their current state]({{< relref "view-alerts.md" >}})
 - [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
@@ -36,7 +36,7 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 You can also set alert rule notifications along with a detailed message about the alert rule. The message can contain anything: information about how you might solve the issue, link to runbook, and so on.
 
-The actual notifications are configured and shared between multiple alerts. Read the notifications guide for how to configure and setup notifications.
+The actual notifications are configured and shared between multiple alerts.
 
 ## Alert execution
 
