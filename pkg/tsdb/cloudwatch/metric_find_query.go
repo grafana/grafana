@@ -699,7 +699,7 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call ec2:DescribeInstances")
+		return nil, fmt.Errorf("Failed to call ec2:DescribeInstances, %v", err)
 	}
 
 	return &resp, nil
@@ -721,7 +721,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call tags:GetResources")
+		return nil, fmt.Errorf("Failed to call tags:GetResources, %v", err)
 	}
 
 	return &resp, nil
