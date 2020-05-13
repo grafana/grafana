@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { TutorialCard } from './TutorialCard';
-import { Card, SetupStep } from '../types';
+import { Card, SetupStep, TutorialCardType } from '../types';
 import { DocsCard } from './DocsCard';
 
 interface Props {
@@ -21,10 +21,10 @@ export const Step: FC<Props> = ({ step }) => {
         <p>{step.info}</p>
       </div>
       <div className={styles.cards}>
-        {step.cards.map((card: Card, index: number) => {
+        {step.cards.map((card: Card | TutorialCardType, index: number) => {
           const key = `${card.title}-${index}`;
           if (card.type === 'tutorial') {
-            return <TutorialCard key={key} card={card} />;
+            return <TutorialCard key={key} card={card as TutorialCardType} />;
           }
           return <DocsCard key={key} card={card} />;
         })}
