@@ -1,53 +1,46 @@
 +++
-title = "Alerting Engine and Rules Guide"
-description = "Configuring Alert Rules"
+title = "Create alerts"
+description = "Configure alert rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
 type = "docs"
 [menu.docs]
-name = "Engine and Rules"
+name = "Create alerts"
 parent = "alerting"
-weight = 1
+weight = 200
 +++
 
-# Alerting Engine and Rules Guide
+# Create alerts
 
 Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard,
-Grafana will extract the alert rules into a separate alert rule storage and schedule them for evaluation.
+Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
 
-{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
+{{< imgbox max-width="1000px" img="/img/docs/alerting/drag_handles_gif.gif" caption="Alerting overview" >}}
 
-In the alert tab of the graph panel you can configure how often the alert rule should be evaluated
-and the conditions that need to be met for the alert to change state and trigger its
-[notifications]({{< relref "notifications.md" >}}).
-
-## Execution
-
-The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
-
-## Clustering
-
-Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
-
-<div class="clearfix"></div>
-
-## Rule Config
+In the Alert tab of the graph panel you can configure how often the alert rule should be evaluated and the conditions that need to be met for the alert to change state and trigger its [notifications]({{< relref "notifications.md" >}}).
 
 Currently only the graph panel supports alert rules.
 
-### Name and Evaluation interval
+## Add or edit an alert rule
 
-Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
-**Note:** You can set a minimum interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Check out the [[configuration]]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) page for more information.
+1. Navigate to the panel you want to add or edit an alert rule for, click the title, and then click **Edit**.
+1. On the Alert tab, click **Create Alert**. If an alert already exists for this panel, then you can just edit the fields on the Alert tab.
+1. Fill out the fields. Descriptions are listed below in [Alert rule fields](#alert-rule-fields).
+1. When you have finished writing your rule, click **Test rule** to make sure the rule returns the results you expect.
 
-### For
+## Alert rule fields
 
-> **Important note regarding No Data:**
->
-> Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
+This section describes the fields you fill out to create an alert.
 
-If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
+### Rule
+
+- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list.
+- **Evaluate every** and **For -**  Specify the name of the alert rule and how often the scheduler should evaluate the alert rule. 
+
+You can set a minimum interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) for more information.
+
+> **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
+
+If an alert rule has a configured `For` and the query violates the configured threshold, then it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
 
 Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers. Looking at the `Alert list` or `Alert list panels` you will be able to see alerts in pending state.
 
@@ -61,7 +54,7 @@ Below you can see an example timeline of an alert using the `For` setting. At ~1
 Currently the only condition type that exists is a `Query` condition that allows you to
 specify a query letter, time range and an aggregation function.
 
-### Query condition example
+#### Query condition example
 
 ```sql
 avg() OF query(A, 15m, now) IS BELOW 14
@@ -76,14 +69,11 @@ For example, we have 3 conditions in the following order:
 *condition:A(evaluates to: TRUE) OR condition:B(evaluates to: FALSE) AND condition:C(evaluates to: TRUE)*
 so the result will be calculated as ((TRUE OR FALSE) AND TRUE) = TRUE.
 
-We plan to add other condition types in the future, like `Other Alert`, where you can include the state
-of another alert in your conditions, and `Time Of Day`.
+We plan to add other condition types in the future, like `Other Alert`, where you can include the state of another alert in your conditions, and `Time Of Day`.
 
 #### Multiple Series
 
-If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series.
-What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed
-in the scenario below.
+If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series. What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed in the scenario below.
 
 - Alert condition with query that returns 2 series: **server1** and **server2**
 - **server1** series causes the alert rule to fire and switch to state `Alerting`
@@ -91,61 +81,55 @@ in the scenario below.
 - In a subsequence evaluation of the same alert rule the **server2** series also cause the alert rule to fire
 - No new notifications are sent as the alert rule is already in state `Alerting`.
 
-So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert
-to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series
-we plan to track state **per series** in a future release.
+So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series we plan to track state **per series** in a future release.
 
 > Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
-> when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will
-> be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
-> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here]({{< relref "notifications/#send-reminders" >}}).
+> when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage of this feature for identifying new/existing series causing alert to fire.
 
-### No Data / Null values
+### No Data & Error Handling
 
-Below your conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.
+Below are conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.
 
 No Data Option | Description
 ------------ | -------------
-NoData | Set alert rule state to `NoData`
+No Data | Set alert rule state to `NoData`
 Alerting | Set alert rule state to `Alerting`
 Keep Last State | Keep the current alert rule state, what ever it is.
+Ok | Not sure why you would want to send yourself an alert when things are okay, but you could.
 
 ### Execution errors or timeouts
 
-The last option tells how to handle execution or timeout errors.
+Tell Grafana how to handle execution or timeout errors.
 
 Error or timeout option | Description
 ------------ | -------------
 Alerting | Set alert rule state to `Alerting`
 Keep Last State | Keep the current alert rule state, what ever it is.
 
-If you have an unreliable time series store from which queries sometime timeout or fail randomly you can set this option
-to `Keep Last State` in order to basically ignore them.
+If you have an unreliable time series store from which queries sometime timeout or fail randomly you can set this option to `Keep Last State` in order to basically ignore them.
 
 ## Notifications
 
-In alert tab you can also specify alert rule notifications along with a detailed message about the alert rule.
-The message can contain anything, information about how you might solve the issue, link to runbook, etc.
+In alert tab you can also specify alert rule notifications along with a detailed message about the alert rule. The message can contain anything, information about how you might solve the issue, link to runbook, and so on.
 
-The actual notifications are configured and shared between multiple alerts. Read the
-[notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
+The actual notifications are configured and shared between multiple alerts. Read
+[Alert notifications]({{< relref "notifications.md" >}}) guide for how to configure and set up notifications.
 
-## Alert State History and Annotations
+- **Send to -** Select an alert notification channel if you have one set up.
+- **Message -** Enter a message to be sent on the notification channel. The message can be in text, markdown, or HTML format. It can include links and variables as well.
+- **Tags -** NEED DESCRIPTION HERE
 
-Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes
-are visualized as annotations in the alert rule's graph panel. You can also go into the `State history`
-submenu in the alert tab to view and clear state history.
+## Alert state history and annotations
 
-## Troubleshooting
+Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes are visualized as annotations in the alert rule's graph panel. You can also go into the `State history` submenu in the alert tab to view and clear state history.
+
+## Troubleshoot alerts
 
 {{< imgbox max-width="40%" img="/img/docs/v4/alert_test_rule.png" caption="Test Rule" >}}
 
-First level of troubleshooting you can do is hit the **Test Rule** button. You will get result back that you can expand
-to the point where you can see the raw data that was returned from your query.
+First level of troubleshooting you can do is click **Test Rule**. You will get result back that you can expand to the point where you can see the raw data that was returned from your query.
 
-Further troubleshooting can also be done by inspecting the grafana-server log. If it's not an error or for some reason
-the log does not say anything you can enable debug logging for some relevant components. This is done
-in Grafana's ini config file.
+Further troubleshooting can also be done by inspecting the grafana-server log. If it's not an error or for some reason the log does not say anything you can enable debug logging for some relevant components. This is done in Grafana's ini config file.
 
 Example showing loggers that could be relevant when troubleshooting alerting.
 
@@ -170,5 +154,4 @@ filters = alerting.scheduler:debug \
           tsdb.elasticsearch.client:debug \
 ```
 
-If you want to log raw query sent to your TSDB and raw response in log you also have to set grafana.ini option `app_mode` to
-`development`.
+If you want to log raw query sent to your TSDB and raw response in log you also have to set grafana.ini option `app_mode` to `development`.
