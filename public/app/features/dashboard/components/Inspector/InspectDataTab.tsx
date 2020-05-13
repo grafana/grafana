@@ -168,7 +168,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
             <div className={cx(styles.options, styles.dataDisplayOptions)}>
               <QueryOperationRow title={'Data display options'} isOpen={false}>
-                {panelTransformations && panelTransformations.length > 0 && transformId !== 'join by time' && (
+                {panelTransformations && panelTransformations.length > 0 && (transformId as any) !== 'join by time' && (
                   <div className="gf-form-inline">
                     <Switch
                       tooltip="Data shown in the table will be transformed using transformations defined in the panel"
