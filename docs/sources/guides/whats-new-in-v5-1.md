@@ -90,7 +90,7 @@ New enhancements include support for multiple series stacking in histogram mode,
 
 ### Table Panel
 
-New enhancements includes support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
+New enhancements include support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
 
 ## New variable interpolation syntax
 
