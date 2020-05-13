@@ -50,7 +50,9 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import { AwsUrl, encodeUrl } from './aws_url';
 
 const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
-const LOG_IDENTIFIER_INTERNAL = '__log_grafana_internal__';
+
+// Constants also defined in tsdb/cloudwatch/cloudwatch.go
+const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
 const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 const displayAlert = (datasourceName: string, region: string) =>
