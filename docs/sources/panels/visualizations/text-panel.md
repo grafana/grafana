@@ -7,7 +7,7 @@ aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/fe
 name = "text-panel"
 parent = "visualizations"
 weight = 700
-draft = "true"
+draft = "false"
 +++
 
 # Text panel
