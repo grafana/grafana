@@ -15,7 +15,7 @@ This page explains what transformations in Grafana are and how to use them.
 
 Transformations process the result set before it’s passed to the visualization. You access transformations in the Transform tab of the Grafana panel editor.
 
-Transformations allow you to rename fields, join separate time series together, do math across queries, and more. For users\, with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain.
+Transformations allow you to rename fields, join separate time series together, do math across queries, and more. For users, with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain.
 
 > **Note:** Transformations sometimes result in data that cannot be graphed. When that happens, Grafana displays a suggestion on the visualization that you can click to switch to table visualization. This often helps you better understand what the transformation is doing to your data.
 
