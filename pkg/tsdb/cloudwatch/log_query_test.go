@@ -40,11 +40,11 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Value: aws.String("fakelog"),
 				},
 				&cloudwatchlogs.ResultField{
-					Field: aws.String(LOGSTREAM_IDENTIFIER_INTERNAL),
+					Field: aws.String(logStreamIdentifierInternal),
 					Value: aws.String("fakelogstream"),
 				},
 				&cloudwatchlogs.ResultField{
-					Field: aws.String(LOG_IDENTIFIER_INTERNAL),
+					Field: aws.String(logIdentifierInternal),
 					Value: aws.String("fakelog"),
 				},
 			},
@@ -70,11 +70,11 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Value: aws.String("fakelog"),
 				},
 				&cloudwatchlogs.ResultField{
-					Field: aws.String(LOGSTREAM_IDENTIFIER_INTERNAL),
+					Field: aws.String(logStreamIdentifierInternal),
 					Value: aws.String("fakelogstream"),
 				},
 				&cloudwatchlogs.ResultField{
-					Field: aws.String(LOG_IDENTIFIER_INTERNAL),
+					Field: aws.String(logIdentifierInternal),
 					Value: aws.String("fakelog"),
 				},
 			},
@@ -100,11 +100,11 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Value: aws.String("fakelog"),
 				},
 				&cloudwatchlogs.ResultField{
-					Field: aws.String(LOGSTREAM_IDENTIFIER_INTERNAL),
+					Field: aws.String(logStreamIdentifierInternal),
 					Value: aws.String("fakelogstream"),
 				},
 				&cloudwatchlogs.ResultField{
-					Field: aws.String(LOG_IDENTIFIER_INTERNAL),
+					Field: aws.String(logIdentifierInternal),
 					Value: aws.String("fakelog"),
 				},
 			},
@@ -145,7 +145,7 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("fakelog"),
 	})
 
-	hiddenLogStreamField := data.NewField(LOGSTREAM_IDENTIFIER_INTERNAL, nil, []*string{
+	hiddenLogStreamField := data.NewField(logStreamIdentifierInternal, nil, []*string{
 		aws.String("fakelogstream"),
 		aws.String("fakelogstream"),
 		aws.String("fakelogstream"),
@@ -156,7 +156,7 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		},
 	})
 
-	hiddenLogField := data.NewField(LOG_IDENTIFIER_INTERNAL, nil, []*string{
+	hiddenLogField := data.NewField(logIdentifierInternal, nil, []*string{
 		aws.String("fakelog"),
 		aws.String("fakelog"),
 		aws.String("fakelog"),
