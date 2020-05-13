@@ -22,6 +22,13 @@ gf-form-switch[disabled] {
   display: flex;
   cursor: pointer;
   margin-right: $space-xs;
+
+  &--disabled {
+    pointer-events: none;
+    .gf-form-label {
+      color: $text-color-faint;
+    }
+  }
 }
 
 .gf-form-switch {

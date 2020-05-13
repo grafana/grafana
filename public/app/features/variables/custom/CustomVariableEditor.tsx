@@ -82,24 +82,24 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
               aria-label="Variable editor Form Custom Query field"
             />
           </div>
-          {!this.props.variable.multi && (
-            <div className="section">
-              <Switch
-                label="Do not clear"
-                labelClass="width-10"
-                checked={this.props.variable.noclear}
-                onChange={this.onNoClearChange}
-                tooltip={'Keep text of current option in textbox to simplify copy-paste'}
-              />
-              <Switch
-                label="Make editable"
-                labelClass="width-10"
-                checked={this.props.variable.editable}
-                onChange={this.onEditableChange}
-                tooltip={'Add current option to dropdown list'}
-              />
-            </div>
-          )}
+          <div className="section">
+            <Switch
+              label="Do not clear"
+              labelClass="width-10"
+              checked={this.props.variable.noclear}
+              disabled={this.props.variable.multi}
+              onChange={this.onNoClearChange}
+              tooltip={'Keep text of current option in textbox to simplify copy-paste'}
+            />
+            <Switch
+              label="Make editable"
+              labelClass="width-10"
+              checked={this.props.variable.editable}
+              disabled={this.props.variable.multi}
+              onChange={this.onEditableChange}
+              tooltip={'Add current option to dropdown list'}
+            />
+          </div>
         </div>
         <SelectionOptionsEditor
           variable={this.props.variable}

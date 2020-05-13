@@ -12,6 +12,7 @@ export interface Props {
   tooltip?: string;
   tooltipPlacement?: PopperJS.Placement;
   transparent?: boolean;
+  disabled?: boolean;
   onChange: (event: React.SyntheticEvent<HTMLInputElement>) => void;
 }
 
@@ -36,6 +37,7 @@ export class Switch extends PureComponent<Props, State> {
       label,
       checked,
       transparent,
+      disabled,
       className,
       tooltip,
       tooltipPlacement,
@@ -44,10 +46,14 @@ export class Switch extends PureComponent<Props, State> {
     const labelId = this.state.id;
     const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
     const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
+    const containerClassName = `
+      gf-form gf-form-switch-container ${className || ''}
+      ${disabled ? 'gf-form-switch-container--disabled' : ''}
+    `;
 
     return (
       <div className="gf-form-switch-container-react">
-        <label htmlFor={labelId} className={`gf-form gf-form-switch-container ${className || ''}`}>
+        <label htmlFor={labelId} className={containerClassName}>
           {label && (
             <div className={labelClassName}>
               {label}
