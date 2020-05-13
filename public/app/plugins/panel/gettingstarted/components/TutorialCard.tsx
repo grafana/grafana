@@ -4,10 +4,10 @@ import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
 import store from 'app/core/store';
 import { cardContent, cardStyle, iconStyle } from './sharedStyles';
-import { Card } from '../types';
+import { TutorialCardType } from '../types';
 
 interface Props {
-  card: Card;
+  card: TutorialCardType;
 }
 
 export const TutorialCard: FC<Props> = ({ card }) => {
@@ -27,7 +27,7 @@ export const TutorialCard: FC<Props> = ({ card }) => {
   );
 };
 
-const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Card) => {
+const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: TutorialCardType) => {
   event.preventDefault();
   const isSet = store.get(card.key);
   if (!isSet) {
