@@ -22,7 +22,7 @@ export const updateQueryVariableOptions = (
   return async (dispatch, getState) => {
     const variableInState = getVariable<QueryVariableModel>(identifier.id!, getState());
     try {
-      const beforeUid = getState().templating.batch.uid;
+      const beforeUid = getState().templating.transaction.uid;
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
@@ -38,7 +38,7 @@ export const updateQueryVariableOptions = (
 
       const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
 
-      const afterUid = getState().templating.batch.uid;
+      const afterUid = getState().templating.transaction.uid;
       if (beforeUid !== afterUid) {
         // we started another batch before this metricFindQuery finished let's abort
         return;

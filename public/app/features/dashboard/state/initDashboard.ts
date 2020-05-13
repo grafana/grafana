@@ -179,7 +179,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     await dispatch(initVariablesBatch(args.urlUid, dashboard, variableSrv));
-    if (getState().templating.batch.uid !== args.urlUid) {
+    if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
       // but the args.urlUid will be the same as before initVariablesBatch was called so then we can't continue initializing
       // the previous dashboard.

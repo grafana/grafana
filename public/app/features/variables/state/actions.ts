@@ -34,10 +34,18 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { getConfig } from '../../../core/config';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { VariableSrv } from '../../templating/variable_srv';
-import { BatchStatus, variablesClearBatch, variablesCompleteBatch, variablesInitBatch } from './batchStateReducer';
+import {
+  TransactionStatus,
+  variablesClearTransaction,
+  variablesCompleteTransaction,
+  variablesInitTransaction,
+} from './transactionReducer';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
-import { dashboardCancelVariables, dashboardSlowVariables } from '../../dashboard/state/reducers';
+import {
+  dashboardSetInitPhaseToCancelVariables,
+  dashboardSetInitPhaseToSlowVariables,
+} from '../../dashboard/state/reducers';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -467,27 +475,27 @@ export const initVariablesBatch = (
   // Detect slow loading / initializing variables
   // This is in order to show loading indication for slow variables queries
   setTimeout(() => {
-    if (getState().templating.batch.status === BatchStatus.Fetching) {
-      dispatch(dashboardSlowVariables());
+    if (getState().templating.transaction.status === TransactionStatus.Fetching) {
+      dispatch(dashboardSetInitPhaseToSlowVariables());
     }
   }, DASHBOARD_SLOW_VARIABLES_TIMEOUT);
 
   // Detect very slow loading / initializing variables
   // This is in order to enable cancel for very slow running queries
   setTimeout(() => {
-    if (getState().templating.batch.status === BatchStatus.Fetching) {
-      dispatch(dashboardCancelVariables());
+    if (getState().templating.transaction.status === TransactionStatus.Fetching) {
+      dispatch(dashboardSetInitPhaseToCancelVariables());
     }
   }, DASHBOARD_CANCEL_SLOW_VARIABLES_TIMEOUT);
 
   try {
-    const batchState = getState().templating.batch;
-    if (batchState.status === BatchStatus.Fetching) {
+    const batchState = getState().templating.transaction;
+    if (batchState.status === TransactionStatus.Fetching) {
       // previous dashboard is still fetching variables, cancel all requests
       dispatch(cancelVariables({ redirectToHome: false }));
     }
 
-    dispatch(variablesInitBatch({ uid: dashboardUid }));
+    dispatch(variablesInitTransaction({ uid: dashboardUid }));
 
     const newVariables = getConfig().featureToggles.newVariables;
 
@@ -501,7 +509,7 @@ export const initVariablesBatch = (
       dispatch(completeDashboardTemplating(dashboard));
     }
 
-    dispatch(variablesCompleteBatch({ uid: dashboardUid }));
+    dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {
     dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
     console.log(err);
@@ -510,7 +518,7 @@ export const initVariablesBatch = (
 
 export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
   dispatch(cleanVariables());
-  dispatch(variablesClearBatch());
+  dispatch(variablesClearTransaction());
 };
 
 export const cancelVariables = ({ redirectToHome }: { redirectToHome?: boolean }): ThunkResult<void> => dispatch => {

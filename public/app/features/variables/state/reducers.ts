@@ -3,20 +3,20 @@ import { optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPick
 import { variableEditorReducer, VariableEditorState } from '../editor/reducer';
 import { variablesReducer } from './variablesReducer';
 import { VariableModel } from '../../templating/types';
-import { BatchState, batchStateReducer } from './batchStateReducer';
+import { transactionReducer, TransactionState } from './transactionReducer';
 
 export interface TemplatingState {
   variables: Record<string, VariableModel>;
   optionsPicker: OptionsPickerState;
   editor: VariableEditorState;
-  batch: BatchState;
+  transaction: TransactionState;
 }
 
 export const templatingReducers = combineReducers({
   editor: variableEditorReducer,
   variables: variablesReducer,
   optionsPicker: optionsPickerReducer,
-  batch: batchStateReducer,
+  transaction: transactionReducer,
 });
 
 export default {

@@ -11,7 +11,7 @@ import { getConfig } from 'app/core/config';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { BatchStatus, variablesInitBatch } from '../../variables/state/batchStateReducer';
+import { TransactionStatus, variablesInitTransaction } from '../../variables/state/transactionReducer';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -145,7 +145,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         },
         templating: {
           variables: {},
-          batch: { uid: 'DGmvKKxZz', status: BatchStatus.Completed },
+          transaction: { uid: 'DGmvKKxZz', status: TransactionStatus.Completed },
         },
       },
       setup: (fn: () => void) => {
@@ -283,6 +283,6 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     if (!getConfig().featureToggles.newVariables) {
       return expect.assertions(0);
     }
-    expect(ctx.actions[3].type).toBe(variablesInitBatch.type);
+    expect(ctx.actions[3].type).toBe(variablesInitTransaction.type);
   });
 });
