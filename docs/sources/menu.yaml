@@ -206,8 +206,8 @@
   children:
     - link: /alerting/alerts-overview/
       name: Overview
-    - link: /alerting/rules/
-      name: Engine and Rules
+    - link: /alerting/create-alerts/
+      name: Creat alerts
     - link: /alerting/notifications/
       name: Notifications
 - name: Image rendering
