@@ -34,7 +34,7 @@ interface PropsFromParent {
   exploreEvents: Emitter;
 }
 
-interface QueryRowProps extends PropsFromParent {
+export interface QueryRowProps extends PropsFromParent {
   changeQuery: typeof changeQuery;
   className?: string;
   exploreId: ExploreId;
