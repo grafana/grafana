@@ -25,7 +25,7 @@ If you want to export a dashboard for others to use then it could be a good idea
 add template variables for things like a metric prefix (use constant variable) and server name.
 
 A template variable of the type `Constant` will automatically be hidden in
-the dashboard, and will also be added as an required input when the dashboard is imported.
+the dashboard, and will also be added as a required input when the dashboard is imported.
 
 ## Importing a dashboard
 
