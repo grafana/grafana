@@ -198,6 +198,7 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string): Vect
 
 function getBinaryCreator(options: BinaryOptions): ValuesCreator {
   const operator = binaryOperators.getIfExists(options.operator);
+
   return (frame: DataFrame) => {
     const left = findFieldValuesWithNameOrConstant(frame, options.left);
     const right = findFieldValuesWithNameOrConstant(frame, options.right);
