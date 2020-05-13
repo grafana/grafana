@@ -96,6 +96,7 @@ export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
   unit?: string;
+  custom?: Record<string, any>;
 }
 
 export interface TableData extends QueryResultBase {
