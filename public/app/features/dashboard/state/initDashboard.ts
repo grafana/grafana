@@ -21,7 +21,7 @@ import {
 import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
-import { initVariablesBatch } from '../../variables/state/actions';
+import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
@@ -178,10 +178,10 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
-    await dispatch(initVariablesBatch(args.urlUid, dashboard, variableSrv));
+    await dispatch(initVariablesTransaction(args.urlUid, dashboard, variableSrv));
     if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
-      // but the args.urlUid will be the same as before initVariablesBatch was called so then we can't continue initializing
+      // but the args.urlUid will be the same as before initVariablesTransaction was called so then we can't continue initializing
       // the previous dashboard.
       return;
     }

@@ -467,7 +467,7 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
 export const DASHBOARD_SLOW_VARIABLES_TIMEOUT = 2000;
 export const DASHBOARD_CANCEL_SLOW_VARIABLES_TIMEOUT = 10000;
 
-export const initVariablesBatch = (
+export const initVariablesTransaction = (
   dashboardUid: string,
   dashboard: DashboardModel,
   variableSrv: VariableSrv
