@@ -4,7 +4,7 @@
   height: $navbarHeight;
   padding: 0 16px 0 60px;
   display: flex;
-  flex-grow: 1;
+  flex-grow: 0;
   border-bottom: 1px solid transparent;
   transition-duration: 350ms;
   transition-timing-function: ease-in-out;
@@ -14,34 +14,18 @@
     padding-left: $dashboard-padding;
     margin-left: 0;
   }
+
+  &--edit {
+    background: $panel-bg;
+    border-bottom: $panel-border;
+    box-shadow: 0 0 10px $dashboard-bg;
+  }
 }
 
 @mixin navbar-alt-look() {
   background: $page-header-bg;
   box-shadow: $search-shadow;
   border-bottom: $navbarBorder;
-}
-
-.dashboard-page--settings-open {
-  .navbar {
-    @include navbar-alt-look();
-  }
-
-  .navbar-buttons--tv,
-  .navbar-button--add-panel,
-  .navbar-button--star,
-  .navbar-button--save,
-  .navbar-button--share,
-  .navbar-button--settings,
-  .navbar-page-btn .fa-caret-down,
-  .refresh-picker,
-  .time-picker {
-    display: none;
-  }
-
-  .navbar-buttons--close {
-    display: flex;
-  }
 }
 
 .panel-in-fullscreen,
@@ -61,12 +45,11 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  display: block;
+  display: flex;
+  align-items: center;
   margin: 0;
-  color: $headings-color;
   font-size: $font-size-lg;
   min-height: $navbarHeight;
-  line-height: $navbarHeight;
 
   .gicon {
     top: -2px;
@@ -81,11 +64,19 @@
       display: inline-block;
     }
   }
+
+  .navbar-page-btn__folder-icon {
+    display: none;
+
+    @include media-breakpoint-up(md) {
+      display: inline-block;
+    }
+  }
 }
 
 .navbar-page-btn__folder {
-  color: $text-color-weak;
   display: none;
+  padding-right: 4px;
 
   @include media-breakpoint-up(lg) {
     display: inline-block;
@@ -129,13 +120,15 @@ i.navbar-page-btn__search {
 }
 
 .navbar-button {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
+  background-color: $panel-bg;
 
   display: flex;
   align-items: center;
   font-weight: $btn-font-weight;
-  padding: 6px $space-sm;
-  line-height: 18px;
+  padding: 0 $space-sm;
+  height: 32px;
+  // 2px less then border
+  line-height: 30px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
   margin-left: $space-xs;
@@ -171,6 +164,7 @@ i.navbar-page-btn__search {
     .gicon {
       filter: $navbar-btn-gicon-brightness;
     }
+
     &:hover {
       .gicon {
         filter: brightness(0.8);
@@ -178,18 +172,34 @@ i.navbar-page-btn__search {
     }
   }
 
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
+  }
+
   &--tight {
-    padding: 7px 4px;
+    padding: 0px 4px;
 
     .fa {
       font-size: 14px;
-      position: relative;
-      top: 1px;
     }
   }
 
-  &--secondary {
-    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  &--primary {
+    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
+  }
+
+  &:hover {
+    svg {
+      color: $text-color;
+    }
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   @include media-breakpoint-down(lg) {
@@ -204,14 +214,5 @@ i.navbar-page-btn__search {
   display: flex;
   height: $navbarHeight;
   align-items: center;
-  padding-right: 13px;
-}
-
-.navbar-settings-title {
-  display: block;
-  margin: 0;
-  color: $headings-color;
-  font-size: $font-size-lg;
-  min-height: $navbarHeight;
-  line-height: $navbarHeight;
+  padding-right: 16px;
 }

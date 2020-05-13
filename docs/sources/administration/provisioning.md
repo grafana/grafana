@@ -51,7 +51,7 @@ If you have a literal `$` in your value and want to avoid interpolation, `$$` ca
 
 ## Configuration Management Tools
 
-Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
+Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily rely on the expertise of the community.
 
 Tool | Project
 -----|------------
@@ -93,6 +93,8 @@ datasources:
   access: proxy
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  # <string> custom UID which can be used to reference this datasource in other parts of the configuration, if not specified will be generated automatically
+  uid: my_unique_uid
   # <string> url
   url: http://localhost:8080
   # <string> Deprecated, use secureJsonData.password
@@ -160,6 +162,9 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| sslRootCertFile | string | PostgreSQL | SSL server root certificate file, must be readable by the Grafana user |
+| sslCertFile | string | PostgreSQL | SSL client certificate file, must be readable by the Grafana user |
+| sslKeyFile | string | PostgreSQL | SSL client key file, must be readable by *only* the Grafana user |
 | encrypt | string | MSSQL | Connection SSL encryption handling. 'disable', 'false' or 'true' |
 | postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
 | timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
@@ -201,9 +206,9 @@ datasources:
     httpHeaderValue2: "Bearer XXXXXXXXX"
 ```
 
-### Dashboards
+## Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -240,9 +245,9 @@ When Grafana starts, it will update/insert all dashboards available in the confi
 It's possible to make changes to a provisioned dashboard in the Grafana UI. However, it is not possible to automatically save the changes back to the provisioning source.
 If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can `Save` the dashboard then changes will be persisted to the Grafana database.
 
-> **Note.** 
+> **Note:**
 > If a provisioned dashboard is saved from the UI and then later updated from the source, the dashboard stored in the database will always be overwritten. The `version` property in the JSON file will not affect this, even if it is lower than the existing dashboard.
-> 
+>
 > If a provisioned dashboard is saved from the UI and the source is removed, the dashboard stored in the database will be deleted unless the configuration option `disableDeletion` is set to true.
 
 If `allowUiUpdates` is configured to `false`, you are not able to make changes to a provisioned dashboard. When you click `Save`, Grafana brings up a *Cannot save provisioned dashboard* dialog. The screenshot below illustrates this behavior.
@@ -250,7 +255,7 @@ If `allowUiUpdates` is configured to `false`, you are not able to make changes t
 Grafana offers options to export the JSON definition of a dashboard. Either `Copy JSON to Clipboard` or `Save JSON to file` can help you synchronize your dashboard changes back to the provisioning source.
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
-                                                                                                                                                                 
+
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard URLs
@@ -398,6 +403,8 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
+| basicAuthUser |
+| basicAuthPassword |
 
 #### Alert notification `teams`
 
@@ -415,6 +422,7 @@ The following sections detail the supported settings for each alert notification
 
 | Name |
 | ---- |
+| singleEmail |
 | addresses |
 
 #### Alert notification `hipchat`
@@ -463,4 +471,3 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
-

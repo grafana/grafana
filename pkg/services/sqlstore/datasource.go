@@ -1,12 +1,14 @@
 package sqlstore
 
 import (
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -101,6 +103,14 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 			cmd.JsonData = simplejson.New()
 		}
 
+		if cmd.Uid == "" {
+			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
+			if err != nil {
+				return errutil.Wrapf(err, "Failed to generate UID for datasource %q", cmd.Name)
+			}
+			cmd.Uid = uid
+		}
+
 		ds := &models.DataSource{
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
@@ -121,9 +131,13 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 			Updated:           time.Now(),
 			Version:           1,
 			ReadOnly:          cmd.ReadOnly,
+			Uid:               cmd.Uid,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
+			if dialect.IsUniqueConstraintViolation(err) && strings.Contains(strings.ToLower(dialect.ErrorMessage(err)), "uid") {
+				return models.ErrDataSourceUidExists
+			}
 			return err
 		}
 		if err := updateIsDefaultFlag(ds, sess); err != nil {
@@ -172,6 +186,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
+			Uid:               cmd.Uid,
 		}
 
 		sess.UseBool("is_default")
@@ -208,4 +223,21 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 		cmd.Result = ds
 		return err
 	})
+}
+
+func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := generateNewUid()
+
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.DataSource{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", models.ErrDataSourceFailedGenerateUniqueUid
 }

@@ -25,7 +25,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
-    if (error.data) {
+    if (error.data && isHandledError(error.data.status)) {
       error.isHandled = true;
     }
   }, []);
@@ -89,7 +89,7 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
         <HorizontalGroup justify="center">
           <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
           <Button
-            variant="danger"
+            variant="destructive"
             onClick={async () => {
               await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
               onDismiss();
@@ -97,13 +97,25 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
           >
             Overwrite
           </Button>
-          <Button variant="inverse" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss}>
             Cancel
           </Button>
         </HorizontalGroup>
       </div>
     </Modal>
   );
+};
+
+const isHandledError = (errorStatus: string) => {
+  switch (errorStatus) {
+    case 'version-mismatch':
+    case 'name-exists':
+    case 'plugin-dashboard':
+      return true;
+
+    default:
+      return false;
+  }
 };
 
 const getConfirmPluginDashboardSaveModalStyles = stylesFactory((theme: GrafanaTheme) => ({

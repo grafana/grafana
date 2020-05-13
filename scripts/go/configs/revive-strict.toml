@@ -1,0 +1,26 @@
+ignoreGeneratedHeader = false
+severity = "error"
+confidence = 0.8
+errorCode = 1
+warningCode = 1
+
+[rule.context-as-argument]
+[rule.error-return]
+[rule.package-comments]
+[rule.range]
+[rule.superfluous-else]
+[rule.modifies-parameter]
+[rule.indent-error-flow]
+[rule.error-strings]
+[rule.error-naming]
+[rule.exported]
+[rule.unexported-return]
+[rule.dot-imports]
+[rule.receiver-naming]
+[rule.blank-imports]
+[rule.var-naming]
+
+# This can be checked by other tools like megacheck
+[rule.unreachable-code]
+
+

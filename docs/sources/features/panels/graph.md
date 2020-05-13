@@ -33,7 +33,7 @@ The general tab allows customization of a panel's appearance and menu options.
 - **Transparent** - If checked, removes the solid background of the panel (default not checked).
 
 ### Repeat
-Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "../../reference/templating.md#repeating-panels" >}}).
+Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "../../variables/templates-and-variables.md#repeating-panels" >}}).
 
 
 ## Metrics
@@ -97,11 +97,11 @@ For **Mode** there are three options:
 
 Additional values can be shown along-side the legend names:
 
-- **Min** - Minimum of all values returned from metric query
+- **Min** - Minimum of all values returned from the metric query
 - **Max** - Maximum of all values returned from the metric query
-- **Avg** - Average of all values returned from metric query
+- **Avg** - Average of all values returned from the metric query
 - **Current** - Last value returned from the metric query
-- **Total** - Sum of all values returned from metric query
+- **Total** - Sum of all values returned from the metric query
 - **Decimals** - Controls how many decimals are displayed for legend values (and graph hover tooltips)
 
 The legend values are calculated client side by Grafana and depend on what type of

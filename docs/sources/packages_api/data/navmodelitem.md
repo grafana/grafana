@@ -5,7 +5,6 @@
 title = "NavModelItem"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## NavModelItem interface

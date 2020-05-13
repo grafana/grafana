@@ -30,7 +30,7 @@ export class CloudWatchQueryParameterCtrl {
           memo.push(uiSegmentSrv.newKeyValue(value));
           return memo;
         },
-        []
+        [] as any
       );
 
       $scope.statSegments = _.map($scope.target.statistics, stat => {
@@ -84,7 +84,7 @@ export class CloudWatchQueryParameterCtrl {
           }
           return memo;
         },
-        []
+        [] as any
       );
 
       $scope.ensurePlusButton($scope.statSegments);
@@ -106,7 +106,7 @@ export class CloudWatchQueryParameterCtrl {
       }
 
       const target = $scope.target;
-      let query = Promise.resolve([]);
+      let query = Promise.resolve([] as any[]);
 
       if (segment.type === 'key' || segment.type === 'plus-button') {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
@@ -207,7 +207,7 @@ export class CloudWatchQueryParameterCtrl {
         });
 
         if (addTemplateVars) {
-          _.each(templateSrv.variables, variable => {
+          _.each(templateSrv.getVariables(), variable => {
             segments.unshift(
               uiSegmentSrv.newSegment({
                 type: 'template',

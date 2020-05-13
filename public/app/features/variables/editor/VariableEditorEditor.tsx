@@ -1,11 +1,12 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
-import { AppEvents } from '@grafana/data';
-import { FormLabel } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { AppEvents, VariableType } from '@grafana/data';
+import { InlineFormLabel } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { variableAdapters } from '../adapters';
-import { EMPTY_UUID, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableModel, VariableType } from '../../templating/variable';
+import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
+import { VariableHide, VariableModel } from '../../templating/types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
@@ -97,11 +98,11 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return;
     }
 
-    if (this.props.variable.uuid !== EMPTY_UUID) {
+    if (this.props.variable.id !== NEW_VARIABLE_ID) {
       await this.props.onEditorUpdate(this.props.identifier);
     }
 
-    if (this.props.variable.uuid === EMPTY_UUID) {
+    if (this.props.variable.id === NEW_VARIABLE_ID) {
       await this.props.onEditorAdd(this.props.identifier);
     }
   };
@@ -111,7 +112,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     if (!EditorToRender) {
       return null;
     }
-    const newVariable = this.props.variable.uuid && this.props.variable.uuid === EMPTY_UUID;
+    const newVariable = this.props.variable.id && this.props.variable.id === NEW_VARIABLE_ID;
 
     return (
       <div>
@@ -129,23 +130,23 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   required
                   value={this.props.editor.name}
                   onChange={this.onNameChange}
-                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalNameInput}
+                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput}
                 />
               </div>
               <div className="gf-form max-width-19">
-                <FormLabel width={6} tooltip={variableAdapters.get(this.props.variable.type).description}>
+                <InlineFormLabel width={6} tooltip={variableAdapters.get(this.props.variable.type).description}>
                   Type
-                </FormLabel>
+                </InlineFormLabel>
                 <div className="gf-form-select-wrapper max-width-17">
                   <select
                     className="gf-form-input"
                     value={this.props.variable.type}
                     onChange={this.onTypeChange}
-                    aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
+                    aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect}
                   >
-                    {variableAdapters.registeredTypes().map(item => (
-                      <option key={item.type} label={item.label} value={item.type}>
-                        {item.label}
+                    {variableAdapters.list().map(({ id, name }) => (
+                      <option key={id} label={name} value={id}>
+                        {name}
                       </option>
                     ))}
                   </select>
@@ -168,7 +169,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   value={this.props.variable.label ?? ''}
                   onChange={this.onLabelChange}
                   placeholder="optional display name"
-                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalLabelInput}
+                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput}
                 />
               </div>
               <div className="gf-form max-width-19">
@@ -178,7 +179,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     className="gf-form-input"
                     value={this.props.variable.hide}
                     onChange={this.onHideChange}
-                    aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalHideSelect}
+                    aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect}
                   >
                     <option label="" value={VariableHide.dontHide}>
                       {''}
@@ -204,7 +205,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
               <button
                 type="submit"
                 className="btn btn-primary"
-                aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.updateButton}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.updateButton}
               >
                 Update
               </button>
@@ -213,7 +214,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
               <button
                 type="submit"
                 className="btn btn-primary"
-                aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.addButton}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.addButton}
               >
                 Add
               </button>
@@ -227,7 +228,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
   editor: state.templating.editor,
-  variable: getVariable(ownProps.identifier.uuid!, state),
+  variable: getVariable(ownProps.identifier.id, state, false), // we could be renaming a variable and we don't want this to throw
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {

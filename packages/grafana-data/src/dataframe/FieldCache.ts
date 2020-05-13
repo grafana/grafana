@@ -58,15 +58,17 @@ export class FieldCache {
   }
 
   getFirstFieldOfType(type: FieldType): FieldWithIndex | undefined {
-    const arr = this.fieldByType[type];
-    if (arr && arr.length > 0) {
-      return arr[0];
-    }
-    return undefined;
+    const fields = this.fieldByType[type];
+    const firstField = fields.find(field => !(field.config.custom && field.config.custom['Hidden']));
+    return firstField;
   }
 
   hasFieldNamed(name: string): boolean {
     return !!this.fieldByName[name];
+  }
+
+  hasFieldWithNameAndType(name: string, type: FieldType): boolean {
+    return !!this.fieldByName[name] && this.fieldByType[type].filter(field => field.name === name).length > 0;
   }
 
   /**

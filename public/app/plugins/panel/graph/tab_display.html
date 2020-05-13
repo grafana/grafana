@@ -1,205 +1,151 @@
-<div class="editor-row">
-  <div class="section gf-form-group">
-    <h5 class="section-heading">Draw Modes</h5>
-    <gf-form-switch
-      class="gf-form"
-      label="Bars"
-      label-class="width-5"
-      checked="ctrl.panel.bars"
-      on-change="ctrl.render()"
-    ></gf-form-switch>
-    <gf-form-switch
-      class="gf-form"
-      label="Lines"
-      label-class="width-5"
-      checked="ctrl.panel.lines"
-      on-change="ctrl.render()"
-    ></gf-form-switch>
-    <gf-form-switch
-      class="gf-form"
-      label="Points"
-      label-class="width-5"
-      checked="ctrl.panel.points"
-      on-change="ctrl.render()"
-    ></gf-form-switch>
-  </div>
-  <div class="section gf-form-group">
-    <h5 class="section-heading">Mode Options</h5>
-    <div class="gf-form">
-      <label class="gf-form-label width-8">Fill</label>
-      <div class="gf-form-select-wrapper max-width-5">
-        <select
-          class="gf-form-input"
-          ng-model="ctrl.panel.fill"
-          ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
-          ng-change="ctrl.render()"
-          ng-disabled="!ctrl.panel.lines"
-        ></select>
-      </div>
-    </div>
-    <div class="gf-form" ng-if="ctrl.panel.lines && ctrl.panel.fill">
-      <label class="gf-form-label width-8">Fill Gradient</label>
-      <div class="gf-form-select-wrapper max-width-5">
-        <select
-          class="gf-form-input"
-          ng-model="ctrl.panel.fillGradient"
-          ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
-          ng-change="ctrl.render()"
-        ></select>
-      </div>
-    </div>
-    <div class="gf-form">
-      <label class="gf-form-label width-8">Line Width</label>
-      <div class="gf-form-select-wrapper max-width-5">
-        <select
-          class="gf-form-input"
-          ng-model="ctrl.panel.linewidth"
-          ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
-          ng-change="ctrl.render()"
-          ng-disabled="!ctrl.panel.lines"
-        ></select>
-      </div>
-    </div>
-    <gf-form-switch
-      ng-disabled="!ctrl.panel.lines"
-      class="gf-form"
-      label="Staircase"
-      label-class="width-8"
-      checked="ctrl.panel.steppedLine"
-      on-change="ctrl.render()"
-    >
-    </gf-form-switch>
-    <div class="gf-form" ng-if="ctrl.panel.points">
-      <label class="gf-form-label width-8">Point Radius</label>
-      <div class="gf-form-select-wrapper max-width-5">
-        <select
-          class="gf-form-input"
-          ng-model="ctrl.panel.pointradius"
-          ng-options="f for f in [0.5,1,2,3,4,5,6,7,8,9,10]"
-          ng-change="ctrl.render()"
-        ></select>
-      </div>
-    </div>
-  </div>
-  <div class="section gf-form-group">
-    <h5 class="section-heading">Hover tooltip</h5>
-    <div class="gf-form">
-      <label class="gf-form-label width-9">Mode</label>
-      <div class="gf-form-select-wrapper max-width-8">
-        <select
-          class="gf-form-input"
-          ng-model="ctrl.panel.tooltip.shared"
-          ng-options="f.value as f.text for f in [{text: 'All series', value: true}, {text: 'Single', value: false}]"
-          ng-change="ctrl.render()"
-        ></select>
-      </div>
-    </div>
-    <div class="gf-form">
-      <label class="gf-form-label width-9">Sort order</label>
-      <div class="gf-form-select-wrapper max-width-8">
-        <select
-          class="gf-form-input"
-          ng-model="ctrl.panel.tooltip.sort"
-          ng-options="f.value as f.text for f in [{text: 'None', value: 0}, {text: 'Increasing', value: 1}, {text: 'Decreasing', value: 2}]"
-          ng-change="ctrl.render()"
-        ></select>
-      </div>
-    </div>
-    <div class="gf-form" ng-show="ctrl.panel.stack">
-      <label class="gf-form-label width-9">Stacked value</label>
-      <div class="gf-form-select-wrapper max-width-8">
-        <select
-          class="gf-form-input"
-          ng-model="ctrl.panel.tooltip.value_type"
-          ng-options="f for f in ['cumulative','individual']"
-          ng-change="ctrl.render()"
-        ></select>
-      </div>
+<div class="gf-form-group">
+  <gf-form-switch
+    class="gf-form"
+    label="Bars"
+    label-class="width-8"
+    checked="ctrl.panel.bars"
+    on-change="ctrl.render()"
+  ></gf-form-switch>
+
+  <gf-form-switch
+    class="gf-form"
+    label="Lines"
+    label-class="width-8"
+    checked="ctrl.panel.lines"
+    on-change="ctrl.render()"
+  ></gf-form-switch>
+
+  <div class="gf-form" ng-if="ctrl.panel.lines">
+    <label class="gf-form-label width-8">Line width</label>
+    <div class="gf-form-select-wrapper max-width-5">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.linewidth"
+        ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
+        ng-change="ctrl.render()"
+      ></select>
     </div>
   </div>
 
-  <div class="section gf-form-group">
-    <h5 class="section-heading">Stacking & Null value</h5>
-    <gf-form-switch
-      class="gf-form"
-      label="Stack"
-      label-class="width-7"
-      checked="ctrl.panel.stack"
-      on-change="ctrl.render()"
-    >
-    </gf-form-switch>
-    <gf-form-switch
-      class="gf-form"
-      ng-show="ctrl.panel.stack"
-      label="Percent"
-      label-class="width-7"
-      checked="ctrl.panel.percentage"
-      on-change="ctrl.render()"
-    >
-    </gf-form-switch>
-    <div class="gf-form">
-      <label class="gf-form-label width-7">Null value</label>
-      <div class="gf-form-select-wrapper">
-        <select
-          class="gf-form-input max-width-9"
-          ng-model="ctrl.panel.nullPointMode"
-          ng-options="f for f in ['connected', 'null', 'null as zero']"
-          ng-change="ctrl.render()"
-        ></select>
-      </div>
+  <gf-form-switch
+    ng-disabled="!ctrl.panel.lines"
+    class="gf-form"
+    label="Staircase"
+    label-class="width-8"
+    checked="ctrl.panel.steppedLine"
+    on-change="ctrl.render()"
+  ></gf-form-switch>
+
+  <div class="gf-form" ng-if="ctrl.panel.lines">
+    <label class="gf-form-label width-8">Area fill</label>
+    <div class="gf-form-select-wrapper max-width-5">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.fill"
+        ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
+        ng-change="ctrl.render()"
+      ></select>
+    </div>
+  </div>
+
+  <div class="gf-form" ng-if="ctrl.panel.lines && ctrl.panel.fill">
+    <label class="gf-form-label width-8">Fill gradient</label>
+    <div class="gf-form-select-wrapper max-width-5">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.fillGradient"
+        ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
+        ng-change="ctrl.render()"
+      ></select>
+    </div>
+  </div>
+
+  <gf-form-switch
+    class="gf-form"
+    label="Points"
+    label-class="width-8"
+    checked="ctrl.panel.points"
+    on-change="ctrl.render()"
+  ></gf-form-switch>
+
+  <div class="gf-form" ng-if="ctrl.panel.points">
+    <label class="gf-form-label width-8">Point Radius</label>
+    <div class="gf-form-select-wrapper max-width-5">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.pointradius"
+        ng-options="f for f in [0.5,1,2,3,4,5,6,7,8,9,10]"
+        ng-change="ctrl.render()"
+      ></select>
     </div>
   </div>
 </div>
 
-<div>
-  <div class="gf-form-inline" ng-repeat="override in ctrl.panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
-    <div class="gf-form">
-      <label class="gf-form-label">alias or regex</label>
-    </div>
-    <div class="gf-form width-15">
-      <input
-        type="text"
-        ng-model="override.alias"
-        bs-typeahead="getSeriesNames"
-        ng-blur="ctrl.render()"
-        data-min-length="0"
-        data-items="100"
-        class="gf-form-input width-15"
-      />
-    </div>
-    <div class="gf-form" ng-repeat="option in currentOverrides">
-      <label class="gf-form-label">
-        <i class="pointer fa fa-remove" ng-click="removeOverride(option)"></i>
-        <span ng-show="option.propertyName === 'color'">
-          Color: <i class="fa fa-circle" ng-style="{color:option.value}"></i>
-        </span>
-        <span ng-show="option.propertyName !== 'color'"> {{ option.name }}: {{ option.value }} </span>
-      </label>
-    </div>
-
-    <div class="gf-form">
-      <span
-        class="dropdown"
-        dropdown-typeahead2="overrideMenu"
-        dropdown-typeahead-on-select="setOverride($item, $subItem)"
-        button-template-class="gf-form-label"
-      >
-      </span>
-    </div>
-
-    <div class="gf-form gf-form--grow">
-      <div class="gf-form-label gf-form-label--grow"></div>
-    </div>
-
-    <div class="gf-form">
-      <label class="gf-form-label">
-        <i class="fa fa-trash pointer" ng-click="ctrl.removeSeriesOverride(override)"></i>
-      </label>
+<div class="gf-form-group">
+  <h5 class="section-heading">Hover tooltip</h5>
+  <div class="gf-form">
+    <label class="gf-form-label width-9">Mode</label>
+    <div class="gf-form-select-wrapper max-width-8">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.tooltip.shared"
+        ng-options="f.value as f.text for f in [{text: 'All series', value: true}, {text: 'Single', value: false}]"
+        ng-change="ctrl.render()"
+      ></select>
     </div>
   </div>
-  <div class="gf-form-button-row">
-    <button class="btn btn-inverse" ng-click="ctrl.addSeriesOverride()">
-      <i class="fa fa-plus"></i>&nbsp;Add series override<tip>Regex match example: /server[0-3]/i </tip>
-    </button>
+  <div class="gf-form">
+    <label class="gf-form-label width-9">Sort order</label>
+    <div class="gf-form-select-wrapper max-width-8">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.tooltip.sort"
+        ng-options="f.value as f.text for f in [{text: 'None', value: 0}, {text: 'Increasing', value: 1}, {text: 'Decreasing', value: 2}]"
+        ng-change="ctrl.render()"
+      ></select>
+    </div>
+  </div>
+  <div class="gf-form" ng-show="ctrl.panel.stack">
+    <label class="gf-form-label width-9">Stacked value</label>
+    <div class="gf-form-select-wrapper max-width-8">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.tooltip.value_type"
+        ng-options="f for f in ['cumulative','individual']"
+        ng-change="ctrl.render()"
+      ></select>
+    </div>
+  </div>
+</div>
+
+<div class="gf-form-group">
+  <h5 class="section-heading">Stacking and null value</h5>
+  <gf-form-switch
+    class="gf-form"
+    label="Stack"
+    label-class="width-7"
+    checked="ctrl.panel.stack"
+    on-change="ctrl.render()"
+  >
+  </gf-form-switch>
+  <gf-form-switch
+    class="gf-form"
+    ng-show="ctrl.panel.stack"
+    label="Percent"
+    label-class="width-7"
+    checked="ctrl.panel.percentage"
+    on-change="ctrl.render()"
+  >
+  </gf-form-switch>
+  <div class="gf-form">
+    <label class="gf-form-label width-7">Null value</label>
+    <div class="gf-form-select-wrapper">
+      <select
+        class="gf-form-input max-width-9"
+        ng-model="ctrl.panel.nullPointMode"
+        ng-options="f for f in ['connected', 'null', 'null as zero']"
+        ng-change="ctrl.render()"
+      ></select>
+    </div>
   </div>
 </div>

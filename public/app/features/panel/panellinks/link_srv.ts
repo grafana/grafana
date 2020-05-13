@@ -2,23 +2,23 @@ import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
-import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
-import locationUtil from 'app/core/utils/location_util';
-import { DataLinkBuiltInVars } from '@grafana/ui';
 import {
-  DataLink,
-  KeyValue,
-  deprecationWarning,
-  LinkModel,
   DataFrame,
-  ScopedVars,
-  FieldType,
+  DataLink,
+  DataLinkBuiltInVars,
+  deprecationWarning,
   Field,
-  VariableSuggestion,
+  FieldType,
+  KeyValue,
+  LinkModel,
+  locationUtil,
+  ScopedVars,
   VariableOrigin,
+  VariableSuggestion,
   VariableSuggestionsScope,
+  urlUtil,
+  textUtil,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -77,7 +77,7 @@ const buildLabelPath = (label: string) => {
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...templateSrv.variables.map(variable => ({
+  ...templateSrv.getVariables().map(variable => ({
     value: variable.name as string,
     label: variable.name,
     origin: VariableOrigin.Template,
@@ -149,7 +149,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
         numeric = f;
       }
 
-      if (!title && f.config.title && f.config.title !== f.name) {
+      if (!title && f.config.displayName && f.config.displayName !== f.name) {
         title = f;
       }
     }
@@ -181,7 +181,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
 
   if (title) {
     suggestions.push({
-      value: `__data.fields[${title.config.title}]`,
+      value: `__data.fields[${title.config.displayName}]`,
       label: `Select by title`,
       documentation: `Use the title to pick the field`,
       origin: VariableOrigin.Fields,
@@ -233,6 +233,8 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
 
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
+  getAnchorInfo: (link: any) => any;
+  getLinkUrl: (link: any) => string;
 }
 
 export class LinkSrv implements LinkService {
@@ -253,8 +255,8 @@ export class LinkSrv implements LinkService {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    url = appendQueryToUrl(url, toUrlParams(params));
-    return getConfig().disableSanitizeHtml ? url : sanitizeUrl(url);
+    url = urlUtil.appendQueryToUrl(url, urlUtil.toUrlParams(params));
+    return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }
 
   getAnchorInfo(link: any) {
@@ -269,7 +271,7 @@ export class LinkSrv implements LinkService {
    */
   getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
-    const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
+    const timeRangeUrl = urlUtil.toUrlParams(this.timeSrv.timeRangeForUrl());
 
     let href = link.url;
 
@@ -302,7 +304,7 @@ export class LinkSrv implements LinkService {
 
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
-    const variablesQuery = toUrlParams(params);
+    const variablesQuery = urlUtil.toUrlParams(params);
 
     info.href = this.templateSrv.replace(info.href, {
       ...scopedVars,
@@ -316,7 +318,7 @@ export class LinkSrv implements LinkService {
       },
     });
 
-    info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
+    info.href = getConfig().disableSanitizeHtml ? info.href : textUtil.sanitizeUrl(info.href);
 
     return info;
   };

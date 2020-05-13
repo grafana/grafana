@@ -218,7 +218,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -274,12 +274,12 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.rows).toHaveLength(1);
     expect(logsModel.rows).toMatchObject([
       {
         entry: 'WARN boooo',
-        labels: undefined,
+        labels: {},
         logLevel: LogLevel.debug,
         uniqueLabels: {},
       },
@@ -338,7 +338,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
@@ -448,7 +448,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(4);
     expect(logsModel.rows).toMatchObject([
@@ -497,7 +497,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.rows[0].uid).toBe('0');
   });
 

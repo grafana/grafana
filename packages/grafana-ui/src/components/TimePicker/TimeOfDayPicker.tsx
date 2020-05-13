@@ -2,12 +2,13 @@ import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
 import { css, cx } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
-import { useTheme, Icon, selectThemeVariant as stv } from '../../index';
+import { useTheme, Icon } from '../../index';
 import { stylesFactory } from '../../themes';
-import { inputSizes, getFocusCss } from '../Forms/commonStyles';
+import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
+import { focusCss } from '../../themes/mixins';
 
-interface Props {
+export interface Props {
   onChange: (value: DateTime) => void;
   value: DateTime;
   showHour?: boolean;
@@ -16,9 +17,9 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.formInputBg }, theme.type);
-  const menuShadowColor = stv({ light: theme.colors.gray4, dark: theme.colors.black }, theme.type);
-  const optionBgHover = stv({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type);
+  const bgColor = theme.colors.formInputBg;
+  const menuShadowColor = theme.colors.dropdownShadow;
+  const optionBgHover = theme.colors.dropdownOptionHoverBg;
   const borderRadius = theme.border.radius.sm;
   const borderColor = theme.colors.formInputBorder;
   return {
@@ -40,7 +41,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           outline-width: 2px;
           &.rc-time-picker-panel-select-option-selected {
             background-color: inherit;
-            border: 1px solid ${theme.colors.orange};
+            border: 1px solid ${theme.palette.orange};
             border-radius: ${borderRadius};
           }
 
@@ -73,10 +74,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: ${bgColor};
         border-radius: ${borderRadius};
         border-color: ${borderColor};
-        height: ${theme.spacing.formInputHeight};
+        height: ${theme.spacing.formInputHeight}px;
 
         &:focus {
-          ${getFocusCss(theme)}
+          ${focusCss(theme)}
         }
       }
     `,
@@ -111,7 +112,7 @@ interface CaretProps {
 const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
   return (
     <div className={wrapperStyle}>
-      <Icon name="caret-down" />
+      <Icon name="angle-down" />
     </div>
   );
 };

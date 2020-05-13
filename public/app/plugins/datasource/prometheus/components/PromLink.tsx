@@ -9,7 +9,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 interface Props {
   datasource: PrometheusDatasource;
   query: PromQuery;
-  panelData: PanelData;
+  panelData?: PanelData;
 }
 
 interface State {
@@ -19,29 +19,38 @@ interface State {
 export default class PromLink extends Component<Props, State> {
   state: State = { href: null };
   async componentDidUpdate(prevProps: Props) {
-    if (prevProps.panelData !== this.props.panelData && this.props.panelData.request) {
-      const href = await this.getExternalLink();
+    const { panelData } = this.props;
+
+    if (panelData && panelData.request && prevProps.panelData !== panelData) {
+      const href = await this.getExternalLink(panelData);
       this.setState({ href });
     }
   }
 
-  async getExternalLink(): Promise<string> {
-    const { query, panelData } = this.props;
-    const target = panelData.request.targets.length > 0 ? panelData.request.targets[0] : ({ datasource: null } as any);
+  async getExternalLink(panelData: PanelData): Promise<string> {
+    const { query } = this.props;
+    const { request } = panelData;
+
+    if (!request) {
+      return '';
+    }
+
+    const target = request.targets.length > 0 ? request.targets[0] : ({ datasource: null } as any);
     const datasourceName = target.datasource;
     const datasource: PrometheusDatasource = datasourceName
       ? (((await getDatasourceSrv().get(datasourceName)) as any) as PrometheusDatasource)
       : (this.props.datasource as PrometheusDatasource);
 
-    const range = panelData.request.range;
+    const range = request.range;
     const start = datasource.getPrometheusTime(range.from, false);
     const end = datasource.getPrometheusTime(range.to, true);
     const rangeDiff = Math.ceil(end - start);
     const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
 
     const options = {
-      interval: panelData.request.interval,
+      interval: request.interval,
     } as DataQueryRequest<PromQuery>;
+
     const queryOptions = datasource.createQuery(query, options, start, end);
     const expr = {
       'g0.expr': queryOptions.expr,
@@ -59,9 +68,10 @@ export default class PromLink extends Component<Props, State> {
 
   render() {
     const { href } = this.state;
+
     return (
       <a href={href} target="_blank" rel="noopener">
-        <i className="fa fa-share-square-o" /> Prometheus
+        Prometheus
       </a>
     );
   }

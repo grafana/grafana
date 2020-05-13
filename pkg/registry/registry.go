@@ -68,7 +68,7 @@ func getServicesWithOverrides() []*Descriptor {
 }
 
 // Service interface is the lowest common shape that services
-// are expected to forfill to be started within Grafana.
+// are expected to fulfill to be started within Grafana.
 type Service interface {
 
 	// Init is called by Grafana main process which gives the service

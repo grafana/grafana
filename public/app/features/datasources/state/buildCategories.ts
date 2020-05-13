@@ -5,11 +5,12 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
   const categories: DataSourcePluginCategory[] = [
     { id: 'tsdb', title: 'Time series databases', plugins: [] },
     { id: 'logging', title: 'Logging & document databases', plugins: [] },
+    { id: 'tracing', title: 'Distributed tracing', plugins: [] },
     { id: 'sql', title: 'SQL', plugins: [] },
     { id: 'cloud', title: 'Cloud', plugins: [] },
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },
     { id: 'other', title: 'Others', plugins: [] },
-  ];
+  ].filter(item => item);
 
   const categoryIndex: Record<string, DataSourcePluginCategory> = {};
   const pluginIndex: Record<string, DataSourcePluginMeta> = {};
@@ -66,6 +67,7 @@ function sortPlugins(plugins: DataSourcePluginMeta[]) {
     graphite: 95,
     loki: 90,
     mysql: 80,
+    jaeger: 100,
     postgres: 79,
     gcloud: -1,
   };
@@ -121,6 +123,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       description: 'New Relic integration & data source',
       name: 'New Relic',
       imgUrl: 'public/img/plugins/newrelic.svg',
+    }),
+    getPhantomPlugin({
+      id: 'dlopes7-appdynamics-datasource',
+      description: 'AppDynamics integration & data source',
+      name: 'AppDynamics',
+      imgUrl: 'public/img/plugins/appdynamics.svg',
     }),
   ];
 }

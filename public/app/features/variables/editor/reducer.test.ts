@@ -63,7 +63,7 @@ describe('variableEditorReducer', () => {
         errors: { update: 'Something wrong' },
         extended: { prop: 1000 },
       };
-      const payload = toVariablePayload({ uuid: '0', type: 'textbox' });
+      const payload = toVariablePayload({ id: '0', type: 'textbox' });
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, initialState)
         .whenActionIsDispatched(variableEditorUnMounted(payload))
@@ -79,7 +79,7 @@ describe('variableEditorReducer', () => {
         isValid: false,
         errors: { name: 'Duplicate', update: 'Update failed' },
       };
-      const payload = toVariablePayload({ uuid: '0', type: 'textbox' }, 'New Name');
+      const payload = toVariablePayload({ id: '0', type: 'textbox' }, { newName: 'New Name' });
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, initialState)
         .whenActionIsDispatched(changeVariableNameSucceeded(payload))
@@ -100,7 +100,7 @@ describe('variableEditorReducer', () => {
         isValid: false,
         errors: { name: 'Duplicate' },
       };
-      const payload = toVariablePayload({ uuid: '0', type: 'textbox' }, 'New Name');
+      const payload = toVariablePayload({ id: '0', type: 'textbox' }, { newName: 'New Name' });
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, initialState)
         .whenActionIsDispatched(changeVariableNameSucceeded(payload))

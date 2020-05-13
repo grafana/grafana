@@ -72,7 +72,7 @@ export function annotationTooltipDirective(
       tooltip += '<div class="graph-annotation__body">';
 
       if (text) {
-        tooltip += '<div>' + sanitizeString(text.replace(/\n/g, '<br>')) + '</div>';
+        tooltip += '<div ng-non-bindable>' + sanitizeString(text.replace(/\n/g, '<br>')) + '</div>';
       }
 
       const tags = event.tags;

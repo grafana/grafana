@@ -1,10 +1,12 @@
 import React, { PureComponent } from 'react';
-import { e2e } from '@grafana/e2e';
-import { Switch, Select, ClipboardButton } from '@grafana/ui';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { LegacyForms, ClipboardButton, Icon, InfoBox } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
+import config from 'app/core/config';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'current', value: 'current' },
@@ -84,14 +86,12 @@ export class ShareLink extends PureComponent<Props, State> {
   render() {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme, shareUrl, imageUrl } = this.state;
-    const selectors = e2e.pages.SharePanelModal.selectors;
+    const selectors = e2eSelectors.pages.SharePanelModal;
 
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <div className="share-modal-big-icon">
-            <i className="gicon gicon-link"></i>
-          </div>
+          <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
             <p className="share-modal-info-text">
               Create a direct link to this dashboard or panel, customized with the options below.
@@ -121,19 +121,35 @@ export class ShareLink extends PureComponent<Props, State> {
                     <input type="text" className="gf-form-input" defaultValue={shareUrl} />
                   </div>
                   <div className="gf-form">
-                    <ClipboardButton variant="inverse" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
+                    <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
                       Copy
                     </ClipboardButton>
                   </div>
                 </div>
               </div>
             </div>
-            {panel && (
+            {panel && config.rendererAvailable && (
               <div className="gf-form">
                 <a href={imageUrl} target="_blank" aria-label={selectors.linkToRenderedImage}>
-                  <i className="fa fa-camera"></i> Direct link rendered image
+                  <Icon name="camera" /> Direct link rendered image
                 </a>
               </div>
+            )}
+            {panel && !config.rendererAvailable && (
+              <InfoBox>
+                <p>
+                  <>To render a panel image, you must install the </>
+                  <a
+                    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                    target="_blank"
+                    rel="noopener"
+                    className="external-link"
+                  >
+                    Grafana Image Renderer plugin
+                  </a>
+                  . Please contact your Grafana administrator to install the plugin.
+                </p>
+              </InfoBox>
             )}
           </div>
         </div>

@@ -2,10 +2,11 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, ExploreMode } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
+import { DataQuery, DataSourceApi, ExploreMode, dateTimeFormat, AppEvents, urlUtil } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
+import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
@@ -13,9 +14,10 @@ import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
 export const RICH_HISTORY_SETTING_KEYS = {
-  retentionPeriod: `${RICH_HISTORY_KEY}.retentionPeriod`,
-  starredTabAsFirstTab: `${RICH_HISTORY_KEY}.starredTabAsFirstTab`,
-  activeDatasourceOnly: `${RICH_HISTORY_KEY}.activeDatasourceOnly`,
+  retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
+  starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
+  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
+  datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };
 
 /*
@@ -27,48 +29,58 @@ export function addToRichHistory(
   richHistory: RichHistoryQuery[],
   datasourceId: string,
   datasourceName: string | null,
-  queries: string[],
+  queries: DataQuery[],
   starred: boolean,
   comment: string | null,
   sessionName: string
 ): any {
   const ts = Date.now();
-  /* Save only queries, that are not falsy (e.g. empty strings, null) */
-  const queriesToSave = queries.filter(expr => Boolean(expr));
-
-  const retentionPeriod = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
+  /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
+  const newQueriesToSave: DataQuery[] = queries && queries.filter(query => notEmptyQuery(query));
+  const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
   /* Keep only queries, that are within the selected retention period or that are starred.
-   * If no queries, initialize with exmpty array
+   * If no queries, initialize with empty array
    */
   const queriesToKeep = richHistory.filter(q => q.ts > retentionPeriodLastTs || q.starred === true) || [];
 
-  if (queriesToSave.length > 0) {
-    if (
-      /* Don't save duplicated queries for the same datasource */
+  if (newQueriesToSave.length > 0) {
+    /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
+     * which can be different) don't save it in rich history.
+     */
+    const newQueriesToCompare = newQueriesToSave.map(q => _.omit(q, ['key', 'refId']));
+    const lastQueriesToCompare =
       queriesToKeep.length > 0 &&
-      JSON.stringify(queriesToSave) === JSON.stringify(queriesToKeep[0].queries) &&
-      JSON.stringify(datasourceName) === JSON.stringify(queriesToKeep[0].datasourceName)
-    ) {
+      queriesToKeep[0].queries.map(q => {
+        return _.omit(q, ['key', 'refId']);
+      });
+
+    if (_.isEqual(newQueriesToCompare, lastQueriesToCompare)) {
       return richHistory;
     }
 
-    let newHistory = [
-      { queries: queriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
+    let updatedHistory = [
+      { queries: newQueriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
       ...queriesToKeep,
     ];
 
-    /* Combine all queries of a datasource type into one rich history */
-    store.setObject(RICH_HISTORY_KEY, newHistory);
-    return newHistory;
+    try {
+      store.setObject(RICH_HISTORY_KEY, updatedHistory);
+      return updatedHistory;
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [error]);
+      return richHistory;
+    }
   }
 
   return richHistory;
 }
 
-export function getRichHistory() {
-  return store.getObject(RICH_HISTORY_KEY, []);
+export function getRichHistory(): RichHistoryQuery[] {
+  const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
+  const transformedRichHistory = migrateRichHistory(richHistory);
+  return transformedRichHistory;
 }
 
 export function deleteAllFromRichHistory() {
@@ -76,7 +88,7 @@ export function deleteAllFromRichHistory() {
 }
 
 export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  const updatedQueries = richHistory.map(query => {
+  const updatedHistory = richHistory.map(query => {
     /* Timestamps are currently unique - we can use them to identify specific queries */
     if (query.ts === ts) {
       const isStarred = query.starred;
@@ -86,8 +98,13 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     return query;
   });
 
-  store.setObject(RICH_HISTORY_KEY, updatedQueries);
-  return updatedQueries;
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
 }
 
 export function updateCommentInRichHistory(
@@ -95,7 +112,7 @@ export function updateCommentInRichHistory(
   ts: number,
   newComment: string | undefined
 ) {
-  const updatedQueries = richHistory.map(query => {
+  const updatedHistory = richHistory.map(query => {
     if (query.ts === ts) {
       const updatedQuery = Object.assign({}, query, { comment: newComment });
       return updatedQuery;
@@ -103,8 +120,24 @@ export function updateCommentInRichHistory(
     return query;
   });
 
-  store.setObject(RICH_HISTORY_KEY, updatedQueries);
-  return updatedQueries;
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
+}
+
+export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+  const updatedHistory = richHistory.filter(query => query.ts !== ts);
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
 }
 
 export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {
@@ -140,14 +173,20 @@ export const copyStringToClipboard = (string: string) => {
 };
 
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
-  const queries = query.queries.map(query => ({ expr: query }));
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
     range: { from: 'now-1h', to: 'now' },
     datasource: query.datasourceName,
-    queries,
-    /* Default mode. In the future, we can also save the query mode */
-    mode: query.datasourceId === 'loki' ? ExploreMode.Logs : ExploreMode.Metrics,
+    queries: query.queries,
+    /* Default mode is metrics. Exceptions are Loki (logs) and Jaeger (tracing) data sources.
+     * In the future, we can remove this as we are working on metrics & logs logic.
+     **/
+    mode:
+      query.datasourceId === 'loki'
+        ? ExploreMode.Logs
+        : query.datasourceId === 'jaeger'
+        ? ExploreMode.Tracing
+        : ExploreMode.Metrics,
     ui: {
       showingGraph: true,
       showingLogs: true,
@@ -158,7 +197,7 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
 
   const serializedState = serializeStateToUrlParam(exploreState, true);
   const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
-  const url = renderUrl(`${baseUrl}/explore`, { left: serializedState });
+  const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;
 };
 
@@ -198,14 +237,18 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
 };
 
 export function createDateStringFromTs(ts: number) {
-  const date = new Date(ts);
-  const month = date.toLocaleString('default', { month: 'long' });
-  const day = date.getDate();
-  return `${month} ${day}`;
+  return dateTimeFormat(ts, {
+    format: 'MMMM D',
+  });
 }
 
 export function getQueryDisplayText(query: DataQuery): string {
-  return JSON.stringify(query);
+  /* If datasource doesn't have getQueryDisplayText, create query display text by
+   * stringifying query that was stripped of key, refId and datasource for nicer
+   * formatting and improved readability
+   */
+  const strippedQuery = _.omit(query, ['key', 'refId', 'datasource']);
+  return JSON.stringify(strippedQuery);
 }
 
 export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder) {
@@ -218,23 +261,15 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function isParsable(string: string) {
-  try {
-    JSON.parse(string);
-  } catch (e) {
-    return false;
+export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi) {
+  /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
+   * to format query text
+   */
+  if (queryDsInstance?.getQueryDisplayText) {
+    return queryDsInstance.getQueryDisplayText(query);
   }
-  return true;
-}
 
-export function createDataQuery(query: RichHistoryQuery, queryString: string, index: number) {
-  let dataQuery;
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  isParsable(queryString)
-    ? (dataQuery = JSON.parse(queryString))
-    : (dataQuery = { expr: queryString, refId: letters[index], datasource: query.datasourceName });
-
-  return dataQuery;
+  return getQueryDisplayText(query);
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
@@ -250,4 +285,75 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   });
 
   return mappedQueriesToHeadings;
+}
+
+/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
+ * exploreDatasources add generic datasource image and add property isRemoved = true.
+ */
+export function createDatasourcesList(queriesDatasources: string[]) {
+  const exploreDatasources = getExploreDatasources();
+  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
+
+  queriesDatasources.forEach(queryDsName => {
+    const index = exploreDatasources.findIndex(exploreDs => exploreDs.name === queryDsName);
+    if (index !== -1) {
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: exploreDatasources[index].meta.info.logos.small,
+        isRemoved: false,
+      });
+    } else {
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: 'public/img/icn-datasource.svg',
+        isRemoved: true,
+      });
+    }
+  });
+  return datasources;
+}
+
+export function notEmptyQuery(query: DataQuery) {
+  /* Check if query has any other properties besides key, refId and datasource.
+   * If not, then we consider it empty query.
+   */
+  const strippedQuery = _.omit(query, ['key', 'refId', 'datasource']);
+  const queryKeys = Object.keys(strippedQuery);
+
+  if (queryKeys.length > 0) {
+    return true;
+  }
+
+  return false;
+}
+
+/* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
+function migrateRichHistory(richHistory: RichHistoryQuery[]) {
+  const transformedRichHistory = richHistory.map(query => {
+    const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
+    return { ...query, queries: transformedQueries };
+  });
+
+  return transformedRichHistory;
+}
+
+function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
+  if (typeof individualQuery === 'object') {
+    return individualQuery;
+  } else if (isParsable(individualQuery)) {
+    return JSON.parse(individualQuery);
+  }
+  return { expr: individualQuery, refId: letters[index] };
+}
+
+function isParsable(string: string) {
+  try {
+    JSON.parse(string);
+  } catch (e) {
+    return false;
+  }
+  return true;
 }

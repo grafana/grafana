@@ -2,6 +2,7 @@
 
 import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+import { styleMixins } from '.';
 
 export const lightThemeVarsTemplate = (theme: GrafanaTheme) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/light.ts', 'grafana-ui/src/themes/_variable.light.scss.tmpl.ts')}
@@ -12,79 +13,88 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-faint: ${theme.colors.blueFaint};
-$blue-light: ${theme.colors.blueLight};
-$blue-base: ${theme.colors.blueBase};
-$blue-shade: ${theme.colors.blueShade};
-$red-base: ${theme.colors.redBase};
-$red-shade: ${theme.colors.redShade};
-$green-base: ${theme.colors.greenBase};
-$green-shade: ${theme.colors.greenShade};
-$orange-dark: ${theme.colors.orangeDark};
+$blue-light: ${theme.palette.blue95};
+$blue-base: ${theme.palette.blue80};
+$blue-shade: ${theme.palette.blue77};
+$red-base: ${theme.palette.redBase};
+$red-shade: ${theme.palette.redShade};
+$green-base: ${theme.palette.greenBase};
+$green-shade: ${theme.palette.greenShade};
+$orange-dark: ${theme.palette.orangeDark};
+
+$gray98: ${theme.palette.gray98};
+$gray95: ${theme.palette.gray95};
+$gray85: ${theme.palette.gray85};
+$gray70: ${theme.palette.gray70};
+$gray60: ${theme.palette.gray60};
+$gray33: ${theme.palette.gray33};
+$gray25: ${theme.palette.gray25};
+$gray15: ${theme.palette.gray15};
+$gray10: ${theme.palette.gray10};
+$gray05: ${theme.palette.gray05};
 
 // Grays
 // -------------------------
-$black: ${theme.colors.black};
+$black: ${theme.palette.black};
 
-$dark-1: ${theme.colors.dark1};
-$dark-2: ${theme.colors.dark2};
-$dark-4: ${theme.colors.dark4};
-$dark-10: ${theme.colors.dark10};
-$gray-1: ${theme.colors.gray1};
-$gray-2: ${theme.colors.gray2};
-$gray-3: ${theme.colors.gray3};
-$gray-4: ${theme.colors.gray4};
-$gray-5: ${theme.colors.gray5};
-$gray-6: ${theme.colors.gray6};
-$gray-7: ${theme.colors.gray7};
+$dark-1: ${theme.palette.dark1};
+$dark-2: ${theme.palette.dark2};
+$dark-4: ${theme.palette.dark4};
+$dark-10: ${theme.palette.dark10};
+$gray-1: ${theme.palette.gray1};
+$gray-2: ${theme.palette.gray2};
+$gray-3: ${theme.palette.gray3};
+$gray-4: ${theme.palette.gray4};
+$gray-5: ${theme.palette.gray5};
+$gray-6: ${theme.palette.gray6};
+$gray-7: ${theme.palette.gray7};
 
-$white: ${theme.colors.white};
+$white: ${theme.palette.white};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.colors.blue};
+$blue: ${theme.colors.textBlue};
 $red: $red-base;
-$yellow: ${theme.colors.yellow};
-$orange: ${theme.colors.orange};
-$purple: ${theme.colors.purple};
-$variable: ${theme.colors.variable};
+$yellow: ${theme.palette.yellow};
+$orange: ${theme.palette.orange};
+$purple: ${theme.palette.purple};
+$variable: ${theme.colors.textBlue};
 
-$brand-primary: ${theme.colors.brandPrimary};
-$brand-success: ${theme.colors.brandSuccess};
-$brand-warning: ${theme.colors.brandWarning};
-$brand-danger: ${theme.colors.brandDanger};
+$brand-primary: ${theme.palette.brandPrimary};
+$brand-success: ${theme.palette.brandSuccess};
+$brand-warning: ${theme.palette.brandWarning};
+$brand-danger: ${theme.palette.brandDanger};
 
-$query-red: ${theme.colors.queryRed};
-$query-green: ${theme.colors.queryGreen};
-$query-purple: ${theme.colors.queryPurple};
-$query-orange: ${theme.colors.orange};
-$query-keyword: ${theme.colors.queryKeyword};
+$query-red: ${theme.palette.queryRed};
+$query-green: ${theme.palette.queryGreen};
+$query-purple: ${theme.palette.queryPurple};
+$query-orange: ${theme.palette.orange};
 
 // Status colors
 // -------------------------
-$online: ${theme.colors.online};
-$warn: ${theme.colors.warn};
-$critical: ${theme.colors.critical};
+$online: ${theme.palette.online};
+$warn: ${theme.palette.warn};
+$critical: ${theme.palette.critical};
 
 // Scaffolding
 // -------------------------
 $body-bg: ${theme.colors.bodyBg};
-$page-bg: ${theme.colors.pageBg};
+$page-bg: ${theme.colors.bodyBg};
+$dashboard-bg: ${theme.colors.dashboardBg};
 
-$body-color: ${theme.colors.body};
 $text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
+$text-color-semi-weak: ${theme.colors.textSemiWeak};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textEmphasis};
+$text-color-emphasis: ${theme.colors.textStrong};
+$text-blue: ${theme.colors.textBlue};
 
 $text-shadow-faint: none;
 
 // gradients
 $brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
 $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
-$page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
-$edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
@@ -95,7 +105,7 @@ $external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.headingColor};
+$headings-color: ${theme.colors.textHeading};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -104,14 +114,14 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: ${theme.colors.panelBg};
-$panel-border: solid 1px $gray-5;
-$panel-header-hover-bg: $gray-6;
+$panel-border: 1px solid ${theme.colors.panelBorder};
+$panel-header-hover-bg: ${theme.colors.bg2};
 $panel-corner: $gray-4;
 
 // Page header
-$page-header-bg: linear-gradient(90deg, $white, $gray-7);
+$page-header-bg: ${theme.colors.pageHeaderBg};
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: $gray-4;
+$page-header-border-color: ${theme.colors.pageHeaderBorder};
 
 $divider-border-color: $gray-2;
 
@@ -119,19 +129,18 @@ $divider-border-color: $gray-2;
 $tight-form-func-bg: $gray-5;
 $tight-form-func-highlight-bg: $gray-6;
 
-$modal-backdrop-bg: $body-bg;
+$modal-backdrop-bg: ${theme.colors.bg1};
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: linear-gradient(135deg, $gray-6, $gray-7);
-$card-background-hover: linear-gradient(135deg, $gray-6, $gray-5);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
+$card-background: ${theme.colors.bg2};
+$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-shadow: none;
 
 // Lists
 $list-item-bg: $gray-7;
 $list-item-hover-bg: $gray-6;
-$list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
 $empty-list-cta-bg: $gray-6;
@@ -143,7 +152,7 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: $gray-5; // for striping
+$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
 $table-border: $gray-3; // table and cell border
 
 $table-bg-odd: $gray-6;
@@ -151,11 +160,11 @@ $table-bg-hover: $gray-5;
 
 // Buttons
 // -------------------------
-$btn-primary-bg: $green-base;
-$btn-primary-bg-hl: $green-shade;
+$btn-secondary-bg: $gray-5;
+$btn-secondary-bg-hl: $gray-4;
 
-$btn-secondary-bg: $blue-base;
-$btn-secondary-bg-hl: $blue-shade;
+$btn-primary-bg: $blue-base;
+$btn-primary-bg-hl: $blue-shade;
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
@@ -164,7 +173,6 @@ $btn-danger-bg: $red-base;
 $btn-danger-bg-hl: $red-shade;
 
 $btn-inverse-bg: $gray-5;
-$btn-inverse-bg-hl: darken($gray-5, 5%);
 $btn-inverse-bg-hl: $gray-4;
 $btn-inverse-text-color: $gray-1;
 $btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -187,22 +195,17 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: $dark-2;
-$input-border-color: $gray-5;
+$input-color: ${theme.colors.formInputText};
+$input-border-color: ${theme.colors.formInputBorder};
 $input-box-shadow: none;
-$input-border-focus: $gray-5 !default;
-$input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: $gray-4 !default;
-$input-label-bg: $gray-5;
-$input-label-border-color: $gray-5;
-$input-color-select-arrow: $gray-1;
-
-// Input placeholder text color
-$placeholderText: $gray-2;
+$input-border-focus: ${theme.palette.blue95};
+$input-box-shadow-focus: ${theme.palette.blue95};
+$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
+$input-label-bg: ${theme.colors.bg2};
+$input-color-select-arrow: ${theme.palette.gray60};
 
 // search
 $search-shadow: 0 1px 5px 0 $gray-5;
-$search-filter-box-bg: $gray-7;
 
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $gray-5;
@@ -214,7 +217,7 @@ $typeahead-selected-color: $yellow;
 $dropdownBackground: $white;
 $dropdownBorder: $gray-4;
 $dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $white;
+$dropdownDividerBottom: $gray-4;
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -229,26 +232,25 @@ $horizontalComponentOffset: 180px;
 // Navbar
 // -------------------------
 $navbarHeight: 52px;
-
-$navbarBackground: $white;
 $navbarBorder: 1px solid $gray-5;
 
-$navbarButtonBackground: lighten($navbarBackground, 3%);
-$navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
-
+$navbarButtonBackground: $panel-bg;
 $navbar-button-border: $gray-4;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: $dark-1;
+$side-menu-bg: ${theme.palette.gray15};
+$side-menu-border: 1px solid ${theme.palette.gray25};
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: $gray-1;
+$side-menu-item-hover-bg: ${theme.palette.gray25};
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
-$side-menu-link-color: $gray-6;
+$side-menu-link-color: $gray-4;
+$side-menu-icon-color: ${theme.palette.gray70};
+$side-menu-header-color: ${theme.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $gray-7;
+$menu-dropdown-bg: $panel-bg;
 $menu-dropdown-hover-bg: $gray-6;
 $menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
 
@@ -270,29 +272,26 @@ $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
 $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
-// popover
+// Tooltips and popovers
+$tooltipBackground: $gray-1;
+$tooltipColor: $gray-7;
+$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
+$tooltipBackgroundError: $brand-danger;
+$tooltipShadow: 0 0 5px $gray60;
+$graph-tooltip-bg: $gray-5;
+
+$tooltipArrowWidth: 5px;
+$tooltipLinkColor: lighten($tooltipColor, 5%);
+
 $popover-bg: $page-bg;
 $popover-color: $text-color;
 $popover-border-color: $gray-5;
 $popover-header-bg: $gray-5;
 $popover-shadow: 0 0 20px $white;
 
-$popover-help-bg: $btn-secondary-bg;
-$popover-help-color: $gray-6;
-
 $popover-error-bg: $btn-danger-bg;
-
-// Tooltips and popovers
-// -------------------------
-$tooltipColor: $popover-help-color;
-$tooltipArrowWidth: 5px;
-$tooltipLinkColor: lighten($popover-help-color, 5%);
-$graph-tooltip-bg: $gray-5;
-
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
+$popover-help-bg: $tooltipBackground;
+$popover-help-color: $tooltipColor;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
@@ -348,7 +347,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: linear-gradient(90deg, #ff9830, #e55400);
+$switch-slider-on-bg: ${theme.palette.blue77};
 $switch-slider-shadow: 0 0 3px $dark-2;
 
 //Checkbox
@@ -374,8 +373,8 @@ $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-light;
+$panel-grid-placeholder-bg: lighten(${theme.palette.blue95}, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue95};
 
 // logs
 $logs-color-unkown: $gray-5;

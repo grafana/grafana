@@ -5,7 +5,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../sta
 import { createCustomOptionsFromQuery, customVariableReducer } from './reducer';
 import { createCustomVariableAdapter } from './adapter';
 import { VariablesState } from '../state/variablesReducer';
-import { CustomVariableModel } from '../../templating/variable';
+import { CustomVariableModel } from '../../templating/types';
 
 describe('customVariableReducer', () => {
   const adapter = createCustomVariableAdapter();
@@ -13,16 +13,16 @@ describe('customVariableReducer', () => {
   describe('when createCustomOptionsFromQuery is dispatched', () => {
     it('then state should be correct', () => {
       const query = 'a,b,c';
-      const uuid = '0';
-      const { initialState } = getVariableTestContext(adapter, { uuid, query });
-      const payload = toVariablePayload({ uuid: '0', type: 'custom' });
+      const id = '0';
+      const { initialState } = getVariableTestContext(adapter, { id, query });
+      const payload = toVariablePayload({ id: '0', type: 'custom' });
 
       reducerTester<VariablesState>()
         .givenReducer(customVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(createCustomOptionsFromQuery(payload))
         .thenStateShouldEqual({
-          [uuid]: {
-            ...initialState[uuid],
+          [id]: {
+            ...initialState[id],
             options: [
               {
                 text: 'a',
@@ -48,16 +48,16 @@ describe('customVariableReducer', () => {
   describe('when createCustomOptionsFromQuery is dispatched and query contains spaces', () => {
     it('then state should be correct', () => {
       const query = 'a,  b,   c';
-      const uuid = '0';
-      const { initialState } = getVariableTestContext(adapter, { uuid, query });
-      const payload = toVariablePayload({ uuid: '0', type: 'constant' });
+      const id = '0';
+      const { initialState } = getVariableTestContext(adapter, { id, query });
+      const payload = toVariablePayload({ id: '0', type: 'constant' });
 
       reducerTester<VariablesState>()
         .givenReducer(customVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(createCustomOptionsFromQuery(payload))
         .thenStateShouldEqual({
-          [uuid]: {
-            ...initialState[uuid],
+          [id]: {
+            ...initialState[id],
             options: [
               {
                 text: 'a',
@@ -83,16 +83,16 @@ describe('customVariableReducer', () => {
   describe('when createCustomOptionsFromQuery is dispatched and includeAll is true', () => {
     it('then state should be correct', () => {
       const query = 'a,b,c';
-      const uuid = '0';
-      const { initialState } = getVariableTestContext(adapter, { uuid, query, includeAll: true });
-      const payload = toVariablePayload({ uuid: '0', type: 'constant' });
+      const id = '0';
+      const { initialState } = getVariableTestContext(adapter, { id, query, includeAll: true });
+      const payload = toVariablePayload({ id: '0', type: 'constant' });
 
       reducerTester<VariablesState>()
         .givenReducer(customVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(createCustomOptionsFromQuery(payload))
         .thenStateShouldEqual({
-          [uuid]: {
-            ...initialState[uuid],
+          [id]: {
+            ...initialState[id],
             options: [
               {
                 text: ALL_VARIABLE_TEXT,

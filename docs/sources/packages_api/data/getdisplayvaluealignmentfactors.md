@@ -5,7 +5,6 @@
 title = "getDisplayValueAlignmentFactors"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getDisplayValueAlignmentFactors() function

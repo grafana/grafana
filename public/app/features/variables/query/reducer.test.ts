@@ -1,11 +1,12 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { queryVariableReducer, updateVariableOptions, updateVariableTags } from './reducer';
-import { QueryVariableModel, VariableOption } from '../../templating/variable';
+import { QueryVariableModel } from '../../templating/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
+import { MetricFindValue } from '@grafana/data';
 
 describe('queryVariableReducer', () => {
   const adapter = createQueryVariableAdapter();
@@ -13,11 +14,10 @@ describe('queryVariableReducer', () => {
   describe('when updateVariableOptions is dispatched and includeAll is true', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext(adapter, { includeAll: true });
-      const options: VariableOption[] = [
-        { text: 'A', value: 'A', selected: false },
-        { text: 'B', value: 'B', selected: false },
-      ];
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, options);
+      const metrics = [createMetric('A'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: '' };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateVariableOptions(payload))
@@ -38,11 +38,10 @@ describe('queryVariableReducer', () => {
   describe('when updateVariableOptions is dispatched and includeAll is false', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext(adapter, { includeAll: false });
-      const options: VariableOption[] = [
-        { text: 'A', value: 'A', selected: false },
-        { text: 'B', value: 'B', selected: false },
-      ];
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, options);
+      const metrics = [createMetric('A'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: '' };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateVariableOptions(payload))
@@ -62,7 +61,9 @@ describe('queryVariableReducer', () => {
   describe('when updateVariableOptions is dispatched and includeAll is true and payload is an empty array', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext(adapter, { includeAll: true });
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, []);
+      const update = { results: [] as MetricFindValue[], templatedRegex: '' };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateVariableOptions(payload))
@@ -79,7 +80,9 @@ describe('queryVariableReducer', () => {
   describe('when updateVariableOptions is dispatched and includeAll is false and payload is an empty array', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext(adapter, { includeAll: false });
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, []);
+      const update = { results: [] as MetricFindValue[], templatedRegex: '' };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateVariableOptions(payload))
@@ -95,12 +98,12 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableOptions is dispatched and includeAll is true and regex is set', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext(adapter, { includeAll: true, regex: '/.*(a).*/i' });
-      const options: VariableOption[] = [
-        { text: 'A', value: 'A', selected: false },
-        { text: 'B', value: 'B', selected: false },
-      ];
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, options);
+      const regex = '/.*(a).*/i';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: true, regex });
+      const metrics = [createMetric('A'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateVariableOptions(payload))
@@ -119,12 +122,12 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableOptions is dispatched and includeAll is false and regex is set', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex: '/.*(a).*/i' });
-      const options: VariableOption[] = [
-        { text: 'A', value: 'A', selected: false },
-        { text: 'B', value: 'B', selected: false },
-      ];
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, options);
+      const regex = '/.*(a).*/i';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('A'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateVariableOptions(payload))
@@ -142,7 +145,7 @@ describe('queryVariableReducer', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext(adapter);
       const tags: any[] = [{ text: 'A' }, { text: 'B' }];
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, tags);
+      const payload = toVariablePayload({ id: '0', type: 'query' }, tags);
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(updateVariableTags(payload))
@@ -159,3 +162,9 @@ describe('queryVariableReducer', () => {
     });
   });
 });
+
+function createMetric(value: string) {
+  return {
+    text: value,
+  };
+}

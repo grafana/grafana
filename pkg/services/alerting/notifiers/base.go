@@ -141,7 +141,7 @@ func (n *NotifierBase) GetDisableResolveMessage() bool {
 	return n.DisableResolveMessage
 }
 
-// GetFrequency returns the freqency for how often
+// GetFrequency returns the frequency for how often
 // alerts should be evaluated.
 func (n *NotifierBase) GetFrequency() time.Duration {
 	return n.Frequency

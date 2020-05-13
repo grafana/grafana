@@ -5,7 +5,6 @@
 title = "DataSourceStatus"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceStatus enum

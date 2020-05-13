@@ -110,13 +110,15 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		},
 	}
 
-	if evalContext.ImagePublicURL != "" {
-		cmd.Data["ImageLink"] = evalContext.ImagePublicURL
-	} else {
-		file, err := os.Stat(evalContext.ImageOnDiskPath)
-		if err == nil {
-			cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
-			cmd.Data["EmbeddedImage"] = file.Name()
+	if en.NeedsImage() {
+		if evalContext.ImagePublicURL != "" {
+			cmd.Data["ImageLink"] = evalContext.ImagePublicURL
+		} else {
+			file, err := os.Stat(evalContext.ImageOnDiskPath)
+			if err == nil {
+				cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
+				cmd.Data["EmbeddedImage"] = file.Name()
+			}
 		}
 	}
 

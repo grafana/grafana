@@ -1,5 +1,5 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
-import { RadioButtonGroup } from './RadioButtonGroup';
+import { Meta, Story, Preview, Props } from "@storybook/addon-docs/blocks";
+import { RadioButtonGroup } from "./RadioButtonGroup";
 
 <Meta title="MDX|RadioButtonGroup" component={RadioButtonGroup} />
 
@@ -12,9 +12,9 @@ Use `RadioButtonGroup` if there are up to four options available. Otherwise use 
 ### Usage
 
 ```jsx
-import { Forms } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 
-<Forms.RadioButtonGroup options={...} value={...} onChange={...} />
+<RadioButtonGroup options={...} value={...} onChange={...} />
 ```
 
 #### Disabling options
@@ -33,7 +33,7 @@ const options = [
 const disabledOptions = ['prometheus', 'elastic'];
 
 
-<Forms.RadioButtonGroup
+<RadioButtonGroup
   options={options}
   disabledOptions={disabledOptions}
   value={...}

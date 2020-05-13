@@ -33,6 +33,7 @@ $panel-header-no-title-zindex: 1;
   flex-wrap: nowrap;
   justify-content: center;
   height: $panel-header-height;
+  line-height: $panel-header-height;
   align-items: center;
 }
 
@@ -61,13 +62,9 @@ $panel-header-no-title-zindex: 1;
 .panel-menu-toggle {
   color: $text-color-weak;
   cursor: pointer;
-  padding: 3px 5px;
+  margin: 2px 0 0 2px;
   visibility: hidden;
   opacity: 0;
-  width: 16px;
-  height: 16px;
-  left: 1px;
-  top: 2px;
 
   &:hover {
     color: $link-hover-color;

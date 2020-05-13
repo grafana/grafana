@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { containsVariable, DataSourceVariableModel } from '../../templating/variable';
+import { DataSourceVariableModel } from '../../templating/types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
@@ -8,11 +8,13 @@ import { OptionsPicker } from '../pickers';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
+import { containsVariable } from '../../templating/utils';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
+    id: 'datasource',
     description: 'Enabled you to dynamically switch the datasource for multiple panels',
-    label: 'Datasource',
+    name: 'Datasource',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
     picker: OptionsPicker,
@@ -33,7 +35,7 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       await dispatch(updateDataSourceVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return { ...rest, options: [] };
     },
     getValueForUrl: variable => {

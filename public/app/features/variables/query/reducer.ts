@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, stringToJsRegex, MetricFindValue } from '@grafana/data';
 
 import {
   QueryVariableModel,
@@ -9,13 +9,13 @@ import {
   VariableRefresh,
   VariableSort,
   VariableTag,
-} from '../../templating/variable';
-import templateSrv from '../../templating/template_srv';
+} from '../../templating/types';
+
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
-  EMPTY_UUID,
   getInstanceState,
+  NEW_VARIABLE_ID,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
   VariablePayload,
@@ -24,6 +24,11 @@ import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
+interface VariableOptionsUpdate {
+  templatedRegex: string;
+  results: MetricFindValue[];
+}
+
 export interface QueryVariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
   dataSources: DataSourceSelectItem[];
@@ -31,7 +36,7 @@ export interface QueryVariableEditorState {
 }
 
 export const initialQueryVariableModelState: QueryVariableModel = {
-  uuid: EMPTY_UUID,
+  id: NEW_VARIABLE_ID,
   global: false,
   index: -1,
   type: 'query',
@@ -94,8 +99,9 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
   let options: VariableOption[] = [];
 
   if (variableRegEx) {
-    regex = stringToJsRegex(templateSrv.replace(variableRegEx, {}, 'regex'));
+    regex = stringToJsRegex(variableRegEx);
   }
+
   for (i = 0; i < metricNames.length; i++) {
     const item = metricNames[i];
     let text = item.text === undefined || item.text === null ? item.value : item.text;
@@ -132,15 +138,16 @@ export const queryVariableSlice = createSlice({
   name: 'templating/query',
   initialState: initialVariablesState,
   reducers: {
-    updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
-      const results = action.payload.data;
-      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
-      const { regex, includeAll, sort } = instanceState;
-      const options = metricNamesToVariableValues(regex, sort, results);
+    updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<VariableOptionsUpdate>>) => {
+      const { results, templatedRegex } = action.payload.data;
+      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
+      const { includeAll, sort } = instanceState;
+      const options = metricNamesToVariableValues(templatedRegex, sort, results);
 
       if (includeAll) {
         options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
       }
+
       if (!options.length) {
         options.push({ text: NONE_VARIABLE_TEXT, value: NONE_VARIABLE_VALUE, isNone: true, selected: false });
       }
@@ -148,7 +155,7 @@ export const queryVariableSlice = createSlice({
       instanceState.options = options;
     },
     updateVariableTags: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
-      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
+      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
       const results = action.payload.data;
       const tags: VariableTag[] = [];
       for (let i = 0; i < results.length; i++) {

@@ -15,7 +15,6 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-faint: #041126;
 $blue-light: #5794f2;
 $blue-base: #3274d9;
 $blue-shade: #1f60c4;
@@ -24,6 +23,17 @@ $red-shade: #c4162a;
 $green-base: #299c46;
 $green-shade: #23843b;
 $orange-dark: #ff780a;
+
+$gray98: #f7f8fa;
+$gray95: #e9edf2;
+$gray85: #c7d0d9;
+$gray70: #9fa7b3;
+$gray60: #7b8087;
+$gray33: #464c54;
+$gray25: #2c3235;
+$gray15: #202226;
+$gray10: #141619;
+$gray05: #0b0c0e;
 
 // Grays
 // -------------------------
@@ -45,19 +55,18 @@ $gray-4: #d8d9da;
 $gray-5: #ececec;
 $gray-6: #f4f5f8;
 
-$gray-blue: #212327;
 $input-black: #0b0c0e;
 
 $white: #ffffff;
 
 // Accent colors
 // -------------------------
-$blue: #33b5e5;
+$blue: #33a2e5;
 $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #32d1df;
+$variable: #33a2e5;
 
 $brand-primary: #eb7b18;
 $brand-success: #299c46;
@@ -68,25 +77,26 @@ $query-red: #e02f44;
 $query-green: #74e680;
 $query-purple: #fe85fc;
 $query-orange: #eb7b18;
-$query-keyword: #66d9ef;
 
 // Status colors
-// -------------------------
+// -------------------------¨
 $online: #299c46;
 $warn: #f79520;
 $critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #161719;
-$page-bg: #161719;
+$body-bg: #141619;
+$page-bg: #141619;
+$dashboard-bg: #0b0c0e;
 
-$body-color: #d8d9da;
-$text-color: #d8d9da;
-$text-color-strong: #ffffff;
-$text-color-weak: #8e8e8e;
-$text-color-faint: #222426;
-$text-color-emphasis: #ececec;
+$text-color-strong: #f7f8fa;
+$text-color: #c7d0d9;
+$text-color-semi-weak: #9fa7b3;
+$text-color-weak: #7b8087;
+$text-color-faint: #464c54;
+$text-color-emphasis: #f7f8fa;
+$text-blue: #33a2e5;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -94,15 +104,13 @@ $textShadow: none;
 // gradients
 $brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
 $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
-$page-gradient: linear-gradient(180deg, $dark-5 10px, $dark-2 100px);
-$edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 
 // Links
 // -------------------------
 $link-color: #d8d9da;
 $link-color-disabled: #8e8e8e;
 $link-hover-color: #ffffff;
-$external-link-color: #33b5e5;
+$external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
@@ -114,15 +122,15 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: #212124;
-$panel-border: solid 1px $dark-1;
-$panel-header-hover-bg: $dark-9;
+$panel-bg: #141619;
+$panel-border: 1px solid #202226;
+$panel-header-hover-bg: #202226;
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: linear-gradient(90deg, $dark-7, $black);
+$page-header-bg: #202226;
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: $dark-9;
+$page-header-border-color: #202226;
 
 $divider-border-color: $gray-1;
 
@@ -130,22 +138,21 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: $dark-9;
 $tight-form-func-highlight-bg: $dark-10;
 
-$modal-backdrop-bg: #343b40;
+$modal-backdrop-bg: #2c3235;
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: linear-gradient(135deg, $dark-8, $dark-6);
-$card-background-hover: linear-gradient(135deg, $dark-9, $dark-6);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
+$card-background: #202226;
+$card-background-hover: #25272b;
+$card-shadow: none;
 
 // Lists
 $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
-$list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
-$empty-list-cta-bg: $gray-blue;
+$empty-list-cta-bg: #202226;
 
 // Scrollbars
 $scrollbarBackground: #404357;
@@ -154,7 +161,7 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: $dark-6; // for striping
+$table-bg-accent: #191b1e; // for striping
 $table-border: $dark-6; // table and cell border
 
 $table-bg-odd: $dark-3;
@@ -162,11 +169,11 @@ $table-bg-hover: $dark-6;
 
 // Buttons
 // -------------------------
-$btn-secondary-bg: $blue-base;
-$btn-secondary-bg-hl: $blue-shade;
+$btn-primary-bg: $blue-base;
+$btn-primary-bg-hl: $blue-shade;
 
-$btn-primary-bg: $green-base;
-$btn-primary-bg-hl: $green-shade;
+$btn-secondary-bg: $dark-6;
+$btn-secondary-bg-hl: lighten($dark-6, 4%);
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
@@ -198,21 +205,16 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: #c7d0d9;
-$input-border-color: $dark-6;
-$input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
-$input-border-focus: $dark-6 !default;
+$input-border-color: #2c3235;
+$input-box-shadow: none;
+$input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: #464c54;
-$input-label-bg: $gray-blue;
-$input-label-border-color: $dark-6;
+$input-label-bg: #202226;
 $input-color-select-arrow: $white;
-
-// Input placeholder text color
-$placeholderText: darken($text-color, 25%);
 
 // Search
 $search-shadow: 0 0 30px 0 $black;
-$search-filter-box-bg: $gray-blue;
 
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $black;
@@ -221,15 +223,14 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $dark-6;
-$dropdownBorder: rgba(0, 0, 0, 0.2);
+$dropdownBackground: $panel-bg;
+$dropdownBorder: #202226;
 $dropdownDividerTop: transparent;
-$dropdownDividerBottom: #444;
+$dropdownDividerBottom: #2c3235;
 
-$dropdownLinkColor: $text-color;
+$dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
 $dropdownLinkColorActive: $white;
-
 $dropdownLinkBackgroundHover: $dark-9;
 
 // Horizontal forms & lists
@@ -239,27 +240,25 @@ $horizontalComponentOffset: 180px;
 // Navbar
 // -------------------------
 $navbarHeight: 55px;
-
-$navbarBackground: $panel-bg;
 $navbarBorder: 1px solid $dark-6;
 
-$navbarButtonBackground: $navbarBackground;
-$navbarButtonBackgroundHighlight: $body-bg;
-
+$navbarButtonBackground: $panel-bg;
 $navbar-button-border: #2f2f32;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: $black;
-$side-menu-bg-mobile: $side-menu-bg;
-$side-menu-item-hover-bg: $dark-3;
+$side-menu-bg: $panel-bg;
+$side-menu-bg-mobile: $panel-bg;
+$side-menu-border: none;
+$side-menu-item-hover-bg: #202226;
 $side-menu-shadow: 0 0 20px black;
-$side-menu-link-color: $link-color;
+$side-menu-icon-color: #9fa7b3;
+$side-menu-header-color: #c7d0d9;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $body-bg;
-$menu-dropdown-hover-bg: $dark-3;
+$menu-dropdown-bg: #141619;
+$menu-dropdown-hover-bg: #202226;
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
 // Tabs
@@ -280,29 +279,28 @@ $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
 $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
-// popover
+// Tooltips and popovers
+// -------------------------
+$tooltipColor: $text-color;
+$tooltipArrowWidth: 5px;
+$tooltipLinkColor: $link-color;
+$tooltipShadow: 0 0 10px black;
+$graph-tooltip-bg: $dark-1;
+
+$tooltipBackground: $gray15;
+$tooltipColor: $text-color;
+$tooltipArrowColor: $tooltipBackground;
+$tooltipBackgroundError: $brand-danger;
+
 $popover-bg: $dark-2;
 $popover-color: $text-color;
 $popover-border-color: $dark-9;
 $popover-header-bg: $dark-9;
 $popover-shadow: 0 0 20px black;
 
-$popover-help-bg: $btn-secondary-bg;
-$popover-help-color: $gray-6;
-
+$popover-help-bg: $tooltipBackground;
+$popover-help-color: $text-color;
 $popover-error-bg: $btn-danger-bg;
-
-// Tooltips and popovers
-// -------------------------
-$tooltipColor: $popover-help-color;
-$tooltipArrowWidth: 5px;
-$tooltipLinkColor: $link-color;
-$graph-tooltip-bg: $dark-1;
-
-$tooltipBackground: $black;
-$tooltipColor: $gray-4;
-$tooltipArrowColor: $tooltipBackground;
-$tooltipBackgroundError: $brand-danger;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -358,7 +356,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
+$switch-slider-on-bg: #5794f2;
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox
@@ -382,10 +380,10 @@ $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
 $panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-blue;
+$panel-options-group-header-bg: #202226;
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
+$panel-grid-placeholder-bg: darken(#1f60c4, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px #3274d9;
 
 // logs
 $logs-color-unkown: $gray-2;

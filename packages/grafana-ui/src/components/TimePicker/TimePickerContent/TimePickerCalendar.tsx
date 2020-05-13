@@ -1,11 +1,11 @@
-import React, { memo, useState, useEffect } from 'react';
-import { css, cx } from 'emotion';
+import React, { memo, useState, useEffect, useCallback } from 'react';
+import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
-import { stringToDateTimeType } from '../time';
+import { GrafanaTheme, DateTime, TimeZone, dateTimeParse } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
-import Forms from '../../Forms';
+import { Button } from '../../Button';
+import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { getThemeColors } from './colors';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -82,7 +82,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
   return {
     title: css`
-      color: ${theme.colors.text}
+      color: ${theme.colors.text};
       background-color: ${colors.background};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
@@ -109,7 +109,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__month-view__weekdays {
         background-color: inherit;
         text-align: center;
-        color: ${theme.colors.blueShade};
+        color: ${theme.palette.blue77};
 
         abbr {
           border: 0;
@@ -139,9 +139,9 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
       .react-calendar__tile--active,
       .react-calendar__tile--active:hover {
-        color: ${theme.colors.white};
+        color: ${theme.palette.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: ${theme.colors.blue95};
+        background: ${theme.palette.blue95};
         box-shadow: none;
         border: 0px;
       }
@@ -150,12 +150,12 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__tile--rangeStart {
         padding: 0;
         border: 0px;
-        color: ${theme.colors.white};
+        color: ${theme.palette.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: ${theme.colors.blue95};
+        background: ${theme.palette.blue95};
 
         abbr {
-          background-color: ${theme.colors.blue77};
+          background-color: ${theme.palette.blue77};
           border-radius: 100px;
           display: block;
           padding-top: 2px;
@@ -186,21 +186,18 @@ const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       padding: 7px;
     `,
-    close: css`
-      cursor: pointer;
-      font-size: ${theme.typography.size.lg};
-    `,
   };
 });
 
 interface Props {
   isOpen: boolean;
-  from: string;
-  to: string;
+  from: DateTime;
+  to: DateTime;
   onClose: () => void;
   onApply: () => void;
-  onChange: (from: string, to: string) => void;
+  onChange: (from: DateTime, to: DateTime) => void;
   isFullscreen: boolean;
+  timeZone?: TimeZone;
 }
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
@@ -245,14 +242,15 @@ const Header = memo<Props>(({ onClose }) => {
   return (
     <div className={styles.container}>
       <TimePickerTitle>Select a time range</TimePickerTitle>
-      <i className={cx(styles.close, 'fa', 'fa-times')} onClick={onClose} />
+      <Icon name="times" onClick={onClose} />
     </div>
   );
 });
 
-const Body = memo<Props>(({ onChange, from, to }) => {
+const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
   const [value, setValue] = useState<Date[]>();
   const theme = useTheme();
+  const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = getBodyStyles(theme);
 
   useEffect(() => {
@@ -267,9 +265,9 @@ const Body = memo<Props>(({ onChange, from, to }) => {
       className={styles.body}
       tileClassName={styles.title}
       value={value}
-      nextLabel={<span className="fa fa-angle-right" />}
-      prevLabel={<span className="fa fa-angle-left" />}
-      onChange={value => valueToInput(value, onChange)}
+      nextLabel={<Icon name="angle-right" />}
+      prevLabel={<Icon name="angle-left" />}
+      onChange={onCalendarChange}
       locale="en"
     />
   );
@@ -281,21 +279,19 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
 
   return (
     <div className={styles.container}>
-      <Forms.Button className={styles.apply} onClick={onApply}>
+      <Button className={styles.apply} onClick={onApply}>
         Apply time range
-      </Forms.Button>
-      <Forms.Button variant="secondary" onClick={onClose}>
+      </Button>
+      <Button variant="secondary" onClick={onClose}>
         Cancel
-      </Forms.Button>
+      </Button>
     </div>
   );
 });
 
-function inputToValue(from: string, to: string): Date[] {
-  const fromAsDateTime = stringToDateTimeType(from);
-  const toAsDateTime = stringToDateTimeType(to);
-  const fromAsDate = fromAsDateTime.isValid() ? fromAsDateTime.toDate() : new Date();
-  const toAsDate = toAsDateTime.isValid() ? toAsDateTime.toDate() : new Date();
+function inputToValue(from: DateTime, to: DateTime): Date[] {
+  const fromAsDate = from.toDate();
+  const toAsDate = to.toDate();
 
   if (fromAsDate > toAsDate) {
     return [toAsDate, fromAsDate];
@@ -303,10 +299,22 @@ function inputToValue(from: string, to: string): Date[] {
   return [fromAsDate, toAsDate];
 }
 
-function valueToInput(value: Date | Date[], onChange: (from: string, to: string) => void): void {
-  const [from, to] = value;
-  const fromAsString = dateTime(from).format(TIME_FORMAT);
-  const toAsString = dateTime(to).format(TIME_FORMAT);
+function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {
+  return useCallback(
+    (value: Date | Date[]) => {
+      if (!Array.isArray(value)) {
+        return console.error('onCalendarChange: should be run in selectRange={true}');
+      }
 
-  return onChange(fromAsString, toAsString);
+      const from = dateTimeParse(dateInfo(value[0]), { timeZone });
+      const to = dateTimeParse(dateInfo(value[1]), { timeZone });
+
+      onChange(from, to);
+    },
+    [onChange]
+  );
+}
+
+function dateInfo(date: Date): number[] {
+  return [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()];
 }

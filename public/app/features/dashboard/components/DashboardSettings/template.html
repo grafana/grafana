@@ -4,7 +4,7 @@
      ng-class="{active: ctrl.viewId === section.id}"
      ng-repeat="section in ctrl.sections"
      aria-label="{{ctrl.selectors.sectionItems(section.title)}}">
-    <i class="{{::section.icon}}"></i>
+    <icon name="'{{::section.icon}}'" style="margin-right: 4px;"></icon>
     {{::section.title}}
   </a>
 
@@ -13,13 +13,13 @@
       <save-dashboard-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save button" />
     </div>
     <div ng-show="ctrl.canSaveAs">
-      <save-dashboard-as-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save as button" variant="'secondary'" useNewForms="true"/>
+      <save-dashboard-as-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save as button" variant="'secondary'" />
     </div>
   </div>
 </aside>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'settings'">
-  <h3 class="dashboard-settings__header">
+  <h3 class="dashboard-settings__header" aria-label="{{::ctrl.selectors.title}}">
     General
   </h3>
 
@@ -50,7 +50,7 @@
     </gf-form-switch>
   </div>
 
-  <gf-time-picker-settings dashboard="ctrl.dashboard"></gf-time-picker-settings>
+  <time-picker-settings getDashboard="ctrl.getDashboard" onTimeZoneChange="ctrl.onTimeZoneChange" onRefreshIntervalChange="ctrl.onRefreshIntervalChange" onNowDelayChange="ctrl.onNowDelayChange" onHideTimePickerChange="ctrl.onHideTimePickerChange"></time-picker-settings>
 
   <h5 class="section-heading">Panel Options</h5>
   <div class="gf-form">

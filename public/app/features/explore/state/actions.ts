@@ -43,7 +43,7 @@ import {
   deleteAllFromRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
-  getQueryDisplayText,
+  deleteQueryInRichHistory,
   getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
@@ -84,6 +84,8 @@ import {
   ToggleTablePayload,
   updateDatasourceInstanceAction,
   updateUIStateAction,
+  changeLoadingStateAction,
+  cancelQueriesAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
@@ -118,14 +120,14 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
+export function changeDatasource(exploreId: ExploreId, datasourceName: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    let newDataSourceInstance: DataSourceApi = null;
+    let newDataSourceInstance: DataSourceApi;
 
-    if (!datasource) {
+    if (!datasourceName) {
       newDataSourceInstance = await getDatasourceSrv().get();
     } else {
-      newDataSourceInstance = await getDatasourceSrv().get(datasource);
+      newDataSourceInstance = await getDatasourceSrv().get(datasourceName);
     }
 
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
@@ -242,6 +244,17 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
 }
 
 /**
+ * Cancel running queries
+ */
+export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
+  return dispatch => {
+    dispatch(scanStopAction({ exploreId }));
+    dispatch(cancelQueriesAction({ exploreId }));
+    dispatch(stateSave());
+  };
+}
+
+/**
  * Loads all explore data sources and sets the chosen datasource.
  * If there are no datasources a missing datasource action is dispatched.
  */
@@ -303,7 +316,7 @@ export const loadDatasourceReady = (
   instance: DataSourceApi,
   orgId: number
 ): PayloadAction<LoadDatasourceReadyPayload> => {
-  const historyKey = `grafana.explore.history.${instance.meta.id}`;
+  const historyKey = `grafana.explore.history.${instance.meta?.id}`;
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
 
@@ -326,7 +339,7 @@ export const loadDatasourceReady = (
 export const importQueries = (
   exploreId: ExploreId,
   queries: DataQuery[],
-  sourceDataSource: DataSourceApi,
+  sourceDataSource: DataSourceApi | undefined,
   targetDataSource: DataSourceApi
 ): ThunkResult<void> => {
   return async dispatch => {
@@ -338,7 +351,7 @@ export const importQueries = (
 
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
-    if (sourceDataSource.meta.id === targetDataSource.meta.id) {
+    if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource
       importedQueries = [...queries];
     } else if (targetDataSource.importQueries) {
@@ -439,25 +452,27 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     stopQueryState(querySubscription);
 
+    const datasourceId = datasourceInstance.meta.id;
+
     const queryOptions: QueryOptions = {
       minInterval,
       // maxDataPoints is used in:
       // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
       // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
       // Influx - used to correctly display logs in graph
-      maxDataPoints: mode === ExploreMode.Logs && datasourceInstance.name === 'Loki' ? undefined : containerWidth,
+      maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
       liveStreaming: live,
       showingGraph,
       showingTable,
       mode,
     };
 
-    const datasourceId = datasourceInstance.meta.id;
     const datasourceName = exploreItemState.requestedDatasourceName;
-
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
+    const timeZone = getTimeZone(getState().user);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 
     let firstResponse = true;
+    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
       .pipe(
@@ -471,17 +486,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
-          const arrayOfStringifiedQueries = queries.map(query =>
-            datasourceInstance?.getQueryDisplayText
-              ? datasourceInstance.getQueryDisplayText(query)
-              : getQueryDisplayText(query)
-          );
-
           const nextRichHistory = addToRichHistory(
             richHistory || [],
             datasourceId,
             datasourceName,
-            arrayOfStringifiedQueries,
+            queries,
             false,
             '',
             ''
@@ -523,6 +532,9 @@ export const updateRichHistory = (ts: number, property: string, updatedProperty?
     }
     if (property === 'comment') {
       nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
+    }
+    if (property === 'delete') {
+      nextRichHistory = deleteQueryInRichHistory(getState().explore.richHistory, ts);
     }
     dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
   };
@@ -678,22 +690,41 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
 }
 
 /**
- * Open the split view and copy the left state to be the right state.
- * The right state is automatically initialized.
- * The copy keeps all query modifications but wipes the query results.
+ * Open the split view and the right state is automatically initialized.
+ * If options are specified it initializes that pane with the datasource and query from options.
+ * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
+ * results.
  */
-export function splitOpen(): ThunkResult<void> {
-  return (dispatch, getState) => {
+export function splitOpen(options?: { datasourceUid: string; query: string }): ThunkResult<void> {
+  return async (dispatch, getState) => {
     // Clone left state to become the right state
-    const leftState = getState().explore[ExploreId.left];
+    const leftState: ExploreItemState = getState().explore[ExploreId.left];
+    const rightState: ExploreItemState = {
+      ...leftState,
+    };
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
-    const itemState: ExploreItemState = {
-      ...leftState,
-      queries: leftState.queries.slice(),
-      urlState,
-    };
-    dispatch(splitOpenAction({ itemState }));
+
+    // TODO: Instead of splitting and then setting query/datasource we may probably do it in one action call
+    rightState.queries = leftState.queries.slice();
+    rightState.urlState = urlState;
+    dispatch(splitOpenAction({ itemState: rightState }));
+
+    if (options) {
+      // TODO: This is hardcoded for Jaeger right now. Need to be changed so that target datasource can define the
+      //  query shape.
+      const queries = [
+        {
+          query: options.query,
+          refId: 'A',
+        } as DataQuery,
+      ];
+
+      const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
+      await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
+    }
+
     dispatch(stateSave());
   };
 }
@@ -738,7 +769,8 @@ const togglePanelActionCreator = (
     }
 
     dispatch(actionCreator({ exploreId }));
-    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate));
+    // The switch further up is exhaustive so uiFragmentStateUpdate should definitely be initialized
+    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate!));
 
     if (shouldRunQueries) {
       dispatch(runQueries(exploreId));

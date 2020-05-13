@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
-import { manifestTask } from './tasks/manifest';
 import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
@@ -15,15 +14,12 @@ import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 import { githubPublishTask } from './tasks/plugin.utils';
-import {
-  ciBuildPluginTask,
-  ciBuildPluginDocsTask,
-  ciPackagePluginTask,
-  ciTestPluginTask,
-  ciPluginReportTask,
-} from './tasks/plugin.ci';
+import { pluginUpdateTask } from './tasks/plugin.update';
+import { ciBuildPluginDocsTask, ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
+import { bundleManagedTask } from './tasks/plugin/bundle.managed';
+import { componentCreateTask } from './tasks/component.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -44,7 +40,7 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('package:build')
-      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit]')
+      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
       .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async cmd => {
         await execTask(buildPackageTask)({
@@ -119,6 +115,16 @@ export const run = (includeInternalScripts = false) => {
           milestone: cmd.milestone,
         });
       });
+
+    // React generator
+    program
+      .command('component:create')
+      .description(
+        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+      )
+      .action(async () => {
+        await execTask(componentCreateTask)({});
+      });
   }
 
   program
@@ -192,14 +198,6 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci-test')
-    .option('--full', 'run all the tests (even stuff that will break)')
-    .description('end-to-end test using bundle in /artifacts')
-    .action(async cmd => {
-      await execTask(ciTestPluginTask)({});
-    });
-
-  program
     .command('plugin:ci-report')
     .description('Build a report for this whole process')
     .option('--upload', 'upload packages also')
@@ -210,27 +208,31 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
+    .command('plugin:bundle-managed')
+    .description('Builds managed plugins')
+    .action(async cmd => {
+      await execTask(bundleManagedTask)({});
+    });
+
+  program
     .command('plugin:github-publish')
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
     .option('--commitHash <hashKey>', 'Specify the commit hash')
-    .option('--recreate', 'Recreate the release if already present')
-    .description('Publish to github ... etc etc etc')
+    .description('Publish to github')
     .action(async cmd => {
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
         verbose: cmd.verbose,
         commitHash: cmd.commitHash,
-        recreate: cmd.recreate,
       });
     });
 
-  // Test the manifest creation
   program
-    .command('manifest')
-    .description('create a manifest file in the cwd')
+    .command('plugin:update-circleci')
+    .description('Update plugin')
     .action(async cmd => {
-      await execTask(manifestTask)({ folder: process.cwd() });
+      await execTask(pluginUpdateTask)({});
     });
 
   program.on('command:*', () => {

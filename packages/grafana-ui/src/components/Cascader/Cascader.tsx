@@ -1,13 +1,12 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
-// @ts-ignore
 import RCCascader from 'rc-cascader';
 
-import { Select } from '../Forms/Select/Select';
-import { FormInputSize } from '../Forms/types';
-import { Input } from '../Forms/Input/Input';
+import { Select } from '../Select/Select';
+import { Input } from '../Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
+import { onChangeCascader } from './optionMappings';
 
 interface CascaderProps {
   /** The seperator between levels in the search */
@@ -15,7 +14,8 @@ interface CascaderProps {
   placeholder?: string;
   options: CascaderOption[];
   onSelect(val: string): void;
-  size?: FormInputSize;
+  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
+  width?: number;
   initialValue?: string;
   allowCustomValue?: boolean;
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
@@ -32,11 +32,18 @@ interface CascaderState {
 }
 
 export interface CascaderOption {
+  /**
+   *  The value used under the hood
+   */
   value: any;
+  /**
+   *  The label to display in the UI
+   */
   label: string;
   /** Items will be just flattened into the main list of items recursively. */
   items?: CascaderOption[];
   disabled?: boolean;
+  /** Avoid using */
   title?: string;
   /**  Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility.*/
   children?: CascaderOption[];
@@ -104,6 +111,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   onChange = (value: string[], selectedOptions: CascaderOption[]) => {
     this.setState({
       rcValue: value,
+      focusCascade: true,
       activeLabel: selectedOptions[selectedOptions.length - 1].label,
     });
 
@@ -128,12 +136,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       isSearching: false,
     });
     this.props.onSelect(value);
-  };
-
-  onClick = () => {
-    this.setState({
-      focusCascade: true,
-    });
   };
 
   onBlur = () => {
@@ -172,7 +174,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { size, allowCustomValue, placeholder } = this.props;
+    const { allowCustomValue, placeholder, width } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
@@ -185,18 +187,16 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onChange={this.onSelect}
             onBlur={this.onBlur}
             options={searchableOptions}
-            size={size}
             onCreateOption={this.onCreateOption}
             formatCreateLabel={this.props.formatCreateLabel}
+            width={width}
           />
         ) : (
           <RCCascader
-            onChange={this.onChange}
-            onClick={this.onClick}
+            onChange={onChangeCascader(this.onChange)}
             options={this.props.options}
-            isFocused={focusCascade}
-            onBlur={this.onBlurCascade}
-            value={rcValue}
+            changeOnSelect
+            value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
             // Required, otherwise the portal that the popup is shown in will render under other components
@@ -206,12 +206,19 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
-                size={size}
+                width={width}
                 placeholder={placeholder}
+                onBlur={this.onBlurCascade}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
-                suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
+                suffix={
+                  focusCascade ? (
+                    <Icon name="angle-up" />
+                  ) : (
+                    <Icon name="angle-down" style={{ marginBottom: 0, marginLeft: '4px' }} />
+                  )
+                }
               />
             </div>
           </RCCascader>

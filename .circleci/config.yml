@@ -2,6 +2,10 @@ version: 2.1
 
 aliases:
   # Workflow filters
+  # filter-all triggers for all branches and version tags
+  - &filter-all
+    tags:
+      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-only-release
     branches:
       only: chore/test-release-pipeline
@@ -24,43 +28,38 @@ aliases:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
 
 executors:
+  base:
+    docker:
+      - image: cimg/base:stable
+  node:
+    docker:
+      - image: cimg/node:12.16
+  go:
+    docker:
+      - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.13
+      - image: grafana/build-container:1.2.16
   grafana-publish:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.4
-  docker:
-    machine:
-      image: circleci/classic:201808-01
-  cloud-sdk:
-    docker:
-      - image: google/cloud-sdk
+      - image: grafana/grafana-ci-deploy:1.2.5
   windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
 
-jobs:
+commands:
   install-grabpl:
-    description: Install the Grafana Build Pipeline tool
-    executor: grafana-build
+    description: "Install Grafana build pipeline tool"
     steps:
       - run:
-          name: Clone repo
+          name: "Install Grafana build pipeline tool"
           command: |
-            mkdir -p ~/.ssh
-            echo 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==' >> ~/.ssh/known_hosts
-            git clone -b v0.0.2 git@github.com:grafana/build-pipeline.git
-      - run:
-          name: Install Grafana Build Pipeline
-          command: |
-            cd build-pipeline
-            go build -o ../bin/grabpl ./cmd/grabpl
-      - persist_to_workspace:
-          root: .
-          paths:
-            - bin/grabpl
+            VERSION=0.4.6
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
+            chmod +x grabpl
+            mv grabpl /tmp
 
+jobs:
   build-backend:
     description: "Build a certain variant of Grafana back-end binaries"
     parameters:
@@ -70,26 +69,32 @@ jobs:
         type: string
     executor: grafana-build
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - run:
           name: Build Grafana backend
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> v6.7.0-beta1
             else
               # A master or PR build
-              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
@@ -113,11 +118,24 @@ jobs:
     parameters:
       edition:
         type: string
+    resource_class: large
     executor: grafana-build
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - checkout
+      - restore_cache:
+          keys:
+            # Use own cache for front-end builds, since for some reason it can't be unpacked for parts of the
+            # pipeline
+            - v1-yarn-build-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v1-yarn-build-
       - run:
           name: Increase node memory
           command: |
@@ -125,9 +143,17 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
+      - run:
+          name: Install dependencies
+          command: yarn install --frozen-lockfile --no-progress
+      - save_cache:
+          key: v1-yarn-build-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
       - run:
           name: Build Grafana frontend
-          command: /tmp/workspace/bin/grabpl build-frontend --edition << parameters.edition >>
+          command: /tmp/grabpl build-frontend --edition << parameters.edition >>
       - run:
           name: Move artifacts
           command: mkdir << parameters.edition >> && cp -r public << parameters.edition >>/
@@ -144,9 +170,56 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
+  build-plugins:
+    description: "Build internal Grafana plug-ins"
+    parameters:
+      edition:
+        type: string
+    executor: grafana-build
+    steps:
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - install-grabpl
+      - run:
+          name: Build internal Grafana plug-ins
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # This is a forked PR, so don't sign as it requires an API secret
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+            else
+              export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
+            fi
+      - run:
+          name: Move artifacts
+          command: |
+            mkdir -p << parameters.edition >>/plugins-bundled
+            mv plugins-bundled/dist << parameters.edition >>/plugins-bundled/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - << parameters.edition >>/plugins-bundled/dist/*
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
   build-release-publisher:
     description: "Build release-publisher"
-    executor: grafana-build
+    executor: go
     steps:
       - checkout
       - run:
@@ -172,17 +245,26 @@ jobs:
           when: on_success
 
   shellcheck:
-    machine: true
+    executor: base
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
+      - run:
+          name: Install ShellCheck
+          command: |
+            VERSION=0.7.1
+            CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+            curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            echo $CHKSUM shellcheck-v${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+            tar xf shellcheck-v${VERSION}.linux.x86_64.tar.xz
+            sudo mv shellcheck-v${VERSION}/shellcheck /usr/local/bin/
       - run:
           name: ShellCheck
-          command: /tmp/workspace/bin/grabpl shellcheck
+          command: |
+            /tmp/grabpl shellcheck
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -227,6 +309,13 @@ jobs:
   build-enterprise-windows-installer:
     executor: windows-installer
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -259,8 +348,13 @@ jobs:
   release-next-packages:
     executor: grafana-build
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - checkout
       - run:
           name: CI job started
@@ -292,24 +386,36 @@ jobs:
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - run:
           name: Copy artifacts from workspace
           command: cp -r /tmp/workspace/oss/* .
       - run:
           name: Package Grafana
           command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo Using test GPG key pair since building a forked PR
+              source scripts/build/gpg-test-vars.sh
+            fi
+
+            # Necessary for signing bundled plugins
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl package --edition oss $CIRCLE_TAG
+              /tmp/grabpl package --jobs 2 --edition oss --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl package --edition oss v6.7.0-beta1
+              /tmp/grabpl package --jobs 2 --edition oss --sign v6.7.0-beta1
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
+            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # A forked forked PR build, don't sign as it requires an API secret
+              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             else
-              # A PR build
-              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+              # A non-forked PR build
+              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -333,30 +439,45 @@ jobs:
   package-enterprise:
     executor: grafana-build
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - run:
           name: Copy artifacts from workspace
           command: cp -r /tmp/workspace/enterprise/* .
       - run:
           name: Package Grafana
           command: |
+            # Necessary for signing bundled plugins
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/workspace/bin/grabpl package --edition enterprise $CIRCLE_TAG
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl package --edition enterprise v6.7.0-beta1
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign v6.7.0-beta1
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
+            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # A forked forked PR build, don't sign as it requires an API secret
+              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             else
               # A PR build
-              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -384,23 +505,31 @@ jobs:
         type: string
     executor: grafana-publish
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
+      - install-grabpl
       - run:
           name: Publish packages
           command: |
             cp -r /tmp/workspace/<< parameters.edition >>/dist .
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >> \
+              /tmp/grabpl publish-packages --edition << parameters.edition >> \
                 --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket \
                 grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release
             else
-              /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >>
+              /tmp/grabpl publish-packages --edition << parameters.edition >>
             fi
       - run:
           name: CI job failed
@@ -422,19 +551,26 @@ jobs:
       - run:
           name: Publish Storybook
           command: |
-            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
             yarn install --frozen-lockfile --no-progress
             yarn storybook:build
+
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
+
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               echo Testing release
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
-              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+              echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+              gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
             elif [[ -n $CIRCLE_TAG ]]; then
+              echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+              gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
               gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
-            else
-              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${CIRCLE_SHA1:0:7}
             fi
       - run:
           name: CI job failed
@@ -446,21 +582,34 @@ jobs:
           when: on_success
 
   build-docker-images:
-    description: "Build Docker images"
+    description: "Build/publish Docker images"
     parameters:
       edition:
         type: string
       ubuntu:
         type: boolean
-    executor: docker
+    executor: base
+    environment:
+      # Required for building cross-platform images
+      DOCKER_BUILDKIT: 1
     steps:
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
-      - run: docker info
+      - setup_remote_docker:
+          # This version is necessary for building cross-platform images
+          version: 18.09.3
+      - install-grabpl
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
@@ -472,56 +621,32 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
-              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
-                --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
+                --ubuntu=<< parameters.ubuntu >>
             else
               # We're testing a branch
-              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
-                --ubuntu=<< parameters.ubuntu >> --archs amd64 $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
+                --ubuntu=<< parameters.ubuntu >> --archs amd64
             fi
-            mkdir -p << parameters.edition >>/docker
-            mv docker/*.tar << parameters.edition >>/docker/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - << parameters.edition >>/docker/*.tar
       - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  publish-docker-images:
-    description: Publish Docker images
-    parameters:
-      edition:
-        type: string
-      ubuntu:
-        type: boolean
-    executor: docker
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Copy artifacts from workspace
+          name: Exit if PR
           command: |
-            cp -r /tmp/workspace/<< parameters.edition >>/docker .
-            cp -r /tmp/workspace/<< parameters.edition >>/dist .
+            if [[ -z $CIRCLE_TAG && $CIRCLE_BRANCH != "chore/test-release-pipeline" && $CIRCLE_BRANCH != "master" ]]; then
+              echo "Nothing to do for PRs, so marking this step successful"
+              circleci step halt
+            fi
       - run:
           name: Publish Docker images
           command: |
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl publish-docker --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
+            elif [[ -n $CIRCLE_TAG ]]; then
+              # This is a release
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             else
-              /tmp/workspace/bin/grabpl publish-docker --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
+              # TODO: Don't ignore errors, temporary workaround until we fix #22955
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
             fi
       - run:
           name: CI job failed
@@ -540,19 +665,30 @@ jobs:
           at: /tmp/workspace
       - checkout
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          keys:
+            - v2-yarn-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v2-yarn-
       - run:
           name: yarn install
-          command: yarn install --pure-lockfile --no-progress
+          command: yarn install --frozen-lockfile --no-progress
           no_output_timeout: 5m
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
+      - run:
+          name: Copy artifacts from workspace
+          command: |
+            mkdir -p dist
+            cp -r /tmp/workspace/oss/dist/*.tar.gz dist/
       - run:
           name: Start grafana-server
           command: ./e2e/start-server
           background: true
+      - run:
+          name: "Wait for Grafana to start"
+          command: './e2e/wait-for-grafana'
       - run:
           name: Run end-to-end tests
           command: ./e2e/run-suite
@@ -569,14 +705,13 @@ jobs:
 
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.14
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
-    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
@@ -600,13 +735,12 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.14
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
-    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
@@ -630,12 +764,12 @@ jobs:
 
   codespell:
     docker:
-      - image: circleci/python
+      - image: cimg/python:3.8
     steps:
       - checkout
       - run:
-          name: install codespell
-          command: "sudo pip install codespell"
+          name: Install codespell
+          command: "pip install codespell"
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
@@ -645,34 +779,60 @@ jobs:
           command: "codespell -I ./words_to_ignore.txt docs/"
 
   lint-go:
-    docker:
-      - image: circleci/golang:1.13.4
-        environment:
-          # we need CGO because of go-sqlite3
-          CGO_ENABLED: 1
-    working_directory: /go/src/github.com/grafana/grafana
+    executor: go
+    environment:
+      # we need CGO because of go-sqlite3
+      CGO_ENABLED: 1
+      # Reduce golangci-lint memory usage (default is 100)
+      GOGC: 20
     steps:
       - checkout
+      - run:
+          name: Install Go linters
+          command: |
+            pushd /tmp
+            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
+            echo 241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179 \
+              golangci-lint-1.24.0-linux-amd64.tar.gz | sha256sum --check --strict --status
+            tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
+            sudo mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            popd
+            make scripts/go/bin/revive scripts/go/bin/gosec
       - run:
           name: Lint Go
-          command: "make lint-go"
+          command: |
+            go vet ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
+              -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
+              -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
+            ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
+            ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
+              ./pkg/services/alerting/... \
+              ./pkg/services/provisioning/datasources/... \
+              ./pkg/services/provisioning/dashboards/...
+
+            ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
+              -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
-    docker:
-      - image: circleci/node:12
+    executor: node
     steps:
       - checkout
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          keys:
+            - v2-yarn-{{ checksum "yarn.lock" }}
+            # Used if checksum fails
+            - v2-yarn-
       - run:
           name: yarn install
           command: "yarn install --frozen-lockfile --no-progress"
           no_output_timeout: 15m
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
       - run:
@@ -681,79 +841,93 @@ jobs:
       - store_test_results:
           path: reports/junit
       - run:
-          name: ci job failed
+          name: CI job failed
           command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
   test-backend:
-    docker:
-      - image: circleci/golang:1.13.4
-    working_directory: /go/src/github.com/grafana/grafana
+    executor: go
     steps:
       - checkout
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - run:
           name: build backend and run go tests
           command: "./scripts/circle-test-backend.sh"
       - run:
-          name: ci job failed
+          name: CI job failed
           command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
   build-docs-website:
-    docker:
-      - image: grafana/build-container:1.2.13
-    working_directory: /docs
+    executor: grafana-build
     steps:
       - checkout
       - setup_remote_docker
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - run:
-          name: install docker
+          name: Install docker
           command: |
             apt-get update
             apt-get install -y docker.io
       - run:
-          name: build grafana docs website
+          name: Build Grafana docs website
           command: |
-            # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
-            # create a dummy container which will hold a volume with config
-            docker create -v /hugo/content/docs/grafana --name docs-website alpine:3.4 /bin/true
-            # copy a config file into this volume
-            docker cp ${PWD}/docs/sources docs-website:/hugo/content/docs/grafana/latest
-            # start an application container using this volume
-            docker run --volumes-from docs-website --rm -it grafana/docs-base:latest /bin/bash -c 'npm i && make prod'
+            # Use latest revision here, since we want to catch if it breaks
+            IMAGE=grafana/docs-base:latest
+
+            # In order to copy sources into the remote container, we need to employ a trick of creating a container
+            # with a volume, that we copy the sources into. Then, we launch the build container, with the volume
+            # from the other container
+            docker create -v /hugo/content/docs/grafana --name docs alpine:3.11 /bin/true
+            docker cp ${PWD}/docs/sources docs:/hugo/content/docs/grafana/latest
+            docker run --volumes-from docs $IMAGE /bin/bash -c 'make prod'
       - run:
-          name: ci job failed
-          command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-failed.sh"
+          name: CI job failed
+          command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
-          command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh"
+          name: CI job succeeded
+          command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  release-packages:
-    docker:
-      - image: circleci/node:12
+  deploy-to-kubernetes:
+    description: "Deploy Grafana master Docker image to Kubernetes"
+    executor: base
     steps:
+      - install-grabpl
+      - run:
+          name: Deploy to Kubernetes
+          command: |
+            /tmp/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+
+  release-packages:
+    executor: node
+    steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - checkout
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - run:
-          name: Boostrap lerna
+          name: Bootstrap lerna
           command: "npx lerna bootstrap"
       - run:
           name: npm - Prepare auth token
@@ -762,15 +936,15 @@ jobs:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
       - run:
-          name: ci job failed
+          name: CI job failed
           command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  scan-docker-master:
+  scan-docker-images:
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -793,11 +967,29 @@ jobs:
           name: Clear trivy cache
           command: trivy --clear-cache
       - run:
-          name: Scan the latest grafana master alpine image with trivy
+          name: Scan grafana/grafana:master
           command: trivy --exit-code 1 grafana/grafana:master
       - run:
-          name: Scan the latest grafana master ubuntu image with trivy
+          name: Scan grafana/grafana:master-ubuntu
           command: trivy --exit-code 1 grafana/grafana:master-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:master
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master
+      - run:
+          name: Scan grafana/grafana-enterprise:master-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:master-ubuntu
+      - run:
+          name: Scan grafana/grafana:latest
+          command: trivy --exit-code 1 grafana/grafana:latest
+      - run:
+          name: Scan grafana/grafana:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana:latest-ubuntu
+      - run:
+          name: Scan grafana/grafana-enterprise:latest
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest
+      - run:
+          name: Scan grafana/grafana-enterprise:latest-ubuntu
+          command: trivy --exit-code 1 grafana/grafana-enterprise:latest-ubuntu
       - save_cache:
           key: vulnerability-db
           paths:
@@ -806,183 +998,181 @@ jobs:
 workflows:
   build-pipeline:
     jobs:
-      # No filters, meaning this job runs for all branches
-      - install-grabpl
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv6
           name: build-oss-backend-armv6
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
-            - install-grabpl
+            - lint-go
       - build-frontend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-frontend
           edition: oss
+      - build-plugins:
+          filters: *filter-all
+          name: build-oss-plugins
+          edition: oss
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv6
           edition: enterprise
           variant: armv6
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7
           edition: enterprise
           variant: armv7
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7-musl
           edition: enterprise
           variant: armv7-musl
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64
           edition: enterprise
           variant: arm64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64-musl
           edition: enterprise
           variant: arm64-musl
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
           requires:
-            - install-grabpl
+            - lint-go
       - build-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
           requires:
-            - install-grabpl
+            - lint-go
       - build-frontend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-frontend
           edition: enterprise
+      - build-plugins:
+          filters: *filter-all
+          name: build-enterprise-plugins
+          edition: enterprise
           requires:
-            - install-grabpl
+            - lint-go
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
+          filters: *filter-all
       - lint-go:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
+          filters: *filter-all
       - shellcheck:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
+          filters: *filter-all
       - test-backend:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
-            - install-grabpl
             - lint-go
       - test-frontend:
-          # No filters, meaning this job runs for all branches
-          requires:
-            - install-grabpl
+          filters: *filter-all
       - mysql-integration-test:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
-            - install-grabpl
             - lint-go
+            - test-backend
+            - test-frontend
       - postgres-integration-test:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
-            - install-grabpl
             - lint-go
+            - test-backend
+            - test-frontend
       - package-oss:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
-            - install-grabpl
             - build-oss-backend-armv6
             - build-oss-backend-armv7
             - build-oss-backend-armv7-musl
@@ -997,12 +1187,10 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
-            - mysql-integration-test
-            - postgres-integration-test
+            - build-oss-plugins
       - package-enterprise:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
-            - install-grabpl
             - build-enterprise-backend-armv6
             - build-enterprise-backend-armv7
             - build-enterprise-backend-armv7-musl
@@ -1017,24 +1205,25 @@ workflows:
             - test-frontend
             - codespell
             - shellcheck
-            - mysql-integration-test
-            - postgres-integration-test
+            - build-enterprise-plugins
       - build-oss-windows-installer:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-enterprise
       - release-next-packages:
           filters: *filter-only-master
           requires:
-            - test-frontend
+            - end-to-end-tests
       - release-packages:
           filters: *filter-only-release
           requires:
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
       - publish-packages:
           filters: *filter-master-or-release
           name: publish-oss-packages
@@ -1043,6 +1232,8 @@ workflows:
             - package-oss
             - build-oss-windows-installer
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - build-release-publisher
       - publish-packages:
           filters: *filter-master-or-release
@@ -1052,82 +1243,76 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
             - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - build-release-publisher
-      - publish-storybook
+      - publish-storybook:
+          filters: *filter-all
+          requires:
+            - test-backend
+            - test-frontend
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-docker-images
           edition: oss
           ubuntu: false
           requires:
+            - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-oss-ubuntu-docker-images
           edition: oss
           ubuntu: true
           requires:
+            - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-docker-images
           edition: enterprise
           ubuntu: false
           requires:
+            - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           name: build-enterprise-ubuntu-docker-images
           edition: enterprise
           ubuntu: true
           requires:
+            - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
-          # No filters, meaning this job runs for all branches
+          filters: *filter-all
           requires:
             - package-oss
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-oss-docker-images
-          edition: oss
-          ubuntu: false
-          requires:
-            - build-oss-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-oss-ubuntu-docker-images
-          edition: oss
-          ubuntu: true
-          requires:
-            - build-oss-ubuntu-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-enterprise-docker-images
-          edition: enterprise
-          ubuntu: false
-          requires:
-            - build-enterprise-docker-images
-            - end-to-end-tests
-      - publish-docker-images:
-          filters: *filter-master-or-release
-          name: publish-enterprise-ubuntu-docker-images
-          edition: enterprise
-          ubuntu: true
-          requires:
-            - build-enterprise-ubuntu-docker-images
-            - end-to-end-tests
       - build-docs-website:
           filters: *filter-not-release-or-master
+          requires:
+            - mysql-integration-test
+            - postgres-integration-test
+      - deploy-to-kubernetes:
+          filters: *filter-only-master
+          requires:
+            - build-enterprise-docker-images
+
   nightly:
     triggers:
       - schedule:
           cron: "0 0 * * *"
           filters: *filter-only-master
     jobs:
-      - scan-docker-master
+      - scan-docker-images

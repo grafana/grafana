@@ -1,11 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/variable';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
+import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/types';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  getInstanceState,
+  NEW_VARIABLE_ID,
+  VariablePayload,
+} from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 export const initialCustomVariableModelState: CustomVariableModel = {
-  uuid: EMPTY_UUID,
+  id: NEW_VARIABLE_ID,
   global: false,
   multi: false,
   includeAll: false,
@@ -27,7 +33,7 @@ export const customVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.uuid);
+      const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.id);
       const { includeAll, query } = instanceState;
       const match = query.match(/(?:\\,|[^,])+/g) ?? [];
 

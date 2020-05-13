@@ -5,7 +5,6 @@
 title = "onUpdateDatasourceOption"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## onUpdateDatasourceOption variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceOption: (props: DataSourcePluginOptionsEditorProps<import("../types").DataSourceJsonData, {}>, key: "id" | "orgId" | "name" | "typeLogoUrl" | "type" | "access" | "url" | "password" | "user" | "database" | "basicAuth" | "basicAuthPassword" | "basicAuthUser" | "isDefault" | "jsonData" | "secureJsonData" | "secureJsonFields" | "readOnly" | "withCredentials" | "version") => (event: import("react").SyntheticEvent<HTMLInputElement | HTMLSelectElement, Event>) => void
+onUpdateDatasourceOption: (props: DataSourcePluginOptionsEditorProps<import("../types").DataSourceJsonData, {}>, key: "type" | "name" | "id" | "orgId" | "typeLogoUrl" | "access" | "url" | "password" | "user" | "database" | "basicAuth" | "basicAuthPassword" | "basicAuthUser" | "isDefault" | "jsonData" | "secureJsonData" | "secureJsonFields" | "readOnly" | "withCredentials" | "version") => (event: import("react").SyntheticEvent<HTMLInputElement | HTMLSelectElement, Event>) => void
 ```
 <b>Import</b>
 

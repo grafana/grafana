@@ -95,7 +95,7 @@ New enhancements includes support for mapping a numeric value/range to text and 
 ## New variable interpolation syntax
 
 We now support a new option for rendering variables that gives the user full control of how the value(s) should be rendered.
-In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/reference/templating/#advanced-formatting-options).
+In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/variables/templates-and-variables/#advanced-formatting-options).
 
 Filter Option | Example | Raw | Interpolated | Description
 ------------ | ------------- | ------------- | -------------  | -------------

@@ -29,7 +29,7 @@ $space-md: 16px !default;
 $space-lg: 24px !default;
 $space-xl: 32px !default;
 
-$spacer: 14px !default;
+$spacer: 16px !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
@@ -92,9 +92,9 @@ $grid-gutter-width: 30px !default;
 
 // Component heights
 // -------------------------
-$height-sm: 24px;
-$height-md: 32px;
-$height-lg: 48px;
+$height-sm: 24;
+$height-md: 32;
+$height-lg: 48;
 
 // Typography
 // -------------------------
@@ -145,15 +145,9 @@ $link-hover-decoration: none !default;
 
 // Forms
 $input-line-height: 18px !default;
-
-$input-border-radius: 0 $border-radius $border-radius 0 !default;
-$input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
-
-$label-border-radius: $border-radius 0 0 $border-radius !default;
-$label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
-
-$input-padding: 8px;
-$input-height: 35px !default;
+$input-border-radius: $border-radius;
+$input-padding: 0 8px;
+$input-height: 32px !default;
 
 $cursor-disabled: not-allowed !default;
 
@@ -166,20 +160,20 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // -------------------------
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
-$zindex-dropdown: 1000;
-$zindex-navbar-fixed: 1020;
-$zindex-sidemenu: 1025;
-$zindex-tooltip: 1030;
-$zindex-modal-backdrop: 1040;
-$zindex-modal: 1050;
-$zindex-typeahead: 1060;
+$zindex-dropdown: 1030;
+$zindex-navbar-fixed: 1000;
+$zindex-sidemenu: 1020;
+$zindex-tooltip: 1040;
+$zindex-modal-backdrop: 1050;
+$zindex-modal: 1060;
+$zindex-typeahead: 1030;
 
 // Buttons
 //
 
 $btn-padding-x: 14px !default;
-$btn-padding-y: 8px !default;
-$btn-line-height: 1 !default;
+$btn-padding-y: 0 !default;
+$btn-line-height: $line-height-base;
 $btn-font-weight: 500 !default;
 
 $btn-padding-x-sm: 7px !default;
@@ -229,6 +223,11 @@ $external-services: (
   ),
   grafanacom: (
     bgColor: #262628,
+    borderColor: #393939,
+    icon: '',
+  ),
+  okta: (
+    bgColor: #2f2f2f,
     borderColor: #393939,
     icon: '',
   ),

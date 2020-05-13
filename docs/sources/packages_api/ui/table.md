@@ -5,7 +5,6 @@
 title = "Table"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Table variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-Table: ({ data, height, onCellClick, width }: Props) => JSX.Element
+Table: FC<Props>
 ```
 <b>Import</b>
 

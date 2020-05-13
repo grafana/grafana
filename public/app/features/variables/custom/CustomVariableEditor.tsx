@@ -1,11 +1,23 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
-import { CustomVariableModel, VariableWithMultiSupport } from '../../templating/variable';
+import { CustomVariableModel, VariableWithMultiSupport } from '../../templating/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { StoreState } from 'app/types';
+import { changeVariableMultiValue } from '../state/actions';
 
-export interface Props extends VariableEditorProps<CustomVariableModel> {}
+interface OwnProps extends VariableEditorProps<CustomVariableModel> {}
 
-export class CustomVariableEditor extends PureComponent<Props> {
+interface ConnectedProps {}
+
+interface DispatchProps {
+  changeVariableMultiValue: typeof changeVariableMultiValue;
+}
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
+
+class CustomVariableEditorUnconnected extends PureComponent<Props> {
   onChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
@@ -44,8 +56,24 @@ export class CustomVariableEditor extends PureComponent<Props> {
             />
           </div>
         </div>
-        <SelectionOptionsEditor variable={this.props.variable} onPropChange={this.onSelectionOptionsChange} />
+        <SelectionOptionsEditor
+          variable={this.props.variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={this.props.changeVariableMultiValue}
+        />
       </>
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({});
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  changeVariableMultiValue,
+};
+
+export const CustomVariableEditor = connectWithStore(
+  CustomVariableEditorUnconnected,
+  mapStateToProps,
+  mapDispatchToProps
+);

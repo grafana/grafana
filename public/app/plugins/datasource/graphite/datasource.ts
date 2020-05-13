@@ -1,20 +1,22 @@
 import _ from 'lodash';
 import {
   DataFrame,
-  dateMath,
-  ScopedVars,
-  DataQueryResponse,
   DataQueryRequest,
-  toDataFrame,
+  DataQueryResponse,
   DataSourceApi,
+  dateMath,
+  QueryResultMetaStat,
+  ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-//Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+// Types
+import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
+import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
+import { getSearchFilterScopedVar } from '../../../features/templating/utils';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -23,6 +25,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   graphiteVersion: any;
   supportsTags: boolean;
   isMetricTank: boolean;
+  rollupIndicatorEnabled: boolean;
   cacheTimeout: any;
   withCredentials: boolean;
   funcDefs: any = null;
@@ -39,6 +42,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
+    this.rollupIndicatorEnabled = instanceSettings.jsonData.rollupIndicatorEnabled;
     this.withCredentials = instanceSettings.withCredentials;
     this.funcDefs = null;
     this.funcDefsPromise = null;
@@ -108,32 +112,73 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     if (!result || !result.data) {
       return { data };
     }
+
     // Series are either at the root or under a node called 'series'
     const series = result.data.series || result.data;
+
     if (!_.isArray(series)) {
       throw { message: 'Missing series in result', data: result };
     }
 
     for (let i = 0; i < series.length; i++) {
       const s = series[i];
+
+      // Disables Grafana own series naming
+      s.title = s.target;
+
       for (let y = 0; y < s.datapoints.length; y++) {
         s.datapoints[y][1] *= 1000;
       }
+
       const frame = toDataFrame(s);
 
       // Metrictank metadata
       if (s.meta) {
         frame.meta = {
           custom: {
-            request: result.data.meta, // info for the whole request
-            info: s.meta, // Array of metadata
+            requestMetaList: result.data.meta, // info for the whole request
+            seriesMetaList: s.meta, // Array of metadata
           },
         };
+
+        if (this.rollupIndicatorEnabled) {
+          const rollupNotice = getRollupNotice(s.meta);
+          const runtimeNotice = getRuntimeConsolidationNotice(s.meta);
+
+          if (rollupNotice) {
+            frame.meta.notices = [rollupNotice];
+          } else if (runtimeNotice) {
+            frame.meta.notices = [runtimeNotice];
+          }
+        }
+
+        // only add the request stats to the first frame
+        if (i === 0 && result.data.meta.stats) {
+          frame.meta.stats = this.getRequestStats(result.data.meta);
+        }
       }
+
       data.push(frame);
     }
+
     return { data };
   };
+
+  getRequestStats(meta: MetricTankRequestMeta): QueryResultMetaStat[] {
+    const stats: QueryResultMetaStat[] = [];
+
+    for (const key in meta.stats) {
+      let unit: string | undefined = undefined;
+
+      if (key.endsWith('.ms')) {
+        unit = 'ms';
+      }
+
+      stats.push({ displayName: key, value: meta.stats[key], unit });
+    }
+
+    return stats;
+  }
 
   parseTags(tagString: string) {
     let tags: string[] = [];
@@ -180,8 +225,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           const target = result.data[i];
 
           for (let y = 0; y < target.length; y++) {
-            const time = target.fields[1].values.get(y);
-            const value = target.fields[0].values.get(y);
+            const time = target.fields[0].values.get(y);
+            const value = target.fields[1].values.get(y);
 
             if (!value) {
               continue;
@@ -278,7 +323,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return date.unix();
   }
 
-  metricFindQuery(query: string, optionalOptions: any) {
+  metricFindQuery(query: string, optionalOptions?: any) {
     const options: any = optionalOptions || {};
     let interpolatedQuery = this.templateSrv.replace(
       query,
@@ -573,7 +618,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return getBackendSrv().datasourceRequest(options);
   }
 
-  buildGraphiteParams(options: any, scopedVars: ScopedVars): string[] {
+  buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
       targets: any = {};

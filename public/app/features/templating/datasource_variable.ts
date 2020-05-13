@@ -1,19 +1,18 @@
 import {
   assignModelProperties,
-  containsVariable,
   DataSourceVariableModel,
   VariableActions,
   VariableHide,
   VariableOption,
   VariableRefresh,
-  VariableType,
   variableTypes,
-} from './variable';
-import { stringToJsRegex } from '@grafana/data';
+} from './types';
+import { VariableType, stringToJsRegex } from '@grafana/data';
 import { VariableSrv } from './variable_srv';
 import { TemplateSrv } from './template_srv';
 import { DatasourceSrv } from '../plugins/datasource_srv';
 import { config } from '@grafana/runtime';
+import { containsVariable } from './utils';
 
 export class DatasourceVariable implements DataSourceVariableModel, VariableActions {
   type: VariableType;

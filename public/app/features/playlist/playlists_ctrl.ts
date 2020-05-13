@@ -50,7 +50,7 @@ export class PlaylistsCtrl {
       title: 'Delete',
       text: 'Are you sure you want to delete playlist ' + playlist.name + '?',
       yesText: 'Delete',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       onConfirm: () => {
         this.removePlaylistConfirmed(playlist);
       },

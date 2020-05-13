@@ -11,7 +11,7 @@ type = "docs"
 
 {{< docs-imagebox img="/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
-The stat panel is designed to show a big single stat values with an optional graph sparkline. You can control
+The stat panel is designed to show a big single stat value with an optional graph sparkline. You can control
 background or value color using thresholds.
 
 ## Display options
@@ -21,16 +21,16 @@ background or value color using thresholds.
   * `All values` - Show a separate stat for every row.
 * Calc
   * Specify calculation / reducer function. Since this panel is designed to only show a single value Grafana needs to
-    know how to reduce a fields many values to a single value.
+    know how to reduce a field's many values to a single value.
 * Orientation
   * If your query returns multiple series or you have set **Show** to `All values` then the visualization will repeat for every series or row. This orientation option will control in what direction it will repeat.
 * Color
   * `Value` - Color the value and graph area only.
   * `Background` - Color the background.
-** Graph
+* Graph
   * `None` - Disable the graph / sparkline
   * `Area graph` - Show area graph below value. This requires that your query returns a time column.
-** Justify
+* Justify
   * `Auto` - If only a single value is shown (no repeat) the value is centered. If multiple series or rows the value is
   * left aligned.
   * `Center` - Force center alignment.
@@ -39,7 +39,7 @@ background or value color using thresholds.
 ### Auto layout
 
 The panel will try to auto adjust layout depending on width & height. The graph will also hide if the panel becomes
-to small.
+too small.
 
 Example of stacked layout where graph is automatically hidden due to each stat being too small:
 
@@ -66,7 +66,7 @@ Example of value color mode:
 ### Thresholds
 
 Define thresholds that will set the color of either the value or the background depending on your `Color` display option. The
-thresholds are automatically sorted from lowerst value to highest. The `Base` value represents minus infinity.
+thresholds are automatically sorted from lowest value to highest. The `Base` value represents minus infinity.
 
 
 ### Value mappings

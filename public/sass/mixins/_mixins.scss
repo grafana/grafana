@@ -44,14 +44,8 @@
 
 // Placeholder text
 // -------------------------
-@mixin placeholder($color: $placeholderText) {
-  &:-moz-placeholder {
-    color: $color;
-  }
-  &:-ms-input-placeholder {
-    color: $color;
-  }
-  &::-webkit-input-placeholder {
+@mixin placeholder($color: $input-color-placeholder) {
+  &::placeholder {
     color: $color;
   }
 }
@@ -360,16 +354,14 @@
   padding: 7px;
   background: $list-item-bg;
   box-shadow: $list-item-shadow;
-  color: $list-item-link-color;
   border-radius: $border-radius;
 
   &:hover {
     background: $list-item-hover-bg;
-    color: $list-item-link-color;
   }
 }
 
-@function lightOrDarkTheme($lightColor, $darkColor) {
+@function lightOrDark($lightColor, $darkColor) {
   @if (lightness($text-color) < 50) {
     @return $lightColor;
   } @else {

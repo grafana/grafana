@@ -71,14 +71,19 @@ external image destination if available or fallback to attaching the image to th
 Be aware that if you use the `local` image storage email servers and clients might not be
 able to access the image.
 
+Setting | Description
+---------- | -----------
+Single email | Send a single email to all recipients. Disabled per default.
+Addresses | Email addresses to recipients. You can enter multiple email addresses using a ";" separator.
+
 ### Slack
 
 {{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
-To set up Slack, you need to configure an incoming Slack webhook URL. You can follow 
-[their guide](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the 
-firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store) 
-in Grafana, or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token 
+To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
+[Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
+firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store)
+in Grafana or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token
 provided (https://api.slack.com/bot-users), which starts with "xoxb".
 
 Setting | Description
@@ -105,7 +110,7 @@ Integration Key | Integration key for PagerDuty.
 Severity | Level for dynamic notifications, default is `critical`
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
 
-**Note:** The tags `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef).  If an alert panel defines these tag keys they will be transposed to the root of the event sent to Pagerduty.  This means they will be available within the Pagerduty UI and Filtering tools.
+**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
 
 ### Webhook
 
@@ -198,25 +203,24 @@ Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
 Slack | `slack` | yes | no
-Squadcast | `webhook` | no | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 Webhook | `webhook` | yes, external only | yes
 
-# Enable images in notifications {#external-image-store}
+## Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure 
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
 
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
 
-Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
+Be aware that some notifiers require public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Notification services which need public image access are marked as 'external only'.
 
-# Use alert rule tags in notifications {#alert-rule-tags}
+## Use alert rule tags in notifications {#alert-rule-tags}
 
 > Only available in Grafana v6.3+.
 
@@ -226,7 +230,7 @@ It currently supports only the Prometheus Alertmanager notifier.
 
  This is an optional feature. You can get notifications without using alert rule tags.
 
-# Configure the link back to Grafana from alert notifications
+## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

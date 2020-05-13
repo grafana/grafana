@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
 import { SegmentInput } from '.';
+import { Icon } from '../Icon/Icon';
 
 const SegmentFrame = ({ children }: any) => (
   <>
@@ -29,8 +30,8 @@ export const BasicInput = () => {
 };
 
 export default {
-  title: 'Panel/Segment/SegmentInput',
-  component: BasicInput,
+  title: 'Data Source/Segment/SegmentInput',
+  component: SegmentInput,
 };
 
 export const BasicInputWithPlaceholder = () => {
@@ -77,7 +78,7 @@ export const InputWithAutoFocus = () => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
-        <i className="fa fa-plus" />
+        <Icon name="plus" />
       </a>
     </SegmentFrame>
   );

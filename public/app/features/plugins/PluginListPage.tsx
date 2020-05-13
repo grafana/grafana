@@ -6,20 +6,17 @@ import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
 import PluginList from './PluginList';
 import { loadPlugins } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
-import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { getPlugins, getPluginsSearchQuery } from './state/selectors';
 import { NavModel, PluginMeta } from '@grafana/data';
 import { StoreState } from 'app/types';
-import { setPluginsLayoutMode, setPluginsSearchQuery } from './state/reducers';
+import { setPluginsSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
   plugins: PluginMeta[];
-  layoutMode: LayoutMode;
   searchQuery: string;
   hasFetched: boolean;
   loadPlugins: typeof loadPlugins;
-  setPluginsLayoutMode: typeof setPluginsLayoutMode;
   setPluginsSearchQuery: typeof setPluginsSearchQuery;
 }
 
@@ -33,15 +30,7 @@ export class PluginListPage extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      hasFetched,
-      navModel,
-      plugins,
-      layoutMode,
-      setPluginsLayoutMode,
-      setPluginsSearchQuery,
-      searchQuery,
-    } = this.props;
+    const { hasFetched, navModel, plugins, setPluginsSearchQuery, searchQuery } = this.props;
 
     const linkButton = {
       href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
@@ -54,12 +43,10 @@ export class PluginListPage extends PureComponent<Props> {
           <>
             <OrgActionBar
               searchQuery={searchQuery}
-              layoutMode={layoutMode}
-              onSetLayoutMode={mode => setPluginsLayoutMode(mode)}
               setSearchQuery={query => setPluginsSearchQuery(query)}
               linkButton={linkButton}
             />
-            {hasFetched && plugins && plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />}
+            {hasFetched && plugins && plugins && <PluginList plugins={plugins} />}
           </>
         </Page.Contents>
       </Page>
@@ -71,7 +58,6 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'plugins'),
     plugins: getPlugins(state.plugins),
-    layoutMode: getLayoutMode(state.plugins),
     searchQuery: getPluginsSearchQuery(state.plugins),
     hasFetched: state.plugins.hasFetched,
   };
@@ -79,7 +65,6 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   loadPlugins,
-  setPluginsLayoutMode,
   setPluginsSearchQuery,
 };
 

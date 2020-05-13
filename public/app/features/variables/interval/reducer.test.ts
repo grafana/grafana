@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload } from '../state/types';
 import { createIntervalVariableAdapter } from './adapter';
-import { IntervalVariableModel } from '../../templating/variable';
+import { IntervalVariableModel } from '../../templating/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { VariablesState } from '../state/variablesReducer';
 import { createIntervalOptions, intervalVariableReducer } from './reducer';
@@ -13,11 +13,11 @@ describe('intervalVariableReducer', () => {
   describe('when createIntervalOptions is dispatched', () => {
     describe('and auto is false', () => {
       it('then state should be correct', () => {
-        const uuid = '0';
+        const id = '0';
         const query = '1s,1m,1h,1d';
         const auto = false;
-        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { uuid, query, auto });
-        const payload = toVariablePayload({ uuid: '0', type: 'interval' });
+        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { id, query, auto });
+        const payload = toVariablePayload({ id: '0', type: 'interval' });
 
         reducerTester<VariablesState>()
           .givenReducer(intervalVariableReducer, cloneDeep(initialState))
@@ -25,7 +25,7 @@ describe('intervalVariableReducer', () => {
           .thenStateShouldEqual({
             '0': {
               ...initialState['0'],
-              uuid: '0',
+              id: '0',
               query: '1s,1m,1h,1d',
               auto: false,
               options: [
@@ -41,11 +41,11 @@ describe('intervalVariableReducer', () => {
 
     describe('and auto is true', () => {
       it('then state should be correct', () => {
-        const uuid = '0';
+        const id = '0';
         const query = '1s,1m,1h,1d';
         const auto = true;
-        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { uuid, query, auto });
-        const payload = toVariablePayload({ uuid: '0', type: 'interval' });
+        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { id, query, auto });
+        const payload = toVariablePayload({ id: '0', type: 'interval' });
 
         reducerTester<VariablesState>()
           .givenReducer(intervalVariableReducer, cloneDeep(initialState))
@@ -53,7 +53,7 @@ describe('intervalVariableReducer', () => {
           .thenStateShouldEqual({
             '0': {
               ...initialState['0'],
-              uuid: '0',
+              id: '0',
               query: '1s,1m,1h,1d',
               auto: true,
               options: [
@@ -70,11 +70,11 @@ describe('intervalVariableReducer', () => {
 
     describe('and query contains "', () => {
       it('then state should be correct', () => {
-        const uuid = '0';
+        const id = '0';
         const query = '"kalle, anka","donald, duck"';
         const auto = false;
-        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { uuid, query, auto });
-        const payload = toVariablePayload({ uuid: '0', type: 'interval' });
+        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { id, query, auto });
+        const payload = toVariablePayload({ id: '0', type: 'interval' });
 
         reducerTester<VariablesState>()
           .givenReducer(intervalVariableReducer, cloneDeep(initialState))
@@ -82,7 +82,7 @@ describe('intervalVariableReducer', () => {
           .thenStateShouldEqual({
             '0': {
               ...initialState['0'],
-              uuid: '0',
+              id: '0',
               query: '"kalle, anka","donald, duck"',
               auto: false,
               options: [
@@ -96,11 +96,11 @@ describe('intervalVariableReducer', () => {
 
     describe("and query contains '", () => {
       it('then state should be correct', () => {
-        const uuid = '0';
+        const id = '0';
         const query = "'kalle, anka','donald, duck'";
         const auto = false;
-        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { uuid, query, auto });
-        const payload = toVariablePayload({ uuid: '0', type: 'interval' });
+        const { initialState } = getVariableTestContext<IntervalVariableModel>(adapter, { id, query, auto });
+        const payload = toVariablePayload({ id: '0', type: 'interval' });
 
         reducerTester<VariablesState>()
           .givenReducer(intervalVariableReducer, cloneDeep(initialState))
@@ -108,7 +108,7 @@ describe('intervalVariableReducer', () => {
           .thenStateShouldEqual({
             '0': {
               ...initialState['0'],
-              uuid: '0',
+              id: '0',
               query: "'kalle, anka','donald, duck'",
               auto: false,
               options: [

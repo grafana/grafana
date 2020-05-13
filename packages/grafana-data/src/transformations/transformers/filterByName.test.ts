@@ -1,7 +1,10 @@
 import { DataTransformerID } from './ids';
-import { transformDataFrame } from '../transformers';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { filterFieldsByNameTransformer } from './filterByName';
+import { filterFieldsTransformer } from './filter';
+import { transformDataFrame } from '../transformDataFrame';
 
 export const seriesWithNamesToMatch = toDataFrame({
   fields: [
@@ -13,6 +16,10 @@ export const seriesWithNamesToMatch = toDataFrame({
 });
 
 describe('filterByName transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([filterFieldsByNameTransformer, filterFieldsTransformer]);
+  });
+
   it('returns original series if no options provided', () => {
     const cfg = {
       id: DataTransformerID.filterFields,
@@ -28,7 +35,7 @@ describe('filterByName transformer', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
-          include: '/^(startsWith)/',
+          include: ['^(startsWith)'],
         },
       };
 
@@ -41,7 +48,7 @@ describe('filterByName transformer', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
-          exclude: '/^(startsWith)/',
+          exclude: ['^(startsWith)'],
         },
       };
 
@@ -54,8 +61,8 @@ describe('filterByName transformer', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
-          exclude: '/^(startsWith)/',
-          include: `/^(B)$/`,
+          exclude: ['^(startsWith)'],
+          include: [`^(B)$`],
         },
       };
 

@@ -5,7 +5,6 @@
 title = "LegendPlacement"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## LegendPlacement type

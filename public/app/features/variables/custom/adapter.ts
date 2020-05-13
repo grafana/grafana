@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { CustomVariableModel } from '../../templating/variable';
+import { CustomVariableModel } from '../../templating/types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
@@ -11,8 +11,9 @@ import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 
 export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {
+    id: 'custom',
     description: 'Define variable values manually',
-    label: 'Custom',
+    name: 'Custom',
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,
     picker: OptionsPicker,
@@ -30,7 +31,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
       await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

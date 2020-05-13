@@ -3,15 +3,7 @@ import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { AppEvents } from '@grafana/data';
 
-import {
-  BackendSrv,
-  getBackendSrv,
-  isContentTypeApplicationJson,
-  parseBody,
-  parseHeaders,
-  parseInitFromOptions,
-  parseUrlFromOptions,
-} from '../services/backend_srv';
+import { BackendSrv, getBackendSrv } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { CoreEvents } from '../../types';
@@ -27,7 +19,6 @@ const getTestContext = (overides?: object) => {
     redirected: false,
     type: 'basic',
     url: 'http://localhost:3000/api/some-mock',
-    headers: { 'Content-Type': 'application/json' },
   };
   const props = { ...defaults, ...overides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
@@ -40,7 +31,6 @@ const getTestContext = (overides?: object) => {
       redirected: false,
       type: 'basic',
       url: 'http://localhost:3000/api/some-mock',
-      headers: { 'Content-Type': 'application/json' },
     };
     return of(mockedResponse);
   });
@@ -355,29 +345,17 @@ describe('backendSrv', () => {
       it('then it should not emit message', async () => {
         const url = 'http://localhost:3000/api/some-mock';
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
-        const result = await backendSrv.datasourceRequest({ url, method: 'GET', silent: true });
+        const options = { url, method: 'GET', silent: true };
+        const result = await backendSrv.datasourceRequest(options);
         expect(result).toEqual({
           data: { test: 'hello world' },
-          headers: {
-            'Content-Type': 'application/json',
-          },
           ok: true,
           redirected: false,
           status: 200,
           statusText: 'Ok',
           type: 'basic',
           url,
-          request: {
-            url,
-            method: 'GET',
-            body: undefined,
-            headers: {
-              map: {
-                'content-type': 'application/json',
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
         expectDataSourceRequestCallChain({ url, method: 'GET', silent: true });
@@ -388,29 +366,17 @@ describe('backendSrv', () => {
       it('then it should not emit message', async () => {
         const url = 'http://localhost:3000/api/some-mock';
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
-        const result = await backendSrv.datasourceRequest({ url, method: 'GET' });
+        const options = { url, method: 'GET' };
+        const result = await backendSrv.datasourceRequest(options);
         const expectedResult = {
           data: { test: 'hello world' },
-          headers: {
-            'Content-Type': 'application/json',
-          },
           ok: true,
           redirected: false,
           status: 200,
           statusText: 'Ok',
           type: 'basic',
           url,
-          request: {
-            url,
-            method: 'GET',
-            body: undefined as any,
-            headers: {
-              map: {
-                'content-type': 'application/json',
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         };
 
         expect(result).toEqual(expectedResult);
@@ -432,11 +398,6 @@ describe('backendSrv', () => {
             status: 200,
             statusText: 'Ok',
             text: () => Promise.resolve(JSON.stringify(slowData)),
-            headers: {
-              map: {
-                'content-type': 'application/json',
-              },
-            },
             redirected: false,
             type: 'basic',
             url,
@@ -449,11 +410,6 @@ describe('backendSrv', () => {
           status: 200,
           statusText: 'Ok',
           text: () => Promise.resolve(JSON.stringify(fastData)),
-          headers: {
-            map: {
-              'content-type': 'application/json',
-            },
-          },
           redirected: false,
           type: 'basic',
           url,
@@ -469,28 +425,13 @@ describe('backendSrv', () => {
         const fastResponse = await backendSrv.datasourceRequest(options);
         expect(fastResponse).toEqual({
           data: { message: 'Fast Request' },
-          headers: {
-            map: {
-              'content-type': 'application/json',
-            },
-          },
           ok: true,
           redirected: false,
           status: 200,
           statusText: 'Ok',
           type: 'basic',
           url: '/api/dashboard/',
-          request: {
-            url: '/api/dashboard/',
-            method: 'GET',
-            body: undefined,
-            headers: {
-              map: {
-                'content-type': 'application/json',
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         });
 
         const result = await slowRequest;
@@ -498,17 +439,7 @@ describe('backendSrv', () => {
           data: [],
           status: -1,
           statusText: 'Request was aborted',
-          request: {
-            url: '/api/dashboard/',
-            method: 'GET',
-            body: undefined,
-            headers: {
-              map: {
-                'content-type': 'application/json',
-                accept: 'application/json, text/plain, */*',
-              },
-            },
-          },
+          config: options,
         });
         expect(unsubscribe).toHaveBeenCalledTimes(1);
       });
@@ -640,87 +571,4 @@ describe('backendSrv', () => {
       });
     });
   });
-});
-
-describe('parseUrlFromOptions', () => {
-  it.each`
-    params                                                      | url                | expected
-    ${undefined}                                                | ${'api/dashboard'} | ${'api/dashboard'}
-    ${{ key: 'value' }}                                         | ${'api/dashboard'} | ${'api/dashboard?key=value'}
-    ${{ key: undefined }}                                       | ${'api/dashboard'} | ${'api/dashboard'}
-    ${{ firstKey: 'first value', secondValue: 'second value' }} | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value&secondValue=second%20value'}
-    ${{ firstKey: 'first value', secondValue: undefined }}      | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value'}
-    ${{ id: [1, 2, 3] }}                                        | ${'api/dashboard'} | ${'api/dashboard?id=1&id=2&id=3'}
-    ${{ id: [] }}                                               | ${'api/dashboard'} | ${'api/dashboard'}
-  `(
-    "when called with params: '$params' and url: '$url' then result should be '$expected'",
-    ({ params, url, expected }) => {
-      expect(parseUrlFromOptions({ params, url })).toEqual(expected);
-    }
-  );
-});
-
-describe('parseInitFromOptions', () => {
-  it.each`
-    method       | expected
-    ${undefined} | ${{ method: undefined, headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-    ${'GET'}     | ${{ method: 'GET', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-    ${'POST'}    | ${{ method: 'POST', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-    ${'monkey'}  | ${{ method: 'monkey', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-  `(
-    "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
-    ({ method, expected }) => {
-      expect(parseInitFromOptions({ method, data: { id: '0' }, url: '' })).toEqual(expected);
-    }
-  );
-});
-
-describe('parseHeaders', () => {
-  it.each`
-    options                                                                 | expected
-    ${undefined}                                                            | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
-    ${{ propKey: 'some prop value' }}                                       | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
-    ${{ headers: { 'content-type': 'application/json' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
-    ${{ headers: { 'cOnTent-tYpe': 'application/json' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
-    ${{ headers: { 'content-type': 'AppLiCatIon/JsOn' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'AppLiCatIon/JsOn' } }}
-    ${{ headers: { 'cOnTent-tYpe': 'AppLiCatIon/JsOn' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'AppLiCatIon/JsOn' } }}
-    ${{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }} | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/x-www-form-urlencoded' } }}
-    ${{ headers: { Accept: 'text/plain' } }}                                | ${{ map: { accept: 'text/plain', 'content-type': 'application/json' } }}
-    ${{ headers: { Auth: 'Basic asdasdasd' } }}                             | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json', auth: 'Basic asdasdasd' } }}
-  `("when called with options: '$options' then the result should be '$expected'", ({ options, expected }) => {
-    expect(parseHeaders(options)).toEqual(expected);
-  });
-});
-
-describe('isContentTypeApplicationJson', () => {
-  it.each`
-    headers                                                                 | expected
-    ${undefined}                                                            | ${false}
-    ${new Headers({ 'cOnTent-tYpe': 'application/json' })}                  | ${true}
-    ${new Headers({ 'content-type': 'AppLiCatIon/JsOn' })}                  | ${true}
-    ${new Headers({ 'cOnTent-tYpe': 'AppLiCatIon/JsOn' })}                  | ${true}
-    ${new Headers({ 'content-type': 'application/x-www-form-urlencoded' })} | ${false}
-    ${new Headers({ auth: 'Basic akdjasdkjalksdjasd' })}                    | ${false}
-  `("when called with headers: 'headers' then the result should be '$expected'", ({ headers, expected }) => {
-    expect(isContentTypeApplicationJson(headers)).toEqual(expected);
-  });
-});
-
-describe('parseBody', () => {
-  it.each`
-    options                  | isAppJson | expected
-    ${undefined}             | ${false}  | ${undefined}
-    ${undefined}             | ${true}   | ${undefined}
-    ${{ data: undefined }}   | ${false}  | ${undefined}
-    ${{ data: undefined }}   | ${true}   | ${undefined}
-    ${{ data: 'some data' }} | ${false}  | ${'some data'}
-    ${{ data: 'some data' }} | ${true}   | ${'some data'}
-    ${{ data: { id: '0' } }} | ${false}  | ${new URLSearchParams({ id: '0' })}
-    ${{ data: { id: '0' } }} | ${true}   | ${'{"id":"0"}'}
-  `(
-    "when called with options: '$options' and isAppJson: '$isAppJson' then the result should be '$expected'",
-    ({ options, isAppJson, expected }) => {
-      expect(parseBody(options, isAppJson)).toEqual(expected);
-    }
-  );
 });

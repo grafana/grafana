@@ -1,3 +1,4 @@
+import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 
@@ -14,20 +15,65 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+export type PreferredVisualisationType = 'graph' | 'table';
+
 export interface QueryResultMeta {
-  [key: string]: any;
-
-  // Match the result to the query
-  requestId?: string;
-
-  // Used in Explore for highlighting
-  searchWords?: string[];
-
-  // Used in Explore to show limit applied to search result
-  limit?: number;
-
-  // DatasSource Specific Values
+  /** DatasSource Specific Values */
   custom?: Record<string, any>;
+
+  /** Stats */
+  stats?: QueryResultMetaStat[];
+
+  /** Meta Notices */
+  notices?: QueryResultMetaNotice[];
+
+  /** Used to track transformation ids that where part of the processing */
+  transformations?: string[];
+
+  /** Currently used to show results in Explore only in preferred visualisation option */
+  preferredVisualisationType?: PreferredVisualisationType;
+
+  /**
+   * Legacy data source specific, should be moved to custom
+   * */
+  gmdMeta?: any[]; // used by cloudwatch
+  rawQuery?: string; // used by stackdriver
+  alignmentPeriod?: string; // used by stackdriver
+  query?: string; // used by azure log
+  searchWords?: string[]; // used by log models and loki
+  limit?: number; // used by log models and loki
+  json?: boolean; // used to keep track of old json doc values
+}
+
+export interface QueryResultMetaStat extends FieldConfig {
+  displayName: string;
+  value: number;
+}
+
+/**
+ * QueryResultMetaNotice is a structure that provides user notices for query result data
+ */
+export interface QueryResultMetaNotice {
+  /**
+   * Specify the notice severity
+   */
+  severity: 'info' | 'warning' | 'error';
+
+  /**
+   * Notice descriptive text
+   */
+  text: string;
+
+  /**
+   * An optional link that may be displayed in the UI.
+   * This value may be an absolute URL or relative to grafana root
+   */
+  link?: string;
+
+  /**
+   * Optionally suggest an appropriate tab for the panel inspector
+   */
+  inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
 export interface QueryResultBase {
@@ -65,6 +111,10 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 
 export interface TimeSeries extends QueryResultBase {
   target: string;
+  /**
+   * If name is manually configured via an alias / legend pattern
+   */
+  title?: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
   tags?: Labels;

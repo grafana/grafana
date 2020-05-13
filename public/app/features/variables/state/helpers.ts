@@ -1,13 +1,13 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import cloneDeep from 'lodash/cloneDeep';
 
-import { EMPTY_UUID } from './types';
-import { VariableHide, VariableModel, VariableRefresh, VariableType } from '../../templating/variable';
+import { NEW_VARIABLE_ID } from './types';
+import { VariableHide, VariableModel } from '../../templating/types';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
-import { VariableAdapter, variableAdapters } from '../adapters';
+import { VariableAdapter } from '../adapters';
+import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -18,7 +18,7 @@ export const getVariableState = (
 
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
-      uuid: index.toString(),
+      id: index.toString(),
       type: 'query',
       name: `Name-${index}`,
       hide: VariableHide.dontHide,
@@ -29,13 +29,13 @@ export const getVariableState = (
   }
 
   if (includeEmpty) {
-    variables[EMPTY_UUID] = {
-      uuid: EMPTY_UUID,
+    variables[NEW_VARIABLE_ID] = {
+      id: NEW_VARIABLE_ID,
       type: 'query',
-      name: `Name-${EMPTY_UUID}`,
+      name: `Name-${NEW_VARIABLE_ID}`,
       hide: VariableHide.dontHide,
       index: noOfVariables,
-      label: `Label-${EMPTY_UUID}`,
+      label: `Label-${NEW_VARIABLE_ID}`,
       skipUrlSync: false,
     };
   }
@@ -49,7 +49,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
 ) => {
   const defaultVariable = {
     ...adapter.initialState,
-    uuid: '0',
+    id: '0',
     index: 0,
     name: '0',
   };
@@ -61,90 +61,16 @@ export const getVariableTestContext = <Model extends VariableModel>(
   return { initialState };
 };
 
-export const variableMockBuilder = (type: VariableType) => {
-  const initialState = variableAdapters.contains(type)
-    ? cloneDeep(variableAdapters.get(type).initialState)
-    : { name: type, type, label: '', hide: VariableHide.dontHide, skipUrlSync: false };
-  const { uuid, index, global, ...rest } = initialState;
-  const model = { ...rest, name: type };
-
-  const withUuid = (uuid: string) => {
-    model.uuid = uuid;
-    return instance;
-  };
-
-  const withName = (name: string) => {
-    model.name = name;
-    return instance;
-  };
-
-  const withOptions = (...texts: string[]) => {
-    model.options = [];
-    for (let index = 0; index < texts.length; index++) {
-      model.options.push({ text: texts[index], value: texts[index], selected: false });
-    }
-    return instance;
-  };
-
-  const withCurrent = (text: string | string[], value?: string | string[]) => {
-    model.current = { text, value: value ?? text, selected: true };
-    return instance;
-  };
-
-  const withRefresh = (refresh: VariableRefresh) => {
-    model.refresh = refresh;
-    return instance;
-  };
-
-  const withQuery = (query: string) => {
-    model.query = query;
-    return instance;
-  };
-
-  const withMulti = () => {
-    model.multi = true;
-    return instance;
-  };
-
-  const withRegEx = (regex: any) => {
-    model.regex = regex;
-    return instance;
-  };
-
-  const withAuto = (auto: boolean) => {
-    model.auto = auto;
-    return instance;
-  };
-
-  const withAutoCount = (autoCount: number) => {
-    model.auto_count = autoCount;
-    return instance;
-  };
-
-  const withAutoMin = (autoMin: string) => {
-    model.auto_min = autoMin;
-    return instance;
-  };
-
-  const create = () => model;
-
-  const instance = {
-    withUuid,
-    withName,
-    withOptions,
-    withCurrent,
-    withRefresh,
-    withQuery,
-    withMulti,
-    withRegEx,
-    withAuto,
-    withAutoCount,
-    withAutoMin,
-    create,
-  };
-
-  return instance;
-};
+export const getRootReducer = () =>
+  combineReducers({
+    location: locationReducer,
+    dashboard: dashboardReducer,
+    templating: combineReducers({
+      optionsPicker: optionsPickerReducer,
+      editor: variableEditorReducer,
+      variables: variablesReducer,
+    }),
+  });
 
 export const getTemplatingRootReducer = () =>
   combineReducers({

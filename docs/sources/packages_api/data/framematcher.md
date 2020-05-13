@@ -5,7 +5,6 @@
 title = "FrameMatcher"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FrameMatcher type

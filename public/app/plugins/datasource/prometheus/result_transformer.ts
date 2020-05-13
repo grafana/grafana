@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, FieldType } from '@grafana/data';
+import { TimeSeries, FieldType, Labels, formatLabels, QueryResultMeta } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class ResultTransformer {
@@ -15,6 +15,7 @@ export class ResultTransformer {
           prometheusResult,
           options.responseListLength,
           options.refId,
+          options.meta,
           options.valueWithRefId
         ),
       ];
@@ -42,9 +43,7 @@ export class ResultTransformer {
 
   transformMetricData(metricData: any, options: any, start: number, end: number) {
     const dps = [];
-    let metricLabel = null;
-
-    metricLabel = this.createMetricLabel(metricData.metric, options);
+    const { name, labels, title } = this.createLabelInfo(metricData.metric, options);
 
     const stepMs = parseFloat(options.step) * 1000;
     let baseTimestamp = start * 1000;
@@ -76,14 +75,23 @@ export class ResultTransformer {
       datapoints: dps,
       query: options.query,
       refId: options.refId,
-      target: metricLabel,
-      tags: metricData.metric,
+      target: name,
+      tags: labels,
+      title,
+      meta: options.meta,
     };
   }
 
-  transformMetricDataToTable(md: any, resultCount: number, refId: string, valueWithRefId?: boolean): TableModel {
+  transformMetricDataToTable(
+    md: any,
+    resultCount: number,
+    refId: string,
+    meta: QueryResultMeta,
+    valueWithRefId?: boolean
+  ): TableModel {
     const table = new TableModel();
     table.refId = refId;
+    table.meta = meta;
 
     let i: number, j: number;
     const metricLabels: { [key: string]: number } = {};
@@ -141,23 +149,39 @@ export class ResultTransformer {
 
   transformInstantMetricData(md: any, options: any) {
     const dps = [];
-    let metricLabel = null;
-    metricLabel = this.createMetricLabel(md.metric, options);
+    const { name, labels } = this.createLabelInfo(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: metricLabel, datapoints: dps, tags: md.metric, refId: options.refId };
+    return { target: name, title: name, datapoints: dps, tags: labels, refId: options.refId, meta: options.meta };
   }
 
-  createMetricLabel(labelData: { [key: string]: string }, options: any) {
-    let label = '';
-    if (_.isUndefined(options) || _.isEmpty(options.legendFormat)) {
-      label = this.getOriginalMetricName(labelData);
-    } else {
-      label = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData);
+  createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels; title?: string } {
+    if (options?.legendFormat) {
+      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labels);
+      return { name: title, title, labels };
     }
-    if (!label || label === '{}') {
-      label = options.query;
+
+    let { __name__, ...labelsWithoutName } = labels;
+
+    let title = __name__ || '';
+
+    const labelPart = formatLabels(labelsWithoutName);
+
+    if (!title && !labelPart) {
+      title = options.query;
     }
-    return label;
+
+    title = `${__name__ ?? ''}${labelPart}`;
+
+    return { name: title, title, labels: labelsWithoutName };
+  }
+
+  getOriginalMetricName(labelData: { [key: string]: string }) {
+    const metricName = labelData.__name__ || '';
+    delete labelData.__name__;
+    const labelPart = Object.entries(labelData)
+      .map(label => `${label[0]}="${label[1]}"`)
+      .join(',');
+    return `${metricName}{${labelPart}}`;
   }
 
   renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
@@ -166,17 +190,8 @@ export class ResultTransformer {
       if (aliasData[g1]) {
         return aliasData[g1];
       }
-      return g1;
+      return '';
     });
-  }
-
-  getOriginalMetricName(labelData: { [key: string]: string }) {
-    const metricName = labelData.__name__ || '';
-    delete labelData.__name__;
-    const labelPart = _.map(_.toPairs(labelData), label => {
-      return label[0] + '="' + label[1] + '"';
-    }).join(',');
-    return metricName + '{' + labelPart + '}';
   }
 
   transformToHistogramOverTime(seriesList: TimeSeries[]) {

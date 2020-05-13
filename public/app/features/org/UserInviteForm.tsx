@@ -1,5 +1,15 @@
 import React, { FC } from 'react';
-import { Forms, HorizontalGroup } from '@grafana/ui';
+import {
+  HorizontalGroup,
+  Button,
+  LinkButton,
+  Input,
+  Switch,
+  RadioButtonGroup,
+  Form,
+  Field,
+  InputControl,
+} from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -7,8 +17,7 @@ import { updateLocation } from 'app/core/actions';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { appEvents } from 'app/core/core';
-import { AppEvents } from '@grafana/data';
-import { assureBaseUrl } from 'app/core/utils/location_util';
+import { AppEvents, locationUtil } from '@grafana/data';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },
@@ -45,41 +54,36 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
   };
 
   return (
-    <Forms.Form defaultValues={defaultValues} onSubmit={onSubmit}>
+    <Form defaultValues={defaultValues} onSubmit={onSubmit}>
       {({ register, control, errors }) => {
         return (
           <>
-            <Forms.Field
+            <Field
               invalid={!!errors.loginOrEmail}
               error={!!errors.loginOrEmail && 'Email or Username is required'}
               label="Email or Username"
             >
-              <Forms.Input
-                size="md"
-                name="loginOrEmail"
-                placeholder="email@example.com"
-                ref={register({ required: true })}
-              />
-            </Forms.Field>
-            <Forms.Field invalid={!!errors.name} label="Name">
-              <Forms.Input size="md" name="name" placeholder="(optional)" ref={register} />
-            </Forms.Field>
-            <Forms.Field invalid={!!errors.role} label="Role">
-              <Forms.InputControl as={Forms.RadioButtonGroup} control={control} options={roles} name="role" />
-            </Forms.Field>
-            <Forms.Field invalid={!!errors.sendEmail} label="Send invite email">
-              <Forms.Switch name="sendEmail" ref={register} />
-            </Forms.Field>
+              <Input name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
+            </Field>
+            <Field invalid={!!errors.name} label="Name">
+              <Input name="name" placeholder="(optional)" ref={register} />
+            </Field>
+            <Field invalid={!!errors.role} label="Role">
+              <InputControl as={RadioButtonGroup} control={control} options={roles} name="role" />
+            </Field>
+            <Field invalid={!!errors.sendEmail} label="Send invite email">
+              <Switch name="sendEmail" ref={register} />
+            </Field>
             <HorizontalGroup>
-              <Forms.Button type="submit">Submit</Forms.Button>
-              <Forms.LinkButton href={assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
+              <Button type="submit">Submit</Button>
+              <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
                 Back
-              </Forms.LinkButton>
+              </LinkButton>
             </HorizontalGroup>
           </>
         );
       }}
-    </Forms.Form>
+    </Form>
   );
 };
 

@@ -117,7 +117,11 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 		apiResponse["code"] = "redirect-to-select-org"
 	}
 
-	hs.loginUserWithUser(user, c)
+	err := hs.loginUserWithUser(user, c)
+	if err != nil {
+		return Error(500, "failed to login user", err)
+	}
+
 	metrics.MApiUserSignUpCompleted.Inc()
 
 	return JSON(200, apiResponse)

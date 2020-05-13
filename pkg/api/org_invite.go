@@ -197,7 +197,10 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 		return rsp
 	}
 
-	hs.loginUserWithUser(user, c)
+	err := hs.loginUserWithUser(user, c)
+	if err != nil {
+		return Error(500, "failed to accept invite", err)
+	}
 
 	metrics.MApiUserSignUpCompleted.Inc()
 	metrics.MApiUserSignUpInvite.Inc()

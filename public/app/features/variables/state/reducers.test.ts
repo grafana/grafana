@@ -1,17 +1,36 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
-import { VariableHide, VariableModel } from '../../templating/variable';
+import { QueryVariableModel, VariableHide } from '../../templating/types';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { toVariablePayload, VariablePayload } from './types';
+import { VariableType } from '@grafana/data';
+
+const variableAdapter: VariableAdapter<QueryVariableModel> = {
+  id: ('mock' as unknown) as VariableType,
+  name: 'Mock label',
+  description: 'Mock description',
+  dependsOn: jest.fn(),
+  updateOptions: jest.fn(),
+  initialState: {} as QueryVariableModel,
+  reducer: jest.fn().mockReturnValue({}),
+  getValueForUrl: jest.fn(),
+  getSaveModel: jest.fn(),
+  picker: null as any,
+  editor: null as any,
+  setValue: jest.fn(),
+  setValueFromUrl: jest.fn(),
+};
+
+variableAdapters.setInit(() => [{ ...variableAdapter }]);
 
 describe('variablesReducer', () => {
   describe('when cleanUpDashboard is dispatched', () => {
     it('then all variables except global variables should be removed', () => {
       const initialState: VariablesState = {
         '0': {
-          uuid: '0',
+          id: '0',
           type: 'query',
           name: 'Name-0',
           hide: VariableHide.dontHide,
@@ -20,7 +39,7 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
         '1': {
-          uuid: '1',
+          id: '1',
           type: 'query',
           name: 'Name-1',
           hide: VariableHide.dontHide,
@@ -30,7 +49,7 @@ describe('variablesReducer', () => {
           global: true,
         },
         '2': {
-          uuid: '2',
+          id: '2',
           type: 'query',
           name: 'Name-2',
           hide: VariableHide.dontHide,
@@ -39,7 +58,7 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
         '3': {
-          uuid: '3',
+          id: '3',
           type: 'query',
           name: 'Name-3',
           hide: VariableHide.dontHide,
@@ -55,7 +74,7 @@ describe('variablesReducer', () => {
         .whenActionIsDispatched(cleanUpDashboard())
         .thenStateShouldEqual({
           '1': {
-            uuid: '1',
+            id: '1',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -65,7 +84,7 @@ describe('variablesReducer', () => {
             global: true,
           },
           '3': {
-            uuid: '3',
+            id: '3',
             type: 'query',
             name: 'Name-3',
             hide: VariableHide.dontHide,
@@ -82,7 +101,7 @@ describe('variablesReducer', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
       const initialState: VariablesState = {
         '0': {
-          uuid: '0',
+          id: '0',
           type: 'query',
           name: 'Name-0',
           hide: VariableHide.dontHide,
@@ -91,30 +110,16 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
       };
-      const variableAdapter: VariableAdapter<VariableModel> = {
-        label: 'Mock label',
-        description: 'Mock description',
-        dependsOn: jest.fn(),
-        updateOptions: jest.fn(),
-        initialState: {} as VariableModel,
-        reducer: jest.fn().mockReturnValue(initialState),
-        getValueForUrl: jest.fn(),
-        getSaveModel: jest.fn(),
-        picker: null as any,
-        editor: null as any,
-        setValue: jest.fn(),
-        setValueFromUrl: jest.fn(),
-      };
-      variableAdapters.set('query', variableAdapter);
+      variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);
       const mockAction = createAction<VariablePayload>('mockAction');
       reducerTester<VariablesState>()
         .givenReducer(variablesReducer, initialState)
-        .whenActionIsDispatched(mockAction(toVariablePayload({ type: 'query', uuid: '0' })))
+        .whenActionIsDispatched(mockAction(toVariablePayload({ type: ('mock' as unknown) as VariableType, id: '0' })))
         .thenStateShouldEqual(initialState);
-      expect(variableAdapter.reducer).toHaveBeenCalledTimes(1);
-      expect(variableAdapter.reducer).toHaveBeenCalledWith(
+      expect(variableAdapters.get('mock').reducer).toHaveBeenCalledTimes(1);
+      expect(variableAdapters.get('mock').reducer).toHaveBeenCalledWith(
         initialState,
-        mockAction(toVariablePayload({ type: 'query', uuid: '0' }))
+        mockAction(toVariablePayload({ type: ('mock' as unknown) as VariableType, id: '0' }))
       );
     });
   });
@@ -123,7 +128,7 @@ describe('variablesReducer', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
       const initialState: VariablesState = {
         '0': {
-          uuid: '0',
+          id: '0',
           type: 'query',
           name: 'Name-0',
           hide: VariableHide.dontHide,
@@ -132,27 +137,13 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
       };
-      const variableAdapter: VariableAdapter<VariableModel> = {
-        label: 'Mock label',
-        description: 'Mock description',
-        dependsOn: jest.fn(),
-        updateOptions: jest.fn(),
-        initialState: {} as VariableModel,
-        reducer: jest.fn().mockReturnValue(initialState),
-        getValueForUrl: jest.fn(),
-        getSaveModel: jest.fn(),
-        picker: null as any,
-        editor: null as any,
-        setValue: jest.fn(),
-        setValueFromUrl: jest.fn(),
-      };
-      variableAdapters.set('query', variableAdapter);
+      variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);
       const mockAction = createAction<VariablePayload>('mockAction');
       reducerTester<VariablesState>()
         .givenReducer(variablesReducer, initialState)
-        .whenActionIsDispatched(mockAction(toVariablePayload({ type: 'adhoc', uuid: '0' })))
+        .whenActionIsDispatched(mockAction(toVariablePayload({ type: 'adhoc', id: '0' })))
         .thenStateShouldEqual(initialState);
-      expect(variableAdapter.reducer).toHaveBeenCalledTimes(0);
+      expect(variableAdapters.get('mock').reducer).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -160,7 +151,7 @@ describe('variablesReducer', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
       const initialState: VariablesState = {
         '0': {
-          uuid: '0',
+          id: '0',
           type: 'query',
           name: 'Name-0',
           hide: VariableHide.dontHide,
@@ -169,27 +160,13 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
       };
-      const variableAdapter: VariableAdapter<VariableModel> = {
-        label: 'Mock label',
-        description: 'Mock description',
-        dependsOn: jest.fn(),
-        updateOptions: jest.fn(),
-        initialState: {} as VariableModel,
-        reducer: jest.fn().mockReturnValue(initialState),
-        getValueForUrl: jest.fn(),
-        getSaveModel: jest.fn(),
-        picker: null as any,
-        editor: null as any,
-        setValue: jest.fn(),
-        setValueFromUrl: jest.fn(),
-      };
-      variableAdapters.set('query', variableAdapter);
+      variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);
       const mockAction = createAction<string>('mockAction');
       reducerTester<VariablesState>()
         .givenReducer(variablesReducer, initialState)
         .whenActionIsDispatched(mockAction('mocked'))
         .thenStateShouldEqual(initialState);
-      expect(variableAdapter.reducer).toHaveBeenCalledTimes(0);
+      expect(variableAdapters.get('mock').reducer).toHaveBeenCalledTimes(0);
     });
   });
 });

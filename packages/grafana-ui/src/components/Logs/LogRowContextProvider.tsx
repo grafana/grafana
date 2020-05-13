@@ -5,6 +5,11 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryResponse, DataQueryError } from '@grafana/data';
 
+export interface RowContextOptions {
+  direction?: 'BACKWARD' | 'FORWARD';
+  limit?: number;
+}
+
 export interface LogRowContextRows {
   before?: string[];
   after?: string[];
@@ -26,7 +31,7 @@ interface ResultType {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
     errors: LogRowContextQueryErrors;
@@ -36,7 +41,7 @@ interface LogRowContextProviderProps {
 }
 
 export const getRowContexts = async (
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>,
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
   limit: number
 ) => {
@@ -77,7 +82,7 @@ export const getRowContexts = async (
           if (idField) {
             // For Loki this means we filter only the one row. Issue is we could have other rows logged at the same
             // ns which came before but they come in the response that search for logs after. This means right now
-            // we will show those as if they came after. This is not strictly correct but seems better than loosing them
+            // we will show those as if they came after. This is not strictly correct but seems better than losing them
             // and making this correct would mean quite a bit of complexity to shuffle things around and messing up
             //counts.
             if (idField.values.get(fieldIndex) === row.uid) {

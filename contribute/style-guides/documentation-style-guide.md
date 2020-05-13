@@ -4,6 +4,8 @@ This style guide applies to all documentation created for Grafana products.
 
 For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
 
+The [Divio documentation system](https://documentation.divio.com/) site is also a good resource.
+
 ## Contributing
 
 The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
@@ -31,6 +33,7 @@ The following sections provide general guidelines on topics specific to Grafana 
   - Use: The panel opens. Grafana opens the panel.
 * Do not use an ampersand (&) as an abbreviation for "and." 
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
+* Avoid using internal slang and jargon in technical documentation.
 
 ### File naming conventions
 
@@ -110,7 +113,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ### Word usage
 
-Grafana products has some words, abbreviations, and slang particular to this discourse community.
+Grafana products has some words, abbreviations, and terms particular to the Grafana discourse community.
 
 #### checkout, check out
 
@@ -138,6 +141,14 @@ Two words, not one
 * Correct, active voice: Grafana displays your list of active alarms.
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
+
+#### drawer
+
+Do not use. This is developer jargon that refers to a UI panel. Refer to the panel or feature by its proper name.
+
+#### intro, introduction
+
+"Introduction" is the preferred word. Use "intro" if there are space constraints (like on the side menu) or you are specifically trying for a less formal, more conversational tone.
 
 #### metadata
 

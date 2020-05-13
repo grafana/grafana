@@ -8,7 +8,7 @@
 .slate-query-field__wrapper {
   position: relative;
   display: inline-block;
-  padding: $input-padding;
+  padding: 6px 8px;
   min-height: $input-height;
   width: 100%;
   cursor: text;
@@ -24,17 +24,17 @@
 
 .slate-query-field__wrapper--disabled {
   background-color: inherit;
+  cursor: not-allowed;
 }
 
 .slate-typeahead {
   .typeahead {
     position: relative;
-    z-index: auto;
+    z-index: $zindex-typeahead;
     border-radius: $border-radius;
     border: $panel-border;
     max-height: calc(66vh);
     overflow-y: scroll;
-    max-width: calc(66%);
     overflow-x: hidden;
     outline: none;
     list-style: none;
@@ -130,7 +130,7 @@
   .token.atrule,
   .token.keyword,
   .token.class-name {
-    color: $query-keyword;
+    color: $text-blue;
   }
 
   .token.punctuation,
@@ -146,6 +146,7 @@
   .token.bold {
     font-weight: bold;
   }
+
   .token.italic {
     font-style: italic;
   }

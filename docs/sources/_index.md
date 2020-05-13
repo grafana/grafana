@@ -8,7 +8,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 
 # Grafana documentation
 
-<h2>Installing Grafana</h2>
+## Installing Grafana
+
 <div class="nav-cards">
     <a href="{{< relref "installation/debian.md" >}}" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-linux">
@@ -26,8 +27,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h5>Install on Windows</h5>
     </a>
     <a href="{{< relref "installation/docker.md" >}}" class="nav-cards__item nav-cards__item--install">
-        <h4>Run Docker image</h4>
-        <p>Run Grafana on a Docker image.</p>
+        <img src="/static/img/logos/logo-docker.svg">
+        <h5>Run Docker image</h5>
     </a>
     <a href="https://grafana.com/cloud/grafana" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-cloud">
@@ -41,14 +42,14 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
     </a>
 </div>
 
-<h2>Guides</h2>
+## Guides
 
 <div class="nav-cards">
-    <a href="{{< relref "guides/what-is-grafana.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "getting-started/what-is-grafana.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>What is Grafana?</h4>
         <p>Get an overview of Grafana's key features.</p>
     </a>
-    <a href="{{< relref "guides/getting_started.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "getting-started/getting-started.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
     </a>
@@ -56,7 +57,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
     </a>
-    <a href="{{< relref "guides/timeseries.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "getting-started/timeseries.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Intro to time series</h4>
         <p>Learn about time series data.</p>
     </a>
@@ -71,7 +72,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 
 </div>
 
-<h2>Data source guides</h2>
+## Data source guides
+
 <div class="nav-cards">
     <a href="{{< relref "features/datasources/graphite.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_graphite.svg" >

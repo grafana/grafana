@@ -27,7 +27,7 @@ These settings apply to all Panels in the Dashboard (except those with Panel Tim
 
 The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `y (years)`. The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/$unit` to the end.
 
-Take a look at some examples to seen these concepts in practice:
+Take a look at some examples to see these concepts in practice:
 
 Example Relative Range | From: | To:
 -------------- | ----- | ---
@@ -53,6 +53,16 @@ From Dashboard settings, click the Timepicker tab. From here you can specify the
 ### Defining Now
 
 Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
+
+### Time zone options
+Starting in version 7.0, you can override the time zone used to display date and time values in a dashboard. 
+
+With this feature, you can specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
+
+Apart from the standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) you can select the following options:
+
+* **Default**: The default selected time zone for the user profile or organization is used. If no time zone is specified for the user profile or the organization, then `Local browser time` is used.
+* **Local browser time**: The time zone configured for the viewing user browser is used. This is usually the same time zone as set on the computer.
 
 ## Panel time overrides and timeshift
 

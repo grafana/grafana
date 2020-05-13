@@ -115,7 +115,7 @@ We also deprecated the `[dashboard.json]` in favor of our new dashboard provisio
 in sync with dashboards in Grafana's database. The dashboard provisioner has multiple advantages over the old
 `[dashboard.json]` feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
-expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
+expects the dashboards to exist in the database. More info in the [dashboard provisioning docs]({{< relref "../administration/provisioning.md" >}})
 
 
 ## Graphite Tags and Integrated Function Docs

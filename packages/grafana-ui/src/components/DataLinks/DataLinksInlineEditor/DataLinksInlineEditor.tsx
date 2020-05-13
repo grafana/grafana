@@ -1,16 +1,15 @@
 import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import Forms from '../../Forms';
+import { Button } from '../../Button/Button';
 import cloneDeep from 'lodash/cloneDeep';
 import { Modal } from '../../Modal/Modal';
-import { FullWidthButtonContainer } from '../../Button/FullWidthButtonContainer';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
+import { stylesFactory, useTheme } from '../../../themes';
 import { DataLinksListItem } from './DataLinksListItem';
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
 
 interface DataLinksInlineEditorProps {
-  links: DataLink[];
+  links?: DataLink[];
   onChange: (links: DataLink[]) => void;
   suggestions: VariableSuggestion[];
   data: DataFrame[];
@@ -18,46 +17,54 @@ interface DataLinksInlineEditorProps {
 
 export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ links, onChange, suggestions, data }) => {
   const theme = useTheme();
-  const [editIndex, setEditIndex] = useState();
-  const isEditing = editIndex !== null && editIndex !== undefined;
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [isNew, setIsNew] = useState(false);
+
   const styles = getDataLinksInlineEditorStyles(theme);
+  const linksSafe: DataLink[] = links ?? [];
+  const isEditing = editIndex !== null;
 
   const onDataLinkChange = (index: number, link: DataLink) => {
-    const update = cloneDeep(links);
+    if (isNew) {
+      if (link.title.trim() === '' && link.url.trim() === '') {
+        setIsNew(false);
+        setEditIndex(null);
+        return;
+      } else {
+        setEditIndex(null);
+        setIsNew(false);
+      }
+    }
+    const update = cloneDeep(linksSafe);
     update[index] = link;
     onChange(update);
+    setEditIndex(null);
   };
 
   const onDataLinkAdd = () => {
-    let update = cloneDeep(links);
-    if (update) {
-      update.push({
-        title: '',
-        url: '',
-      });
-    } else {
-      update = [
-        {
-          title: '',
-          url: '',
-        },
-      ];
+    let update = cloneDeep(linksSafe);
+    setEditIndex(update.length);
+    setIsNew(true);
+  };
+
+  const onDataLinkCancel = (index: number) => {
+    if (isNew) {
+      setIsNew(false);
     }
-    setEditIndex(update.length - 1);
-    onChange(update);
+    setEditIndex(null);
   };
 
   const onDataLinkRemove = (index: number) => {
-    const update = cloneDeep(links);
+    const update = cloneDeep(linksSafe);
     update.splice(index, 1);
     onChange(update);
   };
 
   return (
     <>
-      {links && (
+      {linksSafe.length > 0 && (
         <div className={styles.wrapper}>
-          {links.map((l, i) => {
+          {linksSafe.map((l, i) => {
             return (
               <DataLinksListItem
                 key={`${l.title}/${i}`}
@@ -74,61 +81,36 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
         </div>
       )}
 
-      {isEditing && (
+      {isEditing && editIndex !== null && (
         <Modal
-          title="Edit data link"
-          isOpen={isEditing}
+          title="Edit link"
+          isOpen={true}
           onDismiss={() => {
-            setEditIndex(null);
+            onDataLinkCancel(editIndex);
           }}
         >
           <DataLinkEditorModalContent
             index={editIndex}
-            link={links[editIndex]}
+            link={isNew ? { title: '', url: '' } : linksSafe[editIndex]}
             data={data}
-            onChange={onDataLinkChange}
-            onClose={() => setEditIndex(null)}
+            onSave={onDataLinkChange}
+            onCancel={onDataLinkCancel}
             suggestions={suggestions}
           />
         </Modal>
       )}
 
-      <FullWidthButtonContainer>
-        <Forms.Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
-          Add data link
-        </Forms.Button>
-      </FullWidthButtonContainer>
+      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
+        Add link
+      </Button>
     </>
   );
 };
 
 const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.colors.gray85,
-      dark: theme.colors.dark9,
-    },
-    theme.type
-  );
-
-  const shadow = selectThemeVariant(
-    {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
-    },
-    theme.type
-  );
-
   return {
     wrapper: css`
-      border: 1px dashed ${borderColor};
       margin-bottom: ${theme.spacing.md};
-      transition: box-shadow 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-      box-shadow: none;
-
-      &:hover {
-        box-shadow: 0 0 10px ${shadow};
-      }
     `,
   };
 });

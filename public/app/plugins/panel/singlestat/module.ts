@@ -4,7 +4,6 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
-import locationUtil from 'app/core/utils/location_util';
 
 import {
   DataFrame,
@@ -23,11 +22,12 @@ import {
   getColorFromHexRgbOrName,
   PanelEvents,
   formattedValueToString,
+  locationUtil,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
 
-import { CoreEvents } from 'app/types';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
@@ -123,7 +123,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
@@ -139,13 +139,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
   }
 
-  migrateToGaugePanel(migrate: boolean) {
-    if (migrate) {
-      this.onPluginTypeChange(config.panels['gauge']);
-    } else {
-      this.panel.gauge.show = false;
-      this.render();
-    }
+  migrateToPanel(type: string) {
+    this.onPluginTypeChange(config.panels[type]);
   }
 
   setUnitFormat() {
@@ -161,6 +156,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   onFramesReceived(frames: DataFrame[]) {
     const { panel } = this;
+    this.dataList = frames;
 
     if (frames && frames.length > 1) {
       this.data = {
@@ -175,7 +171,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const distinct = getDistinctNames(frames);
-    let fieldInfo = distinct.byName[panel.tableColumn]; //
+    let fieldInfo: FieldInfo | undefined = distinct.byName[panel.tableColumn];
+
     this.fieldNames = distinct.names;
 
     if (!fieldInfo) {
@@ -191,6 +188,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           },
         },
         theme: config.theme,
+        timeZone: this.dashboard.getTimezone(),
       });
       // When we don't have any field
       this.data = {
@@ -207,7 +205,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   processField(fieldInfo: FieldInfo) {
     const { panel, dashboard } = this;
 
-    const name = fieldInfo.field.config.title || fieldInfo.field.name;
+    const name = getFieldDisplayName(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]);
     let calc = panel.valueName;
     let calcField = fieldInfo.field;
     let val: any = undefined;
@@ -657,7 +655,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           window.location.href = linkInfo.href;
         } else {
           $timeout(() => {
-            $location.url(locationUtil.stripBaseFromUrl(linkInfo.href));
+            $location.url(locationUtil.stripBaseFromUrl(linkInfo!.href));
           });
         }
 
@@ -699,7 +697,7 @@ function getColorForValue(data: any, value: number) {
 
 //------------------------------------------------
 // Private utility functions
-// Somethign like this should be avaliable in a
+// Something like this should be available in a
 //  DataFrame[] abstraction helper
 //------------------------------------------------
 
@@ -736,7 +734,7 @@ function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
         if (!distinct.first) {
           distinct.first = f;
         }
-        let t = field.config.title;
+        let t = field.config.displayName;
         if (t && !distinct.byName[t]) {
           distinct.byName[t] = f;
           distinct.names.push(t);

@@ -1,0 +1,22 @@
+import { Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { TagList } from './TagList';
+
+# TagList
+
+List of tags with predefined margins and positioning.
+
+<Preview>
+  <TagList tags={['datasource-test', 'gdev', 'mysql', 'mssql']} />
+</Preview>
+
+### Usage
+
+```jsx
+import { TagList } from '@grafana/ui';
+const tags = ['datasource-test', 'gdev', 'mysql', 'mssql'];
+
+<TagList tags={tags} onClick={tag => console.log(tag)} />
+```
+
+### Props
+<Props of={TagList} />

@@ -5,7 +5,6 @@
 title = "FilterFramesByRefIdTransformerOptions"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FilterFramesByRefIdTransformerOptions interface

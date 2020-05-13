@@ -8,18 +8,21 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/ini.v1"
 )
 
 func TestPluginDashboards(t *testing.T) {
 	Convey("When asking plugin dashboard info", t, func() {
-		setting.Raw = ini.Empty()
-		sec, _ := setting.Raw.NewSection("plugin.test-app")
-		_, err := sec.NewKey("path", "testdata/test-app")
-		So(err, ShouldBeNil)
-
-		pm := &PluginManager{}
-		err = pm.Init()
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				FeatureToggles: map[string]bool{},
+				PluginSettings: setting.PluginSettings{
+					"test-app": map[string]string{
+						"path": "testdata/test-app",
+					},
+				},
+			},
+		}
+		err := pm.Init()
 		So(err, ShouldBeNil)
 
 		bus.AddHandler("test", func(query *models.GetDashboardQuery) error {

@@ -218,6 +218,11 @@ export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPay
 export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
 
 /**
+ * Cancel running queries.
+ */
+export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
+
+/**
  * Highlight expressions in the log results
  */
 export const highlightLogsExpressionAction = createAction<HighlightLogsExpressionPayload>(

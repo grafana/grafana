@@ -24,30 +24,30 @@ interface LogRowContextProps {
 const getLogRowContextStyles = (theme: GrafanaTheme) => {
   const gradientTop = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.dark1,
+      light: theme.palette.white,
+      dark: theme.palette.dark1,
     },
     theme.type
   );
   const gradientBottom = selectThemeVariant(
     {
-      light: theme.colors.gray7,
-      dark: theme.colors.dark2,
+      light: theme.palette.gray7,
+      dark: theme.palette.dark2,
     },
     theme.type
   );
 
   const boxShadowColor = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.black,
+      light: theme.palette.gray5,
+      dark: theme.palette.black,
     },
     theme.type
   );
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark9,
     },
     theme.type
   );
@@ -60,7 +60,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
       height: 250px;
       z-index: 2;
       overflow: hidden;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.bodyBg};
       background: linear-gradient(180deg, ${gradientTop} 0%, ${gradientBottom} 104.25%);
       box-shadow: 0px 2px 4px ${boxShadowColor}, 0px 0px 2px ${boxShadowColor};
       border: 1px solid ${borderColor};
@@ -102,6 +102,11 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
 
+  const onClickLoadMore = (event: React.SyntheticEvent) => {
+    event.stopPropagation();
+    onLoadMoreContext();
+  };
+
   return (
     <div className={header}>
       <span
@@ -120,7 +125,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
               cursor: pointer;
             }
           `}
-          onClick={() => onLoadMoreContext()}
+          onClick={onClickLoadMore}
         >
           Load 10 more
         </span>

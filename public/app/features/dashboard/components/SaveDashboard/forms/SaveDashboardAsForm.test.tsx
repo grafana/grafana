@@ -16,6 +16,9 @@ jest.mock('app/core/services/context_srv', () => ({
 
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));
+jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
+  validateNewDashboardName: () => true,
+}));
 
 const prepareDashboardMock = (panel: any) => {
   const json = {

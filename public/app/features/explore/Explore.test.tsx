@@ -7,54 +7,107 @@ import {
   DataQueryError,
   DataQueryRequest,
   CoreApp,
+  MutableDataFrame,
 } from '@grafana/data';
 import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { Explore, ExploreProps } from './Explore';
 import { scanStopAction } from './state/actionTypes';
 import { toggleGraph } from './state/actions';
-import { Provider } from 'react-redux';
-import { configureStore } from 'app/store/configureStore';
+import { SecondaryActions } from './SecondaryActions';
+import { TraceView } from './TraceView/TraceView';
+import { getTheme } from '@grafana/ui';
 
-const setup = (renderMethod: any, propOverrides?: object) => {
-  const props: ExploreProps = {
-    changeSize: jest.fn(),
-    datasourceInstance: {
-      meta: {
-        metrics: true,
-        logs: true,
-      },
-      components: {
-        ExploreStartPage: {},
-      },
-    } as DataSourceApi,
-    datasourceMissing: false,
-    exploreId: ExploreId.left,
-    initializeExplore: jest.fn(),
-    initialized: true,
-    modifyQueries: jest.fn(),
-    update: {
-      datasource: false,
-      queries: false,
-      range: false,
-      mode: false,
-      ui: false,
+const dummyProps: ExploreProps = {
+  changeSize: jest.fn(),
+  datasourceInstance: {
+    meta: {
+      metrics: true,
+      logs: true,
     },
-    refreshExplore: jest.fn(),
-    scanning: false,
-    scanRange: {
-      from: '0',
-      to: '0',
+    components: {
+      ExploreStartPage: {},
     },
-    scanStart: jest.fn(),
-    scanStopAction: scanStopAction,
-    setQueries: jest.fn(),
-    split: false,
-    queryKeys: [],
-    initialDatasource: 'test',
-    initialQueries: [],
-    initialRange: {
+  } as DataSourceApi,
+  datasourceMissing: false,
+  exploreId: ExploreId.left,
+  initializeExplore: jest.fn(),
+  initialized: true,
+  modifyQueries: jest.fn(),
+  update: {
+    datasource: false,
+    queries: false,
+    range: false,
+    mode: false,
+    ui: false,
+  },
+  refreshExplore: jest.fn(),
+  scanning: false,
+  scanRange: {
+    from: '0',
+    to: '0',
+  },
+  scanStart: jest.fn(),
+  scanStopAction: scanStopAction,
+  setQueries: jest.fn(),
+  split: false,
+  queryKeys: [],
+  initialDatasource: 'test',
+  initialQueries: [],
+  initialRange: {
+    from: toUtc('2019-01-01 10:00:00'),
+    to: toUtc('2019-01-01 16:00:00'),
+    raw: {
+      from: 'now-6h',
+      to: 'now',
+    },
+  },
+  mode: ExploreMode.Metrics,
+  initialUI: {
+    showingTable: false,
+    showingGraph: false,
+    showingLogs: false,
+  },
+  isLive: false,
+  syncedTimes: false,
+  updateTimeRange: jest.fn(),
+  graphResult: [],
+  loading: false,
+  absoluteRange: {
+    from: 0,
+    to: 0,
+  },
+  showingGraph: false,
+  showingTable: false,
+  timeZone: 'UTC',
+  onHiddenSeriesChanged: jest.fn(),
+  toggleGraph: toggleGraph,
+  queryResponse: {
+    state: LoadingState.NotStarted,
+    series: [],
+    request: ({
+      requestId: '1',
+      dashboardId: 0,
+      interval: '1s',
+      panelId: 1,
+      scopedVars: {
+        apps: {
+          value: 'value',
+        },
+      },
+      targets: [
+        {
+          refId: 'A',
+        },
+      ],
+      timezone: 'UTC',
+      app: CoreApp.Explore,
+      startTime: 0,
+    } as unknown) as DataQueryRequest,
+    error: {} as DataQueryError,
+    timeRange: {
       from: toUtc('2019-01-01 10:00:00'),
       to: toUtc('2019-01-01 16:00:00'),
       raw: {
@@ -62,70 +115,10 @@ const setup = (renderMethod: any, propOverrides?: object) => {
         to: 'now',
       },
     },
-    mode: ExploreMode.Metrics,
-    initialUI: {
-      showingTable: false,
-      showingGraph: false,
-      showingLogs: false,
-    },
-    isLive: false,
-    syncedTimes: false,
-    updateTimeRange: jest.fn(),
-    graphResult: [],
-    loading: false,
-    absoluteRange: {
-      from: 0,
-      to: 0,
-    },
-    showingGraph: false,
-    showingTable: false,
-    timeZone: 'UTC',
-    onHiddenSeriesChanged: jest.fn(),
-    toggleGraph: toggleGraph,
-    queryResponse: {
-      state: LoadingState.NotStarted,
-      series: [],
-      request: ({
-        requestId: '1',
-        dashboardId: 0,
-        interval: '1s',
-        panelId: 1,
-        scopedVars: {
-          apps: {
-            value: 'value',
-          },
-        },
-        targets: [
-          {
-            refId: 'A',
-          },
-        ],
-        timezone: 'UTC',
-        app: CoreApp.Explore,
-        startTime: 0,
-      } as unknown) as DataQueryRequest,
-      error: {} as DataQueryError,
-      timeRange: {
-        from: toUtc('2019-01-01 10:00:00'),
-        to: toUtc('2019-01-01 16:00:00'),
-        raw: {
-          from: 'now-6h',
-          to: 'now',
-        },
-      },
-    },
-    originPanelId: 1,
-    addQueryRow: jest.fn(),
-  };
-
-  const store = configureStore();
-
-  Object.assign(props, propOverrides);
-  return renderMethod(
-    <Provider store={store}>
-      <Explore {...props} />
-    </Provider>
-  );
+  },
+  originPanelId: 1,
+  addQueryRow: jest.fn(),
+  theme: getTheme(),
 };
 
 const setupErrors = (hasRefId?: boolean) => {
@@ -141,20 +134,53 @@ const setupErrors = (hasRefId?: boolean) => {
 
 describe('Explore', () => {
   it('should render component', () => {
-    const wrapper = setup(shallow);
+    const wrapper = shallow(<Explore {...dummyProps} />);
     expect(wrapper).toMatchSnapshot();
+  });
+
+  it('renders SecondaryActions and add row button', () => {
+    const wrapper = shallow(<Explore {...dummyProps} />);
+    expect(wrapper.find(SecondaryActions)).toHaveLength(1);
+    expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(false);
+  });
+
+  it('does not show add row button if mode is tracing', () => {
+    const wrapper = shallow(<Explore {...{ ...dummyProps, mode: ExploreMode.Tracing }} />);
+    expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(true);
+  });
+
+  it('renders TraceView if tracing mode', () => {
+    const wrapper = shallow(
+      <Explore
+        {...{
+          ...dummyProps,
+          mode: ExploreMode.Tracing,
+          queryResponse: {
+            ...dummyProps.queryResponse,
+            state: LoadingState.Done,
+            series: [new MutableDataFrame({ fields: [{ name: 'trace', values: [{}] }] })],
+          },
+        }}
+      />
+    );
+    const autoSizer = shallow(
+      wrapper
+        .find(AutoSizer)
+        .props()
+        .children({ width: 100, height: 100 }) as React.ReactElement
+    );
+    expect(autoSizer.find(TraceView).length).toBe(1);
   });
 
   it('should filter out a query-row-specific error when looking for non-query-row-specific errors', async () => {
     const queryErrors = setupErrors(true);
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
-    expect(queryError).toBeNull();
+    expect(queryError).toBeUndefined();
   });
 
   it('should not filter out a generic error when looking for non-query-row-specific errors', async () => {
     const queryErrors = setupErrors();
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
-    expect(queryError).not.toBeNull();
     expect(queryError).toEqual({
       message: 'Error message',
       status: '400',

@@ -1,7 +1,6 @@
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
-import { getTemplatingRootReducer, variableMockBuilder } from '../state/helpers';
-import { initDashboardTemplating } from '../state/actions';
+import { getRootReducer } from '../state/helpers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { variableAdapters } from '../adapters';
 import { createDataSourceVariableAdapter } from './adapter';
@@ -13,11 +12,12 @@ import {
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
-import { setCurrentVariableValue } from '../state/sharedReducer';
+import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
+import { datasourceBuilder } from '../shared/testing/builders';
 
 describe('data source actions', () => {
-  variableAdapters.set('datasource', createDataSourceVariableAdapter());
+  variableAdapters.setInit(() => [createDataSourceVariableAdapter()]);
 
   describe('when updateDataSourceVariableOptions is dispatched', () => {
     describe('and there is no regex', () => {
@@ -40,13 +40,16 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableMockBuilder('datasource')
-          .withUuid('0')
+        const datasource = datasourceBuilder()
+          .withId('0')
           .withQuery('mock-data-id')
-          .create();
+          .build();
+
         const tester = await reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(initDashboardTemplating([datasource]))
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+          )
           .whenAsyncActionIsDispatched(
             updateDataSourceVariableOptions(toVariableIdentifier(datasource), dependencies),
             true
@@ -54,11 +57,11 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
-            toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: (undefined as unknown) as RegExp })
+            toVariablePayload({ type: 'datasource', id: '0' }, { sources, regex: (undefined as unknown) as RegExp })
           ),
           setCurrentVariableValue(
             toVariablePayload(
-              { type: 'datasource', uuid: '0' },
+              { type: 'datasource', id: '0' },
               { option: { text: 'first-name', value: 'first-name', selected: false } }
             )
           )
@@ -90,14 +93,16 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableMockBuilder('datasource')
-          .withUuid('0')
+        const datasource = datasourceBuilder()
+          .withId('0')
           .withQuery('mock-data-id')
           .withRegEx('/.*(second-name).*/')
-          .create();
+          .build();
         const tester = await reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(initDashboardTemplating([datasource]))
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+          )
           .whenAsyncActionIsDispatched(
             updateDataSourceVariableOptions(toVariableIdentifier(datasource), dependencies),
             true
@@ -105,11 +110,11 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
-            toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: /.*(second-name).*/ })
+            toVariablePayload({ type: 'datasource', id: '0' }, { sources, regex: /.*(second-name).*/ })
           ),
           setCurrentVariableValue(
             toVariablePayload(
-              { type: 'datasource', uuid: '0' },
+              { type: 'datasource', id: '0' },
               { option: { text: 'second-name', value: 'second-name', selected: false } }
             )
           )
@@ -154,7 +159,7 @@ describe('data source actions', () => {
       const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
+        .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(initDataSourceVariableEditor(dependencies));
 
       await tester.thenDispatchedActionsShouldEqual(

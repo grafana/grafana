@@ -1,95 +1,18 @@
-.search-backdrop {
-  position: fixed;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  top: $navbarHeight;
-  z-index: $zindex-modal-backdrop;
-  background-color: $black;
-  @include opacity(75);
-}
-
-.search-container {
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: ($zindex-modal-backdrop + 10);
-  position: fixed;
-}
-
-// Search
-.search-dropdown {
-  display: flex;
-  flex-direction: column;
-  height: calc(100% - #{$navbarHeight});
-}
-
-.search-dropdown__col_1 {
-  background: $page-bg;
-  max-width: 700px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  height: 100%; // Chrome 74 needs this to make the element scrollable
-
-  .search-item--indent {
-    margin-left: 14px;
-  }
-}
-
-.search-dropdown__col_2 {
-  flex-grow: 1;
-  height: 100%;
-  padding-top: 16px;
-  display: none;
-  flex-direction: column;
-}
-
-.search-filter-box {
-  background: $search-filter-box-bg;
-  border-radius: 2px;
-  padding: $spacer * 1.5;
-  min-width: 340px;
-  margin-bottom: $spacer * 1.5;
-}
-
-.search-filter-box__header {
-  border-bottom: 1px solid $hr-border-color;
-  margin-bottom: $spacer * 1.5;
-}
-
-.search-filter-box-link {
-  display: block;
-  margin-bottom: 16px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  i,
-  img {
-    font-size: 20px;
-    margin-right: 5px;
-  }
-}
-
-.search-results-scroller {
-  display: flex;
-  position: relative;
-}
-
 .search-results-container {
   display: block;
   padding: $spacer;
   position: relative;
   flex-grow: 10;
   margin-bottom: $space-md;
+  background: $panel-bg;
+  border: $panel-border;
+  border-radius: 3px;
 
   // Fix for search scroller in mobile view
   height: unset;
 
   .label-tag {
+    margin-top: 2px;
     margin-left: 6px;
     font-size: 11px;
     padding: 2px 6px;
@@ -105,10 +28,9 @@
 
 .search-section {
   background: $panel-bg;
-  border: $panel-border;
+  border-bottom: 1px solid lightOrDark($gray95, $gray25);
   padding: 0px 4px 4px 4px;
   margin-bottom: 3px;
-  border-radius: 5px;
 }
 
 .search-section__header {
@@ -157,8 +79,10 @@
 
   display: flex;
   flex-grow: 1;
-  height: 37px;
-  white-space: nowrap;
+  align-items: center;
+  height: auto;
+  min-height: 37px;
+  white-space: initial;
   padding: 0px;
 
   &:hover,
@@ -178,10 +102,6 @@
   flex-direction: column;
   justify-content: center;
   padding: 0 10px;
-}
-
-.search-item__body-title {
-  color: $list-item-link-color;
 }
 
 .search-item__body-folder-title {
@@ -236,45 +156,11 @@
 }
 
 @include media-breakpoint-up(md) {
-  .search-container {
-    left: $side-menu-width;
-  }
-
   .search-item__tags {
-    display: block;
-  }
-
-  .search-dropdown__col_2 {
     display: flex;
-    margin-bottom: $space-md;
-  }
-}
-
-@include media-breakpoint-up(md) {
-  .search-dropdown__col_2 {
-    flex-direction: row;
-    justify-content: space-between;
-    max-width: 700px;
-    height: 260px;
-    align-items: flex-start;
-  }
-
-  .search-filter-box {
-    margin: 0;
-  }
-}
-
-@include media-breakpoint-up(lg) {
-  .search-dropdown {
-    flex-direction: row;
-  }
-
-  .search-dropdown__col_2 {
-    flex-direction: column;
-  }
-
-  .search-filter-box {
-    margin-left: $spacer * 1.5;
-    margin-bottom: $spacer * 1.5;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: -2px;
   }
 }

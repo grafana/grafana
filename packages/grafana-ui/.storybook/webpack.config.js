@@ -1,4 +1,6 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 module.exports = ({ config, mode }) => {
   config.module.rules = [
     ...(config.module.rules || []),
@@ -36,7 +38,7 @@ module.exports = ({ config, mode }) => {
     use: [
       {
         loader: 'style-loader',
-        options: { injectType: 'lazyStyleTag' }
+        options: { injectType: 'lazyStyleTag' },
       },
       {
         loader: 'css-loader',
@@ -74,7 +76,20 @@ module.exports = ({ config, mode }) => {
     ],
   });
 
+  config.optimization = {
+    nodeEnv: 'production',
+    minimizer: [
+      new TerserPlugin({
+        cache: false,
+        parallel: false,
+        sourceMap: false,
+      }),
+      new OptimizeCSSAssetsPlugin({}),
+    ],
+  };
+
   config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };
