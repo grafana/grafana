@@ -65,14 +65,21 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     });
 
     return (
-      <ValuePicker
-        size="md"
-        variant="secondary"
-        label="Add transformation"
-        options={availableTransformers}
-        onChange={this.onTransformationAdd}
-        isFullWidth={false}
-      />
+      <div
+        className={css`
+          max-width: 66%;
+        `}
+      >
+        <ValuePicker
+          size="md"
+          variant="secondary"
+          label="Add transformation"
+          options={availableTransformers}
+          onChange={this.onTransformationAdd}
+          isFullWidth={false}
+          menuPlacement="bottom"
+        />
+      </div>
     );
   };
 

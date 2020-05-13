@@ -234,12 +234,16 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
 	}
 
+	// The fields @log and @logStream are always included in the results of a user's query
+	// so that a row's context can be retrieved later if necessary.
+	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
+	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
 		EndTime:       aws.Int64(endTime.Unix()),
 		Limit:         aws.Int64(parameters.Get("limit").MustInt64(1000)),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
-		QueryString:   aws.String("fields @timestamp,@log,@logStream|" + parameters.Get("queryString").MustString("")),
+		QueryString:   aws.String("fields @timestamp,ltrim(@log) as " + LOG_IDENTIFIER_INTERNAL + ",ltrim(@logStream) as " + LOGSTREAM_IDENTIFIER_INTERNAL + "|" + parameters.Get("queryString").MustString("")),
 	}
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }

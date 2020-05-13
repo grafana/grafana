@@ -305,12 +305,14 @@ export interface QueryEditorProps<
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
+  onBlur?: () => void;
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
   exploreMode?: ExploreMode;
   exploreId?: any;
+  history?: HistoryItem[];
 }
 
 export enum DataSourceStatus {
