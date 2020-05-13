@@ -100,7 +100,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   onThemeChanged = (theme: SelectableValue<string>) => {
-    if (!theme || !theme.value) {
+    if (!theme || typeof theme.value !== 'string') {
       return;
     }
     this.setState({ theme: theme.value });
