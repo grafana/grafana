@@ -64,6 +64,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   onTransformationChange = (value: SelectableValue<DataTransformerID>) => {
     this.setState({ transformId: value.value, dataFrameIndex: 0 });
+    this.props.onOptionsChange({
+      ...this.props.options,
+      withTransforms: false,
+    });
   };
 
   getTransformedData(): DataFrame[] {
@@ -164,7 +168,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
             <div className={cx(styles.options, styles.dataDisplayOptions)}>
               <QueryOperationRow title={'Data display options'} isOpen={false}>
-                {panelTransformations && panelTransformations.length > 0 && (
+                {panelTransformations && panelTransformations.length > 0 && transformId !== 'join by time' && (
                   <div className="gf-form-inline">
                     <Switch
                       tooltip="Data shown in the table will be transformed using transformations defined in the panel"
@@ -177,7 +181,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 )}
                 <div className="gf-form-inline">
                   <Switch
-                    tooltip="Data shown in the table will have panel field configuration applied, for example units or title"
+                    tooltip="Data shown in the table will have panel field configuration applied, for example units or display name"
                     label="Apply field configuration"
                     labelClass="width-12"
                     checked={!!options.withFieldConfig}

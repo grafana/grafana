@@ -111,6 +111,9 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     const { withTransforms, withFieldConfig } = this.state;
 
     if (plugin && !plugin.meta.skipDataQuery) {
+      if (this.querySubscription) {
+        this.querySubscription.unsubscribe();
+      }
       this.querySubscription = panel
         .getQueryRunner()
         .getData({ withTransforms, withFieldConfig })
