@@ -242,7 +242,7 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		EndTime:       aws.Int64(endTime.Unix()),
 		Limit:         aws.Int64(parameters.Get("limit").MustInt64(1000)),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
-		QueryString:   aws.String("fields @timestamp,ltrim(@log) as " + LOG_IDENTIFIER_INTERNAL + ",ltrim(@logStream) as " + LOGSTREAM_IDENTIFIER_INTERNAL + "|" + parameters.Get("queryString").MustString("")),
+		QueryString:   aws.String("fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")),
 	}
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
