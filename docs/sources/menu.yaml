@@ -207,7 +207,7 @@
     - link: /alerting/alerts-overview/
       name: Overview
     - link: /alerting/notifications/
-      name: Notifications
+      name: Alert notifications
     - link: /alerting/create-alerts/
       name: Create alerts
     - link: /alerting/view-alerts/

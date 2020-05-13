@@ -9,38 +9,34 @@ parent = "alerting"
 weight = 200
 +++
 
-
 # Alert notifications
 
 When an alert changes state, it sends out notifications. Each alert rule can have
 multiple notifications. In order to add a notification to an alert rule you first need
-to add and configure a `notification` channel (can be email, PagerDuty or other integration).
-This is done from the Notification Channels page.
+to add and configure a `notification` channel (can be email, PagerDuty, or other integration).
+
+This is done from the Notification channels page.
 
 > **Note:** Alerting is only available in Grafana v4.0 and above.
 
-## Notification Channel Setup
+## Add a notification channel
 
-On the Notification Channels page hit the `New Channel` button to go the page where you
-can configure and setup a new Notification Channel.
+1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Notification channels**.
+1. Click **Add channel**.
+1. Fill out the fields or select options described below.
 
-You specify a name and a type, and type specific options. You can also test the notification to make
-sure it's setup correctly.
+## New notification channel fields
 
 ### Default (send on all alerts)
 
-When checked, this option will notify for all alert rules - existing and new.
+- **Name -** Enter a name for this channel. It will be displayed when users add notifications to alert rules.
+- **Type -** Select the channel type. Refer to the [List of supported notifiers](#list-of-supported-notifiers) for details.
+- **Default (send on all alerts) -** When selected, this option sends a notification on this channel for all alert rules.
+- **Include Image -** See [Enable images in notifications](#enable-images-in-notifications-external-image-store) for details.
+- **Disable Resolve Message -** When selected, this option disables the resolve message [OK] that is sent when the alerting state returns to false.
+- **Send reminders -** When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h`.
 
-### Send reminders
-
-> Only available in Grafana v5.3 and above.
-
-{{< docs-imagebox max-width="600px" img="/img/docs/v53/alerting_notification_reminders.png" class="docs-image--right" caption="Alerting notification reminders setup" >}}
-
-When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
-should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
-
-**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval]({{< relref "rules/#name-evaluation-interval" >}}).
+**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured alert rule evaluation interval.
 
 These examples show how often and when reminders are sent for a triggered alert.
 
@@ -55,13 +51,28 @@ Alert rule evaluation interval | Send reminders every | Reminder sent every (aft
 
 <div class="clearfix"></div>
 
-### Disable resolve message
+## List of supported notifiers
 
-When checked, this option will disable resolve message [OK] that is sent when alerting state returns to false.
-
-## Supported Notification Types
-
-Grafana ships with the following set of notification types:
+Name | Type | Supports images | Support alert rule tags
+-----|------|---------------- | -----------------------
+[DingDing](#dingdingdingtalk) | `dingding` | yes, external only | no
+Discord | `discord` | yes | no
+[Email](#email) | `email` | yes | no
+[Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
+Hipchat | `hipchat` | yes, external only | no
+[Kafka](#kafka) | `kafka` | yes, external only | no
+Line | `line` | yes, external only | no
+Microsoft Teams | `teams` | yes, external only | no
+OpsGenie | `opsgenie` | yes, external only | yes
+[Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
+Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
+Pushover | `pushover` | yes | no
+Sensu | `sensu` | yes, external only | no
+[Slack](#slack) | `slack` | yes | no
+Telegram | `telegram` | yes | no
+Threema | `threema` | yes, external only | no
+VictorOps | `victorops` | yes, external only | no
+[Webhook](#webhook) | `webhook` | yes, external only | yes
 
 ### Email
 
@@ -185,29 +196,6 @@ Notifications can be sent by setting up an incoming webhook in Google Hangouts c
 
 Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
 
-### All supported notifiers
-
-Name | Type | Supports images | Support alert rule tags
------|------|---------------- | -----------------------
-DingDing | `dingding` | yes, external only | no
-Discord | `discord` | yes | no
-Email | `email` | yes | no
-Google Hangouts Chat | `googlechat` | yes, external only | no
-Hipchat | `hipchat` | yes, external only | no
-Kafka | `kafka` | yes, external only | no
-Line | `line` | yes, external only | no
-Microsoft Teams | `teams` | yes, external only | no
-OpsGenie | `opsgenie` | yes, external only | yes
-Pagerduty | `pagerduty` | yes, external only | yes
-Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
-Pushover | `pushover` | yes | no
-Sensu | `sensu` | yes, external only | no
-Slack | `slack` | yes | no
-Telegram | `telegram` | yes | no
-Threema | `threema` | yes, external only | no
-VictorOps | `victorops` | yes, external only | no
-Webhook | `webhook` | yes, external only | yes
-
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
@@ -225,7 +213,7 @@ Notification services which need public image access are marked as 'external onl
 > Only available in Grafana v6.3+.
 
 Grafana can include a list of tags (key/value) in the notification.
-It's called alert rule tags to contrast with tags parsed from timeseries.
+It's called alert rule tags to contrast with tags parsed from time series.
 It currently supports only the Prometheus Alertmanager notifier.
 
  This is an optional feature. You can get notifications without using alert rule tags.
