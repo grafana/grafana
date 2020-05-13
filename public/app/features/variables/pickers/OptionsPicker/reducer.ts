@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
-import { VariableOption, VariableTag, VariableWithMultiSupport } from '../../../templating/types';
+import { VariableOption, VariableTag, VariableWithMultiSupport, CustomVariableModel } from '../../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
-import { isQuery } from '../../guard';
+import { isQuery, isCustom } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { containsSearchFilter } from '../../../templating/utils';
+import { getLinkText } from './OptionsPicker';
 
 export interface ToggleOption {
   option: VariableOption;
@@ -21,6 +22,8 @@ export interface OptionsPickerState {
   tags: VariableTag[];
   options: VariableOption[];
   multi: boolean;
+  noclear: boolean;
+  editable: boolean;
 }
 
 export const initialState: OptionsPickerState = {
@@ -32,6 +35,8 @@ export const initialState: OptionsPickerState = {
   tags: [],
   options: [],
   multi: false,
+  noclear: false,
+  editable: false,
 };
 
 export const OPTIONS_LIMIT = 1000;
@@ -63,6 +68,25 @@ const updateDefaultSelection = (state: OptionsPickerState): OptionsPickerState =
   return state;
 };
 
+const updateCustomOption = (str: string, options: VariableOption[]): VariableOption[] => {
+  options = options.slice();
+  if (options.length > 0 && options[0].custom) {
+    // delete previously-added option
+    options.shift();
+  }
+  const match = options.filter(option => {
+    return option.text === str;
+  });
+  if (match.length === 0) {
+    // add str to options and deselect all the other options if any
+    options.forEach(option => {
+      option.selected = false;
+    });
+    options.unshift({ text: str, value: str, selected: true, custom: true });
+  }
+  return options;
+};
+
 const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState,
@@ -76,6 +100,16 @@ const optionsPickerSlice = createSlice({
       state.multi = multi ?? false;
       state.id = action.payload.id!;
       state.queryValue = '';
+
+      if (isCustom(action.payload)) {
+        const payload = action.payload as CustomVariableModel;
+        const { noclear, editable } = payload;
+        state.noclear = noclear ?? false;
+        state.editable = editable ?? false;
+        if (noclear) {
+          state.queryValue = getLinkText(payload);
+        }
+      }
 
       if (isQuery(action.payload)) {
         const { queryValue } = action.payload;
@@ -177,6 +211,7 @@ const optionsPickerSlice = createSlice({
     },
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
       const searchQuery = (state.queryValue ?? '').toLowerCase();
+      const { editable } = state;
 
       const filteredOptions = action.payload.filter(option => {
         const text = Array.isArray(option.text) ? option.text.toString() : option.text;
@@ -185,6 +220,10 @@ const optionsPickerSlice = createSlice({
 
       state.options = applyLimit(filteredOptions);
       state.highlightIndex = 0;
+
+      if (editable) {
+        state.options = updateCustomOption(state.queryValue, state.options);
+      }
 
       return applyStateChanges(state, updateSelectedValues);
     },

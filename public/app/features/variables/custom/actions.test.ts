@@ -49,6 +49,8 @@ describe('custom actions', () => {
         index: 0,
         multi: true,
         includeAll: false,
+        noclear: false,
+        editable: false,
       };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()

@@ -104,7 +104,7 @@ const getSelectedTags = (variable: VariableWithOptions): VariableTag[] => {
   return variable.tags.filter(t => t.selected);
 };
 
-const getLinkText = (variable: VariableWithOptions) => {
+export const getLinkText = (variable: VariableWithOptions) => {
   const { current, options } = variable;
 
   if (!current.tags || current.tags.length === 0) {

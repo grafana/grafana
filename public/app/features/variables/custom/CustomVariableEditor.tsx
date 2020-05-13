@@ -6,6 +6,11 @@ import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { changeVariableMultiValue } from '../state/actions';
+import { VariableIdentifier } from '../state/types';
+import { ThunkResult } from '../../../types';
+import { LegacyForms } from '@grafana/ui';
+
+const { Switch } = LegacyForms;
 
 interface OwnProps extends VariableEditorProps<CustomVariableModel> {}
 
@@ -25,8 +30,30 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
     });
   };
 
+  onNoClearChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onPropChange({
+      propName: 'noclear',
+      propValue: event.target.checked,
+    });
+  };
+
+  onEditableChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onPropChange({
+      propName: 'editable',
+      propValue: event.target.checked,
+    });
+  };
+
   onSelectionOptionsChange = async ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
+  };
+
+  onMultiChange = (identifier: VariableIdentifier, multi: boolean): ThunkResult<void> => {
+    if (multi) {
+      this.props.onPropChange({ propName: 'noclear', propValue: false });
+      this.props.onPropChange({ propName: 'editable', propValue: false });
+    }
+    return this.props.changeVariableMultiValue(identifier, multi);
   };
 
   onBlur = (event: FocusEvent<HTMLInputElement>) => {
@@ -55,11 +82,29 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
               aria-label="Variable editor Form Custom Query field"
             />
           </div>
+          {!this.props.variable.multi && (
+            <div className="section">
+              <Switch
+                label="Do not clear"
+                labelClass="width-10"
+                checked={this.props.variable.noclear}
+                onChange={this.onNoClearChange}
+                tooltip={'Keep text of current option in textbox to simplify copy-paste'}
+              />
+              <Switch
+                label="Make editable"
+                labelClass="width-10"
+                checked={this.props.variable.editable}
+                onChange={this.onEditableChange}
+                tooltip={'Add current option to dropdown list'}
+              />
+            </div>
+          )}
         </div>
         <SelectionOptionsEditor
           variable={this.props.variable}
           onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={this.props.changeVariableMultiValue}
+          onMultiChanged={this.onMultiChange}
         />
       </>
     );
