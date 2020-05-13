@@ -38,7 +38,7 @@ This section describes the fields you fill out to create an alert.
 ### Rule
 
 - **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list.
-- **Evaluate every-**  Specify how often the scheduler should evaluate the alert rule.
+- **Evaluate every -**  Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_. 
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
 You can set a minimum evaluation interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) for more information.
