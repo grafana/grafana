@@ -24,9 +24,9 @@ Currently only the graph panel visualization supports alerts.
 You can perform the following tasks for alerts:
 
 - Add an alert notification channel
-- Create an alert rule
-- Test alert rules and troubleshoot
+- [Create an alert rule]({{< relref "create-alerts.md" >}})
 - View existing alert rules
+- [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
 
 ## Clustering
 

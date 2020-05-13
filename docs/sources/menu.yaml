@@ -207,9 +207,11 @@
     - link: /alerting/alerts-overview/
       name: Overview
     - link: /alerting/create-alerts/
-      name: Creat alerts
+      name: Create alerts
     - link: /alerting/notifications/
       name: Notifications
+    - link: /alerting/troubleshoot-alerts/
+      name: Troubleshoot alerts
 - name: Image rendering
   link: /administration/image_rendering/
 - name: Linking
