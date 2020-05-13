@@ -101,19 +101,67 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
-  setExploreQueryField = () => {
+  setReactQueryEditor = () => {
     const { mode, datasourceInstance } = this.props;
-    let QueryField;
+    let QueryEditor;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
-      QueryField = datasourceInstance.components.ExploreMetricsQueryField;
+      QueryEditor = datasourceInstance.components.ExploreMetricsQueryField;
     } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
-      QueryField = datasourceInstance.components.ExploreLogsQueryField;
+      QueryEditor = datasourceInstance.components.ExploreLogsQueryField;
+    } else if (datasourceInstance.components?.ExploreQueryField) {
+      QueryEditor = datasourceInstance.components.ExploreQueryField;
     } else {
-      QueryField = datasourceInstance.components?.ExploreQueryField;
+      QueryEditor = datasourceInstance.components?.QueryEditor;
     }
+    return QueryEditor;
+  };
 
-    return QueryField;
+  renderQueryEditor = () => {
+    const {
+      datasourceInstance,
+      history,
+      query,
+      exploreEvents,
+      range,
+      absoluteRange,
+      queryResponse,
+      mode,
+      exploreId,
+    } = this.props;
+
+    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
+
+    const ReactQueryEditor = this.setReactQueryEditor();
+
+    if (ReactQueryEditor) {
+      return (
+        <ReactQueryEditor
+          datasource={datasourceInstance}
+          query={query}
+          history={history}
+          onRunQuery={this.onRunQuery}
+          onBlur={noopOnBlur}
+          onChange={this.onChange}
+          data={queryResponse}
+          absoluteRange={absoluteRange}
+          exploreMode={mode}
+          exploreId={exploreId}
+        />
+      );
+    }
+    return (
+      <AngularQueryEditor
+        error={queryErrors}
+        datasource={datasourceInstance}
+        onQueryChange={this.onChange}
+        onExecuteQuery={this.onRunQuery}
+        initialQuery={query}
+        exploreEvents={exploreEvents}
+        range={range}
+        textEditModeEnabled={this.state.textEditModeEnabled}
+      />
+    );
   };
 
   updateLogsHighlights = debounce((value: DataQuery) => {
@@ -126,68 +174,17 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   }, 500);
 
   render() {
-    const {
-      datasourceInstance,
-      history,
-      query,
-      exploreEvents,
-      range,
-      absoluteRange,
-      queryResponse,
-      mode,
-      latency,
-      exploreId,
-    } = this.props;
+    const { datasourceInstance, query, queryResponse, mode, latency } = this.props;
 
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
-    const ExploreQueryField = this.setExploreQueryField();
-    const QueryEditor = datasourceInstance.components?.QueryEditor;
 
     return (
       <>
         <div className="query-row">
-          <div className="query-row-field flex-shrink-1">
-            {ExploreQueryField && (
-              <ExploreQueryField
-                datasource={datasourceInstance}
-                query={query}
-                history={history}
-                onRunQuery={this.onRunQuery}
-                onBlur={noopOnBlur}
-                onChange={this.onChange}
-                data={queryResponse}
-                absoluteRange={absoluteRange}
-                exploreMode={mode}
-                exploreId={exploreId}
-              />
-            )}
-            {!ExploreQueryField && QueryEditor && (
-              <QueryEditor
-                datasource={datasourceInstance}
-                query={query}
-                onRunQuery={this.onRunQuery}
-                onChange={this.onChange}
-                data={queryResponse}
-                exploreMode={mode}
-                exploreId={exploreId}
-              />
-            )}
-            {!ExploreQueryField && !QueryEditor && (
-              <AngularQueryEditor
-                error={queryErrors}
-                datasource={datasourceInstance}
-                onQueryChange={this.onChange}
-                onExecuteQuery={this.onRunQuery}
-                initialQuery={query}
-                exploreEvents={exploreEvents}
-                range={range}
-                textEditModeEnabled={this.state.textEditModeEnabled}
-              />
-            )}
-          </div>
+          <div className="query-row-field flex-shrink-1">{this.renderQueryEditor()}</div>
           <QueryRowActions
             canToggleEditorModes={canToggleEditorModes}
             isDisabled={query.hide}
