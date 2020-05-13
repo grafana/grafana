@@ -29,7 +29,7 @@ the dashboard, and will also be added as an required input when the dashboard is
 
 ## Importing a dashboard
 
-To import a dashboard click the + icon in the sidemenu, and click "import". 
+To import a dashboard click the + icon in the side menu, and then click **Import**. 
 
 {{< docs-imagebox img="/img/docs/v70/import_step1.png" max-width="700px" >}}
 
