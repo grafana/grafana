@@ -175,7 +175,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
   renderDataTab() {
     const { last, isLoading } = this.state;
-    return <InspectDataTab data={last.series} isLoading={isLoading} />;
+    return <InspectDataTab data={last.series} isLoading={isLoading} panel={this.props.panel} />;
   }
 
   renderErrorTab(error?: DataQueryError) {

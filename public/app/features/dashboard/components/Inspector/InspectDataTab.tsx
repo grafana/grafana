@@ -17,10 +17,12 @@ import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { cx } from 'emotion';
+import { PanelModel } from '../../state';
 
 interface Props {
   data: DataFrame[];
   isLoading: boolean;
+  panel: PanelModel;
 }
 
 interface State {
@@ -41,12 +43,15 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   exportCsv = (dataFrame: DataFrame) => {
+    const { panel } = this.props;
+    const { transformId } = this.state;
     const dataFrameCsv = toCSV([dataFrame]);
 
     const blob = new Blob([dataFrameCsv], {
       type: 'application/csv;charset=utf-8',
     });
-    const fileName = `${getFrameDisplayName(dataFrame)}-${dateTimeFormat(new Date())}.csv`;
+    const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
+    const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
     saveAs(blob, fileName);
   };
 
