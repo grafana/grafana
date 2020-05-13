@@ -4,7 +4,7 @@ import { setScenarioContext } from '../support/scenarioContext';
 
 export interface AddDataSourceConfig {
   checkHealth: boolean;
-  expectedAlertMessage: string;
+  expectedAlertMessage: string | RegExp;
   form: Function;
   name: string;
 }
@@ -32,7 +32,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): string => 
   form();
   e2e.pages.DataSource.saveAndTest().click();
   e2e.pages.DataSource.alert().should('exist');
-  e2e.pages.DataSource.alertMessage().should('contain.text', expectedAlertMessage);
+  e2e.pages.DataSource.alertMessage().contains(expectedAlertMessage); // assertion
   e2e().logToConsole('Added data source with name:', dataSourceName);
 
   if (checkHealth) {

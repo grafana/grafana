@@ -15,6 +15,7 @@ export interface Props {
   openMenuOnFocus?: boolean;
   showLoading?: boolean;
   placeholder?: string;
+  invalid?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
@@ -48,6 +49,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       openMenuOnFocus,
       showLoading,
       placeholder,
+      invalid,
     } = this.props;
 
     const options = datasources.map(ds => ({
@@ -80,6 +82,7 @@ export class DataSourcePicker extends PureComponent<Props> {
         placeholder={placeholder}
         noOptionsMessage="No datasources found"
         value={value}
+        invalid={invalid}
       />
     );
   }

@@ -11,7 +11,7 @@ import {
   BinaryOperationID,
   SelectableValue,
   binaryOperators,
-  getFieldTitle,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { Select, StatsPicker, LegacyForms, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 import {
@@ -75,11 +75,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           continue;
         }
 
-        const title = getFieldTitle(field, frame, input);
+        const displayName = getFieldDisplayName(field, frame, input);
 
-        if (!byName[title]) {
-          byName[title] = true;
-          allNames.push(title);
+        if (!byName[displayName]) {
+          byName[displayName] = true;
+          allNames.push(displayName);
         }
       }
     }

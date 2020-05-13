@@ -1,4 +1,4 @@
-import React, { FC, memo, useMemo, useCallback } from 'react';
+import React, { FC, memo, useCallback, useMemo } from 'react';
 import { DataFrame, Field } from '@grafana/data';
 import {
   Cell,
@@ -6,10 +6,10 @@ import {
   HeaderGroup,
   useAbsoluteLayout,
   useResizeColumns,
-  useSortBy,
-  useTable,
   UseResizeColumnsState,
+  useSortBy,
   UseSortByState,
+  useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import { getColumns, getTextAlign } from './utils';
@@ -73,14 +73,9 @@ export const Table: FC<Props> = memo((props: Props) => {
     if (!data.fields.length) {
       return [];
     }
-
-    // Check if an array buffer already exists
-    const buffer = (data.fields[0].values as any).buffer;
-    if (Array.isArray(buffer) && buffer.length === data.length) {
-      return buffer;
-    }
-
-    // For arrow tables, the `toArray` implementation is expensive and akward *especially* for timestamps
+    // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
+    // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
+    // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
     return Array(data.length).fill(0);
   }, [data]);
 

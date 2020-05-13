@@ -6,6 +6,7 @@ const { Select } = LegacyForms;
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   resourceUri: string;
@@ -156,7 +157,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             width={20}
           />
         </div>
-        <div className="gf-form">
+        <div className="gf-form" aria-label={selectors.components.TimeZonePicker.container}>
           <label className="gf-form-label width-11">Timezone</label>
           <Select
             isSearchable={true}

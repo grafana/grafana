@@ -7,6 +7,7 @@ import {
   toDataFrame,
   getDisplayProcessor,
   ExploreMode,
+  PreferredVisualisationType,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
@@ -29,13 +30,14 @@ export class ResultProcessor {
     }
 
     const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
+    const timeSeriesToShowInGraph = onlyTimeSeries.filter(frame => shouldShowInVisualisationType(frame, 'graph'));
 
-    if (onlyTimeSeries.length === 0) {
+    if (timeSeriesToShowInGraph.length === 0) {
       return null;
     }
 
     return getGraphSeriesModel(
-      onlyTimeSeries,
+      timeSeriesToShowInGraph,
       this.timeZone,
       {},
       { showBars: false, showLines: true, showPoints: false },
@@ -48,7 +50,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const onlyTables = this.dataFrames.filter(frame => shouldShowInTable(frame));
+    const onlyTables = this.dataFrames.filter(frame => shouldShowInVisualisationType(frame, 'table'));
 
     if (onlyTables.length === 0) {
       return null;
@@ -125,8 +127,8 @@ function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   return false;
 }
 
-function shouldShowInTable(frame: DataFrame) {
-  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== 'table') {
+function shouldShowInVisualisationType(frame: DataFrame, visualisation: PreferredVisualisationType) {
+  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== visualisation) {
     return false;
   }
 

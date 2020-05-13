@@ -1,10 +1,10 @@
-import { DataFrame, Field, TIME_SERIES_FIELD_NAME, FieldType } from '../types';
+import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
 import { formatLabels } from '../utils/labels';
 
 /**
  * Get an appropriate display title
  */
-export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
+export function getFrameDisplayName(frame: DataFrame, index?: number) {
   if (frame.name) {
     return frame.name;
   }
@@ -19,7 +19,7 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   if (index === undefined) {
     return frame.fields
       .filter(f => f.type !== FieldType.time)
-      .map(f => getFieldTitle(f, frame))
+      .map(f => getFieldDisplayName(f, frame))
       .join(', ');
   }
 
@@ -30,39 +30,39 @@ export function getFrameDisplayTitle(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
-export function getFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
-  const existingTitle = field.state?.title;
+export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+  const existingTitle = field.state?.displayName;
 
   if (existingTitle) {
     return existingTitle;
   }
 
-  const title = calculateFieldTitle(field, frame, allFrames);
+  const displayName = calculateFieldDisplayName(field, frame, allFrames);
   field.state = {
     ...field.state,
-    title,
+    displayName,
   };
 
-  return title;
+  return displayName;
 }
 
 /**
- * Get an appropriate display title. If the 'title' is set, use that
+ * Get an appropriate display name. If the 'title' is set, use that
  */
-function calculateFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
-  const hasConfigTitle = field.config?.title && field.config?.title.length;
+function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+  const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
 
-  let title = hasConfigTitle ? field.config!.title! : field.name;
+  let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {
-    return title;
+    return displayName;
   }
 
   // This is an ugly exception for time field
   // For time series we should normally treat time field with same name
   // But in case it has a join source we should handle it as normal field
   if (field.type === FieldType.time && !field.labels) {
-    return title ?? 'Time';
+    return displayName ?? TIME_SERIES_TIME_FIELD_NAME;
   }
 
   let parts: string[] = [];
@@ -86,7 +86,7 @@ function calculateFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFr
     frameNameAdded = true;
   }
 
-  if (field.name && field.name !== TIME_SERIES_FIELD_NAME) {
+  if (field.name && field.name !== TIME_SERIES_VALUE_FIELD_NAME) {
     parts.push(field.name);
   }
 
@@ -106,7 +106,7 @@ function calculateFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFr
   }
 
   // if we have not added frame name and no labels, and field name = Value, we should add frame name
-  if (frame && !frameNameAdded && !labelsAdded && field.name === TIME_SERIES_FIELD_NAME) {
+  if (frame && !frameNameAdded && !labelsAdded && field.name === TIME_SERIES_VALUE_FIELD_NAME) {
     if (frame.name && frame.name.length > 0) {
       parts.push(frame.name);
       frameNameAdded = true;
@@ -114,14 +114,14 @@ function calculateFieldTitle(field: Field, frame?: DataFrame, allFrames?: DataFr
   }
 
   if (parts.length) {
-    title = parts.join(' ');
+    displayName = parts.join(' ');
   } else if (field.name) {
-    title = field.name;
+    displayName = field.name;
   } else {
-    title = TIME_SERIES_FIELD_NAME;
+    displayName = TIME_SERIES_VALUE_FIELD_NAME;
   }
 
-  return title;
+  return displayName;
 }
 
 /**
