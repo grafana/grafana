@@ -11,7 +11,7 @@ weight = 200
 
 # Create alerts
 
-Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
+Grafana alerting allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
 
 {{< imgbox max-width="1000px" img="/img/docs/alerting/drag_handles_gif.gif" caption="Alerting overview" >}}
 
@@ -24,7 +24,8 @@ Currently only the graph panel supports alert rules.
 1. Navigate to the panel you want to add or edit an alert rule for, click the title, and then click **Edit**.
 1. On the Alert tab, click **Create Alert**. If an alert already exists for this panel, then you can just edit the fields on the Alert tab.
 1. Fill out the fields. Descriptions are listed below in [Alert rule fields](#alert-rule-fields).
-1. When you have finished writing your rule, click **Test rule** to make sure the rule returns the results you expect.
+1. When you have finished writing your rule, click **Save** in the upper right corner to save alert rule and the dashboard.
+1. (Optional but recommended) Click **Test rule** to make sure the rule returns the results you expect.
 
 ## Delete an alert
 
@@ -37,9 +38,10 @@ This section describes the fields you fill out to create an alert.
 ### Rule
 
 - **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list.
-- **Evaluate every** and **For -**  Specify the name of the alert rule and how often the scheduler should evaluate the alert rule. 
+- **Evaluate every-**  Specify how often the scheduler should evaluate the alert rule.
+- **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
-You can set a minimum interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) for more information.
+You can set a minimum evaluation interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) for more information.
 
 > **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
 
@@ -120,7 +122,7 @@ The actual notifications are configured and shared between multiple alerts. Read
 
 - **Send to -** Select an alert notification channel if you have one set up.
 - **Message -** Enter a message to be sent on the notification channel. The message can be in text, markdown, or HTML format. It can include links and variables as well.
-- **Tags -** NEED DESCRIPTION HERE
+- **Tags -**  Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "notifications/#all-supported-notifiers" >}}).
 
 ## Alert state history and annotations
 

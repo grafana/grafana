@@ -212,6 +212,8 @@
       name: Create alerts
     - link: /alerting/view-alerts/
       name: View alerts
+    - link: /alerting/pause-an-alert-rule/
+      name: Pause alert rule
     - link: /alerting/troubleshoot-alerts/
       name: Troubleshoot alerts
 - name: Image rendering
