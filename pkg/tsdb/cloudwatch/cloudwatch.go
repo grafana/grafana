@@ -19,8 +19,7 @@ import (
 
 const (
 	cloudWatchDefaultRegion = "default"
-
-	cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+	cloudWatchTSFormat      = "2006-01-02 15:04:05.000"
 )
 
 var (
@@ -60,8 +59,6 @@ type DatasourceInfo struct {
 	AccessKey string
 	SecretKey string
 }
-
-const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 
 // Constants also defined in datasource/cloudwatch/datasource.ts
 const logIdentifierInternal = "__log__grafana_internal__"
