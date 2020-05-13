@@ -8,18 +8,27 @@ import {
   transformDataFrame,
   getFrameDisplayName,
 } from '@grafana/data';
-import { Button, Field, Icon, Select, Table } from '@grafana/ui';
+import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
-import { cx } from 'emotion';
+import { css, cx } from 'emotion';
+import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+
+const { Switch } = LegacyForms;
 
 interface Props {
+  dashboard: DashboardModel;
+  panel: PanelModel;
   data: DataFrame[];
   isLoading: boolean;
+  options: GetDataOptions;
+  onOptionsChange: (options: GetDataOptions) => void;
 }
 
 interface State {
@@ -55,6 +64,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   onTransformationChange = (value: SelectableValue<DataTransformerID>) => {
     this.setState({ transformId: value.value, dataFrameIndex: 0 });
+    this.props.onOptionsChange({
+      ...this.props.options,
+      withTransforms: false,
+    });
   };
 
   getTransformedData(): DataFrame[] {
@@ -74,10 +87,19 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   getProcessedData(): DataFrame[] {
+    const { options } = this.props;
+    let data = this.props.data;
+
+    if (this.state.transformId !== DataTransformerID.noop) {
+      data = this.getTransformedData();
+    }
+
+    // We need to apply field config even though it was already applied in the PanelQueryRunner.
+    // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
-      data: this.getTransformedData(),
+      data,
       theme: config.theme,
-      fieldConfig: { defaults: {}, overrides: [] },
+      fieldConfig: options.withFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
       replaceVariables: (value: string) => {
         return value;
       },
@@ -85,7 +107,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isLoading, data } = this.props;
+    const { isLoading, data, options, onOptionsChange } = this.props;
     const { dataFrameIndex, transformId, transformationOptions } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -110,25 +132,73 @@ export class InspectDataTab extends PureComponent<Props, State> {
       };
     });
 
+    const panelTransformations = this.props.panel.getTransformations();
+
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <div className={styles.toolbar}>
-          {data.length > 1 && (
-            <Field label="Transform data" className="flex-grow-1">
-              <Select options={transformationOptions} value={transformId} onChange={this.onTransformationChange} />
-            </Field>
-          )}
-          {choices.length > 1 && (
-            <Field label="Select result" className={cx(styles.toolbarItem, 'flex-grow-1')}>
-              <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
-            </Field>
-          )}
-          <div className={styles.downloadCsv}>
+        <div className={styles.actionsWrapper}>
+          <div className={styles.leftActions}>
+            <div className={styles.selects}>
+              {data.length > 1 && (
+                <Field
+                  label="Transformer"
+                  className={css`
+                    margin-bottom: 0;
+                  `}
+                >
+                  <Select
+                    options={transformationOptions}
+                    value={transformId}
+                    onChange={this.onTransformationChange}
+                    width={15}
+                  />
+                </Field>
+              )}
+              {choices.length > 1 && (
+                <Field
+                  label="Select result"
+                  className={css`
+                    margin-bottom: 0;
+                  `}
+                >
+                  <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
+                </Field>
+              )}
+            </div>
+
+            <div className={cx(styles.options, styles.dataDisplayOptions)}>
+              <QueryOperationRow title={'Data display options'} isOpen={false}>
+                {panelTransformations && panelTransformations.length > 0 && (transformId as any) !== 'join by time' && (
+                  <div className="gf-form-inline">
+                    <Switch
+                      tooltip="Data shown in the table will be transformed using transformations defined in the panel"
+                      label="Apply panel transformations"
+                      labelClass="width-12"
+                      checked={!!options.withTransforms}
+                      onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+                    />
+                  </div>
+                )}
+                <div className="gf-form-inline">
+                  <Switch
+                    tooltip="Data shown in the table will have panel field configuration applied, for example units or display name"
+                    label="Apply field configuration"
+                    labelClass="width-12"
+                    checked={!!options.withFieldConfig}
+                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
+                  />
+                </div>
+              </QueryOperationRow>
+            </div>
+          </div>
+
+          <div className={styles.options}>
             <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
               Download CSV
             </Button>
           </div>
         </div>
+
         <div style={{ flexGrow: 1 }}>
           <AutoSizer>
             {({ width, height }) => {
