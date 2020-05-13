@@ -53,7 +53,7 @@ Transformations are available from the Transform tab in the bottom pane of the P
 
    If you have trouble, click the bug icon to [debug your transformations](#debug-transformations).
 
-   Click the trash can icon to permanently remove a transformation.
+   Click the trash can icon to remove a transformation.
 
 {{< docs-imagebox img="/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
