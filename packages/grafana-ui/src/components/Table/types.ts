@@ -7,6 +7,7 @@ export interface TableFieldOptions {
   width: number;
   align: FieldTextAlignment;
   displayMode: TableCellDisplayMode;
+  hidden?: boolean;
 }
 
 export enum TableCellDisplayMode {
