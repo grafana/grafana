@@ -10,10 +10,13 @@ export interface Card {
   check: () => Promise<boolean>;
   done: boolean;
   heading: string;
+  learnHref?: string;
+}
+
+export interface TutorialCardType extends Card {
   info?: string;
   // For local storage
-  key?: string;
-  learnHref?: string;
+  key: string;
 }
 
 export interface SetupStep {
@@ -21,6 +24,6 @@ export interface SetupStep {
   subheading: string;
   title: string;
   info: string;
-  cards: Card[];
+  cards: (Card | TutorialCardType)[];
   done: boolean;
 }
