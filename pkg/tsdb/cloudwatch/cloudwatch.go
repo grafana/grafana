@@ -61,9 +61,11 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
+const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+
 // Constants also defined in datasource/cloudwatch/datasource.ts
-const LOG_IDENTIFIER_INTERNAL = "__log__grafana_internal__"
-const LOGSTREAM_IDENTIFIER_INTERNAL = "__logstream__grafana_internal__"
+const logIdentifierInternal = "__log__grafana_internal__"
+const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
 // NewCloudWatchExecutor finds the appropriate CloudWatchExecutor for the given
 // data source, using a global cache protected by a mutex. If there is none
