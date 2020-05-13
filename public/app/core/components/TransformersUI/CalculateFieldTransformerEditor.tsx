@@ -201,6 +201,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               stats={[options.reducer]}
               onChange={this.onStatsChange}
               defaultStat={ReducerID.sum}
+              menuPlacement="bottom"
             />
           </div>
         </div>
@@ -279,12 +280,14 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             className="min-width-18 gf-form-spacing"
             value={options?.left}
             onChange={this.onBinaryLeftChanged}
+            menuPlacement="bottom"
           />
           <Select
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
+            menuPlacement="bottom"
           />
           <Select
             allowCustomValue
@@ -293,6 +296,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             options={rightNames}
             value={options?.right}
             onChange={this.onBinaryRightChanged}
+            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -318,6 +322,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               options={calculationModes}
               value={calculationModes.find(v => v.value === mode)}
               onChange={this.onModeChanged}
+              menuPlacement="bottom"
             />
           </div>
         </div>
