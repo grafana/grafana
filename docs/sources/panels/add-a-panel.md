@@ -25,13 +25,13 @@ Grafana creates an empty graph panel with your default data source selected.
 
 ## 2. Edit panel settings
 
-While not required, we recommend that you add a helpful title and description to your panel. You can use variables you have defined in either field, but not global variables.
+While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/templates-and-variables.md" >}}) in either field, but not [global variables]({{< relref "../variables/global-variables.md" >}}).
 
 ![](/img/docs/panels/panel-settings-7-0.png)
 
 **Panel title -** Text entered in this field is displayed at the top of your panel in the Panel editor and in the dashboard.
 
-**Description -** Write a description of the panel and the data you are displaying. Pretend you are explaining it to a new user six months from now, when it is no longer fresh in your mind. Future editors (possibly yourself) will thank you.
+**Description -** Text entered in this field is displayed in a tooltip in the upper left corner of the panel. Write a description of the panel and the data you are displaying. Pretend you are explaining it to a new user six months from now, when it is no longer fresh in your mind. Future editors (possibly yourself) will thank you.
 
 ## 3. Write a query
 
@@ -42,7 +42,7 @@ Each panel needs at least one query to display a visualization. You write querie
 
 ## 4. Choose a visualization type
 
-In the Visualization section, click a visualization type. Grafana displays a preview of your query with that visualization applied. 
+In the Visualization section of the Panel tab, click a visualization type. Grafana displays a preview of your query results with that visualization applied.
 
 For more information about individual visualizations, refer to [Visualizations](ADD LINK)
 
