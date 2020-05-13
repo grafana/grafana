@@ -5,6 +5,7 @@ import { MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from '../reducers/actionTypes'
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
 import { findSelected } from '../utils';
 import { useSearch } from './useSearch';
+import config from 'app/core/config';
 
 export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => void) => {
   const reducer = useReducer(searchReducer, dashboardsSearchState);
@@ -31,7 +32,11 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
           if (selectedItem.type === DashboardSearchItemType.DashFolder) {
             onToggleSection(selectedItem as DashboardSection);
           } else {
-            getLocationSrv().update({ path: selectedItem.url });
+            getLocationSrv().update({
+              path: selectedItem.url.startsWith(config.appSubUrl)
+                ? selectedItem.url.split(config.appSubUrl + '/')[1]
+                : selectedItem.url,
+            });
             // Delay closing to prevent current page flicker
             setTimeout(onCloseSearch, 0);
           }
