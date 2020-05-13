@@ -582,6 +582,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     if (makeReplacements) {
       requestParams.queries.forEach(query => {
+        if (query.hasOwnProperty('queryString')) {
+          query.queryString = this.replace(query.queryString, scopedVars, true);
+        }
         query.region = this.replace(query.region, scopedVars, true, 'region');
         query.region = this.getActualRegion(query.region);
       });
