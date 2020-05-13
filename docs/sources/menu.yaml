@@ -208,8 +208,6 @@
       name: Overview
     - link: /alerting/rules/
       name: Engine and Rules
-    - link: /alerting/metrics/
-      name: Metrics
     - link: /alerting/notifications/
       name: Notifications
 - name: Image rendering
