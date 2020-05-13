@@ -626,7 +626,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 			return !lastPage
 		})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to call cloudwatch:ListMetrics, %v", err)
+		return nil, fmt.Errorf("Failed to call cloudwatch:ListMetrics, %w", err)
 	}
 
 	return &resp, nil
