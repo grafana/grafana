@@ -204,6 +204,8 @@
 - name: Alerting
   link: /alerting/
   children:
+    - link: /alerting/alerts-overview/
+      name: Overview
     - link: /alerting/rules/
       name: Engine and Rules
     - link: /alerting/metrics/
