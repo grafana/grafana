@@ -138,13 +138,13 @@ In the example below, I hid the value field and renamed Max and Min.
 
 {{< docs-imagebox img="/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-### Outer join
+### Join by field (outer join)
 
 Use this transformation to join multiple time series from a result set by field.
 
 This transformation is especially useful if you want to combine queries so that you can calculate results from the fields.
 
-In the example below, I have two queries displaying streaming data in a table visualization. I can only view the results of one query at a time.
+In the example below, I have a template query displaying time series data from multiple servers in a table visualization. I can only view the results of one query at a time.
 
 {{< docs-imagebox img="/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
