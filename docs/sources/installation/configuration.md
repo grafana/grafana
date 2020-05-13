@@ -560,6 +560,9 @@ Name to be used when sending out emails, defaults to `Grafana`
 ### ehlo_identity
 Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
 
+### startTLS_policy
+Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is "OpportunisticStartTLS"
+
 ## [log]
 
 ### mode

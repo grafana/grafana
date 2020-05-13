@@ -45,6 +45,18 @@ export const zipkinResponse: ZipkinSpan[] = [
       error: '404',
     },
   },
+  {
+    traceId: 'trace_id',
+    parentId: 'span 1 id',
+    name: 'span 3',
+    id: 'span 3 id',
+    timestamp: 6,
+    duration: 7,
+    remoteEndpoint: {
+      serviceName: 'spanstore-jdbc',
+      ipv6: '127.0.0.1',
+    },
+  },
 ];
 
 export const jaegerTrace: TraceData & { spans: SpanData[] } = {
@@ -71,6 +83,16 @@ export const jaegerTrace: TraceData & { spans: SpanData[] } = {
           key: 'ipv4',
           type: 'string',
           value: '1.0.0.1',
+        },
+      ],
+    },
+    'spanstore-jdbc': {
+      serviceName: 'spanstore-jdbc',
+      tags: [
+        {
+          key: 'ipv6',
+          type: 'string',
+          value: '127.0.0.1',
         },
       ],
     },
@@ -133,6 +155,25 @@ export const jaegerTrace: TraceData & { spans: SpanData[] } = {
           value: true,
         },
       ],
+      references: [
+        {
+          refType: 'CHILD_OF',
+          spanID: 'span 1 id',
+          traceID: 'trace_id',
+        },
+      ],
+    },
+    {
+      duration: 7,
+      flags: 1,
+      logs: [],
+      operationName: 'span 3',
+      processID: 'spanstore-jdbc',
+      startTime: 6,
+      tags: [],
+      spanID: 'span 3 id',
+      traceID: 'trace_id',
+      warnings: null as any,
       references: [
         {
           refType: 'CHILD_OF',

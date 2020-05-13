@@ -52,11 +52,11 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 		if *fieldName == "@timestamp" {
 			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{Title: "Time"})
-		} else if *fieldName == "@logStream" || *fieldName == "@log" {
+		} else if *fieldName == LOGSTREAM_IDENTIFIER_INTERNAL || *fieldName == LOG_IDENTIFIER_INTERNAL {
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
 					Custom: map[string]interface{}{
-						"Hidden": true,
+						"hidden": true,
 					},
 				},
 			)

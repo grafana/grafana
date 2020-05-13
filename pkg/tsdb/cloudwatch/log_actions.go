@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -156,7 +155,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	messages := make([]*string, 0)
@@ -196,7 +195,7 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 	}
 
 	if err != nil || response == nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	logGroupNames := make([]*string, 0)
@@ -225,12 +224,16 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
 	}
 
+	// The fields @log and @logStream are always included in the results of a user's query
+	// so that a row's context can be retrieved later if necessary.
+	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
+	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
 		EndTime:       aws.Int64(endTime.Unix()),
 		Limit:         aws.Int64(parameters.Get("limit").MustInt64(1000)),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
-		QueryString:   aws.String("fields @timestamp,@log,@logStream|" + parameters.Get("queryString").MustString("")),
+		QueryString:   aws.String("fields @timestamp,ltrim(@log) as " + LOG_IDENTIFIER_INTERNAL + ",ltrim(@logStream) as " + LOGSTREAM_IDENTIFIER_INTERNAL + "|" + parameters.Get("queryString").MustString("")),
 	}
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
@@ -238,7 +241,7 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 func (e *CloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
@@ -262,15 +265,13 @@ func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 
 	response, err := logsClient.StopQueryWithContext(ctx, queryInput)
 	if err != nil {
-		awsErr := err.(awserr.Error)
+		awsErr, ok := err.(awserr.Error)
 		// If the query has already stopped by the time CloudWatch receives the stop query request,
 		// an "InvalidParameterException" error is returned. For our purposes though the query has been
 		// stopped, so we ignore the error.
-		if awsErr.Code() == "InvalidParameterException" {
+		if ok && awsErr.Code() == "InvalidParameterException" {
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
-		} else {
-			err = errutil.Wrap(awsErr.Message(), err)
 		}
 	}
 
@@ -280,7 +281,7 @@ func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 func (e *CloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	response, err := e.executeStopQuery(ctx, logsClient, parameters)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	dataFrame := data.NewFrame("StopQueryResponse", data.NewField("success", nil, []bool{*response.Success}))
@@ -298,7 +299,7 @@ func (e *CloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, refID string) (*data.Frame, error) {
 	getQueryResultsOutput, err := e.executeGetQueryResults(ctx, logsClient, parameters)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
@@ -321,7 +322,7 @@ func (e *CloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, logsCl
 
 	getLogGroupFieldsOutput, err := logsClient.GetLogGroupFieldsWithContext(ctx, queryInput)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	fieldNames := make([]*string, 0)

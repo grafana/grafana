@@ -1,13 +1,14 @@
 +++
-title = "Sharing a Panel"
+title = "Share a Panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
 type = "docs"
 [menu.docs]
 parent = "dashboard_features"
 weight = 6
+draft = "true"
 +++
 
-# Share Panel
+# Share a panel
 
 Click a panel title to open the panel menu, then click share in the panel menu to open the Share Panel dialog. Here you have access to a link that will take you to exactly this panel with the current time range and selected template variables. Below are ways to share a panel.
 
@@ -27,7 +28,6 @@ https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=156871968017
 - **height**: height in pixels. Default is 400.
 - **tz**: timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC
 - **timeout**: number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.
-- **scale**: numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+.
 
 ## Embed Panel
 

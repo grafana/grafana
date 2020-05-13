@@ -1,6 +1,6 @@
 import { identity } from 'lodash';
 import { keyBy } from 'lodash';
-import { ZipkinAnnotation, ZipkinSpan } from '../types';
+import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
 import { KeyValuePair, Log, Process, SpanData, TraceData } from '@jaegertracing/jaeger-ui-components';
 
 /**
@@ -22,7 +22,7 @@ function transformSpan(span: ZipkinSpan): SpanData {
     flags: 1,
     logs: span.annotations?.map(transformAnnotation) ?? [],
     operationName: span.name,
-    processID: span.localEndpoint.serviceName,
+    processID: span.localEndpoint?.serviceName || span.remoteEndpoint?.serviceName || 'unknown',
     startTime: span.timestamp,
     spanID: span.id,
     traceID: span.traceId,
@@ -77,22 +77,36 @@ function transformAnnotation(annotation: ZipkinAnnotation): Log {
 }
 
 function gatherProcesses(zSpans: ZipkinSpan[]): Record<string, Process> {
-  const processes = zSpans.map(span => ({
-    serviceName: span.localEndpoint.serviceName,
-    tags: [
-      {
-        key: 'ipv4',
-        type: 'string',
-        value: span.localEndpoint.ipv4,
-      },
-      span.localEndpoint.port
-        ? {
-            key: 'port',
-            type: 'number',
-            value: span.localEndpoint.port,
-          }
-        : undefined,
-    ].filter(identity) as KeyValuePair[],
-  }));
+  const processes = zSpans.reduce((acc, span) => {
+    if (span.localEndpoint) {
+      acc.push(endpointToProcess(span.localEndpoint));
+    }
+    if (span.remoteEndpoint) {
+      acc.push(endpointToProcess(span.remoteEndpoint));
+    }
+    return acc;
+  }, [] as Process[]);
   return keyBy(processes, 'serviceName');
+}
+
+function endpointToProcess(endpoint: ZipkinEndpoint): Process {
+  return {
+    serviceName: endpoint.serviceName,
+    tags: [
+      valueToTag('ipv4', endpoint.ipv4, 'string'),
+      valueToTag('ipv6', endpoint.ipv6, 'string'),
+      valueToTag('port', endpoint.port, 'number'),
+    ].filter(identity) as KeyValuePair[],
+  };
+}
+
+function valueToTag(key: string, value: string | number | undefined, type: string): KeyValuePair | undefined {
+  if (!value) {
+    return undefined;
+  }
+  return {
+    key,
+    type,
+    value,
+  };
 }
