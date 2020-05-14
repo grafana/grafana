@@ -32,7 +32,8 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   constructor(props: FilterByNameTransformerEditorProps) {
     super(props);
     this.state = {
-      include: props.options.include || [],
+      include: props.options.includeNames || [],
+      regex: props.options.includePattern,
       options: [],
       selected: [],
       isRegexValid: true,
@@ -51,7 +52,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
   private initOptions() {
     const { input, options } = this.props;
-    const configuredOptions = options.include ? options.include : [];
+    const configuredOptions = options.includeNames ?? [];
 
     const allNames: FieldNameInfo[] = [];
     const byName: KeyValue<FieldNameInfo> = {};
@@ -73,28 +74,20 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       }
     }
 
-    let regexOption;
-
     if (configuredOptions.length) {
-      let selected: FieldNameInfo[] = [];
-
-      for (const o of configuredOptions) {
-        const selectedFields = allNames.filter(n => n.name === o);
-        if (selectedFields.length > 0) {
-          selected = selected.concat(selectedFields);
-        } else {
-          // there can be only one regex in the options
-          regexOption = o;
-        }
-      }
+      const selected: FieldNameInfo[] = allNames.filter(n => configuredOptions.includes(n.name));
 
       this.setState({
         options: allNames,
         selected: selected.map(s => s.name),
-        regex: regexOption,
+        regex: options.includePattern,
       });
     } else {
-      this.setState({ options: allNames, selected: allNames.map(n => n.name) });
+      this.setState({
+        options: allNames,
+        selected: allNames.map(n => n.name),
+        regex: options.includePattern,
+      });
     }
   }
 
@@ -109,17 +102,17 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
   onChange = (selected: string[]) => {
     const { regex, isRegexValid } = this.state;
-    let include = selected;
+    const options: FilterFieldsByNameTransformerOptions = {
+      ...this.props.options,
+      includeNames: selected,
+    };
 
     if (regex && isRegexValid) {
-      include = include.concat([regex]);
+      options.includePattern = regex;
     }
 
     this.setState({ selected }, () => {
-      this.props.onChange({
-        ...this.props.options,
-        include,
-      });
+      this.props.onChange(options);
     });
   };
 
@@ -136,12 +129,13 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     if (isRegexValid) {
       this.props.onChange({
         ...this.props.options,
-        include: regex ? [...selected, regex] : selected,
+        includeNames: [],
+        includePattern: regex,
       });
     } else {
       this.props.onChange({
         ...this.props.options,
-        include: selected,
+        includeNames: selected,
       });
     }
     this.setState({

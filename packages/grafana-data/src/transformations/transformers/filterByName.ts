@@ -4,8 +4,10 @@ import { FieldMatcherID } from '../matchers/ids';
 import { FilterOptions, filterFieldsTransformer } from './filter';
 
 export interface FilterFieldsByNameTransformerOptions {
-  include?: string[];
-  exclude?: string[];
+  includeNames?: string[];
+  includePattern?: string;
+  excludeNames?: string[];
+  excludePattern?: string;
 }
 
 export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNameTransformerOptions> = {
@@ -20,17 +22,17 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    */
   transformer: (options: FilterFieldsByNameTransformerOptions) => {
     const filterOptions: FilterOptions = {
-      include: getMatcherConfig(options.include),
-      exclude: getMatcherConfig(options.exclude),
+      include: getMatcherConfig(options.includeNames, options.includePattern),
+      exclude: getMatcherConfig(options.excludeNames, options.excludePattern),
     };
 
     return filterFieldsTransformer.transformer(filterOptions);
   },
 };
 
-const getMatcherConfig = (names?: string[]): MatcherConfig | undefined => {
-  if (!Array.isArray(names) || names.length === 0) {
-    return undefined;
+const getMatcherConfig = (names?: string[], pattern?: string): MatcherConfig | undefined => {
+  if ((Array.isArray(names) && names.length > 0) || pattern) {
+    return { id: FieldMatcherID.byName, options: { names, pattern } };
   }
-  return { id: FieldMatcherID.byName, options: { names } };
+  return undefined;
 };

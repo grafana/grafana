@@ -27,7 +27,7 @@ import defaults from 'lodash/defaults';
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
 interface CalculateFieldTransformerEditorState {
-  include: string;
+  include: string[];
   names: string[];
   selected: string[];
 }
@@ -45,7 +45,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     super(props);
 
     this.state = {
-      include: props.options?.reduce?.include || '',
+      include: props.options?.reduce?.include || [],
       names: [],
       selected: [],
     };
@@ -63,8 +63,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
   private initOptions() {
     const { input, options } = this.props;
-    const include = options?.reduce?.include || '';
-    const configuredOptions = include.split('|');
+    const configuredOptions = options?.reduce?.include || [];
 
     const allNames: string[] = [];
     const byName: KeyValue<boolean> = {};
@@ -156,7 +155,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { reduce } = this.props.options;
     this.updateReduceOptions({
       ...reduce!,
-      include: selected.join('|'),
+      include: selected,
     });
   };
 

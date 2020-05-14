@@ -17,7 +17,7 @@ export enum CalculateFieldMode {
 }
 
 export interface ReduceOptions {
-  include?: string; // Assume all fields
+  include?: string[]; // Assume all fields
   reducer: ReducerID;
   nullValueMode?: NullValueMode;
 }
@@ -131,11 +131,9 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
   });
 
   if (options.include && options.include.length) {
-    const pattern = options.include;
-
     matcher = getFieldMatcher({
       id: FieldMatcherID.byName,
-      options: { pattern },
+      options: { names: options.include },
     });
   }
 
