@@ -9,7 +9,6 @@ parent = "dashboards"
 weight = 7
 +++
 
-
 # Time range controls
 
 Grafana provides several ways to manage the time ranges of the data being visualized, both at the dashboard level and the panel level. 
@@ -86,9 +85,9 @@ Click and drag to select the time range in the visualization that you want to vi
 
 ### Refresh dashboard
 
+Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations.
 
-
-## Change dashboard refresh interval
+By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
 
 ## Dashboard time settings
 
@@ -108,8 +107,9 @@ To access the dashboard time settings, click the **Dashboard settings** (gear) i
 
 In [Query options]({{< relref "queries.md#query-options" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
-## Controlling time range using URL
-Time range of a dashboard can be controlled by providing following query parameters in dashboard URL:
+## Control the time range using a URL
+
+Time range of a dashboard can be controlled by providing following query parameters in the dashboard URL:
 
 - `from` - defines lower limit of the time range, specified in ms epoch
 - `to` - defines upper limit of the time range, specified in ms epoch
