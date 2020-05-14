@@ -24,7 +24,7 @@ The main highlights are:
 
 - [**New Panel Editor** Redesign based on community feedback.]({{< relref "#new-panel-editor" >}})
 - [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
-- [**Enterprise** Usage Insights, Presence Indicator and Auth Improvements.]({{< relref "#grafana-enterprise" >}})
+- [**Enterprise** Usage insights, Presence indicator, and Auth improvements.]({{< relref "#grafana-enterprise" >}})
 - [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
 - [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-overrides" >}})
 - [**Table** New Table panel.]({{< relref "#table-panel" >}})
@@ -180,11 +180,11 @@ This includes problems like:
 
 {{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
 
-### Usage analytics and presence
+### Usage insights and Presence indicator
 
 This release includes a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage and errors. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
 
-{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence Indicator" >}}
+{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
 
 ### SAML Role and Team Sync
 
