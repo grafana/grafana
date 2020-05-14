@@ -13,26 +13,29 @@ const matchesTimeConfig: MatcherConfig = {
   options: FieldType.time,
 };
 const both = [matchesNumberConfig, matchesTimeConfig];
+const allFrames = [simpleSeriesWithTypes];
 
 describe('Check Predicates', () => {
   it('can not match both', () => {
     const matches = fieldMatchers.get(MatcherID.allMatch).get(both);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matches(field)).toBe(false);
+      expect(matches(field, simpleSeriesWithTypes, allFrames)).toBe(false);
     }
   });
 
   it('match either time or number', () => {
     const matches = fieldMatchers.get(MatcherID.anyMatch).get(both);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matches(field)).toBe(field.type === FieldType.number || field.type === FieldType.time);
+      expect(matches(field, simpleSeriesWithTypes, allFrames)).toBe(
+        field.type === FieldType.number || field.type === FieldType.time
+      );
     }
   });
 
   it('match not time', () => {
     const matches = fieldMatchers.get(MatcherID.invertMatch).get(matchesTimeConfig);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matches(field)).toBe(field.type !== FieldType.time);
+      expect(matches(field, simpleSeriesWithTypes, allFrames)).toBe(field.type !== FieldType.time);
     }
   });
 });
