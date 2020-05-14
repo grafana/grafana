@@ -31,6 +31,14 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<FieldNameMatcherOption
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
+export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<FieldNameMatcherOptions> = {
+  id: FieldMatcherID.byName,
+  component: FieldNameMatcherEditor,
+  matcher: fieldMatchers.get(FieldMatcherID.byName),
+  name: 'Filter by field',
+  description: 'Set properties for fields matching the name',
+};
+
 const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
   return useMemo(() => {
     const names: Set<string> = new Set();
@@ -59,12 +67,4 @@ const getValueFromOptions = (options: FieldNameMatcherOptions): string | undefin
     return undefined;
   }
   return options.names[0];
-};
-
-export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<FieldNameMatcherOptions> = {
-  id: FieldMatcherID.byName,
-  component: FieldNameMatcherEditor,
-  matcher: fieldMatchers.get(FieldMatcherID.byName),
-  name: 'Filter by field',
-  description: 'Set properties for fields matching the name',
 };
