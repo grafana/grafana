@@ -290,7 +290,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
         if (i > 0) {
           csv += config.delimiter;
         }
-        csv += getFieldDisplayName(fields[i]);
+        csv += getFieldDisplayName(fields[i], series);
       }
       csv += config.newline;
     }
