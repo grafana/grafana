@@ -6,7 +6,7 @@ type = "docs"
 name = "news-panel"
 parent = "visualizations"
 weight = 850
-draft = "true"
+draft = "false"
 +++
 
 ## News panel
