@@ -15,6 +15,9 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			continue
 		}
 		if len(row) == 1 {
+			if row[0].Value == nil {
+				continue
+			}
 			// Sometimes it sends row with only timestamp
 			if _, err := time.Parse(cloudWatchTSFormat, *row[0].Value); err == nil {
 				continue
