@@ -86,3 +86,20 @@ license_path = /company/secrets/license.jwt
 ```
 
 This setting can also be set with an environment variable, which is useful if you're running Grafana with Docker and have a custom volume where you have placed the license file. In this case, set the environment variable `GF_ENTERPRISE_LICENSE_PATH` to point to the location of your license file.
+
+### Root URL
+
+As part of the validation checks at startup, Grafana will compare the license URL to the [`root_url`](../installation/configuration/#root-url) in your configuration. Make sure to update the [`root_url`](../installation/configuration/#root-url) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
+
+In `grafana.ini`:
+
+```
+[server]
+root_url = https://grafana.blah.com/
+```
+
+Or with the environment variable:
+
+```
+GF_SERVER_ROOT_URL=https://grafana.blah.com/
+```
