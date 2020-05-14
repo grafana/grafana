@@ -4,7 +4,7 @@ import { shallow } from 'enzyme';
 
 describe('QueryOperationAction', () => {
   it('renders', () => {
-    expect(() => shallow(<QueryOperationAction icon="panel-add" onClick={() => {}} />)).not.toThrow();
+    expect(() => shallow(<QueryOperationAction icon="panel-add" onClick={() => {}} title="" />)).not.toThrow();
   });
   describe('when disabled', () => {
     it('does not call onClick handler', () => {
