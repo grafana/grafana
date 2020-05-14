@@ -22,7 +22,7 @@ Field configuration options allow you to change how the data is displayed in you
 
 > **Note:** The time fields are not affected by field configuration options or overrides.
 
-_Field configuration options_, both standard and custom, are applied in the **Field** tab in the panel editor. Changes on this panel apply to all fields in the visualization. For example, if you change the unit to percentage, then all fields with numeric values will be calculated in percentages. [Apply a field option](#configure-all-fields).
+_Field configuration options_, both standard and custom, are applied in the **Field** tab in the panel editor. Changes on this panel apply to all fields in the visualization. For example, if you change the unit to percentage, then all fields with numeric values will be displayed in percentages. [Apply a field option](#configure-all-fields).
 
 _Field overrides_ are applied in the _Overrides_ tab in the panel editor. They are exactly the same as field configuration options except that they only change fields you select. The current feature only allows you to change one field at a time, but future improvements will offer more flexibility. [Apply an override](#override-a-field).
 
