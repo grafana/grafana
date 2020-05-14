@@ -72,4 +72,4 @@ Learn more about Grafana options and packages.
 
 #### Go
 
-- [Grafana Plugin SDK](https://pkg.go.dev/mod/github.com/grafana/grafana-plugin-sdk-go?tab=overview)
+- [Grafana Plugin SDK for Go]({{< relref "backend/grafana-plugin-sdk-for-go" >}})
