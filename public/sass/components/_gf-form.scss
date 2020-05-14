@@ -164,7 +164,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-pre {
-  display: block;
+  display: block !important;
   flex-grow: 1;
   margin: 0;
   margin-right: $space-xs;
