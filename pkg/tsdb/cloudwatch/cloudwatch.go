@@ -27,6 +27,8 @@ var (
 	// keep a state for each data source.
 	executors    = make(map[int64]*CloudWatchExecutor)
 	executorLock = sync.Mutex{}
+	aliasFormat  = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	plog         = log.New("tsdb.cloudwatch")
 )
 
 // CloudWatchExecutor represents a structure holding enough information to execute
@@ -86,15 +88,8 @@ func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	return exec, nil
 }
 
-var (
-	plog        log.Logger
-	aliasFormat *regexp.Regexp
-)
-
 func init() {
-	plog = log.New("tsdb.cloudwatch")
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
-	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
