@@ -33,8 +33,8 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   constructor(props: FilterByNameTransformerEditorProps) {
     super(props);
     this.state = {
-      include: props.options.includeNames || [],
-      regex: props.options.includePattern,
+      include: props.options.include?.names || [],
+      regex: props.options.include?.pattern,
       options: [],
       selected: [],
       isRegexValid: true,
@@ -53,7 +53,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
   private initOptions() {
     const { input, options } = this.props;
-    const configuredOptions = Array.from(options.includeNames ?? []);
+    const configuredOptions = Array.from(options.include?.names ?? []);
 
     const allNames: FieldNameInfo[] = [];
     const byName: KeyValue<FieldNameInfo> = {};
@@ -75,9 +75,9 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       }
     }
 
-    if (options.includePattern) {
+    if (options.include?.pattern) {
       try {
-        const regex = stringToJsRegex(options.includePattern);
+        const regex = stringToJsRegex(options.include.pattern);
 
         for (const info of allNames) {
           if (regex.test(info.name)) {
@@ -95,13 +95,13 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       this.setState({
         options: allNames,
         selected: selected.map(s => s.name),
-        regex: options.includePattern,
+        regex: options.include?.pattern,
       });
     } else {
       this.setState({
         options: allNames,
         selected: allNames.map(n => n.name),
-        regex: options.includePattern,
+        regex: options.include?.pattern,
       });
     }
   }
@@ -119,11 +119,12 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     const { regex, isRegexValid } = this.state;
     const options: FilterFieldsByNameTransformerOptions = {
       ...this.props.options,
-      includeNames: selected,
+      include: { names: selected },
     };
 
     if (regex && isRegexValid) {
-      options.includePattern = regex;
+      options.include = options.include ?? {};
+      options.include.pattern = regex;
     }
 
     this.setState({ selected }, () => {
@@ -146,14 +147,12 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     if (isRegexValid) {
       this.props.onChange({
         ...this.props.options,
-        includeNames: [],
-        includePattern: regex,
+        include: { pattern: regex },
       });
     } else {
       this.props.onChange({
         ...this.props.options,
-        includeNames: selected,
-        includePattern: undefined,
+        include: { names: selected },
       });
     }
 

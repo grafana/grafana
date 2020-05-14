@@ -272,7 +272,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form">
           <Select
-            allowCustomValue
             placeholder="Field or number"
             options={leftNames}
             className="min-width-18 gf-form-spacing"
@@ -286,7 +285,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             onChange={this.onBinaryOperationChanged}
           />
           <Select
-            allowCustomValue
             placeholder="Field or number"
             className="min-width-10"
             options={rightNames}

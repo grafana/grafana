@@ -8,8 +8,8 @@ describe('Field Name Matcher', () => {
       fields: [{ name: 'A hello world' }, { name: 'AAA' }, { name: 'C' }],
     });
     const config = {
-      id: FieldMatcherID.byName,
-      options: { pattern: '/.*/' },
+      id: FieldMatcherID.byRegexp,
+      options: '/.*/',
     };
 
     const matcher = getFieldMatcher(config);
@@ -24,8 +24,8 @@ describe('Field Name Matcher', () => {
       fields: [{ name: '12' }, { name: '112' }, { name: '13' }],
     });
     const config = {
-      id: FieldMatcherID.byName,
-      options: { pattern: '/^\\d+$/' },
+      id: FieldMatcherID.byRegexp,
+      options: '/^\\d+$/',
     };
 
     const matcher = getFieldMatcher(config);
@@ -40,8 +40,8 @@ describe('Field Name Matcher', () => {
       fields: [{ name: 'some.instance.path' }, { name: '112' }, { name: '13' }],
     });
     const config = {
-      id: FieldMatcherID.byName,
-      options: { pattern: '/\\b(?:\\S+?\\.)+\\S+\\b$/' },
+      id: FieldMatcherID.byRegexp,
+      options: '/\\b(?:\\S+?\\.)+\\S+\\b$/',
     };
 
     const matcher = getFieldMatcher(config);

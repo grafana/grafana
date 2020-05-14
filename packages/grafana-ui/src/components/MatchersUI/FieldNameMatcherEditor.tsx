@@ -1,16 +1,9 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import {
-  FieldMatcherID,
-  fieldMatchers,
-  getFieldDisplayName,
-  FieldNameMatcherOptions,
-  SelectableValue,
-  DataFrame,
-} from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, DataFrame } from '@grafana/data';
 import { Select } from '../Select/Select';
 
-export const FieldNameMatcherEditor = memo<MatcherUIProps<FieldNameMatcherOptions>>(props => {
+export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
   const { data, options } = props;
   const names = useFieldDisplayNames(data);
   const selectOptions = useSelectOptions(names);
@@ -20,18 +13,16 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<FieldNameMatcherOption
       if (!selection.value || !names.has(selection.value)) {
         return;
       }
-      return props.onChange({ names: [selection.value] });
+      return props.onChange(selection.value);
     },
-    [names]
+    [names, props.onChange]
   );
 
-  const value = getValueFromOptions(options);
-  const selectedOption = selectOptions.find(v => v.value === value);
-
+  const selectedOption = selectOptions.find(v => v.value === options);
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
-export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<FieldNameMatcherOptions> = {
+export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byName,
   component: FieldNameMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byName),
@@ -60,11 +51,4 @@ const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<stri
       label: n,
     }));
   }, [displayNames]);
-};
-
-const getValueFromOptions = (options: FieldNameMatcherOptions): string | undefined => {
-  if (!Array.isArray(options?.names) || options?.names.length !== 1) {
-    return undefined;
-  }
-  return options.names[0];
 };

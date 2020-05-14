@@ -51,7 +51,7 @@ export class TablePanel extends Component<Props> {
       }
     } else {
       overrides.push({
-        matcher: { id: matcherId, options: { names: [fieldDisplayName] } },
+        matcher: { id: matcherId, options: fieldDisplayName },
         properties: [{ id: propId, value: width }],
       });
     }

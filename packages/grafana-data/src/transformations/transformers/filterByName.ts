@@ -2,12 +2,11 @@ import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
 import { FilterOptions, filterFieldsTransformer } from './filter';
+import { RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
 
 export interface FilterFieldsByNameTransformerOptions {
-  includeNames?: string[];
-  includePattern?: string;
-  excludeNames?: string[];
-  excludePattern?: string;
+  include?: RegexpOrNamesMatcherOptions;
+  exclude?: RegexpOrNamesMatcherOptions;
 }
 
 export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNameTransformerOptions> = {
@@ -22,17 +21,32 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    */
   transformer: (options: FilterFieldsByNameTransformerOptions) => {
     const filterOptions: FilterOptions = {
-      include: getMatcherConfig(options.includeNames, options.includePattern),
-      exclude: getMatcherConfig(options.excludeNames, options.excludePattern),
+      include: getMatcherConfig(options.include),
+      exclude: getMatcherConfig(options.exclude),
     };
 
     return filterFieldsTransformer.transformer(filterOptions);
   },
 };
 
-const getMatcherConfig = (names?: string[], pattern?: string): MatcherConfig | undefined => {
-  if ((Array.isArray(names) && names.length > 0) || pattern) {
-    return { id: FieldMatcherID.byName, options: { names, pattern } };
+const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
+  if (!options) {
+    return undefined;
   }
-  return undefined;
+
+  const { names, pattern } = options;
+
+  if ((!Array.isArray(names) || names.length === 0) && !pattern) {
+    return undefined;
+  }
+
+  if (!pattern) {
+    return { id: FieldMatcherID.byNames, options: names };
+  }
+
+  if (!Array.isArray(names) || names.length === 0) {
+    return { id: FieldMatcherID.byRegexp, options: pattern };
+  }
+
+  return { id: FieldMatcherID.byRegexpOrNames, options };
 };

@@ -35,7 +35,9 @@ describe('filterByName transformer', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
-          includePattern: '/^(startsWith)/',
+          include: {
+            pattern: '/^(startsWith)/',
+          },
         },
       };
 
@@ -48,7 +50,9 @@ describe('filterByName transformer', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
-          excludePattern: '/^(startsWith)/',
+          exclude: {
+            pattern: '/^(startsWith)/',
+          },
         },
       };
 
@@ -61,8 +65,8 @@ describe('filterByName transformer', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
-          excludePattern: '/^(startsWith)/',
-          includePattern: '/^(B)$/',
+          exclude: { pattern: '/^(startsWith)/' },
+          include: { pattern: '/^(B)$/' },
         },
       };
 
