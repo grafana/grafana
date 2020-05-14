@@ -33,8 +33,8 @@ To import a dashboard click the + icon in the side menu, and then click **Import
 
 {{< docs-imagebox img="/img/docs/v70/import_step1.png" max-width="700px" >}}
 
-From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
-URL or paste dashboard json text directly into the text area.
+From here you can upload a dashboard JSON file, paste a [Grafana.com](https://grafana.com) dashboard
+URL or paste dashboard JSON text directly into the text area.
 
 {{< docs-imagebox img="/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
 
