@@ -3,6 +3,7 @@ set -eo pipefail
 
 source ./common.sh
 
+/bin/rm -rfv install/grafana-toolkit
 mkdir -pv install/grafana-toolkit
 cp -rv ../../bin install/grafana-toolkit
 cp -rv ../../src install/grafana-toolkit

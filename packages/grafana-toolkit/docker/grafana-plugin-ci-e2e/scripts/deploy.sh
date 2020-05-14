@@ -57,7 +57,7 @@ mv $HOME/go/bin/mage /usr/local/bin
 
 # Install grafana-toolkit deps
 pushd /usr/local/grafana-toolkit
-/usr/local/grafana-toolkit && yarn install
+yarn install
 ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
 popd
 
