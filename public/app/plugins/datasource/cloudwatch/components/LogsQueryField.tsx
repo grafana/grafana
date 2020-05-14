@@ -1,6 +1,6 @@
 // Libraries
 import React, { ReactNode } from 'react';
-import intersection from 'lodash/intersection';
+import intersectionBy from 'lodash/intersectionBy';
 import debounce from 'lodash/debounce';
 
 import {
@@ -122,16 +122,29 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   componentWillMount = () => {
-    const { datasource, query } = this.props;
+    const { datasource, query, onChange } = this.props;
 
     this.setState({
       loadingLogGroups: true,
     });
 
     this.fetchLogGroupOptions(query.region).then(logGroups => {
-      this.setState({
-        loadingLogGroups: false,
-        availableLogGroups: logGroups,
+      this.setState(state => {
+        const selectedLogGroups = intersectionBy(state.selectedLogGroups, logGroups, 'value');
+        if (onChange) {
+          const nextQuery = {
+            ...query,
+            logGroupNames: selectedLogGroups.map(group => group.value!),
+          };
+
+          onChange(nextQuery);
+        }
+
+        return {
+          loadingLogGroups: false,
+          availableLogGroups: logGroups,
+          selectedLogGroups,
+        };
       });
     });
 
@@ -184,7 +197,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     const logGroups = await this.fetchLogGroupOptions(v.value!);
 
     this.setState(state => {
-      const selectedLogGroups = intersection(state.selectedLogGroups, logGroups);
+      const selectedLogGroups = intersectionBy(state.selectedLogGroups, logGroups, 'value');
 
       const { onChange, query } = this.props;
       if (onChange) {
