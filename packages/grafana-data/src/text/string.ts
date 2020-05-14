@@ -39,10 +39,6 @@ export function stringToJsRegex(str: string): RegExp {
   return new RegExp(match[1], match[2]);
 }
 
-export function isStringValidJsRegex(str: string): boolean {
-  return !!str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
-}
-
 export function stringToMs(str: string): number {
   if (!str) {
     return 0;
