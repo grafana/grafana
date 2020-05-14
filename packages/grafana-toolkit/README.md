@@ -1,5 +1,5 @@
 
-> **WARNING: @grafana/toolkit is currently in ALPHA**. The core API is unstable and can be a subject of breaking changes!
+> **WARNING: @grafana/toolkit is currently in BETA**.
 
 # grafana-toolkit
 grafana-toolkit is a CLI that enables efficient development of Grafana plugins. We want to help our community focus on the core value of their plugins rather than all the setup required to develop them.
