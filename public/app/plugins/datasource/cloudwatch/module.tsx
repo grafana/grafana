@@ -7,7 +7,6 @@ import { CloudWatchJsonData, CloudWatchQuery } from './types';
 import { CloudWatchLogsQueryEditor } from './components/LogsQueryEditor';
 import { PanelQueryEditor } from './components/PanelQueryEditor';
 import LogsCheatSheet from './components/LogsCheatSheet';
-import { CombinedMetricsEditor } from './components/CombinedMetricsEditor';
 
 export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>(
   CloudWatchDatasource
@@ -15,6 +14,6 @@ export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery
   .setExploreStartPage(LogsCheatSheet)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(PanelQueryEditor)
-  .setExploreMetricsQueryField(CombinedMetricsEditor)
+  .setExploreMetricsQueryField(PanelQueryEditor)
   .setExploreLogsQueryField(CloudWatchLogsQueryEditor)
   .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl);

@@ -10,6 +10,7 @@ import { seriesToColumnsTransformer } from './seriesToColumns';
 import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+import { getFieldDisplayName } from '../../field';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -182,7 +183,7 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string): Vect
   }
 
   for (const f of frame.fields) {
-    if (f.name === name) {
+    if (name === getFieldDisplayName(f, frame)) {
       return f.values;
     }
   }

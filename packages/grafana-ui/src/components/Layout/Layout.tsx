@@ -136,8 +136,8 @@ const getStyles = stylesFactory(
         align-items: ${align};
 
         &:last-child {
-          margin-bottom: 0;
-          margin-right: 0;
+          margin-bottom: ${orientation === Orientation.Vertical && 0};
+          margin-right: ${orientation === Orientation.Horizontal && 0};
         }
       `,
     };

@@ -92,7 +92,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Click on **Users and groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
-## Enable Azure AD Oauth in Grafana
+## Enable Azure AD OAuth in Grafana
 
 1. Add the following to the [Grafana configuration file]({{< relref "../installation/configuration.md#config-file-locations" >}}):
 

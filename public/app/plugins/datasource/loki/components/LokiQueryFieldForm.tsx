@@ -174,7 +174,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               onChange={this.onChangeQuery}
               onBlur={this.props.onBlur}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a Loki query"
+              placeholder="Enter a Loki query (run with Shift+Enter)"
               portalOrigin="loki"
               syntaxLoaded={syntaxLoaded}
             />
