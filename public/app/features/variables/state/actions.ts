@@ -499,7 +499,7 @@ export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
 };
 
 export const cancelVariables = ({ redirectToHome }: { redirectToHome?: boolean }): ThunkResult<void> => dispatch => {
-  getBackendSrv().cancelAllDataSourceRequests();
+  getBackendSrv().cancelAllInFlightRequests();
 
   if (redirectToHome) {
     window.location.href = getConfig().appSubUrl + '/';

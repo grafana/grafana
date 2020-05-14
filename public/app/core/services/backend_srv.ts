@@ -185,7 +185,7 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(requestId);
   }
 
-  cancelAllDataSourceRequests() {
+  cancelAllInFlightRequests() {
     this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
