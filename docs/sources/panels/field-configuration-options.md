@@ -90,7 +90,7 @@ Field overrides allow you to change the settings for one field (column in tables
 
 This section explains all available field options. They are listed in alphabetical order.
 
-Most field options will not affect the visualization until you click outside of the field option box you are editing.
+Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 ### Cell display mode
 
