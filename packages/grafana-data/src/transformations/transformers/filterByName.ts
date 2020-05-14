@@ -1,7 +1,9 @@
 import { DataTransformerID } from './ids';
-import { filterFieldsTransformer, FilterOptions } from './filter';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo, FieldMatcher } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
+import { noopTransformer } from './noop';
+import { getFieldMatcher } from '../matchers';
+import { DataFrame, Field } from '../../types/dataFrame';
 
 export interface FilterFieldsByNameTransformerOptions {
   include?: string[];
@@ -19,22 +21,58 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    * be applied, just return the input series
    */
   transformer: (options: FilterFieldsByNameTransformerOptions) => {
-    const filterOptions: FilterOptions = {};
-    if (options.include) {
-      filterOptions.include = {
-        id: FieldMatcherID.byName,
-        options: options.include.length > 0 ? buildRegex(options.include) : '',
-      };
-    }
-    if (options.exclude) {
-      filterOptions.exclude = {
-        id: FieldMatcherID.byName,
-        options: options.exclude.length > 0 ? buildRegex(options.exclude) : '',
-      };
+    if (!options.include && !options.exclude) {
+      return noopTransformer.transformer({});
     }
 
-    return filterFieldsTransformer.transformer(filterOptions);
+    return (series: DataFrame[]) => {
+      const processed: DataFrame[] = [];
+      for (const frame of series) {
+        // Find the matching field indexes
+        const fields: Field[] = [];
+        for (let i = 0; i < frame.fields.length; i++) {
+          const field = frame.fields[i];
+          const include = getFieldNameMatcher(options.include, frame, series);
+          const exclude = getFieldNameMatcher(options.exclude, frame, series);
+
+          if (exclude) {
+            if (exclude(field)) {
+              continue;
+            }
+            if (!include) {
+              fields.push(field);
+            }
+          }
+          if (include && include(field)) {
+            fields.push(field);
+          }
+        }
+
+        if (!fields.length) {
+          continue;
+        }
+        const copy = {
+          ...frame, // all the other properties
+          fields, // but a different set of fields
+        };
+        processed.push(copy);
+      }
+      return processed;
+    };
   },
+};
+
+const getFieldNameMatcher = (patterns?: string[], frame?: DataFrame, series?: DataFrame[]): FieldMatcher | null => {
+  if (!Array.isArray(patterns) || patterns.length === 0) {
+    return null;
+  }
+
+  const pattern = buildRegex(patterns);
+
+  return getFieldMatcher({
+    id: FieldMatcherID.byName,
+    options: { pattern, frame, series },
+  });
 };
 
 const buildRegex = (regexs: string[]) => {

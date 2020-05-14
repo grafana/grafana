@@ -81,7 +81,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     let creator: ValuesCreator | undefined = undefined;
 
     if (mode === CalculateFieldMode.ReduceRow) {
-      creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions));
+      creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
     } else if (mode === CalculateFieldMode.BinaryOperation) {
       creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions));
     }
@@ -125,17 +125,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   },
 };
 
-function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
+function getReduceRowCreator(options: ReduceOptions, series: DataFrame[]): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
-
-  if (options.include && options.include.length) {
-    matcher = getFieldMatcher({
-      id: FieldMatcherID.byName,
-      options: options.include,
-    });
-  }
 
   const info = fieldReducers.get(options.reducer);
 
@@ -148,6 +141,14 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
   const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
 
   return (frame: DataFrame) => {
+    if (options.include && options.include.length) {
+      const pattern = options.include;
+
+      matcher = getFieldMatcher({
+        id: FieldMatcherID.byName,
+        options: { pattern, frame, series },
+      });
+    }
     // Find the columns that should be examined
     const columns: Vector[] = [];
     for (const field of frame.fields) {

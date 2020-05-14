@@ -9,7 +9,7 @@ describe('Field Name Matcher', () => {
     });
     const config = {
       id: FieldMatcherID.byName,
-      options: '/.*/',
+      options: { pattern: '/.*/' },
     };
 
     const matcher = getFieldMatcher(config);
@@ -25,7 +25,7 @@ describe('Field Name Matcher', () => {
     });
     const config = {
       id: FieldMatcherID.byName,
-      options: '/^\\d+$/',
+      options: { pattern: '/^\\d+$/' },
     };
 
     const matcher = getFieldMatcher(config);
@@ -41,7 +41,7 @@ describe('Field Name Matcher', () => {
     });
     const config = {
       id: FieldMatcherID.byName,
-      options: '/\\b(?:\\S+?\\.)+\\S+\\b$/',
+      options: { pattern: '/\\b(?:\\S+?\\.)+\\S+\\b$/' },
     };
 
     const matcher = getFieldMatcher(config);
