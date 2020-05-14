@@ -50,7 +50,7 @@ Grafana 7.0 comes with a new table panel (and deprecates the old one). This new 
 
 ### Panel inspector
 
-The panel inspector is a feature that every panel will support, including internal as well as external community plugins. In this new panel inspector, you can view the raw data in a table format, apply some predefined transformations, and download as CSV. You can find the __Inspect__ setting in the panel menu. Use the keyboard shortcut `i` when hovering over a panel to get the panel inspect draw to appear.
+The panel inspector is a feature that every panel will support, including internal as well as external community plugins. In this new panel inspector, you can view the raw data in a table format, apply some pre-defined transformations, and download as CSV. You can find the __Inspect__ setting in the panel menu. Use the keyboard shortcut `i` when hovering over a panel to get the panel inspector to appear.
 
 ### Improved time zone support
 
