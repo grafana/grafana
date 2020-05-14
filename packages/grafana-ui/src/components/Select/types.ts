@@ -2,6 +2,9 @@ import { SelectableValue } from '@grafana/data';
 import React from 'react';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
+export type InputActionMeta = {
+  action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
+};
 
 export interface SelectCommonProps<T> {
   allowCustomValue?: boolean;
@@ -39,7 +42,7 @@ export interface SelectCommonProps<T> {
   onCloseMenu?: () => void;
   /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
   onCreateOption?: (value: string) => void;
-  onInputChange?: (label: string) => void;
+  onInputChange?: (value: string, actionMeta: InputActionMeta) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
   onOpenMenu?: () => void;
   openMenuOnFocus?: boolean;
