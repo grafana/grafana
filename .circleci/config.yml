@@ -936,7 +936,14 @@ jobs:
           command: "echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc"
       - run:
           name: Release packages
-          command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
+          command: |
+            if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              echo "We're testing the release pipeline, so stopping before publishing"
+              circleci step halt
+            fi
+
+            ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
