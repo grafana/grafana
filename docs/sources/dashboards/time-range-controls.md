@@ -48,69 +48,65 @@ Hover your curser over the field to see the exact time stamps in the range and t
 
 <img class="no-shadow" src="/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
 
+To change the current time range, click the down arrow next to the current time range. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `now-45h`.
+
+<img class="no-shadow" src="/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
+
+### Relative time range
+
+Select the relative time range from the **Relative time ranges** list. Some examples of time ranges are:
+
+- Last 30 minutes
+- Last 12 hours
+- Last 7 days
+- Last 2 years
+- Yesterday
+- Day before yesterday
+- This day last week
+- Today so far
+- This week so far
+- This month so far
+
+### Absolute time range
+
+Set an absolute time range one of two ways:
+
+- Type values into the **From** and **To** fields. You can type exact time values or relative values, such as `now-24h`, and then click **Apply time range**.
+- Click in the **From** or **To** field. Grafana displays a calender. Click the day or days you want to use as the current time range and then click **Apply time range**.
+
+This section also displays recently used absolute ranges.
+
 ### Zoom out (Cmd+Z or Ctrl+Z)
+
+Click the **Zoom out** icon to view a larger time range in the dashboard or panel visualization.
 
 ### Zoom in (not shown in UI)
 
+Click and drag to select the time range in the visualization that you want to view.
+
 ### Refresh dashboard
 
-## Change current time range
+
 
 ## Change dashboard refresh interval
 
 ## Dashboard time settings
 
+Time settings are saved on a per-dashboard basis.
 
-The two controls for time visualization are available in the top right:
+To access the dashboard time settings, click the **Dashboard settings** (gear) icon at the top of the screen. The settings are in the **Time Options** section of the General tab.
 
-1. **Current time range**: This shows the current dashboard time. You can click on it to change it.
-2. **Refresh interval**: This shows the current refresh interval for the current dashboard. You can click on it to change
-   it. This feature is especially useful for always-on displays so that the most recent data is always shown.
-
-These settings apply to all Panels in the Dashboard (except those with Panel Time Overrides enabled)
-
-## Dashboard Time Options
-
-There are two settings available in the Dashboard Settings General tab, allowing customization of the auto-refresh intervals and the definition of `now`.
-
-<img class="no-shadow" src="/img/docs/v50/time_options.png" width="500px">
-
-### Auto-Refresh Options
-
-It's possible to customize the options displayed for relative time and the auto-refresh options.
-
-From Dashboard settings, click the Timepicker tab. From here you can specify the relative and auto-refresh intervals. The Timepicker tab settings are saved on a per Dashboard basis.  Entries are comma separated and accept any valid time unit.
-
-### Defining Now
-
-Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
-
-### Time zone options
-Starting in version 7.0, you can override the time zone used to display date and time values in a dashboard. 
-
-With this feature, you can specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
-
-Apart from the standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) you can select the following options:
-
-* **Default**: The default selected time zone for the user profile or organization is used. If no time zone is specified for the user profile or the organization, then `Local browser time` is used.
-* **Local browser time**: The time zone configured for the viewing user browser is used. This is usually the same time zone as set on the computer.
+- **Timezone -** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
+  - **Default -**: The default selected time zone for the user profile or organization is used. If no time zone is specified for the user profile or the organization, then Grafana uses local browser time.
+  - **Local browser time -** The time zone configured for the viewing user browser is used. This is usually the same time zone as set on the computer.
+  - Standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), including UTC.
+- **Auto-refresh -** Customize the options displayed for relative time and the auto-refresh options. Entries are comma separated and accept any valid time unit.
+- **Now delay now- -** Override the `now` value by entering a time delay. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
+- **Hide time picker -** Select this option if you do not want Grafana to display the time picker.
 
 ## Panel time overrides and timeshift
 
-You can override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
-
-{{< docs-imagebox img="/img/docs/v50/panel_time_override.png" max-width="500px" >}}
-
-You control these overrides in panel editor mode and the tab `Time Range`.
-
-{{< docs-imagebox img="/img/docs/v50/time_range_tab.png" max-width="500px" >}}
-
-When you zoom or change the Dashboard time to a custom absolute time range, all panel overrides will be disabled. The panel relative time override is only active when the dashboard time is also relative. The panel timeshift override is always active, even when the dashboard time is absolute.
-
-The `Hide time override info` option allows you to hide the override info text that is by default shown in the
-upper right of a panel when overridden time range options.
-
-**Note:** You can only override the dashboard time with relative time ranges. Absolute time ranges are not available.
+In [Query options]({{< relref "queries.md#query-options" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
 ## Controlling time range using URL
 Time range of a dashboard can be controlled by providing following query parameters in dashboard URL:
