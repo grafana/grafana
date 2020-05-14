@@ -1,4 +1,4 @@
-import { Field, FieldType } from '../../types/dataFrame';
+import { Field, FieldType, DataFrame } from '../../types/dataFrame';
 import { FieldMatcherID } from './ids';
 import { FieldMatcherInfo } from '../../types/transformations';
 
@@ -10,7 +10,7 @@ const fieldTypeMatcher: FieldMatcherInfo<FieldType> = {
   defaultOptions: FieldType.number,
 
   get: (type: FieldType) => {
-    return (field: Field) => {
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       return type === field.type;
     };
   },

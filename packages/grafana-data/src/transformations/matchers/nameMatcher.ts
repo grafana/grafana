@@ -6,8 +6,7 @@ import { getFieldDisplayName } from '../../field/fieldState';
 
 export interface FieldNameMatcherOptions {
   pattern: string;
-  frame?: DataFrame;
-  series?: DataFrame[];
+  names?: string[];
 }
 
 const fieldNameMatcher: FieldMatcherInfo<FieldNameMatcherOptions> = {
@@ -19,15 +18,15 @@ const fieldNameMatcher: FieldMatcherInfo<FieldNameMatcherOptions> = {
   },
 
   get: (options: FieldNameMatcherOptions) => {
-    const { pattern, frame, series } = options;
+    const { pattern } = options;
     let regex = new RegExp('');
     try {
       regex = stringToJsRegex(pattern);
     } catch (e) {
       console.error(e);
     }
-    return (field: Field) => {
-      return regex.test(getFieldDisplayName(field, frame, series) ?? '');
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      return regex.test(getFieldDisplayName(field, frame, allFrames) ?? '');
     };
   },
 

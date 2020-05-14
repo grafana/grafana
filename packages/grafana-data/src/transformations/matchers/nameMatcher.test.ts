@@ -15,7 +15,7 @@ describe('Field Name Matcher', () => {
     const matcher = getFieldMatcher(config);
 
     for (const field of seriesWithNames.fields) {
-      expect(matcher(field)).toBe(true);
+      expect(matcher(field, seriesWithNames, [seriesWithNames])).toBe(true);
     }
   });
 
@@ -31,7 +31,7 @@ describe('Field Name Matcher', () => {
     const matcher = getFieldMatcher(config);
 
     for (const field of seriesWithNames.fields) {
-      expect(matcher(field)).toBe(true);
+      expect(matcher(field, seriesWithNames, [seriesWithNames])).toBe(true);
     }
   });
 
@@ -47,7 +47,7 @@ describe('Field Name Matcher', () => {
     const matcher = getFieldMatcher(config);
     let resultCount = 0;
     for (const field of seriesWithNames.fields) {
-      if (matcher(field)) {
+      if (matcher(field, seriesWithNames, [seriesWithNames])) {
         resultCount++;
       }
       expect(resultCount).toBe(1);
