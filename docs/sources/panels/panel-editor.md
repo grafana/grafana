@@ -16,9 +16,15 @@ This page describes the parts of the Grafana panel editor and links to where you
 
 There are several ways to access the panel editor, also called the **Edit Panel** screen, _edit mode_, or _panel edit mode_:
 
-- Click the **Add panel** icon at the top of the screen and then click **Add new panel**. The new panel opens in the panel editor.
+- Click the **Add panel** icon at the top of the screen and then click **Add new panel**. The new panel opens in the panel editor. For detailed instructions on how to add a panel, refer to [Add a panel]({{< relref "add-a-panel.md" >}})
 - Click the title of an existing panel and then click **Edit**. The panel opens in edit mode.
 - Click anywhere on an existing panel and then press **e** on your keyboard. The panel opens in edit mode.
+
+## Resize panel editor sections
+
+Drag to resize sections of the panel editor. If the Panel, Field, and Overrides tabs become too narrow, then the tabs convert to a dropdown list.
+
+{{< docs-imagebox img="/img/docs/panel-editor/resize-panel-editor-panels-7-0.gif" class="docs-image--no-shadow" max-width="600px" >}}
 
 ## Parts of the panel editor
 
@@ -39,15 +45,34 @@ On the right side of the header are the following options:
 
 Panel title, access dashboard settings, Save/Apply/Discard
 
-### Visualization preview, 
-Axes, legend, view options, time, refresh, zoom out button, zoom in instructions (select an area to zoom in)
+### Visualization preview
+
+The visualization preview section contains viewing options, time range controls, the visualization preview, and (if applicable) the panel title, axes, and legend.
+
+{{< docs-imagebox img="/img/docs/panel-editor/visualization-preview-7-0.png" class="docs-image--no-shadow" max-width="1200px" >}}
+
+- **Fill -**
+- **Fit -**
+- **Exact -**
+- **Time range controls -** For more information, refer to [Time range controls](ADD LINK WHEN TOPIC IS MERGED).
 
 ### Data section
-Query 
-Transform
-Alert
 
-### Panel and field options - can show/hide
-Panel
-Field
-Overrides
+The section contains tabs where you enter queries, transform your data, and create alert rules.
+
+{{< docs-imagebox img="/img/docs/panel-editor/data-section-7-0.png" class="docs-image--no-shadow" max-width="1200px" >}}
+
+- **Query tab -** Select your data source and enter queries here. For more information, refer to [Queries]({{< relref "queries.md" >}}).
+- **Transform tab -** Apply data transformations. For more information, refer to [Transformations]({{< relref "transformations.md" >}}).
+- **Alert tab -** Write alert rules. For more information, refer to [Create alerts]({{< relref "../alerting/create-alerts.md" >}}).
+
+### Panel and field configuration options
+
+The section contains tabs is where you control almost every aspect of how your data is visualized. Not all tabs are available for each visualization.
+
+Features in these tabs are documented in the following topics:
+
+- [Add a panel]({{< relref "add-a-panel.md" >}}) describes basic panel settings.
+- [Visualizations]({{< relref "visualizations/_index.md" >}}) display options vary widely. They are described in the individual visualization topic.
+- [Field configuration options and overrides]({{< relref "field-configuration-options.md" >}}) allow you to control almost every aspect of your visualization, including units, value mappings, and [Thresholds]({{< relref "thresholds.md" >}}).
+- [Panel links]({{< relref "../linking/panel-links.md" >}}) and [Data links]({{< relref "../linking/data-links.md" >}}) help you connect your visualization to other resources.
