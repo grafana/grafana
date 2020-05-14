@@ -382,13 +382,19 @@
         - name: Add support for annotations
           link: /developers/plugins/add-support-for-annotations/
         - name: Add support for Explore queries
-          link: /developers/plugins/add-support-for-explore-queries
+          link: /developers/plugins/add-support-for-explore-queries/
         - name: Build a logs data source
           link: /developers/plugins/build-a-logs-data-source/
         - name: Authentication
           link: /developers/plugins/authentication/
         - name: Backend plugins
-          link: /developers/plugins/backend/
+          children:
+            - link: /developers/plugins/backend/
+              name: Overview
+            - link: /developers/plugins/backend/plugin-protocol/
+              name: Plugin protocol
+            - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
+              name: Grafana plugin SDK for Go
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/
