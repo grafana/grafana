@@ -38,6 +38,8 @@ The main highlights are:
 
 We redesigned the UI for editing panels. We separated panel display settings to a right-hand side pane that you can collapse or expand depending on what your focus is on. With this change we are also introducing our new unified option model and UI for defining data configuration and display options. This unified data configuration system powers a consistent UI for setting data options across visualizations and making all data display settings data-driven and overridable.
 
+Learn more about this feature in [Panel editor]({{< relref "../panels/panel-editor.md" >}}).
+
 ## New tracing UI
 
 This release adds major support for distributed tracing, including a telemetry mode to complement the existing support for metrics and logs. Traces allow you to follow how single requests travel through a distributed system. We are starting with an integrated trace viewer and two new built-in data sources: Jaeger and Zipkin.
@@ -109,6 +111,8 @@ Grafana 7.0 adds logging support to one of our most popular cloud provider data 
 ## Plugins platform
 
 The platform for plugins has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation and new components will improve plugin quality and reduce long-term maintenance. We are seeing already that a a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
+
+Learn more about developing plugins in the new framework in [Build a plugin]({{< relref "../developers/plugins/_index.md" >}}).
 
 ### Front end plugins platform
 
