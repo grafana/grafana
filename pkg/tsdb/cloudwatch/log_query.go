@@ -9,7 +9,7 @@ import (
 
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
 	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
-	// Sometimes cloud watch can send empty rows
+	// Sometimes CloudWatch can send empty rows
 	for _, row := range response.Results {
 		if len(row) == 0 {
 			continue
@@ -129,8 +129,10 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 func generateGroupKey(fields []*data.Field, row int) string {
 	groupKey := ""
 	for _, field := range fields {
-		if strField, ok:= field.At(row).(*string); ok {
-			groupKey += *strField
+		if strField, ok := field.At(row).(*string); ok {
+			if strField != nil {
+				groupKey += *strField
+			}
 		}
 	}
 

@@ -228,7 +228,7 @@ func TestGroupKeyGeneration(t *testing.T) {
 	assert.Equal(t, expectedKeys[0], generateGroupKey(fakeFields, 0))
 	assert.Equal(t, expectedKeys[1], generateGroupKey(fakeFields, 1))
 	assert.Equal(t, expectedKeys[2], generateGroupKey(fakeFields, 2))
-	assert.Equal(t, expectedKeys[4], generateGroupKey(fakeFields, 3))
+	assert.Equal(t, expectedKeys[3], generateGroupKey(fakeFields, 3))
 }
 
 func TestGroupingResults(t *testing.T) {
