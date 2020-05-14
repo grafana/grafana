@@ -53,6 +53,7 @@ export const Components = {
       close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
       open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
       select: 'Panel editor option pane select',
+      tab: (title: string) => `Panel editor option pane tab ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
