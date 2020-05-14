@@ -44,7 +44,7 @@ export function dropdownTypeahead($compile: any) {
 
       const typeaheadValues = _.reduce(
         $scope.menuItems,
-        (memo, value, index) => {
+        (memo: any[], value, index) => {
           if (!value.submenu) {
             value.click = 'menuItemSelected(' + index + ')';
             memo.push(value.text);
@@ -184,7 +184,7 @@ export function dropdownTypeahead2($compile: any) {
 
       const typeaheadValues = _.reduce(
         $scope.menuItems,
-        (memo, value, index) => {
+        (memo: any[], value, index) => {
           if (!value.submenu) {
             value.click = 'menuItemSelected(' + index + ')';
             memo.push(value.text);
