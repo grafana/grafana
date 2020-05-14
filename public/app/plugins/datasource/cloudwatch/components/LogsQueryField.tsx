@@ -357,7 +357,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               onRunQuery={this.props.onRunQuery}
               onTypeahead={this.onTypeahead}
               cleanText={cleanText}
-              placeholder="Enter a CloudWatch Logs Insights query"
+              placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
               portalOrigin="cloudwatch"
               syntaxLoaded={syntaxLoaded}
               disabled={loadingLogGroups || selectedLogGroups.length === 0}

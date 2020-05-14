@@ -69,12 +69,12 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     // Base plugins
     this.plugins = [
-      // SuggestionsPlugin needs to be before NewlinePlugin because existence of suggestions
-      // overrides Enter behavior
+      // SuggestionsPlugin and RunnerPlugin need to be before NewlinePlugin
+      // because they override Enter behavior
       SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
+      RunnerPlugin({ handler: this.runOnChangeAndRunQuery }),
       NewlinePlugin(),
       ClearPlugin(),
-      RunnerPlugin({ handler: this.runOnChangeAndRunQuery }),
       SelectionShortcutsPlugin(),
       IndentationPlugin(),
       ClipboardPlugin(),

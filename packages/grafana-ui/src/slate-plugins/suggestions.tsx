@@ -98,7 +98,7 @@ export function SuggestionsPlugin({
           break;
 
         case 'Enter': {
-          if (!keyEvent.shiftKey && hasSuggestions) {
+          if (!(keyEvent.shiftKey || keyEvent.ctrlKey) && hasSuggestions) {
             keyEvent.preventDefault();
             return typeaheadRef.insertSuggestion();
           }
