@@ -1,6 +1,6 @@
 {
+  "$id": "https://grafana.com/plugin-metadata",
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "http://example.com/example.json",
   "type": "object",
   "title": "plugin.json",
   "description": "The plugin.json file is required for all plugins. When Grafana starts, it scans the plugin folders and mounts every folder that contains a plugin.json file unless the folder contains a subfolder named dist. In that case, Grafana mounts the dist folder instead.",
@@ -8,197 +8,153 @@
   "additionalProperties": false,
   "properties": {
     "id": {
-      "$id": "#/properties/id",
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
       "pattern": "^[0-9a-z\\-]+$"
     },
     "type": {
-      "$id": "#/properties/type",
       "type": "string",
       "description": "Plugin type. Possible values are `app`, `datasource`, and `panel`.",
       "enum": ["app", "datasource", "panel"]
     },
     "name": {
-      "$id": "#/properties/name",
       "type": "string",
       "description": "Human-readable name of the plugin that is shown to the user in the UI."
     },
     "category": {
-      "$id": "#/properties/category",
       "type": "string",
       "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, and `sql`.",
       "enum": ["tsdb", "logging", "cloud", "tracing", "sql"]
     },
     "annotations": {
-      "$id": "#/properties/annotations",
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports annotation queries.",
-      "default": false
+      "description": "For data source plugins. If the plugin supports annotation queries."
     },
     "alerting": {
-      "$id": "#/properties/alerting",
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports alerting.",
-      "default": false
+      "description": "For data source plugins. If the plugin supports alerting."
     },
     "backend": {
-      "$id": "#/properties/backend",
       "type": "boolean",
-      "description": "If the plugin has a backend component.",
-      "default": false
+      "description": "If the plugin has a backend component."
     },
     "executable": {
-      "$id": "#/properties/executable",
       "type": "string",
       "description": "The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment."
     },
     "includes": {
-      "$id": "#/properties/includes",
       "type": "array",
       "items": {
-        "$id": "#/properties/includes/items",
         "type": "object",
         "additionalItems": false,
         "properties": {
           "type": {
-            "$id": "#/properties/includes/items/properties/type",
             "type": "string"
           },
           "name": {
-            "$id": "#/properties/includes/items/properties/name",
             "type": "string"
           },
           "component": {
-            "$id": "#/properties/includes/items/properties/component",
             "type": "string"
           },
           "role": {
-            "$id": "#/properties/includes/items/properties/role",
             "type": "string"
           },
           "addToNav": {
-            "$id": "#/properties/includes/items/properties/addToNav",
             "type": "boolean"
           },
           "defaultNav": {
-            "$id": "#/properties/includes/items/properties/defaultNav",
             "type": "boolean"
           }
         }
       }
     },
     "logs": {
-      "$id": "#/properties/logs",
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports logs.",
-      "default": false
+      "description": "For data source plugins. If the plugin supports logs."
     },
     "partials": {
-      "$id": "#/properties/partials",
       "type": "object",
       "additionalItems": false,
       "properties": {
         "config": {
-          "$id": "#/properties/partials/properties/config",
           "type": "string"
         }
       }
     },
     "metrics": {
-      "$id": "#/properties/metrics",
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports metric queries. Used in the Explore feature.",
-      "default": false
+      "description": "For data source plugins. If the plugin supports metric queries. Used in the Explore feature."
     },
     "mixed": {
-      "$id": "#/properties/mixed",
       "type": "boolean",
       "description": "Not to be used by external plugins. Special property for the built-in mixed plugin."
     },
     "module": {
-      "$id": "#/properties/module",
       "type": "string"
     },
     "sort": {
-      "$id": "#/properties/sort",
       "type": "number",
       "description": "Internal property for sorting. Cannot be used as will be overwritten by Grafana."
     },
     "staticRoot": {
-      "$id": "#/properties/staticRoot",
       "type": "string"
     },
     "streaming": {
-      "$id": "#/properties/streaming",
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports streaming.",
-      "default": false
+      "description": "For data source plugins. If the plugin supports streaming."
     },
     "tables": {
-      "$id": "#/properties/tables",
-      "type": "boolean",
-      "default": false
+      "type": "boolean"
     },
     "tracing": {
-      "$id": "#/properties/tracing",
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports tracing.",
-      "default": false
+      "description": "For data source plugins. If the plugin supports tracing."
     },
     "hiddenQueries": {
-      "$id": "#/properties/hiddenQueries",
       "type": "boolean"
     },
     "dependencies": {
-      "$id": "#/properties/dependencies",
       "type": "object",
       "description": "Plugin dependencies.",
       "required": ["grafanaVersion"],
       "additionalProperties": false,
       "properties": {
         "grafanaVersion": {
-          "$id": "#/properties/dependencies/properties/grafanaVersion",
           "type": "string",
           "description": "Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
           "pattern": "^([0-9x]+\\.[0-9x]+\\.*[0-9x]*\\s*)+$"
         },
         "plugins": {
-          "$id": "#/properties/dependencies/properties/plugins",
           "type": "array",
           "description": "An array of required plugins on which this plugin depends.",
           "items": {
-            "$id": "#/properties/dependencies/properties/plugins/items"
+            "type": "string"
           }
         }
       }
     },
     "info": {
-      "$id": "#/properties/info",
       "type": "object",
       "description": "Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.",
       "required": ["logos", "version", "updated"],
       "additionalProperties": false,
       "properties": {
         "author": {
-          "$id": "#/properties/info/properties/author",
           "type": "object",
           "description": "Information about the plugin author.",
           "additionalProperties": false,
           "properties": {
             "name": {
-              "$id": "#/properties/info/properties/author/properties/name",
               "type": "string",
               "description": "Author's name."
             },
             "email": {
-              "$id": "#/properties/info/properties/author/properties/email",
               "type": "string",
               "description": "Author's name.",
               "format": "email"
             },
             "url": {
-              "$id": "#/properties/info/properties/author/properties/url",
               "type": "string",
               "description": "Link to author's website.",
               "format": "uri"
@@ -206,24 +162,20 @@
           }
         },
         "description": {
-          "$id": "#/properties/info/properties/description",
           "type": "string",
           "description": "Description of plugin. Used on the plugins page in Grafana and for search on grafana.com."
         },
         "keywords": {
-          "$id": "#/properties/info/properties/keywords",
           "type": "array",
           "description": "Array of plugin keywords. Used for search on grafana.com.",
           "items": {
-            "$id": "#/properties/info/properties/keywords/items"
+            "type": "string"
           }
         },
         "links": {
-          "$id": "#/properties/info/properties/links",
           "type": "array",
           "description": "An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}`",
           "items": {
-            "$id": "#/properties/info/properties/links/items",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -238,54 +190,43 @@
           }
         },
         "logos": {
-          "$id": "#/properties/info/properties/logos",
           "type": "object",
           "description": "SVG images that are used as plugin icons.",
           "required": ["small", "large"],
           "additionalProperties": false,
           "properties": {
             "small": {
-              "$id": "#/properties/info/properties/logos/properties/small",
               "type": "string",
-              "description": "Link to the \"small\" version of the plugin logo, which must be an SVG image. \"Large\" and \"small\" logos can be the same image.",
-              "examples": ["img/logo.svg"]
+              "description": "Link to the \"small\" version of the plugin logo, which must be an SVG image. \"Large\" and \"small\" logos can be the same image."
             },
             "large": {
-              "$id": "#/properties/info/properties/logos/properties/large",
               "type": "string",
-              "description": "Link to the \"large\" version of the plugin logo, which must be an SVG image. \"Large\" and \"small\" logos can be the same image.",
-              "examples": ["img/logo.svg"]
+              "description": "Link to the \"large\" version of the plugin logo, which must be an SVG image. \"Large\" and \"small\" logos can be the same image."
             }
           }
         },
         "screenshots": {
-          "$id": "#/properties/info/properties/screenshots",
           "type": "array",
           "description": "An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`",
           "items": {
-            "$id": "#/properties/info/properties/screenshots/items",
             "type": "object",
             "additionalProperties": false,
             "properties": {
               "name": {
-                "$id": "#/properties/info/properties/screenshots/items/properties/name",
                 "type": "string"
               },
               "path": {
-                "$id": "#/properties/info/properties/screenshots/items/properties/path",
                 "type": "string"
               }
             }
           }
         },
         "updated": {
-          "$id": "#/properties/info/properties/updated",
           "type": "string",
           "description": "Date when this plugin was built.",
           "pattern": "^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
         },
         "version": {
-          "$id": "#/properties/info/properties/version",
           "type": "string",
           "description": "Project version of this commit, e.g. `6.7.x`.",
           "pattern": "^([0-9x]+\\.[0-9x]+\\.*[0-9x]*$|\\%VERSION\\%)"
@@ -293,102 +234,83 @@
       }
     },
     "queryOptions": {
-      "$id": "#/properties/queryOptions",
       "type": "object",
       "description": "For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.",
       "additionalProperties": false,
       "properties": {
         "maxDataPoints": {
-          "$id": "#/properties/queryOptions/properties/maxDataPoints",
           "type": "boolean",
           "description": "For data source plugins. If the `max data points` option should be shown in the query options section in the query editor."
         },
         "minInterval": {
-          "$id": "#/properties/queryOptions/properties/minInterval",
           "type": "boolean",
           "description": "For data source plugins. If the `min interval` option should be shown in the query options section in the query editor."
         },
         "cacheTimeout": {
-          "$id": "#/properties/queryOptions/properties/cacheTimeout",
           "type": "boolean",
           "description": "For data source plugins. If the `cache timeout` option should be shown in the query options section in the query editor."
         }
       }
     },
     "routes": {
-      "$id": "#/properties/routes",
       "type": "array",
       "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).",
       "items": {
-        "$id": "#/properties/routes/items",
         "type": "object",
         "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).",
         "additionalProperties": false,
         "properties": {
           "path": {
-            "$id": "#/properties/routes/items/properties/path",
             "type": "string",
             "description": "For data source plugins. The route path that is replaced by the route URL field when proxying the call."
           },
           "method": {
-            "$id": "#/properties/routes/items/properties/method",
             "type": "string",
             "description": "For data source plugins. Route method matches the HTTP verb like GET or POST."
           },
           "url": {
-            "$id": "#/properties/routes/items/properties/url",
             "type": "string",
             "description": "For data source plugins. Route URL is where the request is proxied to.",
             "format": "uri"
           },
           "reqSignedIn": {
-            "$id": "#/properties/routes/items/properties/reqSignedIn",
             "type": "boolean"
           },
           "reqRole": {
-            "$id": "#/properties/routes/items/properties/reqRole",
             "type": "string"
           },
           "headers": {
-            "$id": "#/properties/routes/items/properties/headers",
             "type": "array",
             "description": "For data source plugins. Route headers adds HTTP headers to the proxied request."
           },
           "tokenAuth": {
-            "$id": "#/properties/routes/items/properties/tokenAuth",
             "type": "object",
             "description": "For data source plugins. Token authentication section used with an OAuth API.",
             "additionalProperties": false,
             "properties": {
               "url": {
-                "$id": "#/properties/routes/items/properties/tokenAuth/properties/url",
                 "type": "string",
                 "description": "For data source plugins. URL to fetch the authentication token.",
                 "format": "uri"
               },
               "params": {
-                "$id": "#/properties/routes/items/properties/tokenAuth/properties/params",
                 "type": "object",
                 "description": "For data source plugins. Parameters for the token authentication request.",
                 "additionalProperties": false,
                 "properties": {
                   "grant_type": {
-                    "$id": "#/properties/routes/items/properties/tokenAuth/properties/params/properties/grant_type",
                     "type": "string",
                     "description": "For data source plugins. OAuth grant type."
                   },
                   "client_id": {
-                    "$id": "#/properties/routes/items/properties/tokenAuth/properties/params/properties/client_id",
                     "type": "string",
                     "description": "For data source plugins. OAuth client id."
                   },
                   "client_secret": {
-                    "$id": "#/properties/routes/items/properties/tokenAuth/properties/params/properties/client_secret",
                     "type": "string",
                     "description": "For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob."
                   },
                   "resource": {
-                    "$id": "#/properties/routes/items/properties/tokenAuth/properties/params/properties/client_secret",
                     "type": "string",
                     "description": "For data source plugins. OAuth resource."
                   }
