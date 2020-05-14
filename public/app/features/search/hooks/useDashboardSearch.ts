@@ -6,6 +6,7 @@ import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../
 import { findSelected } from '../utils';
 import { useSearch } from './useSearch';
 import config from 'app/core/config';
+import { locationUtil } from '@grafana/data';
 
 export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => void) => {
   const reducer = useReducer(searchReducer, dashboardsSearchState);
@@ -33,9 +34,7 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
             onToggleSection(selectedItem as DashboardSection);
           } else {
             getLocationSrv().update({
-              path: selectedItem.url.startsWith(config.appSubUrl)
-                ? selectedItem.url.split(config.appSubUrl + '/')[1]
-                : selectedItem.url,
+              path: locationUtil.stripBaseFromUrl(selectedItem.url),
             });
             // Delay closing to prevent current page flicker
             setTimeout(onCloseSearch, 0);
