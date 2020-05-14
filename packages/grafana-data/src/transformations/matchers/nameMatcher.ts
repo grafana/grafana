@@ -19,8 +19,8 @@ const fieldNameMatcher: FieldMatcherInfo<FieldNameMatcherOptions> = {
   },
 
   get: (options: FieldNameMatcherOptions) => {
-    const regex = toRegex(options.pattern);
-    const matchByName = toNamesRecord(options.names);
+    const regex = patternToRegex(options.pattern);
+    const matchByName = namesToRecord(options.names);
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       const displayName = getFieldDisplayName(field, frame, allFrames);
@@ -39,7 +39,7 @@ const fieldNameMatcher: FieldMatcherInfo<FieldNameMatcherOptions> = {
   },
 };
 
-const toRegex = (pattern?: string): RegExp | undefined => {
+const patternToRegex = (pattern?: string): RegExp | undefined => {
   if (!pattern) {
     return undefined;
   }
@@ -52,7 +52,7 @@ const toRegex = (pattern?: string): RegExp | undefined => {
   }
 };
 
-const toNamesRecord = (names?: string[]): Record<string, boolean> => {
+const namesToRecord = (names?: string[]): Record<string, boolean> => {
   if (!Array.isArray(names)) {
     return {};
   }
