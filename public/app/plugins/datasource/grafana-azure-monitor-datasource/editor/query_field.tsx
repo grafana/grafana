@@ -147,7 +147,7 @@ class QueryField extends React.Component<any, any> {
         if (this.menuEl) {
           // Dont blur input
           keyboardEvent.preventDefault();
-          if (!suggestions || !suggestions.length) {
+          if (!suggestions || !suggestions.length || keyboardEvent.shiftKey || keyboardEvent.ctrlKey) {
             return next();
           }
 
