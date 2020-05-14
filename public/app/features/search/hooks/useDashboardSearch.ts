@@ -5,7 +5,6 @@ import { MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from '../reducers/actionTypes'
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
 import { findSelected } from '../utils';
 import { useSearch } from './useSearch';
-import config from 'app/core/config';
 import { locationUtil } from '@grafana/data';
 
 export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => void) => {
