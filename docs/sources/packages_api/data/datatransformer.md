@@ -5,14 +5,13 @@
 title = "DataTransformer"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataTransformer type
 
 ### DataTransformer type
 
-Immutable data transformation
+Function that transform data frames (AKA transformer)
 
 <b>Signature</b>
 

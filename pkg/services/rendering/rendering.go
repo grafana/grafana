@@ -3,11 +3,14 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,10 +23,12 @@ import (
 
 func init() {
 	remotecache.Register(&RenderUser{})
-	registry.RegisterService(&RenderingService{})
+	registry.Register(&registry.Descriptor{
+		Name:         "RenderingService",
+		Instance:     &RenderingService{},
+		InitPriority: registry.High,
+	})
 }
-
-var IsPhantomJSEnabled = false
 
 const renderKeyPrefix = "render-%s"
 
@@ -68,7 +73,7 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
-	if rs.Cfg.RendererUrl != "" {
+	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
@@ -76,28 +81,37 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if plugins.Renderer == nil {
-		rs.log = rs.log.New("renderer", "phantomJS")
-		rs.log.Info("Backend rendering via phantomJS")
-		rs.log.Warn("phantomJS is deprecated and will be removed in a future release. " +
-			"You should consider migrating from phantomJS to grafana-image-renderer plugin. " +
-			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-		rs.renderAction = rs.renderViaPhantomJS
-		IsPhantomJSEnabled = true
+	if rs.pluginAvailable() {
+		rs.log = rs.log.New("renderer", "plugin")
+		rs.pluginInfo = plugins.Renderer
+
+		if err := rs.startPlugin(ctx); err != nil {
+			return err
+		}
+
+		rs.renderAction = rs.renderViaPlugin
 		<-ctx.Done()
 		return nil
 	}
 
-	rs.log = rs.log.New("renderer", "plugin")
-	rs.pluginInfo = plugins.Renderer
+	rs.log.Debug("No image renderer found/installed. " +
+		"For image rendering support please install the grafana-image-renderer plugin. " +
+		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 
-	if err := rs.startPlugin(ctx); err != nil {
-		return err
-	}
-
-	rs.renderAction = rs.renderViaPlugin
 	<-ctx.Done()
 	return nil
+}
+
+func (rs *RenderingService) pluginAvailable() bool {
+	return plugins.Renderer != nil
+}
+
+func (rs *RenderingService) remoteAvailable() bool {
+	return rs.Cfg.RendererUrl != ""
+}
+
+func (rs *RenderingService) IsAvailable() bool {
+	return rs.remoteAvailable() || rs.pluginAvailable()
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
@@ -108,30 +122,64 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 	}, nil
 }
 
+func (rs *RenderingService) renderUnavailableImage() *RenderResult {
+	imgPath := "public/img/rendering_plugin_not_installed.png"
+
+	return &RenderResult{
+		FilePath: filepath.Join(setting.HomePath, imgPath),
+	}
+}
+
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+	startTime := time.Now()
+	result, err := rs.render(ctx, opts)
+	elapsedTime := time.Since(startTime).Milliseconds()
+	if err == ErrTimeout {
+		metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
+		metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
+	} else if err != nil {
+		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
+		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
+	} else {
+		metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
+		metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
+	}
+	return result, err
+}
+
+func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
 			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
 		}, nil
 	}
 
-	if rs.renderAction != nil {
-		rs.log.Info("Rendering", "path", opts.Path)
-		renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
-		if err != nil {
-			return nil, err
-		}
-
-		defer rs.deleteRenderKey(renderKey)
-
-		defer func() {
-			rs.inProgressCount--
-		}()
-
-		rs.inProgressCount++
-		return rs.renderAction(ctx, renderKey, opts)
+	if !rs.IsAvailable() {
+		rs.log.Warn("Could not render image, no image renderer found/installed. " +
+			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		return rs.renderUnavailableImage(), nil
 	}
-	return nil, fmt.Errorf("No renderer found")
+
+	rs.log.Info("Rendering", "path", opts.Path)
+	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
+		opts.DeviceScaleFactor = 1
+	}
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rs.deleteRenderKey(renderKey)
+
+	defer func() {
+		rs.inProgressCount--
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	}()
+
+	rs.inProgressCount++
+	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	return rs.renderAction(ctx, renderKey, opts)
 }
 
 func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
@@ -181,8 +229,13 @@ func (rs *RenderingService) getURL(path string) string {
 		protocol = "https"
 	}
 
+	subPath := ""
+	if rs.Cfg.ServeFromSubPath {
+		subPath = rs.Cfg.AppSubUrl
+	}
+
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
+	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, setting.HttpPort, subPath, path)
 }
 
 func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
@@ -208,4 +261,15 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 	if err != nil {
 		rs.log.Error("Failed to delete render key", "error", err)
 	}
+}
+
+func isoTimeOffsetToPosixTz(isoOffset string) string {
+	// invert offset
+	if strings.HasPrefix(isoOffset, "UTC+") {
+		return strings.Replace(isoOffset, "UTC+", "UTC-", 1)
+	}
+	if strings.HasPrefix(isoOffset, "UTC-") {
+		return strings.Replace(isoOffset, "UTC-", "UTC+", 1)
+	}
+	return isoOffset
 }

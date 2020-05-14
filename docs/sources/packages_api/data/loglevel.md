@@ -5,7 +5,6 @@
 title = "LogLevel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogLevel enum

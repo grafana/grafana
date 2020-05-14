@@ -5,50 +5,95 @@ import { NumberFieldConfigSettings, SelectFieldConfigSettings, StringFieldConfig
 /**
  * Option editor registry item
  */
-interface OptionsEditorItem<TSettings, TEditorProps> extends RegistryItem {
+export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> extends RegistryItem {
+  /**
+   * Path of the options property to control.
+   *
+   * @example
+   * Given options object of a type:
+   * ```ts
+   * interface CustomOptions {
+   *   a: {
+   *     b: string;
+   *   }
+   * }
+   * ```
+   *
+   * path can be either 'a' or 'a.b'.
+   */
+  path: (keyof TOptions & string) | string;
+  /**
+   * React component used to edit the options property
+   */
+  editor: ComponentType<TEditorProps>;
+  /**
+   * Custom settings of the editor.
+   */
   settings?: TSettings;
-  editor?: ComponentType<TEditorProps>;
+  /**
+   * Array of strings representing category of the options property.
+   */
+  category?: string[];
+  defaultValue?: TValue;
+  /**
+   * Function that enables configuration of when option editor should be shown based on current options properties.
+   *
+   * @param currentConfig Current options values
+   */
+  showIf?: (currentConfig: TOptions) => boolean | undefined;
+  /**
+   * Function that returns number of items if given option represents a collection, i.e. array of items.
+   * @param value
+   */
+  getItemsCount?: (value?: TValue) => number;
 }
 
 /**
  * Configuration of option editor registry item
  */
-type OptionEditorConfig<TSettings, TEditorProps> = Pick<
-  OptionsEditorItem<TSettings, TEditorProps>,
-  'id' | 'name' | 'description' | 'editor' | 'settings'
->;
+interface OptionEditorConfig<TOptions, TSettings, TValue = any> {
+  id: keyof TOptions & string;
+  name: string;
+  description?: string;
+  settings?: TSettings;
+  defaultValue?: TValue;
+}
 
 /**
  * Describes an API for option editors UI builder
  */
-export interface OptionsUIRegistryBuilderAPI<TEditorProps, T extends OptionsEditorItem<any, TEditorProps>> {
+export interface OptionsUIRegistryBuilderAPI<
+  TOptions,
+  TEditorProps,
+  T extends OptionsEditorItem<TOptions, any, TEditorProps, any>
+> {
   addNumberInput?<TSettings extends NumberFieldConfigSettings = NumberFieldConfigSettings>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TOptions, TSettings, number>
   ): this;
 
   addTextInput?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TOptions, TSettings, string>
   ): this;
 
   addSelect?<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TOptions, TSettings, TOption>
   ): this;
 
   addRadio?<TOption, TSettings extends SelectFieldConfigSettings<TOption> = SelectFieldConfigSettings<TOption>>(
-    config: OptionEditorConfig<TSettings, TEditorProps>
+    config: OptionEditorConfig<TOptions, TSettings, TOption>
   ): this;
 
-  addBooleanSwitch?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
+  addBooleanSwitch?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, boolean>): this;
 
-  addUnitPicker?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
+  addUnitPicker?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
 
-  addColorPicker?<TSettings = any>(config: OptionEditorConfig<TSettings, TEditorProps>): this;
+  addColorPicker?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
 
   /**
    * Enables custom editor definition
    * @param config
    */
-  addCustomEditor<TSettings>(config: OptionsEditorItem<TSettings, TEditorProps>): this;
+  addCustomEditor<TSettings, TValue>(config: OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>): this;
 
   /**
    * Returns registry of option editors
@@ -56,11 +101,14 @@ export interface OptionsUIRegistryBuilderAPI<TEditorProps, T extends OptionsEdit
   getRegistry: () => Registry<T>;
 }
 
-export abstract class OptionsUIRegistryBuilder<TEditorProps, T extends OptionsEditorItem<any, TEditorProps>>
-  implements OptionsUIRegistryBuilderAPI<TEditorProps, T> {
+export abstract class OptionsUIRegistryBuilder<
+  TOptions,
+  TEditorProps,
+  T extends OptionsEditorItem<TOptions, any, TEditorProps, any>
+> implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T> {
   private properties: T[] = [];
 
-  addCustomEditor<TValue>(config: T & OptionsEditorItem<TValue, TEditorProps>): this {
+  addCustomEditor<TSettings, TValue>(config: T & OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>): this {
     this.properties.push(config);
     return this;
   }

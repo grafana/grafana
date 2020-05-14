@@ -140,7 +140,7 @@ func inSlice(a string, list []string) bool {
 	return false
 }
 
-// HumanThresholdType converts a treshold "type" string to a string that matches the UI
+// HumanThresholdType converts a threshold "type" string to a string that matches the UI
 // so errors are less confusing.
 func HumanThresholdType(typ string) string {
 	switch typ {

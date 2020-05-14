@@ -14,10 +14,10 @@ var (
 )
 
 func TestProvsionedSymlinkedFolder(t *testing.T) {
-	cfg := &DashboardsAsConfig{
+	cfg := &config{
 		Name:    "Default",
 		Type:    "file",
-		OrgId:   1,
+		OrgID:   1,
 		Folder:  "",
 		Options: map[string]interface{}{"path": symlinkedFolder},
 	}
@@ -27,7 +27,7 @@ func TestProvsionedSymlinkedFolder(t *testing.T) {
 		t.Error("expected err to be nil")
 	}
 
-	want, err := filepath.Abs(containingId)
+	want, err := filepath.Abs(containingID)
 
 	if err != nil {
 		t.Errorf("expected err to be nil")

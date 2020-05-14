@@ -29,6 +29,8 @@ export interface QueryFieldProps {
   onRunQuery?: () => void;
   onBlur?: () => void;
   onChange?: (value: string) => void;
+  onRichValueChange?: (value: Value) => void;
+  onClick?: (event: Event, editor: CoreEditor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
@@ -120,6 +122,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   onChange = (value: Value, runQuery?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
+    if (this.props.onRichValueChange) {
+      this.props.onRichValueChange(value);
+    }
 
     // Update local state with new value and optionally change value upstream.
     this.setState({ value }, () => {
@@ -167,6 +172,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
    */
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
     const { onBlur } = this.props;
+
     if (onBlur) {
       onBlur();
     } else {
@@ -196,6 +202,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             autoCorrect={false}
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
+            onClick={this.props.onClick}
             // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);

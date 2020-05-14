@@ -5,7 +5,6 @@
 title = "SlideOutTransition"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## SlideOutTransition() function

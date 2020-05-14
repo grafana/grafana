@@ -1,0 +1,11 @@
+#!/bin/bash
+set -eo pipefail
+
+. e2e/variables
+
+HOST=${HOST:-$DEFAULT_HOST}
+PORT=${PORT:-$DEFAULT_PORT}
+
+echo -e "Waiting for grafana-server to finish starting, host=$HOST, port=$PORT"
+
+timeout 60 bash -c 'until nc -z $0 $1; do sleep 1; done' $HOST $PORT

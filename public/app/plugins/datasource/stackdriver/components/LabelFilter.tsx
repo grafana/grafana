@@ -1,7 +1,7 @@
 import React, { FunctionComponent, Fragment } from 'react';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
-import { Segment } from '@grafana/ui';
+import { Segment, Icon } from '@grafana/ui';
 import { labelsToGroupedOptions, filtersToStringArray, stringArrayToFilters, toOption } from '../functions';
 import { Filter } from '../types';
 
@@ -13,7 +13,7 @@ export interface Props {
 }
 
 const removeText = '-- remove filter --';
-const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'fa fa-remove' };
+const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'times' };
 const operators = ['=', '!=', '=~', '!=~'];
 
 export const LabelFilter: FunctionComponent<Props> = ({
@@ -76,7 +76,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
           allowCustomValue
           Component={
             <a className="gf-form-label query-part">
-              <i className="fa fa-plus" />
+              <Icon name="plus" />
             </a>
           }
           options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}

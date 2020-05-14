@@ -11,6 +11,21 @@ jest.mock('../functions', () => ({
   extractServicesFromMetricDescriptors: (): any[] => [],
 }));
 
+jest.mock('../../../../core/config', () => {
+  console.warn('[This test uses old variable system, needs a rewrite]');
+  const original = jest.requireActual('../../../../core/config');
+  const config = original.getConfig();
+  return {
+    getConfig: () => ({
+      ...config,
+      featureToggles: {
+        ...config.featureToggles,
+        newVariables: false,
+      },
+    }),
+  };
+});
+
 const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},

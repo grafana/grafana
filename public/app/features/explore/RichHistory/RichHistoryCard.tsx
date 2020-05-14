@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme, Forms, Button } from '@grafana/ui';
+import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
+import { copyStringToClipboard, createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
 
@@ -26,27 +27,25 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   const rigtColumnWidth = '240px';
   const rigtColumnContentWidth = '170px';
 
-  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.gray25;
-
   /* If datasource was removed, card will have inactive color */
   const cardColor = theme.isLight
     ? isRemoved
-      ? theme.colors.gray95
-      : theme.colors.white
+      ? theme.palette.gray95
+      : theme.palette.white
     : isRemoved
-    ? theme.colors.gray15
-    : theme.colors.gray05;
+    ? theme.palette.gray15
+    : theme.palette.gray05;
 
   return {
     queryCard: css`
       display: flex;
       flex-direction: column;
-      border: 1px solid ${borderColor};
+      border: 1px solid ${theme.colors.formInputBorder};
       margin: ${theme.spacing.sm} 0;
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
       .starred {
-        color: ${theme.colors.orange};
+        color: ${theme.palette.orange};
       }
     `,
     cardRow: css`
@@ -56,7 +55,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       padding: ${theme.spacing.sm};
       border-bottom: none;
       :first-of-type {
-        border-bottom: 1px solid ${borderColor};
+        border-bottom: 1px solid ${theme.colors.formInputBorder};
         padding: ${theme.spacing.xs} ${theme.spacing.sm};
       }
       img {
@@ -76,9 +75,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       display: flex;
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
-      i {
-        margin: ${theme.spacing.xs};
-        cursor: pointer;
+      button {
+        margin-left: ${theme.spacing.sm};
       }
     `,
     queryContainer: css`
@@ -86,7 +84,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
-      border-top: 1px solid ${borderColor};
+      border-top: 1px solid ${theme.colors.formInputBorder};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
@@ -110,7 +108,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     textArea: css`
-      border: 1px solid ${borderColor};
+      border: 1px solid ${theme.colors.formInputBorder};
       background: inherit;
       color: inherit;
       width: 100%;
@@ -125,7 +123,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       justify-content: flex-end;
       button {
         height: auto;
-        padding: ${theme.spacing.sm} ${theme.spacing.md};
+        padding: ${theme.spacing.xs} ${theme.spacing.md};
+        line-height: 1.4;
         span {
           white-space: normal !important;
         }
@@ -147,24 +146,33 @@ export function RichHistoryCard(props: Props) {
   } = props;
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
+  const [queryDsInstance, setQueryDsInstance] = useState<DataSourceApi | undefined>(undefined);
 
-  const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
+  useEffect(() => {
+    const getQueryDsInstance = async () => {
+      const ds = await getDataSourceSrv().get(query.datasourceName);
+      setQueryDsInstance(ds);
+    };
+
+    getQueryDsInstance();
+  }, [query.datasourceName]);
+
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
 
   const onRunQuery = async () => {
-    const dataQueries = query.queries.map((q, i) => createDataQuery(query, q, i));
+    const queriesToRun = query.queries;
     if (query.datasourceName !== datasourceInstance?.name) {
       await changeDatasource(exploreId, query.datasourceName);
-      setQueries(exploreId, dataQueries);
+      setQueries(exploreId, queriesToRun);
     } else {
-      setQueries(exploreId, dataQueries);
+      setQueries(exploreId, queriesToRun);
     }
   };
 
   const onCopyQuery = () => {
-    const queries = query.queries.join('\n\n');
-    copyStringToClipboard(queries);
+    const queriesToCopy = query.queries.map(q => createQueryText(q, queryDsInstance)).join('\n');
+    copyStringToClipboard(queriesToCopy);
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
 
@@ -183,6 +191,8 @@ export function RichHistoryCard(props: Props) {
     updateRichHistory(query.ts, 'starred');
   };
 
+  const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
+
   const onUpdateComment = () => {
     updateRichHistory(query.ts, 'comment', comment);
     toggleActiveUpdateComment();
@@ -195,7 +205,7 @@ export function RichHistoryCard(props: Props) {
 
   const updateComment = (
     <div className={styles.updateCommentContainer}>
-      <Forms.TextArea
+      <TextArea
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={e => setComment(e.currentTarget.value)}
@@ -212,19 +222,20 @@ export function RichHistoryCard(props: Props) {
 
   const queryActionButtons = (
     <div className={styles.queryActionButtons}>
-      <i
-        className="fa fa-fw fa-comment-o"
+      <IconButton
+        name="comment-alt"
         onClick={toggleActiveUpdateComment}
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
-      ></i>
-      <i className="fa fa-fw fa-copy" onClick={onCopyQuery} title="Copy query to clipboard"></i>
-      {!isRemoved && <i className="fa fa-fw fa-link" onClick={onCreateLink} title="Copy link to clipboard"></i>}
-      <i className={'fa fa-trash'} title={'Delete query'} onClick={onDeleteQuery}></i>
-      <i
-        className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}
+      />
+      <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
+      {!isRemoved && <IconButton name="link" onClick={onCreateLink} title="Copy link to clipboard" />}
+      <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
+      <IconButton
+        name={query.starred ? 'favorite' : 'star'}
+        iconType={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
         title={query.starred ? 'Unstar query' : 'Star query'}
-      ></i>
+      />
     </div>
   );
 
@@ -242,9 +253,10 @@ export function RichHistoryCard(props: Props) {
       <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
           {query.queries.map((q, i) => {
+            const queryText = createQueryText(q, queryDsInstance);
             return (
               <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
-                {q}
+                {queryText}
               </div>
             );
           })}

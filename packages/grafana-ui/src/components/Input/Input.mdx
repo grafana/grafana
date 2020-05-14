@@ -1,0 +1,40 @@
+import { Props, Preview } from "@storybook/addon-docs/blocks";
+import { Input } from "./Input";
+import { Field } from "../Forms/Field";
+import { Icon } from "../Icon/Icon";
+
+# Input
+
+Used for regular text input. For an array of data or tree-structured data, consider using `Select` or `Cascader` respectively.
+
+## Prefix and suffix
+
+To add more context to the input you can add either text or an icon before or after the input. You can use the `prefix` and `suffix` props for this. Try some examples in the canvas!
+
+```jsx
+<Input prefix={<Icon name="search" />} />
+```
+
+<Preview>
+  <Input prefix={<Icon name="search" />} />
+</Preview>
+
+## Usage in forms with Field
+
+`Input` should be used with the `Field` component to get labels and descriptions. It should also be used for validation. See the `Field` component for more information.
+
+```jsx
+<Field label="Important information" description="This information is very important, so you really need to fill it in">
+  <Input name="importantInput" required />
+</Field>
+```
+
+<Preview>
+  <Field
+    label="Important information"
+    description="This information is very important, so you really need to fill it in"
+  >
+    <Input name="importantInput" required />
+  </Field>
+</Preview>
+<Props of={Input} />

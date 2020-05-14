@@ -61,7 +61,7 @@ You can edit playlists while creating them or after saving them.
 
 ### Search for a dashboard to add
 
-1. Click the **Find dashboards by name** text box. 
+1. Click the **Search dashboards by name** text box. 
 1. Search for the playlist by name or regular expression. 
 1. If needed, filter your results by starred status or tags.  
    By default, your starred dashboards will appear as options to add to the Playlist.
@@ -131,7 +131,7 @@ You can control a playlist in **Normal** or **TV** mode after it's started, usin
 | --- | --- |
 | Next (double-right arrow) | Advances to the next dashboard. |
 | Back (left arrow) | Returns to the previous dashboard. |
-| Stop (square) | End the playlist, and exits to the current dashboard. |
+| Stop (square) | Ends the playlist, and exits to the current dashboard. |
 | Cycle view mode (monitor icon) | Rotates the display of the dashboards in different view modes. |
 | Time range | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
 | Refresh (circle arrow) | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop down arrow. |

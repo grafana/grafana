@@ -4,7 +4,7 @@
 
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run run-frontend clean devenv devenv-down revive-alerting help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run run-frontend clean devenv devenv-down revive-alerting protobuf help
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
@@ -84,7 +84,10 @@ revive-alerting: scripts/go/bin/revive
 	@echo "lint alerting via revive"
 	@scripts/go/bin/revive \
 		-formatter stylish \
-		./pkg/services/alerting/...
+		-config ./scripts/go/configs/revive-strict.toml \
+		./pkg/services/alerting/... \
+		./pkg/services/provisioning/datasources/... \
+		./pkg/services/provisioning/dashboards/...
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \
@@ -157,6 +160,16 @@ devenv-down: ## Stop optional services.
 	docker-compose down || exit 0;
 
 ##@ Helpers
+
+# We separate the protobuf generation because most development tasks on
+# Grafana do not involve changing protobuf files and protoc is not a
+# go-gettable dependency and so getting it installed can be inconvenient.
+#
+# If you are working on changes to protobuf interfaces you may either use
+# this target or run the individual scripts below directly.
+protobuf: ## Compile protobuf definitions
+	bash scripts/protobuf-check.sh
+	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
 
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"

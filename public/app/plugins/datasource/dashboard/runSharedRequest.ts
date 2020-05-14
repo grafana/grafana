@@ -35,7 +35,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     const listenToRunner = listenToPanel.getQueryRunner();
-    const subscription = listenToRunner.getData(false).subscribe({
+    const subscription = listenToRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => {
         subscriber.next(data);
       },
@@ -43,7 +43,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
 
     // If we are in fullscreen the other panel will not execute any queries
     // So we have to trigger it from here
-    if (currentPanel.fullscreen) {
+    if (currentPanel.isViewing || currentPanel.isEditing) {
       const { datasource, targets } = listenToPanel;
       const modified = {
         ...options,

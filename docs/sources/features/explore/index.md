@@ -51,15 +51,13 @@ You can close the newly created query by clicking on the Close Split button.
 
 ## Query history
 
-> BETA: Query history is a beta feature.
-
 Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
 
 ### View query history
 
 Query history lets you view the history of your querying. For each individual query, you can:
 
-- Replace Explore query for selected query by clicking on the query card.
+- Run a query.
 - Create and/or edit a comment.
 - Copy a query to the clipboard.
 - Copy a URL link with the query to the clipboard.
@@ -71,12 +69,12 @@ All queries that have been starred in the Query history tab are displayed in the
 
 ### Sort query history
 
-By default, query history shows you the most recent queries. You can sort your history in by date or by data source name in ascending or descending order.
+By default, query history shows you the most recent queries. You can sort your history by date or by data source name in ascending or descending order.
 
 1. Click the **Sort queries by** field.
 2. Select one of the following options:
-   - Time ascending
-   - Time descending
+   - Newest first
+   - Oldest first
    - Data source A-Z
    - Data source Z-A
 
@@ -89,7 +87,7 @@ Filter query history in Query history and Starred tab by data source name:
 1. Click the **Filter queries for specific data source(s)** field
 2. Select the data source for which you would like to filter your history. You can select multiple data sources.
 
-In **Query history** tab is is also possible to filter queries by date using the slider:
+In **Query history** tab it is also possible to filter queries by date using the slider:
 
 - Use vertical slider to filter queries by date.
 - By dragging top handle, adjust start date.
@@ -124,7 +122,7 @@ On the left-hand side of the query field is a `Metrics` button, clicking on this
 
 The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
 
-The autocomplete menu can be trigger by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
+The autocomplete menu can be triggered by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 

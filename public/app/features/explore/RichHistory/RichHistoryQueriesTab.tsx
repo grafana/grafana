@@ -21,7 +21,7 @@ import {
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Select, Slider } from '@grafana/ui';
+import { Slider, Select } from '@grafana/ui';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -36,7 +36,7 @@ export interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
 
   /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
   const cardWidth = '100% - 134px';
@@ -59,12 +59,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       width: calc(${cardWidth});
     `,
     containerSlider: css`
-      width: 127px;
+      width: 129px;
       margin-right: ${theme.spacing.sm};
       .slider {
         bottom: 10px;
         height: ${sliderHeight};
-        width: 127px;
+        width: 129px;
         padding: ${theme.spacing.sm} 0;
       }
     `,
@@ -99,7 +99,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       font-size: ${theme.typography.heading.h4};
       margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
     `,
-    feedback: css`
+    footer: css`
       height: 60px;
       margin-top: ${theme.spacing.lg};
       display: flex;
@@ -140,9 +140,10 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
-  const filteredQueriesByDatasource = datasourceFilters
-    ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-    : queries;
+  const filteredQueriesByDatasource =
+    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
+      ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+      : queries;
 
   const sortedQueries = sortQueries(filteredQueriesByDatasource, sortOrder);
   const queriesWithinSelectedTimeline = sortedQueries?.filter(
@@ -224,10 +225,7 @@ export function RichHistoryQueriesTab(props: Props) {
             </div>
           );
         })}
-        <div className={styles.feedback}>
-          Query history is a beta feature. The history is local to your browser and is not shared with others.
-          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
-        </div>
+        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>
   );

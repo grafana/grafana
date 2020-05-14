@@ -1,12 +1,13 @@
 import React, { FC } from 'react';
+import { LinkButton, HorizontalGroup } from '@grafana/ui';
 
 export const UserSignup: FC<{}> = () => {
   return (
-    <div className="login-signup-box">
-      <div className="login-signup-title p-r-1">New to Grafana?</div>
-      <a href="signup" className="btn btn-medium btn-signup btn-p-x-2">
+    <HorizontalGroup justify="flex-start">
+      <LinkButton href="signup" variant="secondary">
         Sign Up
-      </a>
-    </div>
+      </LinkButton>
+      <span>New to Grafana?</span>
+    </HorizontalGroup>
   );
 };

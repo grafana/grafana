@@ -1,20 +1,46 @@
 <div ng-repeat="var in variables">
   <div class="gf-form offset-width-7" ng-if="$index === 0">
     <label class="gf-form-label width-10">Variables</label>
-    <input type="text" class="gf-form-input max-width-12" ng-model="var.name" placeholder="Variable name" ng-blur="onChangeInternal()" spellcheck='false'>
-    <metric-segment-model property="var.pipelineAgg" options="options" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
+    <input
+      type="text"
+      class="gf-form-input max-width-12"
+      ng-model="var.name"
+      placeholder="Variable name"
+      ng-blur="onChangeInternal()"
+      spellcheck="false"
+    />
+    <metric-segment-model
+      property="var.pipelineAgg"
+      options="options"
+      on-change="onChangeInternal()"
+      custom="false"
+      css-class="width-12"
+    ></metric-segment-model>
     <label class="gf-form-label">
-      <a class="pointer" ng-click="remove($index)"><i class="fa fa-minus"></i></a>
+      <a class="pointer" ng-click="remove($index)"><icon name="'minus'"></icon></a>
     </label>
     <label class="gf-form-label">
-      <a class="pointer" ng-click="add()"><i class="fa fa-plus"></i></a>
+      <a class="pointer" ng-click="add()"><icon name="'plus'"></icon></a>
     </label>
   </div>
   <div class="gf-form offset-width-17" ng-if="$index !== 0">
-    <input type="text" class="gf-form-input max-width-12" ng-model="var.name" placeholder="Variable name" ng-blur="onChangeInternal()" spellcheck='false'>
-    <metric-segment-model property="var.pipelineAgg" options="options" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
+    <input
+      type="text"
+      class="gf-form-input max-width-12"
+      ng-model="var.name"
+      placeholder="Variable name"
+      ng-blur="onChangeInternal()"
+      spellcheck="false"
+    />
+    <metric-segment-model
+      property="var.pipelineAgg"
+      options="options"
+      on-change="onChangeInternal()"
+      custom="false"
+      css-class="width-12"
+    ></metric-segment-model>
     <label class="gf-form-label">
-      <a class="pointer" ng-click="remove($index)"><i class="fa fa-minus"></i></a>
+      <a class="pointer" ng-click="remove($index)"><icon name="'minus'"></icon></a>
     </label>
   </div>
 </div>

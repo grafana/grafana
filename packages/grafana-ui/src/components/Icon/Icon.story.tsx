@@ -1,30 +1,34 @@
 import React, { ChangeEvent, useState } from 'react';
 import { css } from 'emotion';
 
-import { Forms } from '../index';
+import { Input } from '../Input/Input';
+import { Field } from '../Forms/Field';
 import { Icon } from './Icon';
-import { getAvailableIcons, IconType } from './types';
+import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme, selectThemeVariant } from '../../themes';
 import mdx from './Icon.mdx';
 
 export default {
-  title: 'General/Icon',
+  title: 'Docs Overview/Icon',
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {
+    options: {
+      showPanel: false,
+    },
     docs: {
       page: mdx,
     },
   },
 };
 
-const IconWrapper: React.FC<{ name: IconType }> = ({ name }) => {
+const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
   const theme = useTheme();
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark6,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark6,
     },
     theme.type
   );
@@ -42,12 +46,7 @@ const IconWrapper: React.FC<{ name: IconType }> = ({ name }) => {
         }
       `}
     >
-      <Icon
-        name={name}
-        className={css`
-          font-size: 18px;
-        `}
-      />
+      <Icon name={name} />
       <div
         className={css`
           padding-top: 16px;
@@ -64,7 +63,7 @@ const IconWrapper: React.FC<{ name: IconType }> = ({ name }) => {
 
 const icons = getAvailableIcons().sort((a, b) => a.localeCompare(b));
 
-export const simple = () => {
+export const iconsOverview = () => {
   const [filter, setFilter] = useState('');
 
   const searchIcon = (event: ChangeEvent<HTMLInputElement>) => {
@@ -79,13 +78,13 @@ export const simple = () => {
         width: 100%;
       `}
     >
-      <Forms.Field
+      <Field
         className={css`
           width: 300px;
         `}
       >
-        <Forms.Input onChange={searchIcon} placeholder="Search icons by name" />
-      </Forms.Field>
+        <Input onChange={searchIcon} placeholder="Search icons by name" />
+      </Field>
       <div
         className={css`
           display: flex;

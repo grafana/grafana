@@ -1,23 +1,32 @@
-
 <div class="gf-form-group">
   <div class="gf-form-inline">
-		<div class="gf-form gf-form--grow">
-			<textarea rows="10" class="gf-form-input" ng-model="ctrl.annotation.rawQuery" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"></textarea>
-		</div>
-	</div>
+    <div class="gf-form gf-form--grow">
+      <textarea
+        rows="10"
+        class="gf-form-input"
+        ng-model="ctrl.annotation.rawQuery"
+        spellcheck="false"
+        placeholder="query expression"
+        data-min-length="0"
+        data-items="100"
+        ng-model-onblur
+        ng-change="ctrl.panelCtrl.refresh()"
+      ></textarea>
+    </div>
+  </div>
 
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
-        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
-        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+        <icon name="'angle-down'" ng-show="ctrl.showHelp" style="margin-top: 3px;"></icon>
+        <icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px;"></icon>
       </label>
-		</div>
+    </div>
   </div>
 
-  <div class="gf-form"  ng-show="ctrl.showHelp">
-		<pre class="gf-form-pre alert alert-info"><h6>Annotation Query Format</h6>
+  <div class="gf-form" ng-show="ctrl.showHelp">
+    <pre class="gf-form-pre alert alert-info"><h6>Annotation Query Format</h6>
 An annotation is an event that is overlaid on top of graphs. The query can have up to four columns per row, the <i>time</i> or <i>time_sec</i> column is mandatory. Annotation rendering is expensive so it is important to limit the number of rows returned.
 
 - column with alias: <b>time</b> or <i>time_sec</i> for the annotation event time. Use epoch time or any native date data type.
@@ -41,5 +50,5 @@ Or build your own conditionals using these macros which just return the values:
 - $__unixEpochNanoFrom() -&gt;  1494410783152415214
 - $__unixEpochNanoTo() -&gt;  1494497183142514872
 		</pre>
-	</div>
+  </div>
 </div>

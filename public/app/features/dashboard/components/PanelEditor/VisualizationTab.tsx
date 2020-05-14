@@ -1,12 +1,13 @@
-import React, { FC } from 'react';
+import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { useTheme, stylesFactory } from '@grafana/ui';
+import { useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
-import { VizTypePicker } from '../../panel_editor/VizTypePicker';
+import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../../panel_editor/VizTypePicker';
+import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
   panel: PanelModel;
@@ -22,29 +23,78 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const VisualizationTabUnconnected: FC<Props> = ({ panel, plugin, changePanelPlugin }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
+  ({ panel, plugin, changePanelPlugin }, ref) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const theme = useTheme();
+    const styles = getStyles(theme);
 
-  if (!plugin) {
-    return null;
+    if (!plugin) {
+      return null;
+    }
+
+    const onPluginTypeChange = (meta: PanelPluginMeta) => {
+      changePanelPlugin(panel, meta.id);
+    };
+
+    const onKeyPress = useCallback(
+      (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+          const query = e.currentTarget.value;
+          const plugins = getAllPanelPluginMeta();
+          const match = filterPluginList(plugins, query, plugin.meta);
+          if (match && match.length) {
+            onPluginTypeChange(match[0]);
+          }
+        }
+      },
+      [onPluginTypeChange]
+    );
+
+    const suffix =
+      searchQuery !== '' ? (
+        <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
+          <Icon name="times" />
+          Clear filter
+        </span>
+      ) : null;
+
+    return (
+      <div className={styles.wrapper}>
+        <Field>
+          <Input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.currentTarget.value)}
+            onKeyPress={onKeyPress}
+            prefix={<Icon name="filter" className={styles.icon} />}
+            suffix={suffix}
+            placeholder="Filter visualizations"
+            ref={ref}
+          />
+        </Field>
+
+        <VizTypePicker
+          current={plugin.meta}
+          onTypeChange={onPluginTypeChange}
+          searchQuery={searchQuery}
+          onClose={() => {}}
+        />
+      </div>
+    );
   }
-
-  const onPluginTypeChange = (meta: PanelPluginMeta) => {
-    changePanelPlugin(panel, meta.id);
-  };
-
-  return (
-    <div className={styles.wrapper}>
-      <VizTypePicker current={plugin.meta} onTypeChange={onPluginTypeChange} searchQuery={''} onClose={() => {}} />
-    </div>
-  );
-};
-
+);
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    icon: css`
+      color: ${theme.palette.gray33};
+    `,
     wrapper: css`
-      padding: ${theme.spacing.md};
+      display: flex;
+      flex-direction: column;
+    `,
+    searchClear: css`
+      color: ${theme.palette.gray60};
+      cursor: pointer;
     `,
   };
 });
@@ -57,4 +107,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelPlugin };
 
-export const VisualizationTab = connect(mapStateToProps, mapDispatchToProps)(VisualizationTabUnconnected);
+export const VisualizationTab = connect(mapStateToProps, mapDispatchToProps, undefined, { forwardRef: true })(
+  VisualizationTabUnconnected
+);

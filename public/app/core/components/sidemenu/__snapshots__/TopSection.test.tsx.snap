@@ -5,6 +5,15 @@ exports[`Render should render component 1`] = `
   className="sidemenu__top"
 >
   <TopSectionItem
+    link={
+      Object {
+        "icon": "search",
+        "text": "Search",
+      }
+    }
+    onClick={[Function]}
+  />
+  <TopSectionItem
     key="3-0"
     link={
       Object {
@@ -20,6 +29,15 @@ exports[`Render should render items 1`] = `
 <div
   className="sidemenu__top"
 >
+  <TopSectionItem
+    link={
+      Object {
+        "icon": "search",
+        "text": "Search",
+      }
+    }
+    onClick={[Function]}
+  />
   <TopSectionItem
     key="3-0"
     link={

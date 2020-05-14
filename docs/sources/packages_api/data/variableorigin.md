@@ -5,7 +5,6 @@
 title = "VariableOrigin"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VariableOrigin enum

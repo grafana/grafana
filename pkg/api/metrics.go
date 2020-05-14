@@ -59,6 +59,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			RefId:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			QueryType:     query.Get("queryType").MustString(""),
 			Model:         query,
 			DataSource:    ds,
 		})

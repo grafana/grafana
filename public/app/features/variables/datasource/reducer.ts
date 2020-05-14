@@ -72,5 +72,4 @@ export const dataSourceVariableSlice = createSlice({
 });
 
 export const dataSourceVariableReducer = dataSourceVariableSlice.reducer;
-
 export const { createDataSourceOptions } = dataSourceVariableSlice.actions;

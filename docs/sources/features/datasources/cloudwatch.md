@@ -43,7 +43,7 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
-> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) it not supported at the moment.
+> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
 
 ## IAM Policies
 
@@ -62,6 +62,8 @@ Here is a minimal policy example:
       "Effect": "Allow",
       "Action": [
         "cloudwatch:DescribeAlarmsForMetric",
+        "cloudwatch:DescribeAlarmHistory",
+        "cloudwatch:DescribeAlarms",
         "cloudwatch:ListMetrics",
         "cloudwatch:GetMetricStatistics",
         "cloudwatch:GetMetricData"
@@ -180,9 +182,9 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 ## Templated queries
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-See the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 

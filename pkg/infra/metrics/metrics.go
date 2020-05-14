@@ -8,7 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const exporterName = "grafana"
+// ExporterName is used as namespace for exposing prometheus metrics
+const ExporterName = "grafana"
 
 var (
 	// MInstanceStart is a metric counter for started instances
@@ -97,6 +98,12 @@ var (
 
 	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
+
+	// MRenderingRequestTotal is a metric counter for image rendering requests
+	MRenderingRequestTotal *prometheus.CounterVec
+
+	// MRenderingQueue is a metric gauge for image rendering queue size
+	MRenderingQueue prometheus.Gauge
 )
 
 // Timers
@@ -106,6 +113,9 @@ var (
 
 	// MAlertingExecutionTime is a metric summary of alert exeuction duration
 	MAlertingExecutionTime prometheus.Summary
+
+	// MRenderingSummary is a metric summary for image rendering request duration
+	MRenderingSummary *prometheus.SummaryVec
 )
 
 // StatTotals
@@ -146,6 +156,9 @@ var (
 	// StatsTotalActiveAdmins is a metric total amount of active admins
 	StatsTotalActiveAdmins prometheus.Gauge
 
+	// StatsTotalDataSources is a metric total number of defined datasources, labeled by pluginId
+	StatsTotalDataSources *prometheus.GaugeVec
+
 	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
 
@@ -159,28 +172,28 @@ func init() {
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
 		Help:      "counter for started instances",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MPageStatus = newCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Name:      "page_response_status_total",
 			Help:      "page http response status",
-			Namespace: exporterName,
+			Namespace: ExporterName,
 		}, []string{"code"}, httpStatusCodes...)
 
 	MApiStatus = newCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Name:      "api_response_status_total",
 			Help:      "api http response status",
-			Namespace: exporterName,
+			Namespace: ExporterName,
 		}, []string{"code"}, httpStatusCodes...)
 
 	MProxyStatus = newCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Name:      "proxy_response_status_total",
 			Help:      "proxy http response status",
-			Namespace: exporterName,
+			Namespace: ExporterName,
 		}, []string{"code"}, httpStatusCodes...)
 
 	MHttpRequestTotal = prometheus.NewCounterVec(
@@ -203,241 +216,272 @@ func init() {
 	MApiUserSignUpStarted = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_started_total",
 		Help:      "amount of users who started the signup flow",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiUserSignUpCompleted = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_completed_total",
 		Help:      "amount of users who completed the signup flow",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiUserSignUpInvite = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_invite_total",
 		Help:      "amount of users who have been invited",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiDashboardSave = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dashboard_save_milliseconds",
 		Help:       "summary for dashboard save duration",
 		Objectives: objectiveMap,
-		Namespace:  exporterName,
+		Namespace:  ExporterName,
 	})
 
 	MApiDashboardGet = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dashboard_get_milliseconds",
 		Help:       "summary for dashboard get duration",
 		Objectives: objectiveMap,
-		Namespace:  exporterName,
+		Namespace:  ExporterName,
 	})
 
 	MApiDashboardSearch = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dashboard_search_milliseconds",
 		Help:       "summary for dashboard search duration",
 		Objectives: objectiveMap,
-		Namespace:  exporterName,
+		Namespace:  ExporterName,
 	})
 
 	MApiAdminUserCreate = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_admin_user_created_total",
 		Help:      "api admin user created counter",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiLoginPost = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_login_post_total",
 		Help:      "api login post counter",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiLoginOAuth = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_login_oauth_total",
 		Help:      "api login oauth counter",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiLoginSAML = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_login_saml_total",
 		Help:      "api login saml counter",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiOrgCreate = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_org_create_total",
 		Help:      "api org created counter",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiDashboardSnapshotCreate = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_dashboard_snapshot_create_total",
 		Help:      "dashboard snapshots created",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiDashboardSnapshotExternal = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_dashboard_snapshot_external_total",
 		Help:      "external dashboard snapshots created",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiDashboardSnapshotGet = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_dashboard_snapshot_get_total",
 		Help:      "loaded dashboards",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MApiDashboardInsert = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_models_dashboard_insert_total",
 		Help:      "dashboards inserted ",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MAlertingResultState = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name:      "alerting_result_total",
 		Help:      "alert execution result counter",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	}, []string{"state"})
 
 	MAlertingNotificationSent = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name:      "alerting_notification_sent_total",
 		Help:      "counter for how many alert notifications have been sent",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	}, []string{"type"})
 
 	MAlertingNotificationFailed = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name:      "alerting_notification_failed_total",
 		Help:      "counter for how many alert notifications have failed",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	}, []string{"type"})
 
 	MAwsCloudWatchGetMetricStatistics = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "aws_cloudwatch_get_metric_statistics_total",
 		Help:      "counter for getting metric statistics from aws",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MAwsCloudWatchListMetrics = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "aws_cloudwatch_list_metrics_total",
 		Help:      "counter for getting list of metrics from aws",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MAwsCloudWatchGetMetricData = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "aws_cloudwatch_get_metric_data_total",
 		Help:      "counter for getting metric data time series from aws",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MDBDataSourceQueryByID = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
 		Help:      "counter for getting datasource by id",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	LDAPUsersSyncExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "ldap_users_sync_execution_time",
 		Help:       "summary for LDAP users sync execution duration",
 		Objectives: objectiveMap,
-		Namespace:  exporterName,
+		Namespace:  ExporterName,
+	})
+
+	MRenderingRequestTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:      "rendering_request_total",
+			Help:      "counter for image rendering requests",
+			Namespace: ExporterName,
+		},
+		[]string{"status"},
+	)
+
+	MRenderingSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "rendering_request_duration_milliseconds",
+			Help:       "summary of image rendering request duration",
+			Objectives: objectiveMap,
+			Namespace:  ExporterName,
+		},
+		[]string{"status"},
+	)
+
+	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "rendering_queue_size",
+		Help:      "size of image rendering queue",
+		Namespace: ExporterName,
 	})
 
 	MDataSourceProxyReqTimer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dataproxy_request_all_milliseconds",
 		Help:       "summary for dataproxy request duration",
 		Objectives: objectiveMap,
-		Namespace:  exporterName,
+		Namespace:  ExporterName,
 	})
 
 	MAlertingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "alerting_execution_time_milliseconds",
 		Help:       "summary of alert exeuction duration",
 		Objectives: objectiveMap,
-		Namespace:  exporterName,
+		Namespace:  ExporterName,
 	})
 
 	MAlertingActiveAlerts = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "alerting_active_alerts",
 		Help:      "amount of active alerts",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
 		Help:      "total amount of dashboards",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MStatTotalUsers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_users",
 		Help:      "total amount of users",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MStatActiveUsers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_active_users",
 		Help:      "number of active users",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MStatTotalOrgs = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_orgs",
 		Help:      "total amount of orgs",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	MStatTotalPlaylists = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_playlists",
 		Help:      "total amount of playlists",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	StatsTotalViewers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_viewers",
 		Help:      "total amount of viewers",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	StatsTotalEditors = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_editors",
 		Help:      "total amount of editors",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	StatsTotalAdmins = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_admins",
 		Help:      "total amount of admins",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	StatsTotalActiveViewers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_active_viewers",
 		Help:      "total amount of viewers",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	StatsTotalActiveEditors = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_active_editors",
 		Help:      "total amount of active editors",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
 
 	StatsTotalActiveAdmins = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_active_admins",
 		Help:      "total amount of active admins",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	})
+
+	StatsTotalDataSources = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "stat_totals_datasource",
+		Help:      "total number of defined datasources, labeled by pluginId",
+		Namespace: ExporterName,
+	}, []string{"plugin_id"})
 
 	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "build_info",
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
 
 	grafanPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
-		Namespace: exporterName,
+		Namespace: ExporterName,
 	}, []string{"plugin_id", "plugin_type", "version"})
 }
 
@@ -488,6 +532,9 @@ func initMetricVars() {
 		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
+		MRenderingRequestTotal,
+		MRenderingSummary,
+		MRenderingQueue,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalUsers,
@@ -500,6 +547,7 @@ func initMetricVars() {
 		StatsTotalActiveViewers,
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
+		StatsTotalDataSources,
 		grafanaBuildVersion,
 		grafanPluginBuildInfoDesc,
 	)

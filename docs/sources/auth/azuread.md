@@ -92,7 +92,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Click on **Users and groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
-## Enable Azure AD Oauth in Grafana
+## Enable Azure AD OAuth in Grafana
 
 1. Add the following to the [Grafana configuration file]({{< relref "../installation/configuration.md#config-file-locations" >}}):
 
@@ -120,6 +120,12 @@ only give access to members of the group `example` which has Id `8bab1c86-8fba-3
 
 ```ini
 allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
+```
+
+You'll need to ensure that you've [enabled group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) in your Azure AD Application Registration manifest file (Azure Portal -> Azure Active Directory -> Application Registrations -> Select Application -> Manifest)
+
+```json
+"groupMembershipClaims": "ApplicationGroup"
 ```
 
 The `allowed_domains` option limits access to the users belonging to the specific domains. Domains should be separated by space or comma.

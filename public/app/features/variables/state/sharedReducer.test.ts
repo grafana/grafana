@@ -1,4 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
+import { default as lodashDefaults } from 'lodash/defaults';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
@@ -29,15 +30,20 @@ variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 describe('sharedReducer', () => {
   describe('when addVariable is dispatched', () => {
     it('then state should be correct', () => {
-      const model = ({ name: 'name from model', type: 'type from model' } as unknown) as QueryVariableModel;
+      const model = ({
+        name: 'name from model',
+        type: 'type from model',
+        current: undefined,
+      } as unknown) as QueryVariableModel;
+
       const payload = toVariablePayload({ id: '0', type: 'query' }, { global: true, index: 0, model });
+
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, { ...initialVariablesState })
         .whenActionIsDispatched(addVariable(payload))
         .thenStateShouldEqual({
           [0]: {
-            ...initialQueryVariableModelState,
-            ...model,
+            ...lodashDefaults({}, model, initialQueryVariableModelState),
             id: '0',
             global: true,
             index: 0,

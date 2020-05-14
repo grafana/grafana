@@ -44,7 +44,6 @@ import {
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   deleteQueryInRichHistory,
-  getQueryDisplayText,
   getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
@@ -121,14 +120,14 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
+export function changeDatasource(exploreId: ExploreId, datasourceName: string): ThunkResult<void> {
   return async (dispatch, getState) => {
     let newDataSourceInstance: DataSourceApi;
 
-    if (!datasource) {
+    if (!datasourceName) {
       newDataSourceInstance = await getDatasourceSrv().get();
     } else {
-      newDataSourceInstance = await getDatasourceSrv().get(datasource);
+      newDataSourceInstance = await getDatasourceSrv().get(datasourceName);
     }
 
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
@@ -469,8 +468,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
-
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
+    const timeZone = getTimeZone(getState().user);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 
     let firstResponse = true;
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
@@ -487,17 +486,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
-          const arrayOfStringifiedQueries = queries.map(query =>
-            datasourceInstance?.getQueryDisplayText
-              ? datasourceInstance.getQueryDisplayText(query)
-              : getQueryDisplayText(query)
-          );
-
           const nextRichHistory = addToRichHistory(
             richHistory || [],
             datasourceId,
             datasourceName,
-            arrayOfStringifiedQueries,
+            queries,
             false,
             '',
             ''
@@ -697,11 +690,12 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
 }
 
 /**
- * Open the split view and copy the left state to be the right state.
- * The right state is automatically initialized.
- * The copy keeps all query modifications but wipes the query results.
+ * Open the split view and the right state is automatically initialized.
+ * If options are specified it initializes that pane with the datasource and query from options.
+ * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
+ * results.
  */
-export function splitOpen(dataSourceName?: string, query?: string): ThunkResult<void> {
+export function splitOpen(options?: { datasourceUid: string; query: string }): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -710,19 +704,24 @@ export function splitOpen(dataSourceName?: string, query?: string): ThunkResult<
     };
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
+
+    // TODO: Instead of splitting and then setting query/datasource we may probably do it in one action call
     rightState.queries = leftState.queries.slice();
     rightState.urlState = urlState;
     dispatch(splitOpenAction({ itemState: rightState }));
 
-    if (dataSourceName && query) {
-      // This is hardcoded for Jaeger right now
+    if (options) {
+      // TODO: This is hardcoded for Jaeger right now. Need to be changed so that target datasource can define the
+      //  query shape.
       const queries = [
         {
-          query,
+          query: options.query,
           refId: 'A',
         } as DataQuery,
       ];
-      await dispatch(changeDatasource(ExploreId.right, dataSourceName));
+
+      const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
     }
 

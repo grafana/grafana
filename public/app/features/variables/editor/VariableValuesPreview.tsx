@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { VariableModel, VariableOption, VariableWithOptions } from '../../templating/types';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface VariableValuesPreviewProps {
   variable: VariableModel;
@@ -30,7 +30,7 @@ export const VariableValuesPreview: React.FunctionComponent<VariableValuesPrevie
           <div className="gf-form" key={`${o.value}-${index}`}>
             <span
               className="gf-form-label"
-              aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.previewOfValuesOption}
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}
             >
               {o.text}
             </span>

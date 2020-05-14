@@ -1,5 +1,5 @@
 import { AdHocVariableFilter } from 'app/features/templating/types';
-import { UrlQueryValue } from '@grafana/runtime';
+import { UrlQueryValue } from '@grafana/data';
 import { isArray, isString } from 'lodash';
 
 export const toUrl = (filters: AdHocVariableFilter[]): string[] => {

@@ -1,6 +1,7 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Input, FormLabel, Select, Button } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 
 export interface Props {
   selectedAzureCloud?: string;
@@ -48,9 +49,9 @@ export class AzureCredentialsForm extends PureComponent<Props> {
           {azureCloudOptions && (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-12" tooltip="Choose an Azure Cloud.">
+                <InlineFormLabel className="width-12" tooltip="Choose an Azure Cloud.">
                   Azure Cloud
-                </FormLabel>
+                </InlineFormLabel>
                 <Select
                   className="width-15"
                   value={azureCloudOptions.find(azureCloud => azureCloud.value === selectedAzureCloud)}
@@ -63,7 +64,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
           )}
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-12">Directory (tenant) ID</FormLabel>
+              <InlineFormLabel className="width-12">Directory (tenant) ID</InlineFormLabel>
               <div className="width-15">
                 <Input
                   className="width-30"
@@ -76,7 +77,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-12">Application (client) ID</FormLabel>
+              <InlineFormLabel className="width-12">Application (client) ID</InlineFormLabel>
               <div className="width-15">
                 <Input
                   className="width-30"
@@ -90,7 +91,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
           {clientSecretConfigured ? (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-12">Client Secret</FormLabel>
+                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
                 <Input className="width-25" placeholder="configured" disabled={true} />
               </div>
               <div className="gf-form">
@@ -104,7 +105,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
           ) : (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-12">Client Secret</FormLabel>
+                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
                 <div className="width-15">
                   <Input
                     className="width-30"
@@ -120,7 +121,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
             <>
               <div className="gf-form-inline">
                 <div className="gf-form">
-                  <FormLabel className="width-12">Default Subscription</FormLabel>
+                  <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
                   <div className="width-25">
                     <Select
                       value={subscriptionOptions.find(subscription => subscription.value === selectedSubscription)}

@@ -1,16 +1,17 @@
 package setting
 
 type SmtpSettings struct {
-	Enabled      bool
-	Host         string
-	User         string
-	Password     string
-	CertFile     string
-	KeyFile      string
-	FromAddress  string
-	FromName     string
-	EhloIdentity string
-	SkipVerify   bool
+	Enabled        bool
+	Host           string
+	User           string
+	Password       string
+	CertFile       string
+	KeyFile        string
+	FromAddress    string
+	FromName       string
+	EhloIdentity   string
+	StartTLSPolicy string
+	SkipVerify     bool
 
 	SendWelcomeEmailOnSignUp bool
 	TemplatesPattern         string
@@ -27,6 +28,7 @@ func (cfg *Cfg) readSmtpSettings() {
 	cfg.Smtp.FromAddress = sec.Key("from_address").String()
 	cfg.Smtp.FromName = sec.Key("from_name").String()
 	cfg.Smtp.EhloIdentity = sec.Key("ehlo_identity").String()
+	cfg.Smtp.StartTLSPolicy = sec.Key("startTLS_policy").String()
 	cfg.Smtp.SkipVerify = sec.Key("skip_verify").MustBool(false)
 
 	emails := cfg.Raw.Section("emails")

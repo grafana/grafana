@@ -21,7 +21,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     );
   }
 
-  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs, timeZone) : null;
+  const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs, timeZone) : null;
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
   return (

@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { Reducer } from 'redux';
-import { UrlQueryValue } from '@grafana/runtime';
+import { Registry, UrlQueryValue, VariableType } from '@grafana/data';
 
 import {
   AdHocVariableModel,
@@ -12,12 +12,10 @@ import {
   TextBoxVariableModel,
   VariableModel,
   VariableOption,
-  VariableType,
 } from '../templating/types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';
-import { Registry } from '@grafana/data';
 import { createQueryVariableAdapter } from './query/adapter';
 import { createCustomVariableAdapter } from './custom/adapter';
 import { createTextBoxVariableAdapter } from './textbox/adapter';

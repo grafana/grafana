@@ -1,6 +1,6 @@
-import { Vector } from '../types/vector';
 import { DataFrame } from '../types/dataFrame';
 import { DisplayProcessor } from '../types';
+import { FunctionalVector } from '../vector/FunctionalVector';
 
 /**
  * This abstraction will present the contents of a DataFrame as if
@@ -13,11 +13,12 @@ import { DisplayProcessor } from '../types';
  * @typeParam T - Type of object stored in the DataFrame.
  * @beta
  */
-export class DataFrameView<T = any> implements Vector<T> {
+export class DataFrameView<T = any> extends FunctionalVector<T> {
   private index = 0;
   private obj: T;
 
   constructor(private data: DataFrame) {
+    super();
     const obj = ({} as unknown) as T;
 
     for (let i = 0; i < data.fields.length; i++) {
@@ -91,24 +92,8 @@ export class DataFrameView<T = any> implements Vector<T> {
   }
 
   toArray(): T[] {
-    return new Array(this.data.length).fill(0).map((_, i) => ({ ...this.get(i) }));
-  }
-
-  toJSON(): T[] {
-    return this.toArray();
-  }
-
-  forEachRow(iterator: (row: T) => void) {
-    for (let i = 0; i < this.data.length; i++) {
-      iterator(this.get(i));
-    }
-  }
-
-  map<V>(iterator: (item: T, index: number) => V) {
-    const acc: V[] = [];
-    for (let i = 0; i < this.data.length; i++) {
-      acc.push(iterator(this.get(i), i));
-    }
-    return acc;
+    return new Array(this.data.length)
+      .fill(0) // Needs to make a full copy
+      .map((_, i) => ({ ...this.get(i) }));
   }
 }

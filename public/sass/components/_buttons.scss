@@ -17,7 +17,7 @@
   vertical-align: middle;
   cursor: pointer;
   border: none;
-  height: $height-md;
+  height: $height-md + px;
 
   @include button-size($btn-padding-y, $space-md, $font-size-base, $border-radius-sm);
 
@@ -70,7 +70,7 @@
 .btn-large {
   @include button-size($btn-padding-y-lg, $space-lg, $font-size-lg, $border-radius-sm);
   font-weight: normal;
-  height: $height-lg;
+  height: $height-lg + px;
 
   .gicon {
     //font-size: 31px;
@@ -81,13 +81,13 @@
 
 .btn-small {
   @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
-  height: $height-sm;
+  height: $height-sm + px;
 }
 
 // Deprecated, only used by old plugins
 .btn-mini {
   @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
-  height: $height-sm;
+  height: #{height-sm}px;
 }
 
 .btn-link {
@@ -113,7 +113,7 @@
 
 // Info appears as a neutral blue
 .btn-secondary {
-  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl, $text-color);
   // Inverse appears as dark gray
 }
 .btn-inverse {
@@ -219,6 +219,15 @@ $btn-service-icon-width: 35px;
 .btn-service--azuread {
   .btn-service-icon {
     background-image: url(../img/microsoft_auth_icon.svg);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 60%;
+  }
+}
+
+.btn-service--okta {
+  .btn-service-icon {
+    background-image: url(../img/okta_logo_white.png);
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 60%;

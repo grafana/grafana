@@ -23,6 +23,10 @@
     "extractorMessageReporting": {
       "default": {
         "logLevel": "warning"
+      },
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
+        "addToApiReportFile": false
       }
     },
     "tsdocMessageReporting": {

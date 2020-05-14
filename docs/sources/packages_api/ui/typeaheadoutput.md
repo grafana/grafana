@@ -5,7 +5,6 @@
 title = "TypeaheadOutput"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## TypeaheadOutput interface

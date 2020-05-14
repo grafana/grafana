@@ -5,7 +5,6 @@
 title = "ValueFormatCategory"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ValueFormatCategory interface

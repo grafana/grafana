@@ -51,12 +51,7 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-type ApplicationInsightsResponse struct {
-	MetricResponse *ApplicationInsightsMetricsResponse
-	QueryResponse  *ApplicationInsightsQueryResponse
-}
-
-// ApplicationInsightsResponse is the json response from the Application Insights API
+//ApplicationInsightsQueryResponse is the json response from the Application Insights API
 type ApplicationInsightsQueryResponse struct {
 	Tables []struct {
 		Name    string `json:"name"`
@@ -68,25 +63,30 @@ type ApplicationInsightsQueryResponse struct {
 	} `json:"tables"`
 }
 
-// ApplicationInsightsMetricsResponse is the json response from the Application Insights API
-type ApplicationInsightsMetricsResponse struct {
-	Name     string
-	Segments []struct {
-		Start     time.Time
-		End       time.Time
-		Segmented map[string]float64
-		Value     float64
-	}
-}
-
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
-	Tables []struct {
-		Name    string `json:"name"`
-		Columns []struct {
-			Name string `json:"name"`
-			Type string `json:"type"`
-		} `json:"columns"`
-		Rows [][]interface{} `json:"rows"`
-	} `json:"tables"`
+	Tables []AzureLogAnalyticsTable `json:"tables"`
+}
+
+//AzureLogAnalyticsTable is the table format for Log Analytics responses
+type AzureLogAnalyticsTable struct {
+	Name    string `json:"name"`
+	Columns []struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"columns"`
+	Rows [][]interface{} `json:"rows"`
+}
+
+type metadata struct {
+	Columns      []column `json:"columns"`
+	Subscription string   `json:"subscription"`
+	Workspace    string   `json:"workspace"`
+	Query        string   `json:"query"`
+	EncodedQuery string   `json:"encodedQuery"`
+}
+
+type column struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
 }

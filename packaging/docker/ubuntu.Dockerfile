@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ubuntu:19.10
+ARG BASE_IMAGE=ubuntu:20.04
 FROM ${BASE_IMAGE} AS grafana-builder
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
@@ -27,14 +27,9 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
-# We need curl in the image, and if the architecture is x86-64, we need to install libfontconfig1 for PhantomJS
-RUN if [ `arch` = "x86_64" ]; then \
-        apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates libfontconfig1 curl && \
-        apt-get autoremove -y && rm -rf /var/lib/apt/lists/*; \
-    else \
-        apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl && \
-        apt-get autoremove -y && rm -rf /var/lib/apt/lists/*; \
-    fi
+# We need curl in the image
+RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl tzdata && \
+    apt-get autoremove -y && rm -rf /var/lib/apt/lists/*;
 
 COPY --from=grafana-builder /tmp/grafana "$GF_PATHS_HOME"
 

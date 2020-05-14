@@ -198,7 +198,7 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 	}
 
 	if ctx.frame != nil {
-		bFrame, err := data.MarshalArrow(ctx.frame)
+		bFrame, err := ctx.frame.MarshalArrow()
 		if err != nil {
 			return nil, err
 		}

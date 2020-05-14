@@ -4,7 +4,6 @@ import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // Services & Utils
-import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
@@ -25,6 +24,7 @@ import {
   ScopedVars,
   applyFieldOverrides,
   DataConfigSource,
+  TimeZone,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -38,8 +38,7 @@ export interface QueryRunnerOptions<
   timezone?: string;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
-  widthPixels: number;
-  maxDataPoints: number | undefined | null;
+  maxDataPoints: number;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
@@ -52,11 +51,21 @@ function getNextRequestId() {
   return 'Q' + counter++;
 }
 
+export interface GetDataOptions {
+  withTransforms?: boolean;
+  withFieldConfig?: boolean;
+}
+const DEFAULT_GET_DATA_OPTIONS: GetDataOptions = {
+  withTransforms: true,
+  withFieldConfig: true,
+};
+
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
+  private timeZone?: TimeZone;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -66,40 +75,45 @@ export class PanelQueryRunner {
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(transform = true): Observable<PanelData> {
+  getData(options: GetDataOptions = DEFAULT_GET_DATA_OPTIONS): Observable<PanelData> {
+    const { withFieldConfig, withTransforms } = options;
+
     return this.subject.pipe(
       map((data: PanelData) => {
         let processedData = data;
-        // apply transformations
-        if (transform && this.hasTransformations()) {
-          processedData = {
-            ...processedData,
-            series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
-          };
+
+        // Apply transformation
+        if (withTransforms) {
+          const transformations = this.dataConfigSource.getTransformations();
+
+          if (transformations && transformations.length > 0) {
+            processedData = {
+              ...processedData,
+              series: transformDataFrame(transformations, data.series),
+            };
+          }
         }
-        // apply overrides
-        if (this.hasFieldOverrideOptions()) {
-          processedData = {
-            ...processedData,
-            series: applyFieldOverrides({
-              data: processedData.series,
-              ...this.dataConfigSource.getFieldOverrideOptions(),
-            }),
-          };
+
+        if (withFieldConfig) {
+          // Apply field defaults & overrides
+          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          if (fieldConfig) {
+            processedData = {
+              ...processedData,
+              series: applyFieldOverrides({
+                timeZone: this.timeZone,
+                autoMinMax: true,
+                data: processedData.series,
+                ...fieldConfig,
+              }),
+            };
+          }
         }
+
         return processedData;
       })
     );
   }
-
-  hasTransformations = () => {
-    const transformations = this.dataConfigSource.getTransformations();
-    return config.featureToggles.transformations && transformations && transformations.length > 0;
-  };
-
-  hasFieldOverrideOptions = () => {
-    return this.dataConfigSource.getFieldOverrideOptions();
-  };
 
   async run(options: QueryRunnerOptions) {
     const {
@@ -111,11 +125,12 @@ export class PanelQueryRunner {
       timeRange,
       timeInfo,
       cacheTimeout,
-      widthPixels,
       maxDataPoints,
       scopedVars,
       minInterval,
     } = options;
+
+    this.timeZone = timezone;
 
     if (isSharedDashboardQuery(datasource)) {
       this.pipeToSubject(runSharedRequest(options));
@@ -133,7 +148,7 @@ export class PanelQueryRunner {
       interval: '',
       intervalMs: 0,
       targets: cloneDeep(queries),
-      maxDataPoints: maxDataPoints || widthPixels,
+      maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
@@ -154,7 +169,7 @@ export class PanelQueryRunner {
       });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
+      const norm = kbn.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -186,11 +201,6 @@ export class PanelQueryRunner {
     });
   }
 
-  pipeDataToSubject = (data: PanelData) => {
-    this.subject.next(data);
-    this.lastResult = data;
-  };
-
   resendLastResult = () => {
     if (this.lastResult) {
       this.subject.next(this.lastResult);
@@ -208,6 +218,15 @@ export class PanelQueryRunner {
 
     if (this.subscription) {
       this.subscription.unsubscribe();
+    }
+  }
+
+  useLastResultFrom(runner: PanelQueryRunner) {
+    this.lastResult = runner.getLastResult();
+
+    if (this.lastResult) {
+      // The subject is a replay subject so anyone subscribing will get this last result
+      this.subject.next(this.lastResult);
     }
   }
 
