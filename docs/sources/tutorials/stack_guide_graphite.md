@@ -94,7 +94,7 @@ This config specifies the resolution of metrics and the retention periods. For e
 roll them up into 10 minute buckets and store those for 1 year, then roll those up into 1 hour buckets and store those for 5 years. For all other metrics
 the default rule will be applied with other retention periods.
 
-This configuration is very important, as the first retention period must match the rate of which you send metrics. The default rule has 10 seconds
+This configuration is very important, as the first retention period must match the rate at which you send metrics. The default rule has 10 seconds
 as its first resolution so when configuring StatsD we should configure it to send metrics every 10 seconds.
 
 > If you send values more frequently than the highest resolution, for example if you send data every second but

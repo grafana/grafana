@@ -16,14 +16,14 @@ type configReader struct {
 	log  log.Logger
 }
 
-func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, error) {
+func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	apiVersion := &ConfigVersion{ApiVersion: 0}
+	apiVersion := &configVersion{APIVersion: 0}
 
 	// We ignore the error here because it errors out for version 0 which does not have apiVersion
 	// specified (so 0 is default). This can also error in case the apiVersion is not an integer but at the moment
@@ -32,18 +32,18 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 	//  integer > max version?).
 	_ = yaml.Unmarshal(yamlFile, &apiVersion)
 
-	if apiVersion.ApiVersion > 0 {
-		v1 := &DashboardAsConfigV1{}
+	if apiVersion.APIVersion > 0 {
+		v1 := &configV1{}
 		err := yaml.Unmarshal(yamlFile, &v1)
 		if err != nil {
 			return nil, err
 		}
 
 		if v1 != nil {
-			return v1.mapToDashboardAsConfig(), nil
+			return v1.mapToDashboardsAsConfig()
 		}
 	} else {
-		var v0 []*DashboardsAsConfigV0
+		var v0 []*configV0
 		err := yaml.Unmarshal(yamlFile, &v0)
 		if err != nil {
 			return nil, err
@@ -51,15 +51,15 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 
 		if v0 != nil {
 			cr.log.Warn("[Deprecated] the dashboard provisioning config is outdated. please upgrade", "filename", filename)
-			return mapV0ToDashboardAsConfig(v0), nil
+			return mapV0ToDashboardsAsConfig(v0)
 		}
 	}
 
-	return []*DashboardsAsConfig{}, nil
+	return []*config{}, nil
 }
 
-func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
-	var dashboards []*DashboardsAsConfig
+func (cr *configReader) readConfig() ([]*config, error) {
+	var dashboards []*config
 
 	files, err := ioutil.ReadDir(cr.path)
 	if err != nil {
@@ -84,15 +84,15 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 	uidUsage := map[string]uint8{}
 	for _, dashboard := range dashboards {
-		if dashboard.OrgId == 0 {
-			dashboard.OrgId = 1
+		if dashboard.OrgID == 0 {
+			dashboard.OrgID = 1
 		}
 
 		if dashboard.UpdateIntervalSeconds == 0 {
 			dashboard.UpdateIntervalSeconds = 10
 		}
-		if len(dashboard.FolderUid) > 0 {
-			uidUsage[dashboard.FolderUid] += 1
+		if len(dashboard.FolderUID) > 0 {
+			uidUsage[dashboard.FolderUID]++
 		}
 	}
 

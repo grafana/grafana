@@ -7,8 +7,7 @@ import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
-import { CoreEvents, Invitee, OrgUser } from 'app/types';
-import appEvents from 'app/core/app_events';
+import { Invitee, OrgUser, OrgRole } from 'app/types';
 import { loadInvitees, loadUsers, removeUser, updateUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
@@ -60,22 +59,10 @@ export class UsersListPage extends PureComponent<Props, State> {
     return await this.props.loadInvitees();
   }
 
-  onRoleChange = (role: string, user: OrgUser) => {
+  onRoleChange = (role: OrgRole, user: OrgUser) => {
     const updatedUser = { ...user, role: role };
 
     this.props.updateUser(updatedUser);
-  };
-
-  onRemoveUser = (user: OrgUser) => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Are you sure you want to delete user ' + user.login + '?',
-      yesText: 'Delete',
-      icon: 'fa-warning',
-      onConfirm: () => {
-        this.props.removeUser(user.userId);
-      },
-    });
   };
 
   onShowInvites = () => {
@@ -94,7 +81,7 @@ export class UsersListPage extends PureComponent<Props, State> {
         <UsersTable
           users={users}
           onRoleChange={(role, user) => this.onRoleChange(role, user)}
-          onRemoveUser={user => this.onRemoveUser(user)}
+          onRemoveUser={user => this.props.removeUser(user.userId)}
         />
       );
     }

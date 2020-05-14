@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:3.10
+ARG BASE_IMAGE=alpine:3.11
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
@@ -24,11 +24,11 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main openssl musl-utils
+    apk add --no-cache --upgrade openssl musl-utils
 
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
-      apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community libaio libnsl && \
+      apk add --no-cache --upgrade libaio libnsl && \
       ln -s /usr/lib/libnsl.so.2 /usr/lib/libnsl.so.1 && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-2.30-r0.apk \
         -O /tmp/glibc-2.30-r0.apk && \
@@ -39,19 +39,6 @@ RUN if [ `arch` = "x86_64" ]; then \
       rm -f /tmp/glibc-bin-2.30-r0.apk && \
       rm -f /lib/ld-linux-x86-64.so.2 && \
       rm -f /etc/ld.so.cache; \
-    fi
-
-# PhantomJS
-RUN if [ `arch` = "x86_64" ]; then \
-      apk add --no-cache --virtual phantomjs-utils curl && \
-      cd /tmp && \
-      curl -Ls https://github.com/dustinblackman/phantomized/releases/download/2.1.1/dockerized-phantomjs.tar.gz | tar xz && \
-      cp -R lib lib64 / && \
-      cp -R usr/lib/x86_64-linux-gnu /usr/lib && \
-      cp -R usr/share/fonts /usr/share && \
-      cp -R etc/fonts /etc && \
-      rm -rf /tmp/* && \
-      apk del --no-cache phantomjs-utils; \
     fi
 
 COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"

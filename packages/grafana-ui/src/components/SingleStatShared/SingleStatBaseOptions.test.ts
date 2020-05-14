@@ -1,4 +1,5 @@
-import { sharedSingleStatMigrationHandler } from './SingleStatBaseOptions';
+import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
+import { PanelModel } from '@grafana/data';
 
 describe('sharedSingleStatMigrationHandler', () => {
   it('from old valueOptions model without pluginVersion', () => {
@@ -153,5 +154,67 @@ describe('sharedSingleStatMigrationHandler', () => {
         "overrides": Array [],
       }
     `);
+  });
+
+  it('Rename title to displayName', () => {
+    const panel = {
+      options: {
+        fieldOptions: {
+          stat: 'last',
+          decimals: 5,
+          defaults: {
+            title: 'newTitle',
+            min: 0,
+            max: 100,
+            mappings: [],
+          },
+          override: {},
+        },
+      },
+      title: 'Usage',
+      type: 'bargauge',
+    };
+
+    sharedSingleStatMigrationHandler(panel as any);
+    expect((panel as any).fieldConfig.defaults.displayName).toBe('newTitle');
+  });
+
+  it('change from angular singlestat with no enabled gauge', () => {
+    const old: any = {
+      angular: {
+        format: 'ms',
+        decimals: 7,
+        gauge: {
+          maxValue: 150,
+          minValue: -10,
+          show: false,
+        },
+      },
+    };
+    const panel = {} as PanelModel;
+    sharedSingleStatPanelChangedHandler(panel, 'singlestat', old);
+    expect(panel.fieldConfig.defaults.unit).toBe('ms');
+    expect(panel.fieldConfig.defaults.min).toBe(undefined);
+    expect(panel.fieldConfig.defaults.max).toBe(undefined);
+  });
+
+  it('change from angular singlestat with no enabled gauge', () => {
+    const old: any = {
+      angular: {
+        format: 'ms',
+        decimals: 7,
+        gauge: {
+          maxValue: 150,
+          minValue: -10,
+          show: false,
+        },
+      },
+    };
+
+    const panel = {} as PanelModel;
+    sharedSingleStatPanelChangedHandler(panel, 'singlestat', old);
+    expect(panel.fieldConfig.defaults.unit).toBe('ms');
+    expect(panel.fieldConfig.defaults.min).toBe(undefined);
+    expect(panel.fieldConfig.defaults.max).toBe(undefined);
   });
 });

@@ -7,11 +7,8 @@ import './services/DashboardSrv';
 import './components/DashLinks';
 import './components/DashExportModal';
 import './components/DashNav';
-import './components/ExportDataModal';
 import './components/VersionHistory';
 import './components/DashboardSettings';
-import './components/SubMenu';
-import './components/UnsavedChangesModal';
 import './components/AdHocFilters';
 import './components/RowOptions';
 

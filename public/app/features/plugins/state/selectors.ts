@@ -9,4 +9,3 @@ export const getPlugins = (state: PluginsState) => {
 };
 
 export const getPluginsSearchQuery = (state: PluginsState) => state.searchQuery;
-export const getLayoutMode = (state: PluginsState) => state.layoutMode;

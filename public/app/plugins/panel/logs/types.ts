@@ -6,10 +6,3 @@ export interface Options {
   wrapLogMessage: boolean;
   sortOrder: SortOrder;
 }
-
-export const defaults: Options = {
-  showLabels: false,
-  showTime: true,
-  wrapLogMessage: true,
-  sortOrder: SortOrder.Descending,
-};

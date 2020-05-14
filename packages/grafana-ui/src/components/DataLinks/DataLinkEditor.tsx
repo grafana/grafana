@@ -1,9 +1,11 @@
 import React, { ChangeEvent, useContext } from 'react';
 import { DataLink, VariableSuggestion, GrafanaTheme } from '@grafana/data';
-import { FormField, Switch } from '../index';
+import { Switch } from '../Switch/Switch';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 
 interface DataLinkEditorProps {
   index: number;
@@ -11,7 +13,6 @@ interface DataLinkEditorProps {
   value: DataLink;
   suggestions: VariableSuggestion[];
   onChange: (index: number, link: DataLink, callback?: () => void) => void;
-  onRemove: (link: DataLink) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
@@ -26,7 +27,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
-  ({ index, value, onChange, onRemove, suggestions, isLast }) => {
+  ({ index, value, onChange, suggestions, isLast }) => {
     const theme = useContext(ThemeContext);
     const styles = getStyles(theme);
 
@@ -37,39 +38,24 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
       onChange(index, { ...value, title: event.target.value });
     };
 
-    const onRemoveClick = () => {
-      onRemove(value);
-    };
-
     const onOpenInNewTabChanged = () => {
       onChange(index, { ...value, targetBlank: !value.targetBlank });
     };
 
     return (
       <div className={styles.listItem}>
-        <div className="gf-form gf-form--inline">
-          <FormField
-            className="gf-form--grow"
-            label="Title"
-            value={value.title}
-            onChange={onTitleChange}
-            inputWidth={0}
-            labelWidth={5}
-            placeholder="Show details"
-          />
-          <Switch label="Open in new tab" checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
-          <button className="gf-form-label gf-form-label--btn" onClick={onRemoveClick} title="Remove link">
-            <i className="fa fa-times" />
-          </button>
-        </div>
-        <FormField
-          label="URL"
-          labelWidth={5}
-          inputEl={<DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />}
-          className={css`
-            width: 100%;
-          `}
-        />
+        <Field label="Title">
+          <Input value={value.title} onChange={onTitleChange} placeholder="Show details" />
+        </Field>
+
+        <Field label="URL">
+          <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
+        </Field>
+
+        <Field label="Open in new tab">
+          <Switch checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+        </Field>
+
         {isLast && (
           <div className={styles.infoText}>
             With data links you can reference data variables like series name, labels and values. Type CMD+Space,

@@ -16,14 +16,15 @@ interface Props extends PanelProps<PieChartOptions> {}
 
 export class PieChartPanel extends PureComponent<Props> {
   render() {
-    const { width, height, options, data, replaceVariables, fieldConfig } = this.props;
+    const { width, height, options, data, replaceVariables, fieldConfig, timeZone } = this.props;
 
     const values = getFieldDisplayValues({
       fieldConfig,
-      fieldOptions: options.fieldOptions,
+      reduceOptions: options.reduceOptions,
       data: data.series,
       theme: config.theme,
       replaceVariables: replaceVariables,
+      timeZone,
     }).map(v => v.display);
 
     return (

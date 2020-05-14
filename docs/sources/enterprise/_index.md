@@ -1,7 +1,7 @@
 +++
 title = "Grafana Enterprise"
 description = "Grafana Enterprise overview"
-keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise"]
+keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
 type = "docs"
 [menu.docs]
 name = "Grafana Enterprise"
@@ -19,21 +19,9 @@ Grafana Enterprise includes all of the features found in the open source edition
 
 [Learn more about Grafana Enterprise.](https://grafana.com/enterprise)
 
-## Enhanced security features
+## Authentication
 
-Grafana Enterprise includes integrations with more ways to authenticate your users and enhanced authorization capabilities.
-
-### Data source permissions
-
-[Data source permissions]({{< relref "datasource_permissions.md" >}}) allow you to restrict query access to only specific teams and users.
-
-### Enhanced LDAP integration
-
-With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you can set up synchronization between LDAP groups and Grafana teams.
-
-### SAML authentication
-
-[SAML authentication]({{< relref "saml.md" >}}) enables your Grafana Enterprise users to authenticate with SAML.
+Grafana Enterprise includes integrations with more ways to authenticate your users and enhanced authentication capabilities.
 
 ### Team sync
 
@@ -42,21 +30,30 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 Supported auth providers:
 
 * [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+* [Azure AD OAuth]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 * [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 * [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+* [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
+* [SAML]({{< relref "saml.md#configure-team-sync" >}})
 
-## Reporting
+### Enhanced LDAP integration
 
-[Reporting]({{< relref "reporting.md" >}}) allows you to take any dashboard, generate a PDF report, and set up a schedule to have it emailed to whoever you choose.
+With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you can set up active LDAP synchronization.
 
-## Export dashboard as PDF
+### SAML authentication
 
-[Export dashboard as PDF]({{< relref "export-pdf.md" >}}) allows you to export a dashboard as a PDF document.
+[SAML authentication]({{< relref "saml.md" >}}) enables your Grafana Enterprise users to authenticate with SAML.
 
-## White labeling
+## Enterprise features
 
-[White labeling]({{< relref "white-labeling.md" >}}) allows you to replace the Grafana brand and logo with your own corporate brand and logo. You can also change footer links to point to your custom resources.
+With Grafana Enterprise, you get access to new features, including:
+
+* [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
+* [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
+* [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
+* [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
+* [Usage insights]({{< relref "usage-insights.md" >}}) to understand how your Grafana instance is used.
 
 ## Enterprise plugins
 
@@ -75,7 +72,7 @@ With a Grafana Enterprise license, you get access to premium plugins, including:
 
 To purchase or obtain a trial license contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
 
-## License file management
+### License file management
 
 To download your Grafana Enterprise license log in to your [Grafana.com](https://grafana.com) account and go to your **Org Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license details page there is **Download Token** link that will download the *license.jwt* file containing your license.
 

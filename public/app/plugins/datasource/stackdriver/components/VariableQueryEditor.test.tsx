@@ -11,13 +11,30 @@ jest.mock('../functions', () => ({
   extractServicesFromMetricDescriptors: (): any[] => [],
 }));
 
+jest.mock('../../../../core/config', () => {
+  console.warn('[This test uses old variable system, needs a rewrite]');
+  const original = jest.requireActual('../../../../core/config');
+  const config = original.getConfig();
+  return {
+    getConfig: () => ({
+      ...config,
+      featureToggles: {
+        ...config.featureToggles,
+        newVariables: false,
+      },
+    }),
+  };
+});
+
 const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},
   datasource: {
     getDefaultProject: () => '',
-    getProjects: async (): Promise<any[]> => [],
-    getMetricTypes: async (p: any): Promise<any[]> => [],
+    getProjects: async () => Promise.resolve([]),
+    getMetricTypes: async (projectName: string) => Promise.resolve([]),
+    getSLOServices: async (projectName: string, serviceId: string) => Promise.resolve([]),
+    getServiceLevelObjectives: (projectName: string, serviceId: string) => Promise.resolve([]),
   },
   templateSrv: { replace: (s: string) => s, getVariables: () => ([] as unknown) as VariableModel[] },
 };

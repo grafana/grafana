@@ -2,7 +2,9 @@ import { FieldType } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldMatcherID } from '../matchers/ids';
-import { transformDataFrame } from '../transformers';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { filterFieldsTransformer } from './filter';
+import { transformDataFrame } from '../transformDataFrame';
 
 export const simpleSeriesWithTypes = toDataFrame({
   fields: [
@@ -14,6 +16,10 @@ export const simpleSeriesWithTypes = toDataFrame({
 });
 
 describe('Filter Transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([filterFieldsTransformer]);
+  });
+
   it('filters by include', () => {
     const cfg = {
       id: DataTransformerID.filterFields,

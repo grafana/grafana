@@ -47,7 +47,7 @@ All requests will be made from the browser directly to the data source and may b
 
 ### Navigate metric segments
 
-Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
+Click the ``Select metric`` link to start navigating the metric space. Once you start you can continue using the mouse
 or keyboard arrow keys. You can select a wildcard and still continue.
 
 {{< docs-imagebox img="/img/docs/v45/graphite_query1_still.png"
@@ -87,11 +87,11 @@ this consolidation is done using `avg` function. You can control how Graphite co
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, then you need to use the Grafana functions `tags` and `tag_values`.
@@ -132,7 +132,6 @@ TagValues
 tag_values(server, server=~${__searchFilter:regex})
 ```
 
-
 ### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
@@ -159,15 +158,19 @@ Example of a tag expression with regex formatting and using the Equal Tilde oper
 server=~${servers:regex}
 ```
 
-Check out the [Advanced Formatting Options section in the Variables]({{< relref "../../reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
+Check out the [Advanced Formatting Options section in the Variables]({{< relref "../../variables/templates-and-variables.md#advanced-formatting-options" >}}) documentation for examples and details.
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
+
+## Getting Grafana metrics into Graphite
+
+Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../administration/metrics.md">}}).
 
 ## Configure the data source with provisioning
 

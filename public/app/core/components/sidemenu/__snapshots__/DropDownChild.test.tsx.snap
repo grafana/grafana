@@ -13,8 +13,9 @@ exports[`Render should render icon if exists 1`] = `
   className=""
 >
   <a>
-    <i
-      className="icon-test"
+    <Icon
+      className="css-290ig"
+      name="icon-test"
     />
   </a>
 </li>

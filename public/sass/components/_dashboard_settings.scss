@@ -6,8 +6,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: $zindex-modal;
-  background: $body-bg;
+  z-index: $zindex-sidemenu;
+  background: $dashboard-bg;
   display: flex;
   flex-direction: column;
 }

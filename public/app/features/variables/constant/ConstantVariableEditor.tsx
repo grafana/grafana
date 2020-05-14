@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { ConstantVariableModel } from '../../templating/types';
 import { VariableEditorProps } from '../editor/types';
@@ -36,9 +36,7 @@ export class ConstantVariableEditor extends PureComponent<Props> {
               onChange={this.onChange}
               onBlur={this.onBlur}
               placeholder="your metric prefix"
-              aria-label={
-                e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.selectors.constantOptionsQueryInput
-              }
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput}
             />
           </div>
         </div>

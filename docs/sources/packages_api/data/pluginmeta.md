@@ -5,7 +5,6 @@
 title = "PluginMeta"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PluginMeta interface
@@ -28,6 +27,7 @@ import { PluginMeta } from '@grafana/data';
 |  [defaultNavUrl](#defaultnavurl-property) | <code>string</code> |  |
 |  [dependencies](#dependencies-property) | <code>PluginDependencies</code> |  |
 |  [enabled](#enabled-property) | <code>boolean</code> |  |
+|  [enterprise](#enterprise-property) | <code>boolean</code> |  |
 |  [hasUpdate](#hasupdate-property) | <code>boolean</code> |  |
 |  [id](#id-property) | <code>string</code> |  |
 |  [includes](#includes-property) | <code>PluginInclude[]</code> |  |
@@ -38,6 +38,7 @@ import { PluginMeta } from '@grafana/data';
 |  [name](#name-property) | <code>string</code> |  |
 |  [pinned](#pinned-property) | <code>boolean</code> |  |
 |  [secureJsonData](#securejsondata-property) | <code>KeyValue</code> |  |
+|  [signature](#signature-property) | <code>PluginSignatureStatus</code> |  |
 |  [state](#state-property) | <code>PluginState</code> |  |
 |  [type](#type-property) | <code>PluginType</code> |  |
 
@@ -71,6 +72,14 @@ dependencies?: PluginDependencies;
 
 ```typescript
 enabled?: boolean;
+```
+
+### enterprise property
+
+<b>Signature</b>
+
+```typescript
+enterprise?: boolean;
 ```
 
 ### hasUpdate property
@@ -151,6 +160,14 @@ pinned?: boolean;
 
 ```typescript
 secureJsonData?: KeyValue;
+```
+
+### signature property
+
+<b>Signature</b>
+
+```typescript
+signature?: PluginSignatureStatus;
 ```
 
 ### state property

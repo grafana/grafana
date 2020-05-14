@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, Icon } from '@grafana/ui';
 import { LdapTeam } from 'app/types';
 
 interface Props {
@@ -36,7 +36,7 @@ export const LdapUserTeams: FC<Props> = ({ teams, showAttributeMapping }) => {
                               No match
                               <Tooltip placement="top" content="No matching teams found" theme={'info'}>
                                 <span className="gf-form-help-icon">
-                                  <i className="fa fa-info-circle" />
+                                  <Icon name="info-circle" />
                                 </span>
                               </Tooltip>
                             </div>

@@ -4,14 +4,14 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
-export let iconMap = {
-  'external link': 'fa-external-link',
-  dashboard: 'fa-th-large',
-  question: 'fa-question',
-  info: 'fa-info',
-  bolt: 'fa-bolt',
-  doc: 'fa-file-text-o',
-  cloud: 'fa-cloud',
+export let iconMap: { [key: string]: string } = {
+  'external link': 'external-link-alt',
+  dashboard: 'apps',
+  question: 'question-circle',
+  info: 'info-circle',
+  bolt: 'bolt',
+  doc: 'file-alt',
+  cloud: 'cloud',
 };
 
 export class DashLinksEditorCtrl {
@@ -22,7 +22,7 @@ export class DashLinksEditorCtrl {
 
   emptyListCta = {
     title: 'There are no dashboard links added yet',
-    buttonIcon: 'gicon gicon-link',
+    buttonIcon: 'link',
     buttonTitle: 'Add Dashboard Link',
     infoBox: {
       __html: `<p>
@@ -62,7 +62,6 @@ export class DashLinksEditorCtrl {
   editLink(link: any) {
     this.link = link;
     this.mode = 'edit';
-    console.log(this.link);
   }
 
   saveLink() {

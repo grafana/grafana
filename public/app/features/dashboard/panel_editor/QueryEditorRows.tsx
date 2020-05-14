@@ -57,8 +57,13 @@ export class QueryEditorRows extends PureComponent<Props> {
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onChangeQueries } = this.props;
 
-    // ensure refId is maintained
-    query.refId = queries[index].refId;
+    const old = queries[index];
+
+    // ensure refId & datasource are maintained
+    query.refId = old.refId;
+    if (old.datasource) {
+      query.datasource = old.datasource;
+    }
 
     // update query in array
     onChangeQueries(
@@ -73,24 +78,20 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   render() {
     const { props } = this;
-    return (
-      <div className="query-editor-rows">
-        {props.queries.map((query, index) => (
-          <QueryEditorRow
-            dataSourceValue={query.datasource || props.datasource.value}
-            key={query.refId}
-            panel={props.panel}
-            dashboard={props.dashboard}
-            data={props.data}
-            query={query}
-            onChange={query => this.onChangeQuery(query, index)}
-            onRemoveQuery={this.onRemoveQuery}
-            onAddQuery={this.onAddQuery}
-            onMoveQuery={this.onMoveQuery}
-            inMixedMode={props.datasource.meta.mixed}
-          />
-        ))}
-      </div>
-    );
+    return props.queries.map((query, index) => (
+      <QueryEditorRow
+        dataSourceValue={query.datasource || props.datasource.value}
+        key={query.refId}
+        panel={props.panel}
+        dashboard={props.dashboard}
+        data={props.data}
+        query={query}
+        onChange={query => this.onChangeQuery(query, index)}
+        onRemoveQuery={this.onRemoveQuery}
+        onAddQuery={this.onAddQuery}
+        onMoveQuery={this.onMoveQuery}
+        inMixedMode={props.datasource.meta.mixed}
+      />
+    ));
   }
 }

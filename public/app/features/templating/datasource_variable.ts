@@ -5,10 +5,9 @@ import {
   VariableHide,
   VariableOption,
   VariableRefresh,
-  VariableType,
   variableTypes,
 } from './types';
-import { stringToJsRegex } from '@grafana/data';
+import { VariableType, stringToJsRegex } from '@grafana/data';
 import { VariableSrv } from './variable_srv';
 import { TemplateSrv } from './template_srv';
 import { DatasourceSrv } from '../plugins/datasource_srv';

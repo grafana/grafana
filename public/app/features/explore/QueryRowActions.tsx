@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon } from '@grafana/ui';
 
 function formatLatency(value: number) {
   return `${(value / 1000).toFixed(1)}s`;
@@ -34,7 +35,7 @@ export function QueryRowActions(props: Props) {
             className="gf-form-label gf-form-label--btn"
             onClick={onClickToggleEditorMode}
           >
-            <i className="fa fa-pencil" />
+            <Icon name="pen" />
           </button>
         </div>
       )}
@@ -48,14 +49,14 @@ export function QueryRowActions(props: Props) {
           disabled={isNotStarted}
           className="gf-form-label gf-form-label--btn"
           onClick={onClickToggleDisabled}
-          title="Disable/enable query"
+          title={isDisabled ? 'Enable query' : 'Disable query'}
         >
-          <i className={isDisabled ? 'fa fa-eye-slash' : 'fa fa-eye'} />
+          <Icon name={isDisabled ? 'eye-slash' : 'eye'} />
         </button>
       </div>
       <div className="gf-form">
         <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton} title="Remove query">
-          <i className="fa fa-minus" />
+          <Icon name="minus" />
         </button>
       </div>
     </div>

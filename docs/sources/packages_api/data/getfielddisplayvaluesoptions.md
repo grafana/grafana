@@ -5,7 +5,6 @@
 title = "GetFieldDisplayValuesOptions"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## GetFieldDisplayValuesOptions interface
@@ -26,10 +25,12 @@ import { GetFieldDisplayValuesOptions } from '@grafana/data';
 |  --- | --- | --- |
 |  [autoMinMax](#autominmax-property) | <code>boolean</code> |  |
 |  [data](#data-property) | <code>DataFrame[]</code> |  |
-|  [fieldOptions](#fieldoptions-property) | <code>FieldDisplayOptions</code> |  |
+|  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> |  |
+|  [reduceOptions](#reduceoptions-property) | <code>ReduceDataOptions</code> |  |
 |  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> |  |
 |  [sparkline](#sparkline-property) | <code>boolean</code> |  |
 |  [theme](#theme-property) | <code>GrafanaTheme</code> |  |
+|  [timeZone](#timezone-property) | <code>TimeZone</code> |  |
 
 ### autoMinMax property
 
@@ -47,12 +48,20 @@ autoMinMax?: boolean;
 data?: DataFrame[];
 ```
 
-### fieldOptions property
+### fieldConfig property
 
 <b>Signature</b>
 
 ```typescript
-fieldOptions: FieldDisplayOptions;
+fieldConfig: FieldConfigSource;
+```
+
+### reduceOptions property
+
+<b>Signature</b>
+
+```typescript
+reduceOptions: ReduceDataOptions;
 ```
 
 ### replaceVariables property
@@ -77,4 +86,12 @@ sparkline?: boolean;
 
 ```typescript
 theme: GrafanaTheme;
+```
+
+### timeZone property
+
+<b>Signature</b>
+
+```typescript
+timeZone?: TimeZone;
 ```

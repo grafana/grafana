@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
-import { DataLink, ScopedVars, PanelMenuItem, PanelData, LoadingState, QueryResultMetaNotice } from '@grafana/data';
+import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
-import { ClickOutsideWrapper, Tooltip } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -25,7 +25,9 @@ export interface Props {
   angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
-  isFullscreen: boolean;
+  alertState?: string;
+  isViewing: boolean;
+  isEditing: boolean;
   data: PanelData;
   updateLocation: typeof updateLocation;
 }
@@ -88,7 +90,7 @@ export class PanelHeader extends Component<Props, State> {
   private renderLoadingState(): JSX.Element {
     return (
       <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
+        <Icon className="fa-spin" name="fa fa-spinner" />
       </div>
     );
   }
@@ -99,7 +101,7 @@ export class PanelHeader extends Component<Props, State> {
     e.stopPropagation();
 
     updateLocation({
-      query: { inspect: panel.id, tab },
+      query: { inspect: panel.id, inspectTab: tab },
       partial: true,
     });
   };
@@ -108,12 +110,12 @@ export class PanelHeader extends Component<Props, State> {
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
-          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice.inspect!)}>
-            <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
+          <div className="panel-info-notice pointer" onClick={e => this.openInspect(e, notice.inspect!)}>
+            <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </div>
         ) : (
-          <a className="panel-info-notice" href={notice.url} target="_blank">
-            <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
+          <a className="panel-info-notice" href={notice.link} target="_blank">
+            <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </a>
         )}
       </Tooltip>
@@ -121,13 +123,13 @@ export class PanelHeader extends Component<Props, State> {
   };
 
   render() {
-    const { panel, scopedVars, error, isFullscreen, data } = this.props;
+    const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
     const panelHeaderClass = classNames({
       'panel-header': true,
-      'grid-drag-handle': !isFullscreen,
+      'grid-drag-handle': !(isViewing || isEditing),
     });
 
     // dedupe on severity
@@ -157,13 +159,21 @@ export class PanelHeader extends Component<Props, State> {
             className="panel-title-container"
             onClick={this.onMenuToggle}
             onMouseDown={this.onMouseDown}
-            aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.title(title)}
+            aria-label={selectors.components.Panels.Panel.title(title)}
           >
             <div className="panel-title">
               {Object.values(notices).map(this.renderNotice)}
-              <span className="icon-gf panel-alert-icon" />
+              {alertState && (
+                <Icon
+                  name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+                  className="icon-gf panel-alert-icon"
+                  style={{ marginRight: '4px' }}
+                  size="sm"
+                />
+              )}
               <span className="panel-title-text">
-                {title} <span className="fa fa-caret-down panel-menu-toggle" />
+                {title}
+                <Icon name="angle-down" className="panel-menu-toggle" />
               </span>
               {this.state.panelMenuOpen && (
                 <ClickOutsideWrapper onClick={this.closeMenu}>
@@ -172,7 +182,7 @@ export class PanelHeader extends Component<Props, State> {
               )}
               {data.request && data.request.timeInfo && (
                 <span className="panel-time-info">
-                  <i className="fa fa-clock-o" /> {data.request.timeInfo}
+                  <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
                 </span>
               )}
             </div>

@@ -16,7 +16,10 @@ const cypress = commandName => {
 
   return execa(`${projectPath}/node_modules/.bin/cypress`, cypressOptions, execaOptions)
     .then(() => {}) // no return value
-    .catch(error => console.error(error.message));
+    .catch(error => {
+      console.error(error.message);
+      process.exitCode = 1;
+    });
 };
 
 module.exports = () => {

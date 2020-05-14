@@ -964,7 +964,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
-			mock.GetAllowUiUpdatesFromConfigFunc = func(name string) bool {
+			mock.GetAllowUIUpdatesFromConfigFunc = func(name string) bool {
 				return true
 			}
 
@@ -1196,7 +1196,7 @@ func (m mockDashboardProvisioningService) GetProvisionedDashboardData(name strin
 	panic("implement me")
 }
 
-func (mock mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error) {
+func (mock mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardId int64) (*models.DashboardProvisioning, error) {
 	return &models.DashboardProvisioning{}, nil
 }
 

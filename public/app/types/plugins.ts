@@ -24,7 +24,6 @@ export interface PanelPluginsIndex {
 export interface PluginsState {
   plugins: PluginMeta[];
   searchQuery: string;
-  layoutMode: string;
   hasFetched: boolean;
   dashboards: PluginDashboard[];
   isLoadingPluginDashboards: boolean;

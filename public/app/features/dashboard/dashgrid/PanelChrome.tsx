@@ -26,6 +26,7 @@ import {
   PanelPlugin,
   FieldConfigSource,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -33,9 +34,9 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  isFullscreen: boolean;
+  isViewing: boolean;
+  isEditing?: boolean;
   isInView: boolean;
-  isInEditMode?: boolean;
   width: number;
   height: number;
   updateLocation: typeof updateLocation;
@@ -69,9 +70,11 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard, isInEditMode } = this.props;
+    const { panel, dashboard, isEditing } = this.props;
+
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
+
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -85,7 +88,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         isFirstLoad: false,
       });
     } else {
-      if (isInEditMode) {
+      if (isEditing) {
         this.querySubscription = panel
           .getQueryRunner()
           .getData()
@@ -97,6 +100,15 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (!this.wantsQueryExecution) {
         this.setState({ isFirstLoad: false });
       }
+    }
+
+    if (!this.querySubscription) {
+      this.querySubscription = panel
+        .getQueryRunner()
+        .getData()
+        .subscribe({
+          next: data => this.onDataUpdate(data),
+        });
     }
   }
 
@@ -183,15 +195,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         return;
       }
 
-      const queryRunner = panel.getQueryRunner();
-
-      if (!this.querySubscription) {
-        this.querySubscription = queryRunner.getData().subscribe({
-          next: data => this.onDataUpdate(data),
-        });
-      }
-
-      queryRunner.run({
+      panel.getQueryRunner().run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
@@ -199,8 +203,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         timezone: this.props.dashboard.getTimezone(),
         timeRange: timeData.timeRange,
         timeInfo: timeData.timeInfo,
-        widthPixels: width,
-        maxDataPoints: panel.maxDataPoints,
+        maxDataPoints: panel.maxDataPoints || width,
         minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
@@ -233,10 +236,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
-  panelHasLastResult = () => {
-    return !!this.props.panel.getQueryRunner().getLastResult();
-  };
-
   get wantsQueryExecution() {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
@@ -254,7 +253,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { theme } = config;
 
     // This is only done to increase a counter that is used by backend
-    // image rendering (phantomjs/headless chrome) to know when to capture image
+    // image rendering to know when to capture image
     const loading = data.state;
     if (loading === LoadingState.Done) {
       profiler.renderingCompleted();
@@ -319,7 +318,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, updateLocation } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -331,7 +330,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
@@ -340,7 +339,8 @@ export class PanelChrome extends PureComponent<Props, State> {
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
-          isFullscreen={isFullscreen}
+          isEditing={isEditing}
+          isViewing={isViewing}
           data={data}
           updateLocation={updateLocation}
         />

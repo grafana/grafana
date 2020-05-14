@@ -10,4 +10,5 @@ const (
 	GRAFANA_COM
 	GITLAB
 	AZUREAD
+	OKTA
 )

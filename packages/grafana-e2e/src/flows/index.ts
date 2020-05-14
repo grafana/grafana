@@ -8,6 +8,7 @@ import { login } from './login';
 import { openDashboard } from './openDashboard';
 import { saveDashboard } from './saveDashboard';
 import { saveNewDashboard } from './saveNewDashboard';
+import { openPanelMenuItem, PanelMenuItems } from './openPanelMenuItem';
 
 export const Flows = {
   addDashboard,
@@ -20,4 +21,6 @@ export const Flows = {
   openDashboard,
   saveDashboard,
   saveNewDashboard,
+  openPanelMenuItem,
+  PanelMenuItems,
 };

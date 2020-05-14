@@ -1,5 +1,6 @@
 import { MutableVector } from '../types/vector';
 import { vectorToArray } from './vectorToArray';
+import { FunctionalVector } from './FunctionalVector';
 
 interface CircularOptions<T> {
   buffer?: T[];
@@ -14,13 +15,15 @@ interface CircularOptions<T> {
  * This supports addting to the 'head' or 'tail' and will grow the buffer
  * to match a configured capacity.
  */
-export class CircularVector<T = any> implements MutableVector<T> {
+export class CircularVector<T = any> extends FunctionalVector implements MutableVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;
   private tail: boolean;
 
   constructor(options: CircularOptions<T>) {
+    super();
+
     this.buffer = options.buffer || [];
     this.capacity = this.buffer.length;
     this.tail = 'head' !== options.append;

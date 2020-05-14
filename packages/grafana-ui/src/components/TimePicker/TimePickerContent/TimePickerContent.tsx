@@ -3,6 +3,7 @@ import { useMedia } from 'react-use';
 import { css } from 'emotion';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange, TimeZone, isDateTime } from '@grafana/data';
+import { Icon } from '../../Icon/Icon';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
@@ -193,7 +194,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
     <>
       <div className={styles.header} onClick={() => setCollapsed(!collapsed)}>
         <TimePickerTitle>Absolute time range</TimePickerTitle>
-        {collapsed ? <i className="fa fa-caret-up" /> : <i className="fa fa-caret-down" />}
+        {<Icon name={collapsed ? 'angle-up' : 'angle-down'} />}
       </div>
       {collapsed && (
         <div className={styles.body}>

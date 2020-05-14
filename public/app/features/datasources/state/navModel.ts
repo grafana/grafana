@@ -15,7 +15,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     children: [
       {
         active: false,
-        icon: 'fa fa-fw fa-sliders',
+        icon: 'sliders-v-alt',
         id: `datasource-settings-${dataSource.id}`,
         text: 'Settings',
         url: `datasources/edit/${dataSource.id}/`,
@@ -38,7 +38,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   if (pluginMeta.includes && hasDashboards(pluginMeta.includes)) {
     navModel.children.push({
       active: false,
-      icon: 'fa fa-fw fa-th-large',
+      icon: 'apps',
       id: `datasource-dashboards-${dataSource.id}`,
       text: 'Dashboards',
       url: `datasources/edit/${dataSource.id}/dashboards`,
@@ -48,7 +48,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   if (config.licenseInfo.hasLicense) {
     navModel.children.push({
       active: false,
-      icon: 'fa fa-fw fa-lock',
+      icon: 'lock',
       id: `datasource-permissions-${dataSource.id}`,
       text: 'Permissions',
       url: `datasources/edit/${dataSource.id}/permissions`,

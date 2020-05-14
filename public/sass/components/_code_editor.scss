@@ -9,7 +9,7 @@
     font-size: $font-size-md;
     min-height: 50px; // Include space for horizontal scrollbar
 
-    @include border-radius($input-border-radius-sm);
+    @include border-radius($input-border-radius);
     border: $border-width solid $input-border-color;
   }
 

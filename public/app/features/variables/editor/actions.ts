@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getVariable, getVariables, getNewVariabelIndex } from '../state/selectors';
+import { getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -17,7 +17,7 @@ import {
   VariableIdentifier,
 } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
-import { VariableType } from '../../templating/types';
+import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
@@ -101,8 +101,8 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
 ) => {
   const originalVariable = getVariable(identifier.id, getState());
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
-  const global = originalVariable.global;
-  const index = originalVariable.index;
+  const global = originalVariable.global!; // global is undefined because of old variable system
+  const index = originalVariable.index!; // index is undefined because of old variable system
   const renamedIdentifier = toVariableIdentifier(model);
 
   dispatch(addVariable(toVariablePayload(renamedIdentifier, { global, index, model })));

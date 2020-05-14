@@ -3,18 +3,18 @@ import classNames from 'classnames';
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
-import { useTheme, Tooltip, stylesFactory, selectThemeVariant } from '@grafana/ui';
+import { useTheme, Tooltip, stylesFactory, selectThemeVariant, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 //Components
 import { ResponsiveButton } from './ResponsiveButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark1 }, theme.type);
-  const orangeLighter = tinycolor(theme.colors.orangeDark)
+  const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark1 }, theme.type);
+  const orangeLighter = tinycolor(theme.palette.orangeDark)
     .lighten(10)
     .toString();
-  const pulseTextColor = tinycolor(theme.colors.orangeDark)
+  const pulseTextColor = tinycolor(theme.palette.orangeDark)
     .desaturate(90)
     .toString();
   return {
@@ -28,13 +28,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     isLive: css`
       label: isLive;
-      border-color: ${theme.colors.orangeDark};
-      color: ${theme.colors.orangeDark};
+      border-color: ${theme.palette.orangeDark};
+      color: ${theme.palette.orangeDark};
       background: transparent;
       &:focus {
         background: transparent;
-        border-color: ${theme.colors.orangeDark};
-        color: ${theme.colors.orangeDark};
+        border-color: ${theme.palette.orangeDark};
+        color: ${theme.palette.orangeDark};
       }
       &:hover {
         background-color: ${bgColor};
@@ -47,12 +47,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     isPaused: css`
       label: isPaused;
-      border-color: ${theme.colors.orangeDark};
+      border-color: ${theme.palette.orangeDark};
       background: transparent;
       animation: pulse 3s ease-out 0s infinite normal forwards;
       &:focus {
         background: transparent;
-        border-color: ${theme.colors.orangeDark};
+        border-color: ${theme.palette.orangeDark};
       }
       &:hover {
         background-color: ${bgColor};
@@ -66,7 +66,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           color: ${pulseTextColor};
         }
         50% {
-          color: ${theme.colors.orangeDark};
+          color: ${theme.palette.orangeDark};
         }
         100% {
           color: ${pulseTextColor};
@@ -128,11 +128,8 @@ export function LiveTailButton(props: LiveTailButtonProps) {
             [styles.isLive]: isLive && !isPaused,
             [styles.isPaused]: isLive && isPaused,
           })}
-          iconClassName={classNames(
-            'fa',
-            isPaused || !isLive ? 'fa-play' : 'fa-pause',
-            isLive && 'icon-brand-gradient'
-          )}
+          icon={!isLive ? 'play' : 'pause'}
+          iconClassName={isLive && 'icon-brand-gradient'}
           onClick={onClickMain}
           title={'\xa0Live'}
         />
@@ -140,7 +137,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
       <CSSTransition
         mountOnEnter={true}
         unmountOnExit={true}
-        timeout={500}
+        timeout={100}
         in={isLive}
         classNames={{
           enter: styles.stopButtonEnter,
@@ -154,7 +151,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
             className={`btn navbar-button navbar-button--attached explore-active-button ${styles.isLive}`}
             onClick={stop}
           >
-            <i className={classNames('fa fa-stop icon-brand-gradient')} />
+            <Icon className="icon-brand-gradient" name="square-shape" size="lg" type="mono" />
           </button>
         </div>
       </CSSTransition>

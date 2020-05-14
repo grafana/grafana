@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { getTagColorsFromName } from '../../utils';
 import { stylesFactory, useTheme } from '../../themes';
+import { Icon } from '../Icon/Icon';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
@@ -16,7 +17,7 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
   return {
     itemStyle: css`
       background-color: ${color};
-      color: ${theme.colors.white};
+      color: ${theme.palette.white};
       border: 1px solid ${borderColor};
       border-radius: 3px;
       padding: 3px 6px;
@@ -32,13 +33,6 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
     nameStyle: css`
       margin-right: 3px;
     `,
-
-    removeStyle: cx([
-      'fa fa-times',
-      css`
-        cursor: pointer;
-      `,
-    ]),
   };
 });
 
@@ -49,7 +43,7 @@ export const TagItem: FC<Props> = ({ name, onRemove }) => {
   return (
     <div className={styles.itemStyle}>
       <span className={styles.nameStyle}>{name}</span>
-      <i className={styles.removeStyle} onClick={() => onRemove(name)} />
+      <Icon name="times" onClick={() => onRemove(name)} />
     </div>
   );
 };

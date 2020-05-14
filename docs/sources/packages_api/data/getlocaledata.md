@@ -5,7 +5,6 @@
 title = "getLocaleData"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getLocaleData variable

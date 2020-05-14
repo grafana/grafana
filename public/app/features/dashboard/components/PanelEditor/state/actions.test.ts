@@ -1,5 +1,5 @@
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
-import { closeCompleted, initialState, PanelEditorStateNew } from './reducers';
+import { closeCompleted, initialState, PanelEditorState } from './reducers';
 import { initPanelEditor, panelEditorCleanUp } from './actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import { DashboardModel, PanelModel } from '../../../state';
@@ -33,10 +33,10 @@ describe('panelEditor actions', () => {
         panels: [{ id: 12, type: 'graph' }],
       });
 
-      const panel = sourcePanel.getEditClone();
+      const panel = dashboard.initEditPanel(sourcePanel);
       panel.updateOptions({ prop: true });
 
-      const state: PanelEditorStateNew = {
+      const state: PanelEditorState = {
         ...initialState(),
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,
@@ -44,7 +44,7 @@ describe('panelEditor actions', () => {
       };
 
       const dispatchedActions = await thunkTester({
-        panelEditorNew: state,
+        panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
         },
@@ -65,20 +65,22 @@ describe('panelEditor actions', () => {
         panels: [{ id: 12, type: 'graph' }],
       });
 
-      const panel = sourcePanel.getEditClone();
+      const panel = dashboard.initEditPanel(sourcePanel);
       panel.type = 'table';
       panel.plugin = getPanelPlugin({ id: 'table' });
       panel.updateOptions({ prop: true });
 
-      const state: PanelEditorStateNew = {
+      const state: PanelEditorState = {
         ...initialState(),
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,
         querySubscription: { unsubscribe: jest.fn() },
       };
 
+      const panelDestroy = (panel.destroy = jest.fn());
+
       const dispatchedActions = await thunkTester({
-        panelEditorNew: state,
+        panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
         },
@@ -88,6 +90,8 @@ describe('panelEditor actions', () => {
 
       expect(dispatchedActions.length).toBe(3);
       expect(dispatchedActions[0].type).toBe(panelModelAndPluginReady.type);
+      expect(sourcePanel.plugin).toEqual(panel.plugin);
+      expect(panelDestroy.mock.calls.length).toEqual(1);
     });
 
     it('should discard changes when shouldDiscardChanges is true', async () => {
@@ -100,10 +104,10 @@ describe('panelEditor actions', () => {
         panels: [{ id: 12, type: 'graph' }],
       });
 
-      const panel = sourcePanel.getEditClone();
+      const panel = dashboard.initEditPanel(sourcePanel);
       panel.updateOptions({ prop: true });
 
-      const state: PanelEditorStateNew = {
+      const state: PanelEditorState = {
         ...initialState(),
         shouldDiscardChanges: true,
         getPanel: () => panel,
@@ -112,7 +116,7 @@ describe('panelEditor actions', () => {
       };
 
       const dispatchedActions = await thunkTester({
-        panelEditorNew: state,
+        panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
         },

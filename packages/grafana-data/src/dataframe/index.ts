@@ -5,3 +5,4 @@ export * from './MutableDataFrame';
 export * from './processDataFrame';
 export * from './dimensions';
 export * from './ArrowDataFrame';
+export * from './ArrayDataFrame';
