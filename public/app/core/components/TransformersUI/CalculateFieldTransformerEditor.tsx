@@ -62,8 +62,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 
   private initOptions() {
-    const { input, options } = this.props;
+    const { options } = this.props;
     const configuredOptions = options?.reduce?.include || [];
+    const input = standardTransformers.ensureColumnsTransformer.transformer(null)(this.props.input);
 
     const allNames: string[] = [];
     const byName: KeyValue<boolean> = {};

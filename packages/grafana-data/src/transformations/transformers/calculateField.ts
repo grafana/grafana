@@ -6,10 +6,10 @@ import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
-import { seriesToColumnsTransformer } from './seriesToColumns';
 import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+import { ensureColumnsTransformer } from './ensureColumns';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -68,13 +68,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     },
   },
   transformer: options => (data: DataFrame[]) => {
-    // Assume timeseries should first be joined by time
-    const timeFieldName = findConsistentTimeFieldName(data);
-
-    if (data.length > 1 && timeFieldName && options.timeSeries !== false) {
-      data = seriesToColumnsTransformer.transformer({
-        byField: timeFieldName,
-      })(data);
+    if (options && options.timeSeries !== false) {
+      data = ensureColumnsTransformer.transformer(null)(data);
     }
 
     const mode = options.mode ?? CalculateFieldMode.ReduceRow;
@@ -207,26 +202,6 @@ function getBinaryCreator(options: BinaryOptions): ValuesCreator {
 
     return new BinaryOperationVector(left, right, operator.operation);
   };
-}
-
-/**
- * Find the name for the time field used in all frames (if one exists)
- */
-function findConsistentTimeFieldName(data: DataFrame[]): string | undefined {
-  let name: string | undefined = undefined;
-  for (const frame of data) {
-    const { timeField } = getTimeField(frame);
-    if (!timeField) {
-      return undefined; // Not timeseries
-    }
-    if (!name) {
-      name = timeField.name;
-    } else if (name !== timeField.name) {
-      // Second frame has a different time column?!
-      return undefined;
-    }
-  }
-  return name;
 }
 
 export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
