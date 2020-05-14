@@ -14,7 +14,7 @@ weight = 7
 
 Grafana provides several ways to manage the time ranges of the data being visualized, both at the dashboard level and the panel level. 
 
-This page describes supported time units and relative ranges, dashboard-wide time settings, and panel-specific time settings.
+This page describes supported time units and relative ranges, the common time controls, dashboard-wide time settings, and panel-specific time settings.
 
 ## Time units and relative ranges
 
@@ -32,10 +32,34 @@ This week | `now/w` | `now/w`
 Week to date | `now/w` | `now`
 Previous Month | `now-1M/M` | `now-1M/M`
 
+## Common time range controls
 
+The dashboard and panel time controls have a common user interface (UI).
 
+<img class="no-shadow" src="/img/docs/time-range-controls/common-time-controls-7-0.png" max-width="700px">
 
-<img class="no-shadow" src="/img/docs/v50/timepicker.png" width="700px">
+The options are defined below.
+
+### Current time range
+
+The current time range, also called the _time picker_, shows the time range currently displayed in the dashboard or panel you are viewing.
+
+Hover your curser over the field to see the exact time stamps in the range and their source (such as the local browser).
+
+<img class="no-shadow" src="/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
+
+### Zoom out (Cmd+Z or Ctrl+Z)
+
+### Zoom in (not shown in UI)
+
+### Refresh dashboard
+
+## Change current time range
+
+## Change dashboard refresh interval
+
+## Dashboard time settings
+
 
 The two controls for time visualization are available in the top right:
 
