@@ -24,7 +24,7 @@ The main highlights are:
 
 - [**New Panel Editor** Redesign based on community feedback.]({{< relref "#new-panel-editor" >}})
 - [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
-- [**Enterprise** Usage Analytics, Presence and Auth Improvements.]({{< relref "#grafana-enterprise" >}})
+- [**Enterprise** Usage Insights, Presence Indicator and Auth Improvements.]({{< relref "#grafana-enterprise" >}})
 - [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
 - [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-overrides" >}})
 - [**Table** New Table panel.]({{< relref "#table-panel" >}})
