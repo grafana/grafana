@@ -3,7 +3,7 @@ title = "Time range controls"
 keywords = ["grafana", "dashboard", "documentation", "time range"]
 type = "docs"
 [menu.docs]
-aliases +["/docs/grafana/latest/reference/timerange/"]
+aliases = ["/docs/grafana/latest/reference/timerange/"]
 name = "Time range controls"
 parent = "dashboards"
 weight = 7
@@ -12,7 +12,28 @@ weight = 7
 
 # Time range controls
 
-Grafana provides several ways to manage the time ranges of the data being visualized, both at the dashboard level and the panel level.
+Grafana provides several ways to manage the time ranges of the data being visualized, both at the dashboard level and the panel level. 
+
+This page describes supported time units and relative ranges, dashboard-wide time settings, and panel-specific time settings.
+
+## Time units and relative ranges
+
+The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`. 
+
+The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/$unit` to the end.
+
+Here are some examples:
+
+Example relative range | From: | To:
+-------------- | ----- | ---
+Last 5 minutes | `now-5m` | `now`
+The day so far | `now/d` | `now`
+This week | `now/w` | `now/w`
+Week to date | `now/w` | `now`
+Previous Month | `now-1M/M` | `now-1M/M`
+
+
+
 
 <img class="no-shadow" src="/img/docs/v50/timepicker.png" width="700px">
 
@@ -23,21 +44,6 @@ The two controls for time visualization are available in the top right:
    it. This feature is especially useful for always-on displays so that the most recent data is always shown.
 
 These settings apply to all Panels in the Dashboard (except those with Panel Time Overrides enabled)
-
-## Time Units
-
-The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `y (years)`. The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/$unit` to the end.
-
-Take a look at some examples to see these concepts in practice:
-
-Example Relative Range | From: | To:
--------------- | ----- | ---
-Last 5 minutes | `now-5m` | `now`
-The day so far | `now/d` | `now`
-This week | `now/w` | `now/w`
-Week to date | `now/w` | `now`
-Previous Month | `now-1M/M` | `now-1M/M`
-
 
 ## Dashboard Time Options
 
