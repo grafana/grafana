@@ -30,10 +30,9 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
           onClick={() => {
             setShowDebug(!showDebug);
           }}
-          title=""
         />
 
-        <QueryOperationAction icon="trash-alt" onClick={onRemove} title="" />
+        <QueryOperationAction icon="trash-alt" onClick={onRemove} />
       </HorizontalGroup>
     );
   };
