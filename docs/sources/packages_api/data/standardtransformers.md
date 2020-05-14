@@ -28,6 +28,7 @@ standardTransformers: {
     seriesToColumnsTransformer: import("..").DataTransformerInfo<import("./transformers/seriesToColumns").SeriesToColumnsOptions>;
     renameFieldsTransformer: import("..").DataTransformerInfo<import("./transformers/rename").RenameFieldsTransformerOptions>;
     labelsToFieldsTransformer: import("..").DataTransformerInfo<import("./transformers/labelsToFields").LabelsToFieldsOptions>;
+    ensureColumnsTransformer: import("..").DataTransformerInfo<any>;
 }
 ```
 <b>Import</b>
