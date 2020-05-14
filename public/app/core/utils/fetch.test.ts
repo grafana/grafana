@@ -27,16 +27,17 @@ describe('parseUrlFromOptions', () => {
 
 describe('parseInitFromOptions', () => {
   it.each`
-    method       | data           | expected
-    ${undefined} | ${undefined}   | ${{ method: undefined, headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
-    ${'GET'}     | ${undefined}   | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
-    ${'POST'}    | ${{ id: '0' }} | ${{ method: 'POST', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-    ${'PUT'}     | ${{ id: '0' }} | ${{ method: 'PUT', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-    ${'monkey'}  | ${undefined}   | ${{ method: 'monkey', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
+    method       | data           | withCredentials | expected
+    ${undefined} | ${undefined}   | ${undefined}    | ${{ method: undefined, headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
+    ${'GET'}     | ${undefined}   | ${undefined}    | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
+    ${'POST'}    | ${{ id: '0' }} | ${undefined}    | ${{ method: 'POST', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
+    ${'PUT'}     | ${{ id: '0' }} | ${undefined}    | ${{ method: 'PUT', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
+    ${'monkey'}  | ${undefined}   | ${undefined}    | ${{ method: 'monkey', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
+    ${'GET'}     | ${undefined}   | ${true}         | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined, credentials: 'include' }}
   `(
-    "when called with method: '$method' and data: '$data' then result should be '$expected'",
-    ({ method, data, expected }) => {
-      expect(parseInitFromOptions({ method, data, url: '' })).toEqual(expected);
+    "when called with method: '$method', data: '$data' and withCredentials: '$withCredentials' then result should be '$expected'",
+    ({ method, data, withCredentials, expected }) => {
+      expect(parseInitFromOptions({ method, data, withCredentials, url: '' })).toEqual(expected);
     }
   );
 });

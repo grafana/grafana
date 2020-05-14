@@ -12,6 +12,7 @@ jest.mock('app/core/store', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: jest.fn(arg => getStub(arg)),
   }),
@@ -22,7 +23,6 @@ jest.mock('@grafana/runtime', () => ({
       newVariables: false,
     },
   },
-  DataSourceWithBackend: jest.fn(),
 }));
 
 describe('given dashboard with repeated panels', () => {

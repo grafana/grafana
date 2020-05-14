@@ -1,0 +1,38 @@
+{
+  "tables": [
+    {
+      "name": "PrimaryResult",
+      "columns": [
+        {
+          "name": "TimeGenerated",
+          "type": "datetime"
+        },
+        {
+          "name": "Computer",
+          "type": "string"
+        },
+        {
+          "name": "avg_CounterValue",
+          "type": "real"
+        }
+      ],
+      "rows": [
+        [
+          "2020-04-19T19:16:06.5Z",
+          "grafana-vm",
+          1.1
+        ],
+        [
+          "2020-04-19T19:16:16.5Z",
+          "grafana-vm",
+          2.2
+        ],
+        [
+          "2020-04-19T19:16:26.5Z",
+          "grafana-vm",
+          3.3
+        ]
+      ]
+    }
+  ]
+}

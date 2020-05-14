@@ -1,12 +1,11 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { store } from 'app/store/store';
-import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
-import { ITimeoutService, ILocationService, IWindowService } from 'angular';
+import { ILocationService, ITimeoutService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { UrlQueryMap } from '@grafana/runtime';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariableSrv } from 'app/features/templating/all';
 
@@ -15,6 +14,7 @@ export class BridgeSrv {
   private fullPageReloadRoutes: string[];
   private lastQuery: UrlQueryMap = {};
   private lastPath = '';
+  private angularUrl: string;
 
   /** @ngInject */
   constructor(
@@ -26,13 +26,16 @@ export class BridgeSrv {
     private variableSrv: VariableSrv
   ) {
     this.fullPageReloadRoutes = ['/logout'];
+    this.angularUrl = $location.url();
   }
 
   init() {
     this.$rootScope.$on('$routeUpdate', (evt, data) => {
-      const angularUrl = this.$location.url();
       const state = store.getState();
-      if (state.location.url !== angularUrl) {
+
+      this.angularUrl = this.$location.url();
+
+      if (state.location.url !== this.angularUrl) {
         store.dispatch(
           updateLocation({
             path: this.$location.path(),
@@ -44,6 +47,8 @@ export class BridgeSrv {
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
+      this.angularUrl = this.$location.url();
+
       store.dispatch(
         updateLocation({
           path: this.$location.path(),
@@ -56,9 +61,12 @@ export class BridgeSrv {
     // Listen for changes in redux location -> update angular location
     store.subscribe(() => {
       const state = store.getState();
-      const angularUrl = this.$location.url();
       const url = state.location.url;
-      if (angularUrl !== url) {
+
+      if (this.angularUrl !== url) {
+        // store angular url right away as otherwise we end up syncing multiple times
+        this.angularUrl = url;
+
         this.$timeout(() => {
           this.$location.url(url);
           // some state changes should not trigger new browser history
@@ -66,6 +74,7 @@ export class BridgeSrv {
             this.$location.replace();
           }
         });
+
         console.log('store updating angular $location.url', url);
       }
 

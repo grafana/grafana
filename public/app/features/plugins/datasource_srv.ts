@@ -6,7 +6,7 @@ import config from 'app/core/config';
 import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 // Types
-import { AppEvents, DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/data';
+import { AppEvents, DataSourceApi, DataSourceInstanceSettings, DataSourceSelectItem, ScopedVars } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
@@ -28,6 +28,10 @@ export class DatasourceSrv implements DataSourceService {
 
   init() {
     this.datasources = {};
+  }
+
+  getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+    return Object.values(config.datasources).find(ds => ds.uid === uid);
   }
 
   get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi> {
@@ -93,12 +97,12 @@ export class DatasourceSrv implements DataSourceService {
     }
   }
 
-  getAll() {
+  getAll(): DataSourceInstanceSettings[] {
     const { datasources } = config;
     return Object.keys(datasources).map(name => datasources[name]);
   }
 
-  getExternal() {
+  getExternal(): DataSourceInstanceSettings[] {
     const datasources = this.getAll().filter(ds => !ds.meta.builtIn);
     return sortBy(datasources, ['name']);
   }

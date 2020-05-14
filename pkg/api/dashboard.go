@@ -107,14 +107,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
 	if provisioningData != nil {
-		allowUiUpdate := hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
-		if !allowUiUpdate {
+		allowUIUpdate := hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
+		if !allowUIUpdate {
 			meta.Provisioned = true
 		}
 
@@ -225,14 +225,14 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
 	allowUiUpdate := true
 	if provisioningData != nil {
-		allowUiUpdate = hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{
@@ -366,7 +366,7 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 			"x": 0,
 			"y": 3,
 			"w": 24,
-			"h": 4,
+			"h": 9,
 		},
 	})
 

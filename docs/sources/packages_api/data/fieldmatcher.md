@@ -5,7 +5,6 @@
 title = "FieldMatcher"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldMatcher type

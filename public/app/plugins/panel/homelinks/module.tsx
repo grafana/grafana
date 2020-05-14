@@ -1,10 +1,10 @@
 // Libraries
 import React, { PureComponent, FC } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 // Utils & Services
 import { PanelPlugin } from '@grafana/data';
-import { stylesFactory, styleMixins } from '@grafana/ui';
+import { stylesFactory, styleMixins, Icon, IconName } from '@grafana/ui';
 import config from 'app/core/config';
 
 // Types
@@ -21,25 +21,25 @@ export class GrafanaLinksPanel extends PureComponent<Props> {
         <div className={styles.list}>
           <HomeLink
             title="Documentation"
-            icon="fa fa-book"
+            icon="book"
             url="https://grafana.com/docs/grafana/latest?utm_source=grafana_homelinks"
             target="_blank"
           />
           <HomeLink
             title="Getting started"
-            icon="fa fa-bolt"
+            icon="bolt"
             url="https://grafana.com/docs/grafana/latest/guides/getting_started/?utm_source=grafana_homelinks"
             target="_blank"
           />
           <HomeLink
             title="Community forum"
-            icon="fa fa-comments"
+            icon="comments-alt"
             url="https://community.grafana.com?utm_source=grafana_homelinks"
             target="_blank"
           />
           <HomeLink
             title="Report a bug"
-            icon="fa fa-bug"
+            icon="bug"
             url="https://github.com/grafana/grafana/issues/new?template=1-bug_report.md"
             target="_blank"
           />
@@ -54,7 +54,7 @@ interface HomeLinkProps {
   title: string;
   url: string;
   target?: string;
-  icon: string;
+  icon: IconName;
 }
 
 export const HomeLink: FC<HomeLinkProps> = ({ title, url, target, icon }) => {
@@ -62,7 +62,7 @@ export const HomeLink: FC<HomeLinkProps> = ({ title, url, target, icon }) => {
 
   return (
     <a className={styles.item} href={url} target={target}>
-      <i className={cx(icon, styles.icon)} />
+      <Icon name={icon} className={styles.icon} />
       {title}
     </a>
   );
@@ -89,10 +89,11 @@ export const getStyles = stylesFactory(() => {
       padding: ${theme.spacing.md};
     `,
     icon: css`
-      padding-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing.sm};
     `,
     footer: css`
-      ${styleMixins.listItem(theme)}
+      background: ${theme.colors.bg2};
+      font-size: ${theme.typography.size.sm};
       position: absolute;
       bottom: 0;
       width: 100%;
@@ -112,4 +113,4 @@ export const getStyles = stylesFactory(() => {
   };
 });
 
-export const plugin = new PanelPlugin(GrafanaLinksPanel).setDefaults({}).setNoPadding();
+export const plugin = new PanelPlugin(GrafanaLinksPanel).setNoPadding();

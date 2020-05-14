@@ -9,22 +9,39 @@ import {
 import { Observable, from } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
+import { toDataQueryResponse } from './queryResponse';
 
-// Ideally internal (exported for consistency)
 const ExpressionDatasourceID = '__expr__';
 
+/**
+ * Describes the current healt status of a data source plugin.
+ *
+ * @public
+ */
 export enum HealthStatus {
   Unknown = 'UNKNOWN',
   OK = 'OK',
   Error = 'ERROR',
 }
 
+/**
+ * Describes the payload returned when checking the health of a data source
+ * plugin.
+ *
+ * @public
+ */
 export interface HealthCheckResult {
   status: HealthStatus;
   message: string;
   details?: Record<string, any>;
 }
 
+/**
+ * Extend this class to implement a data source plugin that is depending on the Grafana
+ * backend API.
+ *
+ * @public
+ */
 export class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
@@ -78,7 +95,11 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp?.data);
+        return toDataQueryResponse(rsp);
+      })
+      .catch(err => {
+        err.isHandled = true; // Avoid extra popup warning
+        return toDataQueryResponse(err);
       });
 
     return from(req);
@@ -86,32 +107,24 @@ export class DataSourceWithBackend<
 
   /**
    * Override to apply template variables
+   *
+   * @virtual
    */
   applyTemplateVariables(query: DataQuery) {
     return query;
   }
 
   /**
-   * This makes the arrow library loading async.
-   */
-  async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    const { resultsToDataFrames } = await import(
-      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/ArrowDataFrame'
-    );
-    return { data: resultsToDataFrames(rsp) };
-  }
-
-  /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(path: string, params?: any): Promise<Record<string, any>> {
+  async getResource(path: string, params?: any): Promise<any> {
     return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(path: string, body?: any): Promise<Record<string, any>> {
+  async postResource(path: string, body?: any): Promise<any> {
     return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
   }
 

@@ -4,9 +4,10 @@ import { Field } from '../types/dataFrame';
  * Returns minimal time step from series time field
  * @param timeField
  */
-export const getSeriesTimeStep = (timeField: Field) => {
-  let previousTime;
-  let minTimeStep;
+export const getSeriesTimeStep = (timeField: Field): number => {
+  let previousTime: number | undefined;
+  let minTimeStep: number | undefined;
+  let returnTimeStep = Number.MAX_VALUE;
 
   for (let i = 0; i < timeField.values.length; i++) {
     const currentTime = timeField.values.get(i);
@@ -15,16 +16,16 @@ export const getSeriesTimeStep = (timeField: Field) => {
       const timeStep = currentTime - previousTime;
 
       if (minTimeStep === undefined) {
-        minTimeStep = timeStep;
+        returnTimeStep = timeStep;
       }
 
-      if (timeStep < minTimeStep) {
-        minTimeStep = timeStep;
+      if (timeStep < returnTimeStep) {
+        returnTimeStep = timeStep;
       }
     }
     previousTime = currentTime;
   }
-  return minTimeStep;
+  return returnTimeStep;
 };
 
 /**

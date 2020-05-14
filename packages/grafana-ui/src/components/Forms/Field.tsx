@@ -9,7 +9,7 @@ export interface FieldProps {
   /** Form input element, i.e Input or Switch */
   children: React.ReactElement;
   /** Label for the field */
-  label?: string;
+  label?: React.ReactNode;
   /** Description of the field */
   description?: string;
   /** Indicates if field is in invalid state */
@@ -71,14 +71,18 @@ export const Field: React.FC<FieldProps> = ({
     // Retrieve input's id to apply on the label for correct click interaction
     inputId = (child as React.ReactElement<{ id?: string }>).props.id;
   }
+  const labelElement =
+    typeof label === 'string' ? (
+      <Label htmlFor={inputId} description={description}>
+        {`${label}${required ? ' *' : ''}`}
+      </Label>
+    ) : (
+      label
+    );
 
   return (
     <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)}>
-      {label && (
-        <Label htmlFor={inputId} description={description}>
-          {`${label}${required ? ' *' : ''}`}
-        </Label>
-      )}
+      {labelElement}
       <div>
         {React.cloneElement(children, { invalid, disabled, loading })}
         {invalid && error && !horizontal && (

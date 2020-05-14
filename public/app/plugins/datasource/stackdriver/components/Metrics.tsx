@@ -81,8 +81,8 @@ export function Metrics(props: Props) {
     const { metricType, templateSrv } = props;
 
     const metrics = metricDescriptors
-      .filter(m => m.service === templateSrv.replace(service))
-      .map(m => ({
+      .filter((m: MetricDescriptor) => m.service === templateSrv.replace(service))
+      .map((m: MetricDescriptor) => ({
         service: m.service,
         value: m.type,
         label: m.displayName,
@@ -96,7 +96,7 @@ export function Metrics(props: Props) {
     }
   };
 
-  const onMetricTypeChange = ({ value }: any, extra: any = {}) => {
+  const onMetricTypeChange = ({ value }: SelectableValue<string>, extra: any = {}) => {
     const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value);
     setState({ ...state, metricDescriptor, ...extra });
     props.onChange({ ...metricDescriptor, type: value });

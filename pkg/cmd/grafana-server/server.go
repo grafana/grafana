@@ -100,7 +100,7 @@ func (s *Server) Run() (err error) {
 			continue
 		}
 
-		s.log.Info("Initializing " + service.Name)
+		s.log.Debug("Initializing " + service.Name)
 
 		if err := service.Instance.Init(); err != nil {
 			return errutil.Wrapf(err, "Service init failed")
@@ -135,7 +135,7 @@ func (s *Server) Run() (err error) {
 					// Server has crashed.
 					s.log.Error("Stopped "+descriptor.Name, "reason", err)
 				} else {
-					s.log.Info("Stopped "+descriptor.Name, "reason", err)
+					s.log.Debug("Stopped "+descriptor.Name, "reason", err)
 				}
 
 				return err

@@ -173,16 +173,16 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 }
 
 func translateNotificationIDToUID(id int64, orgID int64) (string, error) {
-	notificationUid, err := getAlertNotificationUidByIDAndOrgID(id, orgID)
+	notificationUID, err := getAlertNotificationUIDByIDAndOrgID(id, orgID)
 	if err != nil {
 		logger.Debug("Failed to translate Notification Id to Uid", "orgID", orgID, "Id", id)
 		return "", err
 	}
 
-	return notificationUid, nil
+	return notificationUID, nil
 }
 
-func getAlertNotificationUidByIDAndOrgID(notificationID int64, orgID int64) (string, error) {
+func getAlertNotificationUIDByIDAndOrgID(notificationID int64, orgID int64) (string, error) {
 	query := &models.GetAlertNotificationUidQuery{
 		OrgId: orgID,
 		Id:    notificationID,

@@ -2,19 +2,25 @@ import { getPluginId } from '../../config/utils/getPluginId';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getCiFolder } from '../../plugins/env';
 import path = require('path');
+import fs = require('fs');
 // @ts-ignore
-import execa = require('execa');
+// import execa = require('execa');
+import GithubClient from './githubClient';
+import { AxiosResponse } from 'axios';
 
-const ghrPlatform = (): string => {
-  switch (process.platform) {
-    case 'win32':
-      return 'windows';
-    case 'darwin':
-      return 'darwin';
-    case 'linux':
-      return 'linux';
+const resolveContentType = (extension: string): string => {
+  if (extension.startsWith('.')) {
+    extension = extension.substr(1);
+  }
+  switch (extension) {
+    case 'zip':
+      return 'application/zip';
+    case 'json':
+      return 'application/json';
+    case 'sha1':
+      return 'text/plain';
     default:
-      return process.platform;
+      return 'application/octet-stream';
   }
 };
 
@@ -24,6 +30,7 @@ class GitHubRelease {
   repository: string;
   releaseNotes: string;
   commitHash?: string;
+  git: GithubClient;
 
   constructor(token: string, username: string, repository: string, releaseNotes: string, commitHash?: string) {
     this.token = token;
@@ -31,36 +38,30 @@ class GitHubRelease {
     this.repository = repository;
     this.releaseNotes = releaseNotes;
     this.commitHash = commitHash;
+
+    this.git = new GithubClient({
+      required: true,
+      repo: repository,
+    });
   }
 
-  /**
-   * Get the ghr binary to perform the release
-   */
-  private async getGhr(): Promise<string> {
-    const GHR_VERSION = '0.13.0';
-    const GHR_ARCH = process.arch === 'x64' ? 'amd64' : '386';
-    const GHR_PLATFORM = ghrPlatform();
-    const GHR_EXTENSION = process.platform === 'linux' ? 'tar.gz' : 'zip';
-    const outName = `./ghr.${GHR_EXTENSION}`;
-    const archiveName = `ghr_v${GHR_VERSION}_${GHR_PLATFORM}_${GHR_ARCH}`;
-    const exeName = process.platform === 'linux' ? 'ghr' : 'ghr.exe';
-    const exeNameFullPath = path.resolve(process.cwd(), archiveName, exeName);
-    const ghrUrl = `https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/${archiveName}.${GHR_EXTENSION}`;
-    await execa('wget', [ghrUrl, `--output-document=${outName}`]);
-    if (GHR_EXTENSION === 'tar.gz') {
-      await execa('tar', ['zxvf', outName]);
-    } else {
-      await execa('unzip', ['-p', outName]);
-    }
+  publishAssets(srcLocation: string, destUrl: string) {
+    // Add the assets. Loop through files in the ci/dist folder and upload each asset.
+    const files = fs.readdirSync(srcLocation);
 
-    if (process.platform === 'linux') {
-      await execa('chmod', ['755', exeNameFullPath]);
-    }
-
-    return exeNameFullPath;
+    return files.map(async (file: string) => {
+      const fileStat = fs.statSync(`${srcLocation}/${file}`);
+      const fileData = fs.readFileSync(`${srcLocation}/${file}`);
+      return this.git.client.post(`${destUrl}?name=${file}`, fileData, {
+        headers: {
+          'Content-Type': resolveContentType(path.extname(file)),
+          'Content-Length': fileStat.size,
+        },
+      });
+    });
   }
 
-  async release(recreate: boolean) {
+  async release() {
     const ciDir = getCiFolder();
     const distDir = path.resolve(ciDir, 'dist');
     const distContentDir = path.resolve(distDir, getPluginId());
@@ -69,37 +70,41 @@ class GitHubRelease {
     const PUBLISH_DIR = path.resolve(getCiFolder(), 'packages');
     const commitHash = this.commitHash || pluginInfo.build?.hash;
 
-    // Get the ghr binary according to platform
-    const ghrExe = await this.getGhr();
+    try {
+      const latestRelease: AxiosResponse<any> = await this.git.client.get(`releases/tags/v${pluginInfo.version}`);
 
-    if (!commitHash) {
-      throw 'The release plugin was not able to locate a commithash for release. Either build using the ci, or specify the commit hash with --commitHash <value>';
+      // Re-release if the version is the same as an existing release
+      if (latestRelease.data.tag_name === `v${pluginInfo.version}`) {
+        await this.git.client.delete(`releases/${latestRelease.data.id}`);
+      }
+    } catch (reason) {
+      if (reason.response.status !== 404) {
+        // 404 just means no release found. Not an error. Anything else though, re throw the error
+        throw reason;
+      }
     }
 
-    const args = [
-      '-t',
-      this.token,
-      '-u',
-      this.username,
-      '-r',
-      this.repository, // should override --- may not be the same
-      '-c',
-      commitHash,
-      '-n',
-      `${this.repository}_v${pluginInfo.version}`,
-      '-b',
-      this.releaseNotes,
-      `v${pluginInfo.version}`,
-      PUBLISH_DIR,
-    ];
+    try {
+      // Now make the release
+      const newReleaseResponse = await this.git.client.post('releases', {
+        tag_name: `v${pluginInfo.version}`,
+        target_commitish: commitHash,
+        name: `v${pluginInfo.version}`,
+        body: this.releaseNotes,
+        draft: false,
+        prerelease: false,
+      });
 
-    if (recreate) {
-      args.splice(12, 0, '-recreate');
+      const publishPromises = this.publishAssets(
+        PUBLISH_DIR,
+        `https://uploads.github.com/repos/${this.username}/${this.repository}/releases/${newReleaseResponse.data.id}/assets`
+      );
+      await Promise.all(publishPromises);
+    } catch (reason) {
+      console.error(reason.data?.message ?? reason.response.data ?? reason);
+      // Rethrow the error so that we can trigger a non-zero exit code to circle-ci
+      throw reason;
     }
-
-    const { stdout } = await execa(ghrExe, args);
-
-    console.log(stdout);
   }
 }
 

@@ -1,11 +1,11 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { boolean } from '@storybook/addon-knobs';
 import { SeriesColorPicker, ColorPicker } from './ColorPicker';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+import mdx from './ColorPicker.mdx';
 
 const getColorPickerKnobs = () => {
   return {
@@ -13,11 +13,19 @@ const getColorPickerKnobs = () => {
   };
 };
 
-const ColorPickerStories = storiesOf('General/ColorPicker/Pickers', module);
+export default {
+  title: 'Pickers and Editors/ColorPicker',
+  component: ColorPicker,
+  subcomponents: { SeriesColorPicker },
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
+};
 
-ColorPickerStories.addDecorator(withCenteredStory);
-
-ColorPickerStories.add('default', () => {
+export const basic = () => {
   const { enableNamedColors } = getColorPickerKnobs();
 
   return (
@@ -34,9 +42,9 @@ ColorPickerStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};
 
-ColorPickerStories.add('Series color picker', () => {
+export const seriesColorPicker = () => {
   const { enableNamedColors } = getColorPickerKnobs();
 
   return (
@@ -65,4 +73,4 @@ ColorPickerStories.add('Series color picker', () => {
       }}
     </UseState>
   );
-});
+};

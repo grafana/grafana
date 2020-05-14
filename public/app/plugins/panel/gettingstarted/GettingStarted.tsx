@@ -1,123 +1,68 @@
 // Libraries
 import React, { PureComponent } from 'react';
-
 import { PanelProps } from '@grafana/data';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { Button, Spinner, stylesFactory } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { css, cx } from 'emotion';
 import { contextSrv } from 'app/core/core';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-
-interface Step {
-  title: string;
-  cta?: string;
-  icon: string;
-  href: string;
-  target?: string;
-  note?: string;
-  check: () => Promise<boolean>;
-  done?: boolean;
-}
+import { Step } from './components/Step';
+import imageDark from './img/Onboarding_Panel_dark.svg';
+import imageLight from './img/Onboarding_Panel_light.svg';
+import { getSteps } from './steps';
+import { Card, SetupStep } from './types';
 
 interface State {
   checksDone: boolean;
+  currentStep: number;
+  steps: SetupStep[];
 }
 
 export class GettingStarted extends PureComponent<PanelProps, State> {
-  stepIndex = 0;
-  readonly steps: Step[];
+  state = {
+    checksDone: false,
+    currentStep: 0,
+    steps: getSteps(),
+  };
 
-  constructor(props: PanelProps) {
-    super(props);
+  async componentDidMount() {
+    const { steps } = this.state;
 
-    this.state = {
-      checksDone: false,
-    };
+    const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
+      const checkedCardsPromises: Array<Promise<Card>> = step.cards.map((card: Card) => {
+        return card.check().then(passed => {
+          return { ...card, done: passed };
+        });
+      });
+      const checkedCards = await Promise.all(checkedCardsPromises);
+      return {
+        ...step,
+        done: checkedCards.every(c => c.done),
+        cards: checkedCards,
+      };
+    });
 
-    this.steps = [
-      {
-        title: 'Install Grafana',
-        icon: 'icon-gf icon-gf-check',
-        href: 'http://docs.grafana.org/',
-        target: '_blank',
-        note: 'Review the installation docs',
-        check: () => Promise.resolve(true),
-      },
-      {
-        title: 'Create a data source',
-        cta: 'Add data source',
-        icon: 'gicon gicon-datasources',
-        href: 'datasources/new?gettingstarted',
-        check: () => {
-          return new Promise(resolve => {
-            resolve(
-              getDatasourceSrv()
-                .getMetricSources()
-                .filter(item => {
-                  return item.meta.builtIn !== true;
-                }).length > 0
-            );
-          });
-        },
-      },
-      {
-        title: 'Build a dashboard',
-        cta: 'New dashboard',
-        icon: 'gicon gicon-dashboard',
-        href: 'dashboard/new?gettingstarted',
-        check: () => {
-          return backendSrv.search({ limit: 1 }).then(result => {
-            return result.length > 0;
-          });
-        },
-      },
-      {
-        title: 'Invite your team',
-        cta: 'Add Users',
-        icon: 'gicon gicon-team',
-        href: 'org/users?gettingstarted',
-        check: () => {
-          return backendSrv.get('/api/org/users/lookup').then((res: any) => {
-            /* return res.length > 1; */
-            return false;
-          });
-        },
-      },
-      {
-        title: 'Install apps & plugins',
-        cta: 'Explore plugin repository',
-        icon: 'gicon gicon-plugins',
-        href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
-        check: () => {
-          return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
-            return plugins.length > 0;
-          });
-        },
-      },
-    ];
-  }
+    const checkedSteps = await Promise.all(checkedStepsPromises);
 
-  componentDidMount() {
-    this.stepIndex = -1;
-    return this.nextStep().then((res: any) => {
-      this.setState({ checksDone: true });
+    this.setState({
+      currentStep: !checkedSteps[0].done ? 0 : 1,
+      steps: checkedSteps,
+      checksDone: true,
     });
   }
 
-  nextStep(): any {
-    if (this.stepIndex === this.steps.length - 1) {
-      return Promise.resolve();
-    }
+  onForwardClick = () => {
+    this.setState(prevState => ({
+      currentStep: prevState.currentStep + 1,
+    }));
+  };
 
-    this.stepIndex += 1;
-    const currentStep = this.steps[this.stepIndex];
-    return currentStep.check().then(passed => {
-      if (passed) {
-        currentStep.done = true;
-        return this.nextStep();
-      }
-      return Promise.resolve();
-    });
-  }
+  onPreviousClick = () => {
+    this.setState(prevState => ({
+      currentStep: prevState.currentStep - 1,
+    }));
+  };
 
   dismiss = () => {
     const { id } = this.props;
@@ -136,34 +81,130 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   };
 
   render() {
-    const { checksDone } = this.state;
-    if (!checksDone) {
-      return <div>checking...</div>;
-    }
+    const { checksDone, currentStep, steps } = this.state;
+    const styles = getStyles();
+    const step = steps[currentStep];
 
     return (
-      <div className="progress-tracker-container">
-        <button className="progress-tracker-close-btn" onClick={this.dismiss}>
-          <i className="fa fa-remove" />
-        </button>
-        <div className="progress-tracker">
-          {this.steps.map((step, index) => {
-            return (
-              <div key={index} className={step.done ? 'progress-step completed' : 'progress-step active'}>
-                <a className="progress-link" href={step.href} target={step.target} title={step.note}>
-                  <span className="progress-marker">
-                    <i className={step.icon} />
-                  </span>
-                  <span className="progress-text">{step.title}</span>
-                </a>
-                <a className="btn-small progress-step-cta" href={step.href} target={step.target}>
-                  {step.cta}
-                </a>
+      <div className={styles.container}>
+        {!checksDone ? (
+          <div className={styles.loading}>
+            <div className={styles.loadingText}>Checking completed setup steps</div>
+            <Spinner size={24} inline />
+          </div>
+        ) : (
+          <>
+            <div className={styles.dismiss}>
+              <div onClick={this.dismiss}>Remove this panel</div>
+            </div>
+            {currentStep === steps.length - 1 && (
+              <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
+                <Button icon="angle-left" variant="secondary" />
               </div>
-            );
-          })}
-        </div>
+            )}
+            <div className={styles.content}>
+              <Step step={step} />
+            </div>
+            {currentStep < steps.length - 1 && (
+              <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
+                <Button icon="angle-right" variant="secondary" />
+              </div>
+            )}
+          </>
+        )}
       </div>
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  const { theme } = config;
+  const backgroundImage = theme.isDark ? imageDark : imageLight;
+  return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: url(${backgroundImage}) no-repeat;
+      background-size: cover;
+      padding: ${theme.spacing.xl} ${theme.spacing.md} 0;
+    `,
+    content: css`
+      label: content;
+      display: flex;
+      justify-content: center;
+
+      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
+        margin-left: ${theme.spacing.lg};
+        justify-content: flex-start;
+      }
+    `,
+    header: css`
+      label: header;
+      margin-bottom: ${theme.spacing.lg};
+      display: flex;
+      flex-direction: column;
+
+      @media only screen and (min-width: ${theme.breakpoints.lg}) {
+        flex-direction: row;
+      }
+    `,
+    headerLogo: css`
+      height: 58px;
+      padding-right: ${theme.spacing.md};
+      display: none;
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        display: block;
+      }
+    `,
+    heading: css`
+      label: heading;
+      margin-right: ${theme.spacing.lg};
+      margin-bottom: ${theme.spacing.lg};
+      flex-grow: 1;
+      display: flex;
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        margin-bottom: 0;
+      }
+    `,
+    backForwardButtons: css`
+      position: absolute;
+      bottom: 50%;
+      top: 50%;
+      height: 50px;
+    `,
+    previous: css`
+      left: 10px;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        left: 0;
+      }
+    `,
+    forward: css`
+      right: 10px;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        right: 0;
+      }
+    `,
+    dismiss: css`
+      display: flex;
+      justify-content: flex-end;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-right: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing.sm};
+    `,
+    loading: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    `,
+    loadingText: css`
+      margin-right: ${theme.spacing.sm};
+    `,
+  };
+});

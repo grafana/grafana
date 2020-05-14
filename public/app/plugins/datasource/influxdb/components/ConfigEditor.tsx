@@ -8,7 +8,8 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
+import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Select, Input, SecretFormField } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
 const httpModes = [
@@ -40,7 +41,7 @@ export class ConfigEditor extends PureComponent<Props> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-10">Database</FormLabel>
+              <InlineFormLabel className="width-10">Database</InlineFormLabel>
               <div className="width-20">
                 <Input
                   className="width-20"
@@ -52,7 +53,7 @@ export class ConfigEditor extends PureComponent<Props> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-10">User</FormLabel>
+              <InlineFormLabel className="width-10">User</InlineFormLabel>
               <div className="width-10">
                 <Input
                   className="width-20"
@@ -77,14 +78,14 @@ export class ConfigEditor extends PureComponent<Props> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 className="width-10"
                 tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
           method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
           will restrict you and return an error if the query is too large."
               >
                 HTTP Method
-              </FormLabel>
+              </InlineFormLabel>
               <Select
                 className="width-10"
                 value={httpModes.find(httpMode => httpMode.value === options.jsonData.httpMode)}
@@ -111,13 +112,13 @@ export class ConfigEditor extends PureComponent<Props> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 className="width-10"
                 tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 				for example 1m if your data is written every minute."
               >
                 Min time interval
-              </FormLabel>
+              </InlineFormLabel>
               <div className="width-10">
                 <Input
                   className="width-10"

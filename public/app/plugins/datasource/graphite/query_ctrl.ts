@@ -75,12 +75,12 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   checkOtherSegments(fromIndex: number, modifyLastSegment = true) {
     if (this.queryModel.segments.length === 1 && this.queryModel.segments[0].type === 'series-ref') {
-      return;
+      return Promise.resolve();
     }
 
     if (fromIndex === 0) {
       this.addSelectMetricSegment();
-      return;
+      return Promise.resolve();
     }
 
     const path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);

@@ -12,17 +12,14 @@ import {
   DataQueryResponseData,
   DataTransformerConfig,
   eventFactory,
+  FieldConfigSource,
   PanelEvents,
   PanelPlugin,
   ScopedVars,
-  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
-
 import config from 'app/core/config';
-
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -37,7 +34,7 @@ export interface GridPos {
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
-  fullscreen: true,
+  isViewing: true,
   isEditing: true,
   isInView: true,
   hasRefreshed: true,
@@ -84,6 +81,9 @@ const mustKeepProps: { [str: string]: boolean } = {
   queryRunner: true,
   transformations: true,
   fieldConfig: true,
+  editSourceId: true,
+  maxDataPoints: true,
+  interval: true,
 };
 
 const defaults: any = {
@@ -92,6 +92,7 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  datasource: null,
 };
 
 export class PanelModel implements DataConfigSource {
@@ -134,7 +135,7 @@ export class PanelModel implements DataConfigSource {
   transparent: boolean;
 
   // non persisted
-  fullscreen: boolean;
+  isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
   hasRefreshed: boolean;
@@ -148,15 +149,33 @@ export class PanelModel implements DataConfigSource {
 
   constructor(model: any) {
     this.events = new Emitter();
-    // should not be part of defaults as defaults are removed in save model and
-    // this should not be removed in save model as exporter needs to templatize it
-    this.datasource = null;
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
   }
 
   /** Given a persistened PanelModel restores property values */
   restoreModel(model: any) {
+    // Start with clean-up
+    for (const property in this) {
+      if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
+        continue;
+      }
+
+      if (model[property]) {
+        continue;
+      }
+
+      if (typeof (this as any)[property] === 'function') {
+        continue;
+      }
+
+      if (typeof (this as any)[property] === 'symbol') {
+        continue;
+      }
+
+      delete (this as any)[property];
+    }
+
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -188,7 +207,6 @@ export class PanelModel implements DataConfigSource {
 
   updateOptions(options: object) {
     this.options = options;
-
     this.render();
   }
 
@@ -201,6 +219,7 @@ export class PanelModel implements DataConfigSource {
 
   getSaveModel() {
     const model: any = {};
+
     for (const property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
@@ -212,13 +231,18 @@ export class PanelModel implements DataConfigSource {
 
       model[property] = _.cloneDeep(this[property]);
     }
+
+    if (model.datasource === undefined) {
+      // This is part of defaults as defaults are removed in save model and
+      // this should not be removed in save model as exporter needs to templatize it
+      model.datasource = null;
+    }
+
     return model;
   }
 
-  setViewMode(fullscreen: boolean, isEditing: boolean) {
-    this.fullscreen = fullscreen;
-    this.isEditing = isEditing;
-    this.events.emit(PanelEvents.viewModeChanged);
+  setIsViewing(isViewing: boolean) {
+    this.isViewing = isViewing;
   }
 
   updateGridPos(newPos: GridPos) {
@@ -394,13 +418,11 @@ export class PanelModel implements DataConfigSource {
     sourceModel.editSourceId = this.id;
 
     const clone = new PanelModel(sourceModel);
+    clone.isEditing = true;
     const sourceQueryRunner = this.getQueryRunner();
 
-    // pipe last result to new clone query runner
-    sourceQueryRunner
-      .getData()
-      .pipe(take(1))
-      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
+    // Copy last query result
+    clone.getQueryRunner().useLastResultFrom(sourceQueryRunner);
 
     return clone;
   }
@@ -415,9 +437,9 @@ export class PanelModel implements DataConfigSource {
     }
 
     return {
-      fieldOptions: this.fieldConfig,
+      fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      custom: this.plugin.customFieldConfigs,
+      fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
   }
@@ -438,16 +460,17 @@ export class PanelModel implements DataConfigSource {
   }
 
   destroy() {
+    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
-      this.queryRunner = null;
     }
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
+    this.resendLastResult();
   }
 
   replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
@@ -464,6 +487,14 @@ export class PanelModel implements DataConfigSource {
     }
 
     this.getQueryRunner().resendLastResult();
+  }
+
+  /*
+   * Panel have a different id while in edit mode (to more easily be able to discard changes)
+   * Use this to always get the underlying source id
+   * */
+  getSavedId(): number {
+    return this.editSourceId ?? this.id;
   }
 }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon } from '@grafana/ui';
 
 export interface FunctionDescriptor {
   text: string;
@@ -21,12 +22,13 @@ export interface FunctionEditorControlsProps {
 
 const FunctionHelpButton = (props: { description: string; name: string; onDescriptionShow: () => void }) => {
   if (props.description) {
-    return <span className="pointer fa fa-question-circle" onClick={props.onDescriptionShow} />;
+    return <Icon className="pointer" name="question-circle" onClick={props.onDescriptionShow} />;
   }
 
   return (
-    <span
-      className="pointer fa fa-question-circle"
+    <Icon
+      className="pointer"
+      name="question-circle"
       onClick={() => {
         window.open(
           'http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions.' + props.name,
@@ -52,14 +54,14 @@ export const FunctionEditorControls = (
         justifyContent: 'space-between',
       }}
     >
-      <span className="pointer fa fa-arrow-left" onClick={() => onMoveLeft(func)} />
+      <Icon name="arrow-left" onClick={() => onMoveLeft(func)} />
       <FunctionHelpButton
         name={func.def.name}
         description={func.def.description}
         onDescriptionShow={onDescriptionShow}
       />
-      <span className="pointer fa fa-remove" onClick={() => onRemove(func)} />
-      <span className="pointer fa fa-arrow-right" onClick={() => onMoveRight(func)} />
+      <Icon name="times" onClick={() => onRemove(func)} />
+      <Icon name="arrow-right" onClick={() => onMoveRight(func)} />
     </div>
   );
 };

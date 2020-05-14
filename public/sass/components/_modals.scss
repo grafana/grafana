@@ -40,19 +40,16 @@
   background: $page-header-bg;
   box-shadow: $page-header-shadow;
   border-bottom: 1px solid $page-header-border-color;
-  @include clearfix();
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .modal-header-title {
-  font-size: $font-size-h3;
+  font-size: $font-size-lg;
   float: left;
   padding-top: $space-sm;
   margin: 0 $space-md;
-
-  .gicon {
-    position: relative;
-    top: -2px;
-  }
 }
 
 .modal-header-close {
@@ -142,15 +139,8 @@
   }
 
   .share-modal-big-icon {
-    margin-bottom: 10px;
-    margin-right: $space-xl;
-    .fa {
-      font-size: 50px;
-    }
-    .gicon {
-      width: 48px;
-      height: 48px;
-    }
+    margin-right: 8px;
+    margin-top: -7px;
   }
 
   .share-modal-info-text {

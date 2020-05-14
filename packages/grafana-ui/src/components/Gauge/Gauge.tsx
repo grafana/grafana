@@ -52,7 +52,7 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  getFormattedThresholds(): Threshold[] {
+  getFormattedThresholds(decimals: number): Threshold[] {
     const { field, theme } = this.props;
     const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
@@ -67,7 +67,7 @@ export class Gauge extends PureComponent<Props> {
     const first = getActiveThreshold(min, steps);
     const last = getActiveThreshold(max, steps);
     const formatted: Threshold[] = [];
-    formatted.push({ value: min, color: getColorFromHexRgbOrName(first.color, theme.type) });
+    formatted.push({ value: +min.toFixed(decimals), color: getColorFromHexRgbOrName(first.color, theme.type) });
     let skip = true;
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -83,7 +83,7 @@ export class Gauge extends PureComponent<Props> {
         break;
       }
     }
-    formatted.push({ value: max, color: getColorFromHexRgbOrName(last.color, theme.type) });
+    formatted.push({ value: +max.toFixed(decimals), color: getColorFromHexRgbOrName(last.color, theme.type) });
     return formatted;
   }
 
@@ -102,8 +102,8 @@ export class Gauge extends PureComponent<Props> {
 
     const backgroundColor = selectThemeVariant(
       {
-        dark: theme.colors.dark8,
-        light: theme.colors.gray6,
+        dark: theme.palette.dark8,
+        light: theme.palette.gray6,
       },
       theme.type
     );
@@ -129,6 +129,12 @@ export class Gauge extends PureComponent<Props> {
       }
     }
 
+    const decimals = field.decimals === undefined ? 2 : field.decimals!;
+    if (showThresholdMarkers) {
+      min = +min.toFixed(decimals);
+      max = +max.toFixed(decimals);
+    }
+
     const options: any = {
       series: {
         gauges: {
@@ -145,7 +151,7 @@ export class Gauge extends PureComponent<Props> {
           layout: { margin: 0, thresholdWidth: 0, vMargin: 0 },
           cell: { border: { width: 0 } },
           threshold: {
-            values: this.getFormattedThresholds(),
+            values: this.getFormattedThresholds(decimals),
             label: {
               show: showThresholdLabels,
               margin: thresholdMarkersWidth + 1,

@@ -7,12 +7,12 @@ import { AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { DashboardSearchHit } from 'app/types/search';
+import { DataSourceResponse } from 'app/types/events';
+import { DashboardSearchHit } from 'app/features/search/types';
 import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
-import { ContextSrv, contextSrv } from './context_srv';
 import { coreModule } from 'app/core/core_module';
+import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
-import { DataSourceResponse } from '../../types/events';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 
 export interface DatasourceRequestOptions {

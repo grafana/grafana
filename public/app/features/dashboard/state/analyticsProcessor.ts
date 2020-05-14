@@ -18,6 +18,10 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       return;
     }
 
+    if (data.request.exploreMode) {
+      return;
+    }
+
     if (data.state !== LoadingState.Done && data.state !== LoadingState.Error) {
       return;
     }

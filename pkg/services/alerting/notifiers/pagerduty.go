@@ -160,7 +160,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	links[0] = linkJSON
 	bodyJSON.Set("links", links)
 
-	if evalContext.ImagePublicURL != "" {
+	if pn.NeedsImage() && evalContext.ImagePublicURL != "" {
 		contexts := make([]interface{}, 1)
 		imageJSON := simplejson.New()
 		imageJSON.Set("src", evalContext.ImagePublicURL)

@@ -1,13 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PluginMeta, PanelPlugin } from '@grafana/data';
 import { PluginsState } from 'app/types';
-import { LayoutMode, LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { PluginDashboard } from '../../../types/plugins';
 
 export const initialState: PluginsState = {
   plugins: [],
   searchQuery: '',
-  layoutMode: LayoutModes.Grid,
   hasFetched: false,
   dashboards: [],
   isLoadingPluginDashboards: false,
@@ -24,9 +22,6 @@ const pluginsSlice = createSlice({
     },
     setPluginsSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
-    },
-    setPluginsLayoutMode: (state, action: PayloadAction<LayoutMode>) => {
-      state.layoutMode = action.payload;
     },
     pluginDashboardsLoad: (state, action: PayloadAction<undefined>) => {
       state.isLoadingPluginDashboards = true;
@@ -46,7 +41,6 @@ export const {
   pluginsLoaded,
   pluginDashboardsLoad,
   pluginDashboardsLoaded,
-  setPluginsLayoutMode,
   setPluginsSearchQuery,
   panelPluginLoaded,
 } = pluginsSlice.actions;

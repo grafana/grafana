@@ -1,8 +1,8 @@
 import React from 'react';
-import { mount } from 'enzyme';
+import { shallow } from 'enzyme';
 import { RichHistoryCard, Props } from './RichHistoryCard';
 import { ExploreId } from '../../../types/explore';
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, DataQuery } from '@grafana/data';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -12,7 +12,11 @@ const setup = (propOverrides?: Partial<Props>) => {
       datasourceId: 'datasource 1',
       starred: false,
       comment: '',
-      queries: ['query1', 'query2', 'query3'],
+      queries: [
+        { expr: 'query1', refId: 'A' } as DataQuery,
+        { expr: 'query2', refId: 'B' } as DataQuery,
+        { expr: 'query3', refId: 'C' } as DataQuery,
+      ],
       sessionName: '',
     },
     dsImg: '/app/img',
@@ -26,7 +30,7 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<RichHistoryCard {...props} />);
+  const wrapper = shallow(<RichHistoryCard {...props} />);
   return wrapper;
 };
 
@@ -36,7 +40,11 @@ const starredQueryWithComment = {
   datasourceId: 'datasource 1',
   starred: true,
   comment: 'test comment',
-  queries: ['query1', 'query2', 'query3'],
+  queries: [
+    { query: 'query1', refId: 'A' },
+    { query: 'query2', refId: 'B' },
+    { query: 'query3', refId: 'C' },
+  ],
   sessionName: '',
 };
 
@@ -49,19 +57,19 @@ describe('RichHistoryCard', () => {
         .find({ 'aria-label': 'Query text' })
         .at(0)
         .text()
-    ).toEqual('query1');
+    ).toEqual('{"expr":"query1"}');
     expect(
       wrapper
         .find({ 'aria-label': 'Query text' })
         .at(1)
         .text()
-    ).toEqual('query2');
+    ).toEqual('{"expr":"query2"}');
     expect(
       wrapper
         .find({ 'aria-label': 'Query text' })
         .at(2)
         .text()
-    ).toEqual('query3');
+    ).toEqual('{"expr":"query3"}');
   });
   it('should render data source icon', () => {
     const wrapper = setup();
@@ -99,17 +107,9 @@ describe('RichHistoryCard', () => {
       const wrapper = setup();
       expect(wrapper.find({ title: 'Star query' })).toHaveLength(1);
     });
-    it('should render fa-star-o icon, if not starred', () => {
-      const wrapper = setup();
-      expect(wrapper.find({ title: 'Star query' }).hasClass('fa-star-o')).toBe(true);
-    });
     it('should have title "Unstar query", if not starred', () => {
       const wrapper = setup({ query: starredQueryWithComment });
       expect(wrapper.find({ title: 'Unstar query' })).toHaveLength(1);
-    });
-    it('should have fa-star icon, if not starred', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.find({ title: 'Unstar query' }).hasClass('fa-star')).toBe(true);
     });
   });
 });

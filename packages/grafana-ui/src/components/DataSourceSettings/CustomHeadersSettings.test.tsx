@@ -57,7 +57,7 @@ describe('Render', () => {
         },
       },
     });
-    const removeButton = wrapper.find('Button').find({ variant: 'destructive' });
+    const removeButton = wrapper.find('Button').at(1);
     removeButton.simulate('click', { preventDefault: () => {} });
     expect(wrapper.find('FormField').exists()).toBeFalsy();
     expect(wrapper.find('SecretFormField').exists()).toBeFalsy();

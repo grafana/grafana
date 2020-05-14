@@ -25,7 +25,7 @@ If you want to export a dashboard for others to use then it could be a good idea
 add template variables for things like a metric prefix (use constant variable) and server name.
 
 A template variable of the type `Constant` will automatically be hidden in
-the dashboard, and will also be added as an required input when the dashboard is imported.
+the dashboard, and will also be added as a required input when the dashboard is imported.
 
 ## Importing a dashboard
 
@@ -50,7 +50,7 @@ Find dashboards for common server applications at [Grafana.com/dashboards](https
 ## Import and Sharing with Grafana 2.x or 3.0
 
 Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
-to update each panel so that they are using a data source of your choosing. If you are running a
+to update each panel so that they are using a data source of your choice. If you are running a
 Grafana version older than 3.1 then you might need to do some manual steps either
 before or after import in order for the dashboard to work properly.
 
@@ -104,7 +104,7 @@ add the inputs and templatize the data source properties like above.
 
 If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
 it as usual and then update the data source option in the metrics tab so that the panel is using the correct
-data source. Another alternative is to open the json file in a a text editor and update the data source properties
+data source. Another alternative is to open the json file in a text editor and update the data source properties
 to value that matches a name of your data source.
 
 ## Note

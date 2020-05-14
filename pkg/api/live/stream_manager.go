@@ -27,7 +27,7 @@ func NewStreamManager() *StreamManager {
 }
 
 func (sm *StreamManager) Run(context context.Context) {
-	log.Info("Initializing Stream Manager")
+	log.Debug("Initializing Stream Manager")
 
 	go func() {
 		sm.hub.run(context)

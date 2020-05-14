@@ -1,11 +1,10 @@
 import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
 
-import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
 import { auto, ISCEService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { PanelEvents } from '@grafana/data';
+import { PanelEvents, textUtil } from '@grafana/data';
 import { renderMarkdown } from '@grafana/data';
 
 const defaultContent = `
@@ -78,7 +77,7 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   renderText(content: string) {
-    const safeContent = escapeHtml(content).replace(/\n/g, '<br/>');
+    const safeContent = textUtil.escapeHtml(content).replace(/\n/g, '<br/>');
     this.updateContent(safeContent);
   }
 
@@ -95,7 +94,7 @@ export class TextPanelCtrl extends PanelCtrl {
       console.log('Text panel error: ', e);
     }
 
-    this.content = this.$sce.trustAsHtml(config.disableSanitizeHtml ? html : sanitize(html));
+    this.content = this.$sce.trustAsHtml(config.disableSanitizeHtml ? html : textUtil.sanitize(html));
   }
 }
 

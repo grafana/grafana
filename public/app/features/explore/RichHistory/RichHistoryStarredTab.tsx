@@ -28,7 +28,7 @@ export interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
   return {
     container: css`
       display: flex;
@@ -51,7 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     sort: css`
       width: 170px;
     `,
-    feedback: css`
+    footer: css`
       height: 60px;
       margin-top: ${theme.spacing.lg};
       display: flex;
@@ -86,9 +86,10 @@ export function RichHistoryStarredTab(props: Props) {
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   const starredQueries = queries.filter(q => q.starred === true);
-  const starredQueriesFilteredByDatasource = datasourceFilters
-    ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-    : starredQueries;
+  const starredQueriesFilteredByDatasource =
+    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
+      ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+      : starredQueries;
 
   const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 
@@ -128,10 +129,7 @@ export function RichHistoryStarredTab(props: Props) {
             />
           );
         })}
-        <div className={styles.feedback}>
-          Query history is a beta feature. The history is local to your browser and is not shared with others.
-          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
-        </div>
+        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>
   );

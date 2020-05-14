@@ -12,14 +12,7 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import {
-  getColorFromHexRgbOrName,
-  PanelEvents,
-  DataFrame,
-  DataLink,
-  DateTimeInput,
-  VariableSuggestion,
-} from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -27,6 +20,11 @@ import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/l
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
 import { CoreEvents } from 'app/types';
+import { DataWarning } from './types';
+import { getLocationSrv } from '@grafana/runtime';
+import { getDataTimeRange } from './utils';
+import { changePanelPlugin } from 'app/features/dashboard/state/actions';
+import { dispatch } from 'app/store/store';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -40,7 +38,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   alertState: any;
 
   annotationsPromise: any;
-  dataWarning: any;
+  dataWarning?: DataWarning;
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
@@ -158,7 +156,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
-    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
@@ -168,17 +166,18 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Display options', 'public/app/plugins/panel/graph/tab_display.html');
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html');
+    this.addEditorTab('Series overrides', 'public/app/plugins/panel/graph/tab_series_overrides.html');
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
-    this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
+    this.addEditorTab('Thresholds', 'public/app/plugins/panel/graph/tab_thresholds.html');
+    this.addEditorTab('Time regions', 'public/app/plugins/panel/graph/tab_time_regions.html');
     this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
     this.hiddenSeriesTainted = false;
   }
 
   onInitPanelActions(actions: any[]) {
-    actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
@@ -224,27 +223,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
-    this.dataWarning = null;
-    const datapointsCount = this.seriesList.reduce((prev, series) => {
-      return prev + series.datapoints.length;
-    }, 0);
-
-    if (datapointsCount === 0) {
-      this.dataWarning = {
-        title: 'No data',
-        tip: 'No data returned from query',
-      };
-    } else {
-      for (const series of this.seriesList) {
-        if (series.isOutsideRange) {
-          this.dataWarning = {
-            title: 'Data outside time range',
-            tip: 'Can be caused by timezone mismatch or missing time filter in query',
-          };
-          break;
-        }
-      }
-    }
+    this.dataWarning = this.getDataWarning();
 
     this.annotationsPromise.then(
       (result: { alertState: any; annotations: any }) => {
@@ -265,6 +244,66 @@ class GraphCtrl extends MetricsPanelCtrl {
         this.render(this.seriesList);
       }
     );
+  }
+
+  getDataWarning(): DataWarning {
+    const datapointsCount = this.seriesList.reduce((prev, series) => {
+      return prev + series.datapoints.length;
+    }, 0);
+
+    if (datapointsCount === 0) {
+      if (this.dataList) {
+        for (const frame of this.dataList) {
+          if (frame.length && frame.fields?.length) {
+            return {
+              title: 'Unable to graph data',
+              tip: 'Data exists, but is not timeseries',
+              actionText: 'Switch to table view',
+              action: () => {
+                console.log('Change from graph to table');
+                dispatch(changePanelPlugin(this.panel, 'table'));
+              },
+            };
+          }
+        }
+      }
+
+      return {
+        title: 'No data',
+        tip: 'No data returned from query',
+      };
+    }
+
+    // Look for data points outside time range
+    for (const series of this.seriesList) {
+      if (!series.isOutsideRange) {
+        continue;
+      }
+
+      const dataWarning: DataWarning = {
+        title: 'Data outside time range',
+        tip: 'Can be caused by timezone mismatch or missing time filter in query',
+      };
+
+      const range = getDataTimeRange(this.dataList);
+
+      if (range) {
+        dataWarning.actionText = 'Zoom to data';
+        dataWarning.action = () => {
+          getLocationSrv().update({
+            partial: true,
+            query: {
+              from: range.from,
+              to: range.to,
+            },
+          });
+        };
+      }
+
+      return dataWarning;
+    }
+
+    return null;
   }
 
   onRender() {
@@ -339,25 +378,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  exportCsv() {
-    const scope = this.$scope.$new(true);
-    scope.seriesList = this.seriesList
-      .filter(series => !this.panel.legend.hideEmpty || !series.allIsNull)
-      .filter(series => !this.panel.legend.hideZero || !series.allIsZero);
-    this.publishAppEvent(CoreEvents.showModal, {
-      templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
-      scope,
-      modalClass: 'modal--narrow',
-    });
-  }
-
   onContextMenuClose = () => {
     this.contextMenuCtrl.toggleMenu();
   };
 
-  formatDate = (date: DateTimeInput, format?: string) => {
-    return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
-  };
+  getTimeZone = () => this.dashboard.getTimezone();
 
   getDataFrameByRefId = (refId: string) => {
     return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];

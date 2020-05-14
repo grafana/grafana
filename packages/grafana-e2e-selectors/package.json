@@ -1,0 +1,50 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/e2e-selectors",
+  "version": "7.1.0-pre.0",
+  "description": "Grafana End-to-End Test Selectors Library",
+  "keywords": [
+    "cli",
+    "grafana",
+    "e2e",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-e2e-selectors"
+  },
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "grafana-toolkit package:build --scope=e2e-selectors",
+    "bundle": "rollup -c rollup.config.ts",
+    "clean": "rimraf ./dist ./compiled",
+    "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "lint": "eslint src/ --ext=.js,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "11.0.2",
+    "@rollup/plugin-node-resolve": "7.1.1",
+    "@types/node": "13.7.7",
+    "@types/rollup-plugin-visualizer": "2.6.0",
+    "@types/systemjs": "^0.20.6",
+    "pretty-format": "25.1.0",
+    "rollup": "2.0.6",
+    "rollup-plugin-sourcemaps": "0.5.0",
+    "rollup-plugin-terser": "5.3.0",
+    "rollup-plugin-typescript2": "0.26.0",
+    "rollup-plugin-visualizer": "3.3.1",
+    "ts-loader": "6.2.1",
+    "ts-node": "8.8.1"
+  },
+  "types": "src/index.ts",
+  "dependencies": {
+    "@grafana/tsconfig": "^1.0.0-rc1",
+    "commander": "5.0.0",
+    "execa": "4.0.0",
+    "typescript": "3.7.5",
+    "yaml": "^1.8.3"
+  }
+}

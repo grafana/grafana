@@ -5,7 +5,6 @@
 title = "unEscapeStringFromRegex"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## unEscapeStringFromRegex variable

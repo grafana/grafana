@@ -5,7 +5,6 @@
 title = "CreatePlotOverlay"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## CreatePlotOverlay interface

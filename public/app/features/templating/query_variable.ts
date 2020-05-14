@@ -8,10 +8,9 @@ import {
   VariableRefresh,
   VariableSort,
   VariableTag,
-  VariableType,
   variableTypes,
 } from './types';
-import { DataSourceApi, stringToJsRegex } from '@grafana/data';
+import { VariableType, DataSourceApi, stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';

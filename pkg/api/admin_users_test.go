@@ -12,6 +12,12 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const (
+	TestLogin        = "test@example.com"
+	TestPassword     = "password"
+	nonExistingOrgID = 1000
+)
+
 func TestAdminApiEndpoint(t *testing.T) {
 	role := models.ROLE_ADMIN
 	Convey("Given a server admin attempts to remove themself as an admin", t, func() {
@@ -175,6 +181,85 @@ func TestAdminApiEndpoint(t *testing.T) {
 			So(userId, ShouldEqual, 42)
 		})
 	})
+
+	Convey("When a server admin attempts to create a user", t, func() {
+		var userLogin string
+		var orgId int64
+
+		bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
+			userLogin = cmd.Login
+			orgId = cmd.OrgId
+
+			if orgId == nonExistingOrgID {
+				return models.ErrOrgNotFound
+			}
+
+			cmd.Result = models.User{Id: TestUserID}
+			return nil
+		})
+
+		Convey("Without an organization", func() {
+			createCmd := dtos.AdminCreateUserForm{
+				Login:    TestLogin,
+				Password: TestPassword,
+			}
+
+			adminCreateUserScenario("Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+				So(sc.resp.Code, ShouldEqual, 200)
+
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				So(err, ShouldBeNil)
+				So(respJSON.Get("id").MustInt64(), ShouldEqual, TestUserID)
+				So(respJSON.Get("message").MustString(), ShouldEqual, "User created")
+
+				// test that userLogin and orgId were transmitted correctly to the handler
+				So(userLogin, ShouldEqual, TestLogin)
+				So(orgId, ShouldEqual, 0)
+			})
+		})
+
+		Convey("With an organization", func() {
+			createCmd := dtos.AdminCreateUserForm{
+				Login:    TestLogin,
+				Password: TestPassword,
+				OrgId:    TestOrgID,
+			}
+
+			adminCreateUserScenario("Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+				So(sc.resp.Code, ShouldEqual, 200)
+
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				So(err, ShouldBeNil)
+				So(respJSON.Get("id").MustInt64(), ShouldEqual, TestUserID)
+				So(respJSON.Get("message").MustString(), ShouldEqual, "User created")
+
+				So(userLogin, ShouldEqual, TestLogin)
+				So(orgId, ShouldEqual, TestOrgID)
+			})
+		})
+
+		Convey("With a nonexistent organization", func() {
+			createCmd := dtos.AdminCreateUserForm{
+				Login:    TestLogin,
+				Password: TestPassword,
+				OrgId:    nonExistingOrgID,
+			}
+
+			adminCreateUserScenario("Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+				So(sc.resp.Code, ShouldEqual, 400)
+
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				So(err, ShouldBeNil)
+				So(respJSON.Get("message").MustString(), ShouldEqual, "Organization not found")
+
+				So(userLogin, ShouldEqual, TestLogin)
+				So(orgId, ShouldEqual, 1000)
+			})
+		})
+	})
 }
 
 func putAdminScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc) {
@@ -320,6 +405,24 @@ func adminDeleteUserScenario(desc string, url string, routePattern string, fn sc
 		})
 
 		sc.m.Delete(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func adminCreateUserScenario(desc string, url string, routePattern string, cmd dtos.AdminCreateUserForm, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+			sc.context = c
+			sc.context.UserId = TestUserID
+
+			AdminCreateUser(c, cmd)
+		})
+
+		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
 	})

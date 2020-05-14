@@ -56,7 +56,7 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 }
 
 export default class LokiLanguageProvider extends LanguageProvider {
-  labelKeys?: string[];
+  labelKeys: string[];
   logLabelOptions: any[];
   logLabelFetchTs?: number;
   started: boolean;
@@ -129,7 +129,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const { wrapperClasses, value, prefix, text } = input;
 
     // Local text properties
-    const empty = value.document.text.length === 0;
+    const empty = value?.document.text.length === 0;
     const selectedLines = value.document.getTextsAtRange(value.selection);
     const currentLine = selectedLines.size === 1 ? selectedLines.first().getText() : null;
 
@@ -235,6 +235,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
   ): Promise<TypeaheadOutput> {
     let context = 'context-labels';
     const suggestions: CompletionItemGroup[] = [];
+    if (!value) {
+      return { context, suggestions: [] };
+    }
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
@@ -381,7 +384,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param absoluteRange Fetches
    */
   async fetchLogLabels(absoluteRange: AbsoluteTimeRange): Promise<any> {
-    const url = '/api/prom/label';
+    const url = '/loki/api/v1/label';
     try {
       this.logLabelFetchTs = Date.now();
       const rangeParams = absoluteRange ? rangeToParams(absoluteRange) : {};
@@ -442,13 +445,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string, absoluteRange: AbsoluteTimeRange): Promise<string[]> {
-    const url = `/api/prom/label/${key}/values`;
+    const url = `/loki/api/v1/label/${key}/values`;
     let values: string[] = [];
     const rangeParams: { start?: number; end?: number } = absoluteRange ? rangeToParams(absoluteRange) : {};
     const { start, end } = rangeParams;
 
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };
+
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
       try {
@@ -459,20 +463,24 @@ export default class LokiLanguageProvider extends LanguageProvider {
         value = values;
         this.labelsCache.set(cacheKey, value);
 
-        // Add to label options
-        this.logLabelOptions = this.logLabelOptions.map(keyOption => {
-          if (keyOption.value === key) {
-            return {
-              ...keyOption,
-              children: values.map(value => ({ label: value, value })),
-            };
-          }
-          return keyOption;
-        });
+        this.logLabelOptions = this.addLabelValuesToOptions(key, values);
       } catch (e) {
         console.error(e);
       }
+    } else {
+      this.logLabelOptions = this.addLabelValuesToOptions(key, value);
     }
-    return value;
+    return value ?? [];
   }
+
+  private addLabelValuesToOptions = (labelKey: string, values: string[]) => {
+    return this.logLabelOptions.map(keyOption =>
+      keyOption.value === labelKey
+        ? {
+            ...keyOption,
+            children: values.map(value => ({ label: value, value })),
+          }
+        : keyOption
+    );
+  };
 }

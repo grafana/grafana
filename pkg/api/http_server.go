@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/search"
 	"net"
 	"net/http"
 	"os"
@@ -67,6 +68,7 @@ type HTTPServer struct {
 	License              models.Licensing                 `inject:""`
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
+	SearchService        *search.SearchService            `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

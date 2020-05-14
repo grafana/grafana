@@ -1,7 +1,7 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { NullValueMode, Field } from '../types/index';
+import { NullValueMode, Field, FieldState, FieldCalcs } from '../types/index';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -26,10 +26,6 @@ export enum ReducerID {
 
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
-}
-
-export interface FieldCalcs {
-  [key: string]: any;
 }
 
 // Internal function
@@ -57,19 +53,22 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
     return {};
   }
 
-  if (field.calcs) {
+  if (field.state?.calcs) {
     // Find the values we need to calculate
     const missing: string[] = [];
     for (const s of reducers) {
-      if (!field.calcs.hasOwnProperty(s)) {
+      if (!field.state.calcs.hasOwnProperty(s)) {
         missing.push(s);
       }
     }
     if (missing.length < 1) {
       return {
-        ...field.calcs,
+        ...field.state.calcs,
       };
     }
+  }
+  if (!field.state) {
+    field.state = {} as FieldState;
   }
 
   const queue = fieldReducers.list(reducers);
@@ -78,11 +77,11 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   // This lets the concrete implementations assume at least one row
   const data = field.values;
   if (data.length < 1) {
-    const calcs = { ...field.calcs } as FieldCalcs;
+    const calcs = { ...field.state.calcs } as FieldCalcs;
     for (const reducer of queue) {
       calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
     }
-    return (field.calcs = calcs);
+    return (field.state.calcs = calcs);
   }
 
   const { nullValueMode } = field.config;
@@ -92,8 +91,8 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].reduce) {
     const values = queue[0].reduce(field, ignoreNulls, nullAsZero);
-    field.calcs = {
-      ...field.calcs,
+    field.state.calcs = {
+      ...field.state.calcs,
       ...values,
     };
     return values;
@@ -111,11 +110,10 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
     }
   }
 
-  field.calcs = {
-    ...field.calcs,
+  field.state.calcs = {
+    ...field.state.calcs,
     ...values,
   };
-
   return values;
 }
 
@@ -227,7 +225,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
 ]);
 
-function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const calcs = {
     sum: 0,
     max: -Number.MAX_VALUE,
