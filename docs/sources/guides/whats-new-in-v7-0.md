@@ -66,6 +66,8 @@ The [Google Sheets data source](https://grafana.com/grafana/plugins/grafana-goog
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another another and add the result to a new field.
 
+Learn more about this feature in [Transformations]({{< relref "../panels/transformations.md" >}}).
+
 ## Field overrides
 
 With Grafana 7.0 we are introducing a new, unified data configuration system that powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable. This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals` or `value mappings`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
@@ -80,7 +82,7 @@ This feature enables even more powerful visualizations and fine grained control 
 
 Another new feature of Grafana 7.0 is the panel inspector. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
 
-Learn more about this feature in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}})
+Learn more about this feature in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}}).
 
 <div class="clearfix"></div>
 

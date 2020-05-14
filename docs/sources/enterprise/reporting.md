@@ -84,7 +84,7 @@ Weekly reports are generated once per week. All fields are required.
 
 > Only available in Grafana Enterprise v7.0+.
 
-Reports which are scheduled to never be sent have no parameter and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the API.
+Reports which are scheduled to never be sent have no parameter and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the [Reporting API]({{< relref "../http_api/reporting.md" >}}).
 
 ### Send test mail
 

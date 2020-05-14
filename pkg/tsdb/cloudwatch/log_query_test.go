@@ -39,6 +39,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logStreamIdentifierInternal),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logIdentifierInternal),
+					Value: aws.String("fakelog"),
+				},
 			},
 			{
 				&cloudwatchlogs.ResultField{
@@ -61,6 +69,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logStreamIdentifierInternal),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logIdentifierInternal),
+					Value: aws.String("fakelog"),
+				},
 			},
 			{
 				&cloudwatchlogs.ResultField{
@@ -81,6 +97,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 				},
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@log"),
+					Value: aws.String("fakelog"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logStreamIdentifierInternal),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logIdentifierInternal),
 					Value: aws.String("fakelog"),
 				},
 			},
@@ -114,20 +138,32 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("fakelogstream"),
 		aws.String("fakelogstream"),
 	})
-	logStreamField.SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{
-			"Hidden": true,
-		},
-	})
 
 	logField := data.NewField("@log", nil, []*string{
 		aws.String("fakelog"),
 		aws.String("fakelog"),
 		aws.String("fakelog"),
 	})
-	logField.SetConfig(&data.FieldConfig{
+
+	hiddenLogStreamField := data.NewField(logStreamIdentifierInternal, nil, []*string{
+		aws.String("fakelogstream"),
+		aws.String("fakelogstream"),
+		aws.String("fakelogstream"),
+	})
+	hiddenLogStreamField.SetConfig(&data.FieldConfig{
 		Custom: map[string]interface{}{
-			"Hidden": true,
+			"hidden": true,
+		},
+	})
+
+	hiddenLogField := data.NewField(logIdentifierInternal, nil, []*string{
+		aws.String("fakelog"),
+		aws.String("fakelog"),
+		aws.String("fakelog"),
+	})
+	hiddenLogField.SetConfig(&data.FieldConfig{
+		Custom: map[string]interface{}{
+			"hidden": true,
 		},
 	})
 
@@ -138,6 +174,8 @@ func TestLogsResultsToDataframes(t *testing.T) {
 			lineField,
 			logStreamField,
 			logField,
+			hiddenLogStreamField,
+			hiddenLogField,
 		},
 		RefID: "",
 		Meta: &data.FrameMeta{

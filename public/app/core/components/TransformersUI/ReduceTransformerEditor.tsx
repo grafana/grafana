@@ -30,6 +30,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
               reducers: stats as ReducerID[],
             });
           }}
+          menuPlacement="bottom"
         />
       </div>
     </div>
