@@ -45,13 +45,13 @@ Standard field options are:
 You can apply standard field options to the following panel visualizations:
 
 - [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
-- [Gauge]
+- Gauge
 - Stat
 - Table
 
 ### Custom field options
 
-You can only apply custom field options to table visualizations.
+You can only apply custom field options to table visualizations. Plugin authors can add their own custom field options as well, and they might differ across visualizations.
 
 Custom field options are:
 
@@ -64,10 +64,10 @@ Custom field options are:
 To change how all fields display data, you apply a [field option](#field-options). Usually you apply changes that you want to most or all of the fields here, than apply field overrides to exceptions.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
-2. Click the **Field** tab.
-3. Find the 
-4. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
-5. When finished, click **Save** to save all panel edits to the dashboard.
+1. Click the **Field** tab.
+1. Find the option you want to change.
+1. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
+1. When finished, click **Save** to save all panel edits to the dashboard.
 
 ## Override a field
 
