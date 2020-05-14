@@ -126,7 +126,7 @@ For example, if you enter `100` in the field, then when you click outside the fi
 
 Number of decimals to render value with. Leave empty for Grafana to use the number of decimals provided by the data source.
 
-To change this setting, type a number in the field and then click outside the field. The visualization does not change while the cursor is still in the **Decimals** field.
+To change this setting, type a number in the field and then click outside the field or press Enter.
 
 ### Data links
 
