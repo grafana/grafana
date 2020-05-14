@@ -9,7 +9,7 @@ import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { HorizontalGroup } from '..';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange';
+export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
 
 export interface BadgeProps {
   text: string;
