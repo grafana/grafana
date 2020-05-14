@@ -52,7 +52,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
   private initOptions() {
     const { input, options } = this.props;
-    const configuredOptions = options.includeNames ?? [];
+    const configuredOptions = Array.from(options.includeNames ?? []);
 
     const allNames: FieldNameInfo[] = [];
     const byName: KeyValue<FieldNameInfo> = {};
@@ -71,6 +71,20 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
         }
 
         v.count++;
+      }
+    }
+
+    if (options.includePattern) {
+      try {
+        const regex = new RegExp(options.includePattern);
+
+        for (const info of allNames) {
+          if (regex.test(info.name)) {
+            configuredOptions.push(info.name);
+          }
+        }
+      } catch (error) {
+        console.log(error);
       }
     }
 
@@ -119,6 +133,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   onInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { selected, regex } = this.state;
     let isRegexValid = true;
+
     try {
       if (regex) {
         new RegExp(regex);
@@ -126,6 +141,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     } catch (e) {
       isRegexValid = false;
     }
+
     if (isRegexValid) {
       this.props.onChange({
         ...this.props.options,
@@ -136,11 +152,11 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       this.props.onChange({
         ...this.props.options,
         includeNames: selected,
+        includePattern: undefined,
       });
     }
-    this.setState({
-      isRegexValid,
-    });
+
+    this.setState({ isRegexValid });
   };
 
   render() {
