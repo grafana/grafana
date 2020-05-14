@@ -5,14 +5,18 @@ export type ZipkinSpan = {
   id: string;
   timestamp: number;
   duration: number;
-  localEndpoint: {
-    serviceName: string;
-    ipv4: string;
-    port?: number;
-  };
+  localEndpoint?: ZipkinEndpoint;
+  remoteEndpoint?: ZipkinEndpoint;
   annotations?: ZipkinAnnotation[];
   tags?: { [key: string]: string };
   kind?: 'CLIENT' | 'SERVER' | 'PRODUCER' | 'CONSUMER';
+};
+
+export type ZipkinEndpoint = {
+  serviceName: string;
+  ipv4?: string;
+  ipv6?: string;
+  port?: number;
 };
 
 export type ZipkinAnnotation = {

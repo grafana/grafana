@@ -85,6 +85,19 @@
     link: /tutorials/ha_setup/
   - name: Troubleshooting
     link: /installation/troubleshooting/
+- name: Manage users
+  link: /manage-users
+  children:
+  - link: /manage-users/
+    name: Overview
+  - link: /manage-users/add-or-remove-user/
+    name: Add or remove a user
+  - link: /manage-users/enable-or-disable-user/
+    name: Enable or disable a user
+  - link: /manage-users/create-or-remove-team/
+    name: Create or remove a team
+  - link: /manage-users/add-or-remove-user-from-team/
+    name: Add or remove user from team
 - name: Data sources
   link: /features/datasources/
   children:
@@ -106,8 +119,6 @@
     name: Loki
   - link: /features/datasources/mssql/
     name: Microsoft SQL Server
-  - link: /features/datasources/mixed/
-    name: MixedData
   - link: /features/datasources/mysql/
     name: MySQL
   - link: /features/datasources/opentsdb/
@@ -118,21 +129,8 @@
     name: Prometheus
   - link: /features/datasources/testdata/
     name: TestData DB
-- name: Manage users
-  link: /manage-users
-  children:
-  - link: /manage-users/
-    name: Overview
-  - link: /manage-users/add-or-remove-user/
-    name: Add or remove a user
-  - link: /manage-users/enable-or-disable-user/
-    name: Enable or disable a user
-  - link: /manage-users/create-or-remove-team/
-    name: Create or remove a team
-  - link: /manage-users/add-or-remove-user-from-team/
-    name: Add or remove user from team
 - name: Panels
-  link: /features/panels/
+  link: /panels/
   children:
   - link: /features/panels/panels/
     name: Overview
@@ -156,45 +154,51 @@
     name: Alert list
   - link: /features/panels/dashlist/
     name: Dashboard list
-  - link: /features/panels/text/
+  - link: /panels/text-panel/
     name: Text
+  - link: /panels/news-panel/
+    name: News
   - link: /panels/queries/
     name: Queries
+  - link: /panels/transformations/
+    name: Transformations
+  - link: /panels/calculations-list/
+    name: Calculations list
 - name: Dashboards
   link: /features/dashboard/
   children:
-  - link: /features/dashboard/dashboards/
-    name: Overview
-  - link: /reference/annotations/
-    name: Annotations
-  - link: /reference/dashboard_folders/
-    name: Folders
-  - link: /reference/playlist/
-    name: Playlist
-  - link: /reference/search/
-    name: Search
-  - link: /reference/share_dashboard/
-    name: Sharing a dashboard
-  - link: /reference/share_panel/
-    name: Sharing a panel
-  - link: /reference/timerange/
-    name: Time range
-  - link: /reference/export_import/
-    name: Export and import
-  - link: /features/dashboard/links/
-    name: Navigation links
-  - link: /reference/datalinks/
-    name: Data links
-  - link: /reference/dashboard_history/
-    name: Dashboard version history
-  - name: Keyboard Shortcuts
-    link: /features/shortcuts/
-  - name: Reporting
-    link: /features/reporting/
-  - link: /reference/dashboard/
-    name: JSON Model
-  - link: /reference/scripting/
-    name: Scripted dashboards
+    - link: /features/dashboard/dashboards/
+      name: Overview
+    - link: /reference/annotations/
+      name: Annotations
+    - link: /reference/dashboard_folders/
+      name: Folders
+    - link: /reference/playlist/
+      name: Playlist
+    - link: /reference/search/
+      name: Search
+    - link: /reference/share_dashboard/
+      name: Sharing a dashboard
+    - link: /reference/share_panel/
+      name: Sharing a panel
+    - link: /reference/timerange/
+      name: Time range
+    - link: /reference/export_import/
+      name: Export and import
+    - link: /features/dashboard/links/
+      name: Navigation links
+    - link: /reference/datalinks/
+      name: Data links
+    - link: /reference/dashboard_history/
+      name: Dashboard version history
+    - name: Keyboard Shortcuts
+      link: /features/shortcuts/
+    - name: Reporting
+      link: /features/reporting/
+    - link: /reference/dashboard/
+      name: JSON Model
+    - link: /reference/scripting/
+      name: Scripted dashboards
 - name: Explore
   link: /features/explore/
 - name: Alerting
