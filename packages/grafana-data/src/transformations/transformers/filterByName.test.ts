@@ -31,7 +31,7 @@ describe('filterByName transformer', () => {
   });
 
   describe('respects', () => {
-    it('inclusion', () => {
+    it('inclusion by pattern', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -46,7 +46,7 @@ describe('filterByName transformer', () => {
       expect(filtered.fields[0].name).toBe('startsWithA');
     });
 
-    it('exclusion', () => {
+    it('exclusion by pattern', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -61,11 +61,101 @@ describe('filterByName transformer', () => {
       expect(filtered.fields[0].name).toBe('B');
     });
 
-    it('inclusion and exclusion', () => {
+    it('inclusion and exclusion by pattern', () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
           exclude: { pattern: '/^(startsWith)/' },
+          include: { pattern: '/^(B)$/' },
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
+      expect(filtered.fields.length).toBe(1);
+      expect(filtered.fields[0].name).toBe('B');
+    });
+
+    it('inclusion by names', () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          include: {
+            names: ['startsWithA', 'startsWithC'],
+          },
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
+      expect(filtered.fields.length).toBe(2);
+      expect(filtered.fields[0].name).toBe('startsWithA');
+    });
+
+    it('exclusion by names', () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          exclude: {
+            names: ['startsWithA', 'startsWithC'],
+          },
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
+      expect(filtered.fields.length).toBe(2);
+      expect(filtered.fields[0].name).toBe('B');
+    });
+
+    it('inclusion and exclusion by names', () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          exclude: { names: ['startsWithA', 'startsWithC'] },
+          include: { names: ['B'] },
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
+      expect(filtered.fields.length).toBe(1);
+      expect(filtered.fields[0].name).toBe('B');
+    });
+
+    it('inclusion by both', () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          include: {
+            pattern: '/^(startsWith)/',
+            names: ['startsWithA'],
+          },
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
+      expect(filtered.fields.length).toBe(2);
+      expect(filtered.fields[0].name).toBe('startsWithA');
+    });
+
+    it('exclusion by both', () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          exclude: {
+            pattern: '/^(startsWith)/',
+            names: ['startsWithA'],
+          },
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
+      expect(filtered.fields.length).toBe(2);
+      expect(filtered.fields[0].name).toBe('B');
+    });
+
+    it('inclusion and exclusion by both', () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          exclude: { names: ['startsWithA', 'startsWithC'] },
           include: { pattern: '/^(B)$/' },
         },
       };
