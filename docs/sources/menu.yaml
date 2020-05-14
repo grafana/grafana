@@ -407,8 +407,6 @@
               name: Defaults and editor mode
             - link: /developers/plugins/legacy/apps/
               name: App plugins
-            - link: /developers/plugins/legacy/panels/
-              name: Backend plugins
             - link: /developers/plugins/legacy/data-sources/
               name: Data source plugins
             - link: /developers/plugins/legacy/snapshot-mode/
