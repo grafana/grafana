@@ -5,13 +5,13 @@ type = "docs"
 
 # Add support for Explore queries
 
-This guide explains how to add support for [Explore]({{< relref "../../features/explore/index.md" >}}) to an existing data source plugin.
+This guide explains how to improve support for [Explore]({{< relref "../../features/explore/index.md" >}}) to an existing data source plugin.
 
 This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
 
-By adding support for Explore to your data source, users can make ad-hoc queries without the new of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
+With Explore, users can make ad-hoc queries without the use of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
 
-To support Explore, your plugin needs to define a _query editor_ for Explore. Optionally, your plugin can also define a _start page_ for Explore.
+Your data source already supports Explore by default, and will use the existing query editor for the data source. If you want to offer extended Explore functionality for your data source however, you can define a Explore-specific query editor. Optionally, your plugin can also define a _start page_ for Explore.
 
 ## Add a query editor for Explore
 
