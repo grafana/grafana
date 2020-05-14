@@ -79,6 +79,8 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Value: aws.String("fakelog"),
 				},
 			},
+			// Sometimes cloudwatch returns empty row
+			{},
 			{
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@ptr"),

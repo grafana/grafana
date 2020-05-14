@@ -8,14 +8,13 @@ import (
 )
 
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
-	rowCount := len(response.Results)
 	fieldValues := make(map[string]interface{})
 
 	// Maintaining a list of field names in the order returned from CloudWatch
 	// as just iterating over fieldValues would not give a consistent order
 	fieldNames := make([]string, 0)
 
-	for i, row := range response.Results {
+	for _, row := range response.Results {
 		for _, resultField := range row {
 			// Strip @ptr field from results as it's not needed
 			if *resultField.Field == "@ptr" {
@@ -27,9 +26,9 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 				// Check if field is time field
 				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
-					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
+					fieldValues[*resultField.Field] = make([]*time.Time, 0)
 				} else {
-					fieldValues[*resultField.Field] = make([]*string, rowCount)
+					fieldValues[*resultField.Field] = make([]*string, 0)
 				}
 			}
 
@@ -39,9 +38,9 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 					return nil, err
 				}
 
-				timeField[i] = &parsedTime
+				fieldValues[*resultField.Field] = append(timeField, &parsedTime)
 			} else {
-				fieldValues[*resultField.Field].([]*string)[i] = resultField.Value
+				fieldValues[*resultField.Field] = append(fieldValues[*resultField.Field].([]*string), resultField.Value)
 			}
 		}
 	}
