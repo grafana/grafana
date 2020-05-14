@@ -6,6 +6,7 @@
 - **Docker**: Our Ubuntu based images have been upgraded to Ubuntu [20.04 LTS](https://releases.ubuntu.com/20.04/).
 - **Dashboard**: A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds.
 - **@grafana/ui**: Forms migration notice, see [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)
+- **@grafana/ui**: Select API change for creating custom values, see [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)
 - **Interval calculation**: There is now a new option `Max data points` that controls the auto interval `$__interval` calculation. Interval was previously calculated by dividing the panel width by the time range. With the new max data points option it is now easy to set `$__interval` to a dynamic value that is time range agnostic. For example if you set `Max data points` to 10 Grafana will dynamically set `$__interval` by dividing the current time range by 10.
 - **Datasource/Loki**: Support for [deprecated Loki endpoints](https://github.com/grafana/loki/blob/master/docs/api.md#lokis-http-api) has been removed.
 
@@ -43,7 +44,7 @@ This new option architecture and UI will make all panels have a consistent set o
 
 We have yet to migrate all core panels to this new architecture so in 7.0 there will sadly be some big inconsistencies in the UI between panels. Hopefully this will be fixed soon in future releases as we update all the core panels and help the community update the community panel plugins.
 
-### New tabel panel
+### New table panel
 
 Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling and column resize. Paired with the new `Organize fields` transformation detailed above you can reorder, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
 
@@ -58,13 +59,15 @@ We have also extended the time zone options so you can select any of the standar
 # 7.0.0-beta3 (2020-05-08)
 
 ### Features / Enhancements
-* **Docker**: Upgrade to Alpine 3.11. [#24056](https://github.com/grafana/grafana/pull/24056), [@aknuds1](https://github.com/aknuds1)
-* **Forms**: Remove Forms namespace [BREAKING]. Will cause all `Forms` imports to stop working. See migration guide in [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)[#24378](https://github.com/grafana/grafana/pull/24378), [@tskarhed](https://github.com/tskarhed)
+
+- **Docker**: Upgrade to Alpine 3.11. [#24056](https://github.com/grafana/grafana/pull/24056), [@aknuds1](https://github.com/aknuds1)
+- **Forms**: Remove Forms namespace [BREAKING]. Will cause all `Forms` imports to stop working. See migration guide in [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)[#24378](https://github.com/grafana/grafana/pull/24378), [@tskarhed](https://github.com/tskarhed)
 
 ### Bug Fixes
-* **CloudWatch**: Fix error with expression only query. [#24362](https://github.com/grafana/grafana/pull/24362), [@aocenas](https://github.com/aocenas)
-* **Elasticsearch**: Fix building of raw document queries resulting in error Unknown BaseAggregationBuilder error. [#24403](https://github.com/grafana/grafana/pull/24403), [@ivanahuckova](https://github.com/ivanahuckova)
-* **Prometheus**: Fix for prometheus legend formats for instant time series queries. [#24407](https://github.com/grafana/grafana/pull/24407), [@torkelo](https://github.com/torkelo)
+
+- **CloudWatch**: Fix error with expression only query. [#24362](https://github.com/grafana/grafana/pull/24362), [@aocenas](https://github.com/aocenas)
+- **Elasticsearch**: Fix building of raw document queries resulting in error Unknown BaseAggregationBuilder error. [#24403](https://github.com/grafana/grafana/pull/24403), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus**: Fix for prometheus legend formats for instant time series queries. [#24407](https://github.com/grafana/grafana/pull/24407), [@torkelo](https://github.com/torkelo)
 
 # 7.0.0-beta2 (2020-05-07)
 
@@ -83,42 +86,42 @@ We have also extended the time zone options so you can select any of the standar
 
 ### Features / Enhancements
 
-* **CloudWatch**: Adds more examples to CloudWatch Logs cheatsheet. [#24288](https://github.com/grafana/grafana/pull/24288), [@kaydelaney](https://github.com/kaydelaney)
-* **Elasticsearch**: Changes terms min_doc_count default from 1 to 0. [#24204](https://github.com/grafana/grafana/pull/24204), [@Estrax](https://github.com/Estrax)
-* **Login Page**: New design. [#23892](https://github.com/grafana/grafana/pull/23892), [@torkelo](https://github.com/torkelo)
-* **Logs**: Add log level Fatal. [#24185](https://github.com/grafana/grafana/pull/24185), [@davkal](https://github.com/davkal)
-* **Loki**: Show loki datasource stats in panel inspector. [#24190](https://github.com/grafana/grafana/pull/24190), [@davkal](https://github.com/davkal)
-* **Migration**: Dashboard links. [#23553](https://github.com/grafana/grafana/pull/23553), [@peterholmberg](https://github.com/peterholmberg)
-* **Plugins**: Require signing of external back-end plugins. [#24075](https://github.com/grafana/grafana/pull/24075), [@aknuds1](https://github.com/aknuds1)
-* **Prometheus**: Add off switch for metric/label name lookup. [#24034](https://github.com/grafana/grafana/pull/24034), [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w)
-* **Search**: Bring back open search by clicking dashboard name. [#24151](https://github.com/grafana/grafana/pull/24151), [@torkelo](https://github.com/torkelo)
-* **Tracing**: Header updates. [#24153](https://github.com/grafana/grafana/pull/24153), [@aocenas](https://github.com/aocenas)
-* **Transformations**: Improve time series support. [#23978](https://github.com/grafana/grafana/pull/23978), [@ryantxu](https://github.com/ryantxu)
+- **CloudWatch**: Adds more examples to CloudWatch Logs cheatsheet. [#24288](https://github.com/grafana/grafana/pull/24288), [@kaydelaney](https://github.com/kaydelaney)
+- **Elasticsearch**: Changes terms min_doc_count default from 1 to 0. [#24204](https://github.com/grafana/grafana/pull/24204), [@Estrax](https://github.com/Estrax)
+- **Login Page**: New design. [#23892](https://github.com/grafana/grafana/pull/23892), [@torkelo](https://github.com/torkelo)
+- **Logs**: Add log level Fatal. [#24185](https://github.com/grafana/grafana/pull/24185), [@davkal](https://github.com/davkal)
+- **Loki**: Show loki datasource stats in panel inspector. [#24190](https://github.com/grafana/grafana/pull/24190), [@davkal](https://github.com/davkal)
+- **Migration**: Dashboard links. [#23553](https://github.com/grafana/grafana/pull/23553), [@peterholmberg](https://github.com/peterholmberg)
+- **Plugins**: Require signing of external back-end plugins. [#24075](https://github.com/grafana/grafana/pull/24075), [@aknuds1](https://github.com/aknuds1)
+- **Prometheus**: Add off switch for metric/label name lookup. [#24034](https://github.com/grafana/grafana/pull/24034), [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w)
+- **Search**: Bring back open search by clicking dashboard name. [#24151](https://github.com/grafana/grafana/pull/24151), [@torkelo](https://github.com/torkelo)
+- **Tracing**: Header updates. [#24153](https://github.com/grafana/grafana/pull/24153), [@aocenas](https://github.com/aocenas)
+- **Transformations**: Improve time series support. [#23978](https://github.com/grafana/grafana/pull/23978), [@ryantxu](https://github.com/ryantxu)
 
 ### Bug Fixes
 
-* **CloudWatch logs**: Fix default region interpolation and reset log groups on region change. [#24346](https://github.com/grafana/grafana/pull/24346), [@aocenas](https://github.com/aocenas)
-* **Dashboard**: Fix for folder picker menu not being visible outside modal when saving dashboard. [#24296](https://github.com/grafana/grafana/pull/24296), [@tskarhed](https://github.com/tskarhed)
-* **Dashboard**: Go to explore now works even after discarding dashboard changes. [#24149](https://github.com/grafana/grafana/pull/24149), [@torkelo](https://github.com/torkelo)
-* **Dashboard**: Only show cache timeout option in panel edit if enabled in data source plugin json. [#24095](https://github.com/grafana/grafana/pull/24095), [@peterholmberg](https://github.com/peterholmberg)
-* **Dashboard**: Propagate unhandled errors when saving dashboard. [#24081](https://github.com/grafana/grafana/pull/24081), [@peterholmberg](https://github.com/peterholmberg)
-* **Dashboard**: Variable without a current value in json model causes crash on load. [#24261](https://github.com/grafana/grafana/pull/24261), [@torkelo](https://github.com/torkelo)
-* **DashboardManager**: Disable editing if there are no folder permissions. [#24237](https://github.com/grafana/grafana/pull/24237), [@tskarhed](https://github.com/tskarhed)
-* **DataLinks**: Do not add empty links. [#24088](https://github.com/grafana/grafana/pull/24088), [@dprokop](https://github.com/dprokop)
-* **Explore/Loki**: Removes old query syntax support for regex filter. [#24281](https://github.com/grafana/grafana/pull/24281), [@Estrax](https://github.com/Estrax)
-* **Explore**: Fix showing of results of queries in table. [#24018](https://github.com/grafana/grafana/pull/24018), [@ivanahuckova](https://github.com/ivanahuckova)
-* **Field options**: show field name when title option config is empty. [#24335](https://github.com/grafana/grafana/pull/24335), [@dprokop](https://github.com/dprokop)
-* **Graph**: Fixed graph tooltip getting stuck / not being cleared when leaving dashboard. [#24162](https://github.com/grafana/grafana/pull/24162), [@torkelo](https://github.com/torkelo)
-* **Graph**: Fixed issue with x-axis labels showing "MM/DD" after viewing dashboard with pie chart. [#24341](https://github.com/grafana/grafana/pull/24341), [@mckn](https://github.com/mckn)
-* **Jaeger**: Fix how label is created in cascader. [#24164](https://github.com/grafana/grafana/pull/24164), [@aocenas](https://github.com/aocenas)
-* **Loki**: Fix label matcher for log metrics queries. [#24238](https://github.com/grafana/grafana/pull/24238), [@ivanahuckova](https://github.com/ivanahuckova)
-* **Panel inspect**: hides Query tab for plugins without Query ability. [#24216](https://github.com/grafana/grafana/pull/24216), [@hugohaggmark](https://github.com/hugohaggmark)
-* **Prometheus**: Refresh query field metrics on data source change. [#24116](https://github.com/grafana/grafana/pull/24116), [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w)
-* **Select**: Fixes so component loses focus on selecting value or pressing outside of input. [#24008](https://github.com/grafana/grafana/pull/24008), [@mckn](https://github.com/mckn)
-* **Stat/Gauge/BarGauge**: Shows default cursor when missing links. [#24284](https://github.com/grafana/grafana/pull/24284), [@hugohaggmark](https://github.com/hugohaggmark)
-* **Tracing**: Fix view bounds after trace change. [#23994](https://github.com/grafana/grafana/pull/23994), [@aocenas](https://github.com/aocenas)
-* **Variables**: Migrates old tags format for consistency. [#24276](https://github.com/grafana/grafana/pull/24276), [@hugohaggmark](https://github.com/hugohaggmark)
-* **Reporting**: Update report schedule as soon as a report is updated (Enterprise)
+- **CloudWatch logs**: Fix default region interpolation and reset log groups on region change. [#24346](https://github.com/grafana/grafana/pull/24346), [@aocenas](https://github.com/aocenas)
+- **Dashboard**: Fix for folder picker menu not being visible outside modal when saving dashboard. [#24296](https://github.com/grafana/grafana/pull/24296), [@tskarhed](https://github.com/tskarhed)
+- **Dashboard**: Go to explore now works even after discarding dashboard changes. [#24149](https://github.com/grafana/grafana/pull/24149), [@torkelo](https://github.com/torkelo)
+- **Dashboard**: Only show cache timeout option in panel edit if enabled in data source plugin json. [#24095](https://github.com/grafana/grafana/pull/24095), [@peterholmberg](https://github.com/peterholmberg)
+- **Dashboard**: Propagate unhandled errors when saving dashboard. [#24081](https://github.com/grafana/grafana/pull/24081), [@peterholmberg](https://github.com/peterholmberg)
+- **Dashboard**: Variable without a current value in json model causes crash on load. [#24261](https://github.com/grafana/grafana/pull/24261), [@torkelo](https://github.com/torkelo)
+- **DashboardManager**: Disable editing if there are no folder permissions. [#24237](https://github.com/grafana/grafana/pull/24237), [@tskarhed](https://github.com/tskarhed)
+- **DataLinks**: Do not add empty links. [#24088](https://github.com/grafana/grafana/pull/24088), [@dprokop](https://github.com/dprokop)
+- **Explore/Loki**: Removes old query syntax support for regex filter. [#24281](https://github.com/grafana/grafana/pull/24281), [@Estrax](https://github.com/Estrax)
+- **Explore**: Fix showing of results of queries in table. [#24018](https://github.com/grafana/grafana/pull/24018), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Field options**: show field name when title option config is empty. [#24335](https://github.com/grafana/grafana/pull/24335), [@dprokop](https://github.com/dprokop)
+- **Graph**: Fixed graph tooltip getting stuck / not being cleared when leaving dashboard. [#24162](https://github.com/grafana/grafana/pull/24162), [@torkelo](https://github.com/torkelo)
+- **Graph**: Fixed issue with x-axis labels showing "MM/DD" after viewing dashboard with pie chart. [#24341](https://github.com/grafana/grafana/pull/24341), [@mckn](https://github.com/mckn)
+- **Jaeger**: Fix how label is created in cascader. [#24164](https://github.com/grafana/grafana/pull/24164), [@aocenas](https://github.com/aocenas)
+- **Loki**: Fix label matcher for log metrics queries. [#24238](https://github.com/grafana/grafana/pull/24238), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Panel inspect**: hides Query tab for plugins without Query ability. [#24216](https://github.com/grafana/grafana/pull/24216), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Prometheus**: Refresh query field metrics on data source change. [#24116](https://github.com/grafana/grafana/pull/24116), [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w)
+- **Select**: Fixes so component loses focus on selecting value or pressing outside of input. [#24008](https://github.com/grafana/grafana/pull/24008), [@mckn](https://github.com/mckn)
+- **Stat/Gauge/BarGauge**: Shows default cursor when missing links. [#24284](https://github.com/grafana/grafana/pull/24284), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Tracing**: Fix view bounds after trace change. [#23994](https://github.com/grafana/grafana/pull/23994), [@aocenas](https://github.com/aocenas)
+- **Variables**: Migrates old tags format for consistency. [#24276](https://github.com/grafana/grafana/pull/24276), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Reporting**: Update report schedule as soon as a report is updated (Enterprise)
 
 # 7.0.0-beta1 (2020-04-28)
 
@@ -128,6 +131,7 @@ We have also extended the time zone options so you can select any of the standar
 - **Docker**: Our Ubuntu based images have been upgraded to Ubuntu [20.04 LTS](https://releases.ubuntu.com/20.04/).
 - **Dashboard**: A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds.
 - **@grafana/ui**: Forms migration notice, see [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)
+- **@grafana/ui**: Select API change for creating custom values, see [@grafana/ui changelog](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/CHANGELOG.md)
 - **Interval calculation**: There is now a new option `Max data points` that controls the auto interval `$__interval` calculation. Interval was previously calculated by dividing the panel width by the time range. With the new max data points option it is now easy to set `$__interval` to a dynamic value that is time range agnostic. For example if you set `Max data points` to 10 Grafana will dynamically set `$__interval` by dividing the current time range by 10.
 - **Datasource/Loki**: Support for [deprecated Loki endpoints](https://github.com/grafana/loki/blob/master/docs/api.md#lokis-http-api) has been removed.
 
