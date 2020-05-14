@@ -2,6 +2,7 @@
 import React, { ReactNode } from 'react';
 import intersectionBy from 'lodash/intersectionBy';
 import debounce from 'lodash/debounce';
+import unionBy from 'lodash/unionBy';
 
 import {
   QueryField,
@@ -31,6 +32,7 @@ import { ExploreId } from 'app/types';
 import { dispatch } from 'app/store/store';
 import { changeModeAction } from 'app/features/explore/state/actionTypes';
 import { appEvents } from 'app/core/core';
+import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 
 export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery> {
   absoluteRange: AbsoluteTimeRange;
@@ -104,11 +106,12 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     ];
   }
 
-  fetchLogGroupOptions = async (region: string) => {
+  fetchLogGroupOptions = async (region: string, logGroupNamePrefix?: string) => {
     try {
       const logGroups: string[] = await this.props.datasource.describeLogGroups({
         refId: this.props.query.refId,
         region,
+        logGroupNamePrefix,
       });
 
       return logGroups.map(logGroup => ({
@@ -120,6 +123,30 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       return [];
     }
   };
+
+  onLogGroupSearch = (searchTerm: string, region: string, actionMeta: InputActionMeta) => {
+    if (actionMeta.action !== 'input-change') {
+      return Promise.resolve();
+    }
+
+    this.setState({
+      loadingLogGroups: true,
+    });
+
+    return this.fetchLogGroupOptions(region, searchTerm)
+      .then(matchingLogGroups => {
+        this.setState(state => ({
+          availableLogGroups: unionBy(state.availableLogGroups, matchingLogGroups, 'value'),
+        }));
+      })
+      .finally(() => {
+        this.setState({
+          loadingLogGroups: false,
+        });
+      });
+  };
+
+  onLogGroupSearchDebounced = debounce(this.onLogGroupSearch, 300);
 
   componentWillMount = () => {
     const { datasource, query, onChange } = this.props;
@@ -355,6 +382,9 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 noOptionsMessage="No log groups available"
                 isLoading={loadingLogGroups}
                 onOpenMenu={this.onOpenLogGroupMenu}
+                onInputChange={(value, actionMeta) => {
+                  this.onLogGroupSearchDebounced(value, selectedRegion.value ?? 'default', actionMeta);
+                }}
               />
             }
           />
