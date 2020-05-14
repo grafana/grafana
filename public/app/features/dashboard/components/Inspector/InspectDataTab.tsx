@@ -7,6 +7,7 @@ import {
   toCSV,
   transformDataFrame,
   getFrameDisplayName,
+  dateTimeFormat,
 } from '@grafana/data';
 import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -49,13 +50,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   exportCsv = (dataFrame: DataFrame) => {
+    const { panel } = this.props;
+    const { transformId } = this.state;
     const dataFrameCsv = toCSV([dataFrame]);
 
     const blob = new Blob([dataFrameCsv], {
       type: 'application/csv;charset=utf-8',
     });
-
-    saveAs(blob, dataFrame.name + '-' + new Date().getUTCDate() + '.csv');
+    const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
+    const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
+    saveAs(blob, fileName);
   };
 
   onSelectedFrameChanged = (item: SelectableValue<number>) => {
