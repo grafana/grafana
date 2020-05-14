@@ -10,6 +10,7 @@ import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { ensureColumnsTransformer } from './ensureColumns';
+import { getFieldDisplayName } from '../../field';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -78,7 +79,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     if (mode === CalculateFieldMode.ReduceRow) {
       creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
     } else if (mode === CalculateFieldMode.BinaryOperation) {
-      creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions));
+      creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
     }
 
     // Nothing configured
@@ -171,13 +172,13 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
   };
 }
 
-function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string): Vector | undefined {
+function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFrames: DataFrame[]): Vector | undefined {
   if (!name) {
     return undefined;
   }
 
   for (const f of frame.fields) {
-    if (f.name === name) {
+    if (name === getFieldDisplayName(f, frame, allFrames)) {
       return f.values;
     }
   }
@@ -190,12 +191,12 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string): Vect
   return undefined;
 }
 
-function getBinaryCreator(options: BinaryOptions): ValuesCreator {
+function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): ValuesCreator {
   const operator = binaryOperators.getIfExists(options.operator);
 
   return (frame: DataFrame) => {
-    const left = findFieldValuesWithNameOrConstant(frame, options.left);
-    const right = findFieldValuesWithNameOrConstant(frame, options.right);
+    const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
+    const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
       return (undefined as unknown) as Vector;
     }

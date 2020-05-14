@@ -152,7 +152,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
           </div>
         )
       }
-      className={isPhantom && 'add-data-source-item--phantom'}
+      className={isPhantom ? 'add-data-source-item--phantom' : ''}
       onClick={onClick}
       aria-label={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
     />

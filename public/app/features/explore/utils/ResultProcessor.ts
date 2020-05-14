@@ -10,7 +10,7 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import TableModel, { mergeTablesIntoModel, MutableColumn } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
@@ -61,10 +61,11 @@ export class ResultProcessor {
       const fieldCount = fields.length;
       const rowCount = frame.length;
 
-      const columns = fields.map(field => ({
+      const columns: MutableColumn[] = fields.map(field => ({
         text: field.name,
         type: field.type,
         filterable: field.config.filterable,
+        custom: field.config.custom,
       }));
 
       const rows: any[][] = [];
