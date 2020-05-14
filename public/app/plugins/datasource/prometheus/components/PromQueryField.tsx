@@ -340,7 +340,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               onBlur={this.props.onBlur}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a PromQL query"
+              placeholder="Enter a PromQL query (run with Shift+Enter)"
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}
             />

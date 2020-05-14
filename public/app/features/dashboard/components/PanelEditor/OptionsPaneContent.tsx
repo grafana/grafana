@@ -203,6 +203,7 @@ export const TabsBarContent: React.FC<{
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
               title={item.tooltip}
+              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label)}
             />
           ))}
           <div className="flex-grow-1" />

@@ -3,6 +3,7 @@ import {
   hideOptions,
   initialState as optionsPickerInitialState,
   moveOptionsHighlight,
+  OPTIONS_LIMIT,
   optionsPickerReducer,
   OptionsPickerState,
   showOptions,
@@ -606,6 +607,32 @@ describe('optionsPickerReducer', () => {
           queryValue: searchQuery,
           highlightIndex: 0,
         });
+    });
+
+    describe('and option count is are greater then OPTIONS_LIMIT', () => {
+      it('then state should be correct', () => {
+        const searchQuery = 'option:1337';
+
+        const options = [];
+        for (let index = 0; index <= OPTIONS_LIMIT + 337; index++) {
+          options.push({ text: `option:${index}`, value: `option:${index}`, selected: false });
+        }
+
+        const { initialState } = getVariableTestContext({
+          queryValue: searchQuery,
+        });
+
+        reducerTester<OptionsPickerState>()
+          .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+          .whenActionIsDispatched(updateOptionsAndFilter(options))
+          .thenStateShouldEqual({
+            ...cloneDeep(initialState),
+            options: [{ text: 'option:1337', value: 'option:1337', selected: false }],
+            selectedValues: [],
+            queryValue: 'option:1337',
+            highlightIndex: 0,
+          });
+      });
     });
   });
 
