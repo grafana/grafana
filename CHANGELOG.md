@@ -49,6 +49,10 @@ We have yet to migrate all core panels to this new architecture so in 7.0 there 
 
 Grafana 7.0 comes with a new table panel (and deprecates the old one). This new table panel supports horizontal scrolling and column resize. Paired with the new `Organize fields` transformation detailed above you can reorder, hide & rename columns. This new panel also supports new cell display modes, like showing a bar gauge inside a cell.
 
+### Panel inspector
+
+The panel inspector is a feature that every panel will support, including internal as well as external community plugins. In this new panel inspector, you can view the raw data in a table format, apply some pre-defined transformations, and download as CSV. You can find the __Inspect__ setting in the panel menu. Use the keyboard shortcut `i` when hovering over a panel to get the panel inspector to appear.
+
 ### Improved time zone support
 
 Starting in version 7.0, you can override the time zone used to display date and time values in a dashboard.
