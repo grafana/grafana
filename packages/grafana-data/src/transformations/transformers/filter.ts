@@ -24,6 +24,7 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
       return noopTransformer.transformer({});
     }
 
+    console.log('options', options);
     const include = options.include ? getFieldMatcher(options.include) : null;
     const exclude = options.exclude ? getFieldMatcher(options.exclude) : null;
 

@@ -6,6 +6,7 @@ import {
   TransformerRegistyItem,
   TransformerUIProps,
   getFieldDisplayName,
+  stringToJsRegex,
 } from '@grafana/data';
 import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 import { css } from 'emotion';
@@ -76,7 +77,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
     if (options.includePattern) {
       try {
-        const regex = new RegExp(options.includePattern);
+        const regex = stringToJsRegex(options.includePattern);
 
         for (const info of allNames) {
           if (regex.test(info.name)) {
@@ -136,7 +137,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
     try {
       if (regex) {
-        new RegExp(regex);
+        stringToJsRegex(regex);
       }
     } catch (e) {
       isRegexValid = false;
