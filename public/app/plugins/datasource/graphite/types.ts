@@ -25,9 +25,9 @@ export interface MetricTankSeriesMeta {
   'archive-read': number;
   'archive-interval': number;
   'aggnum-norm': number;
-  'consolidator-normfetch': string; //"MaximumConsolidator",
+  'consolidate-normfetch': string; //"MaximumConsolidator",
   'aggnum-rc': number;
-  'consolidator-rc': string; //"MaximumConsolidator",
+  'consolidate-rc': string; //"MaximumConsolidator",
   count: number;
 }
 
