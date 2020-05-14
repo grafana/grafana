@@ -50,14 +50,8 @@ export class TablePanel extends Component<Props> {
         override.properties.push({ id: propId, value: width });
       }
     } else {
-      const options = {
-        pattern: fieldDisplayName,
-        frame,
-        series: data.series,
-      };
-
       overrides.push({
-        matcher: { id: matcherId, options },
+        matcher: { id: matcherId, options: { names: [fieldDisplayName] } },
         properties: [{ id: propId, value: width }],
       });
     }

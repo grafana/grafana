@@ -5,7 +5,7 @@ import { stringToJsRegex } from '../../text/string';
 import { getFieldDisplayName } from '../../field/fieldState';
 
 export interface FieldNameMatcherOptions {
-  pattern: string;
+  pattern?: string;
   names?: string[];
 }
 
@@ -15,18 +15,22 @@ const fieldNameMatcher: FieldMatcherInfo<FieldNameMatcherOptions> = {
   description: 'match the field name',
   defaultOptions: {
     pattern: '/.*/',
+    names: [],
   },
 
   get: (options: FieldNameMatcherOptions) => {
-    const { pattern } = options;
-    let regex = new RegExp('');
-    try {
-      regex = stringToJsRegex(pattern);
-    } catch (e) {
-      console.error(e);
-    }
+    const regex = toRegex(options.pattern);
+    const matchByName = toNamesRecord(options.names);
+
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      return regex.test(getFieldDisplayName(field, frame, allFrames) ?? '');
+      const displayName = getFieldDisplayName(field, frame, allFrames);
+      if (matchByName[displayName]) {
+        return true;
+      }
+      if (regex && regex.test(displayName)) {
+        return true;
+      }
+      return false;
     };
   },
 
@@ -35,7 +39,30 @@ const fieldNameMatcher: FieldMatcherInfo<FieldNameMatcherOptions> = {
   },
 };
 
-// General Field matcher
+const toRegex = (pattern?: string): RegExp | undefined => {
+  if (!pattern) {
+    return undefined;
+  }
+
+  try {
+    return stringToJsRegex(pattern);
+  } catch (error) {
+    console.log(error);
+    return undefined;
+  }
+};
+
+const toNamesRecord = (names?: string[]): Record<string, boolean> => {
+  if (!Array.isArray(names)) {
+    return {};
+  }
+  return names.reduce((all, name) => {
+    all[name] = true;
+    return all;
+  }, {} as Record<string, boolean>);
+};
+
+// General Frame matcher
 const frameNameMatcher: FrameMatcherInfo<string> = {
   id: FrameMatcherID.byName,
   name: 'Frame Name',

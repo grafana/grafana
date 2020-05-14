@@ -28,20 +28,9 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
   },
 };
 
-const getMatcherConfig = (patterns?: string[]): MatcherConfig | undefined => {
-  if (!Array.isArray(patterns) || patterns.length === 0) {
+const getMatcherConfig = (names?: string[]): MatcherConfig | undefined => {
+  if (!Array.isArray(names) || names.length === 0) {
     return undefined;
   }
-
-  const pattern = buildRegex(patterns);
-
-  return {
-    id: FieldMatcherID.byName,
-    options: { pattern },
-  };
-};
-
-const buildRegex = (regexs: string[]) => {
-  const include = regexs.map(s => `(${s})`).join('|');
-  return `/${include}/`;
+  return { id: FieldMatcherID.byName, options: { names } };
 };
