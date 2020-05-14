@@ -13,43 +13,49 @@ However, one limitation with these plugins are that they execute on the client-s
 
 We use the term *backend plugin* to denote that a plugin has a backend component. Still, normally a backend plugin requires frontend components as well. This is for example true for backend data source plugins which normally need configuration and query editor components implemented for the frontend.
 
-Currently, data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, e.g. [notifiers for Grafana Alerting]({{< relref "../../../alerting/notifications.md" >}}) and custom authentication to name a few.
+Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as [notifiers for Grafana Alerting]({{< relref "../../../alerting/notifications.md" >}}) and custom authentication to name a few.
 
 ## Use cases for implementing a backend plugin
 
-The following examples should give you an idea of why you would consider implementing a backend plugin:
+The following examples gives you an idea of why you'd consider implementing a backend plugin:
 
 - Enable [Grafana Alerting]({{< relref "../../../alerting/rules.md" >}}) for data sources.
-- Connect to non-HTTP services that normally cannot be connected to from a web browser, e.g. SQL database servers.
+- Connect to non-HTTP services that normally can't be connected to from a web browser, e.g. SQL database servers.
 - Keep state between users, e.g. query caching for data sources.
-- Use custom authentication methods and/or authorization checks not supported in Grafana.
-- Custom data source request proxy, see [Resources]({{< relref "#resources" >}}).
+- Use custom authentication methods and/or authorization checks that aren't supported in Grafana.
+- Use a custom data source request proxy, see [Resources]({{< relref "#resources" >}}).
 
 ## Grafana’s backend plugin system
 
-The Grafana backend plugin system is based on the [go-plugin library by HashiCorp](https://github.com/hashicorp/go-plugin). Grafana server launches each backend plugin as a subprocess and communicates with it over [gRPC](https://grpc.io/). This approach has a number of benefits:
+The Grafana backend plugin system is based on the [go-plugin library by HashiCorp](https://github.com/hashicorp/go-plugin). The Grafana server launches each backend plugin as a subprocess and communicates with it over [gRPC](https://grpc.io/). This approach has a number of benefits:
 - Plugins can’t crash your grafana process: a panic in a plugin doesn’t panic the server.
 - Plugins are easy to develop: just write a Go application and run `go build` (or use any other language which supports gRPC).
-- Plugins can be relatively secure: The plugin only has access to the interfaces and args given to it, not to the entire memory space of the process.
+- Plugins can be relatively secure: The plugin only has access to the interfaces and arguments that are given to it, not to the entire memory space of the process.
 
-Grafana's backend plugin system exposes a couple of different capabilities or building blocks that a backend plugin can implement. Currently these are query data, resources, health checks and collect metrics.
+Grafana's backend plugin system exposes a couple of different capabilities, or building blocks, that a backend plugin can implement: 
+
+- Query data
+- Resources
+- Health checks
+- Collect metrics
 
 ### Query data
 
-The query data capability allows a backend plugin to handle data source queries, usually submitted from a [dashboard]({{< relref "../../../features/dashboard/dashboards.md" >}}), [Explore]({{< relref "../../../features/explore/index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting/rules.md" >}}). The response format contains [data frames]({{< relref "data-frames.md" >}}), which are suitable for visualising metrics, logs, and traces. This capability is required to implement for a backend data source plugin.
+The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../features/dashboard/dashboards.md" >}}), [Explore]({{< relref "../../../features/explore/index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting/rules.md" >}}). The response contains [data frames]({{< relref "data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
 
 ### Resources
 
 The resources capability allows a backend plugin to handle custom HTTP requests sent to the Grafana HTTP API and respond with custom HTTP responses. Here, the request and response formats can vary, e.g. JSON, plain text, HTML or static resources (files, images) etc. Compared to the query data capability where the response contains data frames, resources give the plugin developer a lot of flexibility for extending and open up Grafana for new and interesting use cases.
 
 Examples of use cases for implementing resources:
+
 - Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy](https://grafana.com/docs/grafana/latest/http_api/data_source/#data-source-proxy-calls).
-- Return data/information in a format suitable to use within a data source query editor to provide auto-complete functionality.
-- Return static resources such as images or files.
-- Send a command to a device such as a micro controller or IOT device.
-- Request information from a device such as a micro controller or IOT device.
+- Return data or information in a format suitable to use within a data source query editor to provide auto-complete functionality.
+- Return static resources, such as images or files.
+- Send a command to a device, such as a micro controller or IOT device.
+- Request information from a device, such as a micro controller or IOT device.
 - Extend Grafana's HTTP API with custom resources, methods and actions.
-- Use [chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding) to return large data responses in chunks and/or enable "basic" streaming capabilities.
+- Use [chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding) to return large data responses in chunks or to enable "basic" streaming capabilities.
 
 ### Health checks
 
@@ -57,6 +63,6 @@ The health checks capability allows a backend plugin to return the status of the
 
 ### Collect metrics
 
-The collect metrics capability allows a backend plugin to collect and return runtime, process and custom metrics using the Prometheus text-based [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you’re using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) when implementing your backend plugin the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is builtin and gives you Go runtime metrics and process metrics out of the box. By using the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) you can add custom metrics to instrument your backend plugin.
+A backend plugin can collect and return runtime, process and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you’re using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in, and gives you Go runtime metrics and process metrics out of the box. By using the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) you can add custom metrics to instrument your backend plugin.
 
 A metrics endpoint (`/api/plugins/<plugin id>/metrics`) for a plugin is available in the Grafana HTTP API and allows a Prometheus instance to be configured to scrape the metrics.

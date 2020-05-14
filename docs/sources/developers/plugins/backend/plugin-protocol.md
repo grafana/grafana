@@ -10,13 +10,13 @@ There’s a physical wire protocol that Grafana server uses to communicate with 
 
 We adwise for backend plugins to not be implemented directly against this protocol. Instead, prefer to use the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) that implements this protocol and provides higher level APIs.
 
-The current plugin protocol can be found [here](https://github.com/grafana/grafana-plugin-sdk-go/blob/master/proto/backend.proto). The plugin protocol lives in the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) since Grafana itself  uses parts of the SDK as a dependency.
+The plugin protocol is available in the [GitHub repository](https://github.com/grafana/grafana-plugin-sdk-go/blob/master/proto/backend.proto). The plugin protocol lives in the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) since Grafana itself uses parts of the SDK as a dependency.
 
 ## Versioning
 
 Additions of services, messages and fields in the latest version of the plugin protocol are expected to happen, but should not introduce any breaking changes. If breaking changes to the plugin protocol is needed, a new major version of the plugin protocol will be created and released together with a new major Grafana release. Grafana will then support both the old and the new plugin protocol for some time to make sure existing backend plugins continue to work.
 
-Grafana owns the plugin protocol and because of that the plugin protocol sort of follows Grafana's versioning, However, that doesn't automatically mean that a new major version of the plugin protocol is created when a new major release of Grafana is released.
+Because Grafana maintains the plugin protocol, the plugin protocol attempts to follow Grafana's versioning, However, that doesn't automatically mean that a new major version of the plugin protocol is created when a new major release of Grafana is released.
 
 ## Writing plugins without Go
 
