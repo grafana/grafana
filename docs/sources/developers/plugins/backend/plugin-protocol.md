@@ -17,3 +17,12 @@ The current plugin protocol can be found [here](https://github.com/grafana/grafa
 Additions of services, messages and fields in the latest version of the plugin protocol is expected to happen, but it should not introduce any breaking changes. If breaking changes to the plugin protocol is needed, a new major version of the plugin protocol will be created and released together with a new major Grafana release. Grafana will then support both the old and the new plugin protocol for some time to make sure existing backend plugins continue to work.
 
 Grafana owns the plugin protocol and because of that the plugin protocol sort of follows Grafana's versioning, However, that doesn't automatically mean that a new major version of the plugin protocol is created when a new major release of Grafana is released.
+
+## Writing plugins without Go
+
+In case you want to write a backend plugin in another language than Go it’s possible as long as the language supports [gRPC](https://grpc.io/). However, writing a plugin in Go is recommended and has several advantages that should be carefully taken into account before proceeding:
+- There's an official [SDK]({{< relref "grafana-plugin-sdk-for-go.md" >}}) available.
+- Single binary as the compiled output.
+- Building and compiling for multiple platforms is easy.
+- A statically compiled binary (in most cases) doesn't require any additional dependencies installed on the target platform enabling it to run “everywhere”.
+- Small footprint in regards to binary size and resource usage.
