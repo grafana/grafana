@@ -38,7 +38,7 @@ export function getRollupNotice(metaList: MetricTankSeriesMeta[]): QueryResultMe
     if (archiveIndex > 0) {
       const schema = parseSchemaRetentions(meta['schema-retentions']);
       const intervalString = schema[archiveIndex].interval;
-      let func = (meta['consolidator-normfetch'] ?? '').replace('Consolidator', '');
+      const func = (meta['consolidator-normfetch'] ?? '').replace('Consolidator', '');
 
       return {
         text: `Data is rolled up, aggregated over ${intervalString} using ${func} function`,
