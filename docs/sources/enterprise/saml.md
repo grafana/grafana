@@ -209,14 +209,14 @@ allowed_organizations = Engineering, Sales
 To configure SAML integration with Okta, create integration inside the Okta org first.
 
 1. Log in to the [Okta portal](https://login.okta.com/).
-1. Go to the Admin Console in your Okta org by clicking **Admin** in the upper-right corner. If you are in the Developer Console, click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.
+1. Go to the Admin Console in your Okta organization by clicking **Admin** in the upper-right corner. If you are in the Developer Console, then click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.
 1. In the Admin Console, go to **Applications** > **Applications**.
 1. Click **Add Application**.
 1. Click **Create New App** to start the Application Integration Wizard.
 1. Choose **Web** as a platform.
 1. Select **SAML 2.0** in the Sign on method section.
 1. Click **Create**.
-1. On the **General Settings** tab, enter a name for your Grafana integration and optionally upload a logo.
+1. On the **General Settings** tab, enter a name for your Grafana integration. You can also upload a logo.
 1. On the **Configure SAML** tab, enter the SAML information related to your Grafana instance:
     - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
     - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, for example, `https://grafana.example.com/saml/metadata`.
@@ -231,18 +231,18 @@ To configure SAML integration with Okta, create integration inside the Okta org 
     
     - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
 1. Click **Next**.
-1. On the final Feedback tab, fill the form and click **Finish**.
+1. On the final Feedback tab, fill out the form and then click **Finish**.
 
-Once application is created, configure Grafana to use it for SAML authentication.
+Once the application is created, configure Grafana to use it for SAML authentication.
 
-1. In the `[auth.saml]` section in the grafana configuration file, set [`enabled`]({{< relref "./enterprise-configuration.md#enabled" >}}) to `true`.
-1. Configure [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
+1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref "./enterprise-configuration.md#enabled" >}}) to `true`.
+1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
 1. On the Okta application page you redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
-1. Set the [`idp_metadata_url`]({{< relref "./enterprise-configuration.md#idp-metadata-url" >}}) to the URL obtained from the previous step. This URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
+1. Set the [`idp_metadata_url`]({{< relref "./enterprise-configuration.md#idp-metadata-url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
 1. Set the [`assertion_attribute_login`]({{< relref "./enterprise-configuration.md#assertion-attribute-login" >}}), [`assertion_attribute_email`]({{< relref "./enterprise-configuration.md#assertion-attribute-email" >}}), [`assertion_attribute_name`]({{< relref "./enterprise-configuration.md#assertion-attribute-name" >}}), and [`assertion_attribute_groups`]({{< relref "./enterprise-configuration.md#assertion-attribute-groups" >}}) options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
-1. Save configuration file and restart Grafana server.
+1. Save the configuration file and and then restart the Grafana server.
 
-Finally, your Grafana configuration may look like:
+When you are finished, the Grafana configuration might look like this example:
 
 ```bash
 [server]
