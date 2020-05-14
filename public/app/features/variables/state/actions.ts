@@ -42,10 +42,6 @@ import {
 } from './transactionReducer';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
-import {
-  dashboardSetInitPhaseToCancelVariables,
-  dashboardSetInitPhaseToSlowVariables,
-} from '../../dashboard/state/reducers';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -464,30 +460,11 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   return queryParamsNew;
 };
 
-export const DASHBOARD_SLOW_VARIABLES_TIMEOUT = 2000;
-export const DASHBOARD_CANCEL_SLOW_VARIABLES_TIMEOUT = 10000;
-
 export const initVariablesTransaction = (
   dashboardUid: string,
   dashboard: DashboardModel,
   variableSrv: VariableSrv
 ): ThunkResult<void> => async (dispatch, getState) => {
-  // Detect slow loading / initializing variables
-  // This is in order to show loading indication for slow variables queries
-  setTimeout(() => {
-    if (getState().templating.transaction.status === TransactionStatus.Fetching) {
-      dispatch(dashboardSetInitPhaseToSlowVariables());
-    }
-  }, DASHBOARD_SLOW_VARIABLES_TIMEOUT);
-
-  // Detect very slow loading / initializing variables
-  // This is in order to enable cancel for very slow running queries
-  setTimeout(() => {
-    if (getState().templating.transaction.status === TransactionStatus.Fetching) {
-      dispatch(dashboardSetInitPhaseToCancelVariables());
-    }
-  }, DASHBOARD_CANCEL_SLOW_VARIABLES_TIMEOUT);
-
   try {
     const batchState = getState().templating.transaction;
     if (batchState.status === TransactionStatus.Fetching) {

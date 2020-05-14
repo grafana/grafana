@@ -336,6 +336,19 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
         Fetching
       </Component>
        
+      <Component
+        align="center"
+        justify="center"
+      >
+        <Button
+          icon="repeat"
+          onClick={[Function]}
+          size="md"
+          variant="secondary"
+        >
+          Cancel loading dashboard
+        </Button>
+      </Component>
     </Component>
   </div>
 </div>

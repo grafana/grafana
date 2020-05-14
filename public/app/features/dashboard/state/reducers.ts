@@ -38,12 +38,6 @@ const dashbardSlice = createSlice({
     dashboardInitServices: (state, action: PayloadAction) => {
       state.initPhase = DashboardInitPhase.Services;
     },
-    dashboardSetInitPhaseToSlowVariables: (state, action: PayloadAction) => {
-      state.initPhase = DashboardInitPhase.Variables;
-    },
-    dashboardSetInitPhaseToCancelVariables: (state, action: PayloadAction) => {
-      state.initPhase = DashboardInitPhase.VariablesCancel;
-    },
     dashboardInitSlow: (state, action: PayloadAction) => {
       state.isInitSlow = true;
     },
@@ -124,8 +118,6 @@ export const {
   dashboardInitSlow,
   dashboardInitCompleted,
   dashboardInitServices,
-  dashboardSetInitPhaseToSlowVariables,
-  dashboardSetInitPhaseToCancelVariables,
   cleanUpDashboard,
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,

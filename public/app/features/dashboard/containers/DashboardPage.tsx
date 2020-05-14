@@ -219,18 +219,16 @@ export class DashboardPage extends PureComponent<Props, State> {
             <HorizontalGroup align="center" justify="center" spacing="xs">
               <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
             </HorizontalGroup>{' '}
-            {this.props.initPhase === DashboardInitPhase.VariablesCancel && (
-              <HorizontalGroup align="center" justify="center">
-                <Button
-                  variant="secondary"
-                  size="md"
-                  icon="repeat"
-                  onClick={() => this.props.cancelVariables({ redirectToHome: true })}
-                >
-                  Cancel and return to Home
-                </Button>
-              </HorizontalGroup>
-            )}
+            <HorizontalGroup align="center" justify="center">
+              <Button
+                variant="secondary"
+                size="md"
+                icon="repeat"
+                onClick={() => this.props.cancelVariables({ redirectToHome: true })}
+              >
+                Cancel loading dashboard
+              </Button>
+            </HorizontalGroup>
           </VerticalGroup>
         </div>
       </div>
