@@ -150,7 +150,7 @@ Lets you set the minimum value used in percentage threshold calculations. Leave 
 
 ### No value
 
-Enter what Grafana should display if the query returns no value for a field.
+Enter what Grafana should display if the field value is empty or null.
 
 ### Unit
 
