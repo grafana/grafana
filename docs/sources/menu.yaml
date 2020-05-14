@@ -162,6 +162,8 @@
     name: Queries
   - link: /panels/transformations/
     name: Transformations
+  - link: /panels/field-configuration-options/
+    name: Field config options
   - link: /panels/calculations-list/
     name: Calculations list
 - name: Dashboards
@@ -221,8 +223,8 @@
       link: /linking/dashboard-links/
     - name: Panel links
       link: /linking/panel-links/
-    - name: Templates and variables
-      link: /variables/
+- name: Templates and variables
+  link: /variables/
   children:
     - link: /variables/templates-and-variables/
       name: Overview
