@@ -78,7 +78,7 @@ Field overrides allow you to change the settings for one field (column in tables
 1. Click **Add override**.
 1. Select a filter option to choose which fields the override applies to. 
    
-   **Note:** Currently you can only match by name, so after you choose the filter, select which field it applies to in the dropdown list.
+   **Note:** Currently you can only match by name, so after you choose the filter, select which field it applies to from the dropdown list.
 
 1. Click **Add override property**.
 1. Select the [field option](#field-options) you want to apply.
