@@ -162,6 +162,8 @@
     name: Queries
   - link: /panels/transformations/
     name: Transformations
+  - link: /panels/field-configuration-options/
+    name: Field config options
   - link: /panels/calculations-list/
     name: Calculations list
 - name: Dashboards
@@ -204,12 +206,18 @@
 - name: Alerting
   link: /alerting/
   children:
-    - link: /alerting/rules/
-      name: Engine and Rules
-    - link: /alerting/metrics/
-      name: Metrics
+    - link: /alerting/alerts-overview/
+      name: Overview
     - link: /alerting/notifications/
-      name: Notifications
+      name: Alert notifications
+    - link: /alerting/create-alerts/
+      name: Create alerts
+    - link: /alerting/view-alerts/
+      name: View alerts
+    - link: /alerting/pause-an-alert-rule/
+      name: Pause alert rule
+    - link: /alerting/troubleshoot-alerts/
+      name: Troubleshoot alerts
 - name: Image rendering
   link: /administration/image_rendering/
 - name: Linking
@@ -221,8 +229,8 @@
       link: /linking/dashboard-links/
     - name: Panel links
       link: /linking/panel-links/
-    - name: Templates and variables
-      link: /variables/
+- name: Templates and variables
+  link: /variables/
   children:
     - link: /variables/templates-and-variables/
       name: Overview

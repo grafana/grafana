@@ -174,7 +174,7 @@ In the Explore split view, you can now link the two timepickers so that if you c
 
 ### Alerting support for Azure Application Insights
 
-The [Azure Monitor]({{< relref "../features/datasources/azuremonitor/" >}}) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting]({{< relref "../alerting/rules" >}}). In Grafana 6.5, alerting support has been implemented for the [Application Insights service]({{< relref "../features/datasources/azuremonitor/#querying-the-application-insights-service" >}}).
+The [Azure Monitor]({{< relref "../features/datasources/azuremonitor/" >}}) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting]({{< relref "../alerting/alerts-overview" >}}). In Grafana 6.5, alerting support has been implemented for the [Application Insights service]({{< relref "../features/datasources/azuremonitor/#querying-the-application-insights-service" >}}).
 
 ### Allow saving of provisioned dashboards from UI
 
