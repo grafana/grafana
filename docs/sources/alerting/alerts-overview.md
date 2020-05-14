@@ -14,8 +14,8 @@ Alerts allow you to identify problems in your system moments after they occur. B
 
 Alerts consists of two parts:
 
-- Notification channel - How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.
 - Alert rules - When the alert is triggered. Alert rules are defined by one or more conditions that are regularly evaluated by Grafana.
+- Notification channel - How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.
 
 Currently only the graph panel visualization supports alerts.
 
