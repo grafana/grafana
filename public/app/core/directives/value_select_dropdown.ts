@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import coreModule from '../core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { containsSearchFilter } from '../../features/templating/utils';
+import { containsSearchFilter } from '../../features/variables/utils';
 
 export class ValueSelectDropdownCtrl {
   dropdownVisible: any;

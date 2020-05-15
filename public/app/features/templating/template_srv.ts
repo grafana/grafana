@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { deprecationWarning, ScopedVars, textUtil, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { getConfig } from 'app/core/config';
-import { variableRegex } from './utils';
+import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from './types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';

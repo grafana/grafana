@@ -9,7 +9,7 @@ import { OptionsPicker } from '../pickers';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
-import { containsVariable } from '../../templating/utils';
+import { containsVariable } from '../utils';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {

@@ -4,7 +4,7 @@ import { VariableOption, VariableTag, VariableWithMultiSupport } from '../../../
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 import { isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
-import { containsSearchFilter } from '../../../templating/utils';
+import { containsSearchFilter } from '../../utils';
 
 export interface ToggleOption {
   option: VariableOption;
