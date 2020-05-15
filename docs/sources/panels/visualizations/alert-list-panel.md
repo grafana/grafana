@@ -11,7 +11,7 @@ weight = 100
 
 # Alert list panel
 
-The alert list panel allows you to display your dashboards alerts. You can configure the list to show current state or recent state changes. You can read  more about alerts in [Alerting rules](http://docs.grafana.org/alerting/alerts-overview).
+The alert list panel allows you to display your dashboards alerts. You can configure the list to show current state or recent state changes. You can read more about alerts in [Alerts overview]({{< relref "../../alerting/alerts-overview.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
 
