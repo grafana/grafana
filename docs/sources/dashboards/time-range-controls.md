@@ -21,6 +21,8 @@ The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)
 
 The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end.
 
+The plus operator allows you to step forward in time relative to now. You might use this feature to look at predicted data in the future, for example.
+
 Here are some examples:
 
 Example relative range | From: | To:
