@@ -33,6 +33,20 @@ export interface CloneOptions {
   message?: string;
 }
 
+type DashboardLinkType = 'link' | 'dashboards';
+
+export interface DashboardLink {
+  icon: string;
+  title: string;
+  tooltip: string;
+  type: DashboardLinkType;
+  url: string;
+  asDropdown: boolean;
+  tags: [];
+  searchHits?: [];
+  target: string;
+}
+
 export class DashboardModel {
   id: any;
   uid: string;
@@ -55,7 +69,7 @@ export class DashboardModel {
   schemaVersion: number;
   version: number;
   revision: number;
-  links: any;
+  links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
@@ -314,18 +328,10 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
-    if (this.panelInEdit === panel) {
-      if (this.panelInEdit.getQueryRunner().getLastResult()) {
-        return;
-      } else {
-        // refresh if panel is in edit mode and there is no last result
-        panel.refresh();
-      }
-    } else {
-      // refresh new panels unless we are in fullscreen / edit mode
-      if (!this.otherPanelInFullscreen(panel)) {
-        panel.refresh();
-      }
+    const lastResult = panel.getQueryRunner().getLastResult();
+
+    if (!this.otherPanelInFullscreen(panel) && !lastResult) {
+      panel.refresh();
     }
   }
 
@@ -349,6 +355,7 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
+    this.panelInEdit.destroy();
     this.panelInEdit = undefined;
   }
 

@@ -23,25 +23,15 @@ import { Field } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [calcs](#calcs-property) | <code>FieldCalcs</code> | Cache of reduced values |
 |  [config](#config-property) | <code>FieldConfig</code> | Meta info about how field and how to display it |
 |  [display](#display-property) | <code>DisplayProcessor</code> | Convert a value for display |
 |  [getLinks](#getlinks-property) | <code>(config: ValueLinkConfig) =&gt; Array&lt;LinkModel&lt;Field&gt;&gt;</code> | Get value data links with variables interpolated |
 |  [labels](#labels-property) | <code>Labels</code> |  |
 |  [name](#name-property) | <code>string</code> | Name of the field (column) |
 |  [parse](#parse-property) | <code>(value: any) =&gt; T</code> | Convert text to the field value |
+|  [state](#state-property) | <code>FieldState &#124; null</code> | Cached values with appropriate display and id values |
 |  [type](#type-property) | <code>FieldType</code> | Field value type (string, number, etc) |
 |  [values](#values-property) | <code>V</code> |  |
-
-### calcs property
-
-Cache of reduced values
-
-<b>Signature</b>
-
-```typescript
-calcs?: FieldCalcs;
-```
 
 ### config property
 
@@ -99,6 +89,16 @@ Convert text to the field value
 
 ```typescript
 parse?: (value: any) => T;
+```
+
+### state property
+
+Cached values with appropriate display and id values
+
+<b>Signature</b>
+
+```typescript
+state?: FieldState | null;
 ```
 
 ### type property

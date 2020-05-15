@@ -51,7 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     sort: css`
       width: 170px;
     `,
-    feedback: css`
+    footer: css`
       height: 60px;
       margin-top: ${theme.spacing.lg};
       display: flex;
@@ -129,10 +129,7 @@ export function RichHistoryStarredTab(props: Props) {
             />
           );
         })}
-        <div className={styles.feedback}>
-          Query history is a beta feature. The history is local to your browser and is not shared with others.
-          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
-        </div>
+        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { getTemplateSrv, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { getTemplateSrv, setBackendSrv, setDataSourceSrv, setLegacyAngularInjector } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -31,6 +31,7 @@ import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/D
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { auto } from 'angular';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -47,7 +48,8 @@ export class GrafanaCtrl {
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
     dashboardSrv: DashboardSrv,
-    angularLoader: AngularLoader
+    angularLoader: AngularLoader,
+    $injector: auto.IInjectorService
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
@@ -57,6 +59,7 @@ export class GrafanaCtrl {
     setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
+    setLegacyAngularInjector($injector);
 
     locationUtil.initialize({
       getConfig: () => config,

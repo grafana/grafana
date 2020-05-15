@@ -27,9 +27,12 @@ import { TemplateSrv } from '@grafana/runtime';
 
 |  Method | Description |
 |  --- | --- |
-|  [getVariables()](#getvariables-method) |  |
+|  [getVariables()](#getvariables-method) | List the dashboard variables |
+|  [replace(target, scopedVars, format)](#replace-method) | Replace the values within the target string. See also  |
 
 ### getVariables method
+
+List the dashboard variables
 
 <b>Signature</b>
 
@@ -39,4 +42,25 @@ getVariables(): VariableModel[];
 <b>Returns:</b>
 
 `VariableModel[]`
+
+### replace method
+
+Replace the values within the target string. See also 
+
+<b>Signature</b>
+
+```typescript
+replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  target | <code>string</code> |  |
+|  scopedVars | <code>ScopedVars</code> |  |
+|  format | <code>string &#124; Function</code> |  |
+
+<b>Returns:</b>
+
+`string`
 

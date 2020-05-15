@@ -26,6 +26,7 @@ import {
   PanelPlugin,
   FieldConfigSource,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -73,6 +74,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
+
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -98,6 +100,15 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (!this.wantsQueryExecution) {
         this.setState({ isFirstLoad: false });
       }
+    }
+
+    if (!this.querySubscription) {
+      this.querySubscription = panel
+        .getQueryRunner()
+        .getData()
+        .subscribe({
+          next: data => this.onDataUpdate(data),
+        });
     }
   }
 
@@ -184,15 +195,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         return;
       }
 
-      const queryRunner = panel.getQueryRunner();
-
-      if (!this.querySubscription) {
-        this.querySubscription = queryRunner.getData().subscribe({
-          next: data => this.onDataUpdate(data),
-        });
-      }
-
-      queryRunner.run({
+      panel.getQueryRunner().run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
@@ -232,10 +235,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { panel } = this.props;
     return panel.snapshotData && panel.snapshotData.length;
   }
-
-  panelHasLastResult = () => {
-    return !!this.props.panel.getQueryRunner().getLastResult();
-  };
 
   get wantsQueryExecution() {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
@@ -331,7 +330,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}

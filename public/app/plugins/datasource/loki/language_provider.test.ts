@@ -144,6 +144,40 @@ describe('Language completion provider', () => {
       ]);
     });
   });
+
+  describe('label values', () => {
+    it('should fetch label values if not cached', async () => {
+      const absoluteRange: AbsoluteTimeRange = {
+        from: 0,
+        to: 5000,
+      };
+
+      const datasource = makeMockLokiDatasource({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      const labelValues = await provider.fetchLabelValues('testkey', absoluteRange);
+      expect(requestSpy).toHaveBeenCalled();
+      expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
+    });
+
+    it('should return cached values', async () => {
+      const absoluteRange: AbsoluteTimeRange = {
+        from: 0,
+        to: 5000,
+      };
+
+      const datasource = makeMockLokiDatasource({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      const labelValues = await provider.fetchLabelValues('testkey', absoluteRange);
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
+
+      const nextLabelValues = await provider.fetchLabelValues('testkey', absoluteRange);
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
+    });
+  });
 });
 
 describe('Request URL', () => {

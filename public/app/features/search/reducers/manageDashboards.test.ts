@@ -1,11 +1,4 @@
-import {
-  TOGGLE_CAN_SAVE,
-  TOGGLE_EDIT_PERMISSIONS,
-  TOGGLE_ALL_CHECKED,
-  TOGGLE_CHECKED,
-  DELETE_ITEMS,
-  MOVE_ITEMS,
-} from './actionTypes';
+import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, DELETE_ITEMS, MOVE_ITEMS } from './actionTypes';
 import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
 import { sections } from '../testData';
 import { UidsToDelete } from '../types';
@@ -32,16 +25,6 @@ describe('Manage dashboards reducer', () => {
       true
     );
     expect(newState2.allChecked).toBe(false);
-  });
-
-  it('should handle TOGGLE_CAN_SAVE', () => {
-    const newState = reducer(state, { type: TOGGLE_CAN_SAVE, payload: true });
-    expect(newState.canSave).toBe(true);
-  });
-
-  it('should handle TOGGLE_EDIT_PERMISSIONS', () => {
-    const newState = reducer(state, { type: TOGGLE_EDIT_PERMISSIONS, payload: true });
-    expect(newState.hasEditPermissionInFolders).toBe(true);
   });
 
   it('should handle TOGGLE_CHECKED sections', () => {

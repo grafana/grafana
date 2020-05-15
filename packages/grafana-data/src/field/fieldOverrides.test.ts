@@ -19,6 +19,7 @@ import { Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getFieldDisplayName } from './fieldState';
 
 const property1 = {
   id: 'custom.property1', // Match field properties
@@ -83,7 +84,7 @@ describe('applyFieldOverrides', () => {
         matcher: { id: FieldMatcherID.numeric },
         properties: [
           { id: 'decimals', value: 1 }, // Numeric
-          { id: 'title', value: 'Kittens' }, // Text
+          { id: 'displayName', value: 'Kittens' }, // Text
         ],
       },
     ],
@@ -111,12 +112,14 @@ describe('applyFieldOverrides', () => {
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
-      expect(withOverrides[0].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+      expect(withOverrides[0].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
         Object {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "name": "message",
+              "label": undefined,
+              "labels": "",
+              "name": "A message",
             },
           },
           "__series": Object {
@@ -128,12 +131,14 @@ describe('applyFieldOverrides', () => {
         }
       `);
 
-      expect(withOverrides[1].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+      expect(withOverrides[1].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
         Object {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "name": "info",
+              "label": undefined,
+              "labels": "",
+              "name": "B info",
             },
           },
           "__series": Object {
@@ -152,16 +157,19 @@ describe('applyFieldOverrides', () => {
       min: 0,
       max: 100,
     };
+
     const f1 = {
       unit: 'ms',
       dateFormat: '', // should be ignored
       max: parseFloat('NOPE'), // should be ignored
       min: null, // should alo be ignored!
+      displayName: 'newTitle',
     };
 
     const f: DataFrame = toDataFrame({
       fields: [{ type: FieldType.number, name: 'x', config: field, values: [] }],
     });
+
     const processed = applyFieldOverrides({
       data: [f],
       fieldConfig: {
@@ -172,11 +180,13 @@ describe('applyFieldOverrides', () => {
       replaceVariables: v => v,
       theme: {} as GrafanaTheme,
     })[0];
-    const out = processed.fields[0].config;
 
-    expect(out.min).toEqual(0);
-    expect(out.max).toEqual(100);
-    expect(out.unit).toEqual('ms');
+    const outField = processed.fields[0];
+
+    expect(outField.config.min).toEqual(0);
+    expect(outField.config.max).toEqual(100);
+    expect(outField.config.unit).toEqual('ms');
+    expect(getFieldDisplayName(outField, f)).toEqual('newTitle');
   });
 
   it('will apply field overrides', () => {
@@ -200,7 +210,7 @@ describe('applyFieldOverrides', () => {
     expect(config.unit).toEqual('xyz');
 
     // The default value applied
-    expect(config.title).toEqual('Kittens');
+    expect(config.displayName).toEqual('Kittens');
 
     // The override applied
     expect(config.decimals).toEqual(1);
@@ -299,15 +309,13 @@ describe('setFieldConfigDefaults', () => {
 describe('setDynamicConfigValue', () => {
   it('applies dynamic config values', () => {
     const config = {
-      title: 'test',
-      // custom: {
-      //   property1: 1,
-      // },
+      displayName: 'test',
     };
+
     setDynamicConfigValue(
       config,
       {
-        id: 'title',
+        id: 'displayName',
         value: 'applied',
       },
       {
@@ -318,7 +326,7 @@ describe('setDynamicConfigValue', () => {
       }
     );
 
-    expect(config.title).toEqual('applied');
+    expect(config.displayName).toEqual('applied');
   });
 
   it('applies custom dynamic config values', () => {
@@ -371,7 +379,7 @@ describe('setDynamicConfigValue', () => {
 
   it('removes properties', () => {
     const config = {
-      title: 'title',
+      displayName: 'title',
       custom: {
         property3: {
           nested: 1,
@@ -395,7 +403,7 @@ describe('setDynamicConfigValue', () => {
     setDynamicConfigValue(
       config,
       {
-        id: 'title',
+        id: 'displayName',
         value: undefined,
       },
       {
@@ -407,6 +415,6 @@ describe('setDynamicConfigValue', () => {
     );
 
     expect(config.custom.property3).toEqual({});
-    expect(config.title).toBeUndefined();
+    expect(config.displayName).toBeUndefined();
   });
 });

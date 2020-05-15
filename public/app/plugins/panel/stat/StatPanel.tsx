@@ -1,33 +1,33 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Utils & Services
-import { config } from 'app/core/config';
-
-// Types
-import { StatPanelOptions } from './types';
 import {
+  BigValue,
+  BigValueGraphMode,
+  BigValueSparkline,
+  DataLinksContextMenu,
   VizRepeater,
   VizRepeaterRenderValueProps,
-  BigValue,
-  DataLinksContextMenu,
-  BigValueSparkline,
-  BigValueGraphMode,
 } from '@grafana/ui';
-
 import {
-  PanelProps,
-  getFieldDisplayValues,
-  FieldDisplay,
-  ReducerID,
-  getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
+  ReducerID,
 } from '@grafana/data';
 
+import { config } from 'app/core/config';
+import { StatPanelOptions } from './types';
+import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
-  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
+  renderComponent = (
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
+    menuProps: DataLinksContextMenuApi
+  ): JSX.Element => {
     const { timeRange, options } = this.props;
     const { value, alignmentFactors, width, height } = valueProps;
+    const { openMenu, targetClassName } = menuProps;
     let sparkline: BigValueSparkline | undefined;
 
     if (value.sparkline) {
@@ -46,23 +46,33 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     }
 
     return (
-      <DataLinksContextMenu links={value.getLinks}>
-        {({ openMenu, targetClassName }) => {
-          return (
-            <BigValue
-              value={value.display}
-              sparkline={sparkline}
-              colorMode={options.colorMode}
-              graphMode={options.graphMode}
-              justifyMode={options.justifyMode}
-              alignmentFactors={alignmentFactors}
-              width={width}
-              height={height}
-              theme={config.theme}
-              onClick={openMenu}
-              className={targetClassName}
-            />
-          );
+      <BigValue
+        value={value.display}
+        sparkline={sparkline}
+        colorMode={options.colorMode}
+        graphMode={options.graphMode}
+        justifyMode={options.justifyMode}
+        alignmentFactors={alignmentFactors}
+        width={width}
+        height={height}
+        theme={config.theme}
+        onClick={openMenu}
+        className={targetClassName}
+      />
+    );
+  };
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
+    const { value } = valueProps;
+    const { getLinks, hasLinks } = value;
+
+    if (!hasLinks) {
+      return this.renderComponent(valueProps, {});
+    }
+
+    return (
+      <DataLinksContextMenu links={getLinks}>
+        {api => {
+          return this.renderComponent(valueProps, api);
         }}
       </DataLinksContextMenu>
     );

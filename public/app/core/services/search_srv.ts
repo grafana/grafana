@@ -4,6 +4,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { hasFilters } from 'app/features/search/utils';
+import { SECTION_STORAGE_KEY } from 'app/features/search/constants';
 import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
 import { backendSrv } from './backend_srv';
 
@@ -12,14 +13,6 @@ interface Sections {
 }
 
 export class SearchSrv {
-  recentIsOpen: boolean;
-  starredIsOpen: boolean;
-
-  constructor() {
-    this.recentIsOpen = store.getBool('search.sections.recent', true);
-    this.starredIsOpen = store.getBool('search.sections.starred', true);
-  }
-
   private getRecentDashboards(sections: DashboardSection[] | any) {
     return this.queryForRecentDashboards().then((result: any[]) => {
       if (result.length > 0) {
@@ -27,7 +20,7 @@ export class SearchSrv {
           title: 'Recent',
           icon: 'clock-nine',
           score: -1,
-          expanded: this.recentIsOpen,
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.recent`, true),
           items: result,
           type: DashboardSearchItemType.DashFolder,
         };
@@ -59,7 +52,7 @@ export class SearchSrv {
           title: 'Starred',
           icon: 'star',
           score: -2,
-          expanded: this.starredIsOpen,
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.starred`, true),
           items: result,
           type: DashboardSearchItemType.DashFolder,
         };
@@ -78,7 +71,7 @@ export class SearchSrv {
     if (query.layout === SearchLayout.List) {
       return backendSrv
         .search({ ...query, type: DashboardSearchItemType.DashDB })
-        .then(results => [{ items: results }]);
+        .then(results => (results.length ? [{ title: '', items: results }] : []));
     }
 
     if (!filters) {

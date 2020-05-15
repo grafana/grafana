@@ -17,7 +17,7 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
     const panel = dashboard.initEditPanel(sourcePanel);
 
     const queryRunner = panel.getQueryRunner();
-    const querySubscription = queryRunner.getData(false).subscribe({
+    const querySubscription = queryRunner.getData({ withTransforms: false }).subscribe({
       next: (data: PanelData) => dispatch(setEditorPanelData(data)),
     });
 
@@ -47,6 +47,10 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
       sourcePanel.restoreModel(modifiedSaveModel);
 
+      // Loaded plugin is not included in the persisted properties
+      // So is not handled by restoreModel
+      sourcePanel.plugin = panel.plugin;
+
       if (panelTypeChanged) {
         dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
@@ -54,10 +58,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       // Resend last query result on source panel query runner
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
-        const lastResult = panel.getQueryRunner().getLastResult();
-        if (lastResult) {
-          sourcePanel.getQueryRunner().pipeDataToSubject(lastResult);
-        }
+        sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
       }, 20);
     }
 
