@@ -7,9 +7,7 @@ aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/fe
 name = "alert-list-panel"
 parent = "visualizations"
 weight = 750
-draft = "true"
 +++
-
 
 # Alert list panel
 
@@ -47,7 +45,7 @@ These options allow you to limit alerts shown to only those that match the query
 
 ### State filter
 
-Choose what alert states to display in this panel.
+Choose which alert states to display in this panel.
 - Ok
 - Paused
 - No data
