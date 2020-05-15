@@ -12,7 +12,7 @@ weight = 2
 
 # Using Zipkin in Grafana
 
-Grafana ships with built-in support for Zipkin, open source distributed tracing system.
+Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
 Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Adding the data source
@@ -55,5 +55,4 @@ TODO: screenshot how it looks like
 ## Links
 
 You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]([Explore]({{< relref "./loki#derived-fields" >}})) for details.
-
 
