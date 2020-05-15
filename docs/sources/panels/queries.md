@@ -9,8 +9,6 @@ weight = 300
 
 # Queries
 
-> **Note:** This documentation refers to a feature only available in Grafana 7.0 beta.
-
 _Queries_ are how Grafana panels communicate with data sources to get data for the visualization. A query is a question written in the query language used by the data source. Grafana asks, "Hey data source, would you send me this data, organized this way?" If the query is properly formed, then the data source responds. How often the query is sent to the data source and how many data points are collected can be adjusted in the panel data source options.
 
 Grafana supports up to 26 queries per panel.

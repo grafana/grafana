@@ -134,38 +134,39 @@
   children:
   - link: /features/panels/panels/
     name: Overview
-  - link: /panels/panel-editor/
-    name: Panel editor
-  - link: /features/panels/graph/
-    name: Graph
-  - link: /features/panels/table_panel/
-    name: Table
-  - link: /features/panels/stat/
-    name: Stat
-  - link: /features/panels/gauge/
-    name: Gauge
-  - link: /features/panels/bar_gauge/
-    name: Bar gauge
-  - link: /features/panels/logs/
-    name: Logs
-  - link: /features/panels/singlestat/
-    name: Singlestat
-  - link: /features/panels/heatmap/
-    name: Heatmap
-  - link: /features/panels/alertlist/
-    name: Alert list
-  - link: /features/panels/dashlist/
-    name: Dashboard list
-  - link: /panels/text-panel/
-    name: Text
-  - link: /panels/news-panel/
-    name: News
   - link: /panels/queries/
     name: Queries
   - link: /panels/transformations/
     name: Transformations
   - link: /panels/field-configuration-options/
     name: Field config options
+  - link: /panels/panel-editor/
+    name: Panel editor
+  - name: Visualizatons
+    link: /panels/visualizations/
+    children:
+    - link: /panels/visualizations/alert-list-panel/
+      name: Alert list
+    - link: /panels/visualizations/bar-gauge-panel/
+      name: Bar gauge
+    - link: /panels/visualizations/dashboard-list-panel/
+      name: Dashboard list
+    - link: /panels/visualizations/gauge-panel/
+      name: Gauge
+    - link: /panels/visualizations/graph-panel/
+      name: Graph
+    - link: /panels/visualizations/heatmap-panel/
+      name: Heatmap
+    - link: /panels/visualizations/logs-panel/
+      name: Logs
+    - link: /panels/visualizations/news-panel/
+      name: News
+    - link: /panels/visualizations/stat-panel/
+      name: Stat
+    - link: /panels/visualizations/table-panel/
+      name: Table
+    - link: /panels/visualizations/text-panel/
+      name: Text
   - link: /panels/calculations-list/
     name: Calculations list
 - name: Dashboards
