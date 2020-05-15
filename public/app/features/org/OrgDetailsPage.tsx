@@ -10,6 +10,7 @@ import { loadOrganization, updateOrganization } from './state/actions';
 import { Organization, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { setOrganizationName } from './state/reducers';
+import { Container } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -46,6 +47,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
                 onSubmit={this.onUpdateOrganization}
                 orgName={organization.name}
               />
+              <Container margin="md" />
               <SharedPreferences resourceUri="org" />
             </div>
           )}
