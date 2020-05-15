@@ -49,7 +49,7 @@ Hover your cursor over the field to see the exact time stamps in the range and t
 
 <img class="no-shadow" src="/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
 
-To change the current time range, click the down arrow next to the current time range. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `now-45h`.
+Click on the current time range to change the time range. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `2020-05-14 00:00:00 to 2020-05-15 23:59:59`.
 
 <img class="no-shadow" src="/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
 
