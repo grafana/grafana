@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { TimeZonePicker, Select, Form, Legend, Field, InputControl, Button } from '@grafana/ui';
+import { Select, Form, Legend, Field, InputControl, Button } from '@grafana/ui';
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
