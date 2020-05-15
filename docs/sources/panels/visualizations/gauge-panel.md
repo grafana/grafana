@@ -28,9 +28,8 @@ Gauge visualizations allow you to apply:
 Use the following options to refine your visualization:
 
 - **Show -** Choose how Grafana displays your data.
-  - **Calculate -** Show a calculated value based on all rows.
+  - **Calculate -** Show a calculated **Value** based on all rows. For a list of available calculations, refer to [List of calculations]({{< relref "../calculations-list.md" >}}).
   - **All values -** Show a separate stat for every row. If you select this option, then you can also select a **Limit**, or the maximum number of rows to display.
-- **Value -** Select a reducer function that Grafana will use to reduce many fields to a single value. Click the **Value** list to see functions and brief descriptions.
 - **Orientation -** Choose a stacking direction.
   - **Auto -** Grafana selects what it thinks is the best orientation.
   - **Horizontal -** Bars stretch horizontally, left to right.
