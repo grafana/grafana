@@ -35,7 +35,7 @@ Just add it as a data source and you are ready to query your traces in [Explore]
 Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
 
 
-Zipkin query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID insert the ID into the text input.
+The Zipkin query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
 TODO: screenshot query editor with trace ID filled in
 
