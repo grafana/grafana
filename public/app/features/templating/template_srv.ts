@@ -75,12 +75,15 @@ export class TemplateSrv implements BaseTemplateSrv {
   updateIndex() {
     const existsOrEmpty = (value: any) => value || value === '';
 
-    this.index = this._variables.reduce((acc, currentValue) => {
-      if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
-        acc[currentValue.name] = currentValue;
-      }
-      return acc;
-    }, {});
+    this.index = this._variables.reduce(
+      (acc, currentValue) => {
+        if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
+          acc[currentValue.name] = currentValue;
+        }
+        return acc;
+      },
+      { ...this.index }
+    );
 
     if (this.timeRange) {
       const from = this.timeRange.from.valueOf().toString();
