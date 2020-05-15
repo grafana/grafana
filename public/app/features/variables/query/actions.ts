@@ -7,7 +7,7 @@ import templateSrv from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
-import DefaultVariableQueryEditor from '../../templating/DefaultVariableQueryEditor';
+import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { variableAdapters } from '../adapters';

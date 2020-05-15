@@ -4,7 +4,7 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
 import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
-import { changeVariableProp, setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
@@ -19,7 +19,7 @@ import {
   removeVariableEditorError,
   setIdInEditor,
 } from '../editor/reducer';
-import DefaultVariableQueryEditor from '../../templating/DefaultVariableQueryEditor';
+import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { expect } from 'test/lib/common';
 
 const mocks: Record<string, any> = {
