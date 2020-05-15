@@ -48,6 +48,7 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/templating/types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { AwsUrl, encodeUrl } from './aws_url';
+import { getStatsGroups } from './utils/query/getStatsGroups';
 
 const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
 
@@ -137,9 +138,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
               queryId: dataFrame.fields[0].values.get(0),
               region: dataFrame.meta?.custom?.['Region'] ?? 'default',
               refId: dataFrame.refId!,
-              groupResults: this.languageProvider.isStatsQuery(
-                options.targets.find(target => target.refId === dataFrame.refId)!.expression
-              ),
+              statsGroups: getStatsGroups(options.targets.find(target => target.refId === dataFrame.refId)!.expression),
             }))
           )
         ),
@@ -205,7 +204,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   logsQuery(
-    queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; groupResults?: boolean }>
+    queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; statsGroups?: string[] }>
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach(param => {
