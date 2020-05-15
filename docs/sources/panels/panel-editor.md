@@ -52,7 +52,7 @@ The visualization preview section contains viewing options, time range controls,
 {{< docs-imagebox img="/img/docs/panel-editor/visualization-preview-7-0.png" class="docs-image--no-shadow" max-width="1200px" >}}
 
 - **Fill -**
-- **Fit -**
+- **Fit -** The visualization preview will fill the available space in but preserve the aspect ratio of the panel.
 - **Exact -**
 - **Time range controls -** For more information, refer to [Time range controls](ADD LINK WHEN TOPIC IS MERGED).
 
