@@ -52,7 +52,7 @@ The visualization preview section contains viewing options, time range controls,
 
 - **Fill -**
 - **Fit -** The visualization preview will fill the available space in but preserve the aspect ratio of the panel.
-- **Exact -**
+- **Exact -** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
 - **Time range controls -** For more information, refer to [Time range controls](ADD LINK WHEN TOPIC IS MERGED).
 
 ### Data section
