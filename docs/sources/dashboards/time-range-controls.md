@@ -49,7 +49,7 @@ Hover your cursor over the field to see the exact time stamps in the range and t
 
 <img class="no-shadow" src="/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
 
-To change the current time range, click the down arrow next to the current time range. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `now-45h`.
+Click on the current time range to change the time range. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `2020-05-14 00:00:00 to 2020-05-15 23:59:59`.
 
 <img class="no-shadow" src="/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
 
@@ -113,6 +113,6 @@ In [Query options]({{< relref "queries.md#query-options" >}}), you can override 
 
 Time range of a dashboard can be controlled by providing following query parameters in the dashboard URL:
 
-- `from` - defines lower limit of the time range, specified in ms epoch
-- `to` - defines upper limit of the time range, specified in ms epoch
+- `from` - defines lower limit of the time range, specified in ms epoch or [relative time]({{< relref "#relative-time-range" >}})
+- `to` - defines upper limit of the time range, specified in ms epoch or [relative time]({{< relref "#relative-time-range" >}})
 - `time` and `time.window` - defines a time range from `time-time.window/2` to `time+time.window/2`. Both params should be specified in ms. For example `?time=1500000000000&time.window=10000` will result in 10s time range from 1499999995000 to 1500000005000
