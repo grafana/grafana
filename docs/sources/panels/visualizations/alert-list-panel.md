@@ -6,14 +6,12 @@ aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/fe
 [menu.docs]
 name = "alert-list-panel"
 parent = "visualizations"
-weight = 750
-draft = "true"
+weight = 100
 +++
-
 
 # Alert list panel
 
-The alert list panel allows you to display your dashboards alerts. You can configure the list to show current state or recent state changes. You can read  more about alerts in [Alerting rules](http://docs.grafana.org/alerting/alerts-overview).
+The alert list panel allows you to display your dashboards alerts. You can configure the list to show current state or recent state changes. You can read more about alerts in [Alerts overview]({{< relref "../../alerting/alerts-overview.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
 
@@ -47,7 +45,7 @@ These options allow you to limit alerts shown to only those that match the query
 
 ### State filter
 
-Choose what alert states to display in this panel.
+Choose which alert states to display in this panel.
 - Ok
 - Paused
 - No data
