@@ -8,7 +8,6 @@ import classNames from 'classnames';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { Branding } from 'app/core/components/Branding/Branding';
-
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
@@ -30,7 +29,6 @@ import {
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
-import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 
 export interface Props {
@@ -263,7 +261,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     } = this.props;
 
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
-    const { featureToggles } = getConfig();
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -295,8 +292,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {!featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
-              {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
+              {!editPanel && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}

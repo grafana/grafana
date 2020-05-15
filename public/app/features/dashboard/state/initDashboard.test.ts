@@ -7,7 +7,6 @@ import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } 
 import { updateLocation } from '../../../core/actions';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
-import { getConfig } from 'app/core/config';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { addVariable } from 'app/features/variables/state/sharedReducer';
@@ -245,9 +244,8 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    const index = getConfig().featureToggles.newVariables ? 4 : 3;
-    expect(ctx.actions[index].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[index].payload.title).toBe('My cool dashboard');
+    expect(ctx.actions[4].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[4].payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
