@@ -36,7 +36,7 @@ describe('Aggregations', () => {
         },
       };
 
-      it('', () => {
+      it('should not have the reduce values', () => {
         const wrapper = shallow(<Aggregations {...nextProps} />);
         const { options } = wrapper.find(Segment).props() as any;
         const [, aggGroup] = options;
@@ -57,7 +57,7 @@ describe('Aggregations', () => {
         },
       };
 
-      it('', () => {
+      it('should have the reduce values', () => {
         const wrapper = shallow(<Aggregations {...nextProps} />);
         const { options } = wrapper.find(Segment).props() as any;
         const [, aggGroup] = options;
