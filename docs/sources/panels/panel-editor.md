@@ -41,7 +41,7 @@ On the right side of the header are the following options:
 - **Dashboard settings (gear) icon -** Click to access the dashboard settings.
 - **Discard -** Discards all changes you have made since you last saved the dashboard.
 - **Save -** Saves the dashboard, including all changes you have made in the panel editor.
-- **Apply -** Applies changes you made and then closes the panel editor, returning you to the dashboard.
+- **Apply -** Applies changes you made and then closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
 
 Panel title, access dashboard settings, Save/Apply/Discard
 
