@@ -62,11 +62,11 @@ By chaining a simple set of point and click [transformations]({{< relref "../pan
 
 [Transformations]({{< relref "../panels/transformations.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively so being able to do it in Grafana is a powerful feature.
 
-For users, with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
+For users with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (e.g log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
 
 The [Google Sheets data source](https://grafana.com/grafana/plugins/grafana-googlesheets-datasource) that was published a few weeks ago works really well together with the transformations feature.
 
-We are also introducing a new shared data model for both time series and table data that we call [DataFrame]({{< relref "../developers/plugins/data-frames/#data-frames" >}}). A DataFrame is like a table with columns but we refer to columns as fields. A time series is simply a DataFrame with two fields (time & value).
+We are also introducing a new shared data model for both time series and table data that we call [DataFrame]({{< relref "../developers/plugins/data-frames/#data-frames" >}}). A DataFrame is like a table with columns but we refer to columns as fields. A time series is a DataFrame with two fields (time & value).
 
 **Transformations shipping in 7.0**
 
@@ -120,7 +120,7 @@ Grafana 7.0 adds logging support to one of our most popular cloud provider data 
 
 ## Plugins platform
 
-The [platform for plugins]({{< relref "../developers/plugins/" >}}) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation and new components will improve plugin quality and reduce long-term maintenance. We are seeing already that a a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
+The [platform for plugins]({{< relref "../developers/plugins/" >}}) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation, and new components will improve plugin quality and reduce long-term maintenance. We are already seeing that a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
 
 ### Front end plugins platform
 
