@@ -447,6 +447,28 @@ describe('templateSrv', () => {
       const target = _templateSrv.replace('this.[[test]].filters');
       expect(target).toBe('this.muuuu.filters');
     });
+
+    it('should not clear index object after updateIndex() when variables array is empty', async () => {
+      const expectedVariablesMock = [
+        {
+          type: 'query',
+          name: 'test',
+          current: {
+            value: 'muuuu',
+          },
+        },
+      ];
+      expect(_templateSrv._variables).toMatchObject(expectedVariablesMock);
+      expect(_templateSrv.index).toMatchObject({
+        test: { ...expectedVariablesMock[0] },
+      });
+      _templateSrv._variables = [];
+      _templateSrv.updateIndex();
+      expect(_templateSrv._variables).toMatchObject([]);
+      expect(_templateSrv.index).toMatchObject({
+        test: { ...expectedVariablesMock[0] },
+      });
+    });
   });
 
   describe('fillVariableValuesForUrl with multi value', () => {
