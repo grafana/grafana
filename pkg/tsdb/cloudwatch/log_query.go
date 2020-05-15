@@ -8,13 +8,33 @@ import (
 )
 
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
+	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
+	// Sometimes CloudWatch can send empty rows
+	for _, row := range response.Results {
+		if len(row) == 0 {
+			continue
+		}
+		if len(row) == 1 {
+			if row[0].Value == nil {
+				continue
+			}
+			// Sometimes it sends row with only timestamp
+			if _, err := time.Parse(cloudWatchTSFormat, *row[0].Value); err == nil {
+				continue
+			}
+		}
+		nonEmptyRows = append(nonEmptyRows, row)
+	}
+
+	rowCount := len(nonEmptyRows)
+
 	fieldValues := make(map[string]interface{})
 
 	// Maintaining a list of field names in the order returned from CloudWatch
 	// as just iterating over fieldValues would not give a consistent order
 	fieldNames := make([]string, 0)
 
-	for _, row := range response.Results {
+	for i, row := range nonEmptyRows {
 		for _, resultField := range row {
 			// Strip @ptr field from results as it's not needed
 			if *resultField.Field == "@ptr" {
@@ -26,9 +46,9 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 				// Check if field is time field
 				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
-					fieldValues[*resultField.Field] = make([]*time.Time, 0)
+					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
 				} else {
-					fieldValues[*resultField.Field] = make([]*string, 0)
+					fieldValues[*resultField.Field] = make([]*string, rowCount)
 				}
 			}
 
@@ -38,9 +58,9 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 					return nil, err
 				}
 
-				fieldValues[*resultField.Field] = append(timeField, &parsedTime)
+				timeField[i] = &parsedTime
 			} else {
-				fieldValues[*resultField.Field] = append(fieldValues[*resultField.Field].([]*string), resultField.Value)
+				fieldValues[*resultField.Field].([]*string)[i] = resultField.Value
 			}
 		}
 	}
@@ -112,7 +132,11 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 func generateGroupKey(fields []*data.Field, row int) string {
 	groupKey := ""
 	for _, field := range fields {
-		groupKey += *field.At(row).(*string)
+		if strField, ok := field.At(row).(*string); ok {
+			if strField != nil {
+				groupKey += *strField
+			}
+		}
 	}
 
 	return groupKey

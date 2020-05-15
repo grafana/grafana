@@ -6,10 +6,10 @@ import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
 import { doStandardCalcs } from '../fieldReducer';
-import { seriesToColumnsTransformer } from './seriesToColumns';
 import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
 
 export enum CalculateFieldMode {
@@ -18,7 +18,7 @@ export enum CalculateFieldMode {
 }
 
 export interface ReduceOptions {
-  include?: string; // Assume all fields
+  include?: string[]; // Assume all fields
   reducer: ReducerID;
   nullValueMode?: NullValueMode;
 }
@@ -69,22 +69,17 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     },
   },
   transformer: options => (data: DataFrame[]) => {
-    // Assume timeseries should first be joined by time
-    const timeFieldName = findConsistentTimeFieldName(data);
-
-    if (data.length > 1 && timeFieldName && options.timeSeries !== false) {
-      data = seriesToColumnsTransformer.transformer({
-        byField: timeFieldName,
-      })(data);
+    if (options && options.timeSeries !== false) {
+      data = ensureColumnsTransformer.transformer(null)(data);
     }
 
     const mode = options.mode ?? CalculateFieldMode.ReduceRow;
     let creator: ValuesCreator | undefined = undefined;
 
     if (mode === CalculateFieldMode.ReduceRow) {
-      creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions));
+      creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
     } else if (mode === CalculateFieldMode.BinaryOperation) {
-      creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions));
+      creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
     }
 
     // Nothing configured
@@ -126,14 +121,14 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   },
 };
 
-function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
+function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
 
   if (options.include && options.include.length) {
     matcher = getFieldMatcher({
-      id: FieldMatcherID.byName,
+      id: FieldMatcherID.byNames,
       options: options.include,
     });
   }
@@ -152,7 +147,7 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
     // Find the columns that should be examined
     const columns: Vector[] = [];
     for (const field of frame.fields) {
-      if (matcher(field)) {
+      if (matcher(field, frame, allFrames)) {
         columns.push(field.values);
       }
     }
@@ -177,13 +172,13 @@ function getReduceRowCreator(options: ReduceOptions): ValuesCreator {
   };
 }
 
-function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string): Vector | undefined {
+function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFrames: DataFrame[]): Vector | undefined {
   if (!name) {
     return undefined;
   }
 
   for (const f of frame.fields) {
-    if (name === getFieldDisplayName(f, frame)) {
+    if (name === getFieldDisplayName(f, frame, allFrames)) {
       return f.values;
     }
   }
@@ -196,38 +191,18 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string): Vect
   return undefined;
 }
 
-function getBinaryCreator(options: BinaryOptions): ValuesCreator {
+function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): ValuesCreator {
   const operator = binaryOperators.getIfExists(options.operator);
 
   return (frame: DataFrame) => {
-    const left = findFieldValuesWithNameOrConstant(frame, options.left);
-    const right = findFieldValuesWithNameOrConstant(frame, options.right);
+    const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
+    const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
       return (undefined as unknown) as Vector;
     }
 
     return new BinaryOperationVector(left, right, operator.operation);
   };
-}
-
-/**
- * Find the name for the time field used in all frames (if one exists)
- */
-function findConsistentTimeFieldName(data: DataFrame[]): string | undefined {
-  let name: string | undefined = undefined;
-  for (const frame of data) {
-    const { timeField } = getTimeField(frame);
-    if (!timeField) {
-      return undefined; // Not timeseries
-    }
-    if (!name) {
-      name = timeField.name;
-    } else if (name !== timeField.name) {
-      // Second frame has a different time column?!
-      return undefined;
-    }
-  }
-  return name;
 }
 
 export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
