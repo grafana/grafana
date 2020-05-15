@@ -10,6 +10,7 @@ import {
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 import { dateTime } from '../datetime/moment_wrapper';
 import { MutableDataFrame } from './MutableDataFrame';
+import { ArrayDataFrame } from './ArrayDataFrame';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -21,16 +22,18 @@ describe('toDataFrame', () => {
       ],
     };
     let series = toDataFrame(input1);
-    expect(series.fields[0].name).toBe(input1.target);
+    expect(series.name).toBe(input1.target);
+    expect(series.fields[1].name).toBe('Value');
 
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;
     expect(v0.length).toEqual(2);
+    expect(v0.get(0)).toEqual(1);
+    expect(v0.get(1)).toEqual(2);
+
     expect(v1.length).toEqual(2);
-    expect(v0.get(0)).toEqual(100);
-    expect(v0.get(1)).toEqual(200);
-    expect(v1.get(0)).toEqual(1);
-    expect(v1.get(1)).toEqual(2);
+    expect(v1.get(0)).toEqual(100);
+    expect(v1.get(1)).toEqual(200);
 
     // Should fill a default name if target is empty
     const input2 = {
@@ -42,7 +45,7 @@ describe('toDataFrame', () => {
       ],
     };
     series = toDataFrame(input2);
-    expect(series.fields[0].name).toEqual('Value');
+    expect(series.fields[1].name).toEqual('Value');
   });
 
   it('assumes TimeSeries values are numbers', () => {
@@ -54,7 +57,8 @@ describe('toDataFrame', () => {
       ],
     };
     const data = toDataFrame(input1);
-    expect(data.fields[0].type).toBe(FieldType.number);
+    expect(data.fields[0].type).toBe(FieldType.time);
+    expect(data.fields[1].type).toBe(FieldType.number);
   });
 
   it('keeps dataFrame unchanged', () => {
@@ -71,6 +75,19 @@ describe('toDataFrame', () => {
     expect(again).toBe(input);
   });
 
+  it('Make sure ArrayDataFrame is used as a DataFrame without modification', () => {
+    const orig = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4 },
+    ];
+    const array = new ArrayDataFrame(orig);
+    const frame = toDataFrame(array);
+    expect(frame).toEqual(array);
+    expect(frame instanceof ArrayDataFrame).toEqual(true);
+    expect(frame.length).toEqual(orig.length);
+    expect(frame.fields.map(f => f.name)).toEqual(['a', 'b']);
+  });
+
   it('throws when table rows is not array', () => {
     expect(() =>
       toDataFrame({
@@ -78,19 +95,6 @@ describe('toDataFrame', () => {
         rows: {},
       })
     ).toThrowError('Expected table rows to be array, got object.');
-  });
-
-  it('migrate from 6.3 style rows', () => {
-    const oldDataFrame = {
-      fields: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
-      rows: [
-        [100, 'A', 1],
-        [200, 'B', 2],
-        [300, 'C', 3],
-      ],
-    };
-    const data = toDataFrame(oldDataFrame);
-    expect(data.length).toBe(oldDataFrame.rows.length);
   });
 
   it('Guess Colum Types from value', () => {
@@ -179,6 +183,24 @@ describe('SerisData backwards compatibility', () => {
     expect(roundtrip.target).toBe(timeseries.target);
   });
 
+  it('can convert TimeSeries to series and back again with tags should render name with tags', () => {
+    const timeseries = {
+      target: 'Series A',
+      tags: { server: 'ServerA', job: 'app' },
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const series = toDataFrame(timeseries);
+    expect(isDataFrame(timeseries)).toBeFalsy();
+    expect(isDataFrame(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isDataFrame(roundtrip)).toBeFalsy();
+    expect(roundtrip.target).toBe('{job="app", server="ServerA"}');
+  });
+
   it('can convert empty table to DataFrame then back to legacy', () => {
     const table = {
       columns: [],
@@ -228,7 +250,9 @@ describe('SerisData backwards compatibility', () => {
     const json: DataFrameDTO = {
       refId: 'Z',
       meta: {
-        somethign: 8,
+        custom: {
+          something: 8,
+        },
       },
       fields: [
         { name: 'T', type: FieldType.time, values: [1, 2, 3] },

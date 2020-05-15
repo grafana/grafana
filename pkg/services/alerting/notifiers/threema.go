@@ -78,7 +78,7 @@ type ThreemaNotifier struct {
 	log         log.Logger
 }
 
-// NewThreemaNotifier is the constructor for the Threema notifer
+// NewThreemaNotifier is the constructor for the Threema notifier
 func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
@@ -147,7 +147,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	if err == nil {
 		message = message + fmt.Sprintf("*URL:* %s\n", ruleURL)
 	}
-	if evalContext.ImagePublicURL != "" {
+	if notifier.NeedsImage() && evalContext.ImagePublicURL != "" {
 		message = message + fmt.Sprintf("*Image:* %s\n", evalContext.ImagePublicURL)
 	}
 	data.Set("text", message)

@@ -13,6 +13,7 @@ import {
   getColorFromHexRgbOrName,
   getValueFormat,
   formattedValueToString,
+  dateTimeFormat,
 } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
@@ -154,19 +155,14 @@ export class HeatmapRenderer {
       .range([0, this.chartWidth]);
 
     const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
-    const grafanaTimeFormatter = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
-    let timeFormat;
-    const dashboardTimeZone = this.ctrl.dashboard.getTimezone();
-    if (dashboardTimeZone === 'utc') {
-      timeFormat = d3.utcFormat(grafanaTimeFormatter);
-    } else {
-      timeFormat = d3.timeFormat(grafanaTimeFormatter);
-    }
+    const format = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
+    const timeZone = this.ctrl.dashboard.getTimezone();
+    const formatter = (date: Date) => dateTimeFormat(date, { format, timeZone });
 
     const xAxis = d3
       .axisBottom(this.xScale)
       .ticks(ticks)
-      .tickFormat(timeFormat)
+      .tickFormat(formatter)
       .tickPadding(X_AXIS_TICK_PADDING)
       .tickSize(this.chartHeight);
 
@@ -577,8 +573,8 @@ export class HeatmapRenderer {
 
   highlightCard(event: any) {
     const color = d3.select(event.target).style('fill');
-    const highlightColor = d3.color(color).darker(2);
-    const strokeColor = d3.color(color).brighter(4);
+    const highlightColor = d3.color(color)!.darker(2);
+    const strokeColor = d3.color(color)!.brighter(4);
     const currentCard = d3.select(event.target);
     this.tooltip.originalFillColor = color;
     currentCard

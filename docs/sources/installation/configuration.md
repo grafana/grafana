@@ -14,7 +14,7 @@ weight = 1
 
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
-> **Note.** You must restart Grafana for any configuration changes to take effect.
+> **Note:** You must restart Grafana for any configuration changes to take effect.
 
 ## Config file locations
 
@@ -28,7 +28,7 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 ### Docker
-Refer to [Configure a Grafana Docker image](configure-docker.md) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
@@ -81,8 +81,7 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 ## instance_name
 
-Set the name of the grafana-server instance. Used in logging and internal metrics and in
-clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
+Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
 system calls to get the machine name.
 
@@ -147,7 +146,7 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http`,`https`,`h2` or `socket`
 
-> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### socket
 Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
@@ -166,7 +165,7 @@ This is the full URL used to access Grafana from a web browser. This is
 important if you use Google or GitHub OAuth authentication (for the
 callback URL to be correct).
 
-> **Note** This setting is also important if you have a reverse proxy
+> **Note:** This setting is also important if you have a reverse proxy
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
@@ -182,7 +181,7 @@ By enabling this setting and using a subpath in `root_url` above, e.g.
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
-files). Default to `public` which is why the Grafana binary needs to be
+files). Defaults to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
 ### enable_gzip
@@ -350,11 +349,15 @@ Default is `false`.
 
 ### data_source_proxy_whitelist
 
-Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces.
+Define a whitelist of allowed IP addresses or domains, with ports, to be used in data source URLs with the Grafana data source proxy. Format: `ip_or_domain:port` separated by spaces. PostgreSQL, MySQL, and MSSQL data sources do not use the proxy and are therefore unaffected by this setting.
 
 ### cookie_secure
 
 Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### disable_brute_force_login_protection
+
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
 
 ### cookie_samesite
 
@@ -415,7 +418,7 @@ organization to be created for that new user.
 
 Set this value to automatically add new users to the provided org.
 This requires `auto_assign_org` to be set to `true`. Please make sure
-that this organization does already exists.
+that this organization already exists.
 
 ### auto_assign_org_role
 
@@ -449,6 +452,11 @@ Text used as placeholder text on login page for password input.
 
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
+
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase it if they experience OAuth login state mismatch errors.
 
 - [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
@@ -502,6 +510,13 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 
 Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
+### min_refresh_interval
+
+> Only available in Grafana v6.7+.
+
+This will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is 5 seconds.
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
+
 ## [dashboards.json]
 
 > This have been replaced with dashboards [provisioning]({{< relref "../administration/provisioning" >}}) in 5.0+
@@ -544,6 +559,9 @@ Name to be used when sending out emails, defaults to `Grafana`
 
 ### ehlo_identity
 Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
+
+### startTLS_policy
+Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is "OpportunisticStartTLS"
 
 ## [log]
 
@@ -632,6 +650,8 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
 
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
+
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
@@ -715,10 +735,10 @@ Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 ## [external_image_storage.webdav]
 
 ### url
-Url to where Grafana will send PUT request with images
+URL to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
+Optional parameter. URL to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
 
 ### username
 basic auth username
@@ -809,6 +829,11 @@ URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, 
 
 If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
 
+### concurrent_render_request_limit
+
+Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
+which this setting can help protect against by only allowing a certain amount of concurrent requests.
+
 ## [panels]
 
 ### disable_sanitize_html
@@ -821,6 +846,10 @@ is false. This settings was introduced in Grafana v6.0.
 ### enable_alpha
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+### allow_loading_unsigned_plugins
+
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature. 
 
 ## [feature_toggles]
 ### enable
@@ -837,7 +866,7 @@ for the full list. Environment variables will override any settings provided her
 
 ### address
 
-The host:port destination for reporting spans. (ex: `localhost:6381`)
+The host:port destination for reporting spans. (ex: `localhost:6831`)
 
 Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
 

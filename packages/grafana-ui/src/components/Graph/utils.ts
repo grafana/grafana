@@ -1,4 +1,11 @@
-import { GraphSeriesValue, Field, formattedValueToString, getDisplayProcessor } from '@grafana/data';
+import {
+  GraphSeriesValue,
+  Field,
+  formattedValueToString,
+  getDisplayProcessor,
+  TimeZone,
+  dateTimeFormat,
+} from '@grafana/data';
 
 /**
  * Returns index of the closest datapoint BEFORE hover position
@@ -48,7 +55,8 @@ export const getMultiSeriesGraphHoverInfo = (
   yAxisDimensions: Field[],
   xAxisDimensions: Field[],
   /** Well, time basically */
-  xAxisPosition: number
+  xAxisPosition: number,
+  timeZone?: TimeZone
 ): {
   results: MultiSeriesHoverInfo[];
   time?: GraphSeriesValue;
@@ -75,7 +83,7 @@ export const getMultiSeriesGraphHoverInfo = (
       minTime = time.display ? formattedValueToString(time.display(pointTime)) : pointTime;
     }
 
-    const display = field.display ?? getDisplayProcessor({ field });
+    const display = field.display ?? getDisplayProcessor({ field, timeZone });
     const disp = display(field.values.get(hoverIndex));
 
     results.push({
@@ -92,4 +100,38 @@ export const getMultiSeriesGraphHoverInfo = (
     results,
     time: minTime,
   };
+};
+
+export const graphTickFormatter = (epoch: number, axis: any) => {
+  return dateTimeFormat(epoch, {
+    format: axis?.options?.timeformat,
+    timeZone: axis?.options?.timezone,
+  });
+};
+
+export const graphTimeFormat = (ticks: number | null, min: number | null, max: number | null): string => {
+  if (min && max && ticks) {
+    const range = max - min;
+    const secPerTick = range / ticks / 1000;
+    // Need have 10 millisecond margin on the day range
+    // As sometimes last 24 hour dashboard evaluates to more than 86400000
+    const oneDay = 86400010;
+    const oneYear = 31536000000;
+
+    if (secPerTick <= 45) {
+      return 'HH:mm:ss';
+    }
+    if (secPerTick <= 7200 || range <= oneDay) {
+      return 'HH:mm';
+    }
+    if (secPerTick <= 80000) {
+      return 'MM/DD HH:mm';
+    }
+    if (secPerTick <= 2419200 || range <= oneYear) {
+      return 'MM/DD';
+    }
+    return 'YYYY-MM';
+  }
+
+  return 'HH:mm';
 };

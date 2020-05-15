@@ -55,7 +55,6 @@
   margin: 2px 0 0; // override default ul
   list-style: none;
   background-color: $dropdownBackground;
-  border: 1px solid #ccc; // Fallback for IE7-8
   border: 1px solid $dropdownBorder;
   text-align: left;
 
@@ -94,7 +93,7 @@
 
       .gicon {
         opacity: 0.7;
-        width: 14px;
+        width: 18px;
         height: 14px;
       }
     }
@@ -111,7 +110,6 @@
     background: $menu-dropdown-bg;
     box-shadow: $menu-dropdown-shadow;
     margin-top: 0px;
-    border: none;
 
     > li > a {
       display: flex;
@@ -260,19 +258,17 @@
   margin-bottom: -2px;
   @include border-radius(5px 5px 5px 0);
 }
-
-// Caret to indicate there is a submenu
-.dropdown-submenu > a::after {
-  position: absolute;
-  top: 35%;
-  right: $space-sm;
-  background-color: transparent;
-  color: $text-color-weak;
-  font: normal normal normal $font-size-sm/1 FontAwesome;
-  content: '\f0da';
-  pointer-events: none;
-  font-size: 11px;
-}
+// .dropdown-submenu > a::after {
+//   position: absolute;
+//   top: 35%;
+//   right: $space-sm;
+//   background-color: transparent;
+//   color: $text-color-weak;
+//   font: normal normal normal $font-size-sm/1 FontAwesome;
+//   content: '\f0da';
+//   pointer-events: none;
+//   font-size: 11px;
+// }
 .dropdown-submenu:hover > a::after {
   border-left-color: $dropdownLinkColorHover;
 }
@@ -310,14 +306,6 @@
   margin-left: $spacer;
   color: $text-muted;
   min-width: 47px;
-
-  &::before {
-    font-family: FontAwesome;
-    width: 28px;
-    display: inline-block;
-    text-align: center;
-    content: '\f11c';
-  }
 }
 
 .dropdown-menu.dropdown-menu--new {

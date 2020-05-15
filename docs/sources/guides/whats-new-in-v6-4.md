@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.4"
+title = "What's new in Grafana v6.4"
 description = "Feature and improvement highlights for Grafana v6.4"
-keywords = ["grafana", "new", "documentation", "6.4"]
+keywords = ["grafana", "new", "documentation", "6.4", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.4"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -15
 +++
 
-# What's New in Grafana v6.4
+# What's new in Grafana v6.4
 
-For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
@@ -109,9 +109,9 @@ You can read more about the grafana-toolkit [in the Readme](https://github.com/g
 
 Please consider migrating from PhantomJS to the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
-## Alpine based docker image
+## Alpine-based Docker image
 
-Grafana’s docker image is now based on Alpine 3.10 and should from now on report zero vulnerabilities when scanning the image for security vulnerabilities.
+Grafana’s Docker image is now based on Alpine 3.10 and should from now on report zero vulnerabilities when scanning the image for security vulnerabilities.
 
 ## LDAP Debug UI
 
@@ -137,7 +137,7 @@ This feature is currently limited to Organization Admins.
 
 GitLab OAuth gets support for Team Sync, making it possible to synchronize your GitLab Groups with Teams in Grafana.
 
-[Read more about Team Sync](https://grafana.com/docs/auth/team-sync/)
+[Read more about Team Sync](https://grafana.com/docs/auth/team-sync/).
 
 ## Upgrading
 
@@ -146,4 +146,3 @@ See [upgrade notes](/installation/upgrading/#upgrading-to-v6-4).
 ## Changelog
 
 Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
-

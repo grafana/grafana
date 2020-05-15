@@ -1,1 +1,0 @@
-go test -db=postgres -conn_str="dbname=xorm_test sslmode=disable" -cache=true

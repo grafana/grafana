@@ -1,0 +1,3 @@
+{
+  "extends": ["@grafana/eslint-config"]
+}

@@ -9,7 +9,6 @@ import {
   GraphSeriesXY,
   getTimeField,
   DataFrame,
-  FieldDisplayOptions,
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
@@ -17,10 +16,11 @@ import {
   DEFAULT_DATE_TIME_FORMAT,
   FieldColor,
   FieldColorMode,
+  FieldConfigSource,
+  getFieldDisplayName,
 } from '@grafana/data';
 
-import { SeriesOptions, GraphOptions } from './types';
-import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
+import { SeriesOptions, GraphOptions, GraphLegendEditorLegendOptions } from './types';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],
@@ -28,7 +28,7 @@ export const getGraphSeriesModel = (
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
   legendOptions: GraphLegendEditorLegendOptions,
-  fieldOptions?: FieldDisplayOptions
+  fieldOptions?: FieldConfigSource
 ) => {
   const graphs: GraphSeriesXY[] = [];
 
@@ -39,11 +39,13 @@ export const getGraphSeriesModel = (
         decimals: legendOptions.decimals,
       },
     },
+    timeZone,
   });
 
   let fieldColumnIndex = -1;
   for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
+
     if (!timeField) {
       continue;
     }
@@ -63,8 +65,8 @@ export const getGraphSeriesModel = (
       });
 
       if (points.length > 0) {
-        const seriesStats = reduceField({ field, reducers: legendOptions.stats });
-        let statsDisplayValues: DisplayValue[];
+        const seriesStats = reduceField({ field, reducers: legendOptions.stats || [] });
+        let statsDisplayValues: DisplayValue[] = [];
 
         if (legendOptions.stats) {
           statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {
@@ -103,7 +105,7 @@ export const getGraphSeriesModel = (
             }
           : { ...field.config, color };
 
-        field.display = getDisplayProcessor({ field });
+        field.display = getDisplayProcessor({ field, timeZone });
 
         // Time step is used to determine bars width when graph is rendered as bar chart
         const timeStep = getSeriesTimeStep(timeField);
@@ -121,7 +123,7 @@ export const getGraphSeriesModel = (
         });
 
         graphs.push({
-          label: field.name,
+          label: getFieldDisplayName(field, series, dataFrames),
           data: points,
           color: field.config.color?.fixedColor,
           info: statsDisplayValues,

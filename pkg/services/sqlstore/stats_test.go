@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStatsDataAccess(t *testing.T) {
@@ -18,41 +19,51 @@ func TestStatsDataAccess(t *testing.T) {
 
 			query := models.GetSystemStatsQuery{}
 			err := GetSystemStats(&query)
-			assert.Nil(t, err)
-			assert.Equal(t, query.Result.Users, int64(3))
-			assert.Equal(t, query.Result.Editors, 1)
-			assert.Equal(t, query.Result.Viewers, 1)
-			assert.Equal(t, query.Result.Admins, 3)
+			require.NoError(t, err)
+			assert.Equal(t, int64(3), query.Result.Users)
+			assert.Equal(t, 1, query.Result.Editors)
+			assert.Equal(t, 1, query.Result.Viewers)
+			assert.Equal(t, 3, query.Result.Admins)
 		})
 
 		t.Run("Get system user count stats should not results in error", func(t *testing.T) {
 			query := models.GetSystemUserCountStatsQuery{}
 			err := GetSystemUserCountStats(context.Background(), &query)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 		})
 
 		t.Run("Get datasource stats should not results in error", func(t *testing.T) {
 			query := models.GetDataSourceStatsQuery{}
 			err := GetDataSourceStats(&query)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 		})
 
 		t.Run("Get datasource access stats should not results in error", func(t *testing.T) {
 			query := models.GetDataSourceAccessStatsQuery{}
 			err := GetDataSourceAccessStats(&query)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 		})
 
 		t.Run("Get alert notifier stats should not results in error", func(t *testing.T) {
 			query := models.GetAlertNotifierUsageStatsQuery{}
 			err := GetAlertNotifiersUsageStats(context.Background(), &query)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 		})
 
 		t.Run("Get admin stats should not result in error", func(t *testing.T) {
 			query := models.GetAdminStatsQuery{}
 			err := GetAdminStats(&query)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
+		})
+
+		t.Run("Get active user count stats should not result in error", func(t *testing.T) {
+			query := models.GetActiveUserStatsQuery{}
+			err := GetActiveUserStats(&query)
+			require.NoError(t, err)
+			assert.Equal(t, int64(1), query.Result.ActiveUsers)
+			assert.Equal(t, int64(1), query.Result.ActiveAdmins)
+			assert.Equal(t, int64(0), query.Result.ActiveEditors)
+			assert.Equal(t, int64(0), query.Result.ActiveViewers)
 		})
 	})
 }
@@ -67,14 +78,14 @@ func populateDB(t *testing.T) {
 			OrgName: fmt.Sprintf("Org #%v", i),
 		}
 		err := CreateUser(context.Background(), cmd)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		users[i] = cmd.Result
 	}
 
 	// get 1st user's organisation
 	getOrgByIdQuery := &models.GetOrgByIdQuery{Id: users[0].OrgId}
 	err := GetOrgById(getOrgByIdQuery)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	org := getOrgByIdQuery.Result
 
 	// add 2nd user as editor
@@ -84,7 +95,7 @@ func populateDB(t *testing.T) {
 		Role:   models.ROLE_EDITOR,
 	}
 	err = AddOrgUser(cmd)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	// add 3rd user as viewer
 	cmd = &models.AddOrgUserCommand{
@@ -93,12 +104,12 @@ func populateDB(t *testing.T) {
 		Role:   models.ROLE_VIEWER,
 	}
 	err = AddOrgUser(cmd)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	// get 2nd user's organisation
 	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[1].OrgId}
 	err = GetOrgById(getOrgByIdQuery)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	org = getOrgByIdQuery.Result
 
 	// add 1st user as admin
@@ -108,5 +119,12 @@ func populateDB(t *testing.T) {
 		Role:   models.ROLE_ADMIN,
 	}
 	err = AddOrgUser(cmd)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
+	// update 1st user last seen at
+	updateUserLastSeenAtCmd := &models.UpdateUserLastSeenAtCommand{
+		UserId: users[0].Id,
+	}
+	err = UpdateUserLastSeenAt(updateUserLastSeenAtCmd)
+	require.NoError(t, err)
 }

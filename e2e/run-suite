@@ -1,0 +1,28 @@
+#!/bin/bash
+
+. e2e/variables
+
+echo -e "Starting Cypress scenarios"
+
+CMD="start"
+PARAMS=""
+SLOWMO=0
+URL=${BASE_URL:-"http://$DEFAULT_HOST:$DEFAULT_PORT"}
+SUITE=${SUITE:-$DEFAULT_SUITE}
+
+if [ "$1" == "debug" ]; then
+    echo -e "Debug mode"
+    SLOWMO=1
+    PARAMS="--headed --no-exit"
+fi
+
+if [ "$1" == "dev" ]; then
+    echo "Dev mode"
+    CMD="open"
+fi
+
+cd packages/grafana-e2e
+
+yarn $CMD --env BASE_URL=$URL,CIRCLE_SHA1=$CIRCLE_SHA1,SLOWMO=$SLOWMO \
+  --config integrationFolder=../../e2e/$SUITE/specs,screenshotsFolder=../../e2e/$SUITE/screenshots,videosFolder=../../e2e/$SUITE/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false \
+  $PARAMS

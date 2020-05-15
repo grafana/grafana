@@ -2,11 +2,12 @@
   "type": "panel",
   "name": "Singlestat",
   "id": "singlestat",
+  "state": "deprecated",
 
   "info": {
     "description": "Singlestat Panel for Grafana",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

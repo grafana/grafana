@@ -3,11 +3,11 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // POST /api/preferences/set-home-dash
-func SetHomeDashboard(c *m.ReqContext, cmd m.SavePreferencesCommand) Response {
+func SetHomeDashboard(c *models.ReqContext, cmd models.SavePreferencesCommand) Response {
 
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
@@ -20,12 +20,12 @@ func SetHomeDashboard(c *m.ReqContext, cmd m.SavePreferencesCommand) Response {
 }
 
 // GET /api/user/preferences
-func GetUserPreferences(c *m.ReqContext) Response {
+func GetUserPreferences(c *models.ReqContext) Response {
 	return getPreferencesFor(c.OrgId, c.UserId, 0)
 }
 
 func getPreferencesFor(orgID, userID, teamID int64) Response {
-	prefsQuery := m.GetPreferencesQuery{UserId: userID, OrgId: orgID, TeamId: teamID}
+	prefsQuery := models.GetPreferencesQuery{UserId: userID, OrgId: orgID, TeamId: teamID}
 
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
@@ -41,12 +41,12 @@ func getPreferencesFor(orgID, userID, teamID int64) Response {
 }
 
 // PUT /api/user/preferences
-func UpdateUserPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
+func UpdateUserPreferences(c *models.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
 	return updatePreferencesFor(c.OrgId, c.UserId, 0, &dtoCmd)
 }
 
 func updatePreferencesFor(orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) Response {
-	saveCmd := m.SavePreferencesCommand{
+	saveCmd := models.SavePreferencesCommand{
 		UserId:          userID,
 		OrgId:           orgID,
 		TeamId:          teamId,
@@ -63,11 +63,11 @@ func updatePreferencesFor(orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsC
 }
 
 // GET /api/org/preferences
-func GetOrgPreferences(c *m.ReqContext) Response {
+func GetOrgPreferences(c *models.ReqContext) Response {
 	return getPreferencesFor(c.OrgId, 0, 0)
 }
 
 // PUT /api/org/preferences
-func UpdateOrgPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
+func UpdateOrgPreferences(c *models.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
 	return updatePreferencesFor(c.OrgId, 0, 0, &dtoCmd)
 }

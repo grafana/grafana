@@ -3,12 +3,12 @@ import memoizeOne from 'memoize-one';
 import _ from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
-import { Segment } from '@grafana/ui';
+import { Segment, Icon } from '@grafana/ui';
 import { getAggregationOptionsByMetric } from '../functions';
 import { ValueTypes, MetricKind } from '../constants';
 
 export interface Props {
-  onChange: (metricDescriptor: any) => void;
+  onChange: (metricDescriptor: string) => void;
   metricDescriptor: {
     valueType: string;
     metricKind: string;
@@ -30,12 +30,19 @@ export const setAggOptions = memoizeOne((valueType: ValueTypes, metricKind: Metr
   };
 });
 
-export const Aggregations: FC<Props> = ({ templateVariableOptions, onChange, crossSeriesReducer, metricDescriptor, children }) => {
+export const Aggregations: FC<Props> = ({
+  templateVariableOptions,
+  onChange,
+  crossSeriesReducer,
+  metricDescriptor,
+  children,
+}) => {
   const [displayAdvancedOptions, setDisplayAdvancedOptions] = useState(false);
 
   const aggOptions = metricDescriptor
     ? [setAggOptions(metricDescriptor.valueType as ValueTypes, metricDescriptor.metricKind as MetricKind)]
-    : [] as any;
+    : ([] as any);
+
   return (
     <>
       <div className="gf-form-inline">
@@ -60,7 +67,7 @@ export const Aggregations: FC<Props> = ({ templateVariableOptions, onChange, cro
           <label className="gf-form-label gf-form-label--grow">
             <a onClick={() => setDisplayAdvancedOptions(!displayAdvancedOptions)}>
               <>
-                <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
+                <Icon name={displayAdvancedOptions ? 'angle-down' : 'angle-right'} /> Advanced Options
               </>
             </a>
           </label>

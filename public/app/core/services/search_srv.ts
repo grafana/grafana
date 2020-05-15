@@ -1,37 +1,28 @@
 import _ from 'lodash';
 
-import coreModule from 'app/core/core_module';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
+import { hasFilters } from 'app/features/search/utils';
+import { SECTION_STORAGE_KEY } from 'app/features/search/constants';
+import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
 import { backendSrv } from './backend_srv';
-import { Section } from '../components/manage_dashboards/manage_dashboards';
-import { DashboardSearchHit } from 'app/types/search';
 
 interface Sections {
-  [key: string]: Partial<Section>;
+  [key: string]: Partial<DashboardSection>;
 }
 
 export class SearchSrv {
-  recentIsOpen: boolean;
-  starredIsOpen: boolean;
-
-  constructor() {
-    this.recentIsOpen = store.getBool('search.sections.recent', true);
-    this.starredIsOpen = store.getBool('search.sections.starred', true);
-  }
-
-  private getRecentDashboards(sections: Sections) {
+  private getRecentDashboards(sections: DashboardSection[] | any) {
     return this.queryForRecentDashboards().then((result: any[]) => {
       if (result.length > 0) {
         sections['recent'] = {
           title: 'Recent',
-          icon: 'fa fa-clock-o',
+          icon: 'clock-nine',
           score: -1,
-          removable: true,
-          expanded: this.recentIsOpen,
-          toggle: this.toggleRecent.bind(this),
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.recent`, true),
           items: result,
+          type: DashboardSearchItemType.DashFolder,
         };
       }
     });
@@ -45,47 +36,25 @@ export class SearchSrv {
 
     return backendSrv.search({ dashboardIds: dashIds }).then(result => {
       return dashIds
-        .map(orderId => {
-          return _.find(result, { id: orderId });
-        })
-        .filter(hit => hit && !hit.isStarred);
+        .map(orderId => result.find(result => result.id === orderId))
+        .filter(hit => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
 
-  private toggleRecent(section: Section) {
-    this.recentIsOpen = section.expanded = !section.expanded;
-    store.set('search.sections.recent', this.recentIsOpen);
-
-    if (!section.expanded || section.items.length) {
-      return Promise.resolve(section);
-    }
-
-    return this.queryForRecentDashboards().then(result => {
-      section.items = result;
-      return Promise.resolve(section);
-    });
-  }
-
-  private toggleStarred(section: Section) {
-    this.starredIsOpen = section.expanded = !section.expanded;
-    store.set('search.sections.starred', this.starredIsOpen);
-    return Promise.resolve(section);
-  }
-
-  private getStarred(sections: Sections) {
+  private getStarred(sections: DashboardSection): Promise<any> {
     if (!contextSrv.isSignedIn) {
       return Promise.resolve();
     }
 
     return backendSrv.search({ starred: true, limit: 30 }).then(result => {
       if (result.length > 0) {
-        sections['starred'] = {
+        (sections as any)['starred'] = {
           title: 'Starred',
-          icon: 'fa fa-star-o',
+          icon: 'star',
           score: -2,
-          expanded: this.starredIsOpen,
-          toggle: this.toggleStarred.bind(this),
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.starred`, true),
           items: result,
+          type: DashboardSearchItemType.DashFolder,
         };
       }
     });
@@ -95,23 +64,26 @@ export class SearchSrv {
     const sections: any = {};
     const promises = [];
     const query = _.clone(options);
-    const hasFilters =
-      options.query ||
-      (options.tag && options.tag.length > 0) ||
-      options.starred ||
-      (options.folderIds && options.folderIds.length > 0);
+    const filters = hasFilters(options) || query.folderIds?.length > 0;
 
-    if (!options.skipRecent && !hasFilters) {
+    query.folderIds = query.folderIds || [];
+
+    if (query.layout === SearchLayout.List) {
+      return backendSrv
+        .search({ ...query, type: DashboardSearchItemType.DashDB })
+        .then(results => (results.length ? [{ title: '', items: results }] : []));
+    }
+
+    if (!filters) {
+      query.folderIds = [0];
+    }
+
+    if (!options.skipRecent && !filters) {
       promises.push(this.getRecentDashboards(sections));
     }
 
-    if (!options.skipStarred && !hasFilters) {
+    if (!options.skipStarred && !filters) {
       promises.push(this.getStarred(sections));
-    }
-
-    query.folderIds = query.folderIds || [];
-    if (!hasFilters) {
-      query.folderIds = [0];
     }
 
     promises.push(
@@ -139,10 +111,10 @@ export class SearchSrv {
           title: hit.title,
           expanded: false,
           items: [],
-          toggle: this.toggleFolder.bind(this),
           url: hit.url,
-          icon: 'fa fa-folder',
+          icon: 'folder',
           score: _.keys(sections).length,
+          type: hit.type,
         };
       }
     }
@@ -161,18 +133,18 @@ export class SearchSrv {
             title: hit.folderTitle,
             url: hit.folderUrl,
             items: [],
-            icon: 'fa fa-folder-open',
-            toggle: this.toggleFolder.bind(this),
+            icon: 'folder-open',
             score: _.keys(sections).length,
+            type: DashboardSearchItemType.DashFolder,
           };
         } else {
           section = {
             id: 0,
             title: 'General',
             items: [],
-            icon: 'fa fa-folder-open',
-            toggle: this.toggleFolder.bind(this),
+            icon: 'folder-open',
             score: _.keys(sections).length,
+            type: DashboardSearchItemType.DashFolder,
           };
         }
         // add section
@@ -180,31 +152,15 @@ export class SearchSrv {
       }
 
       section.expanded = true;
-      section.items.push(hit);
+      section.items && section.items.push(hit);
     }
-  }
-
-  private toggleFolder(section: Section) {
-    section.expanded = !section.expanded;
-    section.icon = section.expanded ? 'fa fa-folder-open' : 'fa fa-folder';
-
-    if (section.items.length) {
-      return Promise.resolve(section);
-    }
-
-    const query = {
-      folderIds: [section.id],
-    };
-
-    return backendSrv.search(query).then(results => {
-      section.items = results;
-      return Promise.resolve(section);
-    });
   }
 
   getDashboardTags() {
     return backendSrv.get('/api/dashboards/tags');
   }
-}
 
-coreModule.service('searchSrv', SearchSrv);
+  getSortOptions() {
+    return backendSrv.get('/api/search/sorting');
+  }
+}

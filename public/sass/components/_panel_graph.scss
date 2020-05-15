@@ -118,31 +118,7 @@
   padding-left: 6px;
 }
 
-// fix for phantomjs
-.body--phantomjs {
-  .graph-panel {
-    display: -webkit-box;
-  }
-
-  .graph-panel--legend-right {
-    .graph-legend {
-      display: block;
-      max-width: min-content;
-    }
-
-    .graph-panel__chart {
-      display: flex;
-    }
-
-    .graph-legend-table {
-      display: table;
-      width: auto;
-    }
-  }
-}
-
 .graph-legend-table {
-  padding-bottom: 1px;
   padding-right: 5px;
   padding-left: 5px;
 
@@ -194,7 +170,7 @@
     overflow: hidden;
   }
 
-  .graph-legend-series:nth-child(odd) {
+  .graph-legend-series:nth-child(even) {
     background: $table-bg-accent;
   }
 
@@ -243,18 +219,8 @@
   color: $purple;
 }
 
-.graph-series-override {
-  input {
-    float: left;
-    margin-right: 10px;
-  }
-  .graph-series-override-option {
-    float: left;
-    padding: 2px 6px;
-  }
-  .graph-series-override-selector {
-    float: left;
-  }
+.graph-series-override__properties {
+  margin-left: $space-md;
 }
 
 .graph-tooltip {

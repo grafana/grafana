@@ -7,10 +7,27 @@ import { PopoverContent } from './Tooltip';
 
 export interface UsingPopperProps {
   show?: boolean;
-  placement?: PopperJS.Placement;
+  placement?: TooltipPlacement;
   content: PopoverContent;
   children: JSX.Element;
 }
+
+export type TooltipPlacement =
+  | 'auto-start'
+  | 'auto'
+  | 'auto-end'
+  | 'top-start'
+  | 'top'
+  | 'top-end'
+  | 'right-start'
+  | 'right'
+  | 'right-end'
+  | 'bottom-end'
+  | 'bottom'
+  | 'bottom-start'
+  | 'left-end'
+  | 'left'
+  | 'left-start';
 
 type PopperControllerRenderProp = (
   showPopper: () => void,

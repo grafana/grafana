@@ -29,18 +29,22 @@ const options = [
 
 const flatOptions = [
   {
+    singleLabel: 'Second',
     label: 'First / Second',
     value: ['1', '2'],
   },
   {
+    singleLabel: 'Third',
     label: 'First / Third',
     value: ['1', '3'],
   },
   {
+    singleLabel: 'Fourth',
     label: 'First / Fourth',
     value: ['1', '4'],
   },
   {
+    singleLabel: 'FirstFirst',
     label: 'FirstFirst',
     value: ['5'],
   },

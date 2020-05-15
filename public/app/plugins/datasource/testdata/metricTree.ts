@@ -19,7 +19,7 @@ function buildMetricTree(parent: string, depth: number): TreeNode[] {
   const chars = ['A', 'B', 'C'];
   const children: TreeNode[] = [];
 
-  if (depth > 3) {
+  if (depth > 5) {
     return [];
   }
 
@@ -70,6 +70,10 @@ function queryTree(children: TreeNode[], query: string[], queryIndex: number): T
 }
 
 export function queryMetricTree(query: string): TreeNode[] {
+  if (query.indexOf('value') === 0) {
+    return [{ name: query, children: [] }];
+  }
+
   const children = buildMetricTree('', 0);
   return queryTree(children, query.split('.'), 0);
 }

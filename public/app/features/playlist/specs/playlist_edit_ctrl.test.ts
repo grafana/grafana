@@ -1,5 +1,7 @@
 import '../playlist_edit_ctrl';
 import { PlaylistEditCtrl } from '../playlist_edit_ctrl';
+import { ILocationService, IScope } from 'angular';
+import { AppEventEmitter } from '../../../types';
 
 describe('PlaylistEditCtrl', () => {
   let ctx: any;
@@ -10,7 +12,12 @@ describe('PlaylistEditCtrl', () => {
       },
     };
 
-    ctx = new PlaylistEditCtrl(null, null, { current: { params: {} } }, navModelSrv);
+    ctx = new PlaylistEditCtrl(
+      (null as unknown) as IScope & AppEventEmitter,
+      (null as unknown) as ILocationService,
+      { current: { params: {} } },
+      navModelSrv
+    );
 
     ctx.dashboardresult = [
       { id: 2, title: 'dashboard: 2' },

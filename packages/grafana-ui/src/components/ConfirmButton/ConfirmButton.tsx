@@ -3,9 +3,8 @@ import { cx, css } from 'emotion';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
-import { Button } from '../Button/Button';
-import Forms from '../Forms';
-import { ButtonVariant, ButtonSize } from '../Button/types';
+import { ComponentSize } from '../../types/size';
+import { Button, ButtonVariant } from '../Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -53,12 +52,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-interface Props extends Themeable {
+export interface Props extends Themeable {
   className?: string;
-  size?: ButtonSize;
+  size?: ComponentSize;
   confirmText?: string;
   disabled?: boolean;
   confirmVariant?: ButtonVariant;
+  closeOnConfirm?: boolean;
 
   onConfirm(): void;
   onClick?(): void;
@@ -106,6 +106,14 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       this.props.onCancel();
     }
   };
+  onConfirm = (event: SyntheticEvent) => {
+    this.props.onConfirm();
+    if (this.props.closeOnConfirm) {
+      this.setState({
+        showConfirm: false,
+      });
+    }
+  };
 
   render() {
     const {
@@ -115,7 +123,6 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       disabled,
       confirmText,
       confirmVariant: confirmButtonVariant,
-      onConfirm,
       children,
     } = this.props;
     const styles = getStyles(theme);
@@ -134,9 +141,9 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       <span className={styles.buttonContainer}>
         {typeof children === 'string' ? (
           <span className={buttonClass}>
-            <Forms.Button size={size} variant="link" onClick={onClick}>
+            <Button size={size} variant="link" onClick={onClick}>
               {children}
-            </Forms.Button>
+            </Button>
           </span>
         ) : (
           <span className={buttonClass} onClick={onClick}>
@@ -145,10 +152,10 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
         )}
         <span className={styles.confirmButtonContainer}>
           <span className={confirmButtonClass}>
-            <Button size={size} variant="transparent" onClick={this.onClickCancel}>
+            <Button size={size} variant="link" onClick={this.onClickCancel}>
               Cancel
             </Button>
-            <Button size={size} variant={confirmButtonVariant} onClick={onConfirm}>
+            <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm}>
               {confirmText}
             </Button>
           </span>

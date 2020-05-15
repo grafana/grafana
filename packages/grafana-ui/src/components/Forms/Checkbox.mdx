@@ -1,18 +1,39 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
-import { Checkbox } from './Checkbox';
+import { Meta, Story, Preview, Props } from "@storybook/addon-docs/blocks";
+import { Checkbox } from "./Checkbox";
 
 <Meta title="MDX|Checkbox" component={Checkbox} />
 
 # Checkbox
+
+### When to use
+
+Checked represents true, un-checked represent false. So you can use them to select a binary option or multiple options in a set. `Checkbox` can be used in groups, where the single checkboxes have no dependencies. That means that selecting one doesn’t affect any other `Checkbox`. When adding a description to your `Checkbox`, write positive statements so that "checked" means "yes" and not "no". That way, you can avoid confusion.
+
+**DO:** [ ] Hide options
+**DON'T:** [ ] Do not show options
+
+Checkboxes typically only trigger changes after sending a form. If your component should trigger a change immediately, it's better to use a toggle switch instead. Furthermore, checkboxes are not mutually exclusive. That means that selecting one will not disable the others or impact them in any other way. If you want to offer a mutually exclusive choice, use `RadioButtonGroup` or a `Select` dropdown.
+
+**DO:**
+Show series
+[ ] A-series
+[ ] B-series
+[ ] C-series
+
+**DON'T:**
+Show only
+[ ] A-series
+[ ] B-series
+[ ] C-series
 
 ### Usage
 
 ```jsx
 import { Forms } from '@grafana/ui';
 
-<Forms.Checkbox value={true|false} label={...} description={...} onChange={...} />
+<Checkbox value={true|false} label={...} description={...} onChange={...} />
 ```
 
 ### Props
-<Props of={Checkbox} />
 
+<Props of={Checkbox} />

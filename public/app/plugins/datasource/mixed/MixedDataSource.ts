@@ -1,7 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import groupBy from 'lodash/groupBy';
-import { from, of, Observable, merge } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { from, of, Observable, forkJoin } from 'rxjs';
+import { map, mergeMap, mergeAll } from 'rxjs/operators';
 
 import {
   LoadingState,
@@ -12,7 +12,6 @@ import {
   DataSourceInstanceSettings,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { mergeMap, map } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -51,64 +50,46 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   }
 
   batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const observables: Array<Observable<DataQueryResponse>> = [];
-    let runningSubRequests = 0;
+    const runningQueries = mixed.filter(this.isQueryable).map((query, i) =>
+      from(query.datasource).pipe(
+        mergeMap((api: DataSourceApi) => {
+          const dsRequest = cloneDeep(request);
+          dsRequest.requestId = `mixed-${i}-${dsRequest.requestId || ''}`;
+          dsRequest.targets = query.targets;
 
-    for (let i = 0; i < mixed.length; i++) {
-      const query = mixed[i];
-      if (!query.targets || !query.targets.length) {
-        continue;
-      }
-      const observable = from(query.datasource).pipe(
-        mergeMap((dataSourceApi: DataSourceApi) => {
-          const datasourceRequest = cloneDeep(request);
-
-          datasourceRequest.requestId = `mixed-${i}-${datasourceRequest.requestId || ''}`;
-          datasourceRequest.targets = query.targets;
-
-          runningSubRequests++;
-          let hasCountedAsDone = false;
-
-          return from(dataSourceApi.query(datasourceRequest)).pipe(
-            tap(
-              (response: DataQueryResponse) => {
-                if (
-                  hasCountedAsDone ||
-                  response.state === LoadingState.Streaming ||
-                  response.state === LoadingState.Loading
-                ) {
-                  return;
-                }
-                runningSubRequests--;
-                hasCountedAsDone = true;
-              },
-              () => {
-                if (hasCountedAsDone) {
-                  return;
-                }
-                hasCountedAsDone = true;
-                runningSubRequests--;
-              }
-            ),
-            map((response: DataQueryResponse) => {
+          return from(api.query(dsRequest)).pipe(
+            map(response => {
               return {
                 ...response,
                 data: response.data || [],
-                state: runningSubRequests === 0 ? LoadingState.Done : LoadingState.Loading,
+                state: LoadingState.Loading,
                 key: `mixed-${i}-${response.key || ''}`,
               } as DataQueryResponse;
             })
           );
         })
-      );
+      )
+    );
 
-      observables.push(observable);
-    }
-
-    return merge(...observables);
+    return forkJoin(runningQueries).pipe(map(this.markAsDone), mergeAll());
   }
 
   testDatasource() {
     return Promise.resolve({});
+  }
+
+  private isQueryable(query: BatchedQueries): boolean {
+    return query && Array.isArray(query.targets) && query.targets.length > 0;
+  }
+
+  private markAsDone(responses: DataQueryResponse[]): DataQueryResponse[] {
+    const { length } = responses;
+
+    if (length === 0) {
+      return responses;
+    }
+
+    responses[length - 1].state = LoadingState.Done;
+    return responses;
   }
 }

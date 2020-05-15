@@ -3,7 +3,6 @@ import { DataQuery, DataSourceJsonData, DataSourceSettings } from '@grafana/data
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
 export interface AzureMonitorQuery extends DataQuery {
-  refId: string;
   format: string;
   subscription: string;
   azureMonitor: AzureMetricQuery;

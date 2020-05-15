@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLinkBuiltInVars } from '@grafana/data';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -111,6 +111,10 @@ describe('DashboardModel', () => {
       expect(table.styles[1].thresholds[1]).toBe('300');
     });
 
+    it('table type should be deprecated', () => {
+      expect(table.type).toBe('table-old');
+    });
+
     it('graph grid to yaxes options', () => {
       expect(graph.yaxes[0].min).toBe(1);
       expect(graph.yaxes[0].max).toBe(10);
@@ -128,7 +132,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(22);
+      expect(model.schemaVersion).toBe(25);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -573,6 +577,142 @@ describe('DashboardModel', () => {
           'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
       });
+    });
+  });
+
+  describe('when migrating variables with multi support', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              multi: false,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+            {
+              multi: true,
+              current: {
+                value: ['value'],
+                text: ['text'],
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have two variables after migration', () => {
+      expect(model.templating.list.length).toBe(2);
+    });
+
+    it('should be migrated if being out of sync', () => {
+      expect(model.templating.list[0].multi).toBe(false);
+      expect(model.templating.list[0].current).toEqual({
+        text: 'text',
+        value: 'value',
+      });
+    });
+
+    it('should not be migrated if being in sync', () => {
+      expect(model.templating.list[1].multi).toBe(true);
+      expect(model.templating.list[1].current).toEqual({
+        text: ['text'],
+        value: ['value'],
+      });
+    });
+  });
+
+  describe('when migrating variables with old tags format', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              tags: ['Africa', 'America', 'Asia', 'Europe'],
+            },
+            {
+              type: 'query',
+              current: {
+                tags: [
+                  {
+                    selected: true,
+                    text: 'America',
+                    values: ['server-us-east', 'server-us-central', 'server-us-west'],
+                    valuesText: 'server-us-east + server-us-central + server-us-west',
+                  },
+                  {
+                    selected: true,
+                    text: 'Europe',
+                    values: ['server-eu-east', 'server-eu-west'],
+                    valuesText: 'server-eu-east + server-eu-west',
+                  },
+                ],
+                text: 'server-us-east + server-us-central + server-us-west + server-eu-east + server-eu-west',
+                value: ['server-us-east', 'server-us-central', 'server-us-west', 'server-eu-east', 'server-eu-west'],
+              },
+              tags: ['Africa', 'America', 'Asia', 'Europe'],
+            },
+            {
+              type: 'query',
+              tags: [
+                { text: 'Africa', selected: false },
+                { text: 'America', selected: true },
+                { text: 'Asia', selected: false },
+                { text: 'Europe', selected: false },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have three variables after migration', () => {
+      expect(model.templating.list.length).toBe(3);
+    });
+
+    it('should be migrated with defaults if being out of sync', () => {
+      expect(model.templating.list[0].tags).toEqual([
+        { text: 'Africa', selected: false },
+        { text: 'America', selected: false },
+        { text: 'Asia', selected: false },
+        { text: 'Europe', selected: false },
+      ]);
+    });
+
+    it('should be migrated with current values if being out of sync', () => {
+      expect(model.templating.list[1].tags).toEqual([
+        { text: 'Africa', selected: false },
+        {
+          text: 'America',
+          selected: true,
+          values: ['server-us-east', 'server-us-central', 'server-us-west'],
+          valuesText: 'server-us-east + server-us-central + server-us-west',
+        },
+        { text: 'Asia', selected: false },
+        {
+          text: 'Europe',
+          selected: true,
+          values: ['server-eu-east', 'server-eu-west'],
+          valuesText: 'server-eu-east + server-eu-west',
+        },
+      ]);
+    });
+
+    it('should not be migrated if being in sync', () => {
+      expect(model.templating.list[2].tags).toEqual([
+        { text: 'Africa', selected: false },
+        { text: 'America', selected: true },
+        { text: 'Asia', selected: false },
+        { text: 'Europe', selected: false },
+      ]);
     });
   });
 });

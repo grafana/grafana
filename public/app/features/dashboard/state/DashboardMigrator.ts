@@ -1,26 +1,24 @@
 // Libraries
 import _ from 'lodash';
-
 // Utils
 import getFactors from 'app/core/utils/factors';
-import { appendQueryToUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
-
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink } from '@grafana/data';
-
+import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
 // Constants
 import {
-  GRID_COLUMN_COUNT,
+  DEFAULT_PANEL_SPAN,
+  DEFAULT_ROW_HEIGHT,
   GRID_CELL_HEIGHT,
   GRID_CELL_VMARGIN,
-  DEFAULT_ROW_HEIGHT,
+  GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
-  DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from '@grafana/ui';
+import { isMulti, isQuery } from 'app/features/variables/guard';
+import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
+import { VariableTag } from '../../templating/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -33,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 22;
+    this.dashboard.schemaVersion = 25;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -242,7 +240,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.templating.list, templateVariable => {
+      _.each(this.dashboard.getVariables(), templateVariable => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }
@@ -499,6 +497,73 @@ export class DashboardMigrator {
       });
     }
 
+    if (oldVersion < 23) {
+      for (const variable of this.dashboard.templating.list) {
+        if (!isMulti(variable)) {
+          continue;
+        }
+        const { multi, current } = variable;
+        variable.current = alignCurrentWithMulti(current, multi);
+      }
+    }
+
+    if (oldVersion < 24) {
+      // 7.0
+      // - migrate existing tables to 'table-old'
+      panelUpgrades.push((panel: any) => {
+        const wasAngularTable = panel.type === 'table';
+        if (wasAngularTable && !panel.styles) {
+          return; // styles are missing so assumes default settings
+        }
+        const wasReactTable = panel.table === 'table2';
+        if (!wasAngularTable || wasReactTable) {
+          return;
+        }
+        panel.type = wasAngularTable ? 'table-old' : 'table';
+      });
+    }
+
+    if (oldVersion < 25) {
+      for (const variable of this.dashboard.templating.list) {
+        if (!isQuery(variable)) {
+          continue;
+        }
+
+        const { tags, current } = variable;
+        if (!Array.isArray(tags)) {
+          variable.tags = [];
+          continue;
+        }
+
+        const currentTags = current?.tags ?? [];
+        const currents = currentTags.reduce((all, tag) => {
+          if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
+            all[tag.text] = tag;
+          }
+          return all;
+        }, {} as Record<string, VariableTag>);
+
+        const newTags: VariableTag[] = [];
+
+        for (const tag of tags) {
+          if (typeof tag === 'object') {
+            // new format let's assume it's correct
+            newTags.push(tag);
+            continue;
+          }
+
+          if (typeof tag !== 'string') {
+            // something that we do not support
+            continue;
+          }
+
+          const currentValue = currents[tag];
+          newTags.push({ text: tag, selected: false, ...currentValue });
+        }
+        variable.tags = newTags;
+      }
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -712,15 +777,15 @@ function upgradePanelLink(link: any): DataLink {
   }
 
   if (link.keepTime) {
-    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
+    url = urlUtil.appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
   }
 
   if (link.includeVars) {
-    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.includeVars}`);
+    url = urlUtil.appendQueryToUrl(url, `$${DataLinkBuiltInVars.includeVars}`);
   }
 
   if (link.params) {
-    url = appendQueryToUrl(url, link.params);
+    url = urlUtil.appendQueryToUrl(url, link.params);
   }
 
   return {

@@ -27,6 +27,7 @@ func (ls *LoginService) Init() error {
 	return nil
 }
 
+// UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
 func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
@@ -38,12 +39,10 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		Login:      extUser.Login,
 	}
 
-	err := bus.Dispatch(userQuery)
-	if err != models.ErrUserNotFound && err != nil {
-		return err
-	}
-
-	if err != nil {
+	if err := bus.Dispatch(userQuery); err != nil {
+		if err != models.ErrUserNotFound {
+			return err
+		}
 		if !cmd.SignupAllowed {
 			log.Warn("Not allowing %s login, user not found in internal user database and allow signup = false", extUser.AuthModule)
 			return ErrInvalidCredentials
@@ -74,7 +73,6 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 				return err
 			}
 		}
-
 	} else {
 		cmd.Result = userQuery.Result
 
@@ -99,9 +97,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 	}
 
-	err = syncOrgRoles(cmd.Result, extUser)
-
-	if err != nil {
+	if err := syncOrgRoles(cmd.Result, extUser); err != nil {
 		return err
 	}
 
@@ -112,16 +108,15 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 	}
 
-	err = ls.Bus.Dispatch(&models.SyncTeamsCommand{
+	err := ls.Bus.Dispatch(&models.SyncTeamsCommand{
 		User:         cmd.Result,
 		ExternalUser: extUser,
 	})
-
-	if err == bus.ErrHandlerNotFound {
-		return nil
+	if err != nil && err != bus.ErrHandlerNotFound {
+		return err
 	}
 
-	return err
+	return nil
 }
 
 func createUser(extUser *models.ExternalUserInfo) (*models.User, error) {

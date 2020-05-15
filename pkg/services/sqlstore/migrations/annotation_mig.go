@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"xorm.io/xorm"
 )
 
 func addAnnotationMig(mg *Migrator) {
@@ -123,7 +123,32 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
 	mg.AddMigration("Move region to single row", &AddMakeRegionSingleRowMigration{})
 
-	// TODO! drop region_id column?
+	//
+	// 6.6.1: Optimize annotation queries
+	//
+	mg.AddMigration("Remove index org_id_epoch from annotation table", NewDropIndexMigration(table, &Index{
+		Cols: []string{"org_id", "epoch"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Remove index org_id_dashboard_id_panel_id_epoch from annotation table", NewDropIndexMigration(table, &Index{
+		Cols: []string{"org_id", "dashboard_id", "panel_id", "epoch"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Add index for org_id_dashboard_id_epoch_end_epoch on annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "dashboard_id", "epoch_end", "epoch"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Add index for org_id_epoch_end_epoch on annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "epoch_end", "epoch"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Remove index org_id_epoch_epoch_end from annotation table", NewDropIndexMigration(table, &Index{
+		Cols: []string{"org_id", "epoch", "epoch_end"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Add index for alert_id on annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"alert_id"}, Type: IndexType,
+	}))
 }
 
 type AddMakeRegionSingleRowMigration struct {

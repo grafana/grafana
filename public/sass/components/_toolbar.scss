@@ -2,12 +2,9 @@
   display: flex;
   align-content: center;
   align-items: center;
-  padding: 3px 20px 3px 20px;
+  padding: 16px;
   position: relative;
   flex: 0 0 auto;
-  background: $toolbar-bg;
-  border-radius: 3px;
-  height: 44px;
 }
 
 .toolbar__heading {

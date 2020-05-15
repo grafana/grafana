@@ -75,6 +75,19 @@ describe('getQueryHints()', () => {
     expect(hints).toEqual(null);
   });
 
+  it('returns no rate hint for a counter metric that already has an increase', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const hints = getQueryHints('increase(metric_total[1m])', series);
+    expect(hints).toEqual(null);
+  });
+
   it('returns a rate hint w/o action for a complex counter metric', () => {
     const series = [
       {

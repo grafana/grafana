@@ -1,11 +1,9 @@
-import React, { ChangeEvent, PureComponent } from 'react';
-
-import { FormField } from '../FormField/FormField';
-import { FormLabel } from '../FormLabel/FormLabel';
+import React from 'react';
+import { HorizontalGroup } from '../Layout/Layout';
+import { IconButton, Label, RadioButtonGroup } from '../index';
+import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
-
-import { MappingType, ValueMapping } from '@grafana/data';
+import { MappingType, RangeMap, SelectableValue, ValueMap, ValueMapping } from '@grafana/data';
 
 export interface Props {
   valueMapping: ValueMapping;
@@ -13,134 +11,114 @@ export interface Props {
   removeValueMapping: () => void;
 }
 
-interface State {
-  from?: string;
-  id: number;
-  operator: string;
-  text: string;
-  to?: string;
-  type: MappingType;
-  value?: string;
-}
-
-const mappingOptions = [
+const MAPPING_OPTIONS: Array<SelectableValue<MappingType>> = [
   { value: MappingType.ValueToText, label: 'Value' },
   { value: MappingType.RangeToText, label: 'Range' },
 ];
 
-export default class MappingRow extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
+export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, removeValueMapping }) => {
+  const { type } = valueMapping;
 
-    this.state = { ...props.valueMapping };
-  }
-
-  onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ value: event.target.value });
+  const onMappingValueChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, value: value });
   };
 
-  onMappingFromChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ from: event.target.value });
+  const onMappingFromChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, from: value });
   };
 
-  onMappingToChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ to: event.target.value });
+  const onMappingToChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, to: value });
   };
 
-  onMappingTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ text: event.target.value });
+  const onMappingTextChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, text: value });
   };
 
-  onMappingTypeChange = (mappingType: MappingType) => {
-    this.setState({ type: mappingType });
+  const onMappingTypeChange = (mappingType: MappingType) => {
+    updateValueMapping({ ...valueMapping, type: mappingType });
   };
 
-  updateMapping = () => {
-    this.props.updateValueMapping({ ...this.state } as ValueMapping);
+  const onKeyDown = (handler: (value: string) => void) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handler(e.currentTarget.value);
+    }
   };
 
-  renderRow() {
-    const { from, text, to, type, value } = this.state;
-
+  const renderRow = () => {
     if (type === MappingType.RangeToText) {
       return (
         <>
-          <FormField
-            label="From"
-            labelWidth={4}
-            inputWidth={8}
-            onBlur={this.updateMapping}
-            onChange={this.onMappingFromChange}
-            value={from}
-          />
-          <FormField
-            label="To"
-            labelWidth={4}
-            inputWidth={8}
-            onBlur={this.updateMapping}
-            onChange={this.onMappingToChange}
-            value={to}
-          />
-          <div className="gf-form gf-form--grow">
-            <FormLabel width={4}>Text</FormLabel>
+          <HorizontalGroup>
+            <Field label="From">
+              <Input
+                type="number"
+                defaultValue={(valueMapping as RangeMap).from!}
+                onBlur={e => onMappingFromChange(e.currentTarget.value)}
+                onKeyDown={onKeyDown(onMappingFromChange)}
+              />
+            </Field>
+            <Field label="To">
+              <Input
+                type="number"
+                defaultValue={(valueMapping as RangeMap).to}
+                onBlur={e => onMappingToChange(e.currentTarget.value)}
+                onKeyDown={onKeyDown(onMappingToChange)}
+              />
+            </Field>
+          </HorizontalGroup>
+
+          <Field label="Text">
             <Input
-              className="gf-form-input"
-              onBlur={this.updateMapping}
-              value={text}
-              onChange={this.onMappingTextChange}
+              defaultValue={valueMapping.text}
+              onBlur={e => onMappingTextChange(e.currentTarget.value)}
+              onKeyDown={onKeyDown(onMappingTextChange)}
             />
-          </div>
+          </Field>
         </>
       );
     }
 
     return (
       <>
-        <FormField
-          label="Value"
-          labelWidth={4}
-          onBlur={this.updateMapping}
-          onChange={this.onMappingValueChange}
-          value={value}
-          inputWidth={8}
-        />
-        <div className="gf-form gf-form--grow">
-          <FormLabel width={4}>Text</FormLabel>
+        <Field label="Value">
           <Input
-            className="gf-form-input"
-            onBlur={this.updateMapping}
-            value={text}
-            onChange={this.onMappingTextChange}
+            type="number"
+            defaultValue={(valueMapping as ValueMap).value}
+            onBlur={e => onMappingValueChange(e.currentTarget.value)}
+            onKeyDown={onKeyDown(onMappingValueChange)}
           />
-        </div>
+        </Field>
+
+        <Field label="Text">
+          <Input
+            defaultValue={valueMapping.text}
+            onBlur={e => onMappingTextChange(e.currentTarget.value)}
+            onKeyDown={onKeyDown(onMappingTextChange)}
+          />
+        </Field>
       </>
     );
-  }
+  };
 
-  render() {
-    const { type } = this.state;
-
-    return (
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <FormLabel width={5}>Type</FormLabel>
-          <Select
-            placeholder="Choose type"
-            isSearchable={false}
-            options={mappingOptions}
-            value={mappingOptions.find(o => o.value === type)}
-            // @ts-ignore
-            onChange={type => this.onMappingTypeChange(type.value)}
-            width={7}
-          />
-        </div>
-        {this.renderRow()}
-        <div className="gf-form">
-          <button onClick={this.props.removeValueMapping} className="gf-form-label gf-form-label--btn">
-            <i className="fa fa-times" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-}
+  const label = (
+    <HorizontalGroup justify="space-between" align="center">
+      <Label>Mapping type</Label>
+      <IconButton name="times" onClick={removeValueMapping} aria-label="ValueMappingsEditor remove button" />
+    </HorizontalGroup>
+  );
+  return (
+    <div>
+      <Field label={label}>
+        <RadioButtonGroup
+          options={MAPPING_OPTIONS}
+          value={type}
+          onChange={type => {
+            onMappingTypeChange(type!);
+          }}
+        />
+      </Field>
+      {renderRow()}
+    </div>
+  );
+};

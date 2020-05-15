@@ -13,6 +13,10 @@ const grafanaPlugin = async () =>
 const influxdbPlugin = async () =>
   await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
+const jaegerPlugin = async () =>
+  await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
+const zipkinPlugin = async () =>
+  await import(/* webpackChunkName: "zipkinPlugin" */ 'app/plugins/datasource/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>
@@ -25,8 +29,6 @@ const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const testDataDSPlugin = async () =>
   await import(/* webpackChunkName: "testDataDSPlugin" */ 'app/plugins/datasource/testdata/module');
-const inputDatasourcePlugin = async () =>
-  await import(/* webpackChunkName: "inputDatasourcePlugin" */ 'app/plugins/datasource/input/module');
 const stackdriverPlugin = async () =>
   await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
 const azureMonitorPlugin = async () =>
@@ -44,7 +46,7 @@ import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
-import * as table2Panel from 'app/plugins/panel/table2/module';
+import * as oldTablePanel from 'app/plugins/panel/table-old/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as singlestatPanel2 from 'app/plugins/panel/stat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
@@ -54,6 +56,7 @@ import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
+import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -64,13 +67,14 @@ const builtInPlugins: any = {
   'app/plugins/datasource/grafana/module': grafanaPlugin,
   'app/plugins/datasource/influxdb/module': influxdbPlugin,
   'app/plugins/datasource/loki/module': lokiPlugin,
+  'app/plugins/datasource/jaeger/module': jaegerPlugin,
+  'app/plugins/datasource/zipkin/module': zipkinPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
-  'app/plugins/datasource/input/module': inputDatasourcePlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
 
@@ -84,7 +88,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/annolist/module': annoListPanel,
   'app/plugins/panel/heatmap/module': heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
-  'app/plugins/panel/table2/module': table2Panel,
+  'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,
@@ -94,6 +98,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/homelinks/module': homeLinksPanel,
+  'app/plugins/panel/welcome/module': welcomeBanner,
 };
 
 export default builtInPlugins;

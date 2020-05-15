@@ -1,14 +1,14 @@
 import {
   DataFrame,
   FieldType,
-  LogsMetaKind,
-  LogsDedupStrategy,
   LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsMetaKind,
   MutableDataFrame,
   toDataFrame,
-  LogRowModel,
 } from '@grafana/data';
-import { dedupLogRows, dataFrameToLogsModel } from './logs_model';
+import { dataFrameToLogsModel, dedupLogRows } from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -218,7 +218,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -240,12 +240,12 @@ describe('dataFrameToLogsModel', () => {
 
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(2);
-    expect(logsModel.meta[0]).toMatchObject({
+    expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
-    expect(logsModel.meta[1]).toMatchObject({
+    expect(logsModel.meta![1]).toMatchObject({
       label: 'Limit',
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
@@ -274,12 +274,12 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.rows).toHaveLength(1);
     expect(logsModel.rows).toMatchObject([
       {
         entry: 'WARN boooo',
-        labels: undefined,
+        labels: {},
         logLevel: LogLevel.debug,
         uniqueLabels: {},
       },
@@ -338,7 +338,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
@@ -364,7 +364,7 @@ describe('dataFrameToLogsModel', () => {
 
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(1);
-    expect(logsModel.meta[0]).toMatchObject({
+    expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
       value: {
         foo: 'bar',
@@ -448,7 +448,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(4);
     expect(logsModel.rows).toMatchObject([
@@ -497,7 +497,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
     expect(logsModel.rows[0].uid).toBe('0');
   });
 

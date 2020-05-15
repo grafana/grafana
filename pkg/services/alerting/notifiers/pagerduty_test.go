@@ -197,6 +197,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 						{Key: "group", Value: "aGroup"},
 						{Key: "class", Value: "aClass"},
 						{Key: "component", Value: "aComponent"},
+						{Key: "severity", Value: "warning"},
 					},
 				})
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
@@ -224,6 +225,162 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"group":     "aGroup",
 							"class":     "aClass",
 							"component": "aComponent",
+							"severity":  "warning",
+							"keyOnly":   "",
+						},
+						"severity":  "warning",
+						"summary":   "someRule - someMessage",
+						"timestamp": "<<PRESENCE>>",
+						"class":     "aClass",
+						"group":     "aGroup",
+					},
+					"images": []interface{}{
+						map[string]interface{}{
+							"src": "http://somewhere.com/omg_dont_panic.png",
+						},
+					},
+					"routing_key": "abcdefgh0123456789",
+				}, payload.Interface(), cmp.Comparer(presenceComparer))
+				So(diff, ShouldBeEmpty)
+			})
+
+			Convey("should support multiple levels of severity", func() {
+				json := `{
+					"integrationKey": "abcdefgh0123456789",
+					"autoResolve": false
+				}`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+
+				model := &models.AlertNotification{
+					Name:     "pagerduty_testing",
+					Type:     "pagerduty",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewPagerdutyNotifier(model)
+				So(err, ShouldBeNil)
+
+				pagerdutyNotifier := not.(*PagerdutyNotifier)
+
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:      0,
+					Name:    "someRule",
+					Message: "someMessage",
+					State:   models.AlertStateAlerting,
+					AlertRuleTags: []*models.Tag{
+						{Key: "keyOnly"},
+						{Key: "group", Value: "aGroup"},
+						{Key: "class", Value: "aClass"},
+						{Key: "component", Value: "aComponent"},
+						{Key: "severity", Value: "info"},
+					},
+				})
+				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
+				evalContext.IsTestRun = true
+
+				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				So(err, ShouldBeNil)
+				payload, err := simplejson.NewJson(payloadJSON)
+				So(err, ShouldBeNil)
+
+				diff := cmp.Diff(map[string]interface{}{
+					"client":       "Grafana",
+					"client_url":   "",
+					"dedup_key":    "alertId-0",
+					"event_action": "trigger",
+					"links": []interface{}{
+						map[string]interface{}{
+							"href": "",
+						},
+					},
+					"payload": map[string]interface{}{
+						"source":    "<<PRESENCE>>",
+						"component": "aComponent",
+						"custom_details": map[string]interface{}{
+							"group":     "aGroup",
+							"class":     "aClass",
+							"component": "aComponent",
+							"severity":  "info",
+							"keyOnly":   "",
+						},
+						"severity":  "info",
+						"summary":   "someRule - someMessage",
+						"timestamp": "<<PRESENCE>>",
+						"class":     "aClass",
+						"group":     "aGroup",
+					},
+					"images": []interface{}{
+						map[string]interface{}{
+							"src": "http://somewhere.com/omg_dont_panic.png",
+						},
+					},
+					"routing_key": "abcdefgh0123456789",
+				}, payload.Interface(), cmp.Comparer(presenceComparer))
+				So(diff, ShouldBeEmpty)
+			})
+
+			Convey("should ignore invalid severity for PD but keep the tag", func() {
+				json := `{
+					"integrationKey": "abcdefgh0123456789",
+					"autoResolve": false,
+					"severity": "critical"
+				}`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+
+				model := &models.AlertNotification{
+					Name:     "pagerduty_testing",
+					Type:     "pagerduty",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewPagerdutyNotifier(model)
+				So(err, ShouldBeNil)
+
+				pagerdutyNotifier := not.(*PagerdutyNotifier)
+
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:      0,
+					Name:    "someRule",
+					Message: "someMessage",
+					State:   models.AlertStateAlerting,
+					AlertRuleTags: []*models.Tag{
+						{Key: "keyOnly"},
+						{Key: "group", Value: "aGroup"},
+						{Key: "class", Value: "aClass"},
+						{Key: "component", Value: "aComponent"},
+						{Key: "severity", Value: "llama"},
+					},
+				})
+				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
+				evalContext.IsTestRun = true
+
+				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				So(err, ShouldBeNil)
+				payload, err := simplejson.NewJson(payloadJSON)
+				So(err, ShouldBeNil)
+
+				diff := cmp.Diff(map[string]interface{}{
+					"client":       "Grafana",
+					"client_url":   "",
+					"dedup_key":    "alertId-0",
+					"event_action": "trigger",
+					"links": []interface{}{
+						map[string]interface{}{
+							"href": "",
+						},
+					},
+					"payload": map[string]interface{}{
+						"source":    "<<PRESENCE>>",
+						"component": "aComponent",
+						"custom_details": map[string]interface{}{
+							"group":     "aGroup",
+							"class":     "aClass",
+							"component": "aComponent",
+							"severity":  "llama",
 							"keyOnly":   "",
 						},
 						"severity":  "critical",

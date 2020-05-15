@@ -2,7 +2,7 @@ package sqlstore
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -12,7 +12,7 @@ func init() {
 	bus.AddHandler("sql", IsStarredByUser)
 }
 
-func IsStarredByUser(query *m.IsStarredByUserQuery) error {
+func IsStarredByUser(query *models.IsStarredByUserQuery) error {
 	rawSql := "SELECT 1 from star where user_id=? and dashboard_id=?"
 	results, err := x.Query(rawSql, query.UserId, query.DashboardId)
 
@@ -29,14 +29,14 @@ func IsStarredByUser(query *m.IsStarredByUserQuery) error {
 	return nil
 }
 
-func StarDashboard(cmd *m.StarDashboardCommand) error {
+func StarDashboard(cmd *models.StarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
-		return m.ErrCommandValidationFailed
+		return models.ErrCommandValidationFailed
 	}
 
 	return inTransaction(func(sess *DBSession) error {
 
-		entity := m.Star{
+		entity := models.Star{
 			UserId:      cmd.UserId,
 			DashboardId: cmd.DashboardId,
 		}
@@ -46,9 +46,9 @@ func StarDashboard(cmd *m.StarDashboardCommand) error {
 	})
 }
 
-func UnstarDashboard(cmd *m.UnstarDashboardCommand) error {
+func UnstarDashboard(cmd *models.UnstarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
-		return m.ErrCommandValidationFailed
+		return models.ErrCommandValidationFailed
 	}
 
 	return inTransaction(func(sess *DBSession) error {
@@ -58,8 +58,8 @@ func UnstarDashboard(cmd *m.UnstarDashboardCommand) error {
 	})
 }
 
-func GetUserStars(query *m.GetUserStarsQuery) error {
-	var stars = make([]m.Star, 0)
+func GetUserStars(query *models.GetUserStarsQuery) error {
+	var stars = make([]models.Star, 0)
 	err := x.Where("user_id=?", query.UserId).Find(&stars)
 
 	query.Result = make(map[int64]bool)

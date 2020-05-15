@@ -1,14 +1,15 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import _ from 'lodash';
 
-import { Select } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { Variable } from 'app/types/templates';
+const { Select } = LegacyForms;
 
 export interface Props {
   onChange: (value: string) => void;
   options: Array<SelectableValue<string>>;
-  isSearchable?: boolean;
+  isSearchable: boolean;
   value: string;
   placeholder?: string;
   className?: string;
@@ -39,8 +40,8 @@ export const compareFn = (nextProps: Props, prevProps: Props) => {
   return nextProps.value === prevProps.value || !_.isEqual(buildOptions(nextProps), buildOptions(prevProps));
 };
 
-export const MetricSelect: FC<Props> = memo(props => {
-  const { value, placeholder, className, isSearchable = true, onChange } = props;
+export const MetricSelect = memo<Props>(props => {
+  const { value, placeholder, className, isSearchable, onChange } = props;
   const opts = buildOptions(props);
 
   return (

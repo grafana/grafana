@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -15,7 +15,7 @@ func init() {
 	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
 }
 
-func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
+func UpdateTempUserStatus(cmd *models.UpdateTempUserStatusCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Code)
@@ -23,11 +23,11 @@ func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
 	})
 }
 
-func CreateTempUser(cmd *m.CreateTempUserCommand) error {
+func CreateTempUser(cmd *models.CreateTempUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		// create user
-		user := &m.TempUser{
+		user := &models.TempUser{
 			Email:           cmd.Email,
 			Name:            cmd.Name,
 			OrgId:           cmd.OrgId,
@@ -50,9 +50,9 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 	})
 }
 
-func UpdateTempUserWithEmailSent(cmd *m.UpdateTempUserWithEmailSentCommand) error {
+func UpdateTempUserWithEmailSent(cmd *models.UpdateTempUserWithEmailSentCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		user := &m.TempUser{
+		user := &models.TempUser{
 			EmailSent:   true,
 			EmailSentOn: time.Now(),
 		}
@@ -63,7 +63,7 @@ func UpdateTempUserWithEmailSent(cmd *m.UpdateTempUserWithEmailSentCommand) erro
 	})
 }
 
-func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
+func GetTempUsersQuery(query *models.GetTempUsersQuery) error {
 	rawSql := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
@@ -95,13 +95,13 @@ func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
 
 	rawSql += " ORDER BY tu.created desc"
 
-	query.Result = make([]*m.TempUserDTO, 0)
+	query.Result = make([]*models.TempUserDTO, 0)
 	sess := x.SQL(rawSql, params...)
 	err := sess.Find(&query.Result)
 	return err
 }
 
-func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
+func GetTempUserByCode(query *models.GetTempUserByCodeQuery) error {
 	var rawSql = `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
@@ -120,14 +120,14 @@ func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
 									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
 	                WHERE tu.code=?`
 
-	var tempUser m.TempUserDTO
+	var tempUser models.TempUserDTO
 	sess := x.SQL(rawSql, query.Code)
 	has, err := sess.Get(&tempUser)
 
 	if err != nil {
 		return err
 	} else if !has {
-		return m.ErrTempUserNotFound
+		return models.ErrTempUserNotFound
 	}
 
 	query.Result = &tempUser

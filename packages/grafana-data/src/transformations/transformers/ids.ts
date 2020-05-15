@@ -1,12 +1,18 @@
 export enum DataTransformerID {
-  //  join = 'join', // Pick a field and merge all series based on that field
-  append = 'append', // Merge all series together
+  // join = 'join', // Pick a field and merge all series based on that field
+  append = 'append',
   //  rotate = 'rotate', // Columns to rows
-  reduce = 'reduce', // Run calculations on fields
-
-  filterFields = 'filterFields', // Pick some fields (keep all frames)
-  filterFieldsByName = 'filterFieldsByName', // Pick fields with name matching regex (keep all frames)
-  filterFrames = 'filterFrames', // Pick some frames (keep all fields)
-  filterByRefId = 'filterByRefId', // Pick some frames by RefId
-  noop = 'noop', // Does nothing to the dataframe
+  reduce = 'reduce',
+  order = 'order',
+  organize = 'organize',
+  rename = 'rename',
+  calculateField = 'calculateField',
+  seriesToColumns = 'seriesToColumns',
+  labelsToFields = 'labelsToFields',
+  filterFields = 'filterFields',
+  filterFieldsByName = 'filterFieldsByName',
+  filterFrames = 'filterFrames',
+  filterByRefId = 'filterByRefId',
+  noop = 'noop',
+  ensureColumns = 'ensureColumns',
 }

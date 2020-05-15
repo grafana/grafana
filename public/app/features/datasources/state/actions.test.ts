@@ -1,4 +1,10 @@
-import { findNewName, nameExits, InitDataSourceSettingDependencies, testDataSource } from './actions';
+import {
+  findNewName,
+  nameExits,
+  InitDataSourceSettingDependencies,
+  testDataSource,
+  TestDataSourceDependencies,
+} from './actions';
 import { getMockPlugin, getMockPlugins } from '../../plugins/__mocks__/pluginMocks';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -11,10 +17,17 @@ import {
 import { initDataSourceSettings } from '../state/actions';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
-import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
 
-jest.mock('app/features/plugins/datasource_srv');
-const getDatasourceSrvMock = (DatasourceSrv.getDatasourceSrv as any) as jest.Mock<DatasourceSrv.DatasourceSrv>;
+const getBackendSrvMock = () =>
+  ({
+    get: jest.fn().mockReturnValue({
+      testDatasource: jest.fn().mockReturnValue({
+        status: '',
+        message: '',
+      }),
+    }),
+    withNoBackendCache: jest.fn().mockImplementationOnce(cb => cb()),
+  } as any);
 
 describe('Name exists', () => {
   const plugins = getMockPlugins(5);
@@ -131,8 +144,8 @@ describe('initDataSourceSettings', () => {
 describe('testDataSource', () => {
   describe('when a datasource is tested', () => {
     it('then testDataSourceStarting and testDataSourceSucceeded should be dispatched', async () => {
-      getDatasourceSrvMock.mockImplementation(
-        () =>
+      const dependencies: TestDataSourceDependencies = {
+        getDatasourceSrv: () =>
           ({
             get: jest.fn().mockReturnValue({
               testDatasource: jest.fn().mockReturnValue({
@@ -140,8 +153,9 @@ describe('testDataSource', () => {
                 message: '',
               }),
             }),
-          } as any)
-      );
+          } as any),
+        getBackendSrv: getBackendSrvMock,
+      };
       const state = {
         testingStatus: {
           status: '',
@@ -150,22 +164,23 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await thunkTester(state)
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('Azure Monitor');
+        .whenThunkIsDispatched('Azure Monitor', dependencies);
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceSucceeded(state.testingStatus)]);
     });
 
     it('then testDataSourceFailed should be dispatched', async () => {
-      getDatasourceSrvMock.mockImplementation(
-        () =>
+      const dependencies: TestDataSourceDependencies = {
+        getDatasourceSrv: () =>
           ({
             get: jest.fn().mockReturnValue({
               testDatasource: jest.fn().mockImplementation(() => {
                 throw new Error('Error testing datasource');
               }),
             }),
-          } as any)
-      );
+          } as any),
+        getBackendSrv: getBackendSrvMock,
+      };
       const result = {
         message: 'Error testing datasource',
       };
@@ -177,7 +192,7 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await thunkTester(state)
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('Azure Monitor');
+        .whenThunkIsDispatched('Azure Monitor', dependencies);
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });

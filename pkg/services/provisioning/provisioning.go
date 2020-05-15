@@ -15,19 +15,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type DashboardProvisioner interface {
-	Provision() error
-	PollChanges(ctx context.Context)
-	GetProvisionerResolvedPath(name string) string
-	GetAllowUiUpdatesFromConfig(name string) bool
+type ProvisioningService interface {
+	ProvisionDatasources() error
+	ProvisionNotifications() error
+	ProvisionDashboards() error
+	GetDashboardProvisionerResolvedPath(name string) string
+	GetAllowUIUpdatesFromConfig(name string) bool
 }
-
-type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 
 func init() {
 	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) (DashboardProvisioner, error) {
-			return dashboards.NewDashboardProvisionerImpl(path)
+		func(path string) (dashboards.DashboardProvisioner, error) {
+			return dashboards.New(path)
 		},
 		notifiers.Provision,
 		datasources.Provision,
@@ -35,7 +34,7 @@ func init() {
 }
 
 func NewProvisioningServiceImpl(
-	newDashboardProvisioner DashboardProvisionerFactory,
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
@@ -51,8 +50,8 @@ type provisioningServiceImpl struct {
 	Cfg                     *setting.Cfg `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner DashboardProvisionerFactory
-	dashboardProvisioner    DashboardProvisioner
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory
+	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
 	mutex                   sync.Mutex
@@ -76,6 +75,7 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards()
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
+		return err
 	}
 
 	for {
@@ -138,8 +138,8 @@ func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name stri
 	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
 
-func (ps *provisioningServiceImpl) GetAllowUiUpdatesFromConfig(name string) bool {
-	return ps.dashboardProvisioner.GetAllowUiUpdatesFromConfig(name)
+func (ps *provisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
+	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

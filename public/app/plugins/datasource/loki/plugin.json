@@ -17,7 +17,7 @@
   "info": {
     "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

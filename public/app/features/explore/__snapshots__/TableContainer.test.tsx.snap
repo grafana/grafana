@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TableContainer should render component 1`] = `
+<Collapse
+  collapsible={true}
+  isOpen={true}
+  label="Table"
+  loading={false}
+  onToggle={[Function]}
+>
+  <Memo(MetaInfoText)
+    metaItems={
+      Array [
+        Object {
+          "value": "0 series returned",
+        },
+      ]
+    }
+  />
+</Collapse>
+`;

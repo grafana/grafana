@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import { AppEvents } from '@grafana/data';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { variableTypes } from './types';
 import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
@@ -60,10 +60,10 @@ export class VariableEditorCtrl {
     ];
 
     $scope.selectors = {
-      ...e2e.pages.Dashboard.Settings.Variables.List.selectors,
-      ...e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors,
-      ...e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors,
-      ...e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.selectors,
+      ...selectors.pages.Dashboard.Settings.Variables.List,
+      ...selectors.pages.Dashboard.Settings.Variables.Edit.General,
+      ...selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable,
+      ...selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable,
     };
 
     $scope.init = () => {

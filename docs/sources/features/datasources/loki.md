@@ -39,14 +39,16 @@ Just add it as a data source and you are ready to query your log data in [Explor
 ### Derived fields
 
 The Derived Fields configuration allows you to: 
+
 * Add fields parsed from the log message. 
 * Add a link that uses the value of the field. 
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links will be shown in the [log details](/features/explore/#labels-and-parsed-fields).
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/features/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
+
 - **Name:** Shown in the log details as a label.
-- **Regex:** A Regex pattern that runs on the log message and captures part of it to as the value of the new field. Can only contain capture a single group.
+- **Regex:** A Regex pattern that runs on the log message and captures part of it as the value of the new field. Can only contain a single capture group.
 - **URL**: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` value in your template to interpolate the real field value into your URL template.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
@@ -69,7 +71,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 <div class="medium-6 columns">
   <video width="800" height="500" controls>
-    <source src="https://grafana.com/static/assets/videos/explore_loki.mp4" type="video/mp4">
+    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -96,7 +98,7 @@ Examples:
 
 The [same rules that apply for Prometheus Label Selectors](https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors) apply for Loki Log Stream Selectors.
 
-Another way to add a label selector, is in the table section, clicking on the **Filter** button beside a label will add the label to the query expression. This even works for multiple queries and will the label selector to each query.
+Another way to add a label selector is in the table section. Click **Filter** beside a label to add the label to the query expression. This even works for multiple queries and will add the label selector to each query.
 
 ### Search Expression
 
@@ -125,7 +127,7 @@ The following filter types are currently supported:
 
 ## Live tailing
 
-Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}) and in dashboards with a Live toggle in the query editor.
+Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly.
 
@@ -144,7 +146,7 @@ log message you're interested in.
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../variables/templates-and-variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Annotations
 
@@ -187,8 +189,16 @@ datasources:
     jsonData:
       maxLines: 1000
       derivedFields:
-        - datasourceName: Jaeger
+        # Field with internal link pointing to data source in Grafana.
+        # Right now, Grafana supports only Jaeger and Zipkin data sources as link targets.
+        - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
+          name: TraceID
+          # url will be interpreted as query for the datasource
+          url: "$${__value.raw}"
+
+        # Field with external link.
+        - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "http://localhost:16686/trace/$${__value.raw}"
 ```

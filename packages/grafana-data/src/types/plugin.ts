@@ -4,6 +4,7 @@ import { KeyValue } from './data';
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
   beta = 'beta', // Will show a warning banner
+  deprecated = 'deprecated', // Will continue to work -- but not show up in the the options to add
 }
 
 export enum PluginType {
@@ -11,6 +12,14 @@ export enum PluginType {
   datasource = 'datasource',
   app = 'app',
   renderer = 'renderer',
+}
+
+export enum PluginSignatureStatus {
+  internal = 'internal', // core plugin, no signature
+  valid = 'valid', // signed and accurate MANIFEST
+  invalid = 'invalid', // invalid signature
+  modified = 'modified', // valid signature, but content mismatch
+  unsigned = 'unsigned', // no MANIFEST file
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
@@ -34,8 +43,10 @@ export interface PluginMeta<T extends KeyValue = {}> {
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
+  enterprise?: boolean;
   latestVersion?: string;
   pinned?: boolean;
+  signature?: PluginSignatureStatus;
 }
 
 interface PluginDependencyInfo {
@@ -123,7 +134,7 @@ export interface PluginConfigPage<T extends PluginMeta> {
 
 export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // Meta is filled in by the plugin loading system
-  meta?: T;
+  meta: T;
 
   // This is set if the plugin system had errors loading the plugin
   loadError?: boolean;
@@ -141,5 +152,9 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
     }
     this.configPages.push(tab);
     return this;
+  }
+
+  constructor() {
+    this.meta = {} as T;
   }
 }

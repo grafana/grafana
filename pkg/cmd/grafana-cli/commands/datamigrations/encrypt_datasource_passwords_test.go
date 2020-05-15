@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPasswordMigrationCommand(t *testing.T) {
@@ -18,10 +19,10 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	defer session.Close()
 
 	datasources := []*models.DataSource{
-		{Type: "influxdb", Name: "influxdb", Password: "foobar"},
-		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar"},
-		{Type: "prometheus", Name: "prometheus"},
-		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd"},
+		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
+		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},
+		{Type: "prometheus", Name: "prometheus", Uid: "prom"},
+		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd", Uid: "elastic"},
 	}
 
 	// set required default values
@@ -45,7 +46,9 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	assert.Nil(t, err)
 
 	//run migration
-	err = EncryptDatasourcePaswords(&commandstest.FakeCommandLine{}, sqlstore)
+	c, err := commandstest.NewCliContext(map[string]string{})
+	require.Nil(t, err)
+	err = EncryptDatasourcePaswords(c, sqlstore)
 	assert.Nil(t, err)
 
 	//verify that no datasources still have password or basic_auth

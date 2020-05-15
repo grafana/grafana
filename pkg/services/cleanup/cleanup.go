@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -93,7 +93,7 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 }
 
 func (srv *CleanUpService) deleteExpiredSnapshots() {
-	cmd := m.DeleteExpiredSnapshotsCommand{}
+	cmd := models.DeleteExpiredSnapshotsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
@@ -102,7 +102,7 @@ func (srv *CleanUpService) deleteExpiredSnapshots() {
 }
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions() {
-	cmd := m.DeleteExpiredVersionsCommand{}
+	cmd := models.DeleteExpiredVersionsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
@@ -115,7 +115,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 		return
 	}
 
-	cmd := m.DeleteOldLoginAttemptsCommand{
+	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
 	if err := bus.Dispatch(&cmd); err != nil {

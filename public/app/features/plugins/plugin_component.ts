@@ -1,4 +1,4 @@
-import angular from 'angular';
+import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
@@ -16,7 +16,8 @@ function pluginDirectiveLoader(
   $rootScope: GrafanaRootScope,
   $http: any,
   $templateCache: any,
-  $timeout: any
+  $timeout: any,
+  $location: ILocationService
 ) {
   function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
@@ -145,11 +146,19 @@ function pluginDirectiveLoader(
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         const dsMeta = scope.ctrl.datasourceMeta;
+        const angularUrl = $location.url();
         return importDataSourcePlugin(dsMeta).then(dsPlugin => {
           scope.$watch(
             'ctrl.current',
             () => {
-              scope.onModelChanged(scope.ctrl.current);
+              // This watcher can trigger when we navigate away due to late digests
+              // This check is to stop onModelChanged from being called when navigating away
+              // as it triggers a redux action which comes before the angular $routeChangeSucces and
+              // This makes the bridgeSrv think location changed from redux before detecting it was actually
+              // changed from angular.
+              if (angularUrl === $location.url()) {
+                scope.onModelChanged(scope.ctrl.current);
+              }
             },
             true
           );

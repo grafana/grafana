@@ -45,7 +45,7 @@ The Dashboard Folder Page is similar to the Manage Dashboards page and is where 
 
 ## Permissions
 
-Permissions can assigned to a folder and inherited by the containing dashboards. An Access Control List (ACL) is used where
+Permissions can be assigned to a folder and inherited by the containing dashboards. An Access Control List (ACL) is used where
 **Organization Role**, **Team** and Individual **User** can be assigned permissions. Read the
  [Dashboard and Folder Permissions]({{< relref "../permissions/dashboard_folder_permissions.md" >}}) docs for more detail
  on the permission system.

@@ -1,12 +1,12 @@
 $input-border: 1px solid $input-border-color;
 
 .gf-form {
-  margin-bottom: $space-xxs;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   text-align: left;
   position: relative;
+  margin-bottom: $space-xs;
 
   &--offset-1 {
     margin-left: $spacer;
@@ -40,8 +40,7 @@ $input-border: 1px solid $input-border-color;
 
   .gf-form-input-icon {
     position: absolute;
-    top: 50%;
-    margin-top: -9px;
+    top: 8px;
     font-size: $font-size-lg;
     left: 10px;
     color: $input-color-placeholder;
@@ -84,12 +83,16 @@ $input-border: 1px solid $input-border-color;
   flex-wrap: wrap;
   align-content: flex-start;
 
-  .gf-form + .gf-form {
-    margin-left: $space-xs;
-  }
-
   &--nowrap {
     flex-wrap: nowrap;
+  }
+
+  .select-container {
+    margin-right: $space-xs;
+  }
+
+  .gf-form-spacing {
+    margin-right: $space-xs;
   }
 }
 
@@ -102,18 +105,19 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-label {
+  display: flex;
+  align-items: center;
   padding: $input-padding;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
   font-size: $font-size-sm;
-
   background-color: $input-label-bg;
-  display: block;
   height: $input-height;
-
-  border: $border-width solid $input-label-border-color;
-  border-right: none;
-  border-radius: $label-border-radius;
+  line-height: $input-height;
+  margin-right: $space-xs;
+  border-radius: $input-border-radius;
+  justify-content: space-between;
+  border: none;
 
   &--grow {
     flex-grow: 1;
@@ -130,17 +134,23 @@ $input-border: 1px solid $input-border-color;
     padding-left: 0px;
   }
 
+  &--variable {
+    color: $variable;
+    background: $panel-bg;
+    border: $panel-border;
+  }
+
+  &--justify-left {
+    justify-content: left;
+  }
+
   &--btn {
-    border-right: $border-width solid $input-label-border-color;
+    border: none;
     border-radius: $border-radius;
 
     &:hover {
       background: $list-item-hover-bg;
       color: $link-color;
-    }
-
-    .fa-caret-down {
-      padding-left: 4px;
     }
   }
 
@@ -154,13 +164,13 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-pre {
-  display: block;
+  display: block !important;
   flex-grow: 1;
   margin: 0;
   margin-right: $space-xs;
   border: $border-width solid transparent;
   border-left: none;
-  @include border-radius($label-border-radius-sm);
+  @include border-radius($input-border-radius);
 }
 
 .gf-form-textarea {
@@ -180,7 +190,7 @@ $input-border: 1px solid $input-border-color;
   background-clip: padding-box;
   border: $input-border;
   border-radius: $input-border-radius;
-  @include box-shadow($input-box-shadow);
+  margin-right: $space-xs;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -189,6 +199,8 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
+    padding: 6px $space-sm;
+    min-height: $input-height;
     height: auto;
   }
 
@@ -225,6 +237,9 @@ $input-border: 1px solid $input-border-color;
 
   &--dropdown {
     padding-right: $space-lg;
+    position: relative;
+    display: flex;
+    align-items: center;
 
     &::after {
       position: absolute;
@@ -267,6 +282,7 @@ $input-border: 1px solid $input-border-color;
 .gf-form-select-wrapper {
   position: relative;
   background-color: $input-bg;
+  margin-right: $space-xs;
 
   .gf-form-select-icon {
     position: absolute;
@@ -370,7 +386,6 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form-help-icon {
   flex-grow: 0;
-  padding-left: $spacer;
   color: $text-color-weak;
 
   &--bold {
@@ -381,7 +396,7 @@ $input-border: 1px solid $input-border-color;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 10px;
+    top: 6px;
   }
 
   &--right-normal {

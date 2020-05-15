@@ -1,12 +1,12 @@
 package dtos
 
-import m "github.com/grafana/grafana/pkg/models"
+import "github.com/grafana/grafana/pkg/models"
 
 type AddInviteForm struct {
-	LoginOrEmail string     `json:"loginOrEmail" binding:"Required"`
-	Name         string     `json:"name"`
-	Role         m.RoleType `json:"role" binding:"Required"`
-	SendEmail    bool       `json:"sendEmail"`
+	LoginOrEmail string          `json:"loginOrEmail" binding:"Required"`
+	Name         string          `json:"name"`
+	Role         models.RoleType `json:"role" binding:"Required"`
+	SendEmail    bool            `json:"sendEmail"`
 }
 
 type InviteInfo struct {

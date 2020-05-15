@@ -74,3 +74,12 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
     }
   }
 }
+
+/**
+ * Defines life cycle of a feature
+ * @internal
+ */
+export enum FeatureState {
+  alpha = 'alpha',
+  beta = 'beta',
+}

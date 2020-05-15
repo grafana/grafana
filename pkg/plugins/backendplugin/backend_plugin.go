@@ -1,25 +1,20 @@
 package backendplugin
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
-
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/expfmt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"net/http"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	plugin "github.com/hashicorp/go-plugin"
-	dto "github.com/prometheus/client_model/go"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // BackendPlugin a registered backend plugin.
@@ -31,7 +26,8 @@ type BackendPlugin struct {
 	client         *plugin.Client
 	logger         log.Logger
 	startFns       PluginStartFuncs
-	diagnostics    backend.DiagnosticsPlugin
+	diagnostics    DiagnosticsPlugin
+	resource       ResourcePlugin
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
@@ -50,7 +46,12 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 			return err
 		}
 
-		rawBackend, err := rpcClient.Dispense("backend")
+		rawResource, err := rpcClient.Dispense("resource")
+		if err != nil {
+			return err
+		}
+
+		rawData, err := rpcClient.Dispense("data")
 		if err != nil {
 			return err
 		}
@@ -60,25 +61,45 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 			return err
 		}
 
+		rawRenderer, err := rpcClient.Dispense("renderer")
+		if err != nil {
+			return err
+		}
+
 		if rawDiagnostics != nil {
-			if plugin, ok := rawDiagnostics.(backend.DiagnosticsPlugin); ok {
+			if plugin, ok := rawDiagnostics.(DiagnosticsPlugin); ok {
 				p.diagnostics = plugin
 			}
 		}
 
 		client = &Client{}
-		if rawBackend != nil {
-			if plugin, ok := rawBackend.(backend.BackendPlugin); ok {
-				client.BackendPlugin = plugin
+		if rawResource != nil {
+			if plugin, ok := rawResource.(ResourcePlugin); ok {
+				p.resource = plugin
+				client.ResourcePlugin = plugin
+			}
+		}
+
+		if rawData != nil {
+			if plugin, ok := rawData.(DataPlugin); ok {
+				client.DataPlugin = plugin
 			}
 		}
 
 		if rawTransform != nil {
-			if plugin, ok := rawTransform.(backend.TransformPlugin); ok {
+			if plugin, ok := rawTransform.(TransformPlugin); ok {
 				client.TransformPlugin = plugin
 			}
 		}
+
+		if rawRenderer != nil {
+			if plugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
+				client.RendererPlugin = plugin
+			}
+		}
 	} else {
+		p.logger.Warn("Plugin uses a deprecated version of Grafana's backend plugin system which will be removed in a future release. " +
+			"Consider upgrading to a newer plugin version or reach out to the plugin repository/developer and request an upgrade.")
 		raw, err := rpcClient.Dispense(p.id)
 		if err != nil {
 			return err
@@ -126,65 +147,60 @@ func (p *BackendPlugin) supportsDiagnostics() bool {
 }
 
 // CollectMetrics implements the collector.Collector interface.
-func (p *BackendPlugin) CollectMetrics(ctx context.Context, ch chan<- prometheus.Metric) error {
-	if p.diagnostics == nil {
-		return nil
-	}
-
-	if p.client == nil || p.client.Exited() {
-		return nil
-	}
-
-	res, err := p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetrics_Request{})
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() == codes.Unimplemented {
-				return nil
-			}
-		}
-
-		return err
-	}
-
-	if res == nil || res.Metrics == nil || res.Metrics.Prometheus == nil {
-		return nil
-	}
-
-	reader := bytes.NewReader(res.Metrics.Prometheus)
-	var parser expfmt.TextParser
-	families, err := parser.TextToMetricFamilies(reader)
-	if err != nil {
-		return errutil.Wrap("failed to parse collected metrics", err)
-	}
-
-	for _, mf := range families {
-		if mf.Help == nil {
-			help := fmt.Sprintf("Metric read from %s plugin", p.id)
-			mf.Help = &help
-		}
-	}
-
-	for _, mf := range families {
-		convertMetricFamily(p.id, mf, ch, p.logger)
-	}
-
-	return nil
-}
-
-func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_Response, error) {
+func (p *BackendPlugin) CollectMetrics(ctx context.Context) (*pluginv2.CollectMetricsResponse, error) {
 	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
-		return &pluginv2.CheckHealth_Response{
-			Status: pluginv2.CheckHealth_Response_UNKNOWN,
+		return &pluginv2.CollectMetricsResponse{
+			Metrics: &pluginv2.CollectMetricsResponse_Payload{},
 		}, nil
 	}
 
-	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealth_Request{})
+	var res *pluginv2.CollectMetricsResponse
+	err := InstrumentPluginRequest(p.id, "metrics", func() error {
+		var innerErr error
+		res, innerErr = p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
+
+		return innerErr
+	})
+
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
-				return &pluginv2.CheckHealth_Response{
-					Status: pluginv2.CheckHealth_Response_UNKNOWN,
-					Info:   "Health check not implemented",
+				return &pluginv2.CollectMetricsResponse{
+					Metrics: &pluginv2.CollectMetricsResponse_Payload{},
+				}, nil
+			}
+		}
+
+		return nil, err
+	}
+
+	return res, nil
+}
+
+var toProto = backend.ToProto()
+
+func (p *BackendPlugin) checkHealth(ctx context.Context, pCtx backend.PluginContext) (*pluginv2.CheckHealthResponse, error) {
+	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
+		return &pluginv2.CheckHealthResponse{
+			Status: pluginv2.CheckHealthResponse_UNKNOWN,
+		}, nil
+	}
+
+	protoContext := toProto.PluginContext(pCtx)
+
+	var res *pluginv2.CheckHealthResponse
+	err := InstrumentPluginRequest(p.id, "checkhealth", func() error {
+		var innerErr error
+		res, innerErr = p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{PluginContext: protoContext})
+		return innerErr
+	})
+
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.Unimplemented {
+				return &pluginv2.CheckHealthResponse{
+					Status:  pluginv2.CheckHealthResponse_UNKNOWN,
+					Message: "Health check not implemented",
 				}, nil
 			}
 		}
@@ -194,111 +210,31 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	return res, nil
 }
 
-// convertMetricFamily converts metric family to prometheus.Metric.
-// Copied from https://github.com/prometheus/node_exporter/blob/3ddc82c2d8d11eec53ed5faa8db969a1bb81f8bb/collector/textfile.go#L66-L165
-func convertMetricFamily(pluginID string, metricFamily *dto.MetricFamily, ch chan<- prometheus.Metric, logger log.Logger) {
-	var valType prometheus.ValueType
-	var val float64
+func (p *BackendPlugin) callResource(ctx context.Context, req *backend.CallResourceRequest) (callResourceResultStream, error) {
+	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
 
-	allLabelNames := map[string]struct{}{}
-	for _, metric := range metricFamily.Metric {
-		labels := metric.GetLabel()
-		for _, label := range labels {
-			if _, ok := allLabelNames[label.GetName()]; !ok {
-				allLabelNames[label.GetName()] = struct{}{}
-			}
-		}
+	if p.resource == nil || p.client == nil || p.client.Exited() {
+		return nil, errors.New("plugin not running, cannot call resource")
 	}
 
-	for _, metric := range metricFamily.Metric {
-		if metric.TimestampMs != nil {
-			logger.Warn("Ignoring unsupported custom timestamp on metric", "metric", metric)
-		}
+	protoReq := toProto.CallResourceRequest(req)
 
-		labels := metric.GetLabel()
-		var names []string
-		var values []string
-		for _, label := range labels {
-			names = append(names, label.GetName())
-			values = append(values, label.GetValue())
-		}
-		names = append(names, "plugin_id")
-		values = append(values, pluginID)
-
-		for k := range allLabelNames {
-			present := false
-			for _, name := range names {
-				if k == name {
-					present = true
-					break
-				}
-			}
-			if !present {
-				names = append(names, k)
-				values = append(values, "")
+	protoStream, err := p.resource.CallResource(ctx, protoReq)
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.Unimplemented {
+				return &singleCallResourceResult{
+					result: &CallResourceResult{
+						Status: http.StatusNotImplemented,
+					},
+				}, nil
 			}
 		}
 
-		metricName := prometheus.BuildFQName(collector.Namespace, "", *metricFamily.Name)
-
-		metricType := metricFamily.GetType()
-		switch metricType {
-		case dto.MetricType_COUNTER:
-			valType = prometheus.CounterValue
-			val = metric.Counter.GetValue()
-
-		case dto.MetricType_GAUGE:
-			valType = prometheus.GaugeValue
-			val = metric.Gauge.GetValue()
-
-		case dto.MetricType_UNTYPED:
-			valType = prometheus.UntypedValue
-			val = metric.Untyped.GetValue()
-
-		case dto.MetricType_SUMMARY:
-			quantiles := map[float64]float64{}
-			for _, q := range metric.Summary.Quantile {
-				quantiles[q.GetQuantile()] = q.GetValue()
-			}
-			ch <- prometheus.MustNewConstSummary(
-				prometheus.NewDesc(
-					metricName,
-					metricFamily.GetHelp(),
-					names, nil,
-				),
-				metric.Summary.GetSampleCount(),
-				metric.Summary.GetSampleSum(),
-				quantiles, values...,
-			)
-		case dto.MetricType_HISTOGRAM:
-			buckets := map[float64]uint64{}
-			for _, b := range metric.Histogram.Bucket {
-				buckets[b.GetUpperBound()] = b.GetCumulativeCount()
-			}
-			ch <- prometheus.MustNewConstHistogram(
-				prometheus.NewDesc(
-					metricName,
-					metricFamily.GetHelp(),
-					names, nil,
-				),
-				metric.Histogram.GetSampleCount(),
-				metric.Histogram.GetSampleSum(),
-				buckets, values...,
-			)
-		default:
-			logger.Error("unknown metric type", "type", metricType)
-			continue
-		}
-
-		if metricType == dto.MetricType_GAUGE || metricType == dto.MetricType_COUNTER || metricType == dto.MetricType_UNTYPED {
-			ch <- prometheus.MustNewConstMetric(
-				prometheus.NewDesc(
-					metricName,
-					metricFamily.GetHelp(),
-					names, nil,
-				),
-				valType, val, values...,
-			)
-		}
+		return nil, errutil.Wrap("Failed to call resource", err)
 	}
+
+	return &callResourceResultStreamImpl{
+		stream: protoStream,
+	}, nil
 }

@@ -1,6 +1,7 @@
-import config from 'app/core/config';
+import config from '../../core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
+import kbn from '../utils/kbn';
 
 export class User {
   id: number;
@@ -32,6 +33,7 @@ export class ContextSrv {
   isEditor: any;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
+  minRefreshInterval: string;
 
   constructor() {
     if (!config.bootData) {
@@ -43,6 +45,7 @@ export class ContextSrv {
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
+    this.minRefreshInterval = config.minRefreshInterval;
   }
 
   hasRole(role: string) {
@@ -51,6 +54,21 @@ export class ContextSrv {
 
   isGrafanaVisible() {
     return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
+  }
+
+  // checks whether the passed interval is longer than the configured minimum refresh rate
+  isAllowedInterval(interval: string) {
+    if (!config.minRefreshInterval) {
+      return true;
+    }
+    return kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshInterval);
+  }
+
+  getValidInterval(interval: string) {
+    if (!this.isAllowedInterval(interval)) {
+      return config.minRefreshInterval;
+    }
+    return interval;
   }
 
   hasAccessToExplore() {

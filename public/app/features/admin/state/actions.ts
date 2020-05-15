@@ -1,6 +1,6 @@
 import { updateLocation } from 'app/core/actions';
 import config from 'app/core/config';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { ThunkResult, LdapUser, UserSession, UserDTO } from 'app/types';
 
@@ -17,7 +17,11 @@ import {
   clearUserMappingInfoAction,
   clearUserErrorAction,
   ldapFailedAction,
+  usersFetched,
+  queryChanged,
+  pageChanged,
 } from './reducers';
+import { debounce } from 'lodash';
 
 // UserAdminPage
 
@@ -137,8 +141,8 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
       return {
         id: session.id,
         isActive: session.isActive,
-        seenAt: dateTime(session.seenAt).fromNow(),
-        createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+        seenAt: dateTimeFormatTimeAgo(session.seenAt),
+        createdAt: dateTimeFormat(session.createdAt, { format: 'MMMM DD, YYYY' }),
         clientIp: session.clientIp,
         browser: session.browser,
         browserVersion: session.browserVersion,
@@ -237,5 +241,35 @@ export function clearUserMappingInfo(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearUserErrorAction());
     dispatch(clearUserMappingInfoAction());
+  };
+}
+
+// UserListAdminPage
+
+export function fetchUsers(): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    try {
+      const { perPage, page, query } = getState().userListAdmin;
+      const result = await getBackendSrv().get(`/api/users/search?perpage=${perPage}&page=${page}&query=${query}`);
+      dispatch(usersFetched(result));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
+
+const fetchUsersWithDebounce = debounce(dispatch => dispatch(fetchUsers()), 500);
+
+export function changeQuery(query: string): ThunkResult<void> {
+  return async dispatch => {
+    dispatch(queryChanged(query));
+    fetchUsersWithDebounce(dispatch);
+  };
+}
+
+export function changePage(page: number): ThunkResult<void> {
+  return async dispatch => {
+    dispatch(pageChanged(page));
+    dispatch(fetchUsers());
   };
 }

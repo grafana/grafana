@@ -1,25 +1,29 @@
 import _ from 'lodash';
 import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from './constants';
 import { SelectableValue } from '@grafana/data';
+import StackdriverDatasource from './datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { StackdriverQuery } from './types';
+import { MetricDescriptor, Filter, MetricQuery } from './types';
 
-export const extractServicesFromMetricDescriptors = (metricDescriptors: any) => _.uniqBy(metricDescriptors, 'service');
+export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
+  _.uniqBy(metricDescriptors, 'service');
 
-export const getMetricTypesByService = (metricDescriptors: any, service: any) =>
-  metricDescriptors.filter((m: any) => m.service === service);
+export const getMetricTypesByService = (metricDescriptors: MetricDescriptor[], service: string) =>
+  metricDescriptors.filter((m: MetricDescriptor) => m.service === service);
 
 export const getMetricTypes = (
-  metricDescriptors: any[],
+  metricDescriptors: MetricDescriptor[],
   metricType: string,
-  interpolatedMetricType: any,
-  selectedService: any
+  interpolatedMetricType: string,
+  selectedService: string
 ) => {
   const metricTypes = getMetricTypesByService(metricDescriptors, selectedService).map((m: any) => ({
     value: m.type,
     name: m.displayName,
   }));
-  const metricTypeExistInArray = metricTypes.some((m: any) => m.value === interpolatedMetricType);
+  const metricTypeExistInArray = metricTypes.some(
+    (m: { value: string; name: string }) => m.value === interpolatedMetricType
+  );
   const selectedMetricType = metricTypeExistInArray ? metricType : metricTypes[0].value;
   return {
     metricTypes,
@@ -27,11 +31,14 @@ export const getMetricTypes = (
   };
 };
 
-export const getAlignmentOptionsByMetric = (metricValueType: any, metricKind: any) => {
+export const getAlignmentOptionsByMetric = (metricValueType: string, metricKind: string) => {
   return !metricValueType
     ? []
     : alignOptions.filter(i => {
-        return i.valueTypes.indexOf(metricValueType) !== -1 && i.metricKinds.indexOf(metricKind) !== -1;
+        return (
+          i.valueTypes.indexOf(metricValueType as ValueTypes) !== -1 &&
+          i.metricKinds.indexOf(metricKind as MetricKind) !== -1
+        );
       });
 };
 
@@ -43,21 +50,25 @@ export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind:
       });
 };
 
-export const getLabelKeys = async (datasource: any, selectedMetricType: any) => {
+export const getLabelKeys = async (
+  datasource: StackdriverDatasource,
+  selectedMetricType: string,
+  projectName: string
+) => {
   const refId = 'handleLabelKeysQuery';
-  const labels = await datasource.getLabels(selectedMetricType, refId);
+  const labels = await datasource.getLabels(selectedMetricType, refId, projectName);
   return [...Object.keys(labels), ...systemLabels];
 };
 
 export const getAlignmentPickerData = (
-  { valueType, metricKind, perSeriesAligner }: Partial<StackdriverQuery>,
+  { valueType, metricKind, perSeriesAligner }: Partial<MetricQuery>,
   templateSrv: TemplateSrv
 ) => {
-  const alignOptions = getAlignmentOptionsByMetric(valueType, metricKind).map(option => ({
+  const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!).map(option => ({
     ...option,
     label: option.text,
   }));
-  if (!alignOptions.some(o => o.value === templateSrv.replace(perSeriesAligner))) {
+  if (!alignOptions.some((o: { value: string }) => o.value === templateSrv.replace(perSeriesAligner!))) {
     perSeriesAligner = alignOptions.length > 0 ? alignOptions[0].value : '';
   }
   return { alignOptions, perSeriesAligner };
@@ -81,4 +92,36 @@ export const labelsToGroupedOptions = (groupBys: string[]) => {
   return Object.entries(groups).map(([label, options]) => ({ label, options, expanded: true }), []);
 };
 
+export const filtersToStringArray = (filters: Filter[]) => {
+  const strArr = _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition]));
+  return strArr.filter((_, i) => i !== strArr.length - 1);
+};
+
+export const stringArrayToFilters = (filterArray: string[]) =>
+  _.chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
+    key,
+    operator,
+    value,
+    condition,
+  }));
+
 export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);
+
+export const formatStackdriverError = (error: any) => {
+  let message = error.statusText ?? '';
+  if (error.data && error.data.error) {
+    try {
+      const res = JSON.parse(error.data.error);
+      message += res.error.code + '. ' + res.error.message;
+    } catch (err) {
+      message += error.data.error;
+    }
+  } else if (error.data && error.data.message) {
+    try {
+      message = JSON.parse(error.data.message).error.message;
+    } catch (err) {
+      error.error;
+    }
+  }
+  return message;
+};

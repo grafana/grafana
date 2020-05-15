@@ -1,24 +1,38 @@
-import set from 'lodash/set';
 import {
-  GrafanaTheme,
   DynamicConfigValue,
   FieldConfig,
-  InterpolateFunction,
   DataFrame,
   Field,
   FieldType,
-  FieldConfigSource,
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
+  FieldOverrideContext,
+  ScopedVars,
+  ApplyFieldOverrideOptions,
+  FieldConfigPropertyItem,
+  LinkModel,
+  InterpolateFunction,
+  ValueLinkConfig,
+  GrafanaTheme,
   TimeZone,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
-import toNumber from 'lodash/toNumber';
+import set from 'lodash/set';
+import unset from 'lodash/unset';
+import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { DataLinkBuiltInVars, locationUtil } from '../utils';
+import { formattedValueToString } from '../valueFormats';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
+import { formatLabels } from '../utils/labels';
+import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
+import { getTimeField } from '../dataframe/processDataFrame';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -30,20 +44,12 @@ interface GlobalMinMax {
   max: number;
 }
 
-export interface ApplyFieldOverrideOptions {
-  data?: DataFrame[];
-  fieldOptions: FieldConfigSource;
-  replaceVariables: InterpolateFunction;
-  theme: GrafanaTheme;
-  timeZone?: TimeZone;
-  autoMinMax?: boolean;
-}
-
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
   let min = Number.MAX_VALUE;
   let max = Number.MIN_VALUE;
 
   const reducers = [ReducerID.min, ReducerID.max];
+
   for (const frame of data) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
@@ -69,10 +75,12 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     return [];
   }
 
-  const source = options.fieldOptions;
+  const source = options.fieldConfig;
   if (!source) {
     return options.data;
   }
+
+  const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let range: GlobalMinMax | undefined = undefined;
 
@@ -91,29 +99,49 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   }
 
   return options.data.map((frame, index) => {
-    let name = frame.name;
-    if (!name) {
-      name = `Series[${index}]`;
-    }
+    const scopedVars: ScopedVars = {
+      __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
+    };
 
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
-      const config: FieldConfig = { ...field.config } || {};
-      if (field.type === FieldType.number) {
-        setFieldConfigDefaults(config, source.defaults);
-      }
+      const fieldScopedVars = { ...scopedVars };
+      const displayName = getFieldDisplayName(field, frame, options.data);
+
+      fieldScopedVars['__field'] = {
+        text: 'Field',
+        value: {
+          name: displayName, // Generally appropriate (may include the series name if useful)
+          labels: formatLabels(field.labels!),
+          label: field.labels,
+        },
+      };
+
+      field.state = {
+        ...field.state,
+        scopedVars: fieldScopedVars,
+        displayName,
+      };
+
+      const config: FieldConfig = { ...field.config };
+      const context = {
+        field,
+        data: options.data!,
+        dataFrameIndex: index,
+        replaceVariables: options.replaceVariables,
+        fieldConfigRegistry: fieldConfigRegistry,
+      };
+
+      // Anything in the field config that's not set by the datasource
+      // will be filled in by panel's field configuration
+      setFieldConfigDefaults(config, source.defaults, context);
 
       // Find any matching rules and then override
       for (const rule of override) {
-        if (rule.match(field)) {
+        if (rule.match(field, frame, options.data!)) {
           for (const prop of rule.properties) {
-            setDynamicConfigValue(config, {
-              value: prop,
-              config,
-              field,
-              data: frame,
-              replaceVariables: options.replaceVariables,
-            });
+            // config.scopedVars is set already here
+            setDynamicConfigValue(config, prop, context);
           }
         }
       }
@@ -164,82 +192,108 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         ...field,
         config,
         type,
+        state: {
+          ...field.state,
+          displayName: null,
+        },
       };
+
       // and set the display processor using it
       f.display = getDisplayProcessor({
         field: f,
         theme: options.theme,
         timeZone: options.timeZone,
       });
+
+      // Attach data links supplier
+      f.getLinks = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
+        theme: options.theme,
+        timeZone: options.timeZone,
+      });
+
       return f;
     });
 
     return {
       ...frame,
       fields,
-      name,
     };
   });
 }
 
-interface DynamicConfigValueOptions {
-  value: DynamicConfigValue;
-  config: FieldConfig;
-  field: Field;
-  data: DataFrame;
-  replaceVariables: InterpolateFunction;
+export interface FieldOverrideEnv extends FieldOverrideContext {
+  fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
-const numericFieldProps: any = {
-  decimals: true,
-  min: true,
-  max: true,
-};
-
-function prepareConfigValue(key: string, input: any, options?: DynamicConfigValueOptions): any {
-  if (options) {
-    // TODO template variables etc
+export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+  const reg = context.fieldConfigRegistry;
+  const item = reg.getIfExists(value.id);
+  if (!item || !item.shouldApply(context.field!)) {
+    return;
   }
 
-  if (numericFieldProps[key]) {
-    const num = toNumber(input);
-    if (isNaN(num)) {
-      return null;
-    }
-    return num;
-  } else if (input) {
-    // skips empty string
-    if (key === 'unit' && input === 'none') {
-      return null;
-    }
-  }
-  return input;
-}
+  const val = item.process(value.value, context, item.settings);
 
-export function setDynamicConfigValue(config: FieldConfig, options: DynamicConfigValueOptions) {
-  const { value } = options;
-  const v = prepareConfigValue(value.path, value.value, options);
-  set(config, value.path, v);
-}
+  const remove = val === undefined || val === null;
 
-/**
- * For numeric values, only valid numbers will be applied
- * for units, 'none' will be skipped
- */
-export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig) {
-  if (props) {
-    const keys = Object.keys(props);
-    for (const key of keys) {
-      const val = prepareConfigValue(key, (props as any)[key]);
-      if (val === null || val === undefined) {
-        continue;
+  if (remove) {
+    if (item.isCustom && config.custom) {
+      unset(config.custom, item.path);
+    } else {
+      unset(config, item.path);
+    }
+  } else {
+    if (item.isCustom) {
+      if (!config.custom) {
+        config.custom = {};
       }
-      set(config, key, val);
+      set(config.custom, item.path, val);
+    } else {
+      set(config, item.path, val);
     }
+  }
+}
+
+// config -> from DS
+// defaults -> from Panel config
+export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
+  for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
+    if (fieldConfigProperty.isCustom && !config.custom) {
+      config.custom = {};
+    }
+    processFieldConfigValue(
+      fieldConfigProperty.isCustom ? config.custom : config,
+      fieldConfigProperty.isCustom ? defaults.custom : defaults,
+      fieldConfigProperty,
+      context
+    );
   }
 
   validateFieldConfig(config);
 }
+
+const processFieldConfigValue = (
+  destination: Record<string, any>, // it's mutable
+  source: Record<string, any>,
+  fieldConfigProperty: FieldConfigPropertyItem,
+  context: FieldOverrideEnv
+) => {
+  const currentConfig = get(destination, fieldConfigProperty.path);
+
+  if (currentConfig === null || currentConfig === undefined) {
+    const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+    if (!item) {
+      return;
+    }
+
+    if (item && item.shouldApply(context.field!)) {
+      const val = item.process(get(source, item.path), context, item.settings);
+      if (val !== undefined && val !== null) {
+        set(destination, item.path, val);
+      }
+    }
+  }
+};
 
 /**
  * This checks that all options on FieldConfig make sense.  It mutates any value that needs
@@ -288,3 +342,85 @@ export function validateFieldConfig(config: FieldConfig) {
     config.min = tmp;
   }
 }
+
+const getLinksSupplier = (
+  frame: DataFrame,
+  field: Field,
+  fieldScopedVars: ScopedVars,
+  replaceVariables: InterpolateFunction,
+  options: {
+    theme: GrafanaTheme;
+    timeZone?: TimeZone;
+  }
+) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {
+  if (!field.config.links || field.config.links.length === 0) {
+    return [];
+  }
+  const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
+  const { timeField } = getTimeField(frame);
+
+  return field.config.links.map(link => {
+    let href = link.url;
+    let dataFrameVars = {};
+    let valueVars = {};
+
+    const info: LinkModel<Field> = {
+      href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
+      title: replaceVariables(link.title || ''),
+      target: link.targetBlank ? '_blank' : '_self',
+      origin: field,
+    };
+
+    const variablesQuery = locationUtil.getVariablesUrlParams();
+
+    // We are not displaying reduction result
+    if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+      const fieldsProxy = getFieldDisplayValuesProxy(frame, config.valueRowIndex, options);
+      valueVars = {
+        raw: field.values.get(config.valueRowIndex),
+        numeric: fieldsProxy[field.name].numeric,
+        text: fieldsProxy[field.name].text,
+        time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
+      };
+      dataFrameVars = {
+        __data: {
+          value: {
+            name: frame.name,
+            refId: frame.refId,
+            fields: fieldsProxy,
+          },
+          text: 'Data',
+        },
+      };
+    } else {
+      if (config.calculatedValue) {
+        valueVars = {
+          raw: config.calculatedValue.numeric,
+          numeric: config.calculatedValue.numeric,
+          text: formattedValueToString(config.calculatedValue),
+        };
+      }
+    }
+
+    info.href = replaceVariables(info.href, {
+      ...fieldScopedVars,
+      __value: {
+        text: 'Value',
+        value: valueVars,
+      },
+      ...dataFrameVars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    });
+
+    info.href = locationUtil.processUrl(info.href);
+
+    return info;
+  });
+};

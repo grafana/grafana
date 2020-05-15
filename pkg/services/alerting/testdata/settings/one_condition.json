@@ -1,0 +1,38 @@
+{
+    "conditions": [
+        {
+            "evaluator": {
+                "params": [
+                    60
+                ],
+                "type": "gt"
+            },
+            "query": {
+                "datasourceId": 3,
+                "model": {
+                    "refId": "A",
+                    "scenario": "random_walk",
+                    "scenarioId": "csv_metric_values",
+                    "stringInput": "1,20,90,30,5,0",
+                    "target": ""
+                },
+                "params": [
+                    "A",
+                    "5m",
+                    "now"
+                ]
+            },
+            "reducer": {
+                "params": [],
+                "type": "avg"
+            },
+            "type": "query"
+        }
+    ],
+    "enabled": true,
+    "frequency": "60s",
+    "handler": 1,
+    "name": "TestData - Always OK",
+    "noDataState": "no_data",
+    "notifications": []
+}
