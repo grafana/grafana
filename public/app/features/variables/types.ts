@@ -1,4 +1,3 @@
-import { assignModelProperties } from 'app/core/utils/model_utils';
 import { Deferred } from '../../core/utils/deferred';
 import { VariableModel as BaseVariableModel } from '@grafana/data';
 
@@ -100,26 +99,3 @@ export interface VariableModel extends BaseVariableModel {
   index?: number;
   initLock?: Deferred | null;
 }
-
-export interface VariableActions {
-  setValue(option: any): any;
-  updateOptions(searchFilter?: string): any;
-  dependsOn(variable: any): any;
-  setValueFromUrl(urlValue: any): any;
-  getValueForUrl(): any;
-  getSaveModel(): any;
-}
-
-export type CtorType = new (...args: any[]) => {};
-
-export interface VariableTypes {
-  [key: string]: {
-    name: string;
-    ctor: CtorType;
-    description: string;
-    supportsMulti?: boolean;
-  };
-}
-
-export let variableTypes: VariableTypes = {};
-export { assignModelProperties };

@@ -20,7 +20,6 @@ import {
 import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
-import { getConfig } from '../../../core/config';
 import { completeDashboardTemplating, initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 
@@ -178,11 +177,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
-      if (getConfig().featureToggles.newVariables) {
-        dispatch(initDashboardTemplating(dashboard.templating.list));
-        await dispatch(processVariables());
-        dispatch(completeDashboardTemplating(dashboard));
-      }
+      dispatch(initDashboardTemplating(dashboard.templating.list));
+      await dispatch(processVariables());
+      dispatch(completeDashboardTemplating(dashboard));
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
       console.log(err);

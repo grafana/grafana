@@ -38,7 +38,6 @@ interface ScenarioContext {
   timeSrv: any;
   annotationsSrv: any;
   unsavedChangesSrv: any;
-  variableSrv: any;
   dashboardSrv: any;
   loaderSrv: any;
   keybindingSrv: any;
@@ -55,7 +54,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     const timeSrv = { init: jest.fn() };
     const annotationsSrv = { init: jest.fn() };
     const unsavedChangesSrv = { init: jest.fn() };
-    const variableSrv = { init: jest.fn() };
     const dashboardSrv = { setCurrent: jest.fn() };
     const keybindingSrv = { setupDashboardBindings: jest.fn() };
     const loaderSrv = {
@@ -102,8 +100,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             return unsavedChangesSrv;
           case 'dashboardSrv':
             return dashboardSrv;
-          case 'variableSrv':
-            return variableSrv;
           case 'keybindingSrv':
             return keybindingSrv;
           default:
@@ -125,7 +121,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       timeSrv,
       annotationsSrv,
       unsavedChangesSrv,
-      variableSrv,
       dashboardSrv,
       keybindingSrv,
       loaderSrv,
@@ -197,13 +192,6 @@ describeInitScenario('Initializing new dashboard', ctx => {
     expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
   });
-
-  it('Should initialize variableSrv if newVariables is disabled', () => {
-    if (getConfig().featureToggles.newVariables) {
-      return expect.assertions(0);
-    }
-    expect(ctx.variableSrv.init).toBeCalled();
-  });
 });
 
 describeInitScenario('Initializing home dashboard', ctx => {
@@ -270,17 +258,7 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
   });
 
-  it('Should initialize variableSrv if newVariables is disabled', () => {
-    if (getConfig().featureToggles.newVariables) {
-      return expect.assertions(0);
-    }
-    expect(ctx.variableSrv.init).toBeCalled();
-  });
-
   it('Should initialize redux variables if newVariables is enabled', () => {
-    if (!getConfig().featureToggles.newVariables) {
-      return expect.assertions(0);
-    }
     expect(ctx.actions[3].type).toBe(addVariable.type);
   });
 });
