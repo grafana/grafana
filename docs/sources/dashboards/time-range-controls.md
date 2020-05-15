@@ -43,7 +43,7 @@ The options are defined below.
 
 The current time range, also called the _time picker_, shows the time range currently displayed in the dashboard or panel you are viewing.
 
-Hover your curser over the field to see the exact time stamps in the range and their source (such as the local browser).
+Hover your cursor over the field to see the exact time stamps in the range and their source (such as the local browser).
 
 <img class="no-shadow" src="/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
 
@@ -71,7 +71,7 @@ Select the relative time range from the **Relative time ranges** list. Some exam
 Set an absolute time range one of two ways:
 
 - Type values into the **From** and **To** fields. You can type exact time values or relative values, such as `now-24h`, and then click **Apply time range**.
-- Click in the **From** or **To** field. Grafana displays a calender. Click the day or days you want to use as the current time range and then click **Apply time range**.
+- Click in the **From** or **To** field. Grafana displays a calendar. Click the day or days you want to use as the current time range and then click **Apply time range**.
 
 This section also displays recently used absolute ranges.
 
