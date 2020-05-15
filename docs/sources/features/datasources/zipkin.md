@@ -46,7 +46,7 @@ Use the trace selector to pick particular trace from all traces logged in the ti
 
 TODO: screenshot trace selector opened up
 
-## Data mapping in trace ui
+## Data mapping in the trace UI
 
 Zipkin annotations are shown in the trace view as logs with annotation value shown under annotation key.
 
