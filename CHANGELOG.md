@@ -194,6 +194,7 @@ We have also extended the time zone options so you can select any of the standar
 - **Tracing**: Fix view bounds after trace change. [#23994](https://github.com/grafana/grafana/pull/23994), [@aocenas](https://github.com/aocenas)
 - **Variables**: Migrates old tags format for consistency. [#24276](https://github.com/grafana/grafana/pull/24276), [@hugohaggmark](https://github.com/hugohaggmark)
 - **Reporting**: Update report schedule as soon as a report is updated (Enterprise)
+- **White-labeling**: Makes login title and subtitle configurable (Enterprise)
 
 # 7.0.0-beta1 (2020-04-28)
 
