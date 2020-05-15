@@ -549,7 +549,7 @@ File path to a cert file, defaults to `empty`
 File path to a key file, defaults to `empty`
 
 ### skip_verify
-Verify SSL for smtp server? defaults to `false`
+Verify SSL for SMTP server? defaults to `false`
 
 ### from_address
 Address used when sending out emails, defaults to `admin@grafana.localhost`
