@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { useMemo, useCallback, FC } from 'react';
 import _ from 'lodash';
 
 import { LegacyForms } from '@grafana/ui';
@@ -16,33 +16,11 @@ export interface Props {
   variables?: Variable[];
 }
 
-export const getSelectedOption = (options: Array<SelectableValue<string>>, value: string) => {
-  const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
-  return allOptions.find(option => option.value === value);
-};
-
-export const buildOptions = ({ variables = [], options }: Props) => {
-  return variables.length
-    ? [
-        {
-          label: 'Template Variables',
-          options: variables.map(({ name }) => ({
-            label: `$${name}`,
-            value: `$${name}`,
-          })),
-        },
-        ...options,
-      ]
-    : options;
-};
-
-export const compareFn = (nextProps: Props, prevProps: Props) => {
-  return nextProps.value === prevProps.value || !_.isEqual(buildOptions(nextProps), buildOptions(prevProps));
-};
-
-export const MetricSelect = memo<Props>(props => {
+export const MetricSelect: FC<Props> = props => {
   const { value, placeholder, className, isSearchable, onChange } = props;
-  const opts = buildOptions(props);
+  const options = useSelectOptions(props);
+  const selected = useSelectedOption(options, value);
+  const onChangeValue = useCallback((selectable: SelectableValue<string>) => onChange(selectable.value), [onChange]);
 
   return (
     <Select
@@ -50,13 +28,39 @@ export const MetricSelect = memo<Props>(props => {
       isMulti={false}
       isClearable={false}
       backspaceRemovesValue={false}
-      onChange={item => onChange(item.value)}
-      options={opts}
+      onChange={onChangeValue}
+      options={options}
       isSearchable={isSearchable}
       maxMenuHeight={500}
       placeholder={placeholder}
       noOptionsMessage={() => 'No options found'}
-      value={getSelectedOption(opts, value)}
+      value={selected}
     />
   );
-}, compareFn);
+};
+
+const useSelectOptions = ({ variables = [], options }: Props): Array<SelectableValue<string>> => {
+  return useMemo(() => {
+    if (!Array.isArray(variables) || variables.length === 0) {
+      return options;
+    }
+
+    return [
+      {
+        label: 'Template Variables',
+        options: variables.map(({ name }) => ({
+          label: `$${name}`,
+          value: `$${name}`,
+        })),
+      },
+      ...options,
+    ];
+  }, [variables, options]);
+};
+
+const useSelectedOption = (options: Array<SelectableValue<string>>, value: string): SelectableValue<string> => {
+  return useMemo(() => {
+    const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
+    return allOptions.find(option => option.value === value);
+  }, [options, value]);
+};
