@@ -44,7 +44,7 @@ Standard field options are:
 
 You can apply standard field options to the following panel visualizations:
 
-- Bar gauge
+- [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
 - Gauge
 - Stat
 - Table
