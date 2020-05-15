@@ -99,9 +99,9 @@ allowed_organizations =
     client_id = <client id>
     client_secret = <client secret>
     scopes = openid email name
-    auth_url = https://<onelogin domain>.onelogin.com/oidc/auth
-    token_url = https://<onelogin domain>.onelogin.com/oidc/token
-    api_url = https://<onelogin domain>.onelogin.com/oidc/me
+    auth_url = https://<onelogin domain>.onelogin.com/oidc/2/auth
+    token_url = https://<onelogin domain>.onelogin.com/oidc/2/token
+    api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
     team_ids =
     allowed_organizations =
     ```
