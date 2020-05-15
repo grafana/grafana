@@ -138,7 +138,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Find any matching rules and then override
       for (const rule of override) {
-        if (rule.match(field)) {
+        if (rule.match(field, frame, options.data!)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);

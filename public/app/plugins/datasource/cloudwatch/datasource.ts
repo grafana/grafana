@@ -45,10 +45,15 @@ import { from, empty, Observable } from 'rxjs';
 import { delay, expand, map, mergeMap, tap, finalize, catchError } from 'rxjs/operators';
 import { CloudWatchLanguageProvider } from './language_provider';
 
-const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
 import { VariableWithMultiSupport } from 'app/features/templating/types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { AwsUrl, encodeUrl } from './aws_url';
+
+const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
+
+// Constants also defined in tsdb/cloudwatch/cloudwatch.go
+const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
+const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -348,12 +353,12 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     let logField = null;
 
     for (const field of row.dataFrame.fields) {
-      if (field.name === '@logStream') {
+      if (field.name === LOGSTREAM_IDENTIFIER_INTERNAL) {
         logStreamField = field;
         if (logField !== null) {
           break;
         }
-      } else if (field.name === '@log') {
+      } else if (field.name === LOG_IDENTIFIER_INTERNAL) {
         logField = field;
         if (logStreamField !== null) {
           break;
@@ -577,6 +582,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     if (makeReplacements) {
       requestParams.queries.forEach(query => {
+        if (query.hasOwnProperty('queryString')) {
+          query.queryString = this.replace(query.queryString, scopedVars, true);
+        }
         query.region = this.replace(query.region, scopedVars, true, 'region');
         query.region = this.getActualRegion(query.region);
       });

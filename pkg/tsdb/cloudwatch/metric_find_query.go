@@ -471,11 +471,11 @@ func (e *CloudWatchExecutor) ensureClientSession(region string) error {
 		dsInfo := e.getDsInfo(region)
 		cfg, err := getAwsConfig(dsInfo)
 		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
+			return fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
 		}
 		sess, err := session.NewSession(cfg)
 		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %v", err)
+			return fmt.Errorf("Failed to call ec2:NewSession, %w", err)
 		}
 		e.ec2Svc = ec2.New(sess, cfg)
 	}
@@ -597,11 +597,11 @@ func (e *CloudWatchExecutor) ensureRGTAClientSession(region string) error {
 		dsInfo := e.getDsInfo(region)
 		cfg, err := getAwsConfig(dsInfo)
 		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
+			return fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
 		}
 		sess, err := session.NewSession(cfg)
 		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %v", err)
+			return fmt.Errorf("Failed to call ec2:NewSession, %w", err)
 		}
 		e.rgtaSvc = resourcegroupstaggingapi.New(sess, cfg)
 	}
@@ -677,7 +677,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 			return !lastPage
 		})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to call cloudwatch:ListMetrics, %v", err)
+		return nil, fmt.Errorf("Failed to call cloudwatch:ListMetrics, %w", err)
 	}
 
 	return &resp, nil
@@ -699,7 +699,7 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call ec2:DescribeInstances")
+		return nil, fmt.Errorf("Failed to call ec2:DescribeInstances, %w", err)
 	}
 
 	return &resp, nil
@@ -721,7 +721,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call tags:GetResources")
+		return nil, fmt.Errorf("Failed to call tags:GetResources, %w", err)
 	}
 
 	return &resp, nil

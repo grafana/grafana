@@ -71,7 +71,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
               query={query.query}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a Lucene query"
+              placeholder="Enter a Lucene query (run with Shift+Enter)"
               portalOrigin="elasticsearch"
               syntaxLoaded={syntaxLoaded}
             />

@@ -50,7 +50,7 @@ interface State {
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv = backendSrv;
-  querySubscription: Unsubscribable;
+  querySubscription: Unsubscribable | null;
 
   state: State = {
     isLoadingHelp: false,
@@ -71,7 +71,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
 
-    this.querySubscription = queryRunner.getData(false).subscribe({
+    this.querySubscription = queryRunner.getData({ withTransforms: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 

@@ -38,9 +38,12 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   const columns: Column[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
-  for (let fieldIndex = 0; fieldIndex < data.fields.length; fieldIndex++) {
-    const field = data.fields[fieldIndex];
+  for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+
+    if (fieldTableOptions.hidden) {
+      continue;
+    }
 
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;

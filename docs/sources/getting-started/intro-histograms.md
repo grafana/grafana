@@ -24,7 +24,7 @@ most values land between 240-300 with a peak between 260-280.
 
 ![](/img/docs/v43/heatmap_histogram.png)
 
-Histograms only look at _value distributions_ over a specific time range. The problem with histograms is you cannot see any trend or changes in the distribution over time.
+Histograms only look at _value distributions_ over a specific time range. The problem with histograms is you cannot see any trends or changes in the distribution over time.
 This is where heatmaps become useful.
 
 ## Heatmaps

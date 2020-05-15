@@ -23,8 +23,8 @@ The Grafana 7.0 stable release is scheduled for the 18th of May. In the meantime
 The main highlights are:
 
 - [**New Panel Editor** Redesign based on community feedback.]({{< relref "#new-panel-editor" >}})
-- [**Explore:** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
-- [**Enterprise** Usage Analytics and Presence.]({{< relref "#grafana-enterprise" >}})
+- [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
+- [**Enterprise** Usage insights, Presence indicator, and Auth improvements.]({{< relref "#grafana-enterprise" >}})
 - [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
 - [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-overrides" >}})
 - [**Table** New Table panel.]({{< relref "#table-panel" >}})
@@ -37,6 +37,8 @@ The main highlights are:
 ## New panel editor
 
 We redesigned the UI for editing panels. We separated panel display settings to a right-hand side pane that you can collapse or expand depending on what your focus is on. With this change we are also introducing our new unified option model and UI for defining data configuration and display options. This unified data configuration system powers a consistent UI for setting data options across visualizations and making all data display settings data-driven and overridable.
+
+Learn more about this feature in [Panel editor]({{< relref "../panels/panel-editor.md" >}}).
 
 ## New tracing UI
 
@@ -66,7 +68,9 @@ The [Google Sheets data source](https://grafana.com/grafana/plugins/grafana-goog
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another another and add the result to a new field.
 
-## Field overrides
+Learn more about this feature in [Transformations]({{< relref "../panels/transformations.md" >}}).
+
+## Field configuration options and overrides
 
 With Grafana 7.0 we are introducing a new, unified data configuration system that powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable. This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals` or `value mappings`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
@@ -74,13 +78,15 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
+Learn more about this feature in [Field configuration options]({{< relref "../panels/field-configuration-options.md" >}}).
+
 ## Inspect panels and export data to CSV
 
 {{< docs-imagebox img="/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
 
 Another new feature of Grafana 7.0 is the panel inspector. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
 
-Learn more about this feature in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}})
+Learn more about this feature in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}}).
 
 <div class="clearfix"></div>
 
@@ -105,6 +111,8 @@ Grafana 7.0 adds logging support to one of our most popular cloud provider data 
 ## Plugins platform
 
 The platform for plugins has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation and new components will improve plugin quality and reduce long-term maintenance. We are seeing already that a a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
+
+Learn more about developing plugins in the new framework in [Build a plugin]({{< relref "../developers/plugins/_index.md" >}}).
 
 ### Front end plugins platform
 
@@ -180,11 +188,19 @@ This includes problems like:
 
 {{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
 
-### Usage analytics and presence
+### Usage insights and Presence indicator
 
 This release includes a series of features that build on our new usage analytics engine. Features like improved dashboard search to sort dashboards by usage and errors. When a user opens a dashboard, they will see a presence indicator of who else is viewing the same dashboard. And finally open a dashboard usage stats drawer to view recent dashboard usage.
 
-{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence Indicator" >}}
+{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
+
+### SAML Role and Team Sync
+
+SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [SAML team sync documentation]({{< relref "../enterprise/saml.md#configure-team-sync" >}}).
+
+### Okta OAuth Team Sync
+
+Okta gets its own provider which adds support for Team Sync. Read more about it in the [Okta documentation]({{< relref "../auth/okta.md" >}}).
 
 ## Upgrading
 
