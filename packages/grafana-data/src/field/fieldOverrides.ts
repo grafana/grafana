@@ -31,7 +31,7 @@ import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
-import { getFrameDisplayTitle, getFieldTitle } from './fieldState';
+import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 
 interface OverrideProps {
@@ -100,18 +100,18 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
   return options.data.map((frame, index) => {
     const scopedVars: ScopedVars = {
-      __series: { text: 'Series', value: { name: getFrameDisplayTitle(frame, index) } }, // might be missing
+      __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
 
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const fieldScopedVars = { ...scopedVars };
-      const title = getFieldTitle(field, frame, options.data);
+      const displayName = getFieldDisplayName(field, frame, options.data);
 
       fieldScopedVars['__field'] = {
         text: 'Field',
         value: {
-          name: title, // Generally appropriate (may include the series name if useful)
+          name: displayName, // Generally appropriate (may include the series name if useful)
           labels: formatLabels(field.labels!),
           label: field.labels,
         },
@@ -119,8 +119,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       field.state = {
         ...field.state,
-        title: title,
         scopedVars: fieldScopedVars,
+        displayName,
       };
 
       const config: FieldConfig = { ...field.config };
@@ -138,7 +138,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Find any matching rules and then override
       for (const rule of override) {
-        if (rule.match(field)) {
+        if (rule.match(field, frame, options.data!)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
@@ -194,7 +194,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         type,
         state: {
           ...field.state,
-          title: null,
+          displayName: null,
         },
       };
 

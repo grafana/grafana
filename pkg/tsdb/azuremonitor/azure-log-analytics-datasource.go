@@ -1,7 +1,10 @@
 package azuremonitor
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,6 +38,7 @@ type AzureLogAnalyticsQuery struct {
 	RefID        string
 	ResultFormat string
 	URL          string
+	Model        *simplejson.Json
 	Params       url.Values
 	Target       string
 }
@@ -77,7 +81,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 		}
 
 		urlComponents := map[string]string{}
-		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
 		urlComponents["workspace"] = fmt.Sprintf("%v", azureLogAnalyticsTarget["workspace"])
 		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
 
@@ -92,6 +95,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 			RefID:        query.RefId,
 			ResultFormat: resultFormat,
 			URL:          apiURL,
+			Model:        query.Model,
 			Params:       params,
 			Target:       params.Encode(),
 		})
@@ -145,12 +149,12 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
 
 	if query.ResultFormat == "table" {
-		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Params.Get("query"))
+		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Model, query.Params)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Params.Get("query"))
+		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Model, query.Params)
 		if err != nil {
 			return nil, err
 		}
@@ -233,9 +237,10 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, query string) ([]*tsdb.Table, *simplejson.Json, error) {
-	meta := metadata{
-		Query: query,
+func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) ([]*tsdb.Table, *simplejson.Json, error) {
+	meta, err := createMetadata(model, params)
+	if err != nil {
+		return nil, simplejson.NewFromAny(meta), err
 	}
 
 	tables := make([]*tsdb.Table, 0)
@@ -267,9 +272,10 @@ func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsRespon
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, query string) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
-	meta := metadata{
-		Query: query,
+func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
+	meta, err := createMetadata(model, params)
+	if err != nil {
+		return nil, simplejson.NewFromAny(meta), err
 	}
 
 	for _, t := range data.Tables {
@@ -351,4 +357,33 @@ func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsRe
 	}
 
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
+}
+
+func createMetadata(model *simplejson.Json, params url.Values) (metadata, error) {
+	meta := metadata{
+		Query:        params.Get("query"),
+		Subscription: model.Get("subscriptionId").MustString(),
+		Workspace:    model.Get("azureLogAnalytics").Get("workspace").MustString(),
+	}
+
+	encQuery, err := encodeQuery(meta.Query)
+	if err != nil {
+		return meta, err
+	}
+	meta.EncodedQuery = encQuery
+	return meta, nil
+}
+
+func encodeQuery(rawQuery string) (string, error) {
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	if _, err := gz.Write([]byte(rawQuery)); err != nil {
+		return "", err
+	}
+
+	if err := gz.Close(); err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }

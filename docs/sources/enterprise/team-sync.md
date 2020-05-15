@@ -25,6 +25,16 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 
 <div class="clearfix"></div>
 
+## Supported providers
+
+* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+* [Azure AD]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
+* [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
+* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
+* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+* [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
+* [SAML]({{< relref "saml.md#configure-team-sync" >}})
+
 ## Synchronize a Grafana team with an external group
 
 If you have already grouped some users into a team, then you can synchronize that team with an external group.
@@ -41,12 +51,3 @@ If you have already grouped some users into a team, then you can synchronize tha
     - For Auth Proxy, this is the value we receive as part of the custom `Groups` header.
 
 1. Click `Add group` to save.
-
-## Supported providers
-
-* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
-* [Azure AD]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
-* [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
-* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
-* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
-* [SAML]({{< relref "saml.md#configure-team-sync" >}})

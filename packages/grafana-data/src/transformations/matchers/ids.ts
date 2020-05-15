@@ -18,6 +18,9 @@ export enum FieldMatcherID {
   // With arguments
   byType = 'byType',
   byName = 'byName',
+  byNames = 'byNames',
+  byRegexp = 'byRegexp',
+  byRegexpOrNames = 'byRegexpOrNames',
   // byIndex = 'byIndex',
   // byLabel = 'byLabel',
 }

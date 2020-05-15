@@ -4,7 +4,7 @@ import { FieldType } from '../../types/dataFrame';
 import { ReducerID } from '../fieldReducer';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
-import { calculateFieldTransformer, CalculateFieldMode } from './calculateField';
+import { calculateFieldTransformer, CalculateFieldMode, ReduceOptions } from './calculateField';
 import { DataFrameView } from '../../dataframe';
 import { BinaryOperationID } from '../../utils';
 
@@ -96,9 +96,9 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.ReduceRow,
         reduce: {
-          include: 'B',
+          include: ['B'],
           reducer: ReducerID.mean,
-        },
+        } as ReduceOptions,
         replaceFields: true,
       },
     };

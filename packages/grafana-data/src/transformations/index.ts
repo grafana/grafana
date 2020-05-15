@@ -9,3 +9,4 @@ export {
   TransformerUIProps,
   standardTransformersRegistry,
 } from './standardTransformersRegistry';
+export { RegexpOrNamesMatcherOptions } from './matchers/nameMatcher';

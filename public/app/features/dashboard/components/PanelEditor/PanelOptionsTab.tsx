@@ -1,6 +1,6 @@
 import React, { FC, useMemo, useRef } from 'react';
 import { DashboardModel, PanelModel } from '../../state';
-import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { getVariables } from '../../../variables/state/selectors';
@@ -16,7 +16,6 @@ interface Props {
   dashboard: DashboardModel;
   onPanelConfigChange: (configKey: string, value: any) => void;
   onPanelOptionsChanged: (options: any) => void;
-  onFieldConfigsChange: (config: FieldConfigSource) => void;
 }
 
 export const PanelOptionsTab: FC<Props> = ({
@@ -26,7 +25,6 @@ export const PanelOptionsTab: FC<Props> = ({
   dashboard,
   onPanelConfigChange,
   onPanelOptionsChanged,
-  onFieldConfigsChange,
 }) => {
   const visTabInputRef = useRef<HTMLInputElement>();
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
@@ -65,7 +63,7 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   elements.push(
-    <OptionsGroup title="Visualisation" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
+    <OptionsGroup title="Visualization" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
       <VisualizationTab panel={panel} ref={visTabInputRef} />
     </OptionsGroup>
   );
