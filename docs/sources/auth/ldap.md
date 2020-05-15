@@ -144,7 +144,7 @@ In this case you skip providing a `bind_password` and instead provide a `bind_dn
 The search filter and search bases settings are still needed to perform the LDAP search to retrieve the other LDAP information (like LDAP groups and email).
 
 ### POSIX schema
-If your ldap server does not support the memberOf attribute add these options:
+If your LDAP server does not support the memberOf attribute add these options:
 
 ```bash
 ## Group search filter, to retrieve the groups of which the user is a member (only set if memberOf attribute is not available)
