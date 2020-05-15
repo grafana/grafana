@@ -30,7 +30,7 @@ Just add it as a data source and you are ready to query your traces in [Explore]
 | _Default_       | Default data source means that it will be pre-selected for new panels.                                                                         |
 | _URL_           | The URL of the Jaeger instance, e.g., `http://localhost:16686`                                                                                   |
 
-## Querying traces
+## Query traces
 
 Querying and displaying traces from Jaeger is available via [Explore]({{< relref "../explore" >}}).
 
@@ -49,4 +49,3 @@ TODO: screenshot trace selector opened up
 ## Links
 
 You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]([Explore]({{< relref "./loki#derived-fields" >}})) for details.
-
