@@ -57,7 +57,7 @@ The visualization preview section contains viewing options, time range controls,
 
 ### Data section
 
-The section contains tabs where you enter queries, transform your data, and create alert rules.
+The section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
 {{< docs-imagebox img="/img/docs/panel-editor/data-section-7-0.png" class="docs-image--no-shadow" max-width="1200px" >}}
 
