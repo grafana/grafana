@@ -55,7 +55,7 @@ The visualization preview section contains viewing options, time range controls,
 - **Exact -** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
 - **Time range controls -** For more information, refer to [Time range controls](ADD LINK WHEN TOPIC IS MERGED).
 
-### Data section
+### Data section (bottom pane)
 
 The section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
