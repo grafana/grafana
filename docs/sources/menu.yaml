@@ -185,8 +185,8 @@
       name: Sharing a dashboard
     - link: /reference/share_panel/
       name: Sharing a panel
-    - link: /reference/timerange/
-      name: Time range
+    - link: /dashboards/time-range-controls/
+      name: Time range controls
     - link: /reference/export_import/
       name: Export and import
     - link: /features/dashboard/links/

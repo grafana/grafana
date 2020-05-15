@@ -76,7 +76,7 @@ In addition to the data sources that you have configured in your Grafana, there 
 
 Click **Query options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made in this panel.
 
-{{< docs-imagebox img="/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="400px" >}}
+{{< docs-imagebox img="/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 Grafana sets defaults that are shown in dark gray text. Changes are displayed in white text. To return a field to the default setting, delete the white text from the field.
 
