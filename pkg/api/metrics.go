@@ -32,7 +32,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 	expr := false
 	var ds *models.DataSource
 	for i, query := range reqDto.Queries {
-		name, _ := query.Get("datasource").String()
+		name := query.Get("datasource").MustString("")
 		if name == "__expr__" {
 			expr = true
 		}
