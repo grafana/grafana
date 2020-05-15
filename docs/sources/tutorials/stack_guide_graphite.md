@@ -29,7 +29,7 @@ install StatsD, but that is optional.
 
 - Carbon is the graphite ingestion daemon responsible for
 receiving metrics and storing them.
-- Graphite-api is light weight version of graphite-web with only the HTTP api and is
+- Graphite-api is light weight version of graphite-web with only the HTTP API and is
 responsible for executing metric queries.
 - Grafana as the frontend to visualize metrics and the tool to help you build metric
 queries that will make the most out of your collected metrics.
