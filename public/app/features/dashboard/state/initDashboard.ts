@@ -5,7 +5,6 @@ import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
-import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp, updateLocation } from 'app/core/actions';
@@ -22,7 +21,7 @@ import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResul
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { getConfig } from '../../../core/config';
-import { initDashboardTemplating, processVariables, completeDashboardTemplating } from '../../variables/state/actions';
+import { completeDashboardTemplating, initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
@@ -164,7 +163,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // init services
     const timeSrv: TimeSrv = args.$injector.get('timeSrv');
     const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
-    const variableSrv: VariableSrv = args.$injector.get('variableSrv');
     const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
     const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
@@ -180,9 +178,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
-      if (!getConfig().featureToggles.newVariables) {
-        await variableSrv.init(dashboard);
-      }
       if (getConfig().featureToggles.newVariables) {
         dispatch(initDashboardTemplating(dashboard.templating.list));
         await dispatch(processVariables());
