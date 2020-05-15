@@ -1,11 +1,11 @@
 import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariable } from 'app/features/templating/all';
 import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { StackdriverOptions } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { CustomVariableModel, VariableHide } from '../../../../features/templating/types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -296,17 +296,18 @@ describe('StackdriverDataSource', () => {
 });
 function initTemplateSrv(values: any, multi = false) {
   const templateSrv = new TemplateSrv();
-  templateSrv.init([
-    new CustomVariable(
-      {
-        name: 'test',
-        current: {
-          value: values,
-        },
-        multi: multi,
-      },
-      {} as any
-    ),
-  ]);
+  const test: CustomVariableModel = {
+    name: 'test',
+    current: { value: values, text: Array.isArray(values) ? values.toString() : values, selected: true },
+    options: [{ value: values, text: Array.isArray(values) ? values.toString() : values, selected: false }],
+    multi,
+    includeAll: false,
+    query: '',
+    hide: VariableHide.dontHide,
+    type: 'custom',
+    label: null,
+    skipUrlSync: false,
+  };
+  templateSrv.init([test]);
   return templateSrv;
 }
