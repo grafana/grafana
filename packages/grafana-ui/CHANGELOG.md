@@ -1,3 +1,9 @@
+# 7.0.0 (2020-05-18)
+
+### Bug Fixes
+
+* **Explore**: Fixes loading more logs in logs context view. [#24135](https://github.com/grafana/grafana/pull/24135), [@Estrax](https://github.com/Estrax)
+
 # 7.0.0-beta3 (2020-05-08)
 
 ### Features / Enhancements
