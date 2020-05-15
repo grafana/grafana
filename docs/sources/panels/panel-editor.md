@@ -65,7 +65,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 - **Transform tab -** Apply data transformations. For more information, refer to [Transformations]({{< relref "transformations.md" >}}).
 - **Alert tab -** Write alert rules. For more information, refer to [Create alerts]({{< relref "../alerting/create-alerts.md" >}}).
 
-### Panel and field configuration options
+### Panel and field configuration options (side pane)
 
 The section contains tabs where you control almost every aspect of how your data is visualized. Not all tabs are available for each visualization.
 
