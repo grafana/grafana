@@ -36,7 +36,7 @@ Before you can sign a user in, you need to create an Okta application from the O
 
 1. Click **Done** to finish creating the Okta application.
 
-## Enable Okta Oauth in Grafana
+## Enable Okta OAuth in Grafana
 
 1. Add the following to the [Grafana configuration file]({{< relref "../installation/configuration.md#config-file-locations" >}}):
 

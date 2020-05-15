@@ -38,7 +38,11 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
-const CLOUDWATCH_TS_FORMAT = "2006-01-02 15:04:05.000"
+const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+
+// Constants also defined in datasource/cloudwatch/datasource.ts
+const logIdentifierInternal = "__log__grafana_internal__"
+const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
 func (e *CloudWatchExecutor) getLogsClient(region string) (*cloudwatchlogs.CloudWatchLogs, error) {
 	e.mux.Lock()
@@ -222,7 +226,7 @@ func queryResultsToDataframe(results *cloudwatchlogs.GetQueryResultsOutput) (*da
 			}
 
 			if _, exists := fieldValues[*resultField.Field]; !exists {
-				if _, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value); err == nil {
+				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
 				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
 					fieldValues[*resultField.Field] = make([]*float64, rowCount)
@@ -232,7 +236,7 @@ func queryResultsToDataframe(results *cloudwatchlogs.GetQueryResultsOutput) (*da
 			}
 
 			if timeField, ok := fieldValues[*resultField.Field].([]*time.Time); ok {
-				parsedTime, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value)
+				parsedTime, err := time.Parse(cloudWatchTSFormat, *resultField.Value)
 				if err != nil {
 					return nil, err
 				}

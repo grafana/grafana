@@ -27,7 +27,7 @@ import defaults from 'lodash/defaults';
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
 interface CalculateFieldTransformerEditorState {
-  include: string;
+  include: string[];
   names: string[];
   selected: string[];
 }
@@ -45,7 +45,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     super(props);
 
     this.state = {
-      include: props.options?.reduce?.include || '',
+      include: props.options?.reduce?.include || [],
       names: [],
       selected: [],
     };
@@ -62,9 +62,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 
   private initOptions() {
-    const { input, options } = this.props;
-    const include = options?.reduce?.include || '';
-    const configuredOptions = include.split('|');
+    const { options } = this.props;
+    const configuredOptions = options?.reduce?.include || [];
+    const input = standardTransformers.ensureColumnsTransformer.transformer(null)(this.props.input);
 
     const allNames: string[] = [];
     const byName: KeyValue<boolean> = {};
@@ -156,7 +156,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { reduce } = this.props.options;
     this.updateReduceOptions({
       ...reduce!,
-      include: selected.join('|'),
+      include: selected,
     });
   };
 
@@ -201,6 +201,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               stats={[options.reducer]}
               onChange={this.onStatsChange}
               defaultStat={ReducerID.sum}
+              menuPlacement="bottom"
             />
           </div>
         </div>
@@ -273,26 +274,27 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form">
           <Select
-            allowCustomValue
             placeholder="Field or number"
             options={leftNames}
             className="min-width-18 gf-form-spacing"
             value={options?.left}
             onChange={this.onBinaryLeftChanged}
+            menuPlacement="bottom"
           />
           <Select
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
+            menuPlacement="bottom"
           />
           <Select
-            allowCustomValue
             placeholder="Field or number"
             className="min-width-10"
             options={rightNames}
             value={options?.right}
             onChange={this.onBinaryRightChanged}
+            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -318,6 +320,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               options={calculationModes}
               value={calculationModes.find(v => v.value === mode)}
               onChange={this.onModeChanged}
+              menuPlacement="bottom"
             />
           </div>
         </div>

@@ -101,8 +101,8 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
 ) => {
   const originalVariable = getVariable(identifier.id, getState());
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
-  const global = originalVariable.global;
-  const index = originalVariable.index;
+  const global = originalVariable.global!; // global is undefined because of old variable system
+  const index = originalVariable.index!; // index is undefined because of old variable system
   const renamedIdentifier = toVariableIdentifier(model);
 
   dispatch(addVariable(toVariablePayload(renamedIdentifier, { global, index, model })));

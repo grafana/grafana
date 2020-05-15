@@ -82,7 +82,7 @@ export interface Field<T = any, V = Vector<T>> {
   labels?: Labels;
 
   /**
-   * Cached values with appropriate dispaly and id values
+   * Cached values with appropriate display and id values
    */
   state?: FieldState | null;
 

@@ -8,14 +8,33 @@ import (
 )
 
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
-	rowCount := len(response.Results)
+	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
+	// Sometimes CloudWatch can send empty rows
+	for _, row := range response.Results {
+		if len(row) == 0 {
+			continue
+		}
+		if len(row) == 1 {
+			if row[0].Value == nil {
+				continue
+			}
+			// Sometimes it sends row with only timestamp
+			if _, err := time.Parse(cloudWatchTSFormat, *row[0].Value); err == nil {
+				continue
+			}
+		}
+		nonEmptyRows = append(nonEmptyRows, row)
+	}
+
+	rowCount := len(nonEmptyRows)
+
 	fieldValues := make(map[string]interface{})
 
 	// Maintaining a list of field names in the order returned from CloudWatch
 	// as just iterating over fieldValues would not give a consistent order
 	fieldNames := make([]*string, 0)
 
-	for i, row := range response.Results {
+	for i, row := range nonEmptyRows {
 		for _, resultField := range row {
 			// Strip @ptr field from results as it's not needed
 			if *resultField.Field == "@ptr" {
@@ -26,7 +45,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				fieldNames = append(fieldNames, resultField.Field)
 
 				// Check if field is time field
-				if _, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value); err == nil {
+				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
 				} else {
 					fieldValues[*resultField.Field] = make([]*string, rowCount)
@@ -34,7 +53,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			}
 
 			if timeField, ok := fieldValues[*resultField.Field].([]*time.Time); ok {
-				parsedTime, err := time.Parse(CLOUDWATCH_TS_FORMAT, *resultField.Value)
+				parsedTime, err := time.Parse(cloudWatchTSFormat, *resultField.Value)
 				if err != nil {
 					return nil, err
 				}
@@ -52,11 +71,11 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 		if *fieldName == "@timestamp" {
 			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{Title: "Time"})
-		} else if *fieldName == "@logStream" || *fieldName == "@log" {
+		} else if *fieldName == logStreamIdentifierInternal || *fieldName == logIdentifierInternal {
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
 					Custom: map[string]interface{}{
-						"Hidden": true,
+						"hidden": true,
 					},
 				},
 			)
@@ -113,7 +132,11 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 func generateGroupKey(fields []*data.Field, row int) string {
 	groupKey := ""
 	for _, field := range fields {
-		groupKey += *field.At(row).(*string)
+		if strField, ok := field.At(row).(*string); ok {
+			if strField != nil {
+				groupKey += *strField
+			}
+		}
 	}
 
 	return groupKey

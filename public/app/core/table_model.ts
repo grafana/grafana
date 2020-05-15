@@ -5,7 +5,7 @@ import { Column, TableData, QueryResultMeta } from '@grafana/data';
  * Extends the standard Column class with variables that get
  * mutated in the angular table panel.
  */
-interface MutableColumn extends Column {
+export interface MutableColumn extends Column {
   title?: string;
   sort?: boolean;
   desc?: boolean;
