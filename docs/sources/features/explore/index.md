@@ -217,7 +217,7 @@ Header shows trace metadata like root span name, trace ID or start time. It also
 
 TODO: image of expanded row
 
-Timeline shows detailed information about all the spans in the trace. You can click shevron icon to the left of the span name to show or hide all the children spans. You can open span details by clicking on the span row. In the details you can see Tags, Process and Logs section if span contains any logs. Each section can be expanded or collapsed by clicking on its title.
+Timeline shows detailed information about all the spans in the trace. You can click the chevron icon to the left of the span name to show or hide all the children spans. You can open span details by clicking on the span row. In the details you can see Tags, Process and Logs section if span contains any logs. Each section can be expanded or collapsed by clicking on its title.
 
 
 ## Navigating between Explore and a dashboard
