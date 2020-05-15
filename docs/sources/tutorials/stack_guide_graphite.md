@@ -165,7 +165,7 @@ supervisorctl reload
 
 ### Graphite-api
 
-Graphite api is a light weight version of graphite-web with only the api component (no web ui). It is dead simple
+Graphite api is a light weight version of graphite-web with only the API component (no web ui). It is dead simple
 to install.
 
 ```
