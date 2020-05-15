@@ -1,14 +1,21 @@
 import '../datasource';
-import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataSourceInstanceSettings, dateMath, getFrameDisplayTitle, DataQueryResponse } from '@grafana/data';
+import { DataSourceInstanceSettings, dateMath, getFrameDisplayName, DataFrame, DataQueryResponse } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchLogsQueryStatus, LogAction } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
+import { of } from 'rxjs';
+
+jest.mock('rxjs/operators', () => {
+  const operators = jest.requireActual('rxjs/operators');
+  operators.delay = jest.fn(() => (s: any) => s);
+  return operators;
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -28,7 +35,7 @@ describe('CloudWatchDatasource', () => {
   const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
   const timeSrv = {
-    time: { from: '2016-12-31 15:00:00', to: '2016-12-31 16:00:00' },
+    time: { from: '2016-12-31 15:00:00Z', to: '2016-12-31 16:00:00Z' },
     timeRange: () => {
       return {
         from: dateMath.parse(timeSrv.time.from, false),
@@ -155,6 +162,86 @@ describe('CloudWatchDatasource', () => {
           },
         ],
       });
+    });
+    it('should stop querying when no more data retrieved past max attempts', async () => {
+      const fakeFrames = genMockFrames(10);
+      for (let i = 7; i < fakeFrames.length; i++) {
+        fakeFrames[i].meta!.custom!['Statistics']['RecordsMatched'] = fakeFrames[6].meta!.custom!['Statistics'][
+          'RecordsMatched'
+        ];
+      }
+
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+
+      const expectedData = [
+        {
+          ...fakeFrames[MAX_ATTEMPTS - 1],
+          meta: { custom: { ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom, Status: 'Complete' } },
+        },
+      ];
+      expect(myResponse).toEqual({
+        data: expectedData,
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(MAX_ATTEMPTS);
+    });
+
+    it('should continue querying as long as new data is being received', async () => {
+      const fakeFrames = genMockFrames(15);
+
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+      expect(myResponse).toEqual({
+        data: [fakeFrames[fakeFrames.length - 1]],
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(15);
+    });
+
+    it('should stop querying when results come back with status "Complete"', async () => {
+      const fakeFrames = genMockFrames(3);
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+
+      expect(myResponse).toEqual({
+        data: [fakeFrames[2]],
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(3);
     });
   });
 
@@ -286,7 +373,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
+        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
@@ -302,7 +389,7 @@ describe('CloudWatchDatasource', () => {
       it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
         response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
-          expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
@@ -317,7 +404,7 @@ describe('CloudWatchDatasource', () => {
           { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
         ];
         ctx.ds.query(query).then((result: any) => {
-          expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
@@ -329,7 +416,7 @@ describe('CloudWatchDatasource', () => {
       it('should be built correctly if the query is a metric stat query', done => {
         response.results['A'].meta.gmdMeta = [{ Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
-          expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
@@ -570,7 +657,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(getFrameDisplayTitle(result.data[0])).toBe(response.results.A.series[0].name);
+        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
@@ -925,3 +1012,25 @@ describe('CloudWatchDatasource', () => {
     }
   );
 });
+
+function genMockFrames(numResponses: number): DataFrame[] {
+  const recordIncrement = 50;
+  const mockFrames: DataFrame[] = [];
+
+  for (let i = 0; i < numResponses; i++) {
+    mockFrames.push({
+      fields: [],
+      meta: {
+        custom: {
+          Status: i === numResponses - 1 ? CloudWatchLogsQueryStatus.Complete : CloudWatchLogsQueryStatus.Running,
+          Statistics: {
+            RecordsMatched: (i + 1) * recordIncrement,
+          },
+        },
+      },
+      length: 0,
+    });
+  }
+
+  return mockFrames;
+}

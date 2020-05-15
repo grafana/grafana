@@ -51,6 +51,15 @@ function getNextRequestId() {
   return 'Q' + counter++;
 }
 
+export interface GetDataOptions {
+  withTransforms?: boolean;
+  withFieldConfig?: boolean;
+}
+const DEFAULT_GET_DATA_OPTIONS: GetDataOptions = {
+  withTransforms: true,
+  withFieldConfig: true,
+};
+
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
@@ -66,37 +75,39 @@ export class PanelQueryRunner {
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(transform = true): Observable<PanelData> {
+  getData(options: GetDataOptions = DEFAULT_GET_DATA_OPTIONS): Observable<PanelData> {
+    const { withFieldConfig, withTransforms } = options;
+
     return this.subject.pipe(
       map((data: PanelData) => {
         let processedData = data;
 
-        // Apply transformations
-
-        if (transform) {
+        // Apply transformation
+        if (withTransforms) {
           const transformations = this.dataConfigSource.getTransformations();
 
           if (transformations && transformations.length > 0) {
             processedData = {
               ...processedData,
-              series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
+              series: transformDataFrame(transformations, data.series),
             };
           }
         }
 
-        // Apply field defaults & overrides
-        const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-
-        if (fieldConfig) {
-          processedData = {
-            ...processedData,
-            series: applyFieldOverrides({
-              timeZone: this.timeZone,
-              autoMinMax: true,
-              data: processedData.series,
-              ...fieldConfig,
-            }),
-          };
+        if (withFieldConfig) {
+          // Apply field defaults & overrides
+          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          if (fieldConfig) {
+            processedData = {
+              ...processedData,
+              series: applyFieldOverrides({
+                timeZone: this.timeZone,
+                autoMinMax: true,
+                data: processedData.series,
+                ...fieldConfig,
+              }),
+            };
+          }
         }
 
         return processedData;

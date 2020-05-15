@@ -29,7 +29,7 @@ export function getFieldDisplayValuesProxy(
       }
       if (!field) {
         // 3. Match the title
-        field = frame.fields.find(f => key === f.config.title);
+        field = frame.fields.find(f => key === f.config.displayName);
       }
       if (!field) {
         return undefined;

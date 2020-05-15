@@ -5,6 +5,7 @@
   "backend": true,
   "info": {
     "description": "Test",
+    "version": "1.0.0",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

@@ -106,7 +106,6 @@ export const OptionsPaneContent: React.FC<Props> = ({
                   dashboard={dashboard}
                   data={currentData}
                   onPanelConfigChange={onPanelConfigChange}
-                  onFieldConfigsChange={onFieldConfigsChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
                 />
               ) : (
@@ -204,6 +203,7 @@ export const TabsBarContent: React.FC<{
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
               title={item.tooltip}
+              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label)}
             />
           ))}
           <div className="flex-grow-1" />
