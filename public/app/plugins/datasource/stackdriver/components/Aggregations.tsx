@@ -1,5 +1,4 @@
-import React, { FC, useState } from 'react';
-import memoizeOne from 'memoize-one';
+import React, { FC, useState, useMemo } from 'react';
 import _ from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
@@ -19,41 +18,22 @@ export interface Props {
   templateVariableOptions: Array<SelectableValue<string>>;
 }
 
-export const setAggOptions = memoizeOne((valueType: ValueTypes, metricKind: MetricKind) => {
-  return {
-    label: 'Aggregations',
-    expanded: true,
-    options: getAggregationOptionsByMetric(valueType, metricKind).map(a => ({
-      ...a,
-      label: a.text,
-    })),
-  };
-});
-
-export const Aggregations: FC<Props> = ({
-  templateVariableOptions,
-  onChange,
-  crossSeriesReducer,
-  metricDescriptor,
-  children,
-}) => {
+export const Aggregations: FC<Props> = props => {
   const [displayAdvancedOptions, setDisplayAdvancedOptions] = useState(false);
-
-  const aggOptions = metricDescriptor
-    ? [setAggOptions(metricDescriptor.valueType as ValueTypes, metricDescriptor.metricKind as MetricKind)]
-    : ([] as any);
+  const aggOptions = useAggregationOptionsByMetric(props);
+  const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
     <>
       <div className="gf-form-inline">
         <label className="gf-form-label query-keyword width-9">Aggregation</label>
         <Segment
-          onChange={({ value }) => onChange(value)}
-          value={[...aggOptions, ...templateVariableOptions].find(s => s.value === crossSeriesReducer)}
+          onChange={({ value }) => props.onChange(value)}
+          value={selected}
           options={[
             {
               label: 'Template Variables',
-              options: templateVariableOptions,
+              options: props.templateVariableOptions,
             },
             {
               label: 'Aggregations',
@@ -73,7 +53,30 @@ export const Aggregations: FC<Props> = ({
           </label>
         </div>
       </div>
-      {children(displayAdvancedOptions)}
+      {props.children(displayAdvancedOptions)}
     </>
   );
+};
+
+const useAggregationOptionsByMetric = ({ metricDescriptor }: Props): Array<SelectableValue<string>> => {
+  return useMemo(() => {
+    if (!metricDescriptor) {
+      return [];
+    }
+
+    return getAggregationOptionsByMetric(
+      metricDescriptor.valueType as ValueTypes,
+      metricDescriptor.metricKind as MetricKind
+    ).map(a => ({
+      ...a,
+      label: a.text,
+    }));
+  }, [metricDescriptor?.metricKind, metricDescriptor?.valueType]);
+};
+
+const useSelectedFromOptions = (aggOptions: Array<SelectableValue<string>>, props: Props) => {
+  return useMemo(() => {
+    const allOptions = [...aggOptions, ...props.templateVariableOptions];
+    return allOptions.find(s => s.value === props.crossSeriesReducer);
+  }, [aggOptions, props.crossSeriesReducer, props.templateVariableOptions]);
 };
