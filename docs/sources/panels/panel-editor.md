@@ -43,7 +43,6 @@ On the right side of the header are the following options:
 - **Save -** Saves the dashboard, including all changes you have made in the panel editor.
 - **Apply -** Applies changes you made and then closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
 
-Panel title, access dashboard settings, Save/Apply/Discard
 
 ### Visualization preview
 
