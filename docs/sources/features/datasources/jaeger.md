@@ -11,7 +11,7 @@ weight = 2
 +++
 
 # Using Jager in Grafana
-
+Jaeger data source
 Grafana ships with built-in support for Jaeger, open source, end-to-end distributed tracing.
 Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
@@ -49,5 +49,4 @@ TODO: screenshot trace selector opened up
 ## Links
 
 You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]([Explore]({{< relref "./loki#derived-fields" >}})) for details.
-
 
