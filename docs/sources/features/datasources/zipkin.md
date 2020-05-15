@@ -10,25 +10,23 @@ parent = "datasources"
 weight = 2
 +++
 
-# Using Zipkin in Grafana
+# Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
 Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Adding the data source
-
-1. Open Grafana and make sure you are logged in.
-2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
-3. Click the `Add data source` button at the top.
-4. Select `Loki` from the list of data sources.
-
-> Note: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Zipkin**.
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                 |
 | _Default_       | Default data source means that it will be pre-selected for new panels.                                                                         |
 | _URL_           | The URL of the Zipkin instance, e.g., `http://localhost:9411`                                                                                   |
+| _Access_        | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| _Basic Auth_    | Enable basic authentication to the Prometheus data source.                                                                            |
+| _User_          | User name for basic authentication.                                                                                                   |
+| _Password_      | Password for basic authentication.                                                                                                    |
 
 ## Query traces
 
@@ -52,6 +50,6 @@ Zipkin annotations are shown in the trace view as logs with annotation value sho
 
 TODO: screenshot how it looks like
 
-## Links
+## Linking Trace ID from logs
 
 You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]([Explore]({{< relref "./loki#derived-fields" >}})) for details.
