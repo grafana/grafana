@@ -58,7 +58,7 @@ port = 389
 use_ssl = false
 # Set to true if connect ldap server with STARTTLS pattern (create connection in insecure, then upgrade to secure connection with TLS)
 start_tls = false
-# set to true if you want to skip ssl cert validation
+# set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults
 # root_ca_cert = "/path/to/certificate.crt"
