@@ -172,7 +172,7 @@ to install.
 pip install gunicorn graphite-api
 ```
 
-You should now have a graphite-api daemon running with an open HTTP api port of 8888.
+You should now have a graphite-api daemon running with an open HTTP API port of 8888.
 
 ### Configuring Graphite-api
 
