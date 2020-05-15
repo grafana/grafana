@@ -10,7 +10,7 @@ rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
 sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
-apk add nodejs npm yarn build-base openssh git-lfs
+apk add nodejs npm yarn build-base openssh git-lfs perl-utils
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.
