@@ -22,7 +22,7 @@ There are several ways to access the panel editor, also called the **Edit Panel*
 
 ## Resize panel editor sections
 
-Drag to resize sections of the panel editor. If the Panel, Field, and Overrides tabs become too narrow, then the tabs convert to a dropdown list.
+Drag to resize sections of the panel editor. If the side pane becomes too narrow, then the Panel, Field, and Overrides tabs change to a dropdown list.
 
 {{< docs-imagebox img="/img/docs/panel-editor/resize-panel-editor-panels-7-0.gif" class="docs-image--no-shadow" max-width="600px" >}}
 
