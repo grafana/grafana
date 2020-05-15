@@ -83,7 +83,7 @@ search_base_dns = ["dc=grafana,dc=org"]
 # group_search_filter_user_attribute = "distinguishedName"
 # group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 
-# Specify names of the ldap attributes your ldap uses
+# Specify names of the LDAP attributes your LDAP uses
 [servers.attributes]
 name = "givenName"
 surname = "sn"
