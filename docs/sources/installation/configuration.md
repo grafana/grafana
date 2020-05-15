@@ -638,7 +638,7 @@ Log line format, valid options are text, console and json. Default is `console`.
 
 ### network and address
 
-Syslog network type and address. This can be udp, tcp, or unix. If left blank, the default unix endpoints will be used.
+Syslog network type and address. This can be UDP, TCP, or unix. If left blank, the default unix endpoints will be used.
 
 ### facility
 
