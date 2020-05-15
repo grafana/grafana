@@ -19,7 +19,7 @@ This page describes supported time units and relative ranges, the common time co
 
 The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`. 
 
-The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/$unit` to the end.
+The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end.
 
 Here are some examples:
 
