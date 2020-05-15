@@ -126,6 +126,7 @@ We have also extended the time zone options so you can select any of the standar
 * **Variables**: Fixes filtering options with more than 1000 entries. [#24614](https://github.com/grafana/grafana/pull/24614), [@hugohaggmark](https://github.com/hugohaggmark)
 * **Variables**: Fixes so Textbox variables read value from url. [#24623](https://github.com/grafana/grafana/pull/24623), [@hugohaggmark](https://github.com/hugohaggmark)
 * **Zipkin**: Fix error when span contains remoteEndpoint. [#24524](https://github.com/grafana/grafana/pull/24524), [@aocenas](https://github.com/aocenas)
+* **SAML**: Switch from email to login for user login attribute mapping (Enterprise)
 
 # 7.0.0-beta3 (2020-05-08)
 
