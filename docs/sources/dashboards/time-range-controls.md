@@ -114,5 +114,5 @@ In [Query options]({{< relref "queries.md#query-options" >}}), you can override 
 Time range of a dashboard can be controlled by providing following query parameters in the dashboard URL:
 
 - `from` - defines lower limit of the time range, specified in ms epoch or [relative time]({{< relref "#relative-time-range" >}})
-- `to` - defines upper limit of the time range, specified in ms epoch
+- `to` - defines upper limit of the time range, specified in ms epoch or [relative time]({{< relref "#relative-time-range" >}})
 - `time` and `time.window` - defines a time range from `time-time.window/2` to `time+time.window/2`. Both params should be specified in ms. For example `?time=1500000000000&time.window=10000` will result in 10s time range from 1499999995000 to 1500000005000
