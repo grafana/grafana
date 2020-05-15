@@ -8,7 +8,6 @@ import './components/DashExportModal';
 import './components/DashNav';
 import './components/VersionHistory';
 import './components/DashboardSettings';
-import './components/RowOptions';
 
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 // angular wrappers

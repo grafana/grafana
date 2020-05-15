@@ -1,11 +1,12 @@
 import React from 'react';
 import classNames from 'classnames';
-import { Icon } from '@grafana/ui';
+import { Icon, ModalsController } from '@grafana/ui';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
+import { RowOptionsModal } from '../RowOptions/RowOptionsModal';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -39,20 +40,13 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   };
 
-  onUpdate = () => {
+  onUpdate = (hideModal: () => void) => (title: string | null, repeat: string | null) => {
+    this.props.panel['title'] = title;
+    this.props.panel['repeat'] = repeat;
+    this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
-  };
-
-  onOpenSettings = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
-      modalClass: 'modal--narrow',
-      model: {
-        row: this.props.panel,
-        onUpdated: this.onUpdate,
-      },
-    });
+    hideModal();
   };
 
   onDelete = () => {
@@ -92,9 +86,25 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         </a>
         {canEdit && (
           <div className="dashboard-row__actions">
-            <a className="pointer" onClick={this.onOpenSettings}>
-              <Icon name="cog" />
-            </a>
+            <ModalsController>
+              {({ showModal, hideModal }) => {
+                return (
+                  <a
+                    className="pointer"
+                    onClick={() => {
+                      showModal(RowOptionsModal, {
+                        title: this.props.panel.title,
+                        repeat: this.props.panel.repeat,
+                        onDismiss: hideModal,
+                        onUpdate: this.onUpdate(hideModal),
+                      });
+                    }}
+                  >
+                    <Icon name="cog" />
+                  </a>
+                );
+              }}
+            </ModalsController>
             <a className="pointer" onClick={this.onDelete}>
               <Icon name="trash-alt" />
             </a>
