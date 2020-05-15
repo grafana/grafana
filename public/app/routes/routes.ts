@@ -318,9 +318,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/profile/select-org', {
-      // templateUrl: 'public/app/features/org/partials/select_org.html',
-      // controller: 'SelectOrgCtrl',
-      // reloadOnSearch: false,
       template: '<react-container/>',
       reloadOnSearch: false,
       resolve: {
