@@ -30,7 +30,7 @@ Just add it as a data source and you are ready to query your traces in [Explore]
 | _Default_       | Default data source means that it will be pre-selected for new panels.                                                                         |
 | _URL_           | The URL of the Zipkin instance, e.g., `http://localhost:9411`                                                                                   |
 
-## Querying traces
+## Query traces
 
 Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
 
@@ -55,4 +55,3 @@ TODO: screenshot how it looks like
 ## Links
 
 You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]([Explore]({{< relref "./loki#derived-fields" >}})) for details.
-
