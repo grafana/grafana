@@ -54,9 +54,9 @@ See [configuration examples](#configuration-examples) for more information.
 host = "127.0.0.1"
 # Default port is 389 or 636 if use_ssl = true
 port = 389
-# Set to true if ldap server supports TLS
+# Set to true if LDAP server supports TLS
 use_ssl = false
-# Set to true if connect ldap server with STARTTLS pattern (create connection in insecure, then upgrade to secure connection with TLS)
+# Set to true if connect LDAP server with STARTTLS pattern (create connection in insecure, then upgrade to secure connection with TLS)
 start_tls = false
 # set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
