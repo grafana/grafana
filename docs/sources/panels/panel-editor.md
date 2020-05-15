@@ -67,7 +67,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 
 ### Panel and field configuration options
 
-The section contains tabs is where you control almost every aspect of how your data is visualized. Not all tabs are available for each visualization.
+The section contains tabs where you control almost every aspect of how your data is visualized. Not all tabs are available for each visualization.
 
 Features in these tabs are documented in the following topics:
 
