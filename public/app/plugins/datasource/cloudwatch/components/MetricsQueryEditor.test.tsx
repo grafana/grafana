@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
-import { CustomVariableModel, VariableHide } from '../../../../features/templating/types';
+import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
 
 const setup = () => {
   const instanceSettings = {

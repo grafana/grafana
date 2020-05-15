@@ -15,7 +15,7 @@ import {
   sharedReducer,
   storeNewVariable,
 } from './sharedReducer';
-import { QueryVariableModel, VariableHide } from '../../templating/types';
+import { QueryVariableModel, VariableHide } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';

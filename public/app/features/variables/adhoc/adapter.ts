@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { AdHocVariableModel } from '../../templating/types';
+import { AdHocVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
 import { AdHocPicker } from './picker/AdHocPicker';

@@ -1,4 +1,4 @@
-import { VariableModel } from '../../templating/types';
+import { VariableModel } from '../types';
 import { VariablesState } from './variablesReducer';
 import { VariableType } from '@grafana/data';
 

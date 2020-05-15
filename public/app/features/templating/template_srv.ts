@@ -5,7 +5,7 @@ import { getFilteredVariables, getVariables, getVariableWithName } from '../vari
 import { getConfig } from 'app/core/config';
 import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
-import { VariableModel } from './types';
+import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from '../variables/adapters';
 

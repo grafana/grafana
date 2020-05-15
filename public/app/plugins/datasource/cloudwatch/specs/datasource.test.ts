@@ -9,7 +9,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
 import { of } from 'rxjs';
-import { CustomVariableModel, VariableHide } from '../../../../features/templating/types';
+import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
 
 jest.mock('rxjs/operators', () => {
   const operators = jest.requireActual('rxjs/operators');

@@ -1,4 +1,4 @@
-import { QueryVariableModel, VariableModel, AdHocVariableModel, VariableWithMultiSupport } from '../templating/types';
+import { AdHocVariableModel, QueryVariableModel, VariableModel, VariableWithMultiSupport } from './types';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
   return model.type === 'query';

@@ -15,7 +15,7 @@ import { makeMockLokiDatasource } from './mocks';
 import { of } from 'rxjs';
 import omit from 'lodash/omit';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { CustomVariableModel } from '../../../features/templating/types';
+import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({

@@ -25,7 +25,7 @@ import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-import { VariableModel } from 'app/features/templating/types';
+import { VariableModel } from 'app/features/variables/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';

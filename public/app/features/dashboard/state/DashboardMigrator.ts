@@ -18,7 +18,7 @@ import {
 } from 'app/core/constants';
 import { isMulti, isQuery } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableTag } from '../../templating/types';
+import { VariableTag } from '../../variables/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;

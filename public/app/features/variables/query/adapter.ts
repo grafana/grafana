@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { QueryVariableModel, VariableRefresh } from '../../templating/types';
+import { QueryVariableModel, VariableRefresh } from '../types';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';

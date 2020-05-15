@@ -3,7 +3,7 @@ import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
 // Utils & Services
 import coreModule from 'app/core/core_module';
-import { VariableActions, variableTypes } from './types';
+import { VariableActions, variableTypes } from '../variables/types';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';

@@ -1,5 +1,5 @@
 import { StoreState } from '../../../types';
-import { VariableModel } from '../../templating/types';
+import { VariableModel } from '../types';
 import { getState } from '../../../store/store';
 import { NEW_VARIABLE_ID } from './types';
 

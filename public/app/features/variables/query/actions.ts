@@ -1,6 +1,6 @@
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 import { validateVariableSelectionState } from '../state/actions';
-import { QueryVariableModel, VariableRefresh } from '../../templating/types';
+import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import templateSrv from '../../templating/template_srv';

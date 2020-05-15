@@ -2,7 +2,7 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/types';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';

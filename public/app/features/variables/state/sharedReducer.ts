@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { default as lodashDefaults } from 'lodash/defaults';
 
 import { VariableType } from '@grafana/data';
-import { VariableModel, VariableOption, VariableWithOptions } from '../../templating/types';
+import { VariableModel, VariableOption, VariableWithOptions } from '../types';
 import { AddVariable, ALL_VARIABLE_VALUE, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';

@@ -4,7 +4,7 @@ import renderer from 'react-test-renderer';
 import { StackdriverVariableQueryEditor } from './VariableQueryEditor';
 import { VariableQueryProps } from 'app/types/plugins';
 import { MetricFindQueryTypes } from '../types';
-import { VariableModel } from 'app/features/templating/types';
+import { VariableModel } from 'app/features/variables/types';
 
 jest.mock('../functions', () => ({
   getMetricTypes: (): any => ({ metricTypes: [], selectedMetricType: '' }),

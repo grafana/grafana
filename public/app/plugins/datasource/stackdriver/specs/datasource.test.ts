@@ -5,7 +5,7 @@ import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { StackdriverOptions } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { CustomVariableModel, VariableHide } from '../../../../features/templating/types';
+import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

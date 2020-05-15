@@ -7,7 +7,7 @@ import {
   VariableTag,
   VariableWithMultiSupport,
   VariableWithOptions,
-} from '../../../templating/types';
+} from '../../types';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../types';

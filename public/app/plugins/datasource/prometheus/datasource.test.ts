@@ -19,7 +19,7 @@ import {
 import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { VariableHide } from '../../../features/templating/types';
+import { VariableHide } from '../../../features/variables/types';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
