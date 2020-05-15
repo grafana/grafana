@@ -42,7 +42,7 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 **Example**
 ```
-# The http port  to use
+# The HTTP port  to use
 ;http_port = 3000
 ```
 
