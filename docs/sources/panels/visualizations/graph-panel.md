@@ -5,8 +5,7 @@ type = "docs"
 aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/"]
 [menu.docs]
 parent = "visualizations"
-weight = 100
-draft = "true"
+weight = 500
 +++
 
 # Graph panel
@@ -16,8 +15,8 @@ This visualization is the most-used in the Grafana ecosystem. It can render as a
 ## Data and field options
 
 Graph visualizations allow you to apply:
-- Data transformations
-- Alerts - This is the only type of visualization that allows you to set alerts. For more information, see [LINK TO UPDATED ALERTING TOPIC]
+- [Data transformations]({{< relref "../transformations.md" >}})
+- [Alerts](../../alerting/alerts-overview.md) - This is the only type of visualization that allows you to set alerts.
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
