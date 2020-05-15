@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/fe
 [menu.docs]
 name = "alert-list-panel"
 parent = "visualizations"
-weight = 750
+weight = 100
 +++
 
 # Alert list panel
