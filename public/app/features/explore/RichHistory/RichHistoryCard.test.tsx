@@ -120,6 +120,13 @@ describe('RichHistoryCard', () => {
       wrapper.simulate('keydown', { key: 'Enter', shiftKey: true });
       expect(wrapper.find({ 'aria-label': 'Update comment form' })).toHaveLength(0);
     });
+    it('should close update comment form when enter and ctrl keys pressed', () => {
+      const wrapper = setup({ query: starredQueryWithComment });
+      const editCommentButton = wrapper.find({ title: 'Edit comment' });
+      editCommentButton.simulate('click');
+      wrapper.simulate('keydown', { key: 'Enter', ctrlKey: true });
+      expect(wrapper.find({ 'aria-label': 'Update comment form' })).toHaveLength(0);
+    });
     it('should not close update comment form when enter key pressed', () => {
       const wrapper = setup({ query: starredQueryWithComment });
       const editCommentButton = wrapper.find({ title: 'Edit comment' });
