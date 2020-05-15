@@ -448,7 +448,7 @@ describe('templateSrv', () => {
       expect(target).toBe('this.muuuu.filters');
     });
 
-    it('should not clear index object after updateIndex() when variables array is empty', async () => {
+    it('should not clear index object after updateIndex() when variables array is empty', () => {
       const expectedVariablesMock = [
         {
           type: 'query',
