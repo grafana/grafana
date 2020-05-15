@@ -34,7 +34,7 @@ Before you apply transformations, all of the following must be true:
   - [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
   - [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
   - [Graph]({{< relref "visualizations/graph-panel.md" >}})
-  - [Heatmap]({{< relref "visualizations/heatmap-panel.md" >}})
+  - [Heatmap]({{< relref "visualizations/heatmap.md" >}})
   - [Logs]({{< relref "visualizations/logs-panel.md" >}})
   - [Stat]({{< relref "visualizations/stat-panel.md" >}})
   - [Table]({{< relref "visualizations/table-panel.md" >}})
