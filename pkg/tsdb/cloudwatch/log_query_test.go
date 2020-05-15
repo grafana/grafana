@@ -39,6 +39,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(LOGSTREAM_IDENTIFIER_INTERNAL),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(LOG_IDENTIFIER_INTERNAL),
+					Value: aws.String("fakelog"),
+				},
 			},
 			{
 				&cloudwatchlogs.ResultField{
@@ -61,6 +69,23 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(LOGSTREAM_IDENTIFIER_INTERNAL),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(LOG_IDENTIFIER_INTERNAL),
+					Value: aws.String("fakelog"),
+				},
+			},
+			// Sometimes cloudwatch returns empty row
+			{},
+			// or rows with only timestamp
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("@timestamp"),
+					Value: aws.String("2020-03-02 17:04:05.000"),
+				},
 			},
 			{
 				&cloudwatchlogs.ResultField{
@@ -81,6 +106,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 				},
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@log"),
+					Value: aws.String("fakelog"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(LOGSTREAM_IDENTIFIER_INTERNAL),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(LOG_IDENTIFIER_INTERNAL),
 					Value: aws.String("fakelog"),
 				},
 			},
@@ -114,20 +147,32 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("fakelogstream"),
 		aws.String("fakelogstream"),
 	})
-	logStreamField.SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{
-			"Hidden": true,
-		},
-	})
 
 	logField := data.NewField("@log", nil, []*string{
 		aws.String("fakelog"),
 		aws.String("fakelog"),
 		aws.String("fakelog"),
 	})
-	logField.SetConfig(&data.FieldConfig{
+
+	hiddenLogStreamField := data.NewField(LOGSTREAM_IDENTIFIER_INTERNAL, nil, []*string{
+		aws.String("fakelogstream"),
+		aws.String("fakelogstream"),
+		aws.String("fakelogstream"),
+	})
+	hiddenLogStreamField.SetConfig(&data.FieldConfig{
 		Custom: map[string]interface{}{
-			"Hidden": true,
+			"hidden": true,
+		},
+	})
+
+	hiddenLogField := data.NewField(LOG_IDENTIFIER_INTERNAL, nil, []*string{
+		aws.String("fakelog"),
+		aws.String("fakelog"),
+		aws.String("fakelog"),
+	})
+	hiddenLogField.SetConfig(&data.FieldConfig{
+		Custom: map[string]interface{}{
+			"hidden": true,
 		},
 	})
 
@@ -138,6 +183,8 @@ func TestLogsResultsToDataframes(t *testing.T) {
 			lineField,
 			logStreamField,
 			logField,
+			hiddenLogStreamField,
+			hiddenLogField,
 		},
 		RefID: "",
 		Meta: &data.FrameMeta{
@@ -158,4 +205,145 @@ func TestLogsResultsToDataframes(t *testing.T) {
 	assert.Equal(t, expectedDataframe.RefID, dataframes.RefID)
 	assert.Equal(t, expectedDataframe.Meta, dataframes.Meta)
 	assert.ElementsMatch(t, expectedDataframe.Fields, dataframes.Fields)
+}
+
+func TestGroupKeyGeneration(t *testing.T) {
+	logField := data.NewField("@log", data.Labels{}, []*string{
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-c"),
+		nil,
+	})
+
+	streamField := data.NewField("stream", data.Labels{}, []*string{
+		aws.String("stream-a"),
+		aws.String("stream-b"),
+		aws.String("stream-c"),
+		aws.String("stream-d"),
+	})
+
+	fakeFields := []*data.Field{logField, streamField}
+	expectedKeys := []string{"fakelog-astream-a", "fakelog-bstream-b", "fakelog-cstream-c", "stream-d"}
+
+	assert.Equal(t, expectedKeys[0], generateGroupKey(fakeFields, 0))
+	assert.Equal(t, expectedKeys[1], generateGroupKey(fakeFields, 1))
+	assert.Equal(t, expectedKeys[2], generateGroupKey(fakeFields, 2))
+	assert.Equal(t, expectedKeys[3], generateGroupKey(fakeFields, 3))
+}
+
+func TestGroupingResults(t *testing.T) {
+	timeA, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
+	timeB, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
+	timeC, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	timeVals := []*time.Time{
+		&timeA, &timeA, &timeA, &timeB, &timeB, &timeB, &timeC, &timeC, &timeC,
+	}
+	timeField := data.NewField("@timestamp", data.Labels{}, timeVals)
+
+	logField := data.NewField("@log", data.Labels{}, []*string{
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-c"),
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-c"),
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-c"),
+	})
+
+	countField := data.NewField("count", data.Labels{}, []*string{
+		aws.String("100"),
+		aws.String("150"),
+		aws.String("20"),
+		aws.String("34"),
+		aws.String("57"),
+		aws.String("62"),
+		aws.String("105"),
+		aws.String("200"),
+		aws.String("99"),
+	})
+
+	fakeDataFrame := &data.Frame{
+		Name: "CloudWatchLogsResponse",
+		Fields: []*data.Field{
+			timeField,
+			logField,
+			countField,
+		},
+		RefID: "",
+	}
+
+	groupedTimeVals := []*time.Time{
+		&timeA, &timeB, &timeC,
+	}
+	groupedTimeField := data.NewField("@timestamp", data.Labels{}, groupedTimeVals)
+	groupedLogFieldA := data.NewField("@log", data.Labels{}, []*string{
+		aws.String("fakelog-a"),
+		aws.String("fakelog-a"),
+		aws.String("fakelog-a"),
+	})
+
+	groupedCountFieldA := data.NewField("count", data.Labels{}, []*string{
+		aws.String("100"),
+		aws.String("34"),
+		aws.String("105"),
+	})
+
+	groupedLogFieldB := data.NewField("@log", data.Labels{}, []*string{
+		aws.String("fakelog-b"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-b"),
+	})
+
+	groupedCountFieldB := data.NewField("count", data.Labels{}, []*string{
+		aws.String("150"),
+		aws.String("57"),
+		aws.String("200"),
+	})
+
+	groupedLogFieldC := data.NewField("@log", data.Labels{}, []*string{
+		aws.String("fakelog-c"),
+		aws.String("fakelog-c"),
+		aws.String("fakelog-c"),
+	})
+
+	groupedCountFieldC := data.NewField("count", data.Labels{}, []*string{
+		aws.String("20"),
+		aws.String("62"),
+		aws.String("99"),
+	})
+
+	expectedGroupedFrames := []*data.Frame{
+		{
+			Name: "fakelog-a",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedLogFieldA,
+				groupedCountFieldA,
+			},
+			RefID: "",
+		},
+		{
+			Name: "fakelog-b",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedLogFieldB,
+				groupedCountFieldB,
+			},
+			RefID: "",
+		},
+		{
+			Name: "fakelog-c",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedLogFieldC,
+				groupedCountFieldC,
+			},
+			RefID: "",
+		},
+	}
+
+	groupedResults, _ := groupResults(fakeDataFrame, []string{"@log"})
+	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }

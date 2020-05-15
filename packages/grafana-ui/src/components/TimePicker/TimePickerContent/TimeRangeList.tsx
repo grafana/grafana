@@ -69,7 +69,7 @@ const Options: React.FC<Props> = ({ options, value, onSelect, timeZone }) => {
             key={keyForOption(option, index)}
             value={option}
             selected={isEqual(option, value)}
-            onSelect={option => onSelect(mapOptionToTimeRange(option))}
+            onSelect={option => onSelect(mapOptionToTimeRange(option, timeZone))}
           />
         ))}
       </div>

@@ -23,12 +23,11 @@ import {
   PanelEvents,
   formattedValueToString,
   locationUtil,
-  getFieldTitle,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
 
-import { CoreEvents } from 'app/types';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
@@ -124,7 +123,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
@@ -206,7 +205,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   processField(fieldInfo: FieldInfo) {
     const { panel, dashboard } = this;
 
-    const name = getFieldTitle(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]);
+    const name = getFieldDisplayName(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]);
     let calc = panel.valueName;
     let calcField = fieldInfo.field;
     let val: any = undefined;
@@ -735,7 +734,7 @@ function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
         if (!distinct.first) {
           distinct.first = f;
         }
-        let t = field.config.title;
+        let t = field.config.displayName;
         if (t && !distinct.byName[t]) {
           distinct.byName[t] = f;
           distinct.names.push(t);

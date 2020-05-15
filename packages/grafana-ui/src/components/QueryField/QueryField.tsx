@@ -29,6 +29,7 @@ export interface QueryFieldProps {
   onRunQuery?: () => void;
   onBlur?: () => void;
   onChange?: (value: string) => void;
+  onRichValueChange?: (value: Value) => void;
   onClick?: (event: Event, editor: CoreEditor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
@@ -68,10 +69,12 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     // Base plugins
     this.plugins = [
-      NewlinePlugin(),
+      // SuggestionsPlugin and RunnerPlugin need to be before NewlinePlugin
+      // because they override Enter behavior
       SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
-      ClearPlugin(),
       RunnerPlugin({ handler: this.runOnChangeAndRunQuery }),
+      NewlinePlugin(),
+      ClearPlugin(),
       SelectionShortcutsPlugin(),
       IndentationPlugin(),
       ClipboardPlugin(),
@@ -121,6 +124,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   onChange = (value: Value, runQuery?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
+    if (this.props.onRichValueChange) {
+      this.props.onRichValueChange(value);
+    }
 
     // Update local state with new value and optionally change value upstream.
     this.setState({ value }, () => {

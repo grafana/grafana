@@ -94,6 +94,10 @@ func validateDefaultUniqueness(datasources []*configs) error {
 				ds.OrgID = 1
 			}
 
+			if ds.Access == "" {
+				ds.Access = "proxy"
+			}
+
 			if ds.IsDefault {
 				defaultCount[ds.OrgID] = defaultCount[ds.OrgID] + 1
 				if defaultCount[ds.OrgID] > 1 {
