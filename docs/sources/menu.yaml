@@ -134,6 +134,8 @@
   children:
   - link: /features/panels/panels/
     name: Overview
+  - link: /panels/panel-editor/
+    name: Panel editor
   - link: /features/panels/graph/
     name: Graph
   - link: /features/panels/table_panel/
