@@ -1,7 +1,7 @@
 import { Field, Threshold, GrafanaTheme, GrafanaThemeType, ThresholdsMode, FieldColorMode } from '../types';
 import { reduceField, ReducerID } from '../transformations';
 import { getColorFromHexRgbOrName } from '../utils/namedColorsPalette';
-import * as d3 from 'd3-scale-chromatic';
+import { interpolateRgbBasis } from 'd3-interpolate';
 import isNumber from 'lodash/isNumber';
 
 export interface ScaledValue {
@@ -15,76 +15,45 @@ export type ScaleCalculator = (value: number) => ScaledValue;
 /**
  * @param t Number in the range [0, 1].
  */
-type colorInterpolator = (t: number) => string;
+type ColorInterpolator = (t: number) => string;
+
+const DEFAULT_COLOR = 'gray';
 
 export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCalculator {
   const themeType = theme ? theme.type : GrafanaThemeType.Dark;
   const config = field.config || {};
-  const { thresholds, color } = config;
+  const { thresholds } = config;
 
-  const fixedColor =
-    color && color.mode === FieldColorMode.Fixed && color.fixedColor
-      ? getColorFromHexRgbOrName(color.fixedColor, themeType)
-      : undefined;
+  const color = config.color ?? { mode: FieldColorMode.Thresholds };
 
-  // Should we calculate the percentage
-  const percentThresholds = thresholds && thresholds.mode === ThresholdsMode.Percentage;
-  const useColorScheme = color && color.mode === FieldColorMode.Scheme;
-
-  if (percentThresholds || useColorScheme) {
-    // Calculate min/max if required
-    let min = config.min;
-    let max = config.max;
-
-    if (!isNumber(min) || !isNumber(max)) {
-      if (field.values && field.values.length) {
-        const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-        if (!isNumber(min)) {
-          min = stats[ReducerID.min];
-        }
-        if (!isNumber(max)) {
-          max = stats[ReducerID.max];
-        }
-      } else {
-        min = 0;
-        max = 100;
-      }
-    }
-
-    const delta = max! - min!;
-
-    // Use a d3 color scale
-    let interpolator: colorInterpolator | undefined;
-
-    if (useColorScheme) {
-      interpolator = (d3 as any)[`interpolate${color!.schemeName}`] as colorInterpolator;
-    }
-
+  if (color.mode === FieldColorMode.Fixed) {
     return (value: number) => {
-      const percent = (value - min!) / delta;
-      const threshold = thresholds
-        ? getActiveThreshold(percentThresholds ? percent * 100 : value, thresholds.steps)
-        : undefined; // 0-100
-      let color = fixedColor;
-
-      if (interpolator) {
-        color = interpolator(percent);
-      } else if (threshold) {
-        color = getColorFromHexRgbOrName(threshold!.color, themeType);
-      }
-
       return {
-        percent,
-        threshold,
-        color,
+        color: getColorFromHexRgbOrName(color.fixedColor ?? DEFAULT_COLOR, themeType),
       };
     };
   }
 
-  if (thresholds) {
+  if (color.mode === FieldColorMode.Thresholds) {
+    if (thresholds?.mode === ThresholdsMode.Percentage) {
+      const info = getMinMaxAndDelta(field);
+
+      return (value: number) => {
+        const percent = (value - info.min!) / info.delta;
+        const threshold = getActiveThreshold(percent * 100 * value, thresholds?.steps);
+        const color = getColorFromHexRgbOrName(threshold.color, themeType);
+
+        return {
+          threshold,
+          color,
+        };
+      };
+    }
+
     return (value: number) => {
-      const threshold = getActiveThreshold(value, thresholds.steps);
-      const color = fixedColor ?? (threshold ? getColorFromHexRgbOrName(threshold.color, themeType) : undefined);
+      const threshold = getActiveThreshold(value, thresholds?.steps);
+      const color = getColorFromHexRgbOrName(threshold.color, themeType);
+
       return {
         threshold,
         color,
@@ -92,21 +61,88 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
     };
   }
 
-  // Constant color
-  if (fixedColor) {
-    return (value: number) => {
-      return { color: fixedColor };
-    };
-  }
+  const info = getMinMaxAndDelta(field);
+  const colorFunc = getColorInterpolator(color.mode, themeType);
 
-  // NO-OP
   return (value: number) => {
-    return {};
+    const percent = (value - info.min!) / info.delta;
+    return { color: colorFunc(percent) };
   };
 }
 
-export function getActiveThreshold(value: number, thresholds: Threshold[]): Threshold {
+function getColorInterpolator(mode: FieldColorMode, themeType: GrafanaThemeType): ColorInterpolator {
+  switch (mode) {
+    case FieldColorMode.SchemeBlues: {
+      return interpolateRgbBasis([
+        getColorFromHexRgbOrName('dark-blue', themeType),
+        getColorFromHexRgbOrName('super-light-blue', themeType),
+      ]);
+    }
+    case FieldColorMode.SchemeReds: {
+      return interpolateRgbBasis([
+        getColorFromHexRgbOrName('dark-red', themeType),
+        getColorFromHexRgbOrName('super-light-red', themeType),
+      ]);
+    }
+    case FieldColorMode.SchemeGreens: {
+      return interpolateRgbBasis([
+        getColorFromHexRgbOrName('dark-green', themeType),
+        getColorFromHexRgbOrName('super-light-green', themeType),
+      ]);
+    }
+    case FieldColorMode.SchemeGrYlRd: {
+      return interpolateRgbBasis([
+        getColorFromHexRgbOrName('green', themeType),
+        getColorFromHexRgbOrName('yellow', themeType),
+        getColorFromHexRgbOrName('red', themeType),
+      ]);
+    }
+    default: {
+      return (value: number) => DEFAULT_COLOR;
+    }
+  }
+}
+
+interface FieldMinMaxInfo {
+  min?: number | null;
+  max?: number | null;
+  delta: number;
+}
+
+function getMinMaxAndDelta(field: Field): FieldMinMaxInfo {
+  // Calculate min/max if required
+  let min = field.config.min;
+  let max = field.config.max;
+
+  if (!isNumber(min) || !isNumber(max)) {
+    if (field.values && field.values.length) {
+      const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
+      if (!isNumber(min)) {
+        min = stats[ReducerID.min];
+      }
+      if (!isNumber(max)) {
+        max = stats[ReducerID.max];
+      }
+    } else {
+      min = 0;
+      max = 100;
+    }
+  }
+
+  return {
+    min,
+    max,
+    delta: max! - min!,
+  };
+}
+
+export function getActiveThreshold(value: number, thresholds: Threshold[] | undefined): Threshold {
+  if (!thresholds || thresholds.length === 0) {
+    return { value, color: DEFAULT_COLOR };
+  }
+
   let active = thresholds[0];
+
   for (const threshold of thresholds) {
     if (value >= threshold.value) {
       active = threshold;
@@ -114,6 +150,7 @@ export function getActiveThreshold(value: number, thresholds: Threshold[]): Thre
       break;
     }
   }
+
   return active;
 }
 

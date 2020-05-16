@@ -14,9 +14,24 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
       description: 'Get color from thresholds',
     },
     {
-      label: 'From thresholds and interpolate',
-      value: FieldColorMode.ThresholdsInterpolate,
-      description: 'Get color from thresholds and interpolate color',
+      label: 'Reds',
+      value: FieldColorMode.SchemeReds,
+      description: 'Dark red to light red',
+    },
+    {
+      label: 'Green',
+      value: FieldColorMode.SchemeGreens,
+      description: 'Dark green to light green',
+    },
+    {
+      label: 'Blues',
+      value: FieldColorMode.SchemeBlues,
+      description: 'Dark blue to light blue',
+    },
+    {
+      label: 'Scheme GrYlRd',
+      value: FieldColorMode.SchemeGrYlRd,
+      description: 'Green - Yellow - Red',
     },
   ];
 

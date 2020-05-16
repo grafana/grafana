@@ -6,7 +6,6 @@ import {
   FieldType,
   ThresholdsMode,
   FieldColorMode,
-  ColorScheme,
   FieldOverrideContext,
   ScopedVars,
   ApplyFieldOverrideOptions,
@@ -324,15 +323,6 @@ export function validateFieldConfig(config: FieldConfig) {
   } else if (!config.color.mode) {
     // Without a mode, skip color altogether
     delete config.color;
-  } else {
-    const { color } = config;
-    if (color.mode === FieldColorMode.Scheme) {
-      if (!color.schemeName) {
-        color.schemeName = ColorScheme.BrBG;
-      }
-    } else {
-      delete color.schemeName;
-    }
   }
 
   // Verify that max > min (swap if necessary)

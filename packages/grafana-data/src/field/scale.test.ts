@@ -1,4 +1,4 @@
-import { Field, FieldType, ColorScheme, ThresholdsConfig, ThresholdsMode, FieldColorMode, FieldConfig } from '../types';
+import { Field, FieldType, ThresholdsConfig, ThresholdsMode, FieldColorMode, FieldConfig } from '../types';
 import { sortThresholds, getScaleCalculator, getActiveThreshold } from './scale';
 import { ArrayVector } from '../vector';
 import { validateFieldConfig } from './fieldOverrides';
@@ -65,21 +65,15 @@ describe('scale', () => {
         max: 100, // note less then range of actual data
         thresholds,
         color: {
-          mode: FieldColorMode.Scheme,
-          schemeName: ColorScheme.Greens,
+          mode: FieldColorMode.Thresholds,
         },
       },
       values: new ArrayVector([
         -1000,
-        -100,
-        -75,
-        -50,
         -25,
         0, // middle
         25,
-        50,
-        75,
-        100,
+        55,
         1000,
       ]),
     };
@@ -91,8 +85,7 @@ describe('scale', () => {
     expect(mapped).toMatchInlineSnapshot(`
       Array [
         Object {
-          "color": "rgb(247, 252, 245)",
-          "percent": -4.5,
+          "color": "#F00",
           "threshold": Object {
             "color": "#F00",
             "state": "LowLow",
@@ -100,26 +93,7 @@ describe('scale', () => {
           },
         },
         Object {
-          "color": "rgb(247, 252, 245)",
-          "percent": 0,
-          "threshold": Object {
-            "color": "#F00",
-            "state": "LowLow",
-            "value": -Infinity,
-          },
-        },
-        Object {
-          "color": "rgb(227, 244, 222)",
-          "percent": 0.125,
-          "threshold": Object {
-            "color": "#F00",
-            "state": "LowLow",
-            "value": -Infinity,
-          },
-        },
-        Object {
-          "color": "rgb(198, 232, 191)",
-          "percent": 0.25,
+          "color": "#F00",
           "threshold": Object {
             "color": "#F00",
             "state": "Low",
@@ -127,17 +101,7 @@ describe('scale', () => {
           },
         },
         Object {
-          "color": "rgb(160, 216, 155)",
-          "percent": 0.375,
-          "threshold": Object {
-            "color": "#F00",
-            "state": "Low",
-            "value": -50,
-          },
-        },
-        Object {
-          "color": "rgb(115, 195, 120)",
-          "percent": 0.5,
+          "color": "#F00",
           "threshold": Object {
             "color": "#F00",
             "state": "OK",
@@ -145,8 +109,7 @@ describe('scale', () => {
           },
         },
         Object {
-          "color": "rgb(69, 170, 93)",
-          "percent": 0.625,
+          "color": "#F00",
           "threshold": Object {
             "color": "#F00",
             "state": "OK",
@@ -154,8 +117,7 @@ describe('scale', () => {
           },
         },
         Object {
-          "color": "rgb(34, 139, 69)",
-          "percent": 0.75,
+          "color": "#F00",
           "threshold": Object {
             "color": "#F00",
             "state": "High",
@@ -163,31 +125,45 @@ describe('scale', () => {
           },
         },
         Object {
-          "color": "rgb(6, 107, 45)",
-          "percent": 0.875,
-          "threshold": Object {
-            "color": "#F00",
-            "state": "High",
-            "value": 50,
-          },
-        },
-        Object {
-          "color": "rgb(0, 68, 27)",
-          "percent": 1,
+          "color": "#F00",
           "threshold": Object {
             "color": "#F00",
             "state": "HighHigh",
             "value": 100,
           },
         },
+      ]
+    `);
+  });
+
+  test('color scheme', () => {
+    const field: Field<number> = {
+      name: 'test',
+      type: FieldType.number,
+      config: {
+        color: {
+          mode: FieldColorMode.SchemeBlues,
+        },
+      },
+      values: new ArrayVector([0, 100, 1000]),
+    };
+
+    validateFieldConfig(field.config);
+    const calc = getScaleCalculator(field);
+    const mapped = field.values.toArray().map(v => {
+      return calc(v);
+    });
+
+    expect(mapped).toMatchInlineSnapshot(`
+      Array [
         Object {
-          "color": "rgb(0, 68, 27)",
-          "percent": 5.5,
-          "threshold": Object {
-            "color": "#F00",
-            "state": "HighHigh",
-            "value": 100,
-          },
+          "color": "rgb(31, 96, 196)",
+        },
+        Object {
+          "color": "rgb(47, 108, 202)",
+        },
+        Object {
+          "color": "rgb(192, 216, 255)",
         },
       ]
     `);
