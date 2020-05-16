@@ -1,6 +1,6 @@
 export enum FieldColorMode {
   Thresholds = 'thresholds',
-  ThresholdsInterpolated = 'thresholds-interpolated',
+  ThresholdsInterpolate = 'thresholds-interpolate',
   Scheme = 'scheme',
   Fixed = 'fixed',
 }

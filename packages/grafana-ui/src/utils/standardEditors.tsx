@@ -193,11 +193,11 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  const color: FieldConfigPropertyItem<any, FieldColor, {}> = {
+  const color: FieldConfigPropertyItem<any, FieldColor | undefined, {}> = {
     id: 'color',
     path: 'color',
     name: 'Color',
-    description: 'Define how field or series color is determined',
+    description: 'Define how field/series color is determined',
     editor: standardEditorsRegistry.get('color').editor as any,
     override: standardEditorsRegistry.get('color').editor as any,
     process: identityOverrideProcessor,

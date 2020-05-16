@@ -2,7 +2,11 @@ import React from 'react';
 import { FieldConfigEditorProps, FieldColorMode, SelectableValue, FieldColor } from '@grafana/data';
 import { Select } from '../Select/Select';
 
-export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, {}>> = ({ value, onChange, item }) => {
+export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, {}>> = ({
+  value,
+  onChange,
+  item,
+}) => {
   const options = [
     {
       label: 'From thresholds',
@@ -10,8 +14,8 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, {}>> 
       description: 'Get color from thresholds',
     },
     {
-      label: 'From thresholds & interpolate',
-      value: FieldColorMode.ThresholdsInterpolated,
+      label: 'From thresholds and interpolate',
+      value: FieldColorMode.ThresholdsInterpolate,
       description: 'Get color from thresholds and interpolate color',
     },
   ];
@@ -22,5 +26,7 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, {}>> 
     });
   };
 
-  return <Select options={options} value={value.mode} onChange={onModeChange} />;
+  const mode = (value ?? { mode: FieldColorMode.Thresholds }).mode;
+
+  return <Select options={options} value={mode} onChange={onModeChange} />;
 };
