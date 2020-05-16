@@ -134,13 +134,13 @@ With [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are d
 
 ### Support for backend plugins
 
-Grafana now officially supports [backend plugins]({{< relref "../developers/plugins/backend/" >}}) and the first type of plugin to be introduced is a backend component for data source plugins. You can optionally add a backend component to your data source plugin and implement the query logic there to automatically enable alerting in Grafana for your plugin. In the 7.0 release, we provide a Go SDK to build plugins and you can generate a plugin scaffold to help you get started using the [`@grafana/toolkit`](https://www.npmjs.com/package/@grafana/toolkit).
+Grafana now officially supports [backend plugins]({{< relref "../developers/plugins/backend/_index.md" >}}) and the first type of plugin to be introduced is a backend component for data source plugins. You can optionally add a backend component to your data source plugin and implement the query logic there to automatically enable alerting in Grafana for your plugin. In the 7.0 release, we introduce the [Grafana Plugin SDK for Go]({{< relref "../developers/plugins/backend/grafana-plugin-sdk-for-go.md" >}}) that enables and simplifies building a backend plugin in [Go](https://golang.org/).
 
 Plugins can be monitored with the new metrics and health check capabilities. The new Resources capability means backend components can return non-time series data like JSON or static resources like images and opens up Grafana for new use cases.
 
 With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
-To learn more, start with the [Build a backend for a data source plugin tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) and the [overview]({{< relref "../developers/plugins/backend/" >}}).
+To learn more, start with the [overview]({{< relref "../developers/plugins/backend/_index.md" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafaba Alerting]({{< relref "../alerting/alerts-overview.md" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
 
 ## New tutorials
 
