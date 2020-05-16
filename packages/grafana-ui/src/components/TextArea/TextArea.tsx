@@ -30,3 +30,5 @@ const getTextAreaStyle = stylesFactory((theme: GrafanaTheme, invalid = false) =>
     ),
   };
 });
+
+TextArea.displayName = 'TextArea';

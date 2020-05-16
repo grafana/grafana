@@ -19,7 +19,7 @@ Data source plugins can be extended with a backend component. In the future we p
 
 The following examples gives you an idea of why you'd consider implementing a backend plugin:
 
-- Enable [Grafana Alerting]({{< relref "../../../alerting/rules.md" >}}) for data sources.
+- Enable [Grafana Alerting]({{< relref "../../../alerting" >}}) for data sources.
 - Connect to non-HTTP services that normally can't be connected to from a web browser, e.g. SQL database servers.
 - Keep state between users, e.g. query caching for data sources.
 - Use custom authentication methods and/or authorization checks that aren't supported in Grafana.
@@ -41,7 +41,7 @@ Grafana's backend plugin system exposes a couple of different capabilities, or b
 
 ### Query data
 
-The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../features/dashboard/dashboards.md" >}}), [Explore]({{< relref "../../../features/explore/index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting/rules.md" >}}). The response contains [data frames]({{< relref "data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
+The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../features/dashboard/dashboards.md" >}}), [Explore]({{< relref "../../../features/explore/index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
 
 ### Resources
 
