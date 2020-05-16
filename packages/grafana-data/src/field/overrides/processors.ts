@@ -107,7 +107,3 @@ export const booleanOverrideProcessor = (
 ) => {
   return value; // !!!! likely not !!!!
 };
-
-export interface ColorFieldConfigSettings {
-  enableNamedColors?: boolean;
-}

@@ -17,6 +17,8 @@ import {
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
   ThresholdsMode,
+  identityOverrideProcessor,
+  FieldColor,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -191,22 +193,19 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  // const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-  //   id: 'color',
-  //   path: 'color',
-  //   name: 'Color',
-  //   description: 'Customise color',
-  //   editor: standardEditorsRegistry.get('color').editor as any,
-  //   override: standardEditorsRegistry.get('color').editor as any,
-  //   process: identityOverrideProcessor,
-  //   settings: {
-  //     placeholder: '-',
-  //   },
-  //   shouldApply: () => true,
-  //   category: ['Color & thresholds'],
-  // };
+  const color: FieldConfigPropertyItem<any, FieldColor, {}> = {
+    id: 'color',
+    path: 'color',
+    name: 'Color',
+    description: 'Define how field or series color is determined',
+    editor: standardEditorsRegistry.get('color').editor as any,
+    override: standardEditorsRegistry.get('color').editor as any,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+    category,
+  };
 
-  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links];
 };
 
 /**
