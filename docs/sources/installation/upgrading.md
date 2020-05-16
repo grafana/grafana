@@ -251,4 +251,4 @@ A global minimum dashboard refresh interval is now enforced and defaults to 5 se
 
 ### Backend plugins
 
-Grafana now require backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly disadvise doing. Read more [here]({{< relref "configuration/#allow-loading-unsigned-plugins" >}}) about this setting.
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "configuration/#allow-loading-unsigned-plugins" >}}) about this setting.
