@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { Icon, IconName, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardsDropdown } from './DashboardsDropdown';
+import { DashboardsList } from './DashboardsList';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 import { DashboardModel } from '../../state';
@@ -20,13 +21,17 @@ export const DashboardLinks: FC<Props> = ({ dashboard }) => {
           const linkInfo = getLinkSrv().getAnchorInfo(link);
           const key = `${link.title}-$${index}`;
 
-          if (link.asDropdown) {
-            return <DashboardsDropdown key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
+          if (link.type === 'dashboards') {
+            if (link.asDropdown) {
+              return <DashboardsDropdown key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
+            } else {
+              return <DashboardsList key={key} link={link} dashboardId={dashboard.id} />;
+            }
           }
 
           const linkElement = (
             <a className="gf-form-label" href={sanitizeUrl(linkInfo.href)} target={link.target}>
-              <Icon name={iconMap[link.icon] as IconName} />
+              <Icon name={iconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
               <span>{sanitize(linkInfo.title)}</span>
             </a>
           );

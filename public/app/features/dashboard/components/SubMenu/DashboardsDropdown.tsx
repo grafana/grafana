@@ -54,7 +54,7 @@ export class DashboardsDropdown extends PureComponent<Props, State> {
           <span>{linkInfo.title}</span>
         </a>
         <ul className="dropdown-menu pull-right" role="menu">
-          {searchHits.length > 1 &&
+          {searchHits.length > 0 &&
             searchHits.map((dashboard: any, index: number) => {
               return (
                 <li key={`${dashboard.id}-${index}`}>
