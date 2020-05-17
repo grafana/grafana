@@ -45,7 +45,7 @@ export class DashboardsDropdown extends PureComponent<Props, State> {
       <div className="gf-form">
         <a
           className="gf-form-label pointer"
-          target={link.target}
+          target={link.targetBlank ? '_blank' : '_self'}
           onClick={this.onDropDownClick}
           data-placement="bottom"
           data-toggle="dropdown"
