@@ -4,7 +4,7 @@ import { Time, TimeProps } from './Time';
 
 const INTERVAL = 150;
 
-export interface ElapsedTimeProps extends Omit<TimeProps, 'time'> {
+export interface ElapsedTimeProps extends Omit<TimeProps, 'timeInMs'> {
   // Use this to reset the timer. Any value is allowed just need to be !== from the previous.
   // Keep in mind things like [] !== [] or {} !== {}.
   resetKey?: any;
