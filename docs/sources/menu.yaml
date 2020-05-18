@@ -238,6 +238,8 @@
       link: /linking/dashboard-links/
     - name: Panel links
       link: /linking/panel-links/
+    - name: Data links
+      link: /linking/data-links/
 - name: Templates and variables
   link: /variables/
   children:
