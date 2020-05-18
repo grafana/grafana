@@ -14,7 +14,6 @@ import (
 	_ "github.com/robfig/cron"
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/stretchr/testify/require"
-	_ "github.com/timberio/go-datemath"
 	_ "gopkg.in/square/go-jose.v2"
 )
 
