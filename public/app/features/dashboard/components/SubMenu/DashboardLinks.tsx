@@ -25,7 +25,11 @@ export const DashboardLinks: FC<Props> = ({ dashboard }) => {
           }
 
           const linkElement = (
-            <a className="gf-form-label" href={sanitizeUrl(linkInfo.href)} target={link.target}>
+            <a
+              className="gf-form-label"
+              href={sanitizeUrl(linkInfo.href)}
+              target={link.targetBlank ? '_blank' : '_self'}
+            >
               <Icon name={iconMap[link.icon] as IconName} />
               <span>{sanitize(linkInfo.title)}</span>
             </a>

@@ -23,9 +23,9 @@ Just add it as a data source and you are ready to query your log data in [Explor
 ## Adding the data source
 
 1. Open Grafana and make sure you are logged in.
-2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
-3. Click the `Add data source` button at the top.
-4. Select `Loki` from the list of data sources.
+1. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
+1. Click the `Add data source` button at the top.
+1. Select `Loki` from the list of data sources.
 
 > Note: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -59,7 +59,7 @@ The new field with the link shown in log details:
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/logs/" >}}) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
+Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
 
 ### Log Queries
 
