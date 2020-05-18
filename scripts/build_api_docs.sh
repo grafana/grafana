@@ -11,7 +11,7 @@ if ! git diff-index --quiet HEAD --; then
 fi
 
 # building grafana packages
-echo "bulding grafana packages..."
+echo "building grafana packages..."
 yarn packages:build
 
 # extract packages api documentation json
