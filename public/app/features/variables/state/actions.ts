@@ -498,7 +498,10 @@ export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
   dispatch(variablesClearTransaction());
 };
 
-export const cancelVariables = (): ThunkResult<void> => dispatch => {
-  getBackendSrv().cancelAllInFlightRequests();
+type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
+export const cancelVariables = (
+  dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }
+): ThunkResult<void> => dispatch => {
+  dependencies.getBackendSrv().cancelAllInFlightRequests();
   dispatch(cleanUpVariables());
 };

@@ -10,7 +10,9 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import {
+  cancelVariables,
   changeVariableMultiValue,
+  cleanUpVariables,
   initDashboardTemplating,
   initVariablesTransaction,
   processVariables,
@@ -50,6 +52,7 @@ import {
 } from './transactionReducer';
 import { initialState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
+import { expect } from '../../../../test/lib/common';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -602,6 +605,35 @@ describe('shared actions', () => {
           removeInitLock(toVariablePayload(constant)),
           variablesCompleteTransaction({ uid })
         );
+      });
+    });
+  });
+
+  describe('cleanUpVariables', () => {
+    describe('when called', () => {
+      it('then correct actions are dispatched', async () => {
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(cleanUpVariables())
+          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+      });
+    });
+  });
+
+  describe('cancelVariables', () => {
+    const cancelAllInFlightRequestsMock = jest.fn();
+    const backendSrvMock: any = {
+      cancelAllInFlightRequests: cancelAllInFlightRequestsMock,
+    };
+
+    describe('when called', () => {
+      it('then cancelAllInFlightRequests should be called and correct actions are dispatched', async () => {
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(cancelVariables({ getBackendSrv: () => backendSrvMock }))
+          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+
+        expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
       });
     });
   });
