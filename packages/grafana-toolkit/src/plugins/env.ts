@@ -112,7 +112,7 @@ export async function getCircleDownloadBaseURL(): Promise<string | undefined> {
       }
     }
   } catch (e) {
-    console.log('Error reading baseURL', e);
+    console.log('Error reading CircleCI artifact URL', e);
   }
   return undefined;
 }
