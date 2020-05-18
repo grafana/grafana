@@ -466,8 +466,8 @@ export const initVariablesTransaction = (
   variableSrv: VariableSrv
 ): ThunkResult<void> => async (dispatch, getState) => {
   try {
-    const batchState = getState().templating.transaction;
-    if (batchState.status === TransactionStatus.Fetching) {
+    const transactionState = getState().templating.transaction;
+    if (transactionState.status === TransactionStatus.Fetching) {
       // previous dashboard is still fetching variables, cancel all requests
       dispatch(cancelVariables());
     }
