@@ -5,7 +5,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
-import { QueryVariableModel, VariableRefresh } from '../../../variables/types';
+import { VariableRefresh } from '../../../variables/types';
 
 const { Select, Input } = LegacyForms;
 
@@ -142,7 +142,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     });
 
     // remove template queries
-    dash.getVariables().forEach((variable: QueryVariableModel) => {
+    dash.getVariables().forEach((variable: any) => {
       variable.query = '';
       variable.options = variable.current ? [variable.current] : [];
       variable.refresh = VariableRefresh.never;
