@@ -107,7 +107,7 @@ To access the dashboard time settings, click the **Dashboard settings** (gear) i
 
 ## Panel time overrides and timeshift
 
-In [Query options]({{< relref "queries.md#query-options" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
+In [Query options]({{< relref "../panels/queries.md#query-options" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
 ## Control the time range using a URL
 
