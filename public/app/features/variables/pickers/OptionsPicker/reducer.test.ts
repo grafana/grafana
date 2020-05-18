@@ -295,7 +295,7 @@ describe('optionsPickerReducer', () => {
           ...initialState,
           options: payload.options,
           queryValue,
-          id: payload.id!,
+          id: payload.id,
           multi: payload.multi,
           selectedValues: [selected],
         });

@@ -31,10 +31,10 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
     const { value } = key;
 
     if (key.value === REMOVE_FILTER_KEY) {
-      return this.props.removeFilter(id!, index);
+      return this.props.removeFilter(id, index);
     }
 
-    return this.props.changeFilter(id!, {
+    return this.props.changeFilter(id, {
       index,
       filter: {
         ...filters[index],
@@ -45,7 +45,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
 
   appendFilterToVariable = (filter: AdHocVariableFilter) => {
     const { id } = this.props.variable;
-    this.props.addFilter(id!, filter);
+    this.props.addFilter(id, filter);
   };
 
   fetchFilterKeys = async () => {

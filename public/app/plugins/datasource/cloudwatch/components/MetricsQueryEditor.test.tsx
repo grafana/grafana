@@ -15,6 +15,8 @@ const setup = () => {
 
   const templateSrv = new TemplateSrv();
   const variable: CustomVariableModel = {
+    id: 'var3',
+    index: 0,
     name: 'var3',
     options: [
       { selected: true, value: 'var3-foo', text: 'var3-foo' },
@@ -29,6 +31,7 @@ const setup = () => {
     type: 'custom',
     label: null,
     skipUrlSync: false,
+    global: false,
   };
   templateSrv.init([variable]);
 

@@ -37,6 +37,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
         '1': {
           id: '1',
@@ -56,6 +57,7 @@ describe('variablesReducer', () => {
           index: 2,
           label: 'Label-2',
           skipUrlSync: false,
+          global: false,
         },
         '3': {
           id: '3',
@@ -108,6 +110,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
       };
       variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);
@@ -135,6 +138,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
       };
       variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);
@@ -158,6 +162,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
       };
       variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);

@@ -57,7 +57,7 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
 export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { id } = getState().templating.optionsPicker;
-    const { query, options } = getVariable<VariableWithOptions>(id!, getState());
+    const { query, options } = getVariable<VariableWithOptions>(id, getState());
     dispatch(updateSearchQuery(searchQuery));
 
     if (containsSearchFilter(query)) {

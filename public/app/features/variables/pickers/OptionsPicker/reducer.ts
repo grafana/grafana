@@ -74,7 +74,7 @@ const optionsPickerSlice = createSlice({
       state.options = cloneDeep(options);
       state.tags = getTags(action.payload);
       state.multi = multi ?? false;
-      state.id = action.payload.id!;
+      state.id = action.payload.id;
       state.queryValue = '';
 
       if (isQuery(action.payload)) {

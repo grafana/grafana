@@ -170,7 +170,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -198,7 +198,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {

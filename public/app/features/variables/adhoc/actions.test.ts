@@ -421,7 +421,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
@@ -453,7 +453,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(

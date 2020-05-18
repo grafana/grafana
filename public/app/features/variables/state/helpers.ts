@@ -25,6 +25,7 @@ export const getVariableState = (
       index,
       label: `Label-${index}`,
       skipUrlSync: false,
+      global: false,
     };
   }
 
@@ -37,6 +38,7 @@ export const getVariableState = (
       index: noOfVariables,
       label: `Label-${NEW_VARIABLE_ID}`,
       skipUrlSync: false,
+      global: false,
     };
   }
 

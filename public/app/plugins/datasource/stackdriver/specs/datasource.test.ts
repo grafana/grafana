@@ -297,6 +297,8 @@ describe('StackdriverDataSource', () => {
 function initTemplateSrv(values: any, multi = false) {
   const templateSrv = new TemplateSrv();
   const test: CustomVariableModel = {
+    id: 'test',
+    index: 0,
     name: 'test',
     current: { value: values, text: Array.isArray(values) ? values.toString() : values, selected: true },
     options: [{ value: values, text: Array.isArray(values) ? values.toString() : values, selected: false }],
@@ -307,6 +309,7 @@ function initTemplateSrv(values: any, multi = false) {
     type: 'custom',
     label: null,
     skipUrlSync: false,
+    global: false,
   };
   templateSrv.init([test]);
   return templateSrv;

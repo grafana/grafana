@@ -314,7 +314,9 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query with interval variable', async () => {
       const period: CustomVariableModel = {
+        id: 'period',
         name: 'period',
+        index: 0,
         current: { value: '10m', text: '10m', selected: true },
         options: [{ value: '10m', text: '10m', selected: true }],
         multi: false,
@@ -324,6 +326,7 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
         label: null,
         skipUrlSync: false,
+        global: false,
       };
       templateSrv.init([period]);
 
@@ -669,7 +672,9 @@ describe('CloudWatchDatasource', () => {
     let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
       const var1: CustomVariableModel = {
+        id: 'var1',
         name: 'var1',
+        index: 0,
         current: { value: 'var1-foo', text: 'var1-foo', selected: true },
         options: [{ value: 'var1-foo', text: 'var1-foo', selected: true }],
         multi: false,
@@ -679,9 +684,12 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
         label: null,
         skipUrlSync: false,
+        global: false,
       };
       const var2: CustomVariableModel = {
+        id: 'var2',
         name: 'var2',
+        index: 1,
         current: { value: 'var2-foo', text: 'var2-foo', selected: true },
         options: [{ value: 'var2-foo', text: 'var2-foo', selected: true }],
         multi: false,
@@ -691,9 +699,12 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
         label: null,
         skipUrlSync: false,
+        global: false,
       };
       const var3: CustomVariableModel = {
+        id: 'var3',
         name: 'var3',
+        index: 2,
         current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
         options: [
           { selected: true, value: 'var3-foo', text: 'var3-foo' },
@@ -707,9 +718,12 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
         label: null,
         skipUrlSync: false,
+        global: false,
       };
       const var4: CustomVariableModel = {
+        id: 'var4',
         name: 'var4',
+        index: 3,
         options: [
           { selected: true, value: 'var4-foo', text: 'var4-foo' },
           { selected: false, value: 'var4-bar', text: 'var4-bar' },
@@ -723,6 +737,7 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
         label: null,
         skipUrlSync: false,
+        global: false,
       };
       const variables = [var1, var2, var3, var4];
       const state = convertToStoreState(variables);

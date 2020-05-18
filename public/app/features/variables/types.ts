@@ -92,10 +92,10 @@ export interface VariableWithOptions extends VariableModel {
 }
 
 export interface VariableModel extends BaseVariableModel {
-  id?: string; // only exists for variables in redux state
-  global?: boolean; // only exists for variables in redux state
+  id: string;
+  global: boolean;
   hide: VariableHide;
   skipUrlSync: boolean;
-  index?: number;
+  index: number;
   initLock?: Deferred | null;
 }

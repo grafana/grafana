@@ -108,7 +108,7 @@ export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkRes
 
 export const changeVariableMultiValue = (identifier: VariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variable = getVariable<VariableWithMultiSupport>(identifier.id!, getState());
+    const variable = getVariable<VariableWithMultiSupport>(identifier.id, getState());
     const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })));
@@ -139,7 +139,7 @@ export const processVariable = (
   queryParams: UrlQueryMap
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.id!, getState());
+    const variable = getVariable(identifier.id, getState());
     await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams['var-' + variable.name];
@@ -185,14 +185,14 @@ export const setOptionFromUrl = (
   urlValue: UrlQueryValue
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.id!, getState());
+    const variable = getVariable(identifier.id, getState());
     if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
       // updates options
       await variableAdapters.get(variable.type).updateOptions(variable);
     }
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(variable.id!, getState());
+    const variableFromState = getVariable<VariableWithOptions>(variable.id, getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -269,7 +269,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier.id!, getState());
+    const variableInState = getVariable<VariableWithOptions>(identifier.id, getState());
     const current = variableInState.current || (({} as unknown) as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -358,7 +358,7 @@ export const variableUpdated = (
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    const variable = getVariable(identifier.id!, getState());
+    const variable = getVariable(identifier.id, getState());
     if (variable.initLock) {
       return Promise.resolve();
     }
@@ -411,7 +411,7 @@ export const onTimeRangeUpdated = (
   const promises = variablesThatNeedRefresh.map(async (variable: VariableWithOptions) => {
     const previousOptions = variable.options.slice();
     await variableAdapters.get(variable.type).updateOptions(variable);
-    const updatedVariable = getVariable<VariableWithOptions>(variable.id!, getState());
+    const updatedVariable = getVariable<VariableWithOptions>(variable.id, getState());
     if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
       const dashboard = getState().dashboard.getModel();
       dashboard?.templateVariableValueUpdated();
