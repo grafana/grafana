@@ -18,5 +18,5 @@ export const ElapsedTime: FC<ElapsedTimeProps> = ({ resetKey, humanize, classNam
   // this effect will only be run when resetKey changes. This will reset the elapsed to 0.
   useEffect(() => setElapsed(0), [resetKey]);
 
-  return <Time time={elapsed / 1000} className={className} humanize={humanize} />;
+  return <Time timeInMs={elapsed} className={className} humanize={humanize} />;
 };

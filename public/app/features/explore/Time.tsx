@@ -2,21 +2,23 @@ import React, { FC } from 'react';
 import { toDuration } from '@grafana/data';
 
 export interface TimeProps {
-  time: number;
+  timeInMs: number;
   className?: string;
   humanize?: boolean;
 }
 
-export const Time: FC<TimeProps> = ({ time, className, humanize }) => {
-  return <span className={`elapsed-time ${className}`}>{formatTime(time, humanize)}</span>;
+export const Time: FC<TimeProps> = ({ timeInMs, className, humanize }) => {
+  return <span className={`elapsed-time ${className}`}>{formatTime(timeInMs, humanize)}</span>;
 };
 
-const formatTime = (time: number, humanize = false): string => {
+const formatTime = (timeInMs: number, humanize = false): string => {
+  const inSeconds = timeInMs / 1000;
+
   if (!humanize) {
-    return `${time.toFixed(1)}s`;
+    return `${inSeconds.toFixed(1)}s`;
   }
 
-  const duration = toDuration(time);
+  const duration = toDuration(inSeconds, 'seconds');
   const hours = duration.hours();
   const minutes = duration.minutes();
   const seconds = duration.seconds();
