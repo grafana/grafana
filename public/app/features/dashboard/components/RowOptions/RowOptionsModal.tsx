@@ -2,13 +2,13 @@ import React, { FC } from 'react';
 import { Modal } from '@grafana/ui';
 import { css } from 'emotion';
 
-import { RowOptionsForm } from './RowOptionsForm';
+import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 
 export interface RowOptionsModalProps {
   title: string | null;
   repeat: string | null;
   onDismiss: () => void;
-  onUpdate: (title: string | null, repeat: string | null) => void;
+  onUpdate: OnRowOptionsUpdate;
 }
 
 export const RowOptionsModal: FC<RowOptionsModalProps> = ({ repeat, title, onDismiss, onUpdate }) => {

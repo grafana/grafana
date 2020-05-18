@@ -1,12 +1,12 @@
 import React from 'react';
 import classNames from 'classnames';
-import { Icon, ModalsController } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { RowOptionsModal } from '../RowOptions/RowOptionsModal';
+import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -40,13 +40,12 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   };
 
-  onUpdate = (hideModal: () => void) => (title: string | null, repeat: string | null) => {
+  onUpdate = (title: string | null, repeat: string | null) => {
     this.props.panel['title'] = title;
     this.props.panel['repeat'] = repeat;
     this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
-    hideModal();
   };
 
   onDelete = () => {
@@ -86,25 +85,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         </a>
         {canEdit && (
           <div className="dashboard-row__actions">
-            <ModalsController>
-              {({ showModal, hideModal }) => {
-                return (
-                  <a
-                    className="pointer"
-                    onClick={() => {
-                      showModal(RowOptionsModal, {
-                        title: this.props.panel.title,
-                        repeat: this.props.panel.repeat,
-                        onDismiss: hideModal,
-                        onUpdate: this.onUpdate(hideModal),
-                      });
-                    }}
-                  >
-                    <Icon name="cog" />
-                  </a>
-                );
-              }}
-            </ModalsController>
+            <RowOptionsButton
+              title={this.props.panel.title}
+              repeat={this.props.panel.repeat}
+              onUpdate={this.onUpdate}
+            />
             <a className="pointer" onClick={this.onDelete}>
               <Icon name="trash-alt" />
             </a>

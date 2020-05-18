@@ -1,11 +1,14 @@
 import React, { FC, useCallback, useState } from 'react';
 import { Button, Field, Form, HorizontalGroup, Input } from '@grafana/ui';
+
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
+
+export type OnRowOptionsUpdate = (title: string | null, repeat: string | null) => void;
 
 export interface Props {
   title: string | null;
   repeat: string | null;
-  onUpdate: (title: string | null, repeat: string | null) => void;
+  onUpdate: OnRowOptionsUpdate;
   onCancel: () => void;
 }
 
