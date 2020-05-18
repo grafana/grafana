@@ -7,28 +7,28 @@ This document describes the rules and governance of the project. It is meant to 
 * **Maintainers**: Maintainers lead an individual project or parts thereof ([`MAINTAINERS.md`][maintainers.md]).
 
 * **Projects**: A single repository in the Grafana GitHub organization and listed below is referred to as a project:
-* clock-panel
-* devtools
-* gel-app
-* grafana
-* grafana-github-datasource
-* grafana-image-renderer
-* grafana-kiosk
-* grafana-plugin-sdk-go
-* grafana-polystat-panel
-* grafonnet-lib
-* kairosdb-datasource
-* piechart-panel
-* simple-angular-panel
-* simple-app-plugin
-* simple-datasource
-* simple-datasource-backend
-* simple-json-backend-datasource
-* simple-json-datasource
-* simple-react-panel
-* strava-datasource
-* tutorials
-* worldmap-panel
+  * clock-panel
+  * devtools
+  * gel-app
+  * grafana
+  * grafana-github-datasource
+  * grafana-image-renderer
+  * grafana-kiosk
+  * grafana-plugin-sdk-go
+  * grafana-polystat-panel
+  * grafonnet-lib
+  * kairosdb-datasource
+  * piechart-panel
+  * simple-angular-panel
+  * simple-app-plugin
+  * simple-datasource
+  * simple-datasource-backend
+  * simple-json-backend-datasource
+  * simple-json-datasource
+  * simple-react-panel
+  * strava-datasource
+  * tutorials
+  * worldmap-panel
 
 * **The Grafana project**: The sum of all activities performed under this governance, concerning one or more repositories or the community.
 
