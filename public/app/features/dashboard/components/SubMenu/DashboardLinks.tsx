@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
 import { Icon, IconName, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
-import { DashboardsDropdown } from './DashboardsDropdown';
-import { DashboardsList } from './DashboardsList';
+import { DashboardLinksDashboard } from './DashboardLinksDashboard';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 import { DashboardModel } from '../../state';
@@ -22,11 +21,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard }) => {
           const key = `${link.title}-$${index}`;
 
           if (link.type === 'dashboards') {
-            if (link.asDropdown) {
-              return <DashboardsDropdown key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
-            } else {
-              return <DashboardsList key={key} link={link} dashboardId={dashboard.id} />;
-            }
+            return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
           }
 
           const linkElement = (
