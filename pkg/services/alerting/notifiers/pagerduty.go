@@ -91,6 +91,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	for _, evt := range evalContext.EvalMatches {
 		customData.Set(evt.Metric, evt.Value)
 	}
+	customData.Set("message", evalContext.Rule.Message)
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 
@@ -129,7 +130,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		}
 	}
 
-	summary := evalContext.Rule.Name + " - " + evalContext.Rule.Message
+	summary := evalContext.Rule.Name
 	if len(summary) > 1024 {
 		summary = summary[0:1024]
 	}
