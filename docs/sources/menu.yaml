@@ -132,7 +132,7 @@
 - name: Panels
   link: /panels/
   children:
-  - link: /features/panels/panels/
+  - link: /panels/panels-overview/
     name: Overview
   - link: /panels/queries/
     name: Queries
@@ -142,7 +142,7 @@
     name: Field config options
   - link: /panels/panel-editor/
     name: Panel editor
-  - name: Visualizatons
+  - name: Visualizations
     link: /panels/visualizations/
     children:
     - link: /panels/visualizations/alert-list-panel/
