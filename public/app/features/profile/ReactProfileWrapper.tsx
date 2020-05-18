@@ -5,7 +5,7 @@ import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedP
 import { UserTeams } from './UserTeams';
 import { UserOrganizations } from './UserOrganizations';
 import { config } from '@grafana/runtime';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, Container } from '@grafana/ui';
 
 export const ReactProfileWrapper = () => (
   <UserProvider userId={config.bootData.user.id}>
@@ -21,7 +21,9 @@ export const ReactProfileWrapper = () => (
               user={user}
             />
           )}
+          <Container margin="md" />
           <SharedPreferences resourceUri="user" />
+          <Container margin="md" />
           <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
           {!states.loadUser && (
             <UserOrganizations

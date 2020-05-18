@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { Select, Form, Legend, Field, InputControl, Button } from '@grafana/ui';
+import { Select, Form, Legend, Field, InputControl, Button, RadioButtonGroup } from '@grafana/ui';
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -117,13 +117,21 @@ export class SharedPreferences extends PureComponent<Props, State> {
       homeDashboardId,
     };
 
+    console.log(defaultValues);
+
     return (
       <Form defaultValues={defaultValues} onSubmit={this.onSubmitForm}>
-        {({ register, errors, control }) => (
+        {({ register, errors, control, getValues }) => (
           <>
             <Legend>Preferences</Legend>
             <Field label="UI Theme">
-              <InputControl name="theme" control={control} options={themes} isSearchable={false} as={Select} />
+              <InputControl
+                name="theme"
+                control={control}
+                options={themes}
+                // value={getValues().theme}
+                as={RadioButtonGroup}
+              />
             </Field>
             <Field
               label="Home dashboard"
