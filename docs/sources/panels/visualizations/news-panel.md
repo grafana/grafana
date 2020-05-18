@@ -5,8 +5,7 @@ type = "docs"
 [menu.docs]
 name = "news-panel"
 parent = "visualizations"
-weight = 850
-draft = "false"
+weight = 800
 +++
 
 ## News panel

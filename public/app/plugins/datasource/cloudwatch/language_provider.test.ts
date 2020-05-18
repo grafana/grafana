@@ -85,6 +85,17 @@ describe('CloudWatchLanguageProvider', () => {
   it('should suggest fields and bool functions after filter', async () => {
     await runSuggestionTest('filter \\', [fields, BOOLEAN_FUNCTIONS.map(v => v.label)]);
   });
+
+  it('should suggest fields and functions after filter bin() function', async () => {
+    await runSuggestionTest('stats count(@message) by bin(30m), \\', [
+      fields,
+      STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS).map(v => v.label),
+    ]);
+  });
+
+  it('should not suggest anything if not after comma in by expression', async () => {
+    await runSuggestionTest('stats count(@message) by bin(30m) \\', []);
+  });
 });
 
 async function runSuggestionTest(query: string, expectedItems: string[][]) {

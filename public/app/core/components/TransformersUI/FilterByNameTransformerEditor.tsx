@@ -6,6 +6,7 @@ import {
   TransformerRegistyItem,
   TransformerUIProps,
   getFieldDisplayName,
+  stringToJsRegex,
 } from '@grafana/data';
 import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 import { css } from 'emotion';
@@ -32,7 +33,8 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   constructor(props: FilterByNameTransformerEditorProps) {
     super(props);
     this.state = {
-      include: props.options.include || [],
+      include: props.options.include?.names || [],
+      regex: props.options.include?.pattern,
       options: [],
       selected: [],
       isRegexValid: true,
@@ -51,7 +53,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
   private initOptions() {
     const { input, options } = this.props;
-    const configuredOptions = options.include ? options.include : [];
+    const configuredOptions = Array.from(options.include?.names ?? []);
 
     const allNames: FieldNameInfo[] = [];
     const byName: KeyValue<FieldNameInfo> = {};
@@ -73,28 +75,34 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       }
     }
 
-    let regexOption;
+    if (options.include?.pattern) {
+      try {
+        const regex = stringToJsRegex(options.include.pattern);
+
+        for (const info of allNames) {
+          if (regex.test(info.name)) {
+            configuredOptions.push(info.name);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
 
     if (configuredOptions.length) {
-      let selected: FieldNameInfo[] = [];
-
-      for (const o of configuredOptions) {
-        const selectedFields = allNames.filter(n => n.name === o);
-        if (selectedFields.length > 0) {
-          selected = selected.concat(selectedFields);
-        } else {
-          // there can be only one regex in the options
-          regexOption = o;
-        }
-      }
+      const selected: FieldNameInfo[] = allNames.filter(n => configuredOptions.includes(n.name));
 
       this.setState({
         options: allNames,
         selected: selected.map(s => s.name),
-        regex: regexOption,
+        regex: options.include?.pattern,
       });
     } else {
-      this.setState({ options: allNames, selected: allNames.map(n => n.name) });
+      this.setState({
+        options: allNames,
+        selected: allNames.map(n => n.name),
+        regex: options.include?.pattern,
+      });
     }
   }
 
@@ -109,44 +117,46 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 
   onChange = (selected: string[]) => {
     const { regex, isRegexValid } = this.state;
-    let include = selected;
+    const options: FilterFieldsByNameTransformerOptions = {
+      ...this.props.options,
+      include: { names: selected },
+    };
 
     if (regex && isRegexValid) {
-      include = include.concat([regex]);
+      options.include = options.include ?? {};
+      options.include.pattern = regex;
     }
 
     this.setState({ selected }, () => {
-      this.props.onChange({
-        ...this.props.options,
-        include,
-      });
+      this.props.onChange(options);
     });
   };
 
   onInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { selected, regex } = this.state;
     let isRegexValid = true;
+
     try {
       if (regex) {
-        new RegExp(regex);
+        stringToJsRegex(regex);
       }
     } catch (e) {
       isRegexValid = false;
     }
+
     if (isRegexValid) {
       this.props.onChange({
         ...this.props.options,
-        include: regex ? [...selected, regex] : selected,
+        include: { pattern: regex },
       });
     } else {
       this.props.onChange({
         ...this.props.options,
-        include: selected,
+        include: { names: selected },
       });
     }
-    this.setState({
-      isRegexValid,
-    });
+
+    this.setState({ isRegexValid });
   };
 
   render() {

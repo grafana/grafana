@@ -11,6 +11,8 @@ type = "docs"
 
 ### TimeZoneResolver type
 
+The type to describe the time zone resolver function that will be used to access the default time zone of a user.
+
 <b>Signature</b>
 
 ```typescript

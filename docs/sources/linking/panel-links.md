@@ -11,8 +11,6 @@ weight = 300
 
 # Panel links
 
-> **Note:** This documentation refers to the Grafana 7.0 beta UI.
-
 Each panel can have its own set of links that are shown in the upper left corner of the panel. You can link to any available URL, including dashboards, panels, or external sites. You can even control the time range to ensure the user is zoomed in on the right data in Grafana.
 
 Click the icon on the top left corner of a panel to see available panel links.

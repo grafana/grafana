@@ -29,14 +29,14 @@ the dashboard, and will also be added as a required input when the dashboard is 
 
 ## Importing a dashboard
 
-To import a dashboard open dashboard search and then hit the import button.
+To import a dashboard click the + icon in the side menu, and then click **Import**. 
 
-{{< docs-imagebox img="/img/docs/v50/import_step1.png" max-width="700px" >}}
+{{< docs-imagebox img="/img/docs/v70/import_step1.png" max-width="700px" >}}
 
-From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
-URL or paste dashboard json text directly into the text area.
+From here you can upload a dashboard JSON file, paste a [Grafana.com](https://grafana.com) dashboard
+URL or paste dashboard JSON text directly into the text area.
 
-{{< docs-imagebox img="/img/docs/v50/import_step2.png"  max-width="700px" >}}
+{{< docs-imagebox img="/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
 
 In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
 data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).

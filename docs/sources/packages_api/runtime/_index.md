@@ -35,6 +35,8 @@ A library containing services, configurations etc. used to interact with the Gra
 |  [getEchoSrv()](./getechosrv/) | Used to retrieve the [EchoSrv](./runtime/echosrv.md) that can be used to report events to registered echo backends. |
 |  [getLocationSrv()](./getlocationsrv/) | Used to retrieve the [LocationSrv](./runtime/locationsrv.md) that can be used to automatically navigate the user to a new place in Grafana. |
 |  [loadPluginCss(options)](./loadplugincss/) | Use this to load css for a Grafana plugin by specifying a [PluginCssOptions](./runtime/plugincssoptions.md) containing styling for the dark and the light theme. |
+|  [toDataQueryError(err)](./todataqueryerror/) | Convert an object into a DataQueryError -- if this is an HTTP response, it will put the correct values in the error filds |
+|  [toDataQueryResponse(res)](./todataqueryresponse/) | Parse the results from \`<!-- -->/api/ds/query |
 
 ## Interfaces
 
@@ -58,7 +60,7 @@ A library containing services, configurations etc. used to interact with the Gra
 |  [MetaAnalyticsEvent](./metaanalyticsevent/) | Describes meta analytics event with predefined [EchoEventType.MetaAnalytics](./runtime/echoeventtype/metaanalytics.md) type. |
 |  [PluginCssOptions](./plugincssoptions/) | Option to specify a plugin css that should be applied for the dark and the light theme. |
 |  [SizeMeta](./sizemeta/) | Describes a size with width/height |
-|  [TemplateSrv](./templatesrv/) | Via the TemplateSrv consumers get access to all the available template variables that can be used within the current active dashboard.<!-- -->For a more in-depth description visit: https://grafana.com/docs/grafana/latest/variables/templates-and-variables |
+|  [TemplateSrv](./templatesrv/) | Via the TemplateSrv consumers get access to all the available template variables that can be used within the current active dashboard.<!-- -->For a more in-depth description visit: https://grafana.com/docs/grafana/latest/reference/templating |
 
 ## Variables
 
@@ -66,6 +68,7 @@ A library containing services, configurations etc. used to interact with the Gra
 |  --- | --- |
 |  [config](./config/) | Use this to access the [GrafanaBootConfig](./runtime/grafanabootconfig.md) for the current running Grafana instance. |
 |  [getBackendSrv](./getbackendsrv/) | Used to retrieve the [BackendSrv](./runtime/backendsrv.md) that can be used to communicate via http(s) to a remote backend such as the Grafana backend, a datasource etc. |
+|  [getLegacyAngularInjector](./getlegacyangularinjector/) | <b><i>(BETA)</i></b> WARNING: this function provides a temporary way for plugins to access anything in the angular injector. While the migration from angular to react continues, there are a few options that do not yet have good alternatives. Note that use of this function will be removed in the future. |
 |  [getTemplateSrv](./gettemplatesrv/) | Used to retrieve the [TemplateSrv](./runtime/templatesrv.md) that can be used to fetch available template variables. |
 |  [registerEchoBackend](./registerechobackend/) | Used to register echo backends that will receive Grafana echo events during application runtime. |
 |  [reportMetaAnalytics](./reportmetaanalytics/) | Helper function to report meta analytics to the [EchoSrv](./runtime/echosrv.md)<!-- -->. |

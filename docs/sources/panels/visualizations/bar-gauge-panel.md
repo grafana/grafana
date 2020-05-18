@@ -4,8 +4,7 @@ description = "Bar gauge panel docs"
 keywords = ["grafana", "bar", "bar gauge"]
 type = "docs"
 aliases =["/docs/grafana/latest/features/panels/bar_gauge/"]
-weight = 400
-draft = "true"
+weight = 200
 +++
 
 # Bar gauge panel
@@ -19,18 +18,16 @@ This panel can show one or more bar gauges depending on how many series, rows, o
 ## Data and field options
 
 Bar gauge visualizations allow you to apply:
-- Data transformations
-- Field settings
-- Field overrides
+- [Data transformations]({{< relref "../transformations.md" >}})
+- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
-- Value mappings
 
 ## Display options
 
 Use the following options to refine your visualization:
 
 - **Show -** Choose how Grafana displays your data.
-  - **Calculate -** Show a calculated value based on all rows.
+  - **Calculate -** Show a calculated value based on all rows. For a list of available calculations, refer to [List of calculations]({{< relref "../calculations-list.md" >}}).
   - **All values -** Show a separate stat for every row. If you select this option, then you can also select a **Limit**, or the maximum number of rows to display.
 - **Value -** Select a reducer function that Grafana will use to reduce many fields to a single value. Click the **Value** list to see functions and brief descriptions.
 - **Orientation -** Choose a stacking direction.

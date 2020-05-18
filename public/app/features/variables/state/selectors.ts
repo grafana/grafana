@@ -12,7 +12,7 @@ export const getVariable = <T extends VariableModel = VariableModel>(
     if (throwWhenMissing) {
       throw new Error(`Couldn't find variable with id:${id}`);
     }
-    return undefined;
+    return (undefined as unknown) as T;
   }
 
   return state.templating.variables[id] as T;

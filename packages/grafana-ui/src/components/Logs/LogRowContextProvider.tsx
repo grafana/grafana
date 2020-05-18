@@ -37,6 +37,7 @@ interface LogRowContextProviderProps {
     errors: LogRowContextQueryErrors;
     hasMoreContextRows: HasMoreContextRows;
     updateLimit: () => void;
+    limit: number;
   }) => JSX.Element;
 }
 
@@ -160,11 +161,19 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
-        if (currentResult && currentResult.data[0].length === value.data[0].length) {
+        const currentResultBefore = currentResult?.data[0][0];
+        const currentResultAfter = currentResult?.data[1][0];
+        const valueBefore = value.data[0][0];
+        const valueAfter = value.data[1][0];
+
+        // checks if there are more log rows in a given direction
+        // if after fetching additional rows the length of result is the same,
+        // we can assume there are no logs in that direction within a given time range
+        if (currentResult && (!valueBefore || currentResultBefore.length === valueBefore.length)) {
           hasMoreLogsBefore = false;
         }
 
-        if (currentResult && currentResult.data[1].length === value.data[1].length) {
+        if (currentResult && (!valueAfter || currentResultAfter.length === valueAfter.length)) {
           hasMoreLogsAfter = false;
         }
 
@@ -189,5 +198,6 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     },
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),
+    limit,
   });
 };

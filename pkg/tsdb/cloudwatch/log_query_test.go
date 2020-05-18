@@ -78,6 +78,15 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Value: aws.String("fakelog"),
 				},
 			},
+			// Sometimes cloudwatch returns empty row
+			{},
+			// or rows with only timestamp
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("@timestamp"),
+					Value: aws.String("2020-03-02 17:04:05.000"),
+				},
+			},
 			{
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@ptr"),
@@ -203,20 +212,23 @@ func TestGroupKeyGeneration(t *testing.T) {
 		aws.String("fakelog-a"),
 		aws.String("fakelog-b"),
 		aws.String("fakelog-c"),
+		nil,
 	})
 
 	streamField := data.NewField("stream", data.Labels{}, []*string{
 		aws.String("stream-a"),
 		aws.String("stream-b"),
 		aws.String("stream-c"),
+		aws.String("stream-d"),
 	})
 
 	fakeFields := []*data.Field{logField, streamField}
-	expectedKeys := []string{"fakelog-astream-a", "fakelog-bstream-b", "fakelog-cstream-c"}
+	expectedKeys := []string{"fakelog-astream-a", "fakelog-bstream-b", "fakelog-cstream-c", "stream-d"}
 
 	assert.Equal(t, expectedKeys[0], generateGroupKey(fakeFields, 0))
 	assert.Equal(t, expectedKeys[1], generateGroupKey(fakeFields, 1))
 	assert.Equal(t, expectedKeys[2], generateGroupKey(fakeFields, 2))
+	assert.Equal(t, expectedKeys[3], generateGroupKey(fakeFields, 3))
 }
 
 func TestGroupingResults(t *testing.T) {
