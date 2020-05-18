@@ -134,6 +134,8 @@
   children:
   - link: /panels/panels-overview/
     name: Overview
+  - link: /panels/add-a-panel/
+    name: Add panel
   - link: /panels/queries/
     name: Queries
   - link: /panels/transformations/
@@ -167,8 +169,12 @@
       name: Table
     - link: /panels/visualizations/text-panel/
       name: Text
-  - link: /panels/calculations-list/
-    name: Calculations list
+    - link: /panels/thresholds/
+      name: Thresholds
+    - link: /panels/inspect-panel/
+      name: Inspect panel
+    - link: /panels/calculations-list/
+      name: Calculations list
 - name: Dashboards
   link: /features/dashboard/
   children:
@@ -190,10 +196,6 @@
       name: Time range controls
     - link: /reference/export_import/
       name: Export and import
-    - link: /features/dashboard/links/
-      name: Navigation links
-    - link: /reference/datalinks/
-      name: Data links
     - link: /reference/dashboard_history/
       name: Dashboard version history
     - name: Keyboard Shortcuts
@@ -232,6 +234,8 @@
       link: /linking/dashboard-links/
     - name: Panel links
       link: /linking/panel-links/
+    - name: Data links
+      link: /linking/data-links/
 - name: Templates and variables
   link: /variables/
   children:
