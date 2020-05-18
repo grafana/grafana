@@ -466,8 +466,8 @@ export const initVariablesTransaction = (
   variableSrv: VariableSrv
 ): ThunkResult<void> => async (dispatch, getState) => {
   try {
-    const batchState = getState().templating.transaction;
-    if (batchState.status === TransactionStatus.Fetching) {
+    const transactionState = getState().templating.transaction;
+    if (transactionState.status === TransactionStatus.Fetching) {
       // previous dashboard is still fetching variables, cancel all requests
       dispatch(cancelVariables());
     }
@@ -498,7 +498,10 @@ export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
   dispatch(variablesClearTransaction());
 };
 
-export const cancelVariables = (): ThunkResult<void> => dispatch => {
-  getBackendSrv().cancelAllInFlightRequests();
+type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
+export const cancelVariables = (
+  dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }
+): ThunkResult<void> => dispatch => {
+  dependencies.getBackendSrv().cancelAllInFlightRequests();
   dispatch(cleanUpVariables());
 };
