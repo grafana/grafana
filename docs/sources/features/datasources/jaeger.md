@@ -29,7 +29,7 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 ## Query traces
 
-Querying and displaying traces from Jaeger is available via [Explore]({{< relref "../explore" >}}).
+You can query and display traces from Jaeger via [Explore]({{< relref "../explore" >}}).
 
 
 The Jaeger query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
