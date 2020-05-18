@@ -1,12 +1,36 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { AsyncSelect, Button, Field, Form, HorizontalGroup, Input, InputControl } from '@grafana/ui';
+import { AsyncSelect, Button, Field, Form, HorizontalGroup, Input, InputControl, Switch } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from '../../types';
 import { createNotificationChannel } from './state/actions';
 import { getBackendSrv } from '@grafana/runtime';
+
+type OptionSwitch = { label: string; name: string; description: string };
+const switches: OptionSwitch[] = [
+  {
+    label: 'Default',
+    description: 'Use this notification for all alerts',
+    name: 'isDefault',
+  },
+  {
+    label: 'Include image',
+    description: 'Captures an image and include it in the notification',
+    name: 'uploadImage',
+  },
+  {
+    label: 'Disable Resolve Message',
+    description: 'Disable the resolve message [OK] that is sent when alerting state returns to false',
+    name: 'disableResolveMessage',
+  },
+  {
+    label: 'Send reminders',
+    description: 'Send additional notifications for triggered alerts',
+    name: 'sendReminder',
+  },
+];
 
 type NotifierType =
   | 'discord'
@@ -89,6 +113,13 @@ class NewAlertNotificationPage extends PureComponent<Props> {
                     noOptionsMessage="No types found"
                   />
                 </Field>
+                {switches.map((item: OptionSwitch, index: number) => {
+                  return (
+                    <Field label={item.label} description={item.description} key={`${item.name}-${index}`}>
+                      <Switch name={item.name} ref={register} />
+                    </Field>
+                  );
+                })}
                 <HorizontalGroup>
                   <Button type="submit" onClick={this.onSubmit}>
                     Save
