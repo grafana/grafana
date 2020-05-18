@@ -30,7 +30,10 @@ Want to learn more about Grafana 7 and more? Sign up for our online conference!
 - [Installation guides](http://docs.grafana.org/installation/)
 
 Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!
-
+## Technology Stack
+- Data Visualisation 
+- Data Analysis
+- Javascript
 ## Documentation
 
 The Grafana documentation is available at [grafana.com/docs](https://grafana.com/docs/).
@@ -42,7 +45,6 @@ If you're interested in contributing to the Grafana project:
 - Start by reading the [Contributing guide](/CONTRIBUTING.md).
 - Learn how to set up your local environment, in our [Developer guide](/contribute/developer-guide.md).
 - Explore our [beginner-friendly issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22).
-
 ## Get involved
 
 - Follow [@grafana on Twitter](https://twitter.com/grafana/)
