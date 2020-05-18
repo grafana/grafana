@@ -469,7 +469,7 @@ export const initVariablesTransaction = (
     const batchState = getState().templating.transaction;
     if (batchState.status === TransactionStatus.Fetching) {
       // previous dashboard is still fetching variables, cancel all requests
-      dispatch(cancelVariables({ redirectToHome: false }));
+      dispatch(cancelVariables());
     }
 
     dispatch(variablesInitTransaction({ uid: dashboardUid }));
@@ -498,13 +498,7 @@ export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
   dispatch(variablesClearTransaction());
 };
 
-export const cancelVariables = ({ redirectToHome }: { redirectToHome?: boolean }): ThunkResult<void> => dispatch => {
+export const cancelVariables = (): ThunkResult<void> => dispatch => {
   getBackendSrv().cancelAllInFlightRequests();
-
-  if (redirectToHome) {
-    window.location.href = getConfig().appSubUrl + '/';
-    return;
-  }
-
   dispatch(cleanUpVariables());
 };

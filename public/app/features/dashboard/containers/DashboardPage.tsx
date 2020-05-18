@@ -211,6 +211,10 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
+  cancelVariables = () => {
+    this.props.updateLocation({ path: '/' });
+  };
+
   renderSlowInitState() {
     return (
       <div className="dashboard-loading">
@@ -220,12 +224,7 @@ export class DashboardPage extends PureComponent<Props, State> {
               <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
             </HorizontalGroup>{' '}
             <HorizontalGroup align="center" justify="center">
-              <Button
-                variant="secondary"
-                size="md"
-                icon="repeat"
-                onClick={() => this.props.cancelVariables({ redirectToHome: true })}
-              >
+              <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
                 Cancel loading dashboard
               </Button>
             </HorizontalGroup>

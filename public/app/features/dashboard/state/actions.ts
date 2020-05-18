@@ -162,5 +162,5 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
 
 export const cleanUpDashboardAndVariables = (): ThunkResult<void> => dispatch => {
   dispatch(cleanUpDashboard());
-  dispatch(cancelVariables({ redirectToHome: false }));
+  dispatch(cancelVariables());
 };
