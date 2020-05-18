@@ -129,7 +129,7 @@ Read more on [Graphite Tag Support](http://graphite.readthedocs.io/en/latest/tag
 
 <div class="clearfix"></div>
 
-## Dashboard model, persistent URL's and API changes
+## Dashboard model, persistent URLs and API changes
 
 We are introducing a new unique identifier (`uid`) in the dashboard JSON model. It's automatically
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.
