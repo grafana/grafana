@@ -11,7 +11,7 @@ weight = 2
 +++
 
 # Jaeger data source
-Grafana ships with built-in support for Jaeger, open source, end-to-end distributed tracing.
+Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing.
 Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Adding the data source
