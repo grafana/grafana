@@ -6,8 +6,7 @@ aliases = ["/docs/grafana/latest/reference/logs/", "/docs/grafana/latest/feature
 [menu.docs]
 name = "Logs panel"
 parent = "visualizations"
-weight = 900
-draft = "true"
+weight = 700
 +++
 
 # Logs panel

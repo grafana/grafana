@@ -31,13 +31,13 @@ Before you apply transformations, all of the following must be true:
 
 - You have entered a query and returned data from a data source. For more information about queries, refer to [Queries]({{< relref "queries.md" >}}).
 - You have applied a visualization that supports queries, such as:
-  - Graph
-  - Stat
-  - Gauge
-  - Bar gauge
-  - Table
-  - Heatmap
-  - Logs
+  - [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
+  - [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
+  - [Graph]({{< relref "visualizations/graph-panel.md" >}})
+  - [Heatmap]({{< relref "visualizations/heatmap.md" >}})
+  - [Logs]({{< relref "visualizations/logs-panel.md" >}})
+  - [Stat]({{< relref "visualizations/stat-panel.md" >}})
+  - [Table]({{< relref "visualizations/table-panel.md" >}})
 
 ## Apply a transformation
 

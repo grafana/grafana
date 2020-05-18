@@ -11,8 +11,7 @@ weight = 1
 
 # User Authentication Overview
 
-Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user
-permissions and org memberships.
+Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
 Here is a table showing all supported authentication providers and the features available for them. [Team sync]({{< relref "../enterprise/team-sync.md" >}}) and [active sync]({{< relref "../enterprise/enhanced_ldap.md#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
@@ -27,7 +26,6 @@ Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active s
 [LDAP]({{< relref "ldap.md" >}})                   | v2.1+ | v2.1+ | v5.3+ | v6.3+
 [Okta OAuth]({{< relref "okta.md" >}})             | v7.0+ | v7.0+ | v7.0+ | - 
 [SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | - 
-
 
 ## Grafana Auth
 
