@@ -14,7 +14,7 @@ weight = 5
 # Using AWS CloudWatch in Grafana
 
 Grafana ships with built-in support for CloudWatch. Add it as a data source, then you are ready to
-build dashboards or use Explore with CloudWatch metrics and CloudWatch logs.
+build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
 ## Adding the data source
 
@@ -128,10 +128,10 @@ region = us-west-2
 
 ## Using the Query Editor
 
-The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch logs APIs, each with its own specialized query editor. You select which API you want to query with using the query mode switch on top of the editor.
+The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor. You select which API you want to query with using the query mode switch on top of the editor.
 
 {{< docs-imagebox img="/img/docs/v70/cloudwatch-metrics-query-field.png" max-width="800px" class="docs-image--left" caption="CloudWatch metrics query field" >}}
-{{< docs-imagebox img="/img/docs/v70/cloudwatch-logs-query-field.png" max-width="800px" class="docs-image--right" caption="CloudWatch logs query field" >}}
+{{< docs-imagebox img="/img/docs/v70/cloudwatch-logs-query-field.png" max-width="800px" class="docs-image--right" caption="CloudWatch Logs query field" >}}
 
 ## Using the Metric Query Editor
 
@@ -189,15 +189,15 @@ This feature is not available for metrics that are based on metric math expressi
 
 > Only available in Grafana v7.0+.
 
-To query CloudWatch logs, select the region and up to 20 log groups which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
+To query CloudWatch Logs, select the region and up to 20 log groups which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html). When making `stats` queries in Explore, you have to make sure you are in Metrics Explore mode.
 
 {{< docs-imagebox img="/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
-To the right of the query input field is a CloudWatch Insights link that opens the CloudWatch Insights console with your query. You can continue exploration there if necessary.
+To the right of the query input field is a CloudWatch Logs Insights link that opens the CloudWatch Logs Insights console with your query. You can continue exploration there if necessary.
 
-{{< docs-imagebox img="/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch logs deep linking" >}}
+{{< docs-imagebox img="/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch Logs deep linking" >}}
 
 ### Using template variables
 
@@ -351,7 +351,7 @@ resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
 ## Pricing
 
 The Amazon CloudWatch data source for Grafana uses the `ListMetrics` and `GetMetricData` CloudWatch API calls to list and retrieve metrics.
-Pricing for CloudWatch Logs is based on the amount of data ingested, archived, and analyzed via logs insights queries.
+Pricing for CloudWatch Logs is based on the amount of data ingested, archived, and analyzed via CloudWatch Logs Insights queries.
 Please see the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/) for more details.
 
 Every time you pick a dimension in the query editor Grafana will issue a ListMetrics request.
