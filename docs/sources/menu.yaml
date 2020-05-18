@@ -134,6 +134,8 @@
   children:
   - link: /panels/panels-overview/
     name: Overview
+  - link: /panels/add-a-panel/
+    name: Add panel
   - link: /panels/queries/
     name: Queries
   - link: /panels/transformations/
@@ -167,7 +169,11 @@
       name: Table
     - link: /panels/visualizations/text-panel/
       name: Text
-  - link: /panels/calculations-list/
+    - link: /panels/thresholds/
+      name: Thresholds
+   - link: /panels/inspect-panel/
+      name: Inspect panel
+      - link: /panels/calculations-list/
     name: Calculations list
 - name: Dashboards
   link: /features/dashboard/
