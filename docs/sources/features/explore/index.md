@@ -209,16 +209,41 @@ For information about how to use the query editor see documentation for specific
 
 TODO: image of the trace view
 
-There are two main sections of the tracing view: header and timeline.
+##### Header
 
-TODO: The header with zoom
+TODO: Img header
 
-Header shows trace metadata like root span name, trace ID or start time. It also shows condensed minimap of all the spans. You can use this minimap to zoom to a section of trace timeline by dragging with your mouse and selecting a region. You can reset the zoom selection with Reset Selection button which is shown when you hover over the minimap. Use search to the right of the root span name to highlight any spans containing the search text.
+- Header title: Shows the name of the root span and trace ID.
+- Search: Highlights spans containing the searched text.
+- Metadata: Various metadata about the trace.
 
-TODO: image of expanded row
+##### Minimap
 
-Timeline shows detailed information about all the spans in the trace. You can click shevron icon to the left of the span name to show or hide all the children spans. You can open span details by clicking on the span row. In the details you can see Tags, Process and Logs section if span contains any logs. Each section can be expanded or collapsed by clicking on its title.
+TODO: Img minimap
 
+Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
+
+##### Timeline
+
+TODO: Img timeline
+
+Shows list of spans within the trace. Each span row consists of these components:
+- Expand children button: Expands or collapses all the children spans of selected span.
+- Service name: Name of the service logged the span.
+- Operation name: Name of the operation that this span represents.
+- Span duration bar: Visual representation of the operation duration within the trace.
+
+Clicking anywhere on the span row will show span details. 
+
+##### Span details
+
+TODO: Img timeline
+
+- Operation name
+- Span metadata
+- Tags: Any tags associated with this span.
+- Process metadata: Metadata about the process that logged this span.
+- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
 ## Navigating between Explore and a dashboard
 
