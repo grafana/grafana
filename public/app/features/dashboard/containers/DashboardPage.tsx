@@ -91,10 +91,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.props.dashboard) {
-      this.props.cleanUpDashboardAndVariables();
-      this.setPanelFullscreenClass(false);
-    }
+    this.props.cleanUpDashboardAndVariables();
+    this.setPanelFullscreenClass(false);
   }
 
   componentDidUpdate(prevProps: Props) {
