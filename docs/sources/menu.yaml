@@ -173,7 +173,7 @@
       name: Thresholds
    - link: /panels/inspect-panel/
       name: Inspect panel
-      - link: /panels/calculations-list/
+    - link: /panels/calculations-list/
     name: Calculations list
 - name: Dashboards
   link: /features/dashboard/
