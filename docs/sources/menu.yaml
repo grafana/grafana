@@ -171,7 +171,7 @@
       name: Text
     - link: /panels/thresholds/
       name: Thresholds
-   - link: /panels/inspect-panel/
+    - link: /panels/inspect-panel/
       name: Inspect panel
       - link: /panels/calculations-list/
     name: Calculations list
