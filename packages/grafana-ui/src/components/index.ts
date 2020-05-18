@@ -24,6 +24,7 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
+export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
