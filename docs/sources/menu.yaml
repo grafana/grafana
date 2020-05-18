@@ -142,7 +142,7 @@
     name: Field config options
   - link: /panels/panel-editor/
     name: Panel editor
-  - name: Visualizatons
+  - name: Visualizations
     link: /panels/visualizations/
     children:
     - link: /panels/visualizations/alert-list-panel/
