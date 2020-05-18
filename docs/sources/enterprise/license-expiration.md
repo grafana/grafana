@@ -8,7 +8,7 @@ parent = "enterprise"
 weight = 8
 +++
 
-# License expiration 
+# License expiration
 
 If your license has expired most of Grafana keeps working as normal. Some enterprise functionality stops or runs with reduced functionality and Grafana displays a banner informing the users that Grafana is running on an expired license. Your Grafana admin needs to upload a new license file to restore full functionality.
 
@@ -23,7 +23,7 @@ If your license has expired most of Grafana keeps working as normal. Some enterp
     ```
     The configuration file's location may also be overridden by the `GF_ENTERPRISE_LICENSE_PATH` environment variable.
 
-2. Log in to your [Grafana.com](https://grafana.com/login) user and make sure you're in the correct organization in the dropdown at the top of the page.
+2. Log in to your [Grafana Cloud Account](https://grafana.com/login) and make sure you're in the correct organization in the dropdown at the top of the page.
 3. Under the **Grafana Enterprise** section in the menu bar to the left, choose licenses and download the currently valid license with which you want to run Grafana. If you cannot see a valid license on Grafana.com, please contact your account manager at Grafana Labs to renew your subscription.
 4. Replace the current `license.jwt`-file with the one you've just downloaded.
 5. Restart Grafana.
