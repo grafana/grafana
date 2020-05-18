@@ -31,17 +31,16 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 You can query and display traces from Jaeger via [Explore]({{< relref "../explore" >}}).
 
+{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
 The Jaeger query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
-TODO: screenshot query editor with trace ID filled in
+{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
 1. The service you are interested in.
 1. Particular operation is part of the selected service
 1. Specific trace in which the selected operation occurred, represented by the root operation name and trace duration.
-
-TODO: screenshot trace selector opened up
 
 ## Linking Trace ID from logs
 

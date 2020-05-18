@@ -32,23 +32,20 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 
 Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
 
+{{< docs-imagebox img="/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
 The Zipkin query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
-TODO: screenshot query editor with trace ID filled in
+{{< docs-imagebox img="/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}} 
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
 1. The service you are interested in.
 1. Particular operation is part of the selected service
 1. Specific trace in which the selected operation occurred, represented by the root operation name and trace duration.
 
-TODO: screenshot trace selector opened up
-
 ## Data mapping in the trace UI
 
 Zipkin annotations are shown in the trace view as logs with annotation value shown under annotation key.
-
-TODO: screenshot how it looks like
 
 ## Linking Trace ID from logs
 

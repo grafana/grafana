@@ -207,11 +207,11 @@ You can visualize traces from tracing data sources in explore. Data sources curr
 
 For information about how to use the query editor see documentation for specific data source.
 
-TODO: image of the trace view
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-full.png" class="docs-image--no-shadow" caption="Screenshot of the trace view" >}}
 
 ##### Header
 
-TODO: Img header
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-header.png" class="docs-image--no-shadow" caption="Screenshot of the trace view header" >}}
 
 - Header title: Shows the name of the root span and trace ID.
 - Search: Highlights spans containing the searched text.
@@ -219,13 +219,13 @@ TODO: Img header
 
 ##### Minimap
 
-TODO: Img minimap
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption ="Screenshot of the trace view minimap" >}}
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
 ##### Timeline
 
-TODO: Img timeline
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption ="Screenshot of the trace view timeline" >}}
 
 Shows list of spans within the trace. Each span row consists of these components:
 - Expand children button: Expands or collapses all the children spans of selected span.
@@ -237,7 +237,7 @@ Clicking anywhere on the span row will show span details.
 
 ##### Span details
 
-TODO: Img timeline
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption ="Screenshot of the trace view span details" >}}
 
 - Operation name
 - Span metadata
