@@ -24,7 +24,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 		t.Run("default values should be applied", func(t *testing.T) {
 			cfgProvider := configReader{path: appliedDefaults, log: logger}
 			cfg, err := cfgProvider.readConfig()
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			require.Equal(t, "file", cfg[0].Type)
 			require.Equal(t, int64(1), cfg[0].OrgID)
@@ -36,7 +36,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			cfgProvider := configReader{path: simpleDashboardConfig, log: logger}
 			cfg, err := cfgProvider.readConfig()
 			_ = os.Unsetenv("TEST_VAR")
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			validateDashboardAsConfig(t, cfg)
 		})
@@ -44,7 +44,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 		t.Run("Can read config file in version 0 format", func(t *testing.T) {
 			cfgProvider := configReader{path: oldVersion, log: logger}
 			cfg, err := cfgProvider.readConfig()
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			validateDashboardAsConfig(t, cfg)
 		})
