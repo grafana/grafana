@@ -337,6 +337,22 @@
       link: /grafana-cloud/hosted-grafana/
     - name: Hosted logs
       link: /grafana-cloud/hosted-logs/
+    - name: Hosted metrics
+      link: /grafana-cloud/hosted-metrics/
+      children:
+        - name: Hosted Prometheus
+          link: /grafana-cloud/hosted-metrics/prometheus/
+        - name: Hosted Graphite
+          link: /grafana-cloud/hosted-metrics/graphite/
+          children:
+            - name: Overview
+              link: /grafana-cloud/hosted-metrics/graphite/
+            - name: Data ingestion
+              link: /grafana-cloud/hosted-metrics/graphite/data-ingestion/
+            - name: Graphite HTTP API
+              link: /grafana-cloud/hosted-metrics/graphite/http-api/
+            - name: FAQ
+              link: /grafana-cloud/hosted-metrics/graphite/faq/
 - name: Plugins
   link: /plugins/
   children:

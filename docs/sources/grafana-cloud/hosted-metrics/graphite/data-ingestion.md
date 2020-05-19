@@ -3,7 +3,7 @@ title: Data Ingestion
 weight: 1
 ---
 
-# Data Ingestion
+# Data ingestion
 
 We support:
 
@@ -17,7 +17,7 @@ Customers typically deploy using either of these 2 options:
 * run the relay as an extra component external to your existing graphite pipeline. Data can be directed to it from any existing carbon relay.
 * replace an existing carbon-relay with carbon-relay-ng
 
-If your Graphite stack does not currently contain any relay, then you can simply add carbon-relay-ng, have your clients (statsd, collectd, diamond, etc) send data to the relay, which in turn can send data to your existing graphite server *and* to our platform.
+If your Graphite stack does not currently contain any relay, then you can simply add carbon-relay-ng, have your clients (statsd, collectd, diamond, and so on) send data to the relay, which in turn can send data to your existing graphite server *and* to our platform.
 
 When creating a Hosted Metrics Graphite instance, we provide a carbon-relay-ng config file that you can plug in and be ready to use out of the box.
 We also have Grafana Labs engineers ready to advise further on set up, if needed.
@@ -28,11 +28,11 @@ The most simple way to send your carbon traffic to GrafanaCloud is to use carbon
 
 An example configuration to do that can be downloaded from your Hosted Metrics instance's "Details" page. It contains a `grafanaNet` route pointing at your instance.
 
-## Sending a copy of your carbon traffic to GrafanaCloud
+## Sending a copy of your carbon traffic to Grafana Cloud
 
 ### Duplicating traffic by adding Carbon-Relay-NG in front of carbon-relay or carbon-cache
 
-It is possible to duplicate your data to send one copy to your existing Graphite infrastructure and the other to GrafanaCloud. To do this you can put an instance of carbon-relay-ng in front of your existing carbon-relay or carbon-cache and make it duplicate the traffic. Carbon-relay-ng allows you to specify routes of various types, to send a copy to GrafanaCloud you need to add a route of the type `grafanaNet`, to send a copy to your existing carbon-relay/carbon-cache you can add a carbon route.
+It is possible to duplicate your data to send one copy to your existing Graphite infrastructure and the other to Grafana Cloud. To do this you can put an instance of carbon-relay-ng in front of your existing carbon-relay or carbon-cache and make it duplicate the traffic. Carbon-relay-ng allows you to specify routes of various types, to send a copy to GrafanaCloud you need to add a route of the type `grafanaNet`, to send a copy to your existing carbon-relay/carbon-cache you can add a carbon route.
 
 For example if you currently have carbon-relay listening on port `2003` and all of your infrastructure is sending its carbon traffic there, you could change it to listen on port `2053` instead and then start a carbon-relay-ng on port `2003` with this config to send a copy of the traffic to `localhost:2053`:
 

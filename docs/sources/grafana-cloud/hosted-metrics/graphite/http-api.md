@@ -3,7 +3,7 @@ title: HTTP API
 weight: 2
 ---
 
-# HTTP API
+# Hosted Graphite HTTP API
 
 The HTTP API is the same as that of Graphite, with the addition of ingestion, authentication and meta tags.
 
@@ -36,7 +36,7 @@ https://graphite-us-central1.grafana.net/graphite
 https://graphite-us-central1.grafana.net/metrics
 ```
 
-Then you are on a shared cluster. However if your URL's look more like this:
+Then you are on a shared cluster. However if your URLs look more like this:
 
 ```
 https://tsdb-123-your-company-name.hosted-metrics.grafana.net/graphite
@@ -68,15 +68,15 @@ So essentially you can use basic auth with username "api_key" (for dedicated clu
 
 You can also use a bearer token in "username:password" format (if username not specified, "api_key" is assumed)
 
-## Common Request Parameters
+## Common request parameters
 
 Many of the API methods involve using Graphite patterns (queries), tag queries and the standard Graphite from/to syntax.
 
-### Graphite Patterns
+### Graphite patterns
 
 [Graphite patterns](https://graphite.readthedocs.io/en/latest/render_api.html#paths-and-wildcards) are queries that involve glob patterns (`*`, `{}`, `[]`, `?`).
 
-### Tag Expressions
+### Tag expressions
 
 Tags expressions are strings, and may have the following formats:
 
@@ -97,7 +97,7 @@ Regular expression conditions are treated as being anchored at the start of the 
 ## Endpoints
 
 
-### Adding New Data: Posting To `/metrics`
+### Adding new data: Posting To `/metrics`
 
 The main entry point for any publisher to publish data to, be it [carbon-relay-ng](https://github.com/graphite-ng/carbon-relay-ng/), or any other script or application such as the [hosted-metrics-sender-example](https://github.com/grafana/hosted-metrics-sender-example)
 
@@ -112,7 +112,7 @@ The main entry point for any publisher to publish data to, be it [carbon-relay-n
   - `rt-metric-binary`: same datastructure, but messagepack encoded. (see [the MetricData Marshal/Encode methods](https://godoc.org/github.com/grafana/metrictank/schema#MetricData))
   - `rt-metric-binary-snappy`: same as above, but snappy compressed.
 
-#### Data Format
+#### Data format
 
 Each metricpoint message can have the following properties:
 ```
@@ -160,7 +160,7 @@ curl -X POST -H "Authorization: Bearer $key" -H "Content-Type: application/json"
 ```
 
 ### Deleting Metrics
-#### Non-tagged With `/metrics/delete`
+#### Non-tagged with `/metrics/delete`
 
 Deletes metrics which match the `query` and all child nodes.
 
@@ -286,7 +286,7 @@ curl -H "Authorization: Bearer $key" "$base_out/metrics/find?query=metrictank.ag
 ]
 ```
 
-#### Tagged With `/tags/findSeries`
+#### Tagged with `/tags/findSeries`
 
 Returns metrics which match tag queries and have received an update since `from`.
 Note: the returned results are not deduplicated and in certain cases it is possible

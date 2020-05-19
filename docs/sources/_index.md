@@ -69,7 +69,17 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>What's new in v7.0</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
-
+    <a href="{{< relref "grafana-cloud/hosted-grafana/" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>Hosted Grafana</h4>
+        <p>Learn about hosted Grafana.</p>
+    </a>
+    <a href="{{< relref "grafana-cloud/hosted-logs/" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>Hosted logs</h4>
+        <p>Learn about hosted Loki.</p>
+    </a>
+    <a href="{{< relref "grafana-cloud/hosted-metrics/" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>Hosted metrics</h4>
+        <p>Hosted Prometheus and Graphite.</p>
 </div>
 
 ## Data source guides

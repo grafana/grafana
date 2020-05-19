@@ -7,7 +7,7 @@ keywords = ["Grafana", "Loki", "Logs", "Aggregation"]
 identifier = "hosted_logs"
 +++
 
-# Hosted Logs
+# Hosted logs
 
 Let Grafana host Loki, your new logging solution.
 
