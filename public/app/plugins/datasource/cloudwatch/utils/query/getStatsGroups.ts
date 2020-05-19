@@ -12,6 +12,8 @@ class GroupListener extends ScrollQLParserListener {
       const groups = ctx.groups;
 
       groups.forEach((group: any) => {
+        // This code is for handling the case where a field specifier is aliased, with the alias available via
+        // the proj property. Otherwise we can just take the group text as it is.
         const proj = group.fieldSpec?.().proj;
         if (proj) {
           this.groupNames.push(proj.getText());
@@ -24,15 +26,16 @@ class GroupListener extends ScrollQLParserListener {
 }
 
 export function getStatsGroups(text: string): string[] {
-  const queryPrefix = 'source test start=0 end=1|';
-  const queryText = queryPrefix + text;
+  // Dummy prefix needed here for parser to function correctly
+  const dummyPrefix = 'source test start=0 end=1|';
+  const queryText = dummyPrefix + text;
   const chars = new antlr4.InputStream(queryText);
   const lexer = new ScrollQLLexer(chars);
   const tokens = new antlr4.CommonTokenStream(lexer);
   const parser = new ScrollQLParser(tokens);
   parser.buildParseTrees = true;
   const tree = parser.query();
-  const printer = new GroupListener();
-  antlr4.tree.ParseTreeWalker.DEFAULT.walk(printer, tree);
-  return printer.groupNames;
+  const groupListener = new GroupListener();
+  antlr4.tree.ParseTreeWalker.DEFAULT.walk(groupListener, tree);
+  return groupListener.groupNames;
 }
