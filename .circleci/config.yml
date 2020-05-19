@@ -531,10 +531,7 @@ jobs:
                 --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket \
                 grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release
             else
-              # TODO: Revert to non-simulation
-              /tmp/grabpl publish-packages --edition << parameters.edition >> \
-                --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket \
-                grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release
+              /tmp/grabpl publish-packages --edition << parameters.edition >>
             fi
       - run:
           name: CI job failed
@@ -656,9 +653,7 @@ jobs:
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
             elif [[ -n $CIRCLE_TAG ]]; then
               # This is a release
-              # TODO: Revert to non-internal
-              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> \
-                --internal
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             else
               # TODO: Don't ignore errors, temporary workaround until we fix #22955
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
@@ -1241,6 +1236,12 @@ workflows:
           filters: *filter-only-master
           requires:
             - end-to-end-tests
+      - release-packages:
+          filters: *filter-only-release
+          requires:
+            - end-to-end-tests
+            - mysql-integration-test
+            - postgres-integration-test
       - publish-packages:
           filters: *filter-master-or-release
           name: publish-oss-packages
@@ -1263,7 +1264,6 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-release-publisher
-      # Is this OK to run on Friday?
       - publish-storybook:
           filters: *filter-all
           requires:
