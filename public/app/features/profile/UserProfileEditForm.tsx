@@ -34,15 +34,14 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
               <Input ref={register} type="text" name="name" />
             </Field>
 
-            <Field label="Email" invalid={!!errors.email} disabled={disableLoginForm}>
+            <Field
+              label="Email"
+              invalid={!!errors.email}
+              disabled={disableLoginForm}
+              description={disableLoginForm && 'Login Details Locked - managed in another system.'}
+            >
               <Input
-                prefix={
-                  disableLoginForm && (
-                    <Tooltip content="Login Details Locked - managed in another system.">
-                      <Icon name="lock" />
-                    </Tooltip>
-                  )
-                }
+                prefix={disableLoginForm && <Icon name="lock" />}
                 placeholder="user@email.com"
                 ref={register}
                 type="email"
@@ -50,19 +49,12 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
               />
             </Field>
 
-            <Field label="Username" disabled={disableLoginForm}>
-              <Input
-                prefix={
-                  disableLoginForm && (
-                    <Tooltip content="Login Details Locked - managed in another system.">
-                      <Icon name="lock" />
-                    </Tooltip>
-                  )
-                }
-                ref={register}
-                type="text"
-                name="login"
-              />
+            <Field
+              label="Username"
+              disabled={disableLoginForm}
+              description={disableLoginForm && 'Login Details Locked - managed in another system.'}
+            >
+              <Input prefix={disableLoginForm && <Icon name="lock" />} ref={register} type="text" name="login" />
             </Field>
             <Button type="submit">Save</Button>
           </>
