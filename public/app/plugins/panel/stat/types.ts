@@ -26,7 +26,8 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
 
 export function addStandardDataReduceOptions(
   builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
-  includeOrientation = true
+  includeOrientation = true,
+  includeFieldMatcher = true
 ) {
   builder.addRadio({
     path: 'reduceOptions.values',
@@ -64,6 +65,24 @@ export function addStandardDataReduceOptions(
     // Hides it when all values mode is on
     showIf: currentConfig => currentConfig.reduceOptions.values === false,
   });
+
+  if (includeFieldMatcher) {
+    const options = [
+      { value: '', label: 'Numeric Fields' },
+      { value: '/.*/', label: 'All Fields' },
+    ];
+    // TODO? list all fields here...
+
+    builder.addSelect({
+      path: 'reduceOptions.fields',
+      name: 'Fields',
+      description: 'Select the fields that should be included in the visualization',
+      settings: {
+        options,
+      },
+      defaultValue: '',
+    });
+  }
 
   if (includeOrientation) {
     builder.addRadio({

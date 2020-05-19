@@ -21,6 +21,8 @@ import { GrafanaTheme } from '../types/theme';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { getFieldMatcher } from '../transformations';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -32,6 +34,8 @@ export interface ReduceDataOptions {
   limit?: number;
   /** When !values, pick one value for the whole field */
   calcs: string[];
+  /** Which fields to show.  By default this is only numeric fields */
+  fields?: string;
 }
 
 // TODO: use built in variables, same as for data links?
@@ -84,6 +88,16 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
+  const fieldMatcher = getFieldMatcher(
+    reduceOptions.fields
+      ? {
+          id: FieldMatcherID.byRegexp,
+          options: reduceOptions.fields,
+        }
+      : {
+          id: FieldMatcherID.numeric,
+        }
+  );
 
   if (options.data) {
     // Field overrides are applied already
@@ -104,7 +118,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const fieldLinksSupplier = field.getLinks;
 
         // To filter out time field, need an option for this
-        if (field.type !== FieldType.number) {
+        if (!fieldMatcher(field, series, data)) {
           continue;
         }
 
