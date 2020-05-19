@@ -279,7 +279,7 @@ func TestHandleGetQueryResults(t *testing.T) {
 		"queryId": "abcd-efgh-ijkl-mnop",
 	})
 
-	frame, err := executor.handleGetQueryResults(context.Background(), logsClient, params, "A")
+	frame, err := executor.handleGetQueryResults(context.Background(), logs, params, "A")
 	require.NoError(t, err)
 	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:37:23.000")
 	require.NoError(t, err)

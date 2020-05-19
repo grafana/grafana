@@ -41,7 +41,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			},
 		}
-		metrics, err := getMetricsForCustomMetrics(dsInfo, f)
+		metrics, err := executor.getMetricsForCustomMetrics("us-east-1")
 		require.NoError(t, err)
 
 		assert.Contains(t, metrics, "Test_MetricName")
@@ -69,7 +69,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			},
 		}
-		dimensionKeys, err := getDimensionsForCustomMetrics(dsInfo, f)
+		dimensionKeys, err := executor.getDimensionsForCustomMetrics("us-east-1")
 		require.NoError(t, err)
 
 		assert.Contains(t, dimensionKeys, "Test_DimensionName")

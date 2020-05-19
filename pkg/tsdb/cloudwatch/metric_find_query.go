@@ -31,6 +31,7 @@ type CustomMetricsCache struct {
 	Cache  []string
 }
 
+var regionCache sync.Map
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":          {"ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "ExpiredCount", "HeapUsage", "InflightCount", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionsCount", "ProducerCount", "QueueSize", "StorePercentUsage", "TotalConsumerCount", "TotalMessageCount", "TotalProducerCount"},
@@ -119,7 +120,6 @@ var metricsMap = map[string][]string{
 	"WAF":                   {"AllowedRequests", "BlockedRequests", "CountedRequests", "DDoSAttackBitsPerSecond", "DDoSAttackPacketsPerSecond", "DDoSAttackRequestsPerSecond", "DDoSDetected", "PassedRequests"},
 	"AWS/Cassandra":         {"AccountMaxReads", "AccountMaxTableLevelReads", "AccountMaxTableLevelWrites", "AccountMaxWrites", "AccountProvisionedReadCapacityUtilization", "AccountProvisionedWriteCapacityUtilization", "ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "MaxProvisionedTableReadCapacityUtilization", "MaxProvisionedTableWriteCapacityUtilization", "ReturnedItemCount", "ReturnedItemCountBySelect", "SuccessfulRequestCount", "SuccessfulRequestLatency", "SystemErrors", "UserErrors"},
 }
-
 var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {},
 	"AWS/AmazonMQ":          {"Broker", "Queue", "Topic"},
