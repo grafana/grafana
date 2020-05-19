@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, TeamSettings } from './TeamSettings';
 import { getMockTeam } from './__mocks__/teamMocks';
