@@ -18,7 +18,7 @@ export interface ReduceTransformerOptions {
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
   name: 'Reduce',
-  description: 'Reduce all rows to a single row and concatenate all results',
+  description: 'Reduce all rows or data points to a single value using a function like max, min, mean or last',
   defaultOptions: {
     reducers: [ReducerID.max],
   },
@@ -59,7 +59,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             type: FieldType.other, // UNKNOWN until after we call the functions
             values: values[values.length - 1],
             config: {
-              title: info.name,
+              displayName: info.name,
               // UNIT from original field?
             },
           });
@@ -72,7 +72,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             continue;
           }
 
-          if (matcher(field)) {
+          if (matcher(field, series, data)) {
             const results = reduceField({
               field,
               reducers,

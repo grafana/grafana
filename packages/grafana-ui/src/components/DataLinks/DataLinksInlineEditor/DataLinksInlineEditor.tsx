@@ -18,26 +18,40 @@ interface DataLinksInlineEditorProps {
 export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ links, onChange, suggestions, data }) => {
   const theme = useTheme();
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [isNew, setIsNew] = useState(false);
+
   const styles = getDataLinksInlineEditorStyles(theme);
   const linksSafe: DataLink[] = links ?? [];
-  const isEditing = editIndex !== null && linksSafe[editIndex] !== undefined;
+  const isEditing = editIndex !== null;
 
   const onDataLinkChange = (index: number, link: DataLink) => {
+    if (isNew) {
+      if (link.title.trim() === '' && link.url.trim() === '') {
+        setIsNew(false);
+        setEditIndex(null);
+        return;
+      } else {
+        setEditIndex(null);
+        setIsNew(false);
+      }
+    }
     const update = cloneDeep(linksSafe);
     update[index] = link;
     onChange(update);
+    setEditIndex(null);
   };
 
   const onDataLinkAdd = () => {
     let update = cloneDeep(linksSafe);
+    setEditIndex(update.length);
+    setIsNew(true);
+  };
 
-    update.push({
-      title: '',
-      url: '',
-    });
-
-    setEditIndex(update.length - 1);
-    onChange(update);
+  const onDataLinkCancel = (index: number) => {
+    if (isNew) {
+      setIsNew(false);
+    }
+    setEditIndex(null);
   };
 
   const onDataLinkRemove = (index: number) => {
@@ -72,15 +86,15 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
           title="Edit link"
           isOpen={true}
           onDismiss={() => {
-            setEditIndex(null);
+            onDataLinkCancel(editIndex);
           }}
         >
           <DataLinkEditorModalContent
             index={editIndex}
-            link={linksSafe[editIndex]}
+            link={isNew ? { title: '', url: '' } : linksSafe[editIndex]}
             data={data}
-            onChange={onDataLinkChange}
-            onClose={() => setEditIndex(null)}
+            onSave={onDataLinkChange}
+            onCancel={onDataLinkCancel}
             suggestions={suggestions}
           />
         </Modal>

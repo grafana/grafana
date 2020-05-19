@@ -8,6 +8,7 @@ import {
   dateTimeFormat,
   dateTimeParse,
   rangeUtil,
+  RawTimeRange,
 } from '@grafana/data';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { Field } from '../../Forms/Field';
@@ -59,10 +60,8 @@ export const TimeRangeForm: React.FC<Props> = props => {
       return;
     }
 
-    const timeRange = rangeUtil.convertRawToRange({
-      from: dateTimeParse(from.value, { timeZone }),
-      to: dateTimeParse(to.value, { timeZone }),
-    });
+    const raw: RawTimeRange = { from: from.value, to: to.value };
+    const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
 
     props.onApply(timeRange);
   }, [from, to, roundup, timeZone]);

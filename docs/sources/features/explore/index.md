@@ -51,8 +51,6 @@ You can close the newly created query by clicking on the Close Split button.
 
 ## Query history
 
-> BETA: Query history is a beta feature.
-
 Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
 
 ### View query history
@@ -124,7 +122,7 @@ On the left-hand side of the query field is a `Metrics` button, clicking on this
 
 The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
 
-The autocomplete menu can be trigger by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
+The autocomplete menu can be triggered by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 
@@ -199,6 +197,53 @@ Click the **Live** button in the Explore toolbar to switch to Live tail view.
 While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
 
 {{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+
+## Tracing integration
+> Only available in Grafana v7.0+.
+
+You can visualize traces from tracing data sources in explore. Data sources currently supported:
+- [Jaeger]({{< relref "../datasources/jaeger" >}})
+- [Zipkin]({{< relref "../datasources/zipkin" >}})
+
+For information about how to use the query editor see documentation for specific data source.
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-full.png" class="docs-image--no-shadow" caption="Screenshot of the trace view" >}}
+
+##### Header
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-header.png" class="docs-image--no-shadow" caption="Screenshot of the trace view header" >}}
+
+- Header title: Shows the name of the root span and trace ID.
+- Search: Highlights spans containing the searched text.
+- Metadata: Various metadata about the trace.
+
+##### Minimap
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption="Screenshot of the trace view minimap" >}}
+
+Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
+
+##### Timeline
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption="Screenshot of the trace view timeline" >}}
+
+Shows list of spans within the trace. Each span row consists of these components:
+- Expand children button: Expands or collapses all the children spans of selected span.
+- Service name: Name of the service logged the span.
+- Operation name: Name of the operation that this span represents.
+- Span duration bar: Visual representation of the operation duration within the trace.
+
+Clicking anywhere on the span row will show span details. 
+
+##### Span details
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption="Screenshot of the trace view span details" >}}
+
+- Operation name
+- Span metadata
+- Tags: Any tags associated with this span.
+- Process metadata: Metadata about the process that logged this span.
+- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
 ## Navigating between Explore and a dashboard
 

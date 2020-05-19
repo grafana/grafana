@@ -83,7 +83,7 @@ describe('getLinksFromLogsField', () => {
               config: {
                 unit: 'kW',
                 decimals: 3,
-                title: 'TheTitle',
+                displayName: 'TheTitle',
               },
             },
             {
@@ -149,6 +149,7 @@ describe('getLinksFromLogsField', () => {
       rowIndex,
       colIndex,
       display: field.display!(field.values.get(rowIndex)),
+      hasLinks: true,
     };
 
     const supplier = getFieldLinksSupplier(fieldDisp);

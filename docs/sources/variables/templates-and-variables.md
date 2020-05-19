@@ -48,7 +48,7 @@ Panel titles and metric queries can refer to variables using two different synta
   Example: apps.frontend.[[server]].requests.count
 
 Before queries are sent to your data source the query is _interpolated_, meaning the variable is replaced with its current value. During
-interpolation the variable value might be _escaped_ in order to conform to the syntax of the query language and where it is used.
+interpolation, the variable value might be _escaped_ in order to conform to the syntax of the query language and where it is used.
 For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
 documentation topic for details on value escaping during interpolation.
 
@@ -66,7 +66,7 @@ Variables are listed in dropdown lists across the top of the screen. Select diff
 
 To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
 
-Templates are in the query portion of panels. Queries with text that starts with `$` are templates. Not all panels will have template queries.
+Variables can be used in titles, descriptions, text panels, and queries. Queries with text that starts with `$` are templates. Not all panels will have template queries.
 
 ## Variable types
 

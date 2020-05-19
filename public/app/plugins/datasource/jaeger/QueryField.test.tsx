@@ -1,24 +1,15 @@
 import React from 'react';
 import { JaegerQueryField } from './QueryField';
-import { shallow } from 'enzyme';
+import { shallow, mount } from 'enzyme';
 import { JaegerDatasource, JaegerQuery } from './datasource';
 import { ButtonCascader } from '@grafana/ui';
 
 describe('JaegerQueryField', function() {
   it('shows empty value if no services returned', function() {
-    const dsMock: JaegerDatasource = {
-      metadataRequest(url: string) {
-        if (url.indexOf('/services') > 0) {
-          return Promise.resolve([]);
-        }
-        throw new Error(`Unexpected url: ${url}`);
-      },
-    } as any;
-
     const wrapper = shallow(
       <JaegerQueryField
         history={[]}
-        datasource={dsMock}
+        datasource={makeDatasourceMock({})}
         query={{ query: '1234' } as JaegerQuery}
         onRunQuery={() => {}}
         onChange={() => {}}
@@ -26,4 +17,81 @@ describe('JaegerQueryField', function() {
     );
     expect(wrapper.find(ButtonCascader).props().options[0].label).toBe('No traces found');
   });
+
+  it('shows root span as 3rd level in cascader', async function() {
+    const wrapper = mount(
+      <JaegerQueryField
+        history={[]}
+        datasource={makeDatasourceMock({
+          service1: {
+            op1: [
+              {
+                traceID: '12345',
+                spans: [
+                  {
+                    spanID: 's2',
+                    operationName: 'nonRootOp',
+                    references: [{ refType: 'CHILD_OF', traceID: '12345', spanID: 's1' }],
+                    duration: 10,
+                  },
+                  {
+                    operationName: 'rootOp',
+                    spanID: 's1',
+                    references: [],
+                    duration: 99,
+                  },
+                ],
+              },
+            ],
+          },
+        })}
+        query={{ query: '1234' } as JaegerQuery}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+      />
+    );
+
+    // Simulating selection options. We need this as the function depends on the intermediate state of the component
+    await wrapper
+      .find(ButtonCascader)
+      .props()
+      .loadData([{ value: 'service1', label: 'service1' }]);
+
+    await wrapper
+      .find(ButtonCascader)
+      .props()
+      .loadData([
+        { value: 'service1', label: 'service1' },
+        { value: 'op1', label: 'op1' },
+      ]);
+
+    wrapper.update();
+    expect(wrapper.find(ButtonCascader).props().options[0].children[1].children[0]).toEqual({
+      label: 'rootOp [99 ms]',
+      value: '12345',
+    });
+  });
 });
+
+function makeDatasourceMock(data: { [service: string]: { [operation: string]: any } }): JaegerDatasource {
+  return {
+    metadataRequest(url: string, params: Record<string, any>) {
+      if (url.match(/\/services$/)) {
+        return Promise.resolve(Object.keys(data));
+      }
+      let match = url.match(/\/services\/(\w+)\/operations/);
+      if (match) {
+        return Promise.resolve(Object.keys(data[match[1]]));
+      }
+
+      if (url.match(/\/traces?/)) {
+        return Promise.resolve(data[params.service][params.operation]);
+      }
+      throw new Error(`Unexpected url: ${url}`);
+    },
+
+    getTimeRange(): { start: number; end: number } {
+      return { start: 1, end: 100 };
+    },
+  } as any;
+}

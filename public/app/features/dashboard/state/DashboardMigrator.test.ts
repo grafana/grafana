@@ -132,7 +132,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(24);
+      expect(model.schemaVersion).toBe(25);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -624,6 +624,95 @@ describe('DashboardModel', () => {
         text: ['text'],
         value: ['value'],
       });
+    });
+  });
+
+  describe('when migrating variables with old tags format', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              tags: ['Africa', 'America', 'Asia', 'Europe'],
+            },
+            {
+              type: 'query',
+              current: {
+                tags: [
+                  {
+                    selected: true,
+                    text: 'America',
+                    values: ['server-us-east', 'server-us-central', 'server-us-west'],
+                    valuesText: 'server-us-east + server-us-central + server-us-west',
+                  },
+                  {
+                    selected: true,
+                    text: 'Europe',
+                    values: ['server-eu-east', 'server-eu-west'],
+                    valuesText: 'server-eu-east + server-eu-west',
+                  },
+                ],
+                text: 'server-us-east + server-us-central + server-us-west + server-eu-east + server-eu-west',
+                value: ['server-us-east', 'server-us-central', 'server-us-west', 'server-eu-east', 'server-eu-west'],
+              },
+              tags: ['Africa', 'America', 'Asia', 'Europe'],
+            },
+            {
+              type: 'query',
+              tags: [
+                { text: 'Africa', selected: false },
+                { text: 'America', selected: true },
+                { text: 'Asia', selected: false },
+                { text: 'Europe', selected: false },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have three variables after migration', () => {
+      expect(model.templating.list.length).toBe(3);
+    });
+
+    it('should be migrated with defaults if being out of sync', () => {
+      expect(model.templating.list[0].tags).toEqual([
+        { text: 'Africa', selected: false },
+        { text: 'America', selected: false },
+        { text: 'Asia', selected: false },
+        { text: 'Europe', selected: false },
+      ]);
+    });
+
+    it('should be migrated with current values if being out of sync', () => {
+      expect(model.templating.list[1].tags).toEqual([
+        { text: 'Africa', selected: false },
+        {
+          text: 'America',
+          selected: true,
+          values: ['server-us-east', 'server-us-central', 'server-us-west'],
+          valuesText: 'server-us-east + server-us-central + server-us-west',
+        },
+        { text: 'Asia', selected: false },
+        {
+          text: 'Europe',
+          selected: true,
+          values: ['server-eu-east', 'server-eu-west'],
+          valuesText: 'server-eu-east + server-eu-west',
+        },
+      ]);
+    });
+
+    it('should not be migrated if being in sync', () => {
+      expect(model.templating.list[2].tags).toEqual([
+        { text: 'Africa', selected: false },
+        { text: 'America', selected: true },
+        { text: 'Asia', selected: false },
+        { text: 'Europe', selected: false },
+      ]);
     });
   });
 });

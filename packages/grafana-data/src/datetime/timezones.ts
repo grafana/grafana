@@ -1,5 +1,18 @@
-// List taken from https://stackoverflow.com/questions/38399465/how-to-get-list-of-all-timezones-in-javascript
+import { TimeZone } from '../types';
+import { getTimeZone } from './common';
 
+export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
+  switch (getTimeZone({ timeZone })) {
+    case 'browser':
+      return 'Local browser time';
+    case 'utc':
+      return 'UTC';
+    default:
+      return timeZone;
+  }
+};
+
+// List taken from https://stackoverflow.com/questions/38399465/how-to-get-list-of-all-timezones-in-javascript
 export const getTimeZoneGroups = () => {
   const europeZones = [
     'Europe/Amsterdam',

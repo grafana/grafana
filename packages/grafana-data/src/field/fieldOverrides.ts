@@ -24,12 +24,15 @@ import set from 'lodash/set';
 import unset from 'lodash/unset';
 import get from 'lodash/get';
 import { getDisplayProcessor } from './displayProcessor';
-import { getTimeField, guessFieldTypeForField } from '../dataframe';
+import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
+import { formatLabels } from '../utils/labels';
+import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
+import { getTimeField } from '../dataframe/processDataFrame';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -46,6 +49,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
   let max = Number.MIN_VALUE;
 
   const reducers = [ReducerID.min, ReducerID.max];
+
   for (const frame of data) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
@@ -95,25 +99,31 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   }
 
   return options.data.map((frame, index) => {
-    let name = frame.name;
-    if (!name) {
-      name = `Series[${index}]`;
-    }
-
     const scopedVars: ScopedVars = {
-      __series: { text: 'Series', value: { name } },
+      __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
 
-    const fields: Field[] = frame.fields.map((field, fieldIndex) => {
+    const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
-      let fieldName = field.name;
-      if (!fieldName) {
-        fieldName = `Field[${fieldIndex}]`;
-      }
       const fieldScopedVars = { ...scopedVars };
-      fieldScopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
+      const displayName = getFieldDisplayName(field, frame, options.data);
 
-      const config: FieldConfig = { ...field.config, scopedVars: fieldScopedVars } || {};
+      fieldScopedVars['__field'] = {
+        text: 'Field',
+        value: {
+          name: displayName, // Generally appropriate (may include the series name if useful)
+          labels: formatLabels(field.labels!),
+          label: field.labels,
+        },
+      };
+
+      field.state = {
+        ...field.state,
+        scopedVars: fieldScopedVars,
+        displayName,
+      };
+
+      const config: FieldConfig = { ...field.config };
       const context = {
         field,
         data: options.data!,
@@ -128,7 +138,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Find any matching rules and then override
       for (const rule of override) {
-        if (rule.match(field)) {
+        if (rule.match(field, frame, options.data!)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
@@ -182,6 +192,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         ...field,
         config,
         type,
+        state: {
+          ...field.state,
+          displayName: null,
+        },
       };
 
       // and set the display processor using it
@@ -203,7 +217,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     return {
       ...frame,
       fields,
-      name,
     };
   });
 }

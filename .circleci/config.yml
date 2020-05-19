@@ -15,7 +15,9 @@ aliases:
     tags:
       ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
     branches:
-      ignore: master
+      ignore:
+        - master
+        - chore/test-release-pipeline
   - &filter-only-master
     branches:
       only: master
@@ -54,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.3
+            VERSION=0.4.8
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -91,7 +93,7 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/grabpl build-backend --edition << parameters.edition >> \
-                --variants << parameters.variant >> v6.7.0-beta1
+                --variants << parameters.variant >> v7.0.0-test
             else
               # A master or PR build
               /tmp/grabpl build-backend --edition << parameters.edition >> \
@@ -192,7 +194,13 @@ jobs:
       - run:
           name: Build internal Grafana plug-ins
           command: |
-            /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # This is a forked PR, so don't sign as it requires an API secret
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
+            else
+              export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
+            fi
       - run:
           name: Move artifacts
           command: |
@@ -392,18 +400,24 @@ jobs:
               source scripts/build/gpg-test-vars.sh
             fi
 
+            # Necessary for signing bundled plugins
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition oss $CIRCLE_TAG
+              /tmp/grabpl package --jobs 2 --edition oss --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition oss v6.7.0-beta1
+              /tmp/grabpl package --jobs 2 --edition oss --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID
-            else
-              # A PR build
+              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
+            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # A forked forked PR build, don't sign as it requires an API secret
               /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
+            else
+              # A non-forked PR build
+              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -447,18 +461,25 @@ jobs:
       - run:
           name: Package Grafana
           command: |
+            # Necessary for signing bundled plugins
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition enterprise $CIRCLE_TAG
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition enterprise v6.7.0-beta1
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
+            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # A forked forked PR build, don't sign as it requires an API secret
+              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             else
               # A PR build
-              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -591,6 +612,14 @@ jobs:
           # This version is necessary for building cross-platform images
           version: 18.09.3
       - install-grabpl
+      - run:
+          name: Install gcloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
+              sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+              sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
@@ -622,8 +651,12 @@ jobs:
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> --dry-run
-            else
+            elif [[ -n $CIRCLE_TAG ]]; then
+              # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
+            else
+              # TODO: Don't ignore errors, temporary workaround until we fix #22955
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
             fi
       - run:
           name: CI job failed
@@ -663,6 +696,9 @@ jobs:
           name: Start grafana-server
           command: ./e2e/start-server
           background: true
+      - run:
+          name: "Wait for Grafana to start"
+          command: './e2e/wait-for-grafana'
       - run:
           name: Run end-to-end tests
           command: ./e2e/run-suite
@@ -907,6 +943,14 @@ jobs:
           name: npm - Prepare auth token
           command: "echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc"
       - run:
+          name: Exit if release pipeline test
+          command: |
+            if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              echo "We're testing the release pipeline, so stopping before publishing"
+              circleci step halt
+            fi
+      - run:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
       - run:
@@ -978,172 +1022,146 @@ workflows:
           variant: armv6
           name: build-oss-backend-armv6
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-frontend:
           filters: *filter-all
           name: build-oss-frontend
           edition: oss
-          requires:
-            - test-backend
-            - test-frontend
       - build-plugins:
           filters: *filter-all
           name: build-oss-plugins
           edition: oss
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv6
           edition: enterprise
           variant: armv6
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7
           edition: enterprise
           variant: armv7
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7-musl
           edition: enterprise
           variant: armv7-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64
           edition: enterprise
           variant: arm64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64-musl
           edition: enterprise
           variant: arm64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-frontend:
           filters: *filter-all
           name: build-enterprise-frontend
           edition: enterprise
-          requires:
-            - test-backend
-            - test-frontend
       - build-plugins:
           filters: *filter-all
           name: build-enterprise-plugins
           edition: enterprise
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:

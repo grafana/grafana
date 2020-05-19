@@ -50,7 +50,7 @@ This release contains a lot of small features and fixes:
 - A new keyboard shortcut `d l` toggles all Graph legends in a dashboard.
 - A small bug fix for Elasticsearch - template variables in the alias field now work properly.
 - Some new capabilities have been added for data source plugins that will be of interest to plugin authors:
-  - a new oauth pass-through option.
+  - a new OAuth pass-through option.
   - it is now possible to add user details to requests sent to the dataproxy.
 - Heatmap and Explore fixes.
 

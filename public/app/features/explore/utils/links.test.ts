@@ -66,6 +66,12 @@ function setup(link: DataLink) {
         origin: origin,
       };
     },
+    getAnchorInfo(link: DataLink) {
+      return { ...link };
+    },
+    getLinkUrl(link: DataLink) {
+      return link.url;
+    },
   });
   setDataSourceSrv({
     getDataSourceSettingsByUid(uid: string) {

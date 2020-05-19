@@ -13,11 +13,11 @@ Grafana supports data source, panel, and app plugins. Having panels as plugins m
 1. In a web browser, navigate to the official [Grafana Plugins page](https://grafana.com/plugins) and find a plugin that you want to install.
 2. Click the plugin, and then click the **Installation** tab.
 
-## Install plugin on Hosted Grafana
+## Install plugin on Grafana Cloud
 
-On the Installation tab, in the **For** field, click the name of the Hosted Grafana instance that you want to install the plugin on.
+On the Installation tab, in the **For** field, click the name of the Grafana instance that you want to install the plugin on.
 
-Grafana handles the plugin installation automatically.
+Grafana Cloud handles the plugin installation automatically.
 
 ## Install plugin on local Grafana
 

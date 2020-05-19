@@ -34,6 +34,7 @@
     "@rollup/plugin-node-resolve": "7.1.1",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/systemjs": "^0.20.6",
+    "@types/jest": "23.3.14",
     "lodash": "4.17.15",
     "pretty-format": "25.1.0",
     "rollup": "2.0.6",

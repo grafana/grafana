@@ -10,7 +10,7 @@
     "build": "grunt build",
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
-    "e3e:debug": "./e2e/start-and-run-suite debug",
+    "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "jest": "jest --notify --watch",
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit --maxWorkers 2",
@@ -53,12 +53,10 @@
   },
   "lint-staged": {
     "*.{ts,tsx,json,scss}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "*pkg/**/*.go": [
-      "gofmt -w -s",
-      "git add"
+      "gofmt -w -s"
     ]
   },
   "devDependencies": {
@@ -100,6 +98,7 @@
     "@types/prismjs": "1.16.0",
     "@types/puppeteer-core": "2.0.0",
     "@types/react": "16.8.16",
+    "@types/react-beautiful-dnd": "12.1.2",
     "@types/react-dom": "16.8.4",
     "@types/react-grid-layout": "0.16.7",
     "@types/react-redux": "7.1.7",
