@@ -111,7 +111,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <CustomScrollbar autoHide>
+      <CustomScrollbar>
         <table className={logsRowsTable}>
           <tbody>
             {hasData &&
