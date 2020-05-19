@@ -78,6 +78,7 @@ export function addStandardDataReduceOptions(
       name: 'Fields',
       description: 'Select the fields that should be included in the panel',
       settings: {
+        allowCustomValue: true,
         options: [],
         getOptions: (context: FieldOverrideContext) => {
           const options = [
