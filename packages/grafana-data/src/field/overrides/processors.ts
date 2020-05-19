@@ -109,6 +109,7 @@ export const booleanOverrideProcessor = (
 };
 
 export interface ColorFieldConfigSettings {
+  defaultText?: string; // Pick Color
   allowUndefined?: boolean;
   disableNamedColors?: boolean;
 }

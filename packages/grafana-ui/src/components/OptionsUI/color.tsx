@@ -36,7 +36,7 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFiel
     <div>
       <Input
         type="text"
-        value={value || 'Pick Color'}
+        value={value || settings.defaultText || 'Pick Color'}
         onBlur={(v: any) => {
           console.log('CLICK');
         }}

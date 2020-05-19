@@ -22,8 +22,9 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
       .addColorPicker({
         path: 'color',
         name: 'Color',
-        description: 'Color Color Color',
+        description: 'just a test... no color pickers in core?',
         settings: {
+          defaultText: 'Pick background',
           disableNamedColors: false,
           allowUndefined: true,
         },
