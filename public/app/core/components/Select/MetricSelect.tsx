@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback, FC } from 'react';
 import _ from 'lodash';
 
 import { LegacyForms } from '@grafana/ui';
@@ -16,75 +16,51 @@ export interface Props {
   variables?: Variable[];
 }
 
-interface State {
-  options: Array<SelectableValue<string>>;
-}
+export const MetricSelect: FC<Props> = props => {
+  const { value, placeholder, className, isSearchable, onChange } = props;
+  const options = useSelectOptions(props);
+  const selected = useSelectedOption(options, value);
+  const onChangeValue = useCallback((selectable: SelectableValue<string>) => onChange(selectable.value), [onChange]);
 
-export class MetricSelect extends React.Component<Props, State> {
-  static defaultProps: Partial<Props> = {
-    variables: [],
-    options: [],
-    isSearchable: true,
-  };
+  return (
+    <Select
+      className={className}
+      isMulti={false}
+      isClearable={false}
+      backspaceRemovesValue={false}
+      onChange={onChangeValue}
+      options={options}
+      isSearchable={isSearchable}
+      maxMenuHeight={500}
+      placeholder={placeholder}
+      noOptionsMessage={() => 'No options found'}
+      value={selected}
+    />
+  );
+};
 
-  constructor(props: Props) {
-    super(props);
-    this.state = { options: [] };
-  }
-
-  componentDidMount() {
-    this.setState({ options: this.buildOptions(this.props) });
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.options.length > 0 || nextProps.variables?.length) {
-      this.setState({ options: this.buildOptions(nextProps) });
+const useSelectOptions = ({ variables = [], options }: Props): Array<SelectableValue<string>> => {
+  return useMemo(() => {
+    if (!Array.isArray(variables) || variables.length === 0) {
+      return options;
     }
-  }
 
-  shouldComponentUpdate(nextProps: Props) {
-    const nextOptions = this.buildOptions(nextProps);
-    return nextProps.value !== this.props.value || !_.isEqual(nextOptions, this.state.options);
-  }
+    return [
+      {
+        label: 'Template Variables',
+        options: variables.map(({ name }) => ({
+          label: `$${name}`,
+          value: `$${name}`,
+        })),
+      },
+      ...options,
+    ];
+  }, [variables, options]);
+};
 
-  buildOptions({ variables = [], options }: Props) {
-    return variables.length > 0 ? [this.getVariablesGroup(), ...options] : options;
-  }
-
-  getVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.props.variables?.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
-  }
-
-  getSelectedOption() {
-    const { options } = this.state;
+const useSelectedOption = (options: Array<SelectableValue<string>>, value: string): SelectableValue<string> => {
+  return useMemo(() => {
     const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
-    return allOptions.find(option => option.value === this.props.value);
-  }
-
-  render() {
-    const { placeholder, className, isSearchable, onChange } = this.props;
-    const { options } = this.state;
-    const selectedOption = this.getSelectedOption();
-    return (
-      <Select
-        className={className}
-        isMulti={false}
-        isClearable={false}
-        backspaceRemovesValue={false}
-        onChange={item => onChange(item.value ?? '')}
-        options={options}
-        isSearchable={isSearchable}
-        maxMenuHeight={500}
-        placeholder={placeholder}
-        noOptionsMessage={() => 'No options found'}
-        value={selectedOption}
-      />
-    );
-  }
-}
+    return allOptions.find(option => option.value === value);
+  }, [options, value]);
+};
