@@ -110,7 +110,7 @@ describe('InfluxDataSource', () => {
       try {
         await ctx.ds.query(queryOptions);
       } catch (err) {
-        expect(err.message).toBe('Error: Query timeout');
+        expect(err.message).toBe('InfluxDB Error: Query timeout');
       }
     });
   });

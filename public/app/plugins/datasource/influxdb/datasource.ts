@@ -326,7 +326,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
             const errors = result.data.results.filter((elem: any) => elem.error);
             if (errors.length > 0) {
               throw {
-                message: 'Error: ' + errors[0].error,
+                message: 'InfluxDB Error: ' + errors[0].error,
                 data: result.data,
               };
             }
