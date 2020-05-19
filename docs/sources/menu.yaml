@@ -157,7 +157,7 @@
       name: Gauge
     - link: /panels/visualizations/graph-panel/
       name: Graph
-    - link: /panels/visualizations/heatmap-panel/
+    - link: /panels/visualizations/heatmap/
       name: Heatmap
     - link: /panels/visualizations/logs-panel/
       name: Logs
