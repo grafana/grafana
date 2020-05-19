@@ -225,7 +225,7 @@ Shows condensed view or the trace timeline. Drag your mouse over the minimap to 
 
 ##### Timeline
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption ="Screenshot of the trace view timeline" >}}
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption="Screenshot of the trace view timeline" >}}
 
 Shows list of spans within the trace. Each span row consists of these components:
 - Expand children button: Expands or collapses all the children spans of selected span.
@@ -237,7 +237,7 @@ Clicking anywhere on the span row will show span details.
 
 ##### Span details
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption ="Screenshot of the trace view span details" >}}
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption="Screenshot of the trace view span details" >}}
 
 - Operation name
 - Span metadata
