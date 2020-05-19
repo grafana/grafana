@@ -900,6 +900,14 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     return this.templateSrv.replace(target, scopedVars);
   }
+
+  getQueryDisplayText(query: CloudWatchQuery) {
+    if (query.queryMode === 'Logs') {
+      return query.expression;
+    } else {
+      return JSON.stringify(query);
+    }
+  }
 }
 
 function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => void): Observable<T> {
