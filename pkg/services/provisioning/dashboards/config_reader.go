@@ -88,6 +88,10 @@ func (cr *configReader) readConfig() ([]*config, error) {
 			dashboard.OrgID = 1
 		}
 
+		if dashboard.Type == "" {
+			dashboard.Type = "file"
+		}
+
 		if dashboard.UpdateIntervalSeconds == 0 {
 			dashboard.UpdateIntervalSeconds = 10
 		}
