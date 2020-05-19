@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FC } from 'react';
-import { Input, Field, Button } from '@grafana/ui';
+import { Input, Field, Button, Legend } from '@grafana/ui';
 import { css } from 'emotion';
 
 export interface Props {
@@ -11,7 +11,7 @@ export interface Props {
 const OrgProfile: FC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
   return (
     <div>
-      <h3 className="page-sub-heading">Organization profile</h3>
+      <Legend>Organization profile</Legend>
       <form
         name="orgForm"
         onSubmit={event => {

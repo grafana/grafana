@@ -41,7 +41,10 @@ exports[`Render should render organization and preferences 1`] = `
         onSubmit={[Function]}
         orgName="Cool org"
       />
-      <SharedPreferences
+      <Component
+        margin="md"
+      />
+      <Component
         resourceUri="org"
       />
     </div>

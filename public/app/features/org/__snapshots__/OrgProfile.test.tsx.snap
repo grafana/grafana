@@ -2,45 +2,28 @@
 
 exports[`Render should render component 1`] = `
 <div>
-  <h3
-    className="page-sub-heading"
-  >
+  <Component>
     Organization profile
-  </h3>
+  </Component>
   <form
-    className="gf-form-group"
+    className="css-11gxx35"
     name="orgForm"
     onSubmit={[Function]}
   >
-    <div
-      className="gf-form-inline"
+    <Component
+      label="Organization name"
     >
-      <div
-        className="gf-form max-width-28"
-      >
-        <span
-          className="gf-form-label"
-        >
-          Organization name
-        </span>
-        <Input
-          className="gf-form-input"
-          onChange={[Function]}
-          type="text"
-          value="Main org"
-        />
-      </div>
-    </div>
-    <div
-      className="gf-form-button-row"
+      <Input
+        onChange={[Function]}
+        type="text"
+        value="Main org"
+      />
+    </Component>
+    <Button
+      type="submit"
     >
-      <button
-        className="btn btn-primary"
-        type="submit"
-      >
-        Save
-      </button>
-    </div>
+      Submit
+    </Button>
   </form>
 </div>
 `;
