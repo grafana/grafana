@@ -517,10 +517,10 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			mAgg := sumAgg.Aggregation.Aggregation.(*es.MetricAggregation)
 			So(mAgg.Field, ShouldEqual, "@value")
 
-			movingAvgAgg := firstLevel.Aggregation.Aggs[1]
-			So(movingAvgAgg.Key, ShouldEqual, "2")
-			So(movingAvgAgg.Aggregation.Type, ShouldEqual, "cumulative_sum")
-			pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			cumulativeSumAgg := firstLevel.Aggregation.Aggs[1]
+			So(cumulativeSumAgg.Key, ShouldEqual, "2")
+			So(cumulativeSumAgg.Aggregation.Type, ShouldEqual, "cumulative_sum")
+			pl := cumulativeSumAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			So(pl.BucketPath, ShouldEqual, "3")
 		})
 
@@ -549,10 +549,10 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
 			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 1)
 
-			movingAvgAgg := firstLevel.Aggregation.Aggs[0]
-			So(movingAvgAgg.Key, ShouldEqual, "2")
-			So(movingAvgAgg.Aggregation.Type, ShouldEqual, "cumulative_sum")
-			pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			cumulativeSumAgg := firstLevel.Aggregation.Aggs[0]
+			So(cumulativeSumAgg.Key, ShouldEqual, "2")
+			So(cumulativeSumAgg.Aggregation.Type, ShouldEqual, "cumulative_sum")
+			pl := cumulativeSumAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			So(pl.BucketPath, ShouldEqual, "_count")
 		})
 
@@ -586,9 +586,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 2)
 
-			movingAvgAgg := firstLevel.Aggregation.Aggs[1]
-			So(movingAvgAgg.Key, ShouldEqual, "2")
-			plAgg := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			cumulativeSumAgg := firstLevel.Aggregation.Aggs[1]
+			So(cumulativeSumAgg.Key, ShouldEqual, "2")
+			plAgg := cumulativeSumAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			So(plAgg.BucketPath, ShouldEqual, "3")
 		})
 
