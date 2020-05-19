@@ -9,7 +9,6 @@ import { getLogRowStyles } from './getLogRowStyles';
 //Components
 import { LogRow } from './LogRow';
 import { RowContextOptions } from './LogRowContextProvider';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
@@ -92,13 +91,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
     } = this.props;
     const { renderAll } = this.state;
-    const { logsRowsTable } = getLogRowStyles(theme);
+    const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
+    const horizontalScrollWindow = wrapLogMessage ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
@@ -111,7 +111,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <CustomScrollbar autoHide>
+      <div className={horizontalScrollWindow}>
         <table className={logsRowsTable}>
           <tbody>
             {hasData &&
@@ -161,7 +161,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             )}
           </tbody>
         </table>
-      </CustomScrollbar>
+      </div>
     );
   }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogRows } from '@grafana/ui';
+import { LogRows, CustomScrollbar } from '@grafana/ui';
 import { LogsDedupStrategy, PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
@@ -25,15 +25,17 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
   return (
-    <LogRows
-      logRows={sortedNewResults.rows}
-      dedupStrategy={LogsDedupStrategy.none}
-      highlighterExpressions={[]}
-      showLabels={showLabels}
-      showTime={showTime}
-      wrapLogMessage={wrapLogMessage}
-      timeZone={timeZone}
-      allowDetails={true}
-    />
+    <CustomScrollbar autoHide>
+      <LogRows
+        logRows={sortedNewResults.rows}
+        dedupStrategy={LogsDedupStrategy.none}
+        highlighterExpressions={[]}
+        showLabels={showLabels}
+        showTime={showTime}
+        wrapLogMessage={wrapLogMessage}
+        timeZone={timeZone}
+        allowDetails={true}
+      />
+    </CustomScrollbar>
   );
 };
