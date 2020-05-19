@@ -13,12 +13,22 @@ var (
 	simpleDashboardConfig = "./testdata/test-configs/dashboards-from-disk"
 	oldVersion            = "./testdata/test-configs/version-0"
 	brokenConfigs         = "./testdata/test-configs/broken-configs"
+	appliedDefaults       = "./testdata/test-configs/applied-defaults"
 )
 
 func TestDashboardsAsConfig(t *testing.T) {
 	t.Run("Dashboards as configuration", func(t *testing.T) {
 
 		logger := log.New("test-logger")
+
+		t.Run("default values should be applied", func(t *testing.T) {
+			cfgProvider := configReader{path: appliedDefaults, log: logger}
+			cfg, err := cfgProvider.readConfig()
+			require.Nil(t, err)
+
+			require.Equal(t, "file", cfg[0].Type)
+			require.Equal(t, int64(1), cfg[0].OrgID)
+		})
 
 		t.Run("Can read config file version 1 format", func(t *testing.T) {
 			_ = os.Setenv("TEST_VAR", "general")
