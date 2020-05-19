@@ -202,7 +202,7 @@ To the right of the query input field is a CloudWatch Logs Insights link that op
 ### Using template variables
 
 As with several other data sources, the CloudWatch data source supports the use of template variables in queries.
-See the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
@@ -213,7 +213,7 @@ If you're not currently logged in to the CloudWatch console, the link will forwa
 ### Alerting
 
 Since CloudWatch Logs queries can return numeric data, for example through the use of the `stats` command, alerts are supported.
-See the [Alerting]({{< relref "../../alerting/rules.md" >}}) documentation for more on Grafana alerts.
+See the [Alerting]({{< relref "../../alerting/alerts-overview.md" >}}) documentation for more on Grafana alerts.
 
 ## Curated dashboards
 
