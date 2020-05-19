@@ -1,5 +1,11 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import { ReducerID, SelectableValue, standardEditorsRegistry } from '@grafana/data';
+import {
+  ReducerID,
+  SelectableValue,
+  standardEditorsRegistry,
+  FieldOverrideContext,
+  getFieldDisplayName,
+} from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 // Structure copied from angular
@@ -67,18 +73,27 @@ export function addStandardDataReduceOptions(
   });
 
   if (includeFieldMatcher) {
-    const options = [
-      { value: '', label: 'Numeric Fields' },
-      { value: '/.*/', label: 'All Fields' },
-    ];
-    // TODO? list all fields here...
-
     builder.addSelect({
       path: 'reduceOptions.fields',
       name: 'Fields',
-      description: 'Select the fields that should be included in the visualization',
+      description: 'Select the fields that should be included in the panel',
       settings: {
-        options,
+        options: [],
+        getOptions: (context: FieldOverrideContext) => {
+          const options = [
+            { value: '', label: 'Numeric Fields' },
+            { value: '/.*/', label: 'All Fields' },
+          ];
+          if (context && context.data) {
+            for (const frame of context.data) {
+              for (const field of frame.fields) {
+                const name = getFieldDisplayName(field, frame, context.data);
+                options.push({ value: name, label: name });
+              }
+            }
+          }
+          return options;
+        },
       },
       defaultValue: '',
     });
