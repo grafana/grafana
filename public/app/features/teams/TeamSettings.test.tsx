@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { shallow } from 'enzyme';
 import { Props, TeamSettings } from './TeamSettings';
 import { getMockTeam } from './__mocks__/teamMocks';
@@ -12,7 +12,7 @@ const setup = (propOverrides?: object) => {
   Object.assign(props, propOverrides);
 
   const wrapper = shallow(<TeamSettings {...props} />);
-  const instance = wrapper.instance() as TeamSettings;
+  const instance = wrapper.instance() as any;
 
   return {
     wrapper,

@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { connect } from 'react-redux';
-import { Input, Field, Form, Button, Container } from '@grafana/ui';
+import { Input, Field, Form, Button, Container, Legend } from '@grafana/ui';
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
@@ -16,7 +16,7 @@ export interface Props {
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   return (
     <div>
-      <h3 className="page-sub-heading">Team Settings</h3>
+      <Legend>Team Settings</Legend>
       <Form
         defaultValues={{ ...team }}
         onSubmit={(formTeam: Team) => {

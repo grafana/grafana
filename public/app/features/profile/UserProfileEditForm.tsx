@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Button, Form, Field, Input, Tooltip, Icon, Legend } from '@grafana/ui';
+import { Button, Form, Field, Input, Icon, Legend } from '@grafana/ui';
 import { User } from 'app/types';
 import config from 'app/core/config';
 import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
@@ -56,7 +56,9 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
             >
               <Input prefix={disableLoginForm && <Icon name="lock" />} ref={register} type="text" name="login" />
             </Field>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isSavingUser}>
+              Save
+            </Button>
           </>
         )}
       </Form>
