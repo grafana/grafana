@@ -326,6 +326,11 @@
       link: /enterprise/usage-insights/
     - name: License expiration
       link: /enterprise/license-expiration/
+- name: Grafana Cloud
+  link: /grafana-cloud/
+  children:
+    - name: Hosted Grafana
+      link: /grafana-cloud/hosted-grafana/
 - name: Plugins
   link: /plugins/
   children:
