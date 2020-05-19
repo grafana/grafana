@@ -28,6 +28,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 			require.Equal(t, "file", cfg[0].Type)
 			require.Equal(t, int64(1), cfg[0].OrgID)
+			require.Equal(t, int64(10), cfg[0].UpdateIntervalSeconds)
 		})
 
 		t.Run("Can read config file version 1 format", func(t *testing.T) {
