@@ -11,13 +11,13 @@ weight = 7
 
 # Time range controls
 
-Grafana provides several ways to manage the time ranges of the data being visualized, both at the dashboard level and the panel level. 
+Grafana provides several ways to manage the time ranges of the data being visualized, both at the dashboard level and the panel level.
 
 This page describes supported time units and relative ranges, the common time controls, dashboard-wide time settings, and panel-specific time settings.
 
 ## Time units and relative ranges
 
-The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`. 
+The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`.
 
 The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end.
 
@@ -25,13 +25,13 @@ The plus operator allows you to step forward in time relative to now. You might 
 
 Here are some examples:
 
-Example relative range | From: | To:
--------------- | ----- | ---
-Last 5 minutes | `now-5m` | `now`
-The day so far | `now/d` | `now`
-This week | `now/w` | `now/w`
-Week to date | `now/w` | `now`
-Previous Month | `now-1M/M` | `now-1M/M`
+| Example relative range | From:      | To:        |
+| ---------------------- | ---------- | ---------- |
+| Last 5 minutes         | `now-5m`   | `now`      |
+| The day so far         | `now/d`    | `now`      |
+| This week              | `now/w`    | `now/w`    |
+| Week to date           | `now/w`    | `now`      |
+| Previous Month         | `now-1M/M` | `now-1M/M` |
 
 ## Common time range controls
 
@@ -98,7 +98,7 @@ Time settings are saved on a per-dashboard basis.
 To access the dashboard time settings, click the **Dashboard settings** (gear) icon at the top of the screen. The settings are in the **Time Options** section of the General tab.
 
 - **Timezone -** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
-  - **Default -**  The default selected time zone for the user profile, team, or organization is used. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses local browser time.
+  - **Default -** The default selected time zone for the user profile, team, or organization is used. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses local browser time.
   - **Local browser time -** The time zone configured for the viewing user browser is used. This is usually the same time zone as set on the computer.
   - Standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), including UTC.
 - **Auto-refresh -** Customize the options displayed for relative time and the auto-refresh options. Entries are comma separated and accept any valid time unit.
@@ -107,7 +107,7 @@ To access the dashboard time settings, click the **Dashboard settings** (gear) i
 
 ## Panel time overrides and timeshift
 
-In [Query options]({{< relref "queries.md#query-options" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
+In [Query options]({{< relref "../panels/queries.md#query-options" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
 ## Control the time range using a URL
 
