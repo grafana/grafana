@@ -35,7 +35,7 @@ describe('CloudWatchDatasource', () => {
   const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
   const timeSrv = {
-    time: { from: '2016-12-31 15:00:00', to: '2016-12-31 16:00:00' },
+    time: { from: '2016-12-31 15:00:00Z', to: '2016-12-31 16:00:00Z' },
     timeRange: () => {
       return {
         from: dateMath.parse(timeSrv.time.from, false),

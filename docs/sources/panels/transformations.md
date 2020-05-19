@@ -9,9 +9,9 @@ weight = 300
 
 # Transformations
 
-> **Note:** This documentation refers to a Grafana 7.0 beta feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
-
 This page explains what transformations in Grafana are and how to use them.
+
+> **Note:** This documentation refers to a Grafana 7.0 beta feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
 
 Transformations process the result set before it’s passed to the visualization. You access transformations in the Transform tab of the Grafana panel editor.
 
@@ -31,13 +31,13 @@ Before you apply transformations, all of the following must be true:
 
 - You have entered a query and returned data from a data source. For more information about queries, refer to [Queries]({{< relref "queries.md" >}}).
 - You have applied a visualization that supports queries, such as:
-  - Graph
-  - Stat
-  - Gauge
-  - Bar gauge
-  - Table
-  - Heatmap
-  - Logs
+  - [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
+  - [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
+  - [Graph]({{< relref "visualizations/graph-panel.md" >}})
+  - [Heatmap]({{< relref "visualizations/heatmap.md" >}})
+  - [Logs]({{< relref "visualizations/logs-panel.md" >}})
+  - [Stat]({{< relref "visualizations/stat-panel.md" >}})
+  - [Table]({{< relref "visualizations/table-panel.md" >}})
 
 ## Apply a transformation
 

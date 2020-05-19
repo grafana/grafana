@@ -22,7 +22,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 
 	for _, query := range queryContext.Queries {
 		query := query
-
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, queryContext, query)
 			if err != nil {
@@ -66,7 +65,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 			return nil
 		})
 	}
-
 	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
@@ -76,7 +74,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 	response := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-
 	for result := range resultChan {
 		response.Results[result.RefId] = result
 	}
@@ -180,9 +177,9 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix").MustString("")
+
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
-
 	if len(logGroupNamePrefix) < 1 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
 			Limit: aws.Int64(parameters.Get("limit").MustInt64(50)),
@@ -193,7 +190,6 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
 		})
 	}
-
 	if err != nil || response == nil {
 		return nil, err
 	}
@@ -221,7 +217,7 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	}
 
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
+		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
 
 	// The fields @log and @logStream are always included in the results of a user's query
@@ -303,7 +299,6 @@ func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 	}
 
 	dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
-
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ weight = 3
 
 # Generic OAuth Authentication
 
-You can configure many different oauth2 authentication services with Grafana using the generic oauth2 feature. Below you
+You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Below you
 can find examples using Okta, BitBucket, OneLogin and Azure.
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
@@ -99,9 +99,9 @@ allowed_organizations =
     client_id = <client id>
     client_secret = <client secret>
     scopes = openid email name
-    auth_url = https://<onelogin domain>.onelogin.com/oidc/auth
-    token_url = https://<onelogin domain>.onelogin.com/oidc/token
-    api_url = https://<onelogin domain>.onelogin.com/oidc/me
+    auth_url = https://<onelogin domain>.onelogin.com/oidc/2/auth
+    token_url = https://<onelogin domain>.onelogin.com/oidc/2/token
+    api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
     team_ids =
     allowed_organizations =
     ```

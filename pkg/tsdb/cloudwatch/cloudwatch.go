@@ -98,7 +98,6 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 
 	queryParams := queryContext.Queries[0].Model
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
-
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +127,6 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 }
 
 func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	var result *tsdb.Response
 	e.DataSource = dsInfo
 
 	/*
@@ -146,8 +144,9 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	}
 
 	queryType := queryParams.Get("type").MustString("")
-	var err error
 
+	var err error
+	var result *tsdb.Response
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
@@ -211,7 +210,7 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 
 	queryParams.Set("queryId", *result.QueryId)
 
-	// Get Query Results
+	// Get query results
 	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
 		return nil, err
@@ -228,14 +227,13 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	}
 
 	response := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+		Results: map[string]*tsdb.QueryResult{
+			"A": {
+				RefId:      "A",
+				Dataframes: [][]byte{dataframeEnc},
+			},
+		},
 	}
-
-	response.Results["A"] = &tsdb.QueryResult{
-		RefId:      "A",
-		Dataframes: [][]byte{dataframeEnc},
-	}
-
 	return response, nil
 }
 
