@@ -39,7 +39,7 @@ Example:
 
 Let's say you use the standard Grafana Cloud retention: `1s:8d,1m:60d,30m:2y`, and a query is issued for `sumSeries(<metric name pattern>)` and a time range of `24h`.
 A metric with `1s` resolution has `86400` data points in a `24h` period, so if `<metric name pattern>` matches `12` or more metrics then `12*86400=1036800` which exceeds the threshold,
-so we will pick the minutely data instead. This way you typically still get high enough resolution (in this case 1440 points per serie), but higher query performance.
+so we will pick the minutely data instead. This way you typically still get high enough resolution (in this case 1440 points per series), but higher query performance.
 
 Note that on custom plans, these settings can be adjusted. You can also [pre-aggregate data in carbon-relay-ng](https://github.com/grafana/carbon-relay-ng/blob/master/docs/aggregation.md) to load fewer series.
 
