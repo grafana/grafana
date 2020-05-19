@@ -26,11 +26,11 @@ export interface TableRow {
 }
 
 export type TableFilterActionCallback = (key: string, value: string) => void;
-export type TableColumnResizeActionCallback = (fieldIndex: number, width: number) => void;
+export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 
 export interface TableSortByFieldState {
-  fieldIndex: number;
+  displayName: string;
   desc?: boolean;
 }
 
