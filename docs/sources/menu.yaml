@@ -331,6 +331,8 @@
   children:
     - name: Hosted Grafana
       link: /grafana-cloud/hosted-grafana/
+    - name: Hosted logs
+      link: /grafana-cloud/hosted-logs/
 - name: Plugins
   link: /plugins/
   children:
