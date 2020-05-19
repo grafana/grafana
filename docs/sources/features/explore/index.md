@@ -219,7 +219,7 @@ For information about how to use the query editor see documentation for specific
 
 ##### Minimap
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption ="Screenshot of the trace view minimap" >}}
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption="Screenshot of the trace view minimap" >}}
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
