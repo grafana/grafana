@@ -202,8 +202,9 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 > Only available in Grafana v7.0+.
 
 You can visualize traces from tracing data sources in explore. Data sources currently supported:
-- [Jaeger]({{< relref "../datasources/jaeger" >}})
-- [Zipkin]({{< relref "../datasources/zipkin" >}})
+
+- [Jaeger]({{< relref "datasources/jaeger.md" >}})
+- [Zipkin]({{< relref "datasources/zipkin.md" >}})
 
 For information about how to use the query editor see documentation for specific data source.
 

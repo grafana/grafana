@@ -13,7 +13,7 @@ weight = 2
 # Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/index.md" >}}).
 
 ## Adding the data source
 To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Zipkin**.
