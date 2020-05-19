@@ -19,6 +19,15 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         },
         defaultValue: 'markdown',
       })
+      .addColorPicker({
+        path: 'color',
+        name: 'Color',
+        description: 'Color Color Color',
+        settings: {
+          disableNamedColors: false,
+          allowUndefined: true,
+        },
+      })
       .addTextInput({
         path: 'content',
         name: 'Content',
