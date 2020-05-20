@@ -113,31 +113,53 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
   const ruleNames = Object.keys(mapping);
   const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
   const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
-  const invalidLabelsRegex = /(\)\{|\}\{)/; // regex matches occurences of ){ or }{
-  let expression = expandedQuery;
-  while (expression.match(invalidLabelsRegex)) {
-    expression = addLabelsToExpression(expression, invalidLabelsRegex);
-  }
 
-  return expression;
+  // Split query into array, so if query uses operators, we can correctly add labels to each individual part.
+  const queryArray = expandedQuery.split(/(\+|\-|\*|\/|\%|\^)/);
+
+  // Regex that matches occurences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
+  const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
+  const correctlyExpandedQueryArray = queryArray.map(query => {
+    let expression = query;
+    if (expression.match(invalidLabelsRegex)) {
+      expression = addLabelsToExpression(expression, invalidLabelsRegex);
+    }
+    return expression;
+  });
+
+  return correctlyExpandedQueryArray.join('');
 }
 
 function addLabelsToExpression(expr: string, regex: RegExp) {
-  const exprBeforeRegexMatch = expr.substr(0, expr.match(regex).index + 1);
-  const exprAfterRegexMatch = expr.substr(expr.match(regex).index + 1);
-  const labelsInString = exprAfterRegexMatch.substr(1, exprAfterRegexMatch.indexOf('}') - 1);
-  const labelsInArray = labelsInString.split(',');
-  const arrWithLabelsObject = labelsInArray.map(string => {
-    const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
-    let match = labelRegexp.exec(string);
+  // Split query into 2 parts - before the invalidLabelsRegex match and after.
+  const indexOfRegexMatch = expr.match(regex).index;
+  const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
+  const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
+
+  // Retrieve string with labels. Our exprAfterRegexMatch starts with "{" and we need to find closest matching bracket.
+  // We want to leave out the brackets and keep just string in labelsInString.
+  const stringOfLabels = exprAfterRegexMatch.substr(1, exprAfterRegexMatch.indexOf('}') - 1);
+
+  // Create array with labels
+  const arrayOfLabels = stringOfLabels.split(',');
+
+  // Transform strings into object with specified key, operator and value
+  // Uses the same regex and similar logic as function method in add_label_to_query
+  const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
+  const arrayOfLabelObjects = arrayOfLabels.map(string => {
+    const match = labelRegexp.exec(string);
     return match && { key: match[1], operator: match[2], value: match[3] };
   });
+
+  // Loop trough all of the label objects and add them to query.
+  // As a starting point we have valid query without the labels.
   let result = exprBeforeRegexMatch;
-  arrWithLabelsObject.filter(Boolean).forEach(obj => {
-    result = addLabelToQuery(result, obj.key, obj.value.substr(1, obj.value.length - 2), obj.operator);
+  arrayOfLabelObjects.filter(Boolean).forEach(obj => {
+    // Remove extra set of quotes from obj.value
+    const value = obj.value.substr(1, obj.value.length - 2);
+    result = addLabelToQuery(result, obj.key, value, obj.operator);
   });
 
-  result = result + exprAfterRegexMatch.substr(exprAfterRegexMatch.indexOf('}') + 1);
   return result;
 }
 
