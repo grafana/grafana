@@ -8,7 +8,8 @@ WARNINGS_COUNT="$(find $REPORT_PATH -type f -name \*.log | xargs grep -o "\[33mW
 WARNINGS_COUNT_LIMIT=868
 
 if [ "$WARNINGS_COUNT" -gt $WARNINGS_COUNT_LIMIT ]; then
-  echo -e "API Extractor warnings/errors $WARNINGS_COUNT exceeded $WARNINGS_COUNT_LIMIT so failing build"
+  echo -e "API Extractor warnings/errors $WARNINGS_COUNT exceeded $WARNINGS_COUNT_LIMIT so failing build.\n"
+  echo -e "Please go to: https://github.com/grafana/grafana/blob/master/contribute/style-guides/code-comments.md for more information on how to add code comments."
   exit 1
 fi
 
