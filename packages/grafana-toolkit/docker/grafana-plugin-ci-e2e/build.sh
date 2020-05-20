@@ -3,12 +3,18 @@ set -eo pipefail
 
 source ./common.sh
 
-/bin/rm -rfv install/grafana-toolkit
-mkdir -pv install/grafana-toolkit
-cp -rv ../../bin install/grafana-toolkit
-cp -rv ../../src install/grafana-toolkit
-cp -v ../../package.json install/grafana-toolkit
-cp -v ../../tsconfig.json install/grafana-toolkit
+#
+# No longer required, but useful to keep just in case we want to deploy 
+# changes in toolkit directly to the docker image
+#
+if [ -n "$INCLUDE_TOOLKIT" ]; then
+	/bin/rm -rfv install/grafana-toolkit
+	mkdir -pv install/grafana-toolkit
+	cp -rv ../../bin install/grafana-toolkit
+	cp -rv ../../src install/grafana-toolkit
+	cp -v ../../package.json install/grafana-toolkit
+	cp -v ../../tsconfig.json install/grafana-toolkit
+fi
 
 
 output=$(docker build . | tee /dev/tty)
@@ -18,4 +24,4 @@ if [ ${#hash} -gt 0 ]; then
 	docker push $DOCKER_IMAGE_NAME:latest
 fi
 
-/bin/rm -rfv install/grafana-toolkit
+[ -n "$INCLUDE_TOOLKIT" ] && /bin/rm -rfv install/grafana-toolkit
