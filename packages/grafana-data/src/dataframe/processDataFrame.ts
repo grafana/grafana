@@ -16,6 +16,7 @@ import {
   DataFrameDTO,
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
+  MutableColumn,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -26,12 +27,12 @@ import { getFieldDisplayName } from '../field/fieldState';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
-    const { text, ...disp } = c;
+    const { text, type, ...disp } = c as MutableColumn;
     return {
       name: text, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
       values: new ArrayVector(),
-      type: FieldType.other,
+      type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
 
@@ -46,9 +47,11 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   }
 
   for (const f of fields) {
-    const t = guessFieldTypeForField(f);
-    if (t) {
-      f.type = t;
+    if (f.type === FieldType.other) {
+      const t = guessFieldTypeForField(f);
+      if (t) {
+        f.type = t;
+      }
     }
   }
 

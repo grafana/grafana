@@ -99,6 +99,17 @@ export interface Column {
   custom?: Record<string, any>;
 }
 
+/**
+ * Extends the standard Column class with variables that get
+ * mutated in the angular table panel.
+ */
+export interface MutableColumn extends Column {
+  title?: string;
+  sort?: boolean;
+  desc?: boolean;
+  type?: string;
+}
+
 export interface TableData extends QueryResultBase {
   name?: string;
   columns: Column[];
