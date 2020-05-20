@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //***
@@ -126,10 +127,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		},
 	}
 
-	dataframes, _ := logsResultsToDataframes(fakeCloudwatchResponse)
-	timeA, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
-	timeB, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
-	timeC, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	dataframes, err := logsResultsToDataframes(fakeCloudwatchResponse)
+	require.NoError(t, err)
+	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
+	require.NoError(t, err)
+	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
+	require.NoError(t, err)
+	timeC, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	require.NoError(t, err)
 	timeVals := []*time.Time{
 		&timeA, &timeB, &timeC,
 	}
@@ -232,9 +237,12 @@ func TestGroupKeyGeneration(t *testing.T) {
 }
 
 func TestGroupingResults(t *testing.T) {
-	timeA, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
-	timeB, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
-	timeC, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
+	require.NoError(t, err)
+	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
+	require.NoError(t, err)
+	timeC, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	require.NoError(t, err)
 	timeVals := []*time.Time{
 		&timeA, &timeA, &timeA, &timeB, &timeB, &timeB, &timeC, &timeC, &timeC,
 	}
@@ -344,6 +352,7 @@ func TestGroupingResults(t *testing.T) {
 		},
 	}
 
-	groupedResults, _ := groupResults(fakeDataFrame, []string{"@log"})
+	groupedResults, err := groupResults(fakeDataFrame, []string{"@log"})
+	require.NoError(t, err)
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }

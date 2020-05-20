@@ -41,7 +41,7 @@ The query field is where you can write your query and explore your data. There a
 
 ## Split and compare
 
-The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
+The split view feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
 {{< docs-imagebox img="/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
@@ -197,6 +197,53 @@ Click the **Live** button in the Explore toolbar to switch to Live tail view.
 While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
 
 {{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+
+## Tracing integration
+> Only available in Grafana v7.0+.
+
+You can visualize traces from tracing data sources in explore. Data sources currently supported:
+- [Jaeger]({{< relref "../datasources/jaeger" >}})
+- [Zipkin]({{< relref "../datasources/zipkin" >}})
+
+For information about how to use the query editor see documentation for specific data source.
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-full.png" class="docs-image--no-shadow" caption="Screenshot of the trace view" >}}
+
+##### Header
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-header.png" class="docs-image--no-shadow" caption="Screenshot of the trace view header" >}}
+
+- Header title: Shows the name of the root span and trace ID.
+- Search: Highlights spans containing the searched text.
+- Metadata: Various metadata about the trace.
+
+##### Minimap
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption="Screenshot of the trace view minimap" >}}
+
+Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
+
+##### Timeline
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption="Screenshot of the trace view timeline" >}}
+
+Shows list of spans within the trace. Each span row consists of these components:
+- Expand children button: Expands or collapses all the children spans of selected span.
+- Service name: Name of the service logged the span.
+- Operation name: Name of the operation that this span represents.
+- Span duration bar: Visual representation of the operation duration within the trace.
+
+Clicking anywhere on the span row will show span details. 
+
+##### Span details
+
+{{< docs-imagebox img="/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption="Screenshot of the trace view span details" >}}
+
+- Operation name
+- Span metadata
+- Tags: Any tags associated with this span.
+- Process metadata: Metadata about the process that logged this span.
+- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
 ## Navigating between Explore and a dashboard
 

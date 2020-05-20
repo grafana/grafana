@@ -7,8 +7,7 @@ aliases =["/docs/grafana/latest/features/panels/heatmap/"]
 [menu.docs]
 name = "Heatmap"
 parent = "visualizations"
-weight = 700
-draft = "true"
+weight = 600
 +++
 
 # Heatmap
@@ -18,6 +17,7 @@ The Heatmap panel visualization allows you to view histograms over time. For mor
 ![](/img/docs/v43/heatmap_panel_cover.jpg)
 
 ## Axes options
+
 Use these settings to adjust how axes are displayed in your visualization.
 
 ### Y Axis
@@ -83,7 +83,6 @@ By default, Grafana calculates cell colors based on minimum and maximum buckets 
 
 - **Min -** Minimum value using for cell color calculation. If bucket value less than Min, it will be mapped to the "minimum" color. Default is series min value.
 - **Max -** Maximum value using for cell color calculation. If bucket value greater than Max, it will be mapped to the "maximum" color. Default is series max value.
-
 
 ### Legend
 

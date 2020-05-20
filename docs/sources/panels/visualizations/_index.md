@@ -3,7 +3,7 @@ title = "Visualizations"
 type = "docs"
 [menu.docs]
 identifier = "visualizations"
-weight = 4
+weight = 600
 +++
 
 # Visualizations
