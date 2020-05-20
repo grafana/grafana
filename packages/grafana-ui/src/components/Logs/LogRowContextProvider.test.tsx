@@ -34,7 +34,13 @@ describe('getRowContexts', () => {
 
       const result = await getRowContexts(getRowContextMock, row, 10);
 
-      expect(result).toEqual({ data: [[['3', '2']], [['6', '5', '4']]], errors: ['', ''] });
+      expect(result).toEqual({
+        data: [
+          ['3', '2'],
+          ['6', '5', '4'],
+        ],
+        errors: ['', ''],
+      });
     });
 
     it('then the result should be in correct format and filtered without uid', async () => {
@@ -63,7 +69,13 @@ describe('getRowContexts', () => {
 
       const result = await getRowContexts(getRowContextMock, row, 10);
 
-      expect(result).toEqual({ data: [[['3', '2', '1']], [['6', '5']]], errors: ['', ''] });
+      expect(result).toEqual({
+        data: [
+          ['3', '2', '1'],
+          ['6', '5'],
+        ],
+        errors: ['', ''],
+      });
     });
   });
 
