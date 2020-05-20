@@ -9,6 +9,7 @@ import {
   getActiveThreshold,
   Threshold,
 } from '@grafana/data';
+import { isNumber } from 'lodash';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 
@@ -57,8 +58,13 @@ export class Gauge extends PureComponent<Props> {
     const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
     const steps = thresholds.steps;
-    let min = field.min!;
-    let max = field.max!;
+    let min = field.min;
+    let max = field.max;
+
+    if (!isNumber(min) || !isNumber(max)) {
+      return [];
+    }
+
     if (isPercent) {
       min = 0;
       max = 100;
@@ -116,9 +122,10 @@ export class Gauge extends PureComponent<Props> {
 
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    let min = field.min!;
-    let max = field.max!;
+    let min = field.min;
+    let max = field.max;
     let numeric = value.numeric;
+
     if (field.thresholds?.mode === ThresholdsMode.Percentage) {
       min = 0;
       max = 100;
@@ -130,9 +137,12 @@ export class Gauge extends PureComponent<Props> {
     }
 
     const decimals = field.decimals === undefined ? 2 : field.decimals!;
+
     if (showThresholdMarkers) {
-      min = +min.toFixed(decimals);
-      max = +max.toFixed(decimals);
+      if (isNumber(min) && isNumber(max)) {
+        min = +min.toFixed(decimals);
+        max = +max.toFixed(decimals);
+      }
     }
 
     const options: any = {
