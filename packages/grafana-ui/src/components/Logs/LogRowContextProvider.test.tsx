@@ -138,7 +138,6 @@ describe('LogRowContextProvider', () => {
         }
         return Promise.resolve({ data: [secondResult] });
       };
-      let wrapper: any;
       let updateLimitCalled = false;
 
       const mockedChildren = jest.fn((mockState: any) => {
@@ -165,9 +164,7 @@ describe('LogRowContextProvider', () => {
         return <></>;
       });
       await act(async () => {
-        wrapper = await mount(
-          <LogRowContextProvider row={row} getRowContext={getRowContextMock} children={mockedChildren} />
-        );
+        await mount(<LogRowContextProvider row={row} getRowContext={getRowContextMock} children={mockedChildren} />);
       });
     });
   });
