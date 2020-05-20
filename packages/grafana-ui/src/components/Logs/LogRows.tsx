@@ -91,13 +91,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
     } = this.props;
     const { renderAll } = this.state;
-    const { logsRowsTable } = getLogRowStyles(theme);
+    const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
+    const horizontalScrollWindow = wrapLogMessage ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
@@ -110,7 +111,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <div>
+      <div className={horizontalScrollWindow}>
         <table className={logsRowsTable}>
           <tbody>
             {hasData &&
