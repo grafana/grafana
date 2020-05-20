@@ -145,9 +145,10 @@ var (
 	LoginCookieName      string
 	LoginMaxLifetimeDays int
 
-	AnonymousEnabled bool
-	AnonymousOrgName string
-	AnonymousOrgRole string
+	AnonymousEnabled     bool
+	AnonymousOrgName     string
+	AnonymousOrgRole     string
+	AnonymousHideVersion bool
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -873,6 +874,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")

@@ -167,6 +167,16 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 	}
 
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	buildstamp := setting.BuildStamp
+
+	if setting.AnonymousHideVersion && !c.IsSignedIn {
+		version = "0.0.0-hidden"
+		commit = "0000000000"
+		buildstamp = 0
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":          defaultDatasource,
 		"datasources":                datasources,
@@ -196,9 +206,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
-			"version":       setting.BuildVersion,
-			"commit":        setting.BuildCommit,
-			"buildstamp":    setting.BuildStamp,
+			"version":       version,
+			"commit":        commit,
+			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
