@@ -4,8 +4,8 @@
 set -e
 
 # this script needs to be run after the packages have been build and the api-extractor have completed.
-REPORT_PATH="$(realpath $(dirname $0)/../reports/docs/)"
-WARNINGS_COUNT="$(find $REPORT_PATH -type f -name \*.log | xargs grep -o "\[33mWarning:" | wc -l | xargs)"
+REPORT_PATH="$(realpath "$(dirname "$0")/../reports/docs/")"
+WARNINGS_COUNT="$(find "$REPORT_PATH" -type f -name \*.log -print0 | xargs -0 grep -o "\[33mWarning:" | wc -l | xargs)"
 WARNINGS_COUNT_LIMIT=900
 
 if [ "$WARNINGS_COUNT" -gt $WARNINGS_COUNT_LIMIT ]; then
