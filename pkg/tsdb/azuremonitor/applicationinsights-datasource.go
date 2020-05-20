@@ -1,6 +1,7 @@
 package azuremonitor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -84,7 +85,9 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			return nil, err // TODO wrap
 		}
 		queryJSONModel := insightsJSONQuery{}
-		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		d := json.NewDecoder(bytes.NewReader(queryBytes))
+		d.UseNumber()
+		err = d.Decode(&queryJSONModel)
 		if err != nil {
 			return nil, err // TODO wrap
 		}
@@ -102,7 +105,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 				return nil, errors.New("rawQuery requires rawQueryString")
 			}
 
-			rawQueryString, err := KqlInterpolate(query, timeRange, fmt.Sprintf("%v", rawQueryString))
+			rawQueryString, err := KqlInterpolate(query, timeRange, insightsJSONModel.RawQueryString)
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +125,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			})
 		} else {
 			azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
-			timeGrain := fmt.Sprintf("%v", insightsJSONModel.TimeGrain)
+			timeGrain := insightsJSONModel.TimeGrain
 			timeGrains := insightsJSONModel.AllowedTimeGrainsMs
 			if timeGrain == "auto" {
 				timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)

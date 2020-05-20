@@ -114,18 +114,18 @@ type azureMonitorJSONQuery struct {
 
 type insightsJSONQuery struct {
 	AppInsights struct {
-		Aggregation         string  `json:"aggregation"`
-		Alias               string  `json:"alias"`
-		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
-		Dimension           string  `json:"dimension"`
-		DimensionFilter     string  `json:"dimensionFilter"`
-		MetricName          string  `json:"metricName"`
-		RawQuery            *bool   `json:"rawQuery"`
-		RawQueryString      string  `json:"rawQueryString"`
-		TimeGrain           string  `json:"timeGrain"`
-		TimeColumn          string  `json:"timeColumn"`
-		ValueColumn         string  `json:"valueColumn"`
-		SegmentColumn       string  `json:"segmentColumn"`
+		Aggregation         string        `json:"aggregation"`
+		Alias               string        `json:"alias"`
+		AllowedTimeGrainsMs []interface{} `json:"allowedTimeGrainsMs"` // in the insights frontend this any, where as in azureMonitor it is type number.
+		Dimension           string        `json:"dimension"`
+		DimensionFilter     string        `json:"dimensionFilter"`
+		MetricName          string        `json:"metricName"`
+		RawQuery            *bool         `json:"rawQuery"`
+		RawQueryString      string        `json:"rawQueryString"`
+		TimeGrain           string        `json:"timeGrain"`
+		TimeColumn          string        `json:"timeColumn"`
+		ValueColumn         string        `json:"valueColumn"`
+		SegmentColumn       string        `json:"segmentColumn"`
 	} `json:"appInsights"`
 	Raw *bool `json:"raw"`
 }
