@@ -95,27 +95,27 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 			return nil, err // TODO wrap this and above
 		}
 
-		azureMonitorTarget := queryJSONModel.AzureMonitor
+		azJSONModel := queryJSONModel.AzureMonitor
 
 		urlComponents := map[string]string{}
 		urlComponents["subscription"] = queryJSONModel.Subscription
-		urlComponents["resourceGroup"] = azureMonitorTarget.ResourceGroup
-		urlComponents["metricDefinition"] = azureMonitorTarget.MetricDefinition
-		urlComponents["resourceName"] = azureMonitorTarget.ResourceName
+		urlComponents["resourceGroup"] = azJSONModel.ResourceGroup
+		urlComponents["metricDefinition"] = azJSONModel.MetricDefinition
+		urlComponents["resourceName"] = azJSONModel.ResourceName
 
 		ub := urlBuilder{
 			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
 			Subscription:        queryJSONModel.Subscription,
 			ResourceGroup:       queryJSONModel.AzureMonitor.ResourceGroup,
-			MetricDefinition:    azureMonitorTarget.MetricDefinition,
-			ResourceName:        azureMonitorTarget.ResourceName,
+			MetricDefinition:    azJSONModel.MetricDefinition,
+			ResourceName:        azJSONModel.ResourceName,
 		}
 		azureURL := ub.Build()
 
-		alias := azureMonitorTarget.Alias
+		alias := azJSONModel.Alias
 
-		timeGrain := azureMonitorTarget.TimeGrain
-		timeGrains := azureMonitorTarget.AllowedTimeGrainsMs
+		timeGrain := azJSONModel.TimeGrain
+		timeGrains := azJSONModel.AllowedTimeGrainsMs
 		if timeGrain == "auto" {
 			timeGrain, err = setAutoTimeGrainTyped(query.IntervalMs, timeGrains)
 			if err != nil {
@@ -127,15 +127,15 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("api-version", azureMonitorAPIVersion)
 		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
-		params.Add("aggregation", azureMonitorTarget.Aggregation)
-		params.Add("metricnames", azureMonitorTarget.MetricName) // MetricName or MetricNames ?
-		params.Add("metricnamespace", azureMonitorTarget.MetricNamespace)
+		params.Add("aggregation", azJSONModel.Aggregation)
+		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
+		params.Add("metricnamespace", azJSONModel.MetricNamespace)
 
-		dimension := strings.TrimSpace(azureMonitorTarget.Dimension)
-		dimensionFilter := strings.TrimSpace(azureMonitorTarget.DimensionFilter)
+		dimension := strings.TrimSpace(azJSONModel.Dimension)
+		dimensionFilter := strings.TrimSpace(azJSONModel.DimensionFilter)
 		if dimension != "" && dimensionFilter != "" && dimension != "None" {
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
-			params.Add("top", fmt.Sprintf("%v", azureMonitorTarget.Top))
+			params.Add("top", azJSONModel.Top)
 		}
 
 		target = params.Encode()
