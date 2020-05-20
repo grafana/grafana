@@ -44,7 +44,7 @@ export interface DashboardLink {
   asDropdown: boolean;
   tags: [];
   searchHits?: [];
-  target: string;
+  targetBlank: boolean;
 }
 
 export class DashboardModel {

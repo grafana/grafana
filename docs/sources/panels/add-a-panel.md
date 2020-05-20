@@ -44,7 +44,7 @@ Each panel needs at least one query to display a visualization. You write querie
 
 In the Visualization section of the Panel tab, click a visualization type. Grafana displays a preview of your query results with that visualization applied.
 
-For more information about individual visualizations, refer to [Visualizations](ADD LINK)
+For more information about individual visualizations, refer to [Visualizations]({{< relref "visualizations/_index.md" >}}).
 
 ## 5. Apply changes and save
 
@@ -56,9 +56,9 @@ Your options vary depending on the changes you made and whether or not it is a n
 
 Our Grafana Fundamentals tutorial is a great place to start, or you can learn more about Grafana by reading one of the documentation topics linked below:
 
-- Learn more Panel editor options.
-- Add more queries.
-- Transform your data.
-- Change how your results are displayed in the visualization.
-- Set up an alert.
-- Create templates and variables.
+- Learn more [Panel editor]({{< relref "panel-editor.md" >}}) options.
+- Add more [queries]({{< relref "queries.md" >}}).
+- [Transform]({{< relref "transformations.md" >}}) your data.
+- [Configure]({{< relref "field-configuration-options.md" >}}) how your results are displayed in the visualization.
+- If you made a graph panel, set up an [alert]({{< relref "../alerting/alerts-overview.md" >}}).
+- Create [templates and variables]({{< relref "../variables/templates-and-variables.md" >}}).

@@ -1,3 +1,4 @@
++++
 title = "Thresholds"
 type = "docs"
 [menu.docs]
@@ -15,11 +16,12 @@ You can define thresholds one of two ways:
 * **Percentage** thresholds are defined relative to minimum and maximums. For example, 80 percent.
 
 You can apply thresholds to the following visualizations:
-* Stat
-* Gauge
-* Bar gauge
-* Table
-* Graph
+
+- [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
+- [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
+- [Graph]({{< relref "visualizations/graph-panel.md" >}})
+- [Stat]({{< relref "visualizations/stat-panel.md" >}})
+- [Table]({{< relref "visualizations/table-panel.md" >}})
 
 ## Default thresholds
 
