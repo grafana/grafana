@@ -134,7 +134,7 @@ grafana-cli --homepath "c:\Program Files\grafana" admin reset-admin-password myn
 
 **Example:**
 ```bash
-grafana-cli admin reset-admin-password --config "/etc/configuration/" mynewpassword
+grafana-cli --config "/etc/configuration/" admin reset-admin-password mynewpassword
 ```
 
 ## Plugins commands
