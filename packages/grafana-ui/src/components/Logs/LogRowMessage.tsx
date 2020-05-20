@@ -91,12 +91,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
-    const highlightedLogMessageStyle = wrapLogMessage
-      ? {
-          label: 'white-space-pre-wrap',
-          whiteSpace: 'pre-wrap',
-        }
-      : {};
 
     return (
       <td className={style.logsRowMessage}>
@@ -118,7 +112,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {needsHighlighter ? (
               <Highlighter
-                style={highlightedLogMessageStyle}
                 textToHighlight={entry}
                 searchWords={highlights}
                 findChunks={findHighlightChunksInText}
