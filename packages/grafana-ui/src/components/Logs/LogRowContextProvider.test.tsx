@@ -159,9 +159,8 @@ describe('LogRowContextProvider', () => {
           updateLimitCalled = true;
           return <></>;
         }
-        if (updateLimitCalled && result.before.length > 0) {
+        if (updateLimitCalled && result.before.length > 0 && limit > 10) {
           expect(limit).toBe(20);
-          expect(hasMoreContextRows).toEqual({ before: true, after: false });
         }
         return <></>;
       });
