@@ -86,7 +86,7 @@ Panel data source query options:
 
   With streaming data, the max data points value is used for the rolling buffer. (Streaming is a continuous flow of data and buffering is a way of dividing the stream into chunks). Loki streams data in the live tailing mode.
 
-- **Min interval -** Sets a minimum limit for the automatically calculated interval, typically the minimum scrape interval. If a data point is saved every 15 seconds, then there's no point in having an interval lower than that. Another use case is, set it to a higher minimum than the scrape interval to get more coarse-grained, well-functioning queries.
+- **Min interval -** Sets a minimum limit for the automatically calculated interval, typically the minimum scrape interval. If a data point is saved every 15 seconds, then there's no point in having an interval lower than that. Another use case is to set it to a higher minimum than the scrape interval to get more coarse-grained, well-functioning queries.
   
 - **Interval -** The interval is a time span that you can use when aggregating or grouping data points by time. 
   
