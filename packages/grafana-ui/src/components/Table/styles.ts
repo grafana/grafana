@@ -82,7 +82,7 @@ export const getTableStyles = stylesFactory(
 
         &:last-child {
           border-right: none;
-          padding-right: 5px;
+          padding-right: ${theme.spacing.md};
         }
       `,
       tableCellLink: css`
