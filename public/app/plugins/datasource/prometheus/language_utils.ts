@@ -1,4 +1,5 @@
 import { PromMetricsMetadata } from './types';
+import { addLabelToQuery } from './add_label_to_query';
 
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
@@ -111,7 +112,33 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
   const ruleNames = Object.keys(mapping);
   const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
-  return query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
+  const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
+  const invalidLabelsRegex = /(\)\{|\}\{)/; // regex matches occurences of ){ or }{
+  let expression = expandedQuery;
+  while (expression.match(invalidLabelsRegex)) {
+    expression = addLabelsToExpression(expression, invalidLabelsRegex);
+  }
+
+  return expression;
+}
+
+function addLabelsToExpression(expr: string, regex: RegExp) {
+  const exprBeforeRegexMatch = expr.substr(0, expr.match(regex).index + 1);
+  const exprAfterRegexMatch = expr.substr(expr.match(regex).index + 1);
+  const labelsInString = exprAfterRegexMatch.substr(1, exprAfterRegexMatch.indexOf('}') - 1);
+  const labelsInArray = labelsInString.split(',');
+  const arrWithLabelsObject = labelsInArray.map(string => {
+    const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
+    let match = labelRegexp.exec(string);
+    return match && { key: match[1], operator: match[2], value: match[3] };
+  });
+  let result = exprBeforeRegexMatch;
+  arrWithLabelsObject.filter(Boolean).forEach(obj => {
+    result = addLabelToQuery(result, obj.key, obj.value.substr(1, obj.value.length - 2), obj.operator);
+  });
+
+  result = result + exprAfterRegexMatch.substr(exprAfterRegexMatch.indexOf('}') + 1);
+  return result;
 }
 
 /**
