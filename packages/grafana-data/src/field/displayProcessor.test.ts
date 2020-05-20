@@ -5,7 +5,6 @@ import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode 
 import { getScaleCalculator, sortThresholds } from './scale';
 import { ArrayVector } from '../vector';
 import { validateFieldConfig } from './fieldOverrides';
-import { formattedValueToString } from '../valueFormats/valueFormats';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
   return getDisplayProcessor({
@@ -176,13 +175,6 @@ describe('Format value', () => {
 
     expect(instance(value).text).toEqual('0.025');
   });
-
-  // it('should set auto decimals correctly for large value with short unit', () => {
-  //   const value = 1000 * 10 * 10 * 10;
-  //   const instance = getDisplayProcessorFromConfig({ unit: 'short', decimals: null });
-
-  //   expect(formattedValueToString(instance(value))).toEqual('1 Mil');
-  // });
 
   it('should use override decimals', () => {
     const value = 100030303;
