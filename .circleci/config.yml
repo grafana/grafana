@@ -422,7 +422,7 @@ jobs:
               # A master build
               /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              # A forked forked PR build, don't sign as it requires an API secret
+              # A forked PR build, don't sign as it requires an API secret
               /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
@@ -484,7 +484,7 @@ jobs:
               # A master build
               /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              # A forked forked PR build, don't sign as it requires an API secret
+              # A forked PR build, don't sign as it requires an API secret
               /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
