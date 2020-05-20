@@ -40,7 +40,6 @@ describe('panelEditor actions', () => {
         ...initialState(),
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,
-        querySubscription: { unsubscribe: jest.fn() },
       };
 
       const dispatchedActions = await thunkTester({
@@ -74,7 +73,6 @@ describe('panelEditor actions', () => {
         ...initialState(),
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,
-        querySubscription: { unsubscribe: jest.fn() },
       };
 
       const panelDestroy = (panel.destroy = jest.fn());
@@ -112,7 +110,6 @@ describe('panelEditor actions', () => {
         shouldDiscardChanges: true,
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,
-        querySubscription: { unsubscribe: jest.fn() },
       };
 
       const dispatchedActions = await thunkTester({
