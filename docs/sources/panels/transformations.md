@@ -75,7 +75,7 @@ Grafana comes with the following transformations:
     - [Labels to fields](#labels-to-fields)
   - [Debug transformations](#debug-transformations)
 
-Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions for how to use them.
+Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ### Reduce
 
@@ -120,7 +120,7 @@ Here is the same query using a Stat visualization.
 
 ### Filter data by query
 
-Use this transformation in panels that have multiple queries if you want to hide one or more of the queries.
+Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
 Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 
