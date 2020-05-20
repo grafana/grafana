@@ -18,6 +18,7 @@ func init() {
 		Type:        "prometheus-alertmanager",
 		Name:        "Prometheus Alertmanager",
 		Description: "Sends alert to Prometheus Alertmanager",
+		Heading:     "Alertmanager settings",
 		Factory:     NewAlertmanagerNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Alertmanager settings</h3>
@@ -38,6 +39,26 @@ func init() {
 		</div>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Url",
+				Type:        "input",
+				Placeholder: "http://localhost:9093",
+				ModelValue:  "url",
+			},
+			{
+				Label:       "Basic Auth User",
+				Type:        "input",
+				Placeholder: "",
+				ModelValue:  "basicAuthUser",
+			},
+			{
+				Label:       "Basic Auth Password",
+				Type:        "input",
+				Placeholder: "",
+				ModelValue:  "basicAuthPassword",
+			},
+		},
 	})
 }
 

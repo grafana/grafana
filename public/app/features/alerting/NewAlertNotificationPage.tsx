@@ -97,7 +97,7 @@ class NewAlertNotificationPage extends PureComponent<Props> {
         <Page.Contents>
           <h2>New Notification Channel</h2>
           <Form onSubmit={this.onSubmit} validateOn="onChange">
-            {({ register, errors, control }) => (
+            {({ register, errors, control, getValues }) => (
               <>
                 <Field label="Name" invalid={!!errors.name} error={errors.name}>
                   <Input name="name" ref={register({ required: 'Name is required' })} />
@@ -120,12 +120,16 @@ class NewAlertNotificationPage extends PureComponent<Props> {
                     </Field>
                   );
                 })}
+                {}
                 <HorizontalGroup>
                   <Button type="submit" onClick={this.onSubmit}>
                     Save
                   </Button>
                   <Button type="button" variant="secondary">
                     Test
+                  </Button>
+                  <Button type="button" variant="secondary">
+                    Back
                   </Button>
                 </HorizontalGroup>
               </>

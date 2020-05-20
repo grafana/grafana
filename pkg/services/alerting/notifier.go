@@ -24,9 +24,18 @@ var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
 type NotifierPlugin struct {
 	Type            string          `json:"type"`
 	Name            string          `json:"name"`
+	Heading         string          `json:"heading"`
 	Description     string          `json:"description"`
 	OptionsTemplate string          `json:"optionsTemplate"`
 	Factory         NotifierFactory `json:"-"`
+	Options         []Option        `json:"options"`
+}
+
+type Option struct {
+	Type        string
+	Label       string
+	Placeholder string
+	ModelValue  string
 }
 
 func newNotificationService(renderService rendering.Service) *notificationService {
