@@ -133,6 +133,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
                 invalid={!this.state.isNowDelayValid}
                 placeholder="0m"
                 onChange={this.onNowDelayChange}
+                defaultValue={dashboard.timepicker.nowDelay}
               />
             </Tooltip>
           </div>

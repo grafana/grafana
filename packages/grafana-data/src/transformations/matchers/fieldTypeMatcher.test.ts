@@ -16,7 +16,8 @@ describe('Field Type Matcher', () => {
   it('finds numbers', () => {
     for (const field of simpleSeriesWithTypes.fields) {
       const matches = matcher.get(FieldType.number);
-      expect(matches(field)).toBe(field.type === FieldType.number);
+      const didMatch = matches(field, simpleSeriesWithTypes, [simpleSeriesWithTypes]);
+      expect(didMatch).toBe(field.type === FieldType.number);
     }
   });
 });

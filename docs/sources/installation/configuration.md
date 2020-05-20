@@ -42,7 +42,7 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 **Example**
 ```
-# The http port  to use
+# The HTTP port  to use
 ;http_port = 3000
 ```
 
@@ -146,7 +146,7 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http`,`https`,`h2` or `socket`
 
-> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for SSL termination.
 
 ### socket
 Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
@@ -549,7 +549,7 @@ File path to a cert file, defaults to `empty`
 File path to a key file, defaults to `empty`
 
 ### skip_verify
-Verify SSL for smtp server? defaults to `false`
+Verify SSL for SMTP server? defaults to `false`
 
 ### from_address
 Address used when sending out emails, defaults to `admin@grafana.localhost`
@@ -559,6 +559,9 @@ Name to be used when sending out emails, defaults to `Grafana`
 
 ### ehlo_identity
 Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
+
+### startTLS_policy
+Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is "OpportunisticStartTLS"
 
 ## [log]
 
@@ -635,7 +638,7 @@ Log line format, valid options are text, console and json. Default is `console`.
 
 ### network and address
 
-Syslog network type and address. This can be udp, tcp, or unix. If left blank, the default unix endpoints will be used.
+Syslog network type and address. This can be UDP, TCP, or unix. If left blank, the default unix endpoints will be used.
 
 ### facility
 

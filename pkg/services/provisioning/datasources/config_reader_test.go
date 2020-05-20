@@ -21,6 +21,7 @@ var (
 	versionZero                     = "testdata/version-0"
 	brokenYaml                      = "testdata/broken-yaml"
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
+	withoutDefaults                 = "testdata/appliedDefaults"
 
 	fakeRepo *fakeRepository
 )
@@ -34,6 +35,18 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
 		bus.AddHandler("test", mockGetAll)
+
+		Convey("apply default values when missing", func() {
+			dc := newDatasourceProvisioner(logger)
+			err := dc.applyChanges(withoutDefaults)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			So(len(fakeRepo.inserted), ShouldEqual, 1)
+			So(fakeRepo.inserted[0].OrgId, ShouldEqual, 1)
+			So(fakeRepo.inserted[0].Access, ShouldEqual, "proxy")
+		})
 
 		Convey("One configured datasource", func() {
 			Convey("no datasource in database", func() {

@@ -57,9 +57,6 @@ export function ControllerTestContext(this: any) {
       self.dashboard.getTimezone = () => {
         return self.isUtc ? 'utc' : 'browser';
       };
-      self.dashboard.isTimezoneUtc = () => {
-        return self.isUtc;
-      };
 
       $rootScope.appEvent = sinon.spy();
       $rootScope.onAppEvent = sinon.spy();
