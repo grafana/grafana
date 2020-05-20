@@ -5,18 +5,15 @@
 title = "styleMixins"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## styleMixins namespace
 
+> This API is provided as a preview for developers and may change based on feedback that we receive. Do not use this API in a production environment.
+> 
+
 ### styleMixins namespace
 
-<b>Signature</b>
-
-```typescript
-export declare namespace styleMixins 
-```
 <b>Import</b>
 
 ```typescript
@@ -28,5 +25,13 @@ import { styleMixins } from '@grafana/ui';
 |  Function | Description |
 |  --- | --- |
 |  [cardChrome(theme)](./cardchrome/) |  |
+|  [hoverColor(color, theme)](./hovercolor/) |  |
 |  [listItem(theme)](./listitem/) |  |
+|  [listItemSelected(theme)](./listitemselected/) |  |
+
+## Variables
+
+|  Variable | Description |
+|  --- | --- |
+|  [focusCss](./focuscss/) |  |
 

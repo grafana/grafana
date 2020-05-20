@@ -51,7 +51,6 @@ var (
 	skipRpmGen            bool     = false
 	skipDebGen            bool     = false
 	printGenVersion       bool     = false
-	modVendor             bool     = true
 )
 
 func main() {
@@ -69,7 +68,6 @@ func main() {
 	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.BoolVar(&race, "race", race, "Use race detector")
-	flag.BoolVar(&modVendor, "modVendor", modVendor, "Go modules use vendor folder")
 	flag.BoolVar(&includeBuildId, "includeBuildId", includeBuildId, "IncludeBuildId in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
@@ -387,7 +385,6 @@ func createPackage(options linuxPackageOptions) {
 	if enterprise {
 		description += " Enterprise"
 	}
-	args = append(args, "--vendor", description)
 
 	if !enterprise {
 		args = append(args, "--license", "\"Apache 2.0\"")
@@ -503,9 +500,6 @@ func build(binaryName, pkg string, tags []string) {
 	}
 	if race {
 		args = append(args, "-race")
-	}
-	if modVendor {
-		args = append(args, "-mod=vendor")
 	}
 
 	args = append(args, "-o", binary)

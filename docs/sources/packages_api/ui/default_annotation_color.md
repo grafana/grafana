@@ -5,7 +5,6 @@
 title = "DEFAULT_ANNOTATION_COLOR"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## DEFAULT\_ANNOTATION\_COLOR variable

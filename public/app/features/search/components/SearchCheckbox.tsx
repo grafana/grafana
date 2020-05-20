@@ -22,6 +22,7 @@ const getStyles = stylesFactory(() => ({
   // Vertically align absolutely positioned checkbox element
   wrapper: css`
     height: 21px;
+    margin-right: 12px;
     & > label {
       height: 100%;
     }

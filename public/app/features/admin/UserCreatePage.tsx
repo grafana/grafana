@@ -37,15 +37,15 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
             return (
               <>
                 <Field label="Name" required invalid={!!errors.name} error={!!errors.name && 'Name is required'}>
-                  <Input name="name" size="md" ref={register({ required: true })} />
+                  <Input name="name" ref={register({ required: true })} />
                 </Field>
 
                 <Field label="E-mail">
-                  <Input name="email" size="md" ref={register} />
+                  <Input name="email" ref={register} />
                 </Field>
 
                 <Field label="Username">
-                  <Input name="login" size="md" ref={register} />
+                  <Input name="login" ref={register} />
                 </Field>
                 <Field
                   label="Password"
@@ -54,7 +54,6 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                   error={!!errors.password && 'Password is required and must contain at least 4 characters'}
                 >
                   <Input
-                    size="md"
                     type="password"
                     name="password"
                     ref={register({

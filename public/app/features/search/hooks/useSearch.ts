@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { useDebounce } from 'react-use';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION } from '../reducers/actionTypes';
+import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION, SEARCH_START, FETCH_ITEMS_START } from '../reducers/actionTypes';
 import { DashboardSection, UseSearch } from '../types';
 import { hasId, getParsedQuery } from '../utils';
 
@@ -15,32 +16,29 @@ const searchSrv = new SearchSrv();
  * @param reducer - return result of useReducer
  * @param params - custom params
  */
-export const useSearch: UseSearch = (query, reducer, params) => {
-  const { queryParsing, folderUid, searchCallback } = params;
+export const useSearch: UseSearch = (query, reducer, params = {}) => {
+  const { queryParsing } = params;
   const [state, dispatch] = reducer;
 
   const search = () => {
+    dispatch({ type: SEARCH_START });
     const parsedQuery = getParsedQuery(query, queryParsing);
-
     searchSrv.search(parsedQuery).then(results => {
-      // Remove header for folder search
-      if (query.folderIds.length === 1 && results.length) {
-        results[0].hideHeader = true;
-      }
       dispatch({ type: FETCH_RESULTS, payload: results });
-
-      if (searchCallback) {
-        searchCallback(folderUid);
-      }
     });
   };
 
-  useDebounce(search, 300, [query, folderUid, queryParsing]);
+  // Set loading state before debounced search
+  useEffect(() => {
+    dispatch({ type: SEARCH_START });
+  }, [query.tag, query.sort, query.starred, query.layout]);
 
-  // TODO as possible improvement, show spinner after expanding section while items are fetching
+  useDebounce(search, 300, [query, queryParsing]);
+
   const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {
-      backendSrv.search({ ...query, folderIds: [section.id] }).then(items => {
+      dispatch({ type: FETCH_ITEMS_START, payload: section.id });
+      backendSrv.search({ folderIds: [section.id] }).then(items => {
         dispatch({ type: FETCH_ITEMS, payload: { section, items } });
         dispatch({ type: TOGGLE_SECTION, payload: section });
       });

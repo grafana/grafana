@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
 import cx from 'classnames';
-import { FormField } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { FormField } = LegacyForms;
 import { DerivedFieldConfig } from '../types';
 import { getLinksFromLogsField } from '../../../../features/panel/panellinks/linkSuppliers';
 import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';

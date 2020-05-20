@@ -48,7 +48,7 @@ func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string
 		JsonData:       query.Result.JsonData,
 		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
 	}
-	interpolated, err := InterpolateString(route.Url, data)
+	interpolated, err := InterpolateString(route.URL, data)
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +57,7 @@ func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string
 
 // NewApiPluginProxy create a plugin proxy
 func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
-	targetURL, _ := url.Parse(route.Url)
+	targetURL, _ := url.Parse(route.URL)
 
 	director := func(req *http.Request) {
 
@@ -98,7 +98,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			}
 		}
 
-		if len(route.Url) > 0 {
+		if len(route.URL) > 0 {
 			interpolatedURL, err := updateURL(route, ctx.OrgId, appID)
 			if err != nil {
 				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)

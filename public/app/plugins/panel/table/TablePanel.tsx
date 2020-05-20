@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 
 import { Table, Select } from '@grafana/ui';
-import { Field, FieldMatcherID, PanelProps, DataFrame, SelectableValue } from '@grafana/data';
+import { FieldMatcherID, PanelProps, DataFrame, SelectableValue, getFrameDisplayName } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
 import { config } from 'app/core/config';
+import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
 interface Props extends PanelProps<Options> {}
 
@@ -13,22 +14,41 @@ export class TablePanel extends Component<Props> {
     super(props);
   }
 
-  onColumnResize = (field: Field, width: number) => {
-    const current = this.props.fieldConfig;
-    const matcherId = FieldMatcherID.byName;
-    const prop = 'width';
-    const overrides = current.overrides.filter(
-      o => o.matcher.id !== matcherId || o.matcher.options !== field.name || o.properties[0].id !== prop
-    );
+  onColumnResize = (fieldDisplayName: string, width: number) => {
+    const { fieldConfig } = this.props;
+    const { overrides } = fieldConfig;
 
-    overrides.push({
-      matcher: { id: matcherId, options: field.name },
-      properties: [{ id: prop, value: width }],
-    });
+    const matcherId = FieldMatcherID.byName;
+    const propId = 'custom.width';
+
+    // look for existing override
+    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+
+    if (override) {
+      // look for existing property
+      const property = override.properties.find(prop => prop.id === propId);
+      if (property) {
+        property.value = width;
+      } else {
+        override.properties.push({ id: propId, value: width });
+      }
+    } else {
+      overrides.push({
+        matcher: { id: matcherId, options: fieldDisplayName },
+        properties: [{ id: propId, value: width }],
+      });
+    }
 
     this.props.onFieldConfigChange({
-      ...current,
+      ...fieldConfig,
       overrides,
+    });
+  };
+
+  onSortByChange = (sortBy: TableSortByFieldState[]) => {
+    this.props.onOptionsChange({
+      ...this.props.options,
+      sortBy,
     });
   };
 
@@ -43,19 +63,30 @@ export class TablePanel extends Component<Props> {
   };
 
   renderTable(frame: DataFrame, width: number, height: number) {
-    const {
-      options: { showHeader, resizable },
-    } = this.props;
-    return <Table height={height} width={width} data={frame} noHeader={!showHeader} resizable={resizable} />;
+    const { options } = this.props;
+
+    return (
+      <Table
+        height={height}
+        width={width}
+        data={frame}
+        noHeader={!options.showHeader}
+        resizable={true}
+        initialSortBy={options.sortBy}
+        onSortByChange={this.onSortByChange}
+        onColumnResize={this.onColumnResize}
+      />
+    );
+  }
+
+  getCurrentFrameIndex() {
+    const { data, options } = this.props;
+    const count = data.series?.length;
+    return options.frameIndex > 0 && options.frameIndex < count ? options.frameIndex : 0;
   }
 
   render() {
-    const {
-      data,
-      height,
-      width,
-      options: { frameIndex },
-    } = this.props;
+    const { data, height, width } = this.props;
 
     const count = data.series?.length;
 
@@ -65,24 +96,26 @@ export class TablePanel extends Component<Props> {
 
     if (count > 1) {
       const inputHeight = config.theme.spacing.formInputHeight;
-      const padding = 8;
-      const index = frameIndex > 0 && frameIndex < count ? frameIndex : 0;
+      const padding = 8 * 2;
+      const currentIndex = this.getCurrentFrameIndex();
       const names = data.series.map((frame, index) => {
         return {
-          label: `${frame.name ?? 'Series'}`,
+          label: getFrameDisplayName(frame),
           value: index,
         };
       });
 
       return (
         <div className={tableStyles.wrapper}>
-          {this.renderTable(data.series[index], width, height - inputHeight - padding)}
-          <Select options={names} value={names[index]} onChange={this.onChangeTableSelection} />
+          {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
+          <div className={tableStyles.selectWrapper}>
+            <Select options={names} value={names[currentIndex]} onChange={this.onChangeTableSelection} />
+          </div>
         </div>
       );
     }
 
-    return this.renderTable(data.series[0], width, height);
+    return this.renderTable(data.series[0], width, height - 12);
   }
 }
 
@@ -92,5 +125,8 @@ const tableStyles = {
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
+  `,
+  selectWrapper: css`
+    padding: 8px;
   `,
 };

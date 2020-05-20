@@ -1,12 +1,12 @@
 {
   "type": "panel",
-  "name": "React Graph",
+  "name": "React graph",
   "id": "graph2",
   "state": "alpha",
 
   "info": {
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

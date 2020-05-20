@@ -5,7 +5,6 @@
 title = "render"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.render variable

@@ -5,6 +5,11 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryResponse, DataQueryError } from '@grafana/data';
 
+export interface RowContextOptions {
+  direction?: 'BACKWARD' | 'FORWARD';
+  limit?: number;
+}
+
 export interface LogRowContextRows {
   before?: string[];
   after?: string[];
@@ -26,17 +31,18 @@ interface ResultType {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
     errors: LogRowContextQueryErrors;
     hasMoreContextRows: HasMoreContextRows;
     updateLimit: () => void;
+    limit: number;
   }) => JSX.Element;
 }
 
 export const getRowContexts = async (
-  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>,
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
   limit: number
 ) => {
@@ -77,7 +83,7 @@ export const getRowContexts = async (
           if (idField) {
             // For Loki this means we filter only the one row. Issue is we could have other rows logged at the same
             // ns which came before but they come in the response that search for logs after. This means right now
-            // we will show those as if they came after. This is not strictly correct but seems better than loosing them
+            // we will show those as if they came after. This is not strictly correct but seems better than losing them
             // and making this correct would mean quite a bit of complexity to shuffle things around and messing up
             //counts.
             if (idField.values.get(fieldIndex) === row.uid) {
@@ -155,11 +161,19 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
-        if (currentResult && currentResult.data[0].length === value.data[0].length) {
+        const currentResultBefore = currentResult?.data[0][0];
+        const currentResultAfter = currentResult?.data[1][0];
+        const valueBefore = value.data[0][0];
+        const valueAfter = value.data[1][0];
+
+        // checks if there are more log rows in a given direction
+        // if after fetching additional rows the length of result is the same,
+        // we can assume there are no logs in that direction within a given time range
+        if (currentResult && (!valueBefore || currentResultBefore.length === valueBefore.length)) {
           hasMoreLogsBefore = false;
         }
 
-        if (currentResult && currentResult.data[1].length === value.data[1].length) {
+        if (currentResult && (!valueAfter || currentResultAfter.length === valueAfter.length)) {
           hasMoreLogsAfter = false;
         }
 
@@ -184,5 +198,6 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     },
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),
+    limit,
   });
 };

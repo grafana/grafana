@@ -24,9 +24,10 @@ export const tablePanelChangedHandler = (
   prevPluginId: string,
   prevOptions: any
 ) => {
-  // Changing from angular singlestat
+  // Changing from angular table panel
   if (prevPluginId === 'table-old' && prevOptions.angular) {
-    console.log('Migrating from angular table', panel);
+    // Todo write migration logic
   }
-  return prevOptions;
+
+  return {};
 };

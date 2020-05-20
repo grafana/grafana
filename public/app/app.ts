@@ -32,6 +32,7 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
+  setTimeZoneResolver,
 } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
@@ -46,9 +47,10 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getStandardFieldConfigs, getStandardOptionEditors, getStandardTransformers } from '@grafana/ui';
+import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
+import { getStandardTransformers } from 'app/core/utils/standardTransformers';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -93,6 +95,7 @@ export class GrafanaApp {
     const app = angular.module('grafana', []);
 
     setLocale(config.bootData.user.locale);
+    setTimeZoneResolver(() => config.bootData.user.timeZone);
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 

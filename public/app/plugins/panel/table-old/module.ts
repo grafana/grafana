@@ -133,7 +133,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     this.renderer = new TableRenderer(
       this.panel,
       this.table,
-      this.dashboard.isTimezoneUtc(),
+      this.dashboard.getTimezone(),
       this.$sanitize,
       this.templateSrv,
       config.theme.type

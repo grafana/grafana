@@ -1,8 +1,8 @@
 // Libraries
 import React, { PureComponent, ChangeEvent } from 'react';
 
-import { FormLabel, LegacyForms, FormField } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Select, FormField } = LegacyForms;
 import { SelectableValue, ReducerID, QueryEditorProps } from '@grafana/data';
 
 // Types
@@ -131,7 +131,7 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
           <Select options={gelTypes} value={selected} onChange={this.onSelectGELType} />
           {query.type === GELQueryType.reduce && (
             <>
-              <FormLabel width={5}>Function:</FormLabel>
+              <InlineFormLabel width={5}>Function:</InlineFormLabel>
               <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} />
               <FormField label="Fields:" labelWidth={5} onChange={this.onExpressionChange} value={query.expression} />
             </>
@@ -147,9 +147,9 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
               <FormField label="Rule:" labelWidth={5} onChange={this.onRuleChange} value={query.rule} />
             </div>
             <div>
-              <FormLabel width={12}>Downsample Function:</FormLabel>
+              <InlineFormLabel width={12}>Downsample Function:</InlineFormLabel>
               <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} />
-              <FormLabel width={12}>Upsample Function:</FormLabel>
+              <InlineFormLabel width={12}>Upsample Function:</InlineFormLabel>
               <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} />
             </div>
           </>

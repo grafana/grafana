@@ -14,6 +14,7 @@ exports[`Render should render component 1`] = `
     >
       <Icon
         name="sign-in-alt"
+        size="xl"
       />
     </span>
   </a>

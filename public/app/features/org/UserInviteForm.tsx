@@ -17,8 +17,7 @@ import { updateLocation } from 'app/core/actions';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { appEvents } from 'app/core/core';
-import { AppEvents } from '@grafana/data';
-import { assureBaseUrl } from 'app/core/utils/location_util';
+import { AppEvents, locationUtil } from '@grafana/data';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },
@@ -64,10 +63,10 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
               error={!!errors.loginOrEmail && 'Email or Username is required'}
               label="Email or Username"
             >
-              <Input size="md" name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
+              <Input name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
             </Field>
             <Field invalid={!!errors.name} label="Name">
-              <Input size="md" name="name" placeholder="(optional)" ref={register} />
+              <Input name="name" placeholder="(optional)" ref={register} />
             </Field>
             <Field invalid={!!errors.role} label="Role">
               <InputControl as={RadioButtonGroup} control={control} options={roles} name="role" />
@@ -77,7 +76,7 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
             </Field>
             <HorizontalGroup>
               <Button type="submit">Submit</Button>
-              <LinkButton href={assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
+              <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
                 Back
               </LinkButton>
             </HorizontalGroup>

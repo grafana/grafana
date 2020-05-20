@@ -60,6 +60,7 @@ type PluginBase struct {
 	Preload      bool               `json:"preload"`
 	State        PluginState        `json:"state,omitempty"`
 	Signature    PluginSignature    `json:"signature"`
+	Backend      bool               `json:"backend"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`

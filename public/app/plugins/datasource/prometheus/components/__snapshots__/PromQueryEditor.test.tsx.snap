@@ -148,6 +148,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             "value": "time_series",
           }
         }
+        width={16}
       />
       <Switch
         checked={false}

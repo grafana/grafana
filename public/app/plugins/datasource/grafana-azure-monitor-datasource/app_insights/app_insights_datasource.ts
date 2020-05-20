@@ -23,9 +23,9 @@ export default class AppInsightsDatasource {
   /** @ngInject */
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
     this.id = instanceSettings.id;
-    this.applicationId = instanceSettings.jsonData.appInsightsAppId;
+    this.applicationId = instanceSettings.jsonData.appInsightsAppId || '';
 
-    switch (instanceSettings.jsonData.cloudName) {
+    switch (instanceSettings.jsonData?.cloudName) {
       // Azure US Government
       case 'govazuremonitor':
         break;
@@ -41,7 +41,7 @@ export default class AppInsightsDatasource {
         this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;
     }
 
-    this.url = instanceSettings.url;
+    this.url = instanceSettings.url || '';
   }
 
   isConfigured(): boolean {
@@ -218,7 +218,7 @@ export default class AppInsightsDatasource {
 
         return {
           status: 'error',
-          message: 'Returned http status code ' + response.status,
+          message: 'Application Insights: Returned http status code ' + response.status,
         };
       })
       .catch((error: any) => {

@@ -1,0 +1,6 @@
+# There is no data generator for this so easiest way to get some data here is run this example app
+# https://github.com/openzipkin/zipkin-js-example/tree/master/web
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"

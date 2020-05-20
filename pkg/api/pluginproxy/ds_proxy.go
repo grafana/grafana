@@ -16,6 +16,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/bus"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -70,8 +71,12 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
+func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	targetURL, err := datasource.ValidateURL(ds.Url)
+	if err != nil {
+		return nil, err
+	}
 
 	return &DataSourceProxy{
 		ds:        ds,
@@ -80,7 +85,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
 		cfg:       cfg,
-	}
+	}, nil
 }
 
 func newHTTPClient() httpClient {
@@ -169,6 +174,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		} else {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
+
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.DecryptedBasicAuthPassword()))

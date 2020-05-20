@@ -84,7 +84,7 @@ div.flot-text {
   padding: $panel-padding;
   width: 100%;
   flex-grow: 1;
-  max-height: calc(100% - #{$panel-header-height});
+  height: calc(100% - #{$panel-header-height});
 
   &--no-padding {
     padding: 0;

@@ -38,10 +38,10 @@ addParameters({
     light: GrafanaLight,
   },
   options: {
-    theme: GrafanaLight,
+    theme: GrafanaDark,
     showPanel: true,
     showRoots: true,
-    panelPosition: 'bottom',
+    panelPosition: 'right',
     showNav: true,
     isFullscreen: false,
     isToolshown: true,

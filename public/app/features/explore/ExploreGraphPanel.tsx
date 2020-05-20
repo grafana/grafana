@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTime } from '@grafana/data';
 
 import {
   selectThemeVariant,
@@ -106,13 +106,14 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     }
 
     const timeRange = {
-      from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-      to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      from: dateTime(absoluteRange.from),
+      to: dateTime(absoluteRange.to),
       raw: {
-        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+        from: dateTime(absoluteRange.from),
+        to: dateTime(absoluteRange.to),
       },
     };
+
     const height = showPanel === false ? 100 : showingGraph && showingTable ? 200 : 400;
     const lineWidth = showLines ? 1 : 5;
     const seriesToShow = showAllTimeSeries ? series : series.slice(0, MAX_NUMBER_OF_TIME_SERIES);

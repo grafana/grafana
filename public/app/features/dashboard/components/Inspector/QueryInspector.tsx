@@ -1,11 +1,14 @@
 import React, { PureComponent } from 'react';
+import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { AppEvents, PanelEvents } from '@grafana/data';
+
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { JSONFormatter, LoadingPlaceholder, Button } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
-import { AppEvents, PanelEvents } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
+import { supportsDataQuery } from '../PanelEditor/utils';
 
 interface DsQuery {
   isLoading: boolean;
@@ -186,9 +189,13 @@ export class QueryInspector extends PureComponent<Props, State> {
     const styles = getPanelInspectorStyles();
     const haveData = Object.keys(response).length > 0;
 
+    if (!supportsDataQuery(this.props.panel.plugin)) {
+      return null;
+    }
+
     return (
       <>
-        <div>
+        <div aria-label={selectors.components.PanelInspector.Query.content}>
           <h3 className="section-heading">Query inspector</h3>
           <p className="small muted">
             Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a
@@ -196,7 +203,11 @@ export class QueryInspector extends PureComponent<Props, State> {
           </p>
         </div>
         <div className={styles.toolbar}>
-          <Button icon="sync" onClick={this.onIssueNewQuery}>
+          <Button
+            icon="sync"
+            onClick={this.onIssueNewQuery}
+            aria-label={selectors.components.PanelInspector.Query.refreshButton}
+          >
             Refresh
           </Button>
 

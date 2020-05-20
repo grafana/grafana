@@ -32,12 +32,12 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const category = ['Standard field options'];
-  const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-    id: 'title',
-    path: 'title',
-    name: 'Title',
-    description: "Field's title",
+  const category = ['Standard options'];
+  const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+    id: 'displayName',
+    path: 'displayName',
+    name: 'Display name',
+    description: 'Change the field or series name',
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
     process: stringOverrideProcessor,
@@ -45,7 +45,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'none',
       expandTemplateVars: true,
     },
-    shouldApply: field => field.type !== FieldType.time,
+    shouldApply: () => true,
     category,
   };
 
@@ -206,7 +206,7 @@ export const getStandardFieldConfigs = () => {
   //   category: ['Color & thresholds'],
   // };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
 };
 
 /**
@@ -247,7 +247,7 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
+    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} />,
   };
 
   const unit: StandardEditorsRegistryItem<string> = {

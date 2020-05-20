@@ -82,14 +82,18 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   const onDynamicConfigValueAdd = useCallback(
     (id: string) => {
+      const registryItem = registry.get(id);
       const propertyConfig: DynamicConfigValue = {
         id,
+        value: registryItem.defaultValue,
       };
+
       if (override.properties) {
         override.properties.push(propertyConfig);
       } else {
         override.properties = [propertyConfig];
       }
+
       onChange(override);
     },
     [override, onChange]
@@ -121,7 +125,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   };
 
   return (
-    <OptionsGroup renderTitle={renderOverrideTitle}>
+    <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
       <Field label={matcherLabel} description={matcherUi.description}>
         <matcherUi.component
           matcher={matcherUi.matcher}
@@ -161,7 +165,6 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <ValuePicker
               label="Add override property"
               variant="secondary"
-              size="sm"
               icon="plus"
               options={configPropertiesOptions}
               onChange={o => {

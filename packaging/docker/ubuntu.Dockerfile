@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ubuntu:19.10
+ARG BASE_IMAGE=ubuntu:20.04
 FROM ${BASE_IMAGE} AS grafana-builder
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
@@ -28,7 +28,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 # We need curl in the image
-RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl && \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl tzdata && \
     apt-get autoremove -y && rm -rf /var/lib/apt/lists/*;
 
 COPY --from=grafana-builder /tmp/grafana "$GF_PATHS_HOME"

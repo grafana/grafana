@@ -3,7 +3,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backdropBackground = theme.colors.bg1;
+  const backdropBackground = theme.colors.bg3;
 
   return {
     modal: css`
@@ -39,7 +39,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 42px;
     `,
     modalHeaderTitle: css`
-      font-size: ${theme.typography.heading.h3};
+      font-size: ${theme.typography.size.lg};
       margin: 0 ${theme.spacing.md};
       display: flex;
       align-items: center;

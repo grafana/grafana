@@ -86,17 +86,11 @@ module.exports = (env = {}) =>
           sourceMap: false,
           preserveUrl: false,
         }),
-        {
-          test: /\.(png|jpg|gif|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
-          loader: 'file-loader',
-        },
       ],
     },
 
     plugins: [
-      new CleanWebpackPlugin({
-        cleanStaleWebpackAssets: false,
-      }),
+      new CleanWebpackPlugin(),
       env.noTsCheck
         ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({

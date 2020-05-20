@@ -60,24 +60,32 @@ exports[`Render should render component 1`] = `
   <div
     className="alert-rule-item__actions"
   >
-    <button
-      className="btn btn-small btn-inverse alert-list__btn width-2"
-      onClick={[MockFunction]}
-      title="Pausing an alert rule prevents it from executing"
+    <Component
+      spacing="sm"
     >
-      <Icon
-        name="pause"
-      />
-    </button>
-    <a
-      className="btn btn-small btn-inverse alert-list__btn width-2"
-      href="https://something.something.darkside?editPanel=1&tab=alert"
-      title="Edit alert rule"
-    >
-      <Icon
-        name="cog"
-      />
-    </a>
+      <Component
+        content="Pausing an alert rule prevents it from executing"
+        placement="bottom"
+      >
+        <Button
+          icon="pause"
+          onClick={[MockFunction]}
+          size="sm"
+          variant="secondary"
+        />
+      </Component>
+      <Component
+        content="Edit alert rule"
+        placement="right"
+      >
+        <LinkButton
+          href="https://something.something.darkside?editPanel=1&tab=alert"
+          icon="cog"
+          size="sm"
+          variant="secondary"
+        />
+      </Component>
+    </Component>
   </div>
 </li>
 `;

@@ -73,7 +73,7 @@ export const stringOverrideProcessor = (
     return value;
   }
   if (settings && settings.expandTemplateVars && context.replaceVariables) {
-    return context.replaceVariables(value, context.field!.config.scopedVars);
+    return context.replaceVariables(value, context.field!.state!.scopedVars);
   }
   return `${value}`;
 };

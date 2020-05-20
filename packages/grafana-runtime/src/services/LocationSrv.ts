@@ -4,6 +4,8 @@
  *
  * @public
  */
+import { UrlQueryMap } from '@grafana/data';
+
 export interface LocationUpdate {
   /**
    * Target path where you automatically wants to navigate the user.
@@ -36,20 +38,6 @@ export interface LocationUpdate {
    */
   replace?: boolean;
 }
-
-/**
- * Type to represent the value of a single query variable.
- *
- * @public
- */
-export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[] | undefined | null;
-
-/**
- * Type to represent the values parsed from the query string.
- *
- * @public
- */
-export type UrlQueryMap = Record<string, UrlQueryValue>;
 
 /**
  * If you need to automatically navigate the user to a new place in the application this should

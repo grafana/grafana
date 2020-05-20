@@ -1,46 +1,55 @@
-import React, { FC, useState } from 'react';
+import React, { FC, memo, useState } from 'react';
 import { css } from 'emotion';
-import { Icon, TagList, HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
+import { HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { FolderDTO } from 'app/types';
+import { useManageDashboards } from '../hooks/useManageDashboards';
+import { SearchLayout } from '../types';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { MoveToFolderModal } from './MoveToFolderModal';
 import { useSearchQuery } from '../hooks/useSearchQuery';
-import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
-import { SearchField } from './SearchField';
 
 export interface Props {
-  folderId?: number;
-  folderUid?: string;
+  folder?: FolderDTO;
 }
 
 const { isEditor } = contextSrv;
 
-export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
+export const ManageDashboards: FC<Props> = memo(({ folder }) => {
+  const folderId = folder?.id;
+  const folderUid = folder?.uid;
   const theme = useTheme();
   const styles = getStyles(theme);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
-  const queryParams = { skipRecent: true, skipStarred: true, folderIds: folderId ? [folderId] : [] };
+  const defaultLayout = folderId ? SearchLayout.List : SearchLayout.Folders;
+  const queryParams = {
+    skipRecent: true,
+    skipStarred: true,
+    folderIds: folderId ? [folderId] : [],
+    layout: defaultLayout,
+  };
   const {
     query,
     hasFilters,
     onQueryChange,
-    onRemoveStarred,
-    onTagRemove,
-    onClearFilters,
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
+    onSortChange,
+    onLayoutChange,
   } = useSearchQuery(queryParams);
 
   const {
     results,
     loading,
+    initialLoading,
     canSave,
     allChecked,
     hasEditPermissionInFolders,
@@ -51,7 +60,8 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     onToggleAllChecked,
     onDeleteItems,
     onMoveItems,
-  } = useManageDashboards(query, { hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders }, folderUid);
+    noFolders,
+  } = useManageDashboards(query, {}, folder);
 
   const onMoveTo = () => {
     setIsMoveModalOpen(true);
@@ -61,7 +71,11 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
     setIsDeleteModalOpen(true);
   };
 
-  if (canSave && folderId && !hasFilters && results.length === 0) {
+  if (initialLoading) {
+    return <Spinner className={styles.spinner} />;
+  }
+
+  if (noFolders && !hasFilters) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
@@ -77,65 +91,44 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
   }
 
   return (
-    <div className="dashboard-list">
-      <HorizontalGroup justify="space-between">
-        <SearchField query={query} onChange={onQueryChange} className={styles.searchField} />
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
-      </HorizontalGroup>
-
-      {hasFilters && (
-        <HorizontalGroup>
-          <div className="gf-form-inline">
-            {query.tag.length > 0 && (
-              <div className="gf-form">
-                <label className="gf-form-label width-4">Tags</label>
-                <TagList tags={query.tag} onClick={onTagRemove} />
-              </div>
-            )}
-            {query.starred && (
-              <div className="gf-form">
-                <label className="gf-form-label">
-                  <a className="pointer" onClick={onRemoveStarred}>
-                    <Icon name="check" />
-                    Starred
-                  </a>
-                </label>
-              </div>
-            )}
-            <div className="gf-form">
-              <label className="gf-form-label">
-                <a className="pointer" onClick={onClearFilters}>
-                  <Icon name="times" />
-                  &nbsp;Clear
-                </a>
-              </label>
-            </div>
-          </div>
-        </HorizontalGroup>
-      )}
-
-      <div className="search-results">
-        {results?.length > 0 && (
-          <SearchResultsFilter
-            allChecked={allChecked}
-            canDelete={canDelete}
-            canMove={canMove}
-            deleteItem={onItemDelete}
-            moveTo={onMoveTo}
-            onToggleAllChecked={onToggleAllChecked}
-            onStarredFilterChange={onStarredFilterChange}
-            onTagFilterChange={onTagFilterChange}
-            selectedStarredFilter={query.starred}
-            selectedTagFilter={query.tag}
+    <div className={styles.container}>
+      <div>
+        <HorizontalGroup justify="space-between">
+          <FilterInput
+            labelClassName="gf-form--has-input-icon"
+            inputClassName="gf-form-input width-20"
+            value={query.query}
+            onChange={onQueryChange}
+            placeholder={'Search dashboards by name'}
           />
-        )}
+          <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
+        </HorizontalGroup>
+      </div>
+
+      <div className={styles.results}>
+        <SearchResultsFilter
+          allChecked={allChecked}
+          canDelete={hasEditPermissionInFolders && canDelete}
+          canMove={hasEditPermissionInFolders && canMove}
+          deleteItem={onItemDelete}
+          moveTo={onMoveTo}
+          onToggleAllChecked={onToggleAllChecked}
+          onStarredFilterChange={onStarredFilterChange}
+          onSortChange={onSortChange}
+          onTagFilterChange={onTagFilterChange}
+          query={query}
+          hideLayout={!!folderUid}
+          onLayoutChange={onLayoutChange}
+          editable={hasEditPermissionInFolders}
+        />
         <SearchResults
           loading={loading}
           results={results}
-          editable
+          editable={hasEditPermissionInFolders}
           onTagSelected={onTagAdd}
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
+          layout={query.layout}
         />
       </div>
       <ConfirmDeleteModal
@@ -152,18 +145,25 @@ export const ManageDashboards: FC<Props> = ({ folderId, folderUid }) => {
       />
     </div>
   );
-};
+});
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    searchField: css`
-      height: auto;
-      border-bottom: none;
-      padding: 0;
-      margin: 0;
-      input {
-        width: 400px;
-      }
+    container: css`
+      height: 100%;
+    `,
+    results: css`
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      margin-top: ${theme.spacing.xl};
+    `,
+    spinner: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
     `,
   };
 });

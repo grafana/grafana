@@ -1,6 +1,6 @@
 /**
  * Used to enable rendering of Angular components within a
- * React component without loosing proper typings.
+ * React component without losing proper typings.
  *
  * @example
  * ```typescript

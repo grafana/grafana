@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, LegacyForms, Select } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
 
 const { Switch } = LegacyForms;
@@ -112,13 +112,13 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
         <div className="gf-form-inline">
           <div className="gf-form">
-            <FormLabel
+            <InlineFormLabel
               width={7}
               tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname."
             >
               Legend
-            </FormLabel>
+            </InlineFormLabel>
             <input
               type="text"
               className="gf-form-input"
@@ -130,7 +130,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           </div>
 
           <div className="gf-form">
-            <FormLabel
+            <InlineFormLabel
               width={7}
               tooltip={
                 <>
@@ -140,7 +140,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               }
             >
               Min step
-            </FormLabel>
+            </InlineFormLabel>
             <input
               type="text"
               className="gf-form-input width-8"
@@ -163,16 +163,22 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
           <div className="gf-form">
             <div className="gf-form-label width-7">Format</div>
-            <Select isSearchable={false} options={FORMAT_OPTIONS} onChange={this.onFormatChange} value={formatOption} />
+            <Select
+              width={16}
+              isSearchable={false}
+              options={FORMAT_OPTIONS}
+              onChange={this.onFormatChange}
+              value={formatOption}
+            />
             <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
 
-            <FormLabel width={10} tooltip="Link to Graph in Prometheus">
+            <InlineFormLabel width={10} tooltip="Link to Graph in Prometheus">
               <PromLink
                 datasource={datasource}
                 query={this.query} // Use modified query
                 panelData={data}
               />
-            </FormLabel>
+            </InlineFormLabel>
           </div>
         </div>
       </div>

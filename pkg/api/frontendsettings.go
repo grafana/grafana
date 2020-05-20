@@ -67,6 +67,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 		var dsMap = map[string]interface{}{
 			"id":   ds.Id,
+			"uid":  ds.Uid,
 			"type": ds.Type,
 			"name": ds.Name,
 			"url":  url,

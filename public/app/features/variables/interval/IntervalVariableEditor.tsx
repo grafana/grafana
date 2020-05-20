@@ -2,7 +2,7 @@ import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 
 import { IntervalVariableModel } from '../../templating/types';
 import { VariableEditorProps } from '../editor/types';
-import { FormLabel, LegacyForms } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Switch } = LegacyForms;
 
 export interface Props extends VariableEditorProps<IntervalVariableModel> {}
@@ -78,12 +78,12 @@ export class IntervalVariableEditor extends PureComponent<Props> {
             {this.props.variable.auto && (
               <>
                 <div className="gf-form">
-                  <FormLabel
+                  <InlineFormLabel
                     width={9}
                     tooltip={'How many times should the current time range be divided to calculate the value'}
                   >
                     Step count
-                  </FormLabel>
+                  </InlineFormLabel>
                   <div className="gf-form-select-wrapper max-width-10">
                     <select
                       className="gf-form-input"
@@ -99,9 +99,9 @@ export class IntervalVariableEditor extends PureComponent<Props> {
                   </div>
                 </div>
                 <div className="gf-form">
-                  <FormLabel width={9} tooltip={'The calculated value will not go below this threshold'}>
+                  <InlineFormLabel width={9} tooltip={'The calculated value will not go below this threshold'}>
                     Min interval
-                  </FormLabel>
+                  </InlineFormLabel>
                   <input
                     type="text"
                     className="gf-form-input max-width-10"

@@ -5,7 +5,6 @@
 title = "colors"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## colors variable

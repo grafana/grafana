@@ -12,7 +12,7 @@ export interface ImportDashboardDTO {
   gnetId: string;
   constants: string[];
   dataSources: DataSourceSelectItem[];
-  folderId: number;
+  folder: { id: number; title?: string };
 }
 
 export enum InputType {

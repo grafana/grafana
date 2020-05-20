@@ -52,6 +52,7 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
         width={width}
         height={tableStyles.cellHeightInner}
         field={config}
+        display={field.display}
         value={displayValue}
         orientation={VizOrientation.Horizontal}
         theme={tableStyles.theme}

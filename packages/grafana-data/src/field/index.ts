@@ -6,3 +6,5 @@ export * from './overrides/processors';
 export { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 
 export { applyFieldOverrides, validateFieldConfig } from './fieldOverrides';
+export { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
+export { getFieldDisplayName, getFrameDisplayName } from './fieldState';

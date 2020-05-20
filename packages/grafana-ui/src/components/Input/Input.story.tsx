@@ -50,6 +50,7 @@ export const simple = () => {
 
   const VISUAL_GROUP = 'Visual options';
   // ---
+  const width = number('Width', 0, undefined, VISUAL_GROUP);
   const placeholder = text('Placeholder', 'Enter your name here...', VISUAL_GROUP);
   const before = boolean('Addon before', false, VISUAL_GROUP);
   const after = boolean('Addon after', false, VISUAL_GROUP);
@@ -84,6 +85,7 @@ export const simple = () => {
     <div style={{ width: containerWidth }}>
       <Input
         disabled={disabled}
+        width={width}
         prefix={prefixEl}
         invalid={invalid}
         suffix={suffixEl}

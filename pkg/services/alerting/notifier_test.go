@@ -39,13 +39,13 @@ func TestNotificationService(t *testing.T) {
 		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 
-	notificationServiceScenario(t, "Given alert rule with upload image enabled but no renderer available should not render and upload image, but send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
+	notificationServiceScenario(t, "Given alert rule with upload image enabled but no renderer available should render and upload unavailable image and send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
 		scenarioCtx.rendererAvailable = false
 		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
 		require.NoError(t, err)
 
-		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render to not be called, but it was")
-		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image to not be uploaded, but it was")
+		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but it wasn't")
+		require.Equalf(t, 1, scenarioCtx.imageUploadCount, "expected image to be uploaded, but it wasn't")
 		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
 	})
 

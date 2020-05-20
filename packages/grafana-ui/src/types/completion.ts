@@ -1,5 +1,4 @@
-import { Value } from 'slate';
-import { Editor } from '@grafana/slate-react';
+import { Value, Editor as CoreEditor } from 'slate';
 
 export interface CompletionItemGroup {
   /**
@@ -98,7 +97,7 @@ export interface TypeaheadInput {
   wrapperClasses: string[];
   labelKey?: string;
   value?: Value;
-  editor?: Editor;
+  editor?: CoreEditor;
 }
 
 export interface SuggestionsState {

@@ -1,30 +1,34 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 import { connect, MapStateToProps } from 'react-redux';
-import { InspectHeader } from './InspectHeader';
+import { InspectSubtitle } from './InspectSubtitle';
 import { InspectJSONTab } from './InspectJSONTab';
 import { QueryInspector } from './QueryInspector';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, TabContent, CustomScrollbar } from '@grafana/ui';
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { CustomScrollbar, Drawer, JSONFormatter, TabContent } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import {
   DataFrame,
-  DataSourceApi,
-  SelectableValue,
-  getDisplayProcessor,
   DataQueryError,
-  PanelData,
+  DataSourceApi,
   FieldType,
   formattedValueToString,
-  QueryResultMetaStat,
+  getDisplayProcessor,
   LoadingState,
+  PanelData,
   PanelPlugin,
+  QueryResultMetaStat,
+  SelectableValue,
+  TimeZone,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { getPanelInspectorStyles } from './styles';
 import { StoreState } from 'app/types';
 import { InspectDataTab } from './InspectDataTab';
+import { supportsDataQuery } from '../PanelEditor/utils';
+import { GetDataOptions } from '../../state/PanelQueryRunner';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -59,6 +63,8 @@ interface State {
   metaDS?: DataSourceApi;
   // drawer width
   drawerWidth: string;
+  withTransforms: boolean;
+  withFieldConfig: boolean;
 }
 
 export class PanelInspectorUnconnected extends PureComponent<Props, State> {
@@ -73,6 +79,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       data: [],
       currentTab: props.defaultTab ?? InspectTab.Data,
       drawerWidth: '50%',
+      withTransforms: true,
+      withFieldConfig: false,
     };
   }
 
@@ -84,8 +92,12 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
-    if (prevProps.plugin !== this.props.plugin) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (
+      prevProps.plugin !== this.props.plugin ||
+      this.state.withTransforms !== prevState.withTransforms ||
+      this.state.withFieldConfig !== prevState.withFieldConfig
+    ) {
       this.init();
     }
   }
@@ -96,11 +108,15 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
    */
   init() {
     const { plugin, panel } = this.props;
+    const { withTransforms, withFieldConfig } = this.state;
 
     if (plugin && !plugin.meta.skipDataQuery) {
+      if (this.querySubscription) {
+        this.querySubscription.unsubscribe();
+      }
       this.querySubscription = panel
         .getQueryRunner()
-        .getData()
+        .getData({ withTransforms, withFieldConfig })
         .subscribe({
           next: data => this.onUpdateData(data),
         });
@@ -161,6 +177,9 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   onSelectTab = (item: SelectableValue<InspectTab>) => {
     this.setState({ currentTab: item.value || InspectTab.Data });
   };
+  onDataTabOptionsChange = (options: GetDataOptions) => {
+    this.setState({ withTransforms: !!options.withTransforms, withFieldConfig: !!options.withFieldConfig });
+  };
 
   renderMetadataInspector() {
     const { metaDS, data } = this.state;
@@ -171,8 +190,20 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 
   renderDataTab() {
-    const { last, isLoading } = this.state;
-    return <InspectDataTab data={last.series} isLoading={isLoading} />;
+    const { last, isLoading, withFieldConfig, withTransforms } = this.state;
+    return (
+      <InspectDataTab
+        dashboard={this.props.dashboard}
+        panel={this.props.panel}
+        data={last.series}
+        isLoading={isLoading}
+        options={{
+          withFieldConfig,
+          withTransforms,
+        }}
+        onOptionsChange={this.onDataTabOptionsChange}
+      />
+    );
   }
 
   renderErrorTab(error?: DataQueryError) {
@@ -208,10 +239,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       dataRows += frame.length;
     }
 
-    stats.push({ title: 'Total request time', value: requestTime, unit: 'ms' });
-    stats.push({ title: 'Data processing time', value: processingTime, unit: 'ms' });
-    stats.push({ title: 'Number of queries', value: request.targets.length });
-    stats.push({ title: 'Total number rows', value: dataRows });
+    stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
+    stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+    stats.push({ displayName: 'Number of queries', value: request.targets.length });
+    stats.push({ displayName: 'Total number rows', value: dataRows });
 
     let dataStats: QueryResultMetaStat[] = [];
 
@@ -222,10 +253,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div aria-label={selectors.components.PanelInspector.Stats.content}>
         {this.renderStatsTable('Stats', stats)}
         {this.renderStatsTable('Data source stats', dataStats)}
-      </>
+      </div>
     );
   }
 
@@ -234,16 +265,17 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
+    const { dashboard } = this.props;
+
     return (
       <div style={{ paddingBottom: '16px' }}>
-        <div className="section-heading">{name}</div>
         <table className="filter-table width-30">
           <tbody>
             {stats.map((stat, index) => {
               return (
-                <tr key={`${stat.title}-${index}`}>
-                  <td>{stat.title}</td>
-                  <td style={{ textAlign: 'right' }}>{formatStat(stat)}</td>
+                <tr key={`${stat.displayName}-${index}`}>
+                  <td>{stat.displayName}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
                 </tr>
               );
             })}
@@ -253,22 +285,10 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     );
   }
 
-  drawerHeader(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
-    const { panel } = this.props;
+  drawerSubtitle(tabs: Array<{ label: string; value: InspectTab }>, activeTab: InspectTab) {
     const { last } = this.state;
 
-    return (
-      <InspectHeader
-        tabs={tabs}
-        tab={activeTab}
-        panelData={last}
-        onSelectTab={this.onSelectTab}
-        onClose={this.onClose}
-        panel={panel}
-        onToggleExpand={this.onToggleExpand}
-        isExpanded={this.state.drawerWidth === '100%'}
-      />
-    );
+    return <InspectSubtitle tabs={tabs} tab={activeTab} panelData={last} onSelectTab={this.onSelectTab} />;
   }
 
   getTabs() {
@@ -277,7 +297,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     const error = last?.error;
     const tabs = [];
 
-    if (plugin && !plugin.meta.skipDataQuery) {
+    if (supportsDataQuery(plugin)) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
       tabs.push({ label: 'Stats', value: InspectTab.Stats });
     }
@@ -292,7 +312,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
-    if (dashboard.meta.canEdit) {
+    if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
     return tabs;
@@ -318,7 +338,13 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
     }
 
     return (
-      <Drawer title={this.drawerHeader(tabs, activeTab)} width={drawerWidth} onClose={this.onClose}>
+      <Drawer
+        title={`Inspect: ${panel.title}` || 'Panel inspect'}
+        subtitle={this.drawerSubtitle(tabs, activeTab)}
+        width={drawerWidth}
+        onClose={this.onClose}
+        expandable
+      >
         {activeTab === InspectTab.Data && this.renderDataTab()}
         <CustomScrollbar autoHeightMin="100%">
           <TabContent className={styles.tabContent}>
@@ -336,13 +362,14 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
   }
 }
 
-function formatStat(stat: QueryResultMetaStat): string {
+function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
   const display = getDisplayProcessor({
     field: {
       type: FieldType.number,
       config: stat,
     },
     theme: config.theme,
+    timeZone,
   });
   return formattedValueToString(display(stat.value));
 }

@@ -87,7 +87,9 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
         font-family: ${theme.typography.fontFamily.sansSerif};
         font-size: ${fontSize};
         padding: ${padding};
-        height: ${height};
+        height: ${height}px;
+        // Deduct border from line-height for perfect vertical centering on windows and linux
+        line-height: ${height - 2}px;
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
@@ -153,7 +155,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
+type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & AnchorHTMLAttributes<HTMLAnchorElement>;
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   ({ variant, icon, children, className, ...otherProps }, ref) => {
     const theme = useContext(ThemeContext);

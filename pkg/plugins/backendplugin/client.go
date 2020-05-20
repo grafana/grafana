@@ -3,11 +3,11 @@ package backendplugin
 import (
 	"os/exec"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	goplugin "github.com/hashicorp/go-plugin"
 )
 
@@ -55,13 +55,29 @@ type PluginStartFuncs struct {
 	OnStart       StartFunc
 }
 
-// PluginDescriptor descriptor used for registering backend plugins.
+// PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
 	pluginID         string
 	executablePath   string
 	managed          bool
 	versionedPlugins map[int]goplugin.PluginSet
 	startFns         PluginStartFuncs
+}
+
+// PluginID returns the plugin ID.
+func (pd PluginDescriptor) PluginID() string {
+	return pd.pluginID
+}
+
+// getV2PluginSet returns list of plugins supported on v2.
+func getV2PluginSet() goplugin.PluginSet {
+	return goplugin.PluginSet{
+		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":    &grpcplugin.ResourceGRPCPlugin{},
+		"data":        &grpcplugin.DataGRPCPlugin{},
+		"transform":   &grpcplugin.TransformGRPCPlugin{},
+		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
+	}
 }
 
 // NewBackendPluginDescriptor creates a new backend plugin descriptor
@@ -75,12 +91,7 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			grpcplugin.ProtocolVersion: {
-				"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
-				"resource":    &grpcplugin.ResourceGRPCPlugin{},
-				"data":        &grpcplugin.DataGRPCPlugin{},
-				"transform":   &grpcplugin.TransformGRPCPlugin{},
-			},
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	}
@@ -97,6 +108,7 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	}
@@ -129,4 +141,5 @@ type Client struct {
 	ResourcePlugin  ResourcePlugin
 	DataPlugin      DataPlugin
 	TransformPlugin TransformPlugin
+	RendererPlugin  pluginextensionv2.RendererPlugin
 }
