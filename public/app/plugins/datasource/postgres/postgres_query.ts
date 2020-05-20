@@ -220,6 +220,11 @@ export default class PostgresQuery {
       }
     }
 
+    const expression: any = _.find(column, (g: any) => g.type === 'select_expression');
+    if (expression) {
+      query = expression.params[0].replace(/\$expr\b/g, query);
+    }
+
     const alias: any = _.find(column, (g: any) => g.type === 'alias');
     if (alias) {
       query += ' AS ' + this.quoteIdentifier(alias.params[0]);

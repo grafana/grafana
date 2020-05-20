@@ -188,6 +188,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
     };
     this.selectMenu.push(windows);
 
+    this.selectMenu.push({ text: 'Expression', value: 'select_expression' });
+
     this.selectMenu.push({ text: 'Alias', value: 'alias' });
     this.selectMenu.push({ text: 'Column', value: 'column' });
   }
@@ -367,6 +369,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
     return _.findIndex(selectParts, (p: any) => p.def.type === 'window' || p.def.type === 'moving_window');
   }
 
+  findExpressionIndex(selectParts: any) {
+    return _.findIndex(selectParts, (p: any) => p.def.type === 'select_expression');
+  }
+
   addSelectPart(selectParts: any[], item: { value: any }, subItem: { type: any; value: any }) {
     let partType = item.value;
     if (subItem && subItem.type) {
@@ -419,6 +425,26 @@ export class PostgresQueryCtrl extends QueryCtrl {
         if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
           addAlias = true;
         }
+        break;
+      case 'select_expression':
+        const exprIndex = this.findExpressionIndex(selectParts);
+        if (exprIndex !== -1) {
+          // replace current expression
+          selectParts[exprIndex] = partModel;
+        } else {
+          const windowIndex = this.findWindowIndex(selectParts);
+          if (windowIndex !== -1) {
+            selectParts.splice(windowIndex + 1, 0, partModel);
+          } else {
+            const aggIndex = this.findAggregateIndex(selectParts);
+            if (aggIndex !== -1) {
+              selectParts.splice(aggIndex + 1, 0, partModel);
+            } else {
+              selectParts.splice(1, 0, partModel);
+            }
+          }
+        }
+
         break;
       case 'alias':
         addAlias = true;

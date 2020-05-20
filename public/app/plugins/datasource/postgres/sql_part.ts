@@ -75,6 +75,14 @@ register({
 });
 
 register({
+  type: 'select_expression',
+  style: 'label',
+  label: 'Expr:',
+  params: [{ name: 'expression', type: 'string' }],
+  defaultParams: ['($expr)'],
+});
+
+register({
   type: 'alias',
   style: 'label',
   params: [{ name: 'name', type: 'string', quote: 'double' }],
