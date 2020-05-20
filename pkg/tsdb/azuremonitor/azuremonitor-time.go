@@ -31,6 +31,20 @@ func setAutoTimeGrain(intervalMs int64, timeGrains interface{}) (string, error) 
 	return autoTimeGrain, nil
 }
 
+// setAutoTimeGrain tries to find the closest interval to the query's intervalMs value
+// if the metric has a limited set of possible intervals/time grains then use those
+// instead of the default list of intervals
+func setAutoTimeGrainTyped(intervalMs int64, timeGrains []int64) (string, error) {
+	autoInterval := findClosestAllowedIntervalMS(intervalMs, timeGrains)
+	tg := &TimeGrain{}
+	autoTimeGrain, err := tg.createISO8601DurationFromIntervalMS(autoInterval)
+	if err != nil {
+		return "", err
+	}
+
+	return autoTimeGrain, nil
+}
+
 // findClosestAllowedIntervalMs is used for the auto time grain setting.
 // It finds the closest time grain from the list of allowed time grains for Azure Monitor
 // using the Grafana interval in milliseconds

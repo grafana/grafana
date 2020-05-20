@@ -90,3 +90,30 @@ type column struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
+
+// azureMonitorJSONQuery is the model for the JSON query sent for azure monitor requests
+// from the frontend.
+type azureMonitorJSONQuery struct {
+	AzureMonitor struct {
+		Aggregation         string  `json:"aggregation"`
+		Alias               string  `json:"alias"`
+		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+		Dimension           string  `json:"dimension"`
+		DimensionFilter     string  `json:"dimensionFilter"`
+		Format              string  `json:"format"`
+		MetricDefinition    string  `json:"metricDefinition"`
+		MetricName          string  `json:"metricName"`
+		MetricNamespace     string  `json:"metricNamespace"`
+		ResourceGroup       string  `json:"resourceGroup"`
+		ResourceName        string  `json:"resourceName"`
+		TimeGrain           string  `json:"timeGrain"`
+		Top                 string  `json:"top"`
+	} `json:"azureMonitor"`
+	DatasourceID int64  `json:"datasourceId"`
+	IntervalMs   int64  `json:"intervalMs"`
+	QueryType    string `json:"queryType"`
+	Raw          bool   `json:"raw"`
+	RefID        string `json:"refId"`
+	Subscription string `json:"subscription"`
+	Type         string `json:"type"`
+}
