@@ -106,10 +106,20 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         return results.data;
       });
     } else {
-      return this.request('GET', this.indexPattern.getIndexForToday() + url).then((results: any) => {
-        results.data.$$config = results.config;
-        return results.data;
-      });
+      return this.request('GET', this.indexPattern.getIndexForToday() + url)
+        .then((results: any) => {
+          results.data.$$config = results.config;
+          return results.data;
+        })
+        .catch((err: any) => {
+          if (err.data && err.data.error) {
+            throw {
+              message: 'Elasticsearch error: ' + err.data.error.reason,
+              error: err.data.error,
+            };
+          }
+          throw err;
+        });
     }
   }
 
