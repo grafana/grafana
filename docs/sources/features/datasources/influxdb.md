@@ -162,7 +162,7 @@ You can also create nested variables. For example if you had another variable, f
 the hosts variable only show hosts from the current selected region with a query like this:
 
 ```sql
-SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
+SHOW TAG VALUES WITH KEY = "hostname"  WHERE region = '$region'
 ```
 
 You can fetch key names for a given measurement.

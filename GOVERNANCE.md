@@ -4,7 +4,7 @@ This document describes the rules and governance of the project. It is meant to 
 
 * **Team members**: Any members of the private [grafana-team][team] Google group.
 
-* **Maintainers**: Maintainers lead an individual project or parts thereof ([`MAINTAINERS.md`][maintainers.md]).
+* **Maintainers**: Maintainers lead an individual project or parts thereof ([`MAINTAINERS.md`][maintainers]).
 
 * **Projects**: A single repository in the Grafana GitHub organization and listed below is referred to as a project:
   * clock-panel
@@ -38,7 +38,7 @@ The Grafana developers and community are expected to follow the values defined i
 
 ## Projects
 
-Each project must have a `MAINTAINERS.md` file with at least one maintainer. Where a project has a release process, access and documentation should be such that more than one person can perform a release. Releases should be announced on the Grafana Labs blog. Any new projects should be first proposed on the [team mailing list][team] following the voting procedures listed below.
+Each project must have a [`MAINTAINERS.md`][maintainers] file with at least one maintainer. Where a project has a release process, access and documentation should be such that more than one person can perform a release. Releases should be announced on the Grafana Labs blog. Any new projects should be first proposed on the [team mailing list][team] following the voting procedures listed below.
 
 ## Decision making
 
@@ -100,7 +100,7 @@ The current team members are:
 
 Maintainers lead one or more project(s) or parts thereof and serve as a point of conflict resolution amongst the contributors to this project. Ideally, maintainers are also team members, but exceptions are possible for suitable maintainers that, for whatever reason, are not yet team members.
 
-Changes in maintainership have to be announced on the [developers mailing list][devs]. They are decided by [rough consensus](#consensus) and formalized by changing the `MAINTAINERS.md` file of the respective repository.
+Changes in maintainership have to be announced on the [developers mailing list][devs]. They are decided by [rough consensus](#consensus) and formalized by changing the [`MAINTAINERS.md`][maintainers] file of the respective repository.
 
 Maintainers are granted commit rights to all projects covered by this governance.
 
@@ -194,6 +194,6 @@ If needed, we reserve the right to publicly announce removal.
 
 [coc]: https://github.com/grafana/grafana/blob/master/CODE_OF_CONDUCT.md
 [devs]: https://groups.google.com/forum/#!forum/grafana-developers
-[maintainers.md]: https://github.com/search?l=&q=org%3Agrafana+filename%3AMAINTAINERS.md+path%3A%2F&ref=advsearch&type=Code&utf8=%E2%9C%93
+[maintainers]: https://github.com/grafana/grafana/blob/master/MAINTAINERS.md
 [rough]: https://tools.ietf.org/html/rfc7282
 [team]: https://groups.google.com/forum/#!forum/grafana-team
