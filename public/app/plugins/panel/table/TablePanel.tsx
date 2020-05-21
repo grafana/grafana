@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 
 import { Table, Select } from '@grafana/ui';
-import { FieldMatcherID, PanelProps, DataFrame, SelectableValue, getFrameDisplayTitle } from '@grafana/data';
+import { FieldMatcherID, PanelProps, DataFrame, SelectableValue, getFrameDisplayName } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
 import { config } from 'app/core/config';
+import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
 interface Props extends PanelProps<Options> {}
 
@@ -13,26 +14,15 @@ export class TablePanel extends Component<Props> {
     super(props);
   }
 
-  onColumnResize = (fieldIndex: number, width: number) => {
-    const { fieldConfig, data } = this.props;
+  onColumnResize = (fieldDisplayName: string, width: number) => {
+    const { fieldConfig } = this.props;
     const { overrides } = fieldConfig;
-    const frame = data.series[this.getCurrentFrameIndex()];
 
-    if (!frame) {
-      return;
-    }
-
-    const field = frame.fields[fieldIndex];
-    if (!field) {
-      return;
-    }
-
-    const fieldName = field.name;
     const matcherId = FieldMatcherID.byName;
     const propId = 'custom.width';
 
     // look for existing override
-    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldName);
+    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
 
     if (override) {
       // look for existing property
@@ -44,7 +34,7 @@ export class TablePanel extends Component<Props> {
       }
     } else {
       overrides.push({
-        matcher: { id: matcherId, options: fieldName },
+        matcher: { id: matcherId, options: fieldDisplayName },
         properties: [{ id: propId, value: width }],
       });
     }
@@ -52,6 +42,13 @@ export class TablePanel extends Component<Props> {
     this.props.onFieldConfigChange({
       ...fieldConfig,
       overrides,
+    });
+  };
+
+  onSortByChange = (sortBy: TableSortByFieldState[]) => {
+    this.props.onOptionsChange({
+      ...this.props.options,
+      sortBy,
     });
   };
 
@@ -75,6 +72,8 @@ export class TablePanel extends Component<Props> {
         data={frame}
         noHeader={!options.showHeader}
         resizable={true}
+        initialSortBy={options.sortBy}
+        onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
       />
     );
@@ -101,7 +100,7 @@ export class TablePanel extends Component<Props> {
       const currentIndex = this.getCurrentFrameIndex();
       const names = data.series.map((frame, index) => {
         return {
-          label: getFrameDisplayTitle(frame),
+          label: getFrameDisplayName(frame),
           value: index,
         };
       });

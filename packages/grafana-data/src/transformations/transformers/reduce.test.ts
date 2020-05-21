@@ -65,25 +65,25 @@ describe('Reducer Transformer', () => {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3, 1, 11000.1]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3, 1, 11000.1]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6, 7, 11000.7]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6, 7, 11000.7]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 
@@ -111,25 +111,25 @@ describe('Reducer Transformer', () => {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3, 1]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3, 1]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6, 7]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6, 7]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 
@@ -157,25 +157,25 @@ describe('Reducer Transformer', () => {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 
@@ -203,25 +203,25 @@ describe('Reducer Transformer', () => {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 

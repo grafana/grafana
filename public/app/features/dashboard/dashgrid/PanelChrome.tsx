@@ -26,6 +26,7 @@ import {
   PanelPlugin,
   FieldConfigSource,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -208,6 +209,9 @@ export class PanelChrome extends PureComponent<Props, State> {
         cacheTimeout: panel.cacheTimeout,
         transformations: panel.transformations,
       });
+    } else {
+      // The panel should render on refresh as well if it doesn't have a query, like clock panel
+      this.onRender();
     }
   };
 
@@ -329,7 +333,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}

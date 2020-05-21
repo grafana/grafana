@@ -1,37 +1,31 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { saveAs } from 'file-saver';
-import {
-  CustomScrollbar,
-  Button,
-  HorizontalGroup,
-  JSONFormatter,
-  VerticalGroup,
-  useTheme,
-  stylesFactory,
-} from '@grafana/ui';
+import { Button, HorizontalGroup, stylesFactory, TextArea, useTheme, VerticalGroup } from '@grafana/ui';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { SaveDashboardFormProps } from '../types';
-import { GrafanaTheme } from '@grafana/data';
+import { AppEvents, GrafanaTheme } from '@grafana/data';
+import appEvents from '../../../../../core/app_events';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const theme = useTheme();
-  const dashboardJSON = useMemo(() => {
+  const [dashboardJSON, setDashboardJson] = useState(() => {
     const clone = dashboard.getSaveModelClone();
     delete clone.id;
-    return clone;
-  }, [dashboard]);
-
-  const getClipboardText = useCallback(() => {
-    return JSON.stringify(dashboardJSON, null, 2);
-  }, [dashboard]);
+    return JSON.stringify(clone, null, 2);
+  });
 
   const saveToFile = useCallback(() => {
-    const blob = new Blob([JSON.stringify(dashboardJSON, null, 2)], {
+    const blob = new Blob([dashboardJSON], {
       type: 'application/json;charset=utf-8',
     });
     saveAs(blob, dashboard.title + '-' + new Date().getTime() + '.json');
   }, [dashboardJSON]);
+
+  const onCopyToClipboardSuccess = useCallback(() => {
+    appEvents.emit(AppEvents.alertSuccess, ['Dashboard JSON copied to clipboard']);
+  }, []);
+
   const styles = getStyles(theme);
   return (
     <>
@@ -55,13 +49,16 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
         <div>
           <strong>File path: </strong> {dashboard.meta.provisionedExternalId}
         </div>
-        <div className={styles.json}>
-          <CustomScrollbar>
-            <JSONFormatter json={dashboardJSON} open={1} />
-          </CustomScrollbar>
-        </div>
+        <TextArea
+          spellCheck={false}
+          value={dashboardJSON}
+          onChange={e => {
+            setDashboardJson(e.currentTarget.value);
+          }}
+          className={styles.json}
+        />
         <HorizontalGroup>
-          <CopyToClipboard text={getClipboardText} elType={Button}>
+          <CopyToClipboard text={() => dashboardJSON} elType={Button} onSuccess={onCopyToClipboardSuccess}>
             Copy JSON to clipboard
           </CopyToClipboard>
           <Button onClick={saveToFile}>Save JSON to file</Button>
@@ -77,10 +74,11 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     json: css`
-      background: ${theme.isLight ? theme.palette.gray7 : theme.palette.black};
-      padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
       height: 400px;
       width: 100%;
+      overflow: auto;
+      resize: none;
+      font-family: monospace;
     `,
   };
 });

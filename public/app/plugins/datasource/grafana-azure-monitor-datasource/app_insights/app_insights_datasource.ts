@@ -218,7 +218,7 @@ export default class AppInsightsDatasource {
 
         return {
           status: 'error',
-          message: 'Returned http status code ' + response.status,
+          message: 'Application Insights: Returned http status code ' + response.status,
         };
       })
       .catch((error: any) => {

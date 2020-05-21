@@ -39,7 +39,7 @@ The image above shows you the top header for a Dashboard.
 
 ## Manage dashboards
 
-The time period for the dashboard can be controlled by the [Time range controls]({{< relref "../../reference/timerange.md" >}}) in the upper right of the dashboard.
+The time period for the dashboard can be controlled by the [Time range controls]({{< relref "../../dashboards/time-range-controls.md" >}}) in the upper right of the dashboard.
 
 Dashboards can use [templating]({{< relref "../../variables/templates-and-variables.md" >}}) to make them more dynamic and interactive.
 
