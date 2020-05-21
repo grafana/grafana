@@ -209,6 +209,9 @@ export class PanelChrome extends PureComponent<Props, State> {
         cacheTimeout: panel.cacheTimeout,
         transformations: panel.transformations,
       });
+    } else {
+      // The panel should render on refresh as well if it doesn't have a query, like clock panel
+      this.onRender();
     }
   };
 
