@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -155,10 +156,78 @@ func TestPagerdutyNotifier(t *testing.T) {
 						},
 					},
 					"payload": map[string]interface{}{
+						"component":      "Grafana",
+						"source":         "<<PRESENCE>>",
+						"custom_details": map[string]interface{}{},
+						"severity":       "critical",
+						"summary":        "someRule - someMessage",
+						"timestamp":      "<<PRESENCE>>",
+					},
+					"routing_key": "abcdefgh0123456789",
+				}, payload.Interface(), cmp.Comparer(presenceComparer))
+				So(diff, ShouldBeEmpty)
+			})
+
+			Convey("should return properly formatted payload with message moved to details", func() {
+				json := `{
+					"integrationKey": "abcdefgh0123456789",
+					"autoResolve": false,
+					"messageInDetails": true
+				}`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+
+				model := &models.AlertNotification{
+					Name:     "pagerduty_testing",
+					Type:     "pagerduty",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewPagerdutyNotifier(model)
+				So(err, ShouldBeNil)
+
+				pagerdutyNotifier := not.(*PagerdutyNotifier)
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:      0,
+					Name:    "someRule",
+					Message: "someMessage",
+					State:   models.AlertStateAlerting,
+				})
+				evalContext.IsTestRun = true
+				evalContext.EvalMatches = []*alerting.EvalMatch{
+					{
+						// nil is a terrible value to test with, but the cmp.Diff doesn't
+						// like comparing actual floats. So this is roughly the equivalent
+						// of <<PRESENCE>>
+						Value:  null.FloatFromPtr(nil),
+						Metric: "someMetric",
+					},
+				}
+
+				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				So(err, ShouldBeNil)
+				payload, err := simplejson.NewJson(payloadJSON)
+				So(err, ShouldBeNil)
+
+				diff := cmp.Diff(map[string]interface{}{
+					"client":       "Grafana",
+					"client_url":   "",
+					"dedup_key":    "alertId-0",
+					"event_action": "trigger",
+					"links": []interface{}{
+						map[string]interface{}{
+							"href": "",
+						},
+					},
+					"payload": map[string]interface{}{
 						"component": "Grafana",
 						"source":    "<<PRESENCE>>",
 						"custom_details": map[string]interface{}{
 							"message": "someMessage",
+							"queries": map[string]interface{}{
+								"someMetric": nil,
+							},
 						},
 						"severity":  "critical",
 						"summary":   "someRule",
@@ -229,10 +298,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"component": "aComponent",
 							"severity":  "warning",
 							"keyOnly":   "",
-							"message":   "someMessage",
 						},
 						"severity":  "warning",
-						"summary":   "someRule",
+						"summary":   "someRule - someMessage",
 						"timestamp": "<<PRESENCE>>",
 						"class":     "aClass",
 						"group":     "aGroup",
@@ -307,10 +375,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"component": "aComponent",
 							"severity":  "info",
 							"keyOnly":   "",
-							"message":   "someMessage",
 						},
 						"severity":  "info",
-						"summary":   "someRule",
+						"summary":   "someRule - someMessage",
 						"timestamp": "<<PRESENCE>>",
 						"class":     "aClass",
 						"group":     "aGroup",
@@ -386,10 +453,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"component": "aComponent",
 							"severity":  "llama",
 							"keyOnly":   "",
-							"message":   "someMessage",
 						},
 						"severity":  "critical",
-						"summary":   "someRule",
+						"summary":   "someRule - someMessage",
 						"timestamp": "<<PRESENCE>>",
 						"class":     "aClass",
 						"group":     "aGroup",
