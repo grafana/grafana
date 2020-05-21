@@ -5,6 +5,7 @@ import {
   standardEditorsRegistry,
   FieldOverrideContext,
   getFieldDisplayName,
+  escapeStringForRegex,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 
@@ -89,7 +90,7 @@ export function addStandardDataReduceOptions(
             for (const frame of context.data) {
               for (const field of frame.fields) {
                 const name = getFieldDisplayName(field, frame, context.data);
-                options.push({ value: name, label: name });
+                options.push({ value: escapeStringForRegex(name), label: name });
               }
             }
           }

@@ -4,6 +4,7 @@ import { get as lodashGet, set as lodashSet } from 'lodash';
 import { Field, Label } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
+import { getTemplateSrv } from '@grafana/runtime';
 
 interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
@@ -24,8 +25,10 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
     onChange(newOptions);
   };
 
+  // ??? OptionsEditorItem vs FieldOverrideEditorProps ???
   const context: FieldOverrideContext = {
     data: data ?? [],
+    replaceVariables: getTemplateSrv().replace,
   };
 
   return (
