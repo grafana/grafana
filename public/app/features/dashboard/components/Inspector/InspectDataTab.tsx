@@ -59,25 +59,23 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { transformId } = this.state;
 
     // Replace the time field with a formatted time
-    if (true) {
-      const { timeIndex, timeField } = getTimeField(dataFrame);
-      if (timeField) {
-        // Use the configurd date or dateTimeIso
-        const processor: DisplayProcessor = timeField.display ? timeField.display : v => dateTimeAsIso(v);
+    const { timeIndex, timeField } = getTimeField(dataFrame);
+    if (timeField) {
+      // Use the configurd date or dateTimeIso
+      const processor: DisplayProcessor = timeField.display ? timeField.display : v => dateTimeAsIso(v);
 
-        const formattedDateField = {
-          ...timeField,
-          type: FieldType.string,
-          values: new FormattedVector(timeField.values, processor),
-        };
+      const formattedDateField = {
+        ...timeField,
+        type: FieldType.string,
+        values: new FormattedVector(timeField.values, processor),
+      };
 
-        const fields = [...dataFrame.fields];
-        fields[timeIndex] = formattedDateField;
-        dataFrame = {
-          ...dataFrame,
-          fields,
-        };
-      }
+      const fields = [...dataFrame.fields];
+      fields[timeIndex] = formattedDateField;
+      dataFrame = {
+        ...dataFrame,
+        fields,
+      };
     }
 
     const dataFrameCsv = toCSV([dataFrame]);
