@@ -110,6 +110,8 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 }
 
 export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
+  console.log('query', query);
+  console.log('mapping', mapping);
   const ruleNames = Object.keys(mapping);
   const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
   const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
@@ -136,7 +138,7 @@ function addLabelsToExpression(expr: string, regex: RegExp) {
   const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
   const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
 
-  // Retrieve string with labels. Our exprAfterRegexMatch starts with "{" and we need to find closest matching bracket.
+  // Retrieve labels (as a string). Our exprAfterRegexMatch starts with "{" and we need to find closest matching bracket.
   // We want to leave out the brackets and keep just string in labelsInString.
   const stringOfLabels = exprAfterRegexMatch.substr(1, exprAfterRegexMatch.indexOf('}') - 1);
 
@@ -144,7 +146,7 @@ function addLabelsToExpression(expr: string, regex: RegExp) {
   const arrayOfLabels = stringOfLabels.split(',');
 
   // Transform strings into object with specified key, operator and value
-  // Uses the same regex and similar logic as function method in add_label_to_query
+  // Uses the same regex and similar logic as function addLabelToSelector in add_label_to_query
   const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
   const arrayOfLabelObjects = arrayOfLabels.map(string => {
     const match = labelRegexp.exec(string);
