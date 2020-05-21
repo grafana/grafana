@@ -12,7 +12,7 @@ import {
   FieldType,
   FormattedVector,
   DisplayProcessor,
-  dateTimeAsIso,
+  getDisplayProcessor,
 } from '@grafana/data';
 import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -61,8 +61,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
     // Replace the time field with a formatted time
     const { timeIndex, timeField } = getTimeField(dataFrame);
     if (timeField) {
-      // Use the configurd date or dateTimeIso
-      const processor: DisplayProcessor = timeField.display ? timeField.display : v => dateTimeAsIso(v);
+      // Use the configurd date or standandard time display
+      let processor: DisplayProcessor = timeField.display;
+      if (!processor) {
+        processor = getDisplayProcessor({
+          field: timeField,
+        });
+      }
 
       const formattedDateField = {
         ...timeField,
