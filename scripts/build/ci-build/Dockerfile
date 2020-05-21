@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 as toolchain
+FROM debian:stretch-20200514 AS toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_SDK=MacOSX10.10.sdk \
@@ -72,7 +72,7 @@ RUN cd /tmp && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
 # base image to crossbuild grafana
-FROM ubuntu:20.04
+FROM debian:stretch-20200514
 
 ENV GOVERSION=1.14.1 \
     PATH=/usr/local/go/bin:$PATH \
@@ -86,7 +86,7 @@ COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz 
 RUN apt-get update && \
     apt-get upgrade -yq && \
     apt-get install -yq  \
-        clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
+        build-essential clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
         ca-certificates \
         curl            \
@@ -99,6 +99,7 @@ RUN apt-get update && \
         xz-utils        \
         expect          \
         gnupg2          \
+        procps          \
         unzip &&        \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil                  && \
     curl -fL https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-x64.tar.xz \
@@ -130,9 +131,6 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
-RUN apt-get install -yq gcc libc-dev make && \
-    gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
-    curl -fsSL https://get.rvm.io | bash -s stable && \
-    /bin/bash -l -c "rvm requirements && rvm install 2.2 && gem install -N fpm"
+RUN apt-get install -yq ruby ruby-dev rubygems && gem install -N fpm
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh
