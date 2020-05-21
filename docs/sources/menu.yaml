@@ -157,7 +157,7 @@
       name: Gauge
     - link: /panels/visualizations/graph-panel/
       name: Graph
-    - link: /panels/visualizations/heatmap-panel/
+    - link: /panels/visualizations/heatmap/
       name: Heatmap
     - link: /panels/visualizations/logs-panel/
       name: Logs
@@ -398,8 +398,10 @@
           link: /developers/plugins/add-support-for-annotations/
         - name: Add support for Explore queries
           link: /developers/plugins/add-support-for-explore-queries/
-        - name: Build a logs data source
-          link: /developers/plugins/build-a-logs-data-source/
+        - name: Build a logs data source plugin
+          link: /developers/plugins/build-a-logs-data-source-plugin/
+        - name: Build a streaming data source plugin
+          link: /developers/plugins/build-a-streaming-data-source-plugin/
         - name: Authentication
           link: /developers/plugins/authentication/
         - name: Backend plugins
