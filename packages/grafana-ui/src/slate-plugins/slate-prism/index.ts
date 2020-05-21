@@ -43,8 +43,8 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
       const tokens = Prism.tokenize(blockText, grammar);
       const flattened = flattenTokens(tokens);
 
-      // @ts-ignore
-      editor.setData({ tokens: flattened });
+      const newData = editor.value.data.set('tokens', flattened);
+      editor.setData(newData);
       return decorateNode(opts, tokens, block);
     },
 

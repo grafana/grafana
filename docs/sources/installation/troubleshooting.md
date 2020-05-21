@@ -34,7 +34,7 @@ You can enable more logging by changing log level in the Grafana configuration f
 ## Diagnostics
 
 The `grafana-server` process can be instructed to enable certain diagnostics when it starts. This can be helpful
-when investigating certain performance problems. It's *not* recommended to have these enabled per default.
+when investigating certain performance problems. It's *not* recommended to have these enabled by default.
 
 ### Profiling
 

@@ -318,9 +318,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/profile/select-org', {
-      templateUrl: 'public/app/features/org/partials/select_org.html',
-      controller: 'SelectOrgCtrl',
+      template: '<react-container/>',
       reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webPackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')),
+      },
     })
     // ADMIN
     .when('/admin', {

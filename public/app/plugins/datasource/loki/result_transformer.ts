@@ -10,7 +10,6 @@ import {
   ArrayVector,
   MutableDataFrame,
   findUniqueLabels,
-  FieldConfig,
   DataFrameView,
   DataLink,
   Field,
@@ -77,10 +76,10 @@ function constructDataFrame(
   const dataFrame = {
     refId,
     fields: [
-      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
+      { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
       { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
       { name: 'id', type: FieldType.string, config: {}, values: uids },
-      { name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' }, values: timesNs }, // Time
+      { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
     ],
     length: times.length,
   };
@@ -283,7 +282,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
         unit = 'decbytes';
       }
       const title = `${_.capitalize(section)}: ${decamelize(label)}`;
-      result.push({ title, value, unit });
+      result.push({ displayName: title, value, unit });
     }
   }
   return result;
@@ -332,14 +331,15 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-  const newFields = derivedFields.map(fieldFromDerivedFieldConfig);
-  const newFieldsMap = _.keyBy(newFields, 'name');
+  const derivedFieldsGrouped = _.groupBy(derivedFields, 'name');
+
+  const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
   const view = new DataFrameView(dataFrame);
   view.forEach((row: { line: string }) => {
-    for (const field of derivedFields) {
-      const logMatch = row.line.match(field.matcherRegex);
-      newFieldsMap[field.name].values.add(logMatch && logMatch[1]);
+    for (const field of newFields) {
+      const logMatch = row.line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
+      field.values.add(logMatch && logMatch[1]);
     }
   });
 
@@ -349,28 +349,30 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 /**
  * Transform derivedField config into dataframe field with config that contains link.
  */
-function fieldFromDerivedFieldConfig(derivedFieldConfig: DerivedFieldConfig): Field<any, ArrayVector> {
-  const config: FieldConfig = {};
-  if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
-    const link: Partial<DataLink> = {
-      // We do not know what title to give here so we count on presentation layer to create a title from metadata.
-      title: '',
-      url: derivedFieldConfig.url,
-    };
-
-    // Having field.datasourceUid means it is an internal link.
-    if (derivedFieldConfig.datasourceUid) {
-      link.meta = {
-        datasourceUid: derivedFieldConfig.datasourceUid,
-      };
+function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+  const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
+    if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
+      acc.push({
+        // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+        title: '',
+        url: derivedFieldConfig.url,
+        // Having field.datasourceUid means it is an internal link.
+        meta: derivedFieldConfig.datasourceUid
+          ? {
+              datasourceUid: derivedFieldConfig.datasourceUid,
+            }
+          : undefined,
+      });
     }
+    return acc;
+  }, [] as DataLink[]);
 
-    config.links = [link as DataLink];
-  }
   return {
-    name: derivedFieldConfig.name,
+    name: derivedFieldConfigs[0].name,
     type: FieldType.string,
-    config,
+    config: {
+      links: dataLinks,
+    },
     // We are adding values later on
     values: new ArrayVector<string>([]),
   };

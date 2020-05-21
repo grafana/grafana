@@ -3,6 +3,7 @@ import { mount } from 'enzyme';
 import { DerivedFields } from './DerivedFields';
 import { Button } from '@grafana/ui';
 import { DerivedField } from './DerivedField';
+import { act } from 'react-dom/test-utils';
 
 describe('DerivedFields', () => {
   let originalGetSelection: typeof window.getSelection;
@@ -15,32 +16,46 @@ describe('DerivedFields', () => {
     window.getSelection = originalGetSelection;
   });
 
-  it('renders correctly when no fields', () => {
-    const wrapper = mount(<DerivedFields onChange={() => {}} />);
+  it('renders correctly when no fields', async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = await mount(<DerivedFields onChange={() => {}} />);
+    });
     expect(wrapper.find(Button).length).toBe(1);
     expect(wrapper.find(Button).contains('Add')).toBeTruthy();
     expect(wrapper.find(DerivedField).length).toBe(0);
   });
 
-  it('renders correctly when there are fields', () => {
-    const wrapper = mount(<DerivedFields value={testValue} onChange={() => {}} />);
+  it('renders correctly when there are fields', async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = await mount(<DerivedFields value={testValue} onChange={() => {}} />);
+    });
 
-    expect(wrapper.find(Button).filterWhere(button => button.contains('Add')).length).toBe(1);
-    expect(wrapper.find(Button).filterWhere(button => button.contains('Show example log message')).length).toBe(1);
+    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Add')).length).toBe(1);
+    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Show example log message')).length).toBe(
+      1
+    );
     expect(wrapper.find(DerivedField).length).toBe(2);
   });
 
-  it('adds new field', () => {
+  it('adds new field', async () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(<DerivedFields onChange={onChangeMock} />);
-    const addButton = wrapper.find(Button).filterWhere(button => button.contains('Add'));
+    let wrapper: any;
+    await act(async () => {
+      wrapper = await mount(<DerivedFields onChange={onChangeMock} />);
+    });
+    const addButton = wrapper.find(Button).filterWhere((button: any) => button.contains('Add'));
     addButton.simulate('click');
     expect(onChangeMock.mock.calls[0][0].length).toBe(1);
   });
 
-  it('removes field', () => {
+  it('removes field', async () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(<DerivedFields value={testValue} onChange={onChangeMock} />);
+    let wrapper: any;
+    await act(async () => {
+      wrapper = await mount(<DerivedFields value={testValue} onChange={onChangeMock} />);
+    });
     const removeButton = wrapper
       .find(DerivedField)
       .at(0)

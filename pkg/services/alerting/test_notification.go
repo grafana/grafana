@@ -52,7 +52,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		DashboardID: 1,
 		PanelID:     1,
 		Name:        "Test notification",
-		Message:     "Someone is testing the alert notification within grafana.",
+		Message:     "Someone is testing the alert notification within Grafana.",
 		State:       models.AlertStateAlerting,
 	}
 
