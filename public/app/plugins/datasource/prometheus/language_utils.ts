@@ -110,8 +110,6 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 }
 
 export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
-  console.log('query', query);
-  console.log('mapping', mapping);
   const ruleNames = Object.keys(mapping);
   const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
   const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
@@ -147,8 +145,8 @@ function addLabelsToExpression(expr: string, regex: RegExp) {
 
   // Transform strings into object with specified key, operator and value
   // Uses the same regex and similar logic as function addLabelToSelector in add_label_to_query
-  const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
   const arrayOfLabelObjects = arrayOfLabels.map(string => {
+    const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
     const match = labelRegexp.exec(string);
     return match && { key: match[1], operator: match[2], value: match[3] };
   });
