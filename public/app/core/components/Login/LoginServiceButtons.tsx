@@ -71,6 +71,9 @@ const getServiceStyles = (theme: GrafanaTheme) => {
       color: #d8d9da;
       margin: 0 0 ${theme.spacing.md};
       width: 100%;
+      &:hover {
+        color: #fff;
+      }
     `,
     divider: {
       base: css`
@@ -128,7 +131,7 @@ export const LoginServiceButtons = () => {
     return (
       <a
         key={key}
-        className={`${styles.button} btn btn-medium btn-service btn-service--${service.className || key}`}
+        className={`btn btn-medium btn-service btn-service--${service.className || key} ${styles.button}`}
         href={`login/${service.hrefName ? service.hrefName : key}`}
         target="_self"
       >
