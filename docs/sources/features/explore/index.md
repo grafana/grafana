@@ -41,7 +41,7 @@ The query field is where you can write your query and explore your data. There a
 
 ## Split and compare
 
-The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
+The split view feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
 {{< docs-imagebox img="/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
@@ -202,8 +202,9 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 > Only available in Grafana v7.0+.
 
 You can visualize traces from tracing data sources in explore. Data sources currently supported:
-- [Jaeger]({{< relref "../datasources/jaeger" >}})
-- [Zipkin]({{< relref "../datasources/zipkin" >}})
+
+- [Jaeger]({{< relref "datasources/jaeger.md" >}})
+- [Zipkin]({{< relref "datasources/zipkin.md" >}})
 
 For information about how to use the query editor see documentation for specific data source.
 
