@@ -136,17 +136,16 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
   const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
 
-  // Create array with labels. We are creating new regexp as we are going to use exec method
-  // and we don't want other functions to affect regexp state
-  const validLabelRegexp = new RegExp(labelRegexp);
-  const arrayOfLabels = exprAfterRegexMatch.match(validLabelRegexp);
+  // Firstly, create array with label strings that match labelRegexp.
+  const arrayOfLabelStrings = exprAfterRegexMatch.match(labelRegexp);
 
-  // Transform array with strings into object with specified key, operator and value.
-  const arrayOfLabelObjects = arrayOfLabels.map(string => {
-    // Regex is stateful object, we need to reset lastIndex so all matched are added to arrayOfLabelObjects.
-    validLabelRegexp.lastIndex = 0;
-    const match = validLabelRegexp.exec(string);
-    return match && { key: match[1], operator: match[2], value: match[3] };
+  // Loop trough arrayOfLabelStrings and create arrayOfLabelObjects.
+  const arrayOfLabelObjects: Array<{ key: string; operator: string; value: string }> = [];
+  arrayOfLabelStrings.forEach(string => {
+    string.replace(labelRegexp, (label, key, operator, value) => {
+      arrayOfLabelObjects.push({ key, operator, value });
+      return '';
+    });
   });
 
   // Loop trough all of the label objects and add them to query.
