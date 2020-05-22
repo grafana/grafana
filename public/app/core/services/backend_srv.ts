@@ -319,13 +319,12 @@ export class BackendSrv implements BackendService {
 
   private async moveDashboard(uid: string, toFolder: FolderInfo) {
     const fullDash: DashboardDTO = await this.getDashboardByUid(uid);
-    const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
     if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
       return { alreadyInFolder: true };
     }
 
-    const clone = model.getSaveModelClone();
+    const clone = fullDash.dashboard;
     const options = {
       folderId: toFolder.id,
       overwrite: false,
