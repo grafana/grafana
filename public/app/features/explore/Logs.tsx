@@ -45,6 +45,7 @@ interface Props {
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
+  visibleRange?: AbsoluteTimeRange;
 
   width: number;
   highlighterExpressions?: string[];
@@ -144,6 +145,7 @@ export class Logs extends PureComponent<Props, State> {
       logRows,
       logsMeta,
       logsSeries,
+      visibleRange,
       highlighterExpressions,
       loading = false,
       onClickFilterLabel,
@@ -190,7 +192,7 @@ export class Logs extends PureComponent<Props, State> {
             width={width}
             onHiddenSeriesChanged={this.onToggleLogLevel}
             loading={loading}
-            absoluteRange={absoluteRange}
+            absoluteRange={visibleRange || absoluteRange}
             isStacked={true}
             showPanel={false}
             showingGraph={true}

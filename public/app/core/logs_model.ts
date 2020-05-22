@@ -27,6 +27,7 @@ import {
   getDisplayProcessor,
   textUtil,
   dateTime,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
@@ -90,18 +91,16 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZone: TimeZone): GraphSeriesXY[] {
+export function makeSeriesForLogs(sortedRows: LogRowModel[], intervalMs: number, timeZone: TimeZone): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
-  // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
-  // when executing queries & interval calculated and not here but this is a temporary fix.
-  // intervalMs = intervalMs * 10;
+  // need at least 10px per bucket, so we multiply interval by 20 to also give some space around the bars.
+  // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
   // Graph time series by log level
   const seriesByLevel: any = {};
-  const bucketSize = intervalMs * 10;
+  const bucketSize = intervalMs * 20;
   const seriesList: any[] = [];
 
-  const sortedRows = rows.sort(sortInAscendingOrder);
   for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
 
@@ -198,16 +197,33 @@ function isLogsData(series: DataFrame) {
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
-  timeZone: TimeZone
+  timeZone: TimeZone,
+  absoluteRange?: AbsoluteTimeRange
 ): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
-      // Create metrics from logs
-      // If interval is not defined or 0 we cannot really compute the series
-      logsModel.series = intervalMs ? makeSeriesForLogs(logsModel.rows, intervalMs, timeZone) : [];
+      // Create histogram metrics from logs using the interval as bucket size for the line count
+      if (intervalMs && logsModel.rows.length > 0) {
+        const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
+        let resolutionIntervalMs = intervalMs;
+        // Clamp time range to visible logs otherwise big parts of the graph might look empty
+        if (absoluteRange) {
+          const earliest = sortedRows[0].timeEpochMs;
+          const latest = absoluteRange.to;
+          logsModel.visibleRange = { from: earliest, to: latest };
+          // Adjust interval bucket size for potentially shorter visible range
+          const visibleRangeMs = latest - earliest;
+          if (visibleRangeMs > 0) {
+            resolutionIntervalMs *= visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+          }
+        }
+        logsModel.series = makeSeriesForLogs(sortedRows, resolutionIntervalMs, timeZone);
+      } else {
+        logsModel.series = [];
+      }
     } else {
       // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
