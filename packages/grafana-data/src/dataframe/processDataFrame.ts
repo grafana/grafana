@@ -16,7 +16,6 @@ import {
   DataFrameDTO,
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
-  MutableColumn,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -27,7 +26,7 @@ import { getFieldDisplayName } from '../field/fieldState';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
-    const { text, type, ...disp } = c as MutableColumn;
+    const { text, type, ...disp } = c as any;
     return {
       name: text, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,

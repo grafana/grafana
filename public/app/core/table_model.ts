@@ -1,5 +1,16 @@
 import _ from 'lodash';
-import { Column, MutableColumn, TableData, QueryResultMeta } from '@grafana/data';
+import { Column, TableData, QueryResultMeta } from '@grafana/data';
+
+/**
+ * Extends the standard Column class with variables that get
+ * mutated in the angular table panel.
+ */
+export interface MutableColumn extends Column {
+  title?: string;
+  sort?: boolean;
+  desc?: boolean;
+  type?: string;
+}
 
 export default class TableModel implements TableData {
   columns: MutableColumn[];
