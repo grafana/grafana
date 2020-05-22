@@ -17,7 +17,7 @@ interface State {
 }
 
 export class ClickOutsideWrapper extends PureComponent<Props, State> {
-  public static defaultProps = {
+  static defaultProps = {
     includeButtonPress: true,
   };
   state = {
