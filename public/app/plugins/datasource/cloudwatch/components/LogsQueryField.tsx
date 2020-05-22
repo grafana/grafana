@@ -33,6 +33,7 @@ import { dispatch } from 'app/store/store';
 import { changeModeAction } from 'app/features/explore/state/actionTypes';
 import { appEvents } from 'app/core/core';
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
+import { getStatsGroups } from '../utils/query/getStatsGroups';
 
 export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery> {
   absoluteRange: AbsoluteTimeRange;
@@ -193,6 +194,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         expression: value,
         logGroupNames: selectedLogGroups?.map(logGroupName => logGroupName.value!) ?? [],
         region: selectedRegion.value ?? 'default',
+        statsGroups: getStatsGroups(value),
       };
       onChange(nextQuery);
     }

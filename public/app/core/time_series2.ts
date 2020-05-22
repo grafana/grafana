@@ -98,8 +98,8 @@ export default class TimeSeries {
   hideTooltip: boolean;
   allIsNull: boolean;
   allIsZero: boolean;
-  decimals: number;
-  scaledDecimals: number;
+  decimals: DecimalCount;
+  scaledDecimals: DecimalCount;
   hasMsResolution: boolean;
   isOutsideRange: boolean;
 
@@ -344,8 +344,8 @@ export default class TimeSeries {
 
   updateLegendValues(formater: ValueFormatter, decimals: DecimalCount, scaledDecimals: DecimalCount) {
     this.valueFormater = formater;
-    this.decimals = decimals ?? 0;
-    this.scaledDecimals = scaledDecimals ?? 0;
+    this.decimals = decimals;
+    this.scaledDecimals = scaledDecimals;
   }
 
   formatValue(value: number) {
