@@ -1,6 +1,6 @@
 import React from 'react';
 import config from 'app/core/config';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -131,7 +131,7 @@ export const LoginServiceButtons = () => {
     return (
       <a
         key={key}
-        className={`btn btn-medium btn-service btn-service--${service.className || key} ${styles.button}`}
+        className={cx(`btn btn-medium btn-service btn-service--${service.className || key}`, styles.button)}
         href={`login/${service.hrefName ? service.hrefName : key}`}
         target="_self"
       >
