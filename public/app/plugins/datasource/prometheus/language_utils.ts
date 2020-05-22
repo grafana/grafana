@@ -136,16 +136,11 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
   const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
 
-  // Firstly, create array with label strings that match labelRegexp.
-  const arrayOfLabelStrings = exprAfterRegexMatch.match(labelRegexp);
-
-  // Loop trough arrayOfLabelStrings and create arrayOfLabelObjects.
+  // Create arrayOfLabelObjects with label objects that have key, operator and value.
   const arrayOfLabelObjects: Array<{ key: string; operator: string; value: string }> = [];
-  arrayOfLabelStrings.forEach(string => {
-    string.replace(labelRegexp, (label, key, operator, value) => {
-      arrayOfLabelObjects.push({ key, operator, value });
-      return '';
-    });
+  exprAfterRegexMatch.replace(labelRegexp, (label, key, operator, value) => {
+    arrayOfLabelObjects.push({ key, operator, value });
+    return '';
   });
 
   // Loop trough all of the label objects and add them to query.
