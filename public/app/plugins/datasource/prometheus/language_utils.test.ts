@@ -123,6 +123,11 @@ describe('expandRecordingRules()', () => {
       expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', { metricA: 'fooA', metricB: 'fooB' })
     ).toBe('fooA{label1="value1"} / fooB{label2="value2"}');
     expect(
+      expandRecordingRules('metricA{label1="value1",label2="value,2"}', {
+        metricA: 'rate(fooA[])',
+      })
+    ).toBe('rate(fooA{label1="value1",label2="value,2"}[])');
+    expect(
       expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', {
         metricA: 'rate(fooA[])',
         metricB: 'rate(fooB[])',

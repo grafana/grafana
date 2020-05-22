@@ -130,24 +130,22 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
   return correctlyExpandedQueryArray.join('');
 }
 
-function addLabelsToExpression(expr: string, regex: RegExp) {
+function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   // Split query into 2 parts - before the invalidLabelsRegex match and after.
-  const indexOfRegexMatch = expr.match(regex).index;
+  const indexOfRegexMatch = expr.match(invalidLabelsRegexp).index;
   const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
   const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
 
-  // Retrieve labels (as a string). Our exprAfterRegexMatch starts with "{" and we need to find closest matching bracket.
-  // We want to leave out the brackets and keep just string in labelsInString.
-  const stringOfLabels = exprAfterRegexMatch.substr(1, exprAfterRegexMatch.indexOf('}') - 1);
+  // Create array with labels. We are creating new regexp as we are going to use exec method
+  // and we don't want other functions to affect regexp state
+  const validLabelRegexp = new RegExp(labelRegexp);
+  const arrayOfLabels = exprAfterRegexMatch.match(validLabelRegexp);
 
-  // Create array with labels
-  const arrayOfLabels = stringOfLabels.split(',');
-
-  // Transform strings into object with specified key, operator and value
-  // Uses the same regex and similar logic as function addLabelToSelector in add_label_to_query
+  // Transform array with strings into object with specified key, operator and value.
   const arrayOfLabelObjects = arrayOfLabels.map(string => {
-    const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
-    const match = labelRegexp.exec(string);
+    // Regex is stateful object, we need to reset lastIndex so all matched are added to arrayOfLabelObjects.
+    validLabelRegexp.lastIndex = 0;
+    const match = validLabelRegexp.exec(string);
     return match && { key: match[1], operator: match[2], value: match[3] };
   });
 
