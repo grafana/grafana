@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import ReactDOM from 'react-dom';
 
 export interface Props {
@@ -16,10 +16,13 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
 
   componentDidMount() {
     window.addEventListener('click', this.onOutsideClick, false);
+    // Use keyup since keydown already has an eventlistener on window
+    window.addEventListener('keyup', this.onOutsideClick, false);
   }
 
   componentWillUnmount() {
     window.removeEventListener('click', this.onOutsideClick, false);
+    window.addEventListener('keyup', this.onOutsideClick, false);
   }
 
   onOutsideClick = (event: any) => {
