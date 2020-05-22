@@ -54,7 +54,7 @@ export class ThresholdMapper {
     }
 
     for (const t of panel.thresholds) {
-      t.fill = true;
+      t.fill = panel.alert.fill;
       t.line = true;
       t.colorMode = 'critical';
     }
