@@ -3,14 +3,14 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/teams/:teamId/members
-func (hs *HTTPServer) GetTeamMembers(c *m.ReqContext) Response {
-	query := m.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
+func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
+	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return Error(500, "Failed to get Team Members", err)
@@ -30,7 +30,7 @@ func (hs *HTTPServer) GetTeamMembers(c *m.ReqContext) Response {
 }
 
 // POST /api/teams/:teamId/members
-func (hs *HTTPServer) AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
+func (hs *HTTPServer) AddTeamMember(c *models.ReqContext, cmd models.AddTeamMemberCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.TeamId = c.ParamsInt64(":teamId")
 
@@ -39,11 +39,11 @@ func (hs *HTTPServer) AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand)
 	}
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrTeamNotFound {
+		if err == models.ErrTeamNotFound {
 			return Error(404, "Team not found", nil)
 		}
 
-		if err == m.ErrTeamMemberAlreadyAdded {
+		if err == models.ErrTeamMemberAlreadyAdded {
 			return Error(400, "User is already added to this team", nil)
 		}
 
@@ -56,7 +56,7 @@ func (hs *HTTPServer) AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand)
 }
 
 // PUT /:teamId/members/:userId
-func (hs *HTTPServer) UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCommand) Response {
+func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext, cmd models.UpdateTeamMemberCommand) Response {
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
@@ -64,7 +64,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCo
 		return Error(403, "Not allowed to update team member", err)
 	}
 
-	if c.OrgRole != m.ROLE_ADMIN {
+	if c.OrgRole != models.ROLE_ADMIN {
 		cmd.ProtectLastAdmin = true
 	}
 
@@ -73,7 +73,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCo
 	cmd.OrgId = orgId
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrTeamMemberNotFound {
+		if err == models.ErrTeamMemberNotFound {
 			return Error(404, "Team member not found.", nil)
 		}
 		return Error(500, "Failed to update team member.", err)
@@ -82,7 +82,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCo
 }
 
 // DELETE /api/teams/:teamId/members/:userId
-func (hs *HTTPServer) RemoveTeamMember(c *m.ReqContext) Response {
+func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) Response {
 	orgId := c.OrgId
 	teamId := c.ParamsInt64(":teamId")
 	userId := c.ParamsInt64(":userId")
@@ -92,16 +92,16 @@ func (hs *HTTPServer) RemoveTeamMember(c *m.ReqContext) Response {
 	}
 
 	protectLastAdmin := false
-	if c.OrgRole != m.ROLE_ADMIN {
+	if c.OrgRole != models.ROLE_ADMIN {
 		protectLastAdmin = true
 	}
 
-	if err := hs.Bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
-		if err == m.ErrTeamNotFound {
+	if err := hs.Bus.Dispatch(&models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
+		if err == models.ErrTeamNotFound {
 			return Error(404, "Team not found", nil)
 		}
 
-		if err == m.ErrTeamMemberNotFound {
+		if err == models.ErrTeamMemberNotFound {
 			return Error(404, "Team member not found", nil)
 		}
 

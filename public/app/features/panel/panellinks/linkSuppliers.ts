@@ -1,18 +1,20 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
+  DataLink,
+  DisplayValue,
+  Field,
   FieldDisplay,
-  LinkModelSupplier,
+  formattedValueToString,
+  getFieldDisplayValuesProxy,
   getTimeField,
   Labels,
-  ScopedVars,
-  ScopedVar,
-  Field,
   LinkModel,
-  formattedValueToString,
-  DisplayValue,
+  LinkModelSupplier,
+  ScopedVar,
+  ScopedVars,
 } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
-import { getFieldDisplayValuesProxy } from './fieldDisplayValuesProxy';
+import { config } from 'app/core/config';
 
 interface SeriesVars {
   name?: string;
@@ -99,7 +101,9 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               value: {
                 name: dataFrame.name,
                 refId: dataFrame.refId,
-                fields: getFieldDisplayValuesProxy(dataFrame, value.rowIndex!),
+                fields: getFieldDisplayValuesProxy(dataFrame, value.rowIndex!, {
+                  theme: config.theme,
+                }),
               },
               text: 'Data',
             };
@@ -143,7 +147,10 @@ export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<Pane
   };
 };
 
-export const getLinksFromLogsField = (field: Field, rowIndex: number): Array<LinkModel<Field>> => {
+export const getLinksFromLogsField = (
+  field: Field,
+  rowIndex: number
+): Array<{ linkModel: LinkModel<Field>; link: DataLink }> => {
   const scopedVars: any = {};
   scopedVars['__value'] = {
     value: {
@@ -153,6 +160,11 @@ export const getLinksFromLogsField = (field: Field, rowIndex: number): Array<Lin
   };
 
   return field.config.links
-    ? field.config.links.map(link => getLinkSrv().getDataLinkUIModel(link, scopedVars, field))
+    ? field.config.links.map(link => {
+        return {
+          link,
+          linkModel: getLinkSrv().getDataLinkUIModel(link, scopedVars, field),
+        };
+      })
     : [];
 };

@@ -5,10 +5,6 @@
   box-sizing: border-box;
 }
 
-.template-variable {
-  color: $variable;
-}
-
 div.flot-text {
   color: $text-color !important;
 }
@@ -22,6 +18,10 @@ div.flot-text {
   .sidemenu {
     display: none;
   }
+}
+
+.template-variable {
+  color: $variable;
 }
 
 .panel-solo {
@@ -54,10 +54,13 @@ div.flot-text {
   border-radius: 3px;
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
 
   &--transparent {
-    background-color: $page-bg;
-    border: none;
+    background-color: transparent;
+    border: 1px solid transparent;
   }
 
   &:hover {
@@ -79,23 +82,14 @@ div.flot-text {
 
 .panel-content {
   padding: $panel-padding;
-  height: calc(100% - #{$panel-header-height});
   width: 100%;
-  position: relative;
-  overflow: auto;
+  flex-grow: 1;
+  height: calc(100% - #{$panel-header-height});
 
   &--no-padding {
     padding: 0;
   }
 }
-
-// For larger screens, set back to hidden to avoid double scroll bars
-@include media-breakpoint-up(md) {
-  .panel-content {
-    overflow: hidden;
-  }
-}
-
 .dashboard-header {
   font-size: $font-size-h2;
   text-align: center;

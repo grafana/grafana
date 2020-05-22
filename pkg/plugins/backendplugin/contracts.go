@@ -1,7 +1,6 @@
 package backendplugin
 
 import (
-	"encoding/json"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -35,46 +34,42 @@ func (hs HealthStatus) String() string {
 
 // CheckHealthResult check health result.
 type CheckHealthResult struct {
-	Status HealthStatus
-	Info   string
+	Status      HealthStatus
+	Message     string
+	JSONDetails []byte
 }
 
-func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *CheckHealthResult {
+func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckHealthResult {
 	status := HealthStatusUnknown
 	switch protoResp.Status {
-	case pluginv2.CheckHealth_Response_ERROR:
+	case pluginv2.CheckHealthResponse_ERROR:
 		status = HealthStatusError
-	case pluginv2.CheckHealth_Response_OK:
+	case pluginv2.CheckHealthResponse_OK:
 		status = HealthStatusOk
 	}
 
 	return &CheckHealthResult{
-		Status: status,
-		Info:   protoResp.Info,
+		Status:      status,
+		Message:     protoResp.Message,
+		JSONDetails: protoResp.JsonDetails,
 	}
 }
 
-type PluginInstance struct {
-	ID       int64
-	Name     string
-	Type     string
-	URL      string
-	JSONData json.RawMessage
+func collectMetricsResultFromProto(protoResp *pluginv2.CollectMetricsResponse) *CollectMetricsResult {
+	var prometheusMetrics []byte
+
+	if protoResp.Metrics != nil {
+		prometheusMetrics = protoResp.Metrics.Prometheus
+	}
+
+	return &CollectMetricsResult{
+		PrometheusMetrics: prometheusMetrics,
+	}
 }
 
-type PluginConfig struct {
-	PluginID string
-	OrgID    int64
-	Instance *PluginInstance
-}
-
-type CallResourceRequest struct {
-	Config  PluginConfig
-	Path    string
-	Method  string
-	URL     string
-	Headers map[string][]string
-	Body    []byte
+// CollectMetricsResult collect metrics result.
+type CollectMetricsResult struct {
+	PrometheusMetrics []byte
 }
 
 // CallResourceResult call resource result.
@@ -82,4 +77,47 @@ type CallResourceResult struct {
 	Status  int
 	Headers map[string][]string
 	Body    []byte
+}
+
+type callResourceResultStream interface {
+	Recv() (*CallResourceResult, error)
+	Close() error
+}
+
+type callResourceResultStreamImpl struct {
+	stream pluginv2.Resource_CallResourceClient
+}
+
+func (s *callResourceResultStreamImpl) Recv() (*CallResourceResult, error) {
+	protoResp, err := s.stream.Recv()
+	if err != nil {
+		return nil, err
+	}
+
+	respHeaders := map[string][]string{}
+	for key, values := range protoResp.Headers {
+		respHeaders[key] = values.Values
+	}
+
+	return &CallResourceResult{
+		Headers: respHeaders,
+		Body:    protoResp.Body,
+		Status:  int(protoResp.Code),
+	}, nil
+}
+
+func (s *callResourceResultStreamImpl) Close() error {
+	return s.stream.CloseSend()
+}
+
+type singleCallResourceResult struct {
+	result *CallResourceResult
+}
+
+func (s *singleCallResourceResult) Recv() (*CallResourceResult, error) {
+	return s.result, nil
+}
+
+func (s *singleCallResourceResult) Close() error {
+	return nil
 }

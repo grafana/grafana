@@ -13,6 +13,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
   const { query, data, datasource, onChange, onRunQuery } = props;
 
   let absolute: AbsoluteTimeRange;
+
   if (data && data.request) {
     const { range } = data.request;
     absolute = {

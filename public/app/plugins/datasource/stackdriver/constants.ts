@@ -273,3 +273,9 @@ export const systemLabels = [
   'metadata.system_labels.top_level_controller_name',
   'metadata.system_labels.container_image',
 ];
+
+export const selectors = [
+  { label: 'SLI Value', value: 'select_slo_health' },
+  { label: 'SLO Compliance', value: 'select_slo_compliance' },
+  { label: 'SLO Error Budget Remaining', value: 'select_slo_budget_fraction' },
+];

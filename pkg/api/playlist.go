@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/bus"
-	_ "github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
-func ValidateOrgPlaylist(c *m.ReqContext) {
+func ValidateOrgPlaylist(c *models.ReqContext) {
 	id := c.ParamsInt64(":id")
-	query := m.GetPlaylistByIdQuery{Id: id}
+	query := models.GetPlaylistByIdQuery{Id: id}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -41,7 +40,7 @@ func ValidateOrgPlaylist(c *m.ReqContext) {
 	}
 }
 
-func SearchPlaylists(c *m.ReqContext) Response {
+func SearchPlaylists(c *models.ReqContext) Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
@@ -49,7 +48,7 @@ func SearchPlaylists(c *m.ReqContext) Response {
 		limit = 1000
 	}
 
-	searchQuery := m.GetPlaylistsQuery{
+	searchQuery := models.GetPlaylistsQuery{
 		Name:  query,
 		Limit: limit,
 		OrgId: c.OrgId,
@@ -63,9 +62,9 @@ func SearchPlaylists(c *m.ReqContext) Response {
 	return JSON(200, searchQuery.Result)
 }
 
-func GetPlaylist(c *m.ReqContext) Response {
+func GetPlaylist(c *models.ReqContext) Response {
 	id := c.ParamsInt64(":id")
-	cmd := m.GetPlaylistByIdQuery{Id: id}
+	cmd := models.GetPlaylistByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Playlist not found", err)
@@ -73,7 +72,7 @@ func GetPlaylist(c *m.ReqContext) Response {
 
 	playlistDTOs, _ := LoadPlaylistItemDTOs(id)
 
-	dto := &m.PlaylistDTO{
+	dto := &models.PlaylistDTO{
 		Id:       cmd.Result.Id,
 		Name:     cmd.Result.Name,
 		Interval: cmd.Result.Interval,
@@ -84,17 +83,17 @@ func GetPlaylist(c *m.ReqContext) Response {
 	return JSON(200, dto)
 }
 
-func LoadPlaylistItemDTOs(id int64) ([]m.PlaylistItemDTO, error) {
+func LoadPlaylistItemDTOs(id int64) ([]models.PlaylistItemDTO, error) {
 	playlistitems, err := LoadPlaylistItems(id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	playlistDTOs := make([]m.PlaylistItemDTO, 0)
+	playlistDTOs := make([]models.PlaylistItemDTO, 0)
 
 	for _, item := range playlistitems {
-		playlistDTOs = append(playlistDTOs, m.PlaylistItemDTO{
+		playlistDTOs = append(playlistDTOs, models.PlaylistItemDTO{
 			Id:         item.Id,
 			PlaylistId: item.PlaylistId,
 			Type:       item.Type,
@@ -107,8 +106,8 @@ func LoadPlaylistItemDTOs(id int64) ([]m.PlaylistItemDTO, error) {
 	return playlistDTOs, nil
 }
 
-func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
-	itemQuery := m.GetPlaylistItemsByIdQuery{PlaylistId: id}
+func LoadPlaylistItems(id int64) ([]models.PlaylistItem, error) {
+	itemQuery := models.GetPlaylistItemsByIdQuery{PlaylistId: id}
 	if err := bus.Dispatch(&itemQuery); err != nil {
 		return nil, err
 	}
@@ -116,7 +115,7 @@ func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
 	return *itemQuery.Result, nil
 }
 
-func GetPlaylistItems(c *m.ReqContext) Response {
+func GetPlaylistItems(c *models.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	playlistDTOs, err := LoadPlaylistItemDTOs(id)
@@ -128,7 +127,7 @@ func GetPlaylistItems(c *m.ReqContext) Response {
 	return JSON(200, playlistDTOs)
 }
 
-func GetPlaylistDashboards(c *m.ReqContext) Response {
+func GetPlaylistDashboards(c *models.ReqContext) Response {
 	playlistID := c.ParamsInt64(":id")
 
 	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistID)
@@ -139,10 +138,10 @@ func GetPlaylistDashboards(c *m.ReqContext) Response {
 	return JSON(200, playlists)
 }
 
-func DeletePlaylist(c *m.ReqContext) Response {
+func DeletePlaylist(c *models.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
-	cmd := m.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
+	cmd := models.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to delete playlist", err)
 	}
@@ -150,7 +149,7 @@ func DeletePlaylist(c *m.ReqContext) Response {
 	return JSON(200, "")
 }
 
-func CreatePlaylist(c *m.ReqContext, cmd m.CreatePlaylistCommand) Response {
+func CreatePlaylist(c *models.ReqContext, cmd models.CreatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -160,7 +159,7 @@ func CreatePlaylist(c *m.ReqContext, cmd m.CreatePlaylistCommand) Response {
 	return JSON(200, cmd.Result)
 }
 
-func UpdatePlaylist(c *m.ReqContext, cmd m.UpdatePlaylistCommand) Response {
+func UpdatePlaylist(c *models.ReqContext, cmd models.UpdatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 

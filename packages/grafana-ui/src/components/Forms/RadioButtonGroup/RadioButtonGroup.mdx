@@ -1,20 +1,24 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
-import { RadioButtonGroup } from './RadioButtonGroup';
+import { Meta, Story, Preview, Props } from "@storybook/addon-docs/blocks";
+import { RadioButtonGroup } from "./RadioButtonGroup";
 
 <Meta title="MDX|RadioButtonGroup" component={RadioButtonGroup} />
 
 # RadioButtonGroup
 
-`RadioButtonGroup` is used for selecting single value from multiple options.
+`RadioButtonGroup` is used to select a single value from multiple mutually exclusive options.
 
-Use `RadioButtonGroup` if there are up to four options available. Otherwise use Select component.
+### When to use
+
+Use `RadioButtonGroup` for mutually exclusive selections if there are up to four options available. This is because the `RadioButtonGroup` cannot have more than one row and should still accommodate small resolutions. For a mutually exclusive selection of more than four options, use `Select` component.
+
+Radio buttons can only exist in this type of group. If you want one single option, it's better to use `Switch` instead. To offer multiple choices within the same group or context which are not mutually exclusive, use `Checkbox` instead.
 
 ### Usage
 
 ```jsx
-import { Forms } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 
-<Forms.RadioButtonGroup options={...} value={...} onChange={...} />
+<RadioButtonGroup options={...} value={...} onChange={...} />
 ```
 
 #### Disabling options
@@ -33,7 +37,7 @@ const options = [
 const disabledOptions = ['prometheus', 'elastic'];
 
 
-<Forms.RadioButtonGroup
+<RadioButtonGroup
   options={options}
   disabledOptions={disabledOptions}
   value={...}

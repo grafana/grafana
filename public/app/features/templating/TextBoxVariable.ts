@@ -4,10 +4,10 @@ import {
   VariableActions,
   VariableHide,
   VariableOption,
-  VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 import { VariableSrv } from './variable_srv';
+import { VariableType } from '@grafana/data';
 
 export class TextBoxVariable implements TextBoxVariableModel, VariableActions {
   type: VariableType;

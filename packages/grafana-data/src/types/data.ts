@@ -1,5 +1,12 @@
+import { FieldConfig } from './dataFrame';
+import { DataTransformerConfig } from './transformations';
+import { ApplyFieldOverrideOptions } from './fieldOverrides';
+
 export type KeyValue<T = any> = { [s: string]: T };
 
+/**
+ * Represent panel data loading state.
+ */
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
@@ -8,24 +15,65 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+export type PreferredVisualisationType = 'graph' | 'table';
+
 export interface QueryResultMeta {
-  [key: string]: any;
-
-  // Match the result to the query
-  requestId?: string;
-
-  // Used in Explore for highlighting
-  searchWords?: string[];
-
-  // Used in Explore to show limit applied to search result
-  limit?: number;
-
-  // HACK: save the datassource name in the meta so we can load it from the response
-  // we should be able to find the datasource from the refId
-  datasource?: string;
-
-  // DatasSource Specific Values
+  /** DatasSource Specific Values */
   custom?: Record<string, any>;
+
+  /** Stats */
+  stats?: QueryResultMetaStat[];
+
+  /** Meta Notices */
+  notices?: QueryResultMetaNotice[];
+
+  /** Used to track transformation ids that where part of the processing */
+  transformations?: string[];
+
+  /** Currently used to show results in Explore only in preferred visualisation option */
+  preferredVisualisationType?: PreferredVisualisationType;
+
+  /**
+   * Legacy data source specific, should be moved to custom
+   * */
+  gmdMeta?: any[]; // used by cloudwatch
+  rawQuery?: string; // used by stackdriver
+  alignmentPeriod?: string; // used by stackdriver
+  query?: string; // used by azure log
+  searchWords?: string[]; // used by log models and loki
+  limit?: number; // used by log models and loki
+  json?: boolean; // used to keep track of old json doc values
+}
+
+export interface QueryResultMetaStat extends FieldConfig {
+  displayName: string;
+  value: number;
+}
+
+/**
+ * QueryResultMetaNotice is a structure that provides user notices for query result data
+ */
+export interface QueryResultMetaNotice {
+  /**
+   * Specify the notice severity
+   */
+  severity: 'info' | 'warning' | 'error';
+
+  /**
+   * Notice descriptive text
+   */
+  text: string;
+
+  /**
+   * An optional link that may be displayed in the UI.
+   * This value may be an absolute URL or relative to grafana root
+   */
+  link?: string;
+
+  /**
+   * Optionally suggest an appropriate tab for the panel inspector
+   */
+  inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
 export interface QueryResultBase {
@@ -48,6 +96,7 @@ export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
   unit?: string;
+  custom?: Record<string, any>;
 }
 
 export interface TableData extends QueryResultBase {
@@ -63,6 +112,10 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 
 export interface TimeSeries extends QueryResultBase {
   target: string;
+  /**
+   * If name is manually configured via an alias / legend pattern
+   */
+  title?: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
   tags?: Labels;
@@ -93,4 +146,12 @@ export interface AnnotationEvent {
 
   // Currently used to merge annotations from alerts and dashboard
   source?: any; // source.type === 'dashboard'
+}
+
+/**
+ * Describes and API for exposing panel specific data configurations.
+ */
+export interface DataConfigSource {
+  getTransformations: () => DataTransformerConfig[] | undefined;
+  getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
 }

@@ -20,13 +20,13 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 
 	password := models.Password(newPassword)
 	if password.IsWeak() {
-		return fmt.Errorf("New password is too short")
+		return fmt.Errorf("new password is too short")
 	}
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		return fmt.Errorf("Could not read user from database. Error: %v", err)
+		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 
 	passwordHashed, err := util.EncodePassword(newPassword, userQuery.Result.Salt)
@@ -40,7 +40,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return errutil.Wrapf(err, "Failed to update user password")
+		return errutil.Wrapf(err, "failed to update user password")
 	}
 
 	logger.Infof("\n")

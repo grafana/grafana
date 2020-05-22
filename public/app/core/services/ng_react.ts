@@ -54,7 +54,7 @@ function applied(fn: any, scope: any) {
   if (fn.wrappedInApply) {
     return fn;
   }
-  //tslint:disable-next-line:only-arrow-functions
+  // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
   const wrapped: any = function() {
     const args = arguments;
     const phase = scope.$root.$$phase;

@@ -8,6 +8,7 @@ import { DataFrame } from './dataFrame';
  */
 export enum LogLevel {
   emerg = 'critical',
+  fatal = 'critical',
   alert = 'critical',
   crit = 'critical',
   critical = 'critical',
@@ -17,6 +18,7 @@ export enum LogLevel {
   eror = 'error',
   error = 'error',
   info = 'info',
+  information = 'info',
   notice = 'info',
   dbug = 'debug',
   debug = 'debug',
@@ -58,6 +60,9 @@ export interface LogRowModel {
   searchWords?: string[];
   timeFromNow: string;
   timeEpochMs: number;
+  // timeEpochNs stores time with nanosecond-level precision,
+  // as millisecond-level precision is usually not enough for proper sorting of logs
+  timeEpochNs: string;
   timeLocal: string;
   timeUtc: string;
   uid: string;

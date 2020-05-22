@@ -20,9 +20,14 @@
   white-space: nowrap;
   border-radius: 3px;
   text-shadow: none;
-  font-size: 13px;
-  padding: 2px 6px 2px 6px;
-  border: 1px solid lighten($purple, 10%);
+  font-size: 12px;
+  padding: 0px 6px;
+  line-height: 20px;
+  height: 20px;
+
+  svg {
+    margin-bottom: 0;
+  }
 
   .icon-tag {
     position: relative;

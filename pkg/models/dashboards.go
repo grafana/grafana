@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -31,7 +32,9 @@ var (
 	ErrDashboardInvalidUid                       = errors.New("uid contains illegal characters")
 	ErrDashboardUidToLong                        = errors.New("uid to long. max 40 characters")
 	ErrDashboardCannotSaveProvisionedDashboard   = errors.New("Cannot save provisioned dashboard")
+	ErrDashboardRefreshIntervalTooShort          = errors.New("Dashboard refresh interval is too low")
 	ErrDashboardCannotDeleteProvisionedDashboard = errors.New("provisioned dashboard cannot be deleted")
+	ErrDashboardIdentifierNotSet                 = errors.New("Unique identfier needed to be able to get a dashboard")
 	RootFolderName                               = "General"
 )
 
@@ -187,7 +190,18 @@ func (dash *Dashboard) UpdateSlug() {
 }
 
 func SlugifyTitle(title string) string {
-	return slug.Make(strings.ToLower(title))
+	s := slug.Make(strings.ToLower(title))
+	if s == "" {
+		// If the dashboard name is only characters outside of the
+		// sluggable characters, the slug creation will return an
+		// empty string which will mess up URLs. This failsafe picks
+		// that up and creates the slug as a base64 identifier instead.
+		s = base64.RawURLEncoding.EncodeToString([]byte(title))
+		if slug.MaxLength != 0 && len(s) > slug.MaxLength {
+			s = s[:slug.MaxLength]
+		}
+	}
+	return s
 }
 
 // GetUrl return the html url for a folder if it's folder, otherwise for a dashboard

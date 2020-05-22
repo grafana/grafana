@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.1"
+title = "What's new in Grafana v6.1"
 description = "Feature and improvement highlights for Grafana v6.1"
-keywords = ["grafana", "new", "documentation", "6.1"]
+keywords = ["grafana", "new", "documentation", "6.1", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.1"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -12
 +++
 
-# What's New in Grafana v6.1
+# What's new in Grafana v6.1
 
 ## Highlights
 
@@ -50,7 +50,7 @@ This release contains a lot of small features and fixes:
 - A new keyboard shortcut `d l` toggles all Graph legends in a dashboard.
 - A small bug fix for Elasticsearch - template variables in the alias field now work properly.
 - Some new capabilities have been added for data source plugins that will be of interest to plugin authors:
-  - a new oauth pass-through option.
+  - a new OAuth pass-through option.
   - it is now possible to add user details to requests sent to the dataproxy.
 - Heatmap and Explore fixes.
 

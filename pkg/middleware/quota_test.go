@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -44,8 +44,8 @@ func TestMiddlewareQuota(t *testing.T) {
 		QuotaFn := Quota(qs)
 
 		middlewareScenario(t, "with user not logged in", func(sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *m.GetGlobalQuotaByTargetQuery) error {
-				query.Result = &m.GlobalQuotaDTO{
+			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
 					Used:   4,
@@ -83,20 +83,20 @@ func TestMiddlewareQuota(t *testing.T) {
 
 		middlewareScenario(t, "with user logged in", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
-				return &m.UserToken{
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return &models.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil
 			}
 
-			bus.AddHandler("globalQuota", func(query *m.GetGlobalQuotaByTargetQuery) error {
-				query.Result = &m.GlobalQuotaDTO{
+			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
 					Used:   4,
@@ -104,8 +104,8 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("userQuota", func(query *m.GetUserQuotaByTargetQuery) error {
-				query.Result = &m.UserQuotaDTO{
+			bus.AddHandler("userQuota", func(query *models.GetUserQuotaByTargetQuery) error {
+				query.Result = &models.UserQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
 					Used:   4,
@@ -113,8 +113,8 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("orgQuota", func(query *m.GetOrgQuotaByTargetQuery) error {
-				query.Result = &m.OrgQuotaDTO{
+			bus.AddHandler("orgQuota", func(query *models.GetOrgQuotaByTargetQuery) error {
+				query.Result = &models.OrgQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
 					Used:   4,

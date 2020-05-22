@@ -11,12 +11,13 @@
 .main-view {
   position: relative;
   flex-grow: 1;
-  background: $page-gradient;
+  background: $page-bg;
 }
 
-.panel-in-fullscreen {
+.page-explore,
+.page-dashboard {
   .main-view {
-    background: $edit-gradient;
+    background: $dashboard-bg;
   }
 }
 
@@ -32,11 +33,13 @@
   min-height: 100%;
   flex-direction: column;
   width: 100%;
+  height: 100%;
 }
 
 .page-container {
   flex-grow: 1;
   width: 100%;
+  flex-basis: 100%;
   margin-left: auto;
   margin-right: auto;
   padding-left: $spacer * 2;
@@ -82,13 +85,6 @@
       width: 100%;
       align-self: flex-end;
     }
-  }
-}
-
-// fix for phantomjs
-.body--phantomjs {
-  .scroll-canvas {
-    overflow: hidden;
   }
 }
 
@@ -148,8 +144,7 @@
 
 .page-sub-heading-icon {
   margin-left: $spacer;
-  vertical-align: 6px;
-  font-size: 13px;
+  margin-top: $space-xs;
 }
 
 .page-sidebar {

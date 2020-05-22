@@ -1,5 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import classNames from 'classnames';
+import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types/icon';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -15,16 +17,16 @@ interface AlertProps {
 function getIconFromSeverity(severity: AlertVariant): string {
   switch (severity) {
     case 'error': {
-      return 'fa fa-exclamation-triangle';
+      return 'exclamation-triangle';
     }
     case 'warning': {
-      return 'fa fa-exclamation-triangle';
+      return 'exclamation-triangle';
     }
     case 'info': {
-      return 'fa fa-info-circle';
+      return 'info-circle';
     }
     case 'success': {
-      return 'fa fa-check';
+      return 'check';
     }
     default:
       return '';
@@ -37,7 +39,7 @@ export const Alert: FC<AlertProps> = ({ title, buttonText, onButtonClick, onRemo
     <div className="alert-container">
       <div className={alertClass}>
         <div className="alert-icon">
-          <i className={getIconFromSeverity(severity)} />
+          <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
         <div className="alert-body">
           <div className="alert-title">{title}</div>
@@ -46,7 +48,7 @@ export const Alert: FC<AlertProps> = ({ title, buttonText, onButtonClick, onRemo
         {/* If onRemove is specified , giving preference to onRemove */}
         {onRemove && (
           <button type="button" className="alert-close" onClick={onRemove}>
-            <i className="fa fa fa-remove" />
+            <Icon name="times" size="lg" />
           </button>
         )}
         {onButtonClick && (

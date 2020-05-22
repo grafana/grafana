@@ -215,4 +215,9 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add check_sum column", NewAddColumnMigration(dashboardExtrasTableV2, &Column{
 		Name: "check_sum", Type: DB_NVarchar, Length: 32, Nullable: true,
 	}))
+	mg.AddMigration("Add index for dashboard_title", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"title"},
+		Type: IndexType,
+	}))
+
 }

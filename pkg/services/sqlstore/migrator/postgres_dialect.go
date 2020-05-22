@@ -2,12 +2,12 @@ package migrator
 
 import (
 	"fmt"
+	"github.com/lib/pq"
 	"strconv"
 	"strings"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/lib/pq"
+	"xorm.io/xorm"
 )
 
 type Postgres struct {
@@ -147,6 +147,13 @@ func (db *Postgres) isThisError(err error, errcode string) bool {
 	}
 
 	return false
+}
+
+func (db *Postgres) ErrorMessage(err error) string {
+	if driverErr, ok := err.(*pq.Error); ok {
+		return driverErr.Message
+	}
+	return ""
 }
 
 func (db *Postgres) IsUniqueConstraintViolation(err error) bool {

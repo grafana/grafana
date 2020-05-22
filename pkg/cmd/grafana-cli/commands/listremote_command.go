@@ -7,9 +7,8 @@ import (
 
 // listRemoteCommand prints out all plugins in the remote repo with latest version supported on current platform.
 // If there are no supported versions for plugin it is skipped.
-func listRemoteCommand(c utils.CommandLine) error {
-	plugin, err := c.ApiClient().ListAllPlugins(c.RepoDirectory())
-
+func (cmd Command) listRemoteCommand(c utils.CommandLine) error {
+	plugin, err := cmd.Client.ListAllPlugins(c.RepoDirectory())
 	if err != nil {
 		return err
 	}

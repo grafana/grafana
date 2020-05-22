@@ -20,22 +20,17 @@ const setup = (propOverrides?: object) => {
       basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
-      secureJsonFields: {
-        appInsightsApiKey: false,
-      },
+      secureJsonFields: {},
       jsonData: {
         cloudName: '',
         subscriptionId: '',
-        appInsightsAppId: 'cvvcc020-2cpo-123a-a3d0-df6547fki792',
       },
-      secureJsonData: {
-        appInsightsApiKey: 'e7f3f775-a987-4b3f-3835-51c4f982kl48',
-      },
+      secureJsonData: {},
       version: 1,
       readOnly: false,
     },
-    onUpdateOption: jest.fn(),
-    onUpdateSecureOption: jest.fn(),
+    onUpdateJsonDataOption: jest.fn(),
+    onUpdateSecureJsonDataOption: jest.fn(),
     onResetOptionKey: jest.fn(),
   };
 
@@ -53,7 +48,7 @@ describe('Render', () => {
 
   it('should disable insights api key input', () => {
     const wrapper = setup({
-      datasourceConfig: {
+      options: {
         secureJsonFields: {
           appInsightsApiKey: true,
         },
@@ -70,7 +65,7 @@ describe('Render', () => {
 
   it('should enable insights api key input', () => {
     const wrapper = setup({
-      datasourceConfig: {
+      options: {
         secureJsonFields: {
           appInsightsApiKey: false,
         },

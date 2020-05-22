@@ -89,3 +89,14 @@ type SystemUserCountStats struct {
 type GetSystemUserCountStatsQuery struct {
 	Result *SystemUserCountStats
 }
+
+type ActiveUserStats struct {
+	ActiveUsers   int64
+	ActiveAdmins  int64
+	ActiveEditors int64
+	ActiveViewers int64
+}
+
+type GetActiveUserStatsQuery struct {
+	Result *ActiveUserStats
+}

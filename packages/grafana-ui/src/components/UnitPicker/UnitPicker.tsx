@@ -1,7 +1,5 @@
 import React, { PureComponent } from 'react';
-
-import { Select } from '../Select/Select';
-
+import { Cascader, CascaderOption } from '../Cascader/Cascader';
 import { getValueFormats, SelectableValue } from '@grafana/data';
 
 interface Props {
@@ -15,10 +13,6 @@ function formatCreateLabel(input: string) {
 }
 
 export class UnitPicker extends PureComponent<Props> {
-  static defaultProps = {
-    width: 12,
-  };
-
   onChange = (value: SelectableValue<string>) => {
     this.props.onChange(value.value);
   };
@@ -47,7 +41,8 @@ export class UnitPicker extends PureComponent<Props> {
 
       return {
         label: group.text,
-        options,
+        value: group.text,
+        items: options,
       };
     });
 
@@ -57,15 +52,14 @@ export class UnitPicker extends PureComponent<Props> {
     }
 
     return (
-      <Select
+      <Cascader
         width={width}
-        defaultValue={current}
-        isSearchable={true}
-        allowCustomValue={true}
+        initialValue={current && current.label}
+        allowCustomValue
         formatCreateLabel={formatCreateLabel}
-        options={groupOptions}
+        options={groupOptions as CascaderOption[]}
         placeholder="Choose"
-        onChange={this.onChange}
+        onSelect={this.props.onChange}
       />
     );
   }

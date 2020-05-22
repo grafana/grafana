@@ -6,6 +6,12 @@ import $q from 'q';
 import { dateTime } from '@grafana/data';
 import { CustomVariable } from '../custom_variable';
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    user: { orgId: 1, orgName: 'TestOrg' },
+  },
+}));
+
 describe('VariableSrv', function(this: any) {
   const ctx = {
     datasourceSrv: {},
@@ -26,6 +32,7 @@ describe('VariableSrv', function(this: any) {
         this.variables = vars;
       },
       updateIndex: () => {},
+      setGlobalVariable: (name: string, variable: any) => {},
       replace: (str: any) =>
         str.replace(this.regex, (match: string) => {
           return match;

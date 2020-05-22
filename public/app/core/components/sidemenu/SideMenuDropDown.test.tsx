@@ -32,4 +32,19 @@ describe('Render', () => {
 
     expect(wrapper).toMatchSnapshot();
   });
+
+  it('should not render hideFromMenu children', () => {
+    const wrapper = setup({
+      link: {
+        text: 'link',
+        children: [
+          { id: 1, hideFromMenu: false },
+          { id: 2, hideFromMenu: true },
+          { id: 3, hideFromMenu: false },
+        ],
+      },
+    });
+
+    expect(wrapper).toMatchSnapshot();
+  });
 });

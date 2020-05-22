@@ -59,7 +59,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { data, query } = this.props;
+    const { query } = this.props;
     const { syntaxLoaded } = this.state;
 
     return (
@@ -71,13 +71,12 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
               query={query.query}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a Lucene query"
+              placeholder="Enter a Lucene query (run with Shift+Enter)"
               portalOrigin="elasticsearch"
               syntaxLoaded={syntaxLoaded}
             />
           </div>
         </div>
-        {data && data.error ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
       </>
     );
   }

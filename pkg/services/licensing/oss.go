@@ -44,7 +44,7 @@ func (l *OSSLicensingService) Init() error {
 					Text: "Upgrade",
 					Id:   "upgrading",
 					Url:  l.LicenseURL(req.SignedInUser),
-					Icon: "fa fa-fw fa-unlock-alt",
+					Icon: "unlock",
 				})
 			}
 		}

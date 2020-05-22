@@ -8,6 +8,7 @@ jest.mock('app/core/store', () => {
   return {
     getBool: jest.fn(),
     set: jest.fn(),
+    getObject: jest.fn(),
   };
 });
 
@@ -288,7 +289,7 @@ describe('SearchSrv', () => {
 
       searchSrv['getStarred'] = () => {
         getStarredCalled = true;
-        return Promise.resolve();
+        return Promise.resolve({});
       };
 
       return searchSrv.search({ skipStarred: true }).then(() => {});

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import { TimeSeries } from 'app/core/core';
-import { CustomScrollbar } from '@grafana/ui';
+import { CustomScrollbar, Icon } from '@grafana/ui';
 import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
 type Sort = 'min' | 'max' | 'avg' | 'current' | 'total';
@@ -303,7 +303,7 @@ class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & Legen
     return (
       <th className="pointer" onClick={this.onClick}>
         {statName}
-        {sort === statName && <span className={sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up'} />}
+        {sort === statName && <Icon name={sortDesc ? 'angle-down' : 'angle-up'} />}
       </th>
     );
   }

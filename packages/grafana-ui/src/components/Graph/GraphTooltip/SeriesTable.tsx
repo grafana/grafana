@@ -67,6 +67,7 @@ interface SeriesTableProps {
 export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) => {
   const theme = useTheme();
   const styles = getSeriesTableRowStyles(theme);
+
   return (
     <>
       {timestamp && (

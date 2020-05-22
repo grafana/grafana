@@ -15,11 +15,13 @@ import {
   LinkModel,
   Field,
 } from '@grafana/data';
-import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import store from 'app/core/store';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -52,6 +54,7 @@ interface Props {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
+  showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -59,7 +62,7 @@ interface Props {
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
@@ -148,6 +151,7 @@ export class Logs extends PureComponent<Props, State> {
       timeZone,
       scanning,
       scanRange,
+      showContextToggle,
       width,
       dedupedRows,
       absoluteRange,
@@ -239,6 +243,7 @@ export class Logs extends PureComponent<Props, State> {
           rowLimit={logRows ? logRows.length : undefined}
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
+          showContextToggle={showContextToggle}
           showLabels={showLabels}
           showTime={showTime}
           wrapLogMessage={wrapLogMessage}

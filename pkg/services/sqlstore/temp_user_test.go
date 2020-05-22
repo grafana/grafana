@@ -3,9 +3,8 @@ package sqlstore
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
-
-	m "github.com/grafana/grafana/pkg/models"
 )
 
 func TestTempUserCommandsAndQueries(t *testing.T) {
@@ -14,18 +13,18 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given saved api key", func() {
-			cmd := m.CreateTempUserCommand{
+			cmd := models.CreateTempUserCommand{
 				OrgId:  2256,
 				Name:   "hello",
 				Code:   "asd",
 				Email:  "e@as.co",
-				Status: m.TmpUserInvitePending,
+				Status: models.TmpUserInvitePending,
 			}
 			err := CreateTempUser(&cmd)
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get temp users by org id", func() {
-				query := m.GetTempUsersQuery{OrgId: 2256, Status: m.TmpUserInvitePending}
+				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
 				err = GetTempUsersQuery(&query)
 
 				So(err, ShouldBeNil)
@@ -33,7 +32,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able to get temp users by email", func() {
-				query := m.GetTempUsersQuery{Email: "e@as.co", Status: m.TmpUserInvitePending}
+				query := models.GetTempUsersQuery{Email: "e@as.co", Status: models.TmpUserInvitePending}
 				err = GetTempUsersQuery(&query)
 
 				So(err, ShouldBeNil)
@@ -41,7 +40,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able to get temp users by code", func() {
-				query := m.GetTempUserByCodeQuery{Code: "asd"}
+				query := models.GetTempUserByCodeQuery{Code: "asd"}
 				err = GetTempUserByCode(&query)
 
 				So(err, ShouldBeNil)
@@ -49,24 +48,23 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able update status", func() {
-				cmd2 := m.UpdateTempUserStatusCommand{Code: "asd", Status: m.TmpUserRevoked}
+				cmd2 := models.UpdateTempUserStatusCommand{Code: "asd", Status: models.TmpUserRevoked}
 				err := UpdateTempUserStatus(&cmd2)
 				So(err, ShouldBeNil)
 			})
 
 			Convey("Should be able update email sent and email sent on", func() {
-				cmd3 := m.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
+				cmd3 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
 				err := UpdateTempUserWithEmailSent(&cmd3)
 				So(err, ShouldBeNil)
 
-				query := m.GetTempUsersQuery{OrgId: 2256, Status: m.TmpUserInvitePending}
+				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
 				err = GetTempUsersQuery(&query)
 
 				So(err, ShouldBeNil)
 				So(query.Result[0].EmailSent, ShouldBeTrue)
 				So(query.Result[0].EmailSentOn, ShouldHappenOnOrAfter, (query.Result[0].Created))
 			})
-
 		})
 	})
 }

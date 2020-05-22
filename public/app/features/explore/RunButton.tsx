@@ -1,5 +1,6 @@
 import React from 'react';
 import { RefreshPicker } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
 import classNames from 'classnames';
@@ -20,22 +21,30 @@ const getStyles = memoizeOne(() => {
 type Props = {
   splitted: boolean;
   loading: boolean;
-  onRun: () => void;
+  isLive: boolean;
+  onRun: (loading: boolean) => void;
   refreshInterval?: string;
   onChangeRefreshInterval: (interval: string) => void;
   showDropdown: boolean;
 };
 
 export function RunButton(props: Props) {
-  const { splitted, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown } = props;
+  const { splitted, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const styles = getStyles();
+
   const runButton = (
     <ResponsiveButton
       splitted={splitted}
-      title="Run Query"
-      onClick={onRun}
-      buttonClassName={classNames('navbar-button--secondary', { 'btn--radius-right-0': showDropdown })}
-      iconClassName={loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-refresh fa-fw'}
+      title={loading && !isLive ? 'Cancel' : 'Run Query'}
+      onClick={() => onRun(loading)}
+      buttonClassName={classNames({
+        'navbar-button--primary': isLive || !loading,
+        'navbar-button--danger': loading && !isLive,
+        'btn--radius-right-0': showDropdown,
+      })}
+      icon={loading ? 'fa fa-spinner' : 'sync'}
+      iconClassName={loading && ' fa-spin run-icon'}
+      aria-label={selectors.pages.Explore.General.runButton}
     />
   );
 
@@ -44,7 +53,9 @@ export function RunButton(props: Props) {
       <RefreshPicker
         onIntervalChanged={onChangeRefreshInterval}
         value={refreshInterval}
-        buttonSelectClassName={`navbar-button--secondary ${styles.selectButtonOverride}`}
+        buttonSelectClassName={`${loading ? 'navbar-button--danger' : 'navbar-button--primary'} ${
+          styles.selectButtonOverride
+        }`}
         refreshButton={runButton}
       />
     );

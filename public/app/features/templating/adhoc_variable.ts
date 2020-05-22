@@ -5,9 +5,10 @@ import {
   assignModelProperties,
   VariableActions,
   VariableHide,
-  VariableType,
   variableTypes,
-} from './variable';
+} from './types';
+
+import { VariableType } from '@grafana/data';
 
 export class AdhocVariable implements AdHocVariableModel, VariableActions {
   type: VariableType;

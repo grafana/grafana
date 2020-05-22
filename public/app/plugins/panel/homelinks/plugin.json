@@ -1,6 +1,6 @@
 {
   "type": "panel",
-  "name": "Home Links",
+  "name": "Home links",
   "id": "homelinks",
 
   "hideFromList": true,
@@ -8,7 +8,7 @@
 
   "info": {
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

@@ -11,11 +11,10 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
+	"xorm.io/xorm"
 )
 
 var (
@@ -35,7 +35,8 @@ var (
 	sqlog log.Logger = log.New("sqlstore")
 )
 
-const ContextSessionName = "db-session"
+// ContextSessionKey is used as key to save values in `context.Context`
+type ContextSessionKey struct{}
 
 func init() {
 	// This change will make xorm use an empty default schema for postgres and
@@ -67,7 +68,6 @@ func (ss *SqlStore) Init() error {
 	ss.readConfig()
 
 	engine, err := ss.getEngine()
-
 	if err != nil {
 		return fmt.Errorf("Fail to connect to database: %v", err)
 	}
@@ -99,6 +99,12 @@ func (ss *SqlStore) Init() error {
 
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
+	ss.addAlertNotificationUidByIdHandler()
+
+	err = ss.logOrgsNotice()
+	if err != nil {
+		return err
+	}
 
 	if ss.skipEnsureDefaultOrgAndUser {
 		return nil
@@ -107,9 +113,33 @@ func (ss *SqlStore) Init() error {
 	return ss.ensureMainOrgAndAdminUser()
 }
 
+func (ss *SqlStore) logOrgsNotice() error {
+	type targetCount struct {
+		Count int64
+	}
+
+	return ss.WithDbSession(context.Background(), func(session *DBSession) error {
+		resp := make([]*targetCount, 0)
+		if err := session.SQL("select count(id) as Count from org").Find(&resp); err != nil {
+			return err
+		}
+
+		if resp[0].Count > 1 {
+			ss.log.Warn(`[Deprecation notice]`)
+			ss.log.Warn(`Fewer than 1% of Grafana installations use organizations, and we feel that most of those`)
+			ss.log.Warn(`users would have a better experience using Teams instead. As such, we are considering de-emphasizing`)
+			ss.log.Warn(`and eventually deprecating Organizations in a future Grafana release. If you would like to provide`)
+			ss.log.Warn(`feedback or describe your need, please do so in the issue linked below`)
+			ss.log.Warn(`https://github.com/grafana/grafana/issues/24588`)
+		}
+
+		return nil
+	})
+}
+
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-		systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
+		systemUserCountQuery := models.GetSystemUserCountStatsQuery{}
 		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
 		if err != nil {
 			return fmt.Errorf("Could not determine if admin user exists: %v", err)
@@ -121,7 +151,7 @@ func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
-			cmd := m.CreateUserCommand{}
+			cmd := models.CreateUserCommand{}
 			cmd.Login = setting.AdminUser
 			cmd.Email = setting.AdminUser + "@localhost"
 			cmd.Password = setting.AdminPassword
@@ -230,7 +260,6 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 
 func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 	connectionString, err := ss.buildConnectionString()
-
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +337,7 @@ type ITestDB interface {
 	Fatalf(format string, args ...interface{})
 }
 
-// InitTestDB initiliaze test DB
+// InitTestDB initialize test DB.
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}

@@ -21,6 +21,7 @@ var (
 	versionZero                     = "testdata/version-0"
 	brokenYaml                      = "testdata/broken-yaml"
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
+	withoutDefaults                 = "testdata/appliedDefaults"
 
 	fakeRepo *fakeRepository
 )
@@ -34,6 +35,18 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
 		bus.AddHandler("test", mockGetAll)
+
+		Convey("apply default values when missing", func() {
+			dc := newDatasourceProvisioner(logger)
+			err := dc.applyChanges(withoutDefaults)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			So(len(fakeRepo.inserted), ShouldEqual, 1)
+			So(fakeRepo.inserted[0].OrgId, ShouldEqual, 1)
+			So(fakeRepo.inserted[0].Access, ShouldEqual, "proxy")
+		})
 
 		Convey("One configured datasource", func() {
 			Convey("no datasource in database", func() {
@@ -159,9 +172,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			dsCfg := cfg[0]
 
-			So(dsCfg.ApiVersion, ShouldEqual, 1)
+			So(dsCfg.APIVersion, ShouldEqual, 1)
 
-			validateDatasource(dsCfg)
+			validateDatasourceV1(dsCfg)
 			validateDeleteDatasources(dsCfg)
 
 			dsCount := 0
@@ -187,26 +200,28 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			dsCfg := cfg[0]
 
-			So(dsCfg.ApiVersion, ShouldEqual, 0)
+			So(dsCfg.APIVersion, ShouldEqual, 0)
 
 			validateDatasource(dsCfg)
 			validateDeleteDatasources(dsCfg)
 		})
 	})
 }
-func validateDeleteDatasources(dsCfg *DatasourcesAsConfig) {
+
+func validateDeleteDatasources(dsCfg *configs) {
 	So(len(dsCfg.DeleteDatasources), ShouldEqual, 1)
 	deleteDs := dsCfg.DeleteDatasources[0]
 	So(deleteDs.Name, ShouldEqual, "old-graphite3")
-	So(deleteDs.OrgId, ShouldEqual, 2)
+	So(deleteDs.OrgID, ShouldEqual, 2)
 }
-func validateDatasource(dsCfg *DatasourcesAsConfig) {
+
+func validateDatasource(dsCfg *configs) {
 	ds := dsCfg.Datasources[0]
 	So(ds.Name, ShouldEqual, "name")
 	So(ds.Type, ShouldEqual, "type")
 	So(ds.Access, ShouldEqual, models.DS_ACCESS_PROXY)
-	So(ds.OrgId, ShouldEqual, 2)
-	So(ds.Url, ShouldEqual, "url")
+	So(ds.OrgID, ShouldEqual, 2)
+	So(ds.URL, ShouldEqual, "url")
 	So(ds.User, ShouldEqual, "user")
 	So(ds.Password, ShouldEqual, "password")
 	So(ds.Database, ShouldEqual, "database")
@@ -218,15 +233,21 @@ func validateDatasource(dsCfg *DatasourcesAsConfig) {
 	So(ds.Editable, ShouldBeTrue)
 	So(ds.Version, ShouldEqual, 10)
 
-	So(len(ds.JsonData), ShouldBeGreaterThan, 2)
-	So(ds.JsonData["graphiteVersion"], ShouldEqual, "1.1")
-	So(ds.JsonData["tlsAuth"], ShouldEqual, true)
-	So(ds.JsonData["tlsAuthWithCACert"], ShouldEqual, true)
+	So(len(ds.JSONData), ShouldBeGreaterThan, 2)
+	So(ds.JSONData["graphiteVersion"], ShouldEqual, "1.1")
+	So(ds.JSONData["tlsAuth"], ShouldEqual, true)
+	So(ds.JSONData["tlsAuthWithCACert"], ShouldEqual, true)
 
-	So(len(ds.SecureJsonData), ShouldBeGreaterThan, 2)
-	So(ds.SecureJsonData["tlsCACert"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
-	So(ds.SecureJsonData["tlsClientCert"], ShouldEqual, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
-	So(ds.SecureJsonData["tlsClientKey"], ShouldEqual, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
+	So(len(ds.SecureJSONData), ShouldBeGreaterThan, 2)
+	So(ds.SecureJSONData["tlsCACert"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
+	So(ds.SecureJSONData["tlsClientCert"], ShouldEqual, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
+	So(ds.SecureJSONData["tlsClientKey"], ShouldEqual, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
+}
+
+func validateDatasourceV1(dsCfg *configs) {
+	validateDatasource(dsCfg)
+	ds := dsCfg.Datasources[0]
+	So(ds.UID, ShouldEqual, "test_uid")
 }
 
 type fakeRepository struct {

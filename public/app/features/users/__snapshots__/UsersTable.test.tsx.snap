@@ -71,396 +71,414 @@ exports[`Render should render users table 1`] = `
       key="0-0"
     >
       <td
-        className="width-4 text-center"
+        className="width-2 text-center"
       >
         <img
           className="filter-table__avatar"
           src="url/to/avatar"
         />
       </td>
-      <td>
-        user-0
-      </td>
-      <td>
+      <td
+        className="max-width-6"
+      >
         <span
           className="ellipsis"
+          title="user-0"
+        >
+          user-0
+        </span>
+      </td>
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-0@test.com"
         >
           user-0@test.com
         </span>
       </td>
-      <td>
-        user-0 test
-      </td>
-      <td />
-      <td>
-        <div
-          className="gf-form-select-wrapper width-12"
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-0 test"
         >
-          <select
-            className="gf-form-input"
-            onChange={[Function]}
-            value="Admin"
-          >
-            <option
-              key="Viewer-0"
-              value="Viewer"
-            >
-              Viewer
-            </option>
-            <option
-              key="Editor-1"
-              value="Editor"
-            >
-              Editor
-            </option>
-            <option
-              key="Admin-2"
-              value="Admin"
-            >
-              Admin
-            </option>
-          </select>
-        </div>
+          user-0 test
+        </span>
+      </td>
+      <td
+        className="width-1"
+      />
+      <td
+        className="width-8"
+      >
+        <Component
+          onChange={[Function]}
+          value="Admin"
+        />
       </td>
       <td>
-        <div
-          className="btn btn-danger btn-small"
+        <Button
+          icon="times"
           onClick={[Function]}
-        >
-          <i
-            className="fa fa-remove"
-          />
-        </div>
+          size="sm"
+          variant="destructive"
+        />
+        <Component
+          body="Are you sure you want to delete user user-0?"
+          confirmText="Delete"
+          isOpen={false}
+          onConfirm={[Function]}
+          onDismiss={[Function]}
+          title="Delete"
+        />
       </td>
     </tr>
     <tr
       key="1-1"
     >
       <td
-        className="width-4 text-center"
+        className="width-2 text-center"
       >
         <img
           className="filter-table__avatar"
           src="url/to/avatar"
         />
       </td>
-      <td>
-        user-1
-      </td>
-      <td>
+      <td
+        className="max-width-6"
+      >
         <span
           className="ellipsis"
+          title="user-1"
+        >
+          user-1
+        </span>
+      </td>
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-1@test.com"
         >
           user-1@test.com
         </span>
       </td>
-      <td>
-        user-1 test
-      </td>
-      <td />
-      <td>
-        <div
-          className="gf-form-select-wrapper width-12"
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-1 test"
         >
-          <select
-            className="gf-form-input"
-            onChange={[Function]}
-            value="Admin"
-          >
-            <option
-              key="Viewer-0"
-              value="Viewer"
-            >
-              Viewer
-            </option>
-            <option
-              key="Editor-1"
-              value="Editor"
-            >
-              Editor
-            </option>
-            <option
-              key="Admin-2"
-              value="Admin"
-            >
-              Admin
-            </option>
-          </select>
-        </div>
+          user-1 test
+        </span>
+      </td>
+      <td
+        className="width-1"
+      />
+      <td
+        className="width-8"
+      >
+        <Component
+          onChange={[Function]}
+          value="Admin"
+        />
       </td>
       <td>
-        <div
-          className="btn btn-danger btn-small"
+        <Button
+          icon="times"
           onClick={[Function]}
-        >
-          <i
-            className="fa fa-remove"
-          />
-        </div>
+          size="sm"
+          variant="destructive"
+        />
+        <Component
+          body="Are you sure you want to delete user user-1?"
+          confirmText="Delete"
+          isOpen={false}
+          onConfirm={[Function]}
+          onDismiss={[Function]}
+          title="Delete"
+        />
       </td>
     </tr>
     <tr
       key="2-2"
     >
       <td
-        className="width-4 text-center"
+        className="width-2 text-center"
       >
         <img
           className="filter-table__avatar"
           src="url/to/avatar"
         />
       </td>
-      <td>
-        user-2
-      </td>
-      <td>
+      <td
+        className="max-width-6"
+      >
         <span
           className="ellipsis"
+          title="user-2"
+        >
+          user-2
+        </span>
+      </td>
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-2@test.com"
         >
           user-2@test.com
         </span>
       </td>
-      <td>
-        user-2 test
-      </td>
-      <td />
-      <td>
-        <div
-          className="gf-form-select-wrapper width-12"
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-2 test"
         >
-          <select
-            className="gf-form-input"
-            onChange={[Function]}
-            value="Admin"
-          >
-            <option
-              key="Viewer-0"
-              value="Viewer"
-            >
-              Viewer
-            </option>
-            <option
-              key="Editor-1"
-              value="Editor"
-            >
-              Editor
-            </option>
-            <option
-              key="Admin-2"
-              value="Admin"
-            >
-              Admin
-            </option>
-          </select>
-        </div>
+          user-2 test
+        </span>
+      </td>
+      <td
+        className="width-1"
+      />
+      <td
+        className="width-8"
+      >
+        <Component
+          onChange={[Function]}
+          value="Admin"
+        />
       </td>
       <td>
-        <div
-          className="btn btn-danger btn-small"
+        <Button
+          icon="times"
           onClick={[Function]}
-        >
-          <i
-            className="fa fa-remove"
-          />
-        </div>
+          size="sm"
+          variant="destructive"
+        />
+        <Component
+          body="Are you sure you want to delete user user-2?"
+          confirmText="Delete"
+          isOpen={false}
+          onConfirm={[Function]}
+          onDismiss={[Function]}
+          title="Delete"
+        />
       </td>
     </tr>
     <tr
       key="3-3"
     >
       <td
-        className="width-4 text-center"
+        className="width-2 text-center"
       >
         <img
           className="filter-table__avatar"
           src="url/to/avatar"
         />
       </td>
-      <td>
-        user-3
-      </td>
-      <td>
+      <td
+        className="max-width-6"
+      >
         <span
           className="ellipsis"
+          title="user-3"
+        >
+          user-3
+        </span>
+      </td>
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-3@test.com"
         >
           user-3@test.com
         </span>
       </td>
-      <td>
-        user-3 test
-      </td>
-      <td />
-      <td>
-        <div
-          className="gf-form-select-wrapper width-12"
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-3 test"
         >
-          <select
-            className="gf-form-input"
-            onChange={[Function]}
-            value="Admin"
-          >
-            <option
-              key="Viewer-0"
-              value="Viewer"
-            >
-              Viewer
-            </option>
-            <option
-              key="Editor-1"
-              value="Editor"
-            >
-              Editor
-            </option>
-            <option
-              key="Admin-2"
-              value="Admin"
-            >
-              Admin
-            </option>
-          </select>
-        </div>
+          user-3 test
+        </span>
+      </td>
+      <td
+        className="width-1"
+      />
+      <td
+        className="width-8"
+      >
+        <Component
+          onChange={[Function]}
+          value="Admin"
+        />
       </td>
       <td>
-        <div
-          className="btn btn-danger btn-small"
+        <Button
+          icon="times"
           onClick={[Function]}
-        >
-          <i
-            className="fa fa-remove"
-          />
-        </div>
+          size="sm"
+          variant="destructive"
+        />
+        <Component
+          body="Are you sure you want to delete user user-3?"
+          confirmText="Delete"
+          isOpen={false}
+          onConfirm={[Function]}
+          onDismiss={[Function]}
+          title="Delete"
+        />
       </td>
     </tr>
     <tr
       key="4-4"
     >
       <td
-        className="width-4 text-center"
+        className="width-2 text-center"
       >
         <img
           className="filter-table__avatar"
           src="url/to/avatar"
         />
       </td>
-      <td>
-        user-4
-      </td>
-      <td>
+      <td
+        className="max-width-6"
+      >
         <span
           className="ellipsis"
+          title="user-4"
+        >
+          user-4
+        </span>
+      </td>
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-4@test.com"
         >
           user-4@test.com
         </span>
       </td>
-      <td>
-        user-4 test
-      </td>
-      <td />
-      <td>
-        <div
-          className="gf-form-select-wrapper width-12"
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-4 test"
         >
-          <select
-            className="gf-form-input"
-            onChange={[Function]}
-            value="Admin"
-          >
-            <option
-              key="Viewer-0"
-              value="Viewer"
-            >
-              Viewer
-            </option>
-            <option
-              key="Editor-1"
-              value="Editor"
-            >
-              Editor
-            </option>
-            <option
-              key="Admin-2"
-              value="Admin"
-            >
-              Admin
-            </option>
-          </select>
-        </div>
+          user-4 test
+        </span>
+      </td>
+      <td
+        className="width-1"
+      />
+      <td
+        className="width-8"
+      >
+        <Component
+          onChange={[Function]}
+          value="Admin"
+        />
       </td>
       <td>
-        <div
-          className="btn btn-danger btn-small"
+        <Button
+          icon="times"
           onClick={[Function]}
-        >
-          <i
-            className="fa fa-remove"
-          />
-        </div>
+          size="sm"
+          variant="destructive"
+        />
+        <Component
+          body="Are you sure you want to delete user user-4?"
+          confirmText="Delete"
+          isOpen={false}
+          onConfirm={[Function]}
+          onDismiss={[Function]}
+          title="Delete"
+        />
       </td>
     </tr>
     <tr
       key="5-5"
     >
       <td
-        className="width-4 text-center"
+        className="width-2 text-center"
       >
         <img
           className="filter-table__avatar"
           src="url/to/avatar"
         />
       </td>
-      <td>
-        user-5
-      </td>
-      <td>
+      <td
+        className="max-width-6"
+      >
         <span
           className="ellipsis"
+          title="user-5"
+        >
+          user-5
+        </span>
+      </td>
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-5@test.com"
         >
           user-5@test.com
         </span>
       </td>
-      <td>
-        user-5 test
-      </td>
-      <td />
-      <td>
-        <div
-          className="gf-form-select-wrapper width-12"
+      <td
+        className="max-width-5"
+      >
+        <span
+          className="ellipsis"
+          title="user-5 test"
         >
-          <select
-            className="gf-form-input"
-            onChange={[Function]}
-            value="Admin"
-          >
-            <option
-              key="Viewer-0"
-              value="Viewer"
-            >
-              Viewer
-            </option>
-            <option
-              key="Editor-1"
-              value="Editor"
-            >
-              Editor
-            </option>
-            <option
-              key="Admin-2"
-              value="Admin"
-            >
-              Admin
-            </option>
-          </select>
-        </div>
+          user-5 test
+        </span>
+      </td>
+      <td
+        className="width-1"
+      />
+      <td
+        className="width-8"
+      >
+        <Component
+          onChange={[Function]}
+          value="Admin"
+        />
       </td>
       <td>
-        <div
-          className="btn btn-danger btn-small"
+        <Button
+          icon="times"
           onClick={[Function]}
-        >
-          <i
-            className="fa fa-remove"
-          />
-        </div>
+          size="sm"
+          variant="destructive"
+        />
+        <Component
+          body="Are you sure you want to delete user user-5?"
+          confirmText="Delete"
+          isOpen={false}
+          onConfirm={[Function]}
+          onDismiss={[Function]}
+          title="Delete"
+        />
       </td>
     </tr>
   </tbody>

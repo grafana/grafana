@@ -1,63 +1,73 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Services & Utils
-import { config } from 'app/core/config';
-
-import { BarGauge, VizRepeater, DataLinksContextMenu } from '@grafana/ui';
-import { BarGaugeOptions } from './types';
 import {
-  getFieldDisplayValues,
-  FieldDisplay,
-  PanelProps,
-  getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
 } from '@grafana/data';
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+
+import { config } from 'app/core/config';
+import { BarGaugeOptions } from './types';
+import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  renderValue = (
-    value: FieldDisplay,
-    width: number,
-    height: number,
-    alignmentFactors: DisplayValueAlignmentFactors
+  renderComponent = (
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
+    menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { options } = this.props;
+    const { value, alignmentFactors, orientation, width, height } = valueProps;
     const { field, display, view, colIndex } = value;
+    const { openMenu, targetClassName } = menuProps;
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
-        {({ openMenu, targetClassName }) => {
-          return (
-            <BarGauge
-              value={display}
-              width={width}
-              height={height}
-              orientation={options.orientation}
-              field={field}
-              display={view?.getFieldDisplayProcessor(colIndex)}
-              theme={config.theme}
-              itemSpacing={this.getItemSpacing()}
-              displayMode={options.displayMode}
-              onClick={openMenu}
-              className={targetClassName}
-              alignmentFactors={alignmentFactors}
-              showUnfilled={options.showUnfilled}
-            />
-          );
+      <BarGauge
+        value={display}
+        width={width}
+        height={height}
+        orientation={orientation}
+        field={field}
+        display={view?.getFieldDisplayProcessor(colIndex)}
+        theme={config.theme}
+        itemSpacing={this.getItemSpacing()}
+        displayMode={options.displayMode}
+        onClick={openMenu}
+        className={targetClassName}
+        alignmentFactors={alignmentFactors}
+        showUnfilled={options.showUnfilled}
+      />
+    );
+  };
+
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
+    const { value } = valueProps;
+    const { hasLinks, getLinks } = value;
+
+    if (!hasLinks) {
+      return this.renderComponent(valueProps, {});
+    }
+
+    return (
+      <DataLinksContextMenu links={getLinks}>
+        {api => {
+          return this.renderComponent(valueProps, api);
         }}
       </DataLinksContextMenu>
     );
   };
 
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables } = this.props;
+    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     return getFieldDisplayValues({
-      ...options,
+      fieldConfig,
+      reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
       autoMinMax: true,
+      timeZone,
     });
   };
 

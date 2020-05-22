@@ -1,20 +1,21 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
 import { TimeZonePicker } from './TimeZonePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const TimeZonePickerStories = storiesOf('UI/TimeZonePicker', module);
+export default {
+  title: 'Pickers and Editors/TimePickers/TimeZonePicker',
+  component: TimeZonePicker,
+  decorators: [withCenteredStory],
+};
 
-TimeZonePickerStories.addDecorator(withCenteredStory);
-
-TimeZonePickerStories.add('default', () => {
+export const basic = () => {
   return (
     <UseState
       initialState={{
-        value: 'europe/stockholm',
+        value: 'Europe/Stockholm',
       }}
     >
       {(value, updateValue) => {
@@ -25,10 +26,9 @@ TimeZonePickerStories.add('default', () => {
               action('on selected')(newValue);
               updateValue({ value: newValue });
             }}
-            width={20}
           />
         );
       }}
     </UseState>
   );
-});
+};

@@ -2,10 +2,12 @@ import {
   DataQuery,
   DataSourceApi,
   dateTime,
+  ExploreMode,
   LoadingState,
   LogsDedupStrategy,
   RawTimeRange,
   toDataFrame,
+  UrlQueryMap,
 } from '@grafana/data';
 
 import {
@@ -16,7 +18,7 @@ import {
   makeExploreItemState,
   makeInitialUpdateState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState, ExploreUrlState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   changeModeAction,
@@ -32,7 +34,6 @@ import {
 } from './actionTypes';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
-import { UrlQueryMap } from '@grafana/runtime';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {

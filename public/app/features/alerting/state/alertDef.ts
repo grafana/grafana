@@ -47,7 +47,9 @@ const reducerTypes = [
   { text: 'last()', value: 'last' },
   { text: 'median()', value: 'median' },
   { text: 'diff()', value: 'diff' },
+  { text: 'diff_abs()', value: 'diff_abs' },
   { text: 'percent_diff()', value: 'percent_diff' },
+  { text: 'percent_diff_abs()', value: 'percent_diff_abs' },
   { text: 'count_non_null()', value: 'count_non_null' },
 ];
 
@@ -73,42 +75,42 @@ function getStateDisplayModel(state: string) {
     case 'ok': {
       return {
         text: 'OK',
-        iconClass: 'icon-gf icon-gf-online',
+        iconClass: 'heart',
         stateClass: 'alert-state-ok',
       };
     }
     case 'alerting': {
       return {
         text: 'ALERTING',
-        iconClass: 'icon-gf icon-gf-critical',
+        iconClass: 'heart-break',
         stateClass: 'alert-state-critical',
       };
     }
     case 'no_data': {
       return {
         text: 'NO DATA',
-        iconClass: 'fa fa-question',
+        iconClass: 'question-circle',
         stateClass: 'alert-state-warning',
       };
     }
     case 'paused': {
       return {
         text: 'PAUSED',
-        iconClass: 'fa fa-pause',
+        iconClass: 'pause',
         stateClass: 'alert-state-paused',
       };
     }
     case 'pending': {
       return {
         text: 'PENDING',
-        iconClass: 'fa fa-exclamation',
+        iconClass: 'exclamation-triangle',
         stateClass: 'alert-state-warning',
       };
     }
     case 'unknown': {
       return {
         text: 'UNKNOWN',
-        iconClass: 'fa fa-question',
+        iconClass: 'question-circle',
         stateClass: 'alert-state-paused',
       };
     }

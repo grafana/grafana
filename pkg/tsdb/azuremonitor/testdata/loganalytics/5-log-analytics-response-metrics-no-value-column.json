@@ -1,0 +1,31 @@
+{
+  "tables": [
+    {
+      "name": "PrimaryResult",
+      "columns": [
+        {
+          "name": "TimeGenerated",
+          "type": "datetime"
+        },
+        {
+          "name": "Computer",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "2020-04-19T19:16:06.5Z",
+          "grafana-vm"
+        ],
+        [
+          "2020-04-19T19:16:16.5Z",
+          "grafana-vm"
+        ],
+        [
+          "2020-04-19T19:16:26.5Z",
+          "grafana-vm"
+        ]
+      ]
+    }
+  ]
+}

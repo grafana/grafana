@@ -5,40 +5,43 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/ini.v1"
 )
 
 func TestPluginDashboards(t *testing.T) {
 	Convey("When asking plugin dashboard info", t, func() {
-		setting.Raw = ini.Empty()
-		sec, _ := setting.Raw.NewSection("plugin.test-app")
-		_, err := sec.NewKey("path", "testdata/test-app")
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				FeatureToggles: map[string]bool{},
+				PluginSettings: setting.PluginSettings{
+					"test-app": map[string]string{
+						"path": "testdata/test-app",
+					},
+				},
+			},
+		}
+		err := pm.Init()
 		So(err, ShouldBeNil)
 
-		pm := &PluginManager{}
-		err = pm.Init()
-		So(err, ShouldBeNil)
-
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 			if query.Slug == "nginx-connections" {
-				dash := m.NewDashboard("Nginx Connections")
+				dash := models.NewDashboard("Nginx Connections")
 				dash.Data.Set("revision", "1.1")
 				query.Result = dash
 				return nil
 			}
 
-			return m.ErrDashboardNotFound
+			return models.ErrDashboardNotFound
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardsByPluginIdQuery) error {
+		bus.AddHandler("test", func(query *models.GetDashboardsByPluginIdQuery) error {
 			var data = simplejson.New()
 			data.Set("title", "Nginx Connections")
 			data.Set("revision", 22)
 
-			query.Result = []*m.Dashboard{
+			query.Result = []*models.Dashboard{
 				{Slug: "nginx-connections", Data: data},
 			}
 			return nil

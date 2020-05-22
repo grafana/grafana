@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v2.5"
+title = "What's new in Grafana v2.5"
 description = "Feature and improvement highlights for Grafana v2.5"
-keywords = ["grafana", "new", "documentation", "2.5"]
+keywords = ["grafana", "new", "documentation", "2.5", "release notes"]
 type = "docs"
 +++
 
@@ -70,7 +70,7 @@ data from Prometheus. Mixing different data sources on the same graph works for 
 ### Panel Resize handles
 <img src="/img/docs/whatsnew_2_5/panel_resize.gif" alt="">
 
-This release adds resize handles to the the bottom right corners of panels making is easy to resize both width and height.
+This release adds resize handles to the bottom right corners of panels making it easy to resize both width and height.
 
 ### User invites
 <img src="/img/docs/whatsnew_2_5/org_invite.png" alt="">
@@ -103,4 +103,3 @@ view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG
 - - -
 
 ### <a href="https://grafana.com/get">Download Grafana 2.5 now</a>
-

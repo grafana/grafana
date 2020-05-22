@@ -62,7 +62,12 @@ export default class InfluxQueryModel {
   }
 
   addGroupBy(value: string) {
-    const stringParts = value.match(/^(\w+)\((.*)\)$/);
+    let stringParts = value.match(/^(\w+)\((.*)\)$/);
+
+    if (!stringParts || !this.target.groupBy) {
+      return;
+    }
+
     const typePart = stringParts[1];
     const arg = stringParts[2];
     const partModel = queryPart.create({ type: typePart, params: [arg] });

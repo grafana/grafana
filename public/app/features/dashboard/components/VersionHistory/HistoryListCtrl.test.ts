@@ -4,6 +4,16 @@ import { IScope } from 'angular';
 import { HistoryListCtrl } from './HistoryListCtrl';
 import { compare, restore, versions } from './__mocks__/history';
 import { CoreEvents } from 'app/types';
+import { appEvents } from 'app/core/app_events';
+
+jest.mock('app/core/app_events', () => {
+  return {
+    appEvents: {
+      emit: jest.fn(),
+      on: jest.fn(),
+    },
+  };
+});
 
 describe('HistoryListCtrl', () => {
   const RESTORE_ID = 4;
@@ -37,6 +47,7 @@ describe('HistoryListCtrl', () => {
         id: 2,
         version: 3,
         formatDate: jest.fn(() => 'date'),
+        getRelativeTime: jest.fn(() => 'time ago'),
       };
     });
 
@@ -114,13 +125,15 @@ describe('HistoryListCtrl', () => {
       });
 
       it('should listen for the `dashboardSaved` appEvent', () => {
-        expect($rootScope.onAppEvent).toHaveBeenCalledTimes(1);
-        expect($rootScope.onAppEvent.mock.calls[0][0]).toBe(CoreEvents.dashboardSaved);
+        // @ts-ignore
+        expect(appEvents.on.mock.calls[0][0]).toBe(CoreEvents.dashboardSaved);
       });
 
       it('should call `onDashboardSaved` when the appEvent is received', () => {
-        expect($rootScope.onAppEvent.mock.calls[0][1]).not.toBe(historyListCtrl.onDashboardSaved);
-        expect($rootScope.onAppEvent.mock.calls[0][1].toString).toBe(historyListCtrl.onDashboardSaved.toString);
+        // @ts-ignore
+        expect(appEvents.on.mock.calls[0][1]).not.toBe(historyListCtrl.onDashboardSaved);
+        // @ts-ignore
+        expect(appEvents.on.mock.calls[0][1].toString).toBe(historyListCtrl.onDashboardSaved.toString);
       });
     });
   });
@@ -136,6 +149,7 @@ describe('HistoryListCtrl', () => {
         id: 2,
         version: 3,
         formatDate: jest.fn(() => 'date'),
+        getRelativeTime: jest.fn(() => 'time ago'),
       };
 
       historySrv.calculateDiff = jest.fn(() => Promise.resolve(versionsResponse));

@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.6"
+title = "What's new in Grafana v6.6"
 description = "Feature and improvement highlights for Grafana v6.6"
-keywords = ["grafana", "new", "documentation", "6.6"]
+keywords = ["grafana", "new", "documentation", "6.6", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.6"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -16
 +++
 
-# What's New in Grafana v6.6
+# What's new in Grafana v6.6
 
-For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
@@ -131,19 +131,19 @@ This release adds new white labeling options to the grafana.ini file (can also b
 
 ```bash
 [white_labeling]
-# Set to complete url to override login logo
+# Set to complete URL to override login logo
 login_logo = https://my.logo.url/images/logo.png
 
 # Set to complete css background expression to override login background
 login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg)
 
-# Set to complete url to override menu logo
+# Set to complete URL to override menu logo
 menu_logo = https://my.logo.url/images/logo_icon.png
 
-# Set to complete url to override fav icon (icon shown in browser tab)
+# Set to complete URL to override fav icon (icon shown in browser tab)
 fav_icon = https://my.logo.url/images/logo_icon_32px.png
 
-# Set to complete url to override apple/ios icon
+# Set to complete URL to override apple/ios icon
 apple_touch_icon = https://my.logo.url/images/logo_icon_32px.png
 
 # Below is an example for how to replace the default footer & help links with 2 custom links
@@ -188,7 +188,7 @@ From now on it will be possible to utilize meta data label in group bys, filters
 
 ## CloudWatch: Calculate period based on time range
 
-When the period field was left blank in Grafana 6.5, it would default to 60 seconds. In case users issued queries with a large time span, there was a high risk that they would reach the 100,800 data points per request limit in the Get Metric Data (GMD) api. When the period field is left blank in Grafana 6.6, the period will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. This will reduce the risk for receiving a `Too many datapoints requested` error in the panel.
+When the period field was left blank in Grafana 6.5, it would default to 60 seconds. In case users issued queries with a large time span, there was a high risk that they would reach the 100,800 data points per request limit in the Get Metric Data (GMD) API. When the period field is left blank in Grafana 6.6, the period will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. This will reduce the risk for receiving a `Too many datapoints requested` error in the panel.
 
 ## CloudWatch: Display partial result in graph when max data points per call limit is reached
 
@@ -218,4 +218,3 @@ backendSrv.get(‘http://your.url/api’).then(result => {
     this.$scope.$digest();
 });
 ```
-

@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.2"
+title = "What's new in Grafana v5.2"
 description = "Feature and improvement highlights for Grafana v5.2"
-keywords = ["grafana", "new", "documentation", "5.2"]
+keywords = ["grafana", "new", "documentation", "5.2", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.2"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -8
 +++
 
-# What's New in Grafana v5.2
+# What's new in Grafana v5.2
 
 Grafana v5.2 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -76,7 +76,7 @@ By popular demand Grafana now includes support for an alert notification channel
 
 Starting from Grafana v5.2, a modified time range or variable are no longer saved by default. To save a modified
 time range or variable, you'll need to actively select that when saving a dashboard, see screenshot.
-This should hopefully make it easier to have sane defaults for time and variables in dashboards and make it more explicit
+This should hopefully make it easier to have same defaults for time and variables in dashboards and make it more explicit
 when you actually want to overwrite those settings.
 
 <div class="clearfix"></div>

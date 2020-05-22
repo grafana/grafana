@@ -5,6 +5,7 @@ import { InfluxDatasourceMock } from '../datasource.mock';
 import InfluxDatasource from '../datasource';
 import { InfluxQuery } from '../types';
 import { ButtonCascader } from '@grafana/ui';
+import { KeyValuePair } from '../../../../features/explore/AdHocFilterField';
 
 describe('pairsAreValid()', () => {
   describe('when all pairs are fully defined', () => {
@@ -34,7 +35,7 @@ describe('pairsAreValid()', () => {
 
   describe('when pairs are undefined', () => {
     it('should return true', () => {
-      expect(pairsAreValid(undefined)).toBe(true);
+      expect(pairsAreValid((undefined as unknown) as KeyValuePair[])).toBe(true);
     });
   });
 

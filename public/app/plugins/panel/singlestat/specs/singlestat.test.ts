@@ -1,5 +1,5 @@
 import { SingleStatCtrl, ShowData } from '../module';
-import { dateTime, ReducerID } from '@grafana/data';
+import { dateTime, ReducerID, getFieldDisplayName } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { LegacyResponseData } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -26,23 +26,21 @@ describe('SingleStatCtrl', () => {
 
   const $sanitize = {};
 
-  SingleStatCtrl.prototype.panel = {
-    events: {
-      on: () => {},
-      emit: () => {},
-    },
-  };
   SingleStatCtrl.prototype.dashboard = ({
     getTimezone: jest.fn(() => 'utc'),
   } as any) as DashboardModel;
-  SingleStatCtrl.prototype.events = {
-    on: () => {},
-  };
 
   function singleStatScenario(desc: string, func: any) {
     describe(desc, () => {
       ctx.setup = (setupFunc: any) => {
         beforeEach(() => {
+          SingleStatCtrl.prototype.panel = {
+            events: {
+              on: () => {},
+              emit: () => {},
+            },
+          };
+
           // @ts-ignore
           ctx.ctrl = new SingleStatCtrl($scope, $injector, {} as LinkSrv, $sanitize);
           setupFunc();
@@ -92,7 +90,8 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should use series avg as default main value', () => {
-      expect(ctx.data.value).toBe('test.cpu1');
+      const name = getFieldDisplayName(ctx.data.field);
+      expect(name).toBe('test.cpu1');
     });
 
     it('should set formatted value', () => {
@@ -335,9 +334,6 @@ describe('SingleStatCtrl', () => {
     singleStatScenario('with default values', (ctx: TestContext) => {
       ctx.setup(() => {
         ctx.input = tableData;
-        ctx.ctrl.panel = {
-          emit: () => {},
-        };
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.format = 'none';
       });
@@ -386,7 +382,7 @@ describe('SingleStatCtrl', () => {
       ctx.setup(() => {
         ctx.input = tableData;
         ctx.input[0].rows[0] = [1492759673649, 'ignore1', 10, 'ignore2'];
-        ctx.ctrl.panel.mappingType = 2;
+        ctx.ctrl.panel.mappingType = 1;
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.valueMaps = [{ value: '10', text: 'OK' }];
       });

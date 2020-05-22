@@ -4,10 +4,10 @@ import {
   VariableActions,
   VariableHide,
   VariableOption,
-  VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 import { VariableSrv } from './all';
+import { VariableType } from '@grafana/data';
 
 export class ConstantVariable implements ConstantVariableModel, VariableActions {
   type: VariableType;
@@ -22,7 +22,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   defaults: ConstantVariableModel = {
     type: 'constant',
     name: '',
-    hide: VariableHide.hideLabel,
+    hide: VariableHide.hideVariable,
     label: '',
     query: '',
     current: {} as VariableOption,

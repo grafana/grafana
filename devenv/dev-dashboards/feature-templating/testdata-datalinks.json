@@ -66,7 +66,7 @@
           {
             "targetBlank": false,
             "title": "Drill it down",
-            "url": "http://localhost:3000/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}&var-labelDatacenter=${__series.labels.datacenter}&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}&var-valueTime=${__value.time}&var-valueNumeric=${__value.numeric}&var-valueText=${__value.text}"
+            "url": "/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}&var-labelDatacenter=${__series.labels.datacenter}&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}&var-valueTime=${__value.time}&var-valueNumeric=${__value.numeric}&var-valueText=${__value.text}"
           }
         ]
       },
@@ -164,7 +164,7 @@
           {
             "targetBlank": false,
             "title": "Drill it down",
-            "url": "http://localhost:3000/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}&var-valueTime=${__value.time}&var-valueNumeric=${__value.numeric}&var-valueText=${__value.text}&var-fieldName=${__field.name}"
+            "url": "/d/wfTJJL5Wz/datalinks-source?var-seriesName=${__series.name}&var-valueTime=${__value.time}&var-valueNumeric=${__value.numeric}&var-valueText=${__value.text}&var-fieldName=${__field.name}"
           }
         ]
       },
@@ -246,7 +246,7 @@
               {
                 "targetBlank": true,
                 "title": "Drill it down!",
-                "url": "http://localhost:3000/d/wfTJJL5Wz/datalinks-source\n?var-fieldName=${__field.name}\n&var-labelDatacenter=${__series.labels.datacenter}\n&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}\n&var-valueNumeric=${__value.numeric}\n&var-valueText=${__value.text}\n&var-valueCalc=${__value.calc}"
+                "url": "/d/wfTJJL5Wz/datalinks-source\n?var-fieldName=${__field.name}\n&var-labelDatacenter=${__series.labels.datacenter}\n&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}\n&var-valueNumeric=${__value.numeric}\n&var-valueText=${__value.text}\n&var-valueCalc=${__value.calc}"
               }
             ],
             "mappings": [
@@ -307,7 +307,7 @@
             "links": [
               {
                 "title": "Drill it down",
-                "url": "http://localhost:3000/d/wfTJJL5Wz/datalinks-source?var-fieldName=${__field.name}&var-labelDatacenter=${__series.labels.datacenter}&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}&var-valueNumeric=${__value.numeric}&var-valueText=${__value.text}&var-valueCalc=${__value.calc}"
+                "url": "/d/wfTJJL5Wz/datalinks-source?var-fieldName=${__field.name}&var-labelDatacenter=${__series.labels.datacenter}&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}&var-valueNumeric=${__value.numeric}&var-valueText=${__value.text}&var-valueCalc=${__value.calc}"
               }
             ],
             "mappings": [],

@@ -5,7 +5,7 @@ import { Value } from 'slate';
 import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 
-import { parseSelector, processLabels, processHistogramLabels } from './language_utils';
+import { parseSelector, processLabels, processHistogramLabels, fixSummariesMetadata } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
@@ -112,10 +112,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   start = async (): Promise<any[]> => {
+    if (this.datasource.lookupsDisabled) {
+      return [];
+    }
+
     this.metrics = await this.request('/api/v1/label/__name__/values', []);
     this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
-    this.metricsMetadata = await this.request('/api/v1/metadata', {});
+    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
+
     return [];
   };
 
@@ -403,14 +408,20 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const tRange = this.datasource.getTimeRange();
-    const url = `/api/v1/series?match[]=${name}&start=${tRange['start']}&end=${tRange['end']}`;
+    const params = new URLSearchParams({
+      'match[]': name,
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/series?${params.toString()}`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    const cacheKey = `/api/v1/series?match[]=${name}&start=${this.roundToMinutes(
-      tRange['start']
-    )}&end=${this.roundToMinutes(tRange['end'])}&withName=${!!withName}`;
+    params.set('start', this.roundToMinutes(tRange['start']).toString());
+    params.set('end', this.roundToMinutes(tRange['end']).toString());
+    params.append('withName', withName ? 'true' : 'false');
+    const cacheKey = `/api/v1/series?${params.toString()}`;
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
       const data = await this.request(url, []);

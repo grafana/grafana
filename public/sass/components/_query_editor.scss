@@ -1,6 +1,6 @@
 .query-keyword {
   font-weight: $font-weight-semi-bold;
-  color: $blue;
+  color: $text-blue;
 }
 
 .query-segment-operator {
@@ -9,30 +9,6 @@
 
 .query-placeholder {
   color: $gray-2;
-}
-
-.query-editor-rows {
-  margin: 20px 0;
-}
-
-.gf-form-query {
-  .gf-form,
-  .gf-form-filler {
-    margin-bottom: 2px;
-  }
-
-  .gf-form-switch,
-  .gf-form-switch label,
-  .gf-form-input,
-  .gf-form-select-wrapper,
-  .gf-form-filler,
-  .gf-form-label {
-    margin-right: 2px;
-  }
-
-  .gf-form + .gf-form {
-    margin-left: 0;
-  }
 }
 
 .tight-form-func {
@@ -137,48 +113,9 @@ input[type='text'].tight-form-func-param {
   padding: 4px 0px 4px 8px;
   position: relative;
   height: 35px;
-  background: $page-bg;
+  background: $input-label-bg;
   flex-wrap: nowrap;
   align-items: center;
-}
-.query-editor-row__ref-id {
-  font-weight: $font-weight-semi-bold;
-  color: $blue;
-  font-size: $font-size-md;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-
-  i {
-    padding-right: 5px;
-    color: $text-muted;
-    position: relative;
-  }
-}
-
-.query-editor-row__collapsed-text {
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-  overflow: hidden;
-
-  > div {
-    color: $text-muted;
-    font-style: italic;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-size: $font-size-sm;
-    min-width: 0;
-  }
-}
-
-.query-editor-row__actions {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  color: $text-muted;
 }
 
 .query-editor-row__action {
@@ -199,11 +136,4 @@ input[type='text'].tight-form-func-param {
   &--collapsed {
     display: none;
   }
-}
-
-.query-editor-row__context-info {
-  font-style: italic;
-  font-size: $font-size-sm;
-  color: $text-muted;
-  padding-left: 10px;
 }

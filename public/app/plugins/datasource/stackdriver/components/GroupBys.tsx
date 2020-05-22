@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Segment } from '@grafana/ui';
+import { Segment, Icon } from '@grafana/ui';
 import { labelsToGroupedOptions } from '../functions';
 import { systemLabels } from '../constants';
 
@@ -26,7 +26,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
             key={value + index}
             value={value}
             options={options}
-            onChange={({ value }) =>
+            onChange={({ value = '' }) =>
               onChange(
                 value === removeText
                   ? values.filter((_, i) => i !== index)
@@ -39,11 +39,11 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
         <Segment
           Component={
             <a className="gf-form-label query-part">
-              <i className="fa fa-plus" />
+              <Icon name="plus" />
             </a>
           }
           allowCustomValue
-          onChange={({ value }) => onChange([...values, value])}
+          onChange={({ value = '' }) => onChange([...values, value])}
           options={[
             variableOptionGroup,
             ...labelsToGroupedOptions([...groupBys.filter(groupBy => !values.includes(groupBy)), ...systemLabels]),

@@ -4,7 +4,7 @@ import {
   dashboardInitFetching,
   dashboardInitSlow,
   loadDashboardPermissions,
-} from './actions';
+} from './reducers';
 import { DashboardInitPhase, DashboardState, OrgRole, PermissionLevel } from 'app/types';
 import { dashboardReducer, initialState } from './reducers';
 import { DashboardModel } from './DashboardModel';
@@ -32,15 +32,28 @@ describe('dashboard reducer', () => {
     beforeEach(() => {
       state = dashboardReducer(initialState, dashboardInitFetching());
       state = dashboardReducer(state, dashboardInitSlow());
-      state = dashboardReducer(state, dashboardInitCompleted(new DashboardModel({ title: 'My dashboard' })));
+      state = dashboardReducer(
+        state,
+        dashboardInitCompleted(
+          new DashboardModel({
+            title: 'My dashboard',
+            panels: [{ id: 1 }, { id: 2 }],
+          })
+        )
+      );
     });
 
     it('should set model', async () => {
-      expect(state.model?.title).toBe('My dashboard');
+      expect(state.getModel()!.title).toBe('My dashboard');
     });
 
     it('should set reset isInitSlow', async () => {
       expect(state.isInitSlow).toBe(false);
+    });
+
+    it('should create panel state', async () => {
+      expect(state.panels['1']).toBeDefined();
+      expect(state.panels['2']).toBeDefined();
     });
   });
 
@@ -53,7 +66,7 @@ describe('dashboard reducer', () => {
     });
 
     it('should set model', async () => {
-      expect(state.model?.title).toBe('Dashboard init failed');
+      expect(state.getModel()?.title).toBe('Dashboard init failed');
     });
 
     it('should set reset isInitSlow', async () => {
