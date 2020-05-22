@@ -2,7 +2,13 @@ import { PureComponent } from 'react';
 import ReactDOM from 'react-dom';
 
 export interface Props {
+  /**
+   *  When clicking outside of current element
+   */
   onClick: () => void;
+  /**
+   *  Runs the 'onClick' function when pressing a key outside of the current element. Defaults to true.
+   */
   includeButtonPress: boolean;
 }
 
