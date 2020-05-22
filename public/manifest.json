@@ -1,0 +1,13 @@
+{
+  "name": "Grafana",
+  "short_name": "Grafana",
+  "description": "Graphs for everyone everwhere anyhow",
+  "start_url": "/",
+  "background_color": "#000000",
+  "theme_color": "#0f4a73",
+  "icons": [{
+    "src": "public/img/fav32.png",
+    "sizes": "32x32",
+    "type": "image/png"
+  }]
+}
