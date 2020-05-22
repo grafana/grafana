@@ -226,8 +226,18 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
 
     return this.post('_msearch', payload).then((res: any) => {
+      let parsedRes = undefined;
+      if (typeof res !== 'object') {
+        try {
+          parsedRes = JSON.parse(res);
+        } catch (err) {
+          throw err;
+        }
+      } else {
+        parsedRes = res;
+      }
       const list = [];
-      const hits = res.responses[0].hits.hits;
+      const hits = parsedRes.responses[0].hits.hits;
 
       const getFieldFromSource = (source: any, fieldName: any) => {
         if (!fieldName) {
@@ -411,7 +421,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const url = this.getMultiSearchUrl();
 
     return this.post(url, payload).then((res: any) => {
-      const er = new ElasticResponse(sentTargets, res);
+      let parsedRes = undefined;
+      if (typeof res !== 'object') {
+        try {
+          parsedRes = JSON.parse(res);
+        } catch (err) {
+          throw err;
+        }
+      } else {
+        parsedRes = res;
+      }
+      const er = new ElasticResponse(sentTargets, parsedRes);
       if (sentTargets.some(target => target.isLogsQuery)) {
         const response = er.getLogs(this.logMessageField, this.logLevelField);
         for (const dataFrame of response.data) {
@@ -427,6 +447,16 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   getFields(query: any) {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then((result: any) => {
+      let parsedResult = undefined;
+      if (typeof result !== 'object') {
+        try {
+          parsedResult = JSON.parse(result);
+        } catch (err) {
+          throw err;
+        }
+      } else {
+        parsedResult = result;
+      }
       const typeMap: any = {
         float: 'number',
         double: 'number',
@@ -486,8 +516,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         fieldNameParts.pop();
       }
 
-      for (const indexName in result) {
-        const index = result[indexName];
+      for (const indexName in parsedResult) {
+        const index = parsedResult[indexName];
         if (index && index.mappings) {
           const mappings = index.mappings;
 
@@ -523,11 +553,21 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const url = this.getMultiSearchUrl();
 
     return this.post(url, esQuery).then((res: any) => {
-      if (!res.responses[0].aggregations) {
+      let parsedRes = undefined;
+      if (typeof res !== 'object') {
+        try {
+          parsedRes = JSON.parse(res);
+        } catch (err) {
+          throw err;
+        }
+      } else {
+        parsedRes = res;
+      }
+      if (!parsedRes.responses[0].aggregations) {
         return [];
       }
 
-      const buckets = res.responses[0].aggregations['1'].buckets;
+      const buckets = parsedRes.responses[0].aggregations['1'].buckets;
       return _.map(buckets, bucket => {
         return {
           text: bucket.key_as_string || bucket.key,
