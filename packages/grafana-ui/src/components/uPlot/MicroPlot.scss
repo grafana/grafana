@@ -5,12 +5,10 @@
 
 .uplot {
   box-sizing: border-box;
-  background-color: $panel-bg;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   line-height: 1.5;
-  position: relative;
-  display: inline-block;
+  width: max-content;
   * {
     box-sizing: border-box;
     &::before {
@@ -20,41 +18,28 @@
       box-sizing: border-box;
     }
   }
-  [class*='cursor'] {
-    position: absolute;
-    left: 0;
-    top: 0;
-    pointer-events: none;
-    will-change: transform;
-    z-index: 100;
-  }
-  .cursor-x {
-    height: 100%;
-    border-right: 1px dashed #607d8b;
-  }
-  .cursor-y {
-    width: 100%;
-    border-bottom: 1px dashed #607d8b;
-  }
   .title {
     text-align: center;
-    padding: 16px;
     font-size: 18px;
     font-weight: bold;
   }
   .wrap {
     position: relative;
-  }
-  .plot {
-    position: relative;
-    display: inline-block;
-    outline: 1px solid #eee;
-    overflow-y: hidden;
-    overflow-x: hidden;
     user-select: none;
+  }
+  .over {
+    position: absolute;
+    overflow: hidden;
+  }
+  .under {
+    position: absolute;
+    overflow: hidden;
   }
   canvas {
     display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
   }
   .legend {
     font-size: 14px;
@@ -64,6 +49,7 @@
       font-weight: 600;
       > * {
         vertical-align: middle;
+        display: inline-block;
       }
     }
     .ident {
@@ -109,133 +95,34 @@
   .select.off {
     display: none;
   }
-  .point {
+  .cursor-x {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    will-change: transform;
+    z-index: 100;
+    height: 100%;
+    border-right: 1px dashed #607d8b;
+  }
+  .cursor-y {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    will-change: transform;
+    z-index: 100;
+    width: 100%;
+    border-bottom: 1px dashed #607d8b;
+  }
+  .cursor-pt {
     position: absolute;
     top: 0;
     left: 0;
+    border-radius: 50%;
+    filter: brightness(85%);
     pointer-events: none;
-    user-select: none;
     will-change: transform;
     z-index: 100;
-  }
-  [class*='axis'].off {
-    display: none;
-  }
-  [class*='axis'] {
-    .labels {
-      text-align: center;
-      position: absolute;
-      font-size: 12px;
-      font-weight: bold;
-      > * {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        white-space: nowrap;
-      }
-    }
-    .values {
-      position: absolute;
-    }
-  }
-  [class*='axis-y-1'] {
-    .labels {
-      > * {
-        transform: translate(-50%, -50%) rotate(90deg);
-      }
-    }
-  }
-  [class*='axis-y-3'] {
-    .labels {
-      > * {
-        transform: translate(-50%, -50%) rotate(-90deg);
-      }
-    }
-  }
-  [class*='axis-y'] {
-    .values {
-      top: 0;
-      height: 100%;
-      > * {
-        position: absolute;
-        transform: translateY(-50%);
-        font-size: 12px;
-        white-space: pre-line;
-        width: 100%;
-        &::before {
-          content: '';
-          width: 10px;
-          border-top: 2px solid #eee;
-          transform: translateY(-50%);
-          position: absolute;
-          top: 50%;
-          z-index: -1;
-        }
-      }
-    }
-  }
-  [class*='axis-x'] {
-    .values {
-      > * {
-        position: absolute;
-        transform: translateX(-50%);
-        font-size: 12px;
-        white-space: pre-line;
-        text-align: center;
-        height: 100%;
-        &::before {
-          content: '';
-          height: 10px;
-          border-left: 2px solid #eee;
-          transform: translateX(-50%);
-          position: absolute;
-          left: 50%;
-          z-index: -1;
-        }
-      }
-    }
-  }
-  .axis-x-2 {
-    .values {
-      > * {
-        padding-top: 10px;
-        &::before {
-          top: 0;
-        }
-      }
-    }
-  }
-  .axis-x-0 {
-    .values {
-      > * {
-        padding-bottom: 10px;
-        &::before {
-          bottom: 0;
-        }
-      }
-    }
-  }
-  .axis-y-3 {
-    .values {
-      > * {
-        padding-right: 14px;
-        text-align: right;
-        &::before {
-          right: 0;
-        }
-      }
-    }
-  }
-  .axis-y-1 {
-    .values {
-      > * {
-        padding-left: 14px;
-        text-align: left;
-        &::before {
-          left: 0;
-        }
-      }
-    }
   }
 }

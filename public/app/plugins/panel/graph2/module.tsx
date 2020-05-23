@@ -7,6 +7,12 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
   .setPanelOptions(builder => {
     builder
       .addBooleanSwitch({
+        path: 'useMicroPlot',
+        name: 'Use Micro Plot',
+        description: '',
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
         path: 'graph.showBars',
         name: 'Show bars',
         description: '',

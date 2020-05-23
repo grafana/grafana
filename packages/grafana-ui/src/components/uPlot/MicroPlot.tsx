@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 
 import { DataFrame, getTimeField, FieldType } from '@grafana/data';
 
-import uPlot from 'uPlot/dist/uPlot.cjs';
+import uPlot from 'uplot';
 import { colors } from '../../utils';
 
 interface Props {
@@ -42,7 +42,6 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
     const { width, height } = this.props;
 
     const { series, uData, scales } = getUPlotStuff(this.props);
-    const fmtt = (val: number, dec: number) => val.toFixed(dec);
 
     const opts = {
       width,
@@ -54,9 +53,79 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
       scales,
       series,
       axes: [
-        {},
         {
-          values: (u: any, vals: any) => vals.map((v: any) => fmtt(v, 0)),
+          show: true,
+          stroke: 'red',
+          grid: {
+            show: true,
+            stroke: 'green',
+            width: 1,
+          },
+        },
+        {
+          show: true,
+          label: 'Population',
+          labelSize: 30,
+          labelFont: 'bold 12px Arial',
+          font: '12px Arial',
+          gap: 5,
+          size: 50,
+          stroke: 'red',
+          grid: {
+            show: true,
+            stroke: '#eee',
+            width: 1,
+          },
+          ticks: {
+            show: true,
+            stroke: 'pink',
+            width: 2,
+          },
+          //  values: (u: any, vals: any) => vals.map((v: any) => fmtt(v, 0)),
+        },
+        {
+          show: true,
+          label: 'Right Axis AAA',
+          labelSize: 30,
+          labelFont: 'bold 12px Arial',
+          font: '12px Arial',
+          gap: 5,
+          size: 50,
+          stroke: 'red',
+          side: 1,
+        },
+        {
+          show: true,
+          label: 'Right Axis BBB',
+          labelSize: 30,
+          labelFont: 'bold 12px Arial',
+          font: '12px Arial',
+          gap: 5,
+          size: 50,
+          stroke: 'red',
+          side: 1,
+        },
+        {
+          show: true,
+          label: 'Right Axis CCC',
+          labelSize: 30,
+          labelFont: 'bold 12px Arial',
+          font: '12px Arial',
+          gap: 5,
+          size: 50,
+          stroke: 'red',
+          side: 1,
+        },
+        {
+          show: true,
+          label: 'Left axis',
+          labelSize: 30,
+          labelFont: 'bold 12px Arial',
+          font: '12px Arial',
+          gap: 5,
+          size: 50,
+          stroke: 'red',
+          side: 3,
         },
       ],
       hooks: {
@@ -66,7 +135,7 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
               console.log('Double click!', e);
             };
 
-            const plot = u.root.querySelector('.plot');
+            const plot = u.root.querySelector('.over');
 
             plot.addEventListener('mouseleave', () => {
               console.log('EXIT');
@@ -97,7 +166,7 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
 
     // Should only happen once!
     console.log('INIT Plot', series, scales, uData);
-    this.plot = new uPlot.Line(opts, uData, element);
+    this.plot = new uPlot(opts, uData, element);
   };
 
   render() {
@@ -130,6 +199,8 @@ export function getUPlotStuff(props: Props) {
   }
   uData.push(xvals); // make all numbers floating point
   series.push({});
+
+  let sidx = 0;
   for (let i = 0; i < data.fields.length; i++) {
     if (i === timeIndex) {
       continue; // already handled time
@@ -141,10 +212,12 @@ export function getUPlotStuff(props: Props) {
 
     series.push({
       label: field.name,
-      stroke: colors[i], // The line color
-      width: 3,
+      stroke: colors[sidx++], // The line color
+      //fill: 'red',
+      width: 1,
     });
     uData.push(field.values.toArray());
   }
+
   return { series, uData, scales };
 }
