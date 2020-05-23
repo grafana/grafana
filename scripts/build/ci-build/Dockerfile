@@ -104,7 +104,7 @@ RUN apt-get update && \
         ruby-dev        \
         rubygems        \
         unzip &&        \
-    gem install -N fpm \
+    gem install -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil                  && \
     curl -fL https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-x64.tar.xz \
       | tar -xJ --strip-components=1 -C /usr/local                      && \
