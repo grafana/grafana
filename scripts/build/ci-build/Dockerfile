@@ -100,7 +100,11 @@ RUN apt-get update && \
         expect          \
         gnupg2          \
         procps          \
+        ruby            \
+        ruby-dev        \
+        rubygems        \
         unzip &&        \
+    gem install -N fpm \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil                  && \
     curl -fL https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-x64.tar.xz \
       | tar -xJ --strip-components=1 -C /usr/local                      && \
@@ -130,7 +134,5 @@ RUN cd /tmp && \
     ([ "$(sha512sum x86_64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_AMD64_MUSL" ] || (echo "Mismatching checksums amd64"; exit 1)) && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
-
-RUN apt-get install -yq ruby ruby-dev rubygems && gem install -N fpm
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh
