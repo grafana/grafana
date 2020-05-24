@@ -134,7 +134,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         <td style={{ width: '1%' }}>
                           <a
                             onClick={event => this.onDuplicateVariable(event, toVariableIdentifier(variable))}
-                            className="btn btn-inverse btn-small"
+                            className="btn btn-primary"
                             aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(
                               variable.name
                             )}
