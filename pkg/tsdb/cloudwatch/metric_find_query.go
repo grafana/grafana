@@ -139,7 +139,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/CodeBuild":         {"ProjectName"},
 	"AWS/Cognito":           {"Operation", "RiskLevel", "UserPoolId"},
 	"AWS/Connect":           {"InstanceId", "MetricGroup", "Participant", "QueueName", "Stream Type", "Type of Connection"},
-	"AWS/DataSync":   		 {"AgentId", "TaskId"},
+	"AWS/DataSync":          {"AgentId", "TaskId"},
 	"AWS/DDoSProtection":    {"Region", "Rule", "RuleGroup", "WebACL"},
 	"AWS/DMS":               {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
 	"AWS/DocDB":             {"DBClusterIdentifier", "DBInstanceIdentifier", "Role"},
