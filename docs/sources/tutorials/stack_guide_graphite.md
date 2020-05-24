@@ -73,7 +73,7 @@ Copy example carbon config:
 cp /opt/graphite/conf/carbon.conf.example /opt/graphite/conf/carbon.conf
 ```
 
-Edit the config file `/opt/graphite/conf/carbon.conf`, find line `ENABLE_UPD_LISTENER` and
+Edit the config file `/opt/graphite/conf/carbon.conf`, find line `ENABLE_UDP_LISTENER` and
 change this setting to `True`.
 
 ### Configure storage-schemas.conf
