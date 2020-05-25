@@ -1,3 +1,4 @@
+// Let's start optimizing this! :D
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
