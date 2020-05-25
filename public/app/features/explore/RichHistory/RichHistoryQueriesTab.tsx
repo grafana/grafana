@@ -232,8 +232,9 @@ export function RichHistoryQueriesTab(props: Props) {
         })}
         <FullWidthButtonContainer>
           <Button
+            variant="secondary"
             onClick={() => {
-              setRenderLimit(renderLimit + 50);
+              setRenderLimit(renderLimit + 30);
             }}
           >
             Show more queries{' '}
