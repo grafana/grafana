@@ -141,8 +141,8 @@ export class TransformationsEditor extends React.PureComponent<Props> {
             <p>
               Transformations allow you to join, calculate, re-order, hide and rename your query results before being
               visualized. <br />
-              Many transforms are not suitable if your using the Graph visualization as it currently only supports time
-              series. <br />
+              Many transforms are not suitable if you're using the Graph visualization as it currently only supports
+              time series. <br />
               It can help to switch to Table visualization to understand what a transformation is doing. <br />
             </p>
             <p>Select one of the transformations below to start.</p>

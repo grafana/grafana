@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.8
+            VERSION=0.4.9
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -155,7 +155,17 @@ jobs:
             - node_modules
       - run:
           name: Build Grafana frontend
-          command: /tmp/grabpl build-frontend --edition << parameters.edition >>
+          command: |
+            if [[ -n $CIRCLE_TAG ]]; then
+              # A release build
+              /tmp/grabpl build-frontend --edition << parameters.edition >> $CIRCLE_TAG
+            elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              /tmp/grabpl build-frontend --edition << parameters.edition >> 7.0.0-test
+            else
+              # A master or PR build
+              /tmp/grabpl build-frontend --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
+            fi
       - run:
           name: Move artifacts
           command: mkdir << parameters.edition >> && cp -r public << parameters.edition >>/
@@ -412,7 +422,7 @@ jobs:
               # A master build
               /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              # A forked forked PR build, don't sign as it requires an API secret
+              # A forked PR build, don't sign as it requires an API secret
               /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
@@ -474,7 +484,7 @@ jobs:
               # A master build
               /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              # A forked forked PR build, don't sign as it requires an API secret
+              # A forked PR build, don't sign as it requires an API secret
               /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
@@ -783,7 +793,7 @@ jobs:
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
-          command: 'echo -e "unknwon\nreferer\nerrorstring\neror" > words_to_ignore.txt'
+          command: 'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt'
       - run:
           name: check documentation spelling errors
           command: "codespell -I ./words_to_ignore.txt docs/"
