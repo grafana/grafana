@@ -53,6 +53,7 @@ export const Components = {
       close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
       open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
       select: 'Panel editor option pane select',
+      tab: (title: string) => `Panel editor option pane tab ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
@@ -124,7 +125,11 @@ export const Components = {
   FolderPicker: {
     container: 'Folder picker select container',
   },
+  DataSourcePicker: {
+    container: 'Data source picker select container',
+  },
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  QueryField: { container: 'Query field' },
 };

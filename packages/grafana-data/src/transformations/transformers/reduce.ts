@@ -72,7 +72,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             continue;
           }
 
-          if (matcher(field)) {
+          if (matcher(field, series, data)) {
             const results = reduceField({
               field,
               reducers,

@@ -97,7 +97,7 @@ describe('Stats Calculators', () => {
     expect(stats.delta).toEqual(300);
   });
 
-  it('consistenly check allIsNull/allIsZero', () => {
+  it('consistently check allIsNull/allIsZero', () => {
     const empty = createField('x');
     const allNull = createField('x', [null, null, null, null]);
     const allUndefined = createField('x', [undefined, undefined, undefined, undefined]);
@@ -155,7 +155,7 @@ describe('Stats Calculators', () => {
             `Invalid ${reducer} result for: ` +
             input.data.join(', ') +
             ` Expected: ${input.result}` + // configured
-            ` Recieved: Multiple: ${v1}, Single: ${v2}`;
+            ` Received: Multiple: ${v1}, Single: ${v2}`;
           expect(msg).toEqual(null);
         }
       }

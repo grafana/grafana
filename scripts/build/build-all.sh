@@ -73,7 +73,7 @@ echo "Building frontend"
 start=$(date +%s%N)
 go run build.go ${OPT} build-frontend
 runtime=$((($(date +%s%N) - start)/1000000))
-echo "Frontent build took $runtime"
+echo "Frontend build took $runtime"
 reportFrontEndBuildTime $runtime
 
 if [ -d "dist" ]; then

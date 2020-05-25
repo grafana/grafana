@@ -13,7 +13,7 @@ parent = "http_api"
 
 ## Tokens
 
-Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or oauth).
+Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
 
 ## Basic Auth
 

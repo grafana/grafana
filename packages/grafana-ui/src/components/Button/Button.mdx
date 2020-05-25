@@ -7,7 +7,9 @@ import { Button } from './Button';
 
 ## Primary
 
-Used for "call to action".
+Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If you need multiple buttons for different actions, decide which action is the most important and make that the primary `Button`. All other `Button` components should be secondary.
+
+If there is no primary action, all `Button` components should be secondary.
 
 <Preview>
   <div>
@@ -25,7 +27,10 @@ Used for "call to action".
 
 ## Secondary
 
-The secondary button, used for "cancel" or aborting.
+The secondary `Button` is the default button style and can trigger various actions. How it is used depends on its surroundings:
+
+1. When next to the primary `Button`, the Secondary style can for example be used for "Cancel" or "Abort" actions. 
+2. When there is no main important action on a given page, all `Button` components should use the secondary style.
 
 <Preview>
   <div>
@@ -43,7 +48,7 @@ The secondary button, used for "cancel" or aborting.
 
 ## Destructive
 
-Used for removing or deleting entities.
+Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm.
 
 <Preview>
   <div>

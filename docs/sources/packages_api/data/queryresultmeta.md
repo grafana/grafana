@@ -29,6 +29,7 @@ import { QueryResultMeta } from '@grafana/data';
 |  [json](#json-property) | <code>boolean</code> |  |
 |  [limit](#limit-property) | <code>number</code> |  |
 |  [notices](#notices-property) | <code>QueryResultMetaNotice[]</code> | Meta Notices |
+|  [preferredVisualisationType](#preferredvisualisationtype-property) | <code>PreferredVisualisationType</code> | Currently used to show results in Explore only in preferred visualisation option |
 |  [query](#query-property) | <code>string</code> |  |
 |  [rawQuery](#rawquery-property) | <code>string</code> |  |
 |  [searchWords](#searchwords-property) | <code>string[]</code> |  |
@@ -87,6 +88,16 @@ Meta Notices
 
 ```typescript
 notices?: QueryResultMetaNotice[];
+```
+
+### preferredVisualisationType property
+
+Currently used to show results in Explore only in preferred visualisation option
+
+<b>Signature</b>
+
+```typescript
+preferredVisualisationType?: PreferredVisualisationType;
 ```
 
 ### query property
