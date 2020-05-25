@@ -4,6 +4,7 @@ import {
   setFieldConfigDefaults,
   setDynamicConfigValue,
   applyFieldOverrides,
+  getLinksSupplier,
 } from './fieldOverrides';
 import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
@@ -20,7 +21,7 @@ import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
-
+import { locationUtil } from '../utils';
 const property1 = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
@@ -416,5 +417,42 @@ describe('setDynamicConfigValue', () => {
 
     expect(config.custom.property3).toEqual({});
     expect(config.displayName).toBeUndefined();
+  });
+});
+
+describe('getLinksSupplier', () => {
+  it('will replace variables in url and title of the data link', () => {
+    locationUtil.initialize({
+      getConfig: () => ({} as any),
+      buildParamsFromVariables: (() => {}) as any,
+      getTimeRangeForUrl: (() => {}) as any,
+    });
+
+    const f0 = new MutableDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+          config: {
+            links: [
+              {
+                url: 'url to be interpolated',
+                title: 'title to be interpolated',
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const replaceSpy = jest.fn();
+    const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy, { theme: {} as GrafanaTheme });
+    supplier({});
+
+    expect(replaceSpy).toBeCalledTimes(2);
+    expect(replaceSpy.mock.calls[0][0]).toEqual('url to be interpolated');
+    expect(replaceSpy.mock.calls[1][0]).toEqual('title to be interpolated');
   });
 });
