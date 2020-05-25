@@ -6,4 +6,6 @@ identifier = "whatsnew"
 weight = 5
 +++
 
+# What's New
 
+This section contains pages with Grafana release notes.

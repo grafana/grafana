@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -33,12 +32,11 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 			// the query response is in, there does not seem to be a way to tell
 			// by the response alone if/how the results should be grouped.
 			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-			// the "groupResults" parameter is sent along with the query to the backend so that we
+			// the "statsGroups" parameter is sent along with the query to the backend so that we
 			// can correctly group the CloudWatch logs response.
-			if query.Model.Get("groupResults").MustBool() && len(dataframe.Fields) > 0 {
-				groupingFields := findGroupingFields(dataframe.Fields)
-
-				groupedFrames, err := groupResults(dataframe, groupingFields)
+			statsGroups := query.Model.Get("statsGroups").MustStringArray()
+			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
+				groupedFrames, err := groupResults(dataframe, statsGroups)
 				if err != nil {
 					return err
 				}
@@ -79,23 +77,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 	}
 
 	return response, nil
-}
-
-func findGroupingFields(fields []*data.Field) []string {
-	groupingFields := make([]string, 0)
-	for _, field := range fields {
-		if field.Type().Numeric() || field.Type() == data.FieldTypeNullableTime || field.Type() == data.FieldTypeTime {
-			continue
-		}
-
-		if _, err := strconv.ParseFloat(*field.At(0).(*string), 64); err == nil {
-			continue
-		}
-
-		groupingFields = append(groupingFields, field.Name)
-	}
-
-	return groupingFields
 }
 
 func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext *tsdb.TsdbQuery, query *tsdb.Query) (*data.Frame, error) {
