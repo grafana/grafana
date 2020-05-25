@@ -6,26 +6,23 @@ aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/featur
 [menu.docs]
 name = "Table panel"
 parent = "visualizations"
-weight = 500
-draft = "true"
+weight = 1000
 +++
-
 
 # Table panel
 
-The table panel is very flexible, supporting multiple modes for time series and for
-tables, annotation, and raw JSON data. This panel also provides date formatting, value formatting, and coloring options.
+The table panel is very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This panel also provides date formatting, value formatting, and coloring options.
 
 <img class="screenshot" src="/assets/img/features/table-panel.png">
 
-To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](ADD LINK TEXT).
-
 ## Data and field options
+
 Tables visualizations allow you to apply:
 
-- Data transformations
-- Field options
-- Field option overrides
+- [Data transformations]({{< relref "../transformations.md" >}})
+- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+- [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
+
 - **Show header -** Show or hide column names imported from your data source..

@@ -27,7 +27,7 @@ grafana-piechart-panel
 mtanda-histogram-panel
 ```
 
-The full file format for plugin.json is described [here]({{< relref "metadata.md" >}}).
+The full file format for plugin.json is described [here]({{< relref "../metadata.md" >}}).
 
 Minimal plugin.json:
 
@@ -110,11 +110,23 @@ Below is a minimal example of an editor row with one form group and two fields, 
     <div class="gf-form">
       <label class="gf-form-label width-10">Label1</label>
       <div class="gf-form-select-wrapper max-width-10">
-        <select class="input-small gf-form-input" ng-model="ctrl.panel.mySelectProperty" ng-options="t for t in ['option1', 'option2', 'option3']" ng-change="ctrl.onSelectChange()"></select>
+        <select
+          class="input-small gf-form-input"
+          ng-model="ctrl.panel.mySelectProperty"
+          ng-options="t for t in ['option1', 'option2', 'option3']"
+          ng-change="ctrl.onSelectChange()"
+        ></select>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-10">Label2</label>
-        <input type="text" class="input-small gf-form-input width-10" ng-model="ctrl.panel.myProperty" ng-change="ctrl.onFieldChange()" placeholder="suggestion for user" ng-model-onblur />
+        <input
+          type="text"
+          class="input-small gf-form-input width-10"
+          ng-model="ctrl.panel.myProperty"
+          ng-change="ctrl.onFieldChange()"
+          placeholder="suggestion for user"
+          ng-model-onblur
+        />
       </div>
     </div>
   </div>
@@ -137,43 +149,45 @@ We recommend that you use a linter for your JavaScript. For ES6, the standard li
 2. Prefer to use `let` instead `var` ([Exploring ES6](http://exploringjs.com/es6/ch_core-features.html#_from-var-to-letconst))
 3. Use arrow functions, which don’t shadow `this` ([Exploring ES6](http://exploringjs.com/es6/ch_core-features.html#_from-function-expressions-to-arrow-functions)):
 
-    ```js
-    testDatasource() {
-      return this.getServerStatus()
-      .then(status => {
-        return this.doSomething(status);
-      })
-    }
-    ```
+   ```js
+   testDatasource() {
+     return this.getServerStatus()
+     .then(status => {
+       return this.doSomething(status);
+     })
+   }
+   ```
 
-    better than
+   better than
 
-    ```js
-    testDatasource() {
-      var self = this;
-      return this.getServerStatus()
-      .then(function(status) {
-        return self.doSomething(status);
-      })
-    }
-    ```
+   ```js
+   testDatasource() {
+     var self = this;
+     return this.getServerStatus()
+     .then(function(status) {
+       return self.doSomething(status);
+     })
+   }
+   ```
+
 4. Use native _Promise_ object:
 
-    ```js
-    metricFindQuery(query) {
-      if (!query) {
-        return Promise.resolve([]);
-      }
-    }
-    ```
+   ```js
+   metricFindQuery(query) {
+     if (!query) {
+       return Promise.resolve([]);
+     }
+   }
+   ```
 
-    better than
+   better than
 
-    ```js
-    metricFindQuery(query) {
-      if (!query) {
-        return this.$q.when([]);
-      }
-    }
-    ```
+   ```js
+   metricFindQuery(query) {
+     if (!query) {
+       return this.$q.when([]);
+     }
+   }
+   ```
+
 5. If using Lodash, then be consistent and prefer that to the native ES6 array functions.

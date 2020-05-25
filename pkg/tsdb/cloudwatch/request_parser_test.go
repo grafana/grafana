@@ -12,8 +12,10 @@ import (
 func TestRequestParser(t *testing.T) {
 	Convey("TestRequestParser", t, func() {
 		timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
-		from, _ := timeRange.ParseFrom()
-		to, _ := timeRange.ParseTo()
+		from, err := timeRange.ParseFrom()
+		So(err, ShouldBeNil)
+		to, err := timeRange.ParseTo()
+		So(err, ShouldBeNil)
 		Convey("when parsing query editor row json", func() {
 			Convey("using new dimensions structure", func() {
 				query := simplejson.NewFromAny(map[string]interface{}{
@@ -102,8 +104,10 @@ func TestRequestParser(t *testing.T) {
 				Convey("when time range is short", func() {
 					query.Set("period", "900")
 					timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
-					from, _ := timeRange.ParseFrom()
-					to, _ := timeRange.ParseTo()
+					from, err := timeRange.ParseFrom()
+					So(err, ShouldBeNil)
+					to, err := timeRange.ParseTo()
+					So(err, ShouldBeNil)
 
 					res, err := parseRequestQuery(query, "ref1", from, to)
 					So(err, ShouldBeNil)

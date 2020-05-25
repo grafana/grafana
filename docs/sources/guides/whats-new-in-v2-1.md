@@ -92,7 +92,7 @@ Grafana OpenTSDB data source now supports template variable values queries. This
 template variables that fetches the values from OpenTSDB (for example metric names, tag names, or tag values).
 The query editor is also enhanced to limiting tags by metric.
 
-> ***Note:*** OpenTSDB config option tsd.core.meta.enable_realtime_ts must enabled for OpenTSDB lookup api)
+> ***Note:*** OpenTSDB config option tsd.core.meta.enable_realtime_ts must enabled for OpenTSDB lookup API)
 
 ### New Data Source: KairosDB
 The Cassandra backed time series database KairosDB is now supported in Grafana out of the box. Thank you to

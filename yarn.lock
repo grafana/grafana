@@ -5056,6 +5056,11 @@
   resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.56.tgz#20124077bd44061e018c7283c0bb83f4b00322dd"
   integrity sha512-HxtqilvklZ7i6XOaiP7uIJIrFXEVEhfbSY45nfv2DeBRngncI58Y4ZOUMiUkcT8sqgLL1ablmbfylChUg7A3GA==
 
+"@types/antlr4@^4.7.1":
+  version "4.7.1"
+  resolved "https://registry.yarnpkg.com/@types/antlr4/-/antlr4-4.7.1.tgz#09a8f985e29149c73e92b161d08691a1fd8425ef"
+  integrity sha512-mjQv+WtdJnwI5qhNh5yJkZ9rVFdRClUyaO5KebaLSJFHT6uSyDLAK9jUke4zLKZXk6vQQ/QJN2j7QV2q7l5Slw==
+
 "@types/anymatch@*":
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/@types/anymatch/-/anymatch-1.3.1.tgz#336badc1beecb9dacc38bea2cf32adf627a8421a"
@@ -7049,6 +7054,11 @@ ansi-to-html@^0.6.11:
   integrity sha512-qBkIqLW979675mP76yB7yVkzeAWtATegdnDQ0RA3CZzknx0yUlNxMSML4xFdBfTs2GWYFQ1FELfbGbVSPzJ+LA==
   dependencies:
     entities "^1.1.2"
+
+antlr4@^4.8.0:
+  version "4.8.0"
+  resolved "https://registry.yarnpkg.com/antlr4/-/antlr4-4.8.0.tgz#f938ec171be7fc2855cd3a533e87647185b32b6a"
+  integrity sha512-en/MxQ4OkPgGJQ3wD/muzj1uDnFSzdFIhc2+c6bHZokWkuBb6RRvFjpWhPxWLbgQvaEzldJZ0GSQpfSAaE3hqg==
 
 any-observable@^0.3.0:
   version "0.3.0"
@@ -21734,6 +21744,13 @@ resize-observer-polyfill@^1.5.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/resize-observer-polyfill/-/resize-observer-polyfill-1.5.1.tgz#0e9020dd3d21024458d4ebd27e23e40269810464"
   integrity sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==
+
+resolve-as-bin@2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/resolve-as-bin/-/resolve-as-bin-2.1.0.tgz#25638f52e13203eae97125ab26f54082ab98c6e1"
+  integrity sha512-ileUuPIOP+xj+GS/d/EbB2XqRA8T2IeZTFkMggNIW2Mo72VyBMbq+HvIAxdW0ED9D44aEzJwHvUtbMm2PJT5Kw==
+  dependencies:
+    cross-spawn "^6.0.5"
 
 resolve-cwd@^2.0.0:
   version "2.0.0"
