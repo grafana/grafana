@@ -9,6 +9,7 @@ import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { filterFieldsTransformer } from './filter';
+import { getFieldDisplayName } from '../../field';
 
 export interface ReduceTransformerOptions {
   reducers: ReducerID[];
@@ -79,9 +80,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             });
 
             // Update the name list
-            const seriesName = series.name ?? series.refId ?? seriesIndex;
-            const fieldName =
-              field.name === seriesName || data.length === 1 ? field.name : `${field.name} {${seriesName}}`;
+            const fieldName = getFieldDisplayName(field, series, data);
 
             values[0].buffer.push(fieldName);
 
