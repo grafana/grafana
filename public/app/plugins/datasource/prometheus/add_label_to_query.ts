@@ -40,6 +40,10 @@ export function addLabelToQuery(
     const isColonBounded = word.endsWith(':');
 
     previousWord = word;
+
+    // with Prometheus datasource, adds an empty selector to a bare metric name
+    // but doesn't add it with Loki datasource so there are no unnecessary labels
+    // e.g. when the filter contains a dash (-) character inside
     if (
       !isLokiDatasource &&
       !insideSelector &&
