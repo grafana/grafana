@@ -18,8 +18,13 @@ const builtInWords = [
 const metricNameRegexp = /([A-Za-z:][\w:]*)\b(?![\(\]{=!",])/g;
 const selectorRegexp = /{([^{]*)}/g;
 
-// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
-export function addLabelToQuery(query: string, key: string, value: string, operator?: string): string {
+export function addLabelToQuery(
+  query: string,
+  key: string,
+  value: string,
+  operator?: string,
+  hasNoMetrics?: boolean
+): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
@@ -35,7 +40,17 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
     const isColonBounded = word.endsWith(':');
 
     previousWord = word;
-    if (!insideSelector && !isColonBounded && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+
+    // with Prometheus datasource, adds an empty selector to a bare metric name
+    // but doesn't add it with Loki datasource so there are no unnecessary labels
+    // e.g. when the filter contains a dash (-) character inside
+    if (
+      !hasNoMetrics &&
+      !insideSelector &&
+      !isColonBounded &&
+      !previousWordIsKeyWord &&
+      builtInWords.indexOf(word) === -1
+    ) {
       return `${word}{}`;
     }
     return word;
