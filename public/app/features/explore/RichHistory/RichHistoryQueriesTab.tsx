@@ -6,7 +6,7 @@ import { uniqBy } from 'lodash';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme, FullWidthButtonContainer, Button } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { SortOrder } from 'app/core/utils/explore';
@@ -133,6 +133,7 @@ export function RichHistoryQueriesTab(props: Props) {
   } = props;
 
   const [sliderRetentionFilter, setSliderRetentionFilter] = useState<[number, number]>([0, retentionPeriod]);
+  const [renderLimit, setRenderLimit] = useState(25);
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
@@ -156,7 +157,7 @@ export function RichHistoryQueriesTab(props: Props) {
    * are keys and arrays with queries that belong to that headings are values.
    */
   let mappedQueriesToHeadings = mapQueriesToHeadings(queriesWithinSelectedTimeline, sortOrder);
-
+  let counter = 0;
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
@@ -202,13 +203,20 @@ export function RichHistoryQueriesTab(props: Props) {
           </div>
         </div>
         {Object.keys(mappedQueriesToHeadings).map(heading => {
+          if (counter === renderLimit) {
+            return null;
+          }
           return (
             <div key={heading}>
               <div className={styles.heading}>
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
               {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                if (counter === renderLimit) {
+                  return null;
+                }
                 const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+                counter++;
                 return (
                   <RichHistoryCard
                     query={q}
@@ -222,6 +230,15 @@ export function RichHistoryQueriesTab(props: Props) {
             </div>
           );
         })}
+        <FullWidthButtonContainer>
+          <Button
+            onClick={() => {
+              setRenderLimit(renderLimit + 50);
+            }}
+          >
+            Show more queries{' '}
+          </Button>
+        </FullWidthButtonContainer>
         <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>
