@@ -972,7 +972,13 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  scan-docker-images:
+  scan-docker-image:
+    description: "Scans a docker image for vulnerabilities using trivy"
+    parameters:
+      image:
+        type: string
+      tag:
+        type: string
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -995,29 +1001,11 @@ jobs:
           name: Clear trivy cache
           command: trivy --clear-cache
       - run:
-          name: Scan grafana/grafana:master
-          command: trivy --exit-code 1 grafana/grafana:master
+          name: Scan Docker image for unkown/low/medium vulnerabilities
+          command: trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM << parameters.image >>:<< parameters.tag >>
       - run:
-          name: Scan grafana/grafana:master-ubuntu
-          command: trivy --exit-code 1 grafana/grafana:master-ubuntu
-      - run:
-          name: Scan grafana/grafana-enterprise:master
-          command: trivy --exit-code 1 grafana/grafana-enterprise:master
-      - run:
-          name: Scan grafana/grafana-enterprise:master-ubuntu
-          command: trivy --exit-code 1 grafana/grafana-enterprise:master-ubuntu
-      - run:
-          name: Scan grafana/grafana:latest
-          command: trivy --exit-code 1 grafana/grafana:latest
-      - run:
-          name: Scan grafana/grafana:latest-ubuntu
-          command: trivy --exit-code 1 grafana/grafana:latest-ubuntu
-      - run:
-          name: Scan grafana/grafana-enterprise:latest
-          command: trivy --exit-code 1 grafana/grafana-enterprise:latest
-      - run:
-          name: Scan grafana/grafana-enterprise:latest-ubuntu
-          command: trivy --exit-code 1 grafana/grafana-enterprise:latest-ubuntu
+          name: Scan Docker image for high/critical vulnerabilities
+          command: trivy --exit-code 1 --severity HIGH,CRITICAL << parameters.image >>:<< parameters.tag >>
       - save_cache:
           key: vulnerability-db
           paths:
@@ -1343,4 +1331,8 @@ workflows:
           cron: "0 0 * * *"
           filters: *filter-only-master
     jobs:
-      - scan-docker-images
+      - scan-docker-image:
+          matrix:
+            parameters:
+              image: [grafana/grafana, grafana/grafana-enterprise]
+              tag: [latest, master, latest-ubuntu, master-ubuntu]
