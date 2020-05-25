@@ -1,6 +1,5 @@
 import { LogRowModel, toDataFrame, Field, FieldCache } from '@grafana/data';
 import React, { useState, useEffect } from 'react';
-import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryResponse, DataQueryError } from '@grafana/data';
@@ -101,11 +100,7 @@ export const getRowContexts = async (
           const lineField: Field<string> = dataFrame.fields.filter(field => field.name === 'line')[0];
           const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
 
-          if (data.length === 0) {
-            data[0] = [line];
-          } else {
-            data[0].push(line);
-          }
+          data.push(line);
         }
       }
 
@@ -161,10 +156,10 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
-        const currentResultBefore = currentResult?.data[0][0];
-        const currentResultAfter = currentResult?.data[1][0];
-        const valueBefore = value.data[0][0];
-        const valueAfter = value.data[1][0];
+        const currentResultBefore = currentResult?.data[0];
+        const currentResultAfter = currentResult?.data[1];
+        const valueBefore = value.data[0];
+        const valueAfter = value.data[1];
 
         // checks if there are more log rows in a given direction
         // if after fetching additional rows the length of result is the same,
@@ -189,8 +184,8 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
 
   return children({
     result: {
-      before: result ? flatten(result.data[0]) : [],
-      after: result ? flatten(result.data[1]) : [],
+      before: result ? result.data[0] : [],
+      after: result ? result.data[1] : [],
     },
     errors: {
       before: result ? result.errors[0] : undefined,
