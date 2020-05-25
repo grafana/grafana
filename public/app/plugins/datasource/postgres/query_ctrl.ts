@@ -514,6 +514,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
     let params = [value];
     if (partType === 'time') {
       params = ['$__interval', 'none'];
+    } else if (partType !== 'column') {
+      // assume it's a manually typed column that we didn't present as an option
+      value = partType;
+      partType = 'column';
     }
     const partModel = sqlPart.create({ type: partType, params: params });
 
