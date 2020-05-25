@@ -524,7 +524,10 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineProperties(commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
-	expandConfig(parsedFile)
+	err = expandConfig(parsedFile)
+	if err != nil {
+		return nil, err
+	}
 
 	// update data path and logging config
 	dataPath, err := valueAsString(parsedFile.Section("paths"), "data", "")

@@ -89,8 +89,8 @@ func applyExpander(s string, e registeredExpander) (string, error) {
 	matches := regex.FindAllStringSubmatch(s, -1)
 
 	for _, match := range matches {
-		if len(match) <= 3 {
-			return "", fmt.Errorf("regex error, got too few results back for match")
+		if len(match) < 3 {
+			return "", fmt.Errorf("regex error, got %d results back for match, expected 3", len(match))
 		}
 
 		_, isEnv := e.expander.(envExpander)
@@ -119,7 +119,7 @@ func (e envExpander) Expand(s string) (string, error) {
 
 	// if env variable is hostname and it is empty use os.Hostname as default
 	if s == "HOSTNAME" && envValue == "" {
-		envValue, _ = os.Hostname()
+		return os.Hostname()
 	}
 
 	return os.Getenv(s), nil
@@ -133,6 +133,11 @@ func (e fileExpander) Init(file *ini.File) error {
 }
 
 func (e fileExpander) Expand(s string) (string, error) {
+	_, err := os.Stat(s)
+	if err != nil {
+		return "", err
+	}
+
 	f, err := ioutil.ReadFile(s)
 	if err != nil {
 		return "", err
