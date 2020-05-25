@@ -1000,7 +1000,15 @@ workflows:
             parameters:
               edition: [oss,enterprise]
           requires:
-            - build-<< matrix.edition >>-backend-<< matrix.variant >>
+            - build-<< matrix.edition >>-backend-armv6
+            - build-<< matrix.edition >>-backend-armv7
+            - build-<< matrix.edition >>-backend-armv7-musl
+            - build-<< matrix.edition >>-backend-arm64
+            - build-<< matrix.edition >>-backend-arm64-musl
+            - build-<< matrix.edition >>-backend-osx64
+            - build-<< matrix.edition >>-backend-win64
+            - build-<< matrix.edition >>-backend-linux-x64
+            - build-<< matrix.edition >>-backend-linux-x64-musl
             - build-<< matrix.edition >>-frontend
             - test-backend
             - test-frontend
