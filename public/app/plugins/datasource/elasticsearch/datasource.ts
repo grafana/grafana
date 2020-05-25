@@ -231,7 +231,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         try {
           parsedRes = JSON.parse(res);
         } catch (err) {
-          throw err;
+          throw {
+            status: 'error',
+            message: 'Response coming from datasource is not a valid JSON. ' + err,
+          };
         }
       } else {
         parsedRes = res;
@@ -426,7 +429,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         try {
           parsedRes = JSON.parse(res);
         } catch (err) {
-          throw err;
+          throw {
+            status: 'error',
+            message: 'Response coming from datasource is not a valid JSON. ' + err,
+          };
         }
       } else {
         parsedRes = res;
@@ -452,7 +458,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         try {
           parsedResult = JSON.parse(result);
         } catch (err) {
-          throw err;
+          throw {
+            status: 'error',
+            message: 'Response coming from datasource is not a valid JSON. ' + err,
+          };
         }
       } else {
         parsedResult = result;
@@ -558,7 +567,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         try {
           parsedRes = JSON.parse(res);
         } catch (err) {
-          throw err;
+          throw {
+            status: 'error',
+            message: 'Response coming from datasource is not a valid JSON. ' + err,
+          };
         }
       } else {
         parsedRes = res;
