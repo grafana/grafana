@@ -1001,8 +1001,11 @@ jobs:
           name: Clear trivy cache
           command: trivy --clear-cache
       - run:
-          name: Scan Docker image
-          command: trivy --exit-code 1 << parameters.image >>:<< parameters.tag >>
+          name: Scan Docker image for unkown/low/medium vulnerabilities
+          command: trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM << parameters.image >>:<< parameters.tag >>
+      - run:
+          name: Scan Docker image for high/critical vulnerabilities
+          command: trivy --exit-code 1 --severity HIGH,CRITICAL << parameters.image >>:<< parameters.tag >>
       - save_cache:
           key: vulnerability-db
           paths:
