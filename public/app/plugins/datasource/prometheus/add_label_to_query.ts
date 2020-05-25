@@ -23,7 +23,7 @@ export function addLabelToQuery(
   key: string,
   value: string,
   operator?: string,
-  isLokiDatasource?: boolean
+  hasNoMetrics?: boolean
 ): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
@@ -45,7 +45,7 @@ export function addLabelToQuery(
     // but doesn't add it with Loki datasource so there are no unnecessary labels
     // e.g. when the filter contains a dash (-) character inside
     if (
-      !isLokiDatasource &&
+      !hasNoMetrics &&
       !insideSelector &&
       !isColonBounded &&
       !previousWordIsKeyWord &&
