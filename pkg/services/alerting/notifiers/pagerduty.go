@@ -100,17 +100,17 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		eventType = "resolve"
 	}
 	customData := simplejson.New()
-	if !pn.MessageInDetails {
-		for _, evt := range evalContext.EvalMatches {
-			customData.Set(evt.Metric, evt.Value)
-		}
-	} else {
+	if pn.MessageInDetails {
 		queries := make(map[string]interface{})
 		for _, evt := range evalContext.EvalMatches {
 			queries[evt.Metric] = evt.Value
 		}
 		customData.Set("queries", queries)
 		customData.Set("message", evalContext.Rule.Message)
+	} else {
+		for _, evt := range evalContext.EvalMatches {
+			customData.Set(evt.Metric, evt.Value)
+		}
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
@@ -151,10 +151,10 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	}
 
 	var summary string
-	if !pn.MessageInDetails {
-		summary = evalContext.Rule.Name + " - " + evalContext.Rule.Message
-	} else {
+	if pn.MessageInDetails {
 		summary = evalContext.Rule.Name
+	} else {
+		summary = evalContext.Rule.Name + " - " + evalContext.Rule.Message
 	}
 	if len(summary) > 1024 {
 		summary = summary[0:1024]
