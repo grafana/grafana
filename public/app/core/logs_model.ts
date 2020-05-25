@@ -91,14 +91,12 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(sortedRows: LogRowModel[], intervalMs: number, timeZone: TimeZone): GraphSeriesXY[] {
+export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number, timeZone: TimeZone): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
-  // need at least 10px per bucket, so we multiply interval by 20 to also give some space around the bars.
   // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
   // Graph time series by log level
   const seriesByLevel: any = {};
-  const bucketSize = intervalMs * 20;
   const seriesList: any[] = [];
 
   for (const row of sortedRows) {
@@ -209,18 +207,26 @@ export function dataFrameToLogsModel(
       if (intervalMs && logsModel.rows.length > 0) {
         const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
         let resolutionIntervalMs = intervalMs;
+        // Buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
+        const pxPerBar = 20;
+        let bucketSize = resolutionIntervalMs * pxPerBar;
         // Clamp time range to visible logs otherwise big parts of the graph might look empty
         if (absoluteRange) {
           const earliest = sortedRows[0].timeEpochMs;
           const latest = absoluteRange.to;
-          logsModel.visibleRange = { from: earliest, to: latest };
-          // Adjust interval bucket size for potentially shorter visible range
           const visibleRangeMs = latest - earliest;
           if (visibleRangeMs > 0) {
-            resolutionIntervalMs *= visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+            // Adjust interval bucket size for potentially shorter visible range
+            const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+            resolutionIntervalMs *= clampingFactor;
+            // Minimum bucketsize of 1s for nicer graphing
+            bucketSize = Math.max(resolutionIntervalMs * pxPerBar, 1000);
+            // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
+            const adjustedEarliest = Math.floor(earliest / bucketSize) * bucketSize;
+            logsModel.visibleRange = { from: adjustedEarliest, to: latest };
           }
         }
-        logsModel.series = makeSeriesForLogs(sortedRows, resolutionIntervalMs, timeZone);
+        logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
       } else {
         logsModel.series = [];
       }
