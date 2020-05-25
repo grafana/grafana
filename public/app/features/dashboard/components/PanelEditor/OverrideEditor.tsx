@@ -51,11 +51,13 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   const theme = useTheme();
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
   const styles = getStyles(theme);
+
   const matcherLabel = (
     <Label category={['Matcher']} description={matcherUi.description}>
       {matcherUi.name}
     </Label>
   );
+
   const onMatcherConfigChange = useCallback(
     (matcherConfig: any) => {
       override.matcher.options = matcherConfig;
