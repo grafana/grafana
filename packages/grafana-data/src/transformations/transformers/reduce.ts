@@ -80,7 +80,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             });
 
             // Update the name list
-            const fieldName = getFieldDisplayName(field, series);
+            const fieldName = getFieldDisplayName(field, series, data);
 
             values[0].buffer.push(fieldName);
 
