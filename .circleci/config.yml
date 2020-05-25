@@ -1324,12 +1324,6 @@ workflows:
           filters: *filter-only-master
           requires:
             - build-enterprise-docker-images
-      - scan-docker-image:
-          filters: *filter-all
-          matrix:
-            parameters:
-              image: [grafana/grafana, grafana/grafana-enterprise]
-              tag: [latest, master, latest-ubuntu, master-ubuntu]
 
   nightly:
     triggers:
