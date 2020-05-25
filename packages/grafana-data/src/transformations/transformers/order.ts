@@ -1,7 +1,7 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { DataFrame, Field } from '../../types';
-import { calculateFieldDisplayName } from '../../field/fieldState';
+import { getFieldDisplayName } from '../../field/fieldState';
 
 export interface OrderFieldsTransformerOptions {
   indexByName: Record<string, number>;
@@ -51,9 +51,7 @@ const createFieldsOrderer = (indexByName: Record<string, number>) => (
     return fields;
   }
   const comparer = createOrderFieldsComparer(indexByName);
-  return fields.sort((a, b) =>
-    comparer(calculateFieldDisplayName(a, frame, data), calculateFieldDisplayName(b, frame, data))
-  );
+  return fields.sort((a, b) => comparer(getFieldDisplayName(a, frame, data), getFieldDisplayName(b, frame, data)));
 };
 
 const indexOfField = (fieldName: string, indexByName: Record<string, number>) => {

@@ -49,7 +49,7 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
 /**
  * Get an appropriate display name. If the 'displayName' field config is set, use that
  */
-export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
 
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
