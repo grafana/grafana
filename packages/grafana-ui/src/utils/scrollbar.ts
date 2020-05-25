@@ -1,8 +1,8 @@
-﻿// Slightly modified, but without dependancies:
+// Slightly modified, but without dependancies:
 // https://raw.githubusercontent.com/malte-wessel/react-custom-scrollbars/master/src/utils/getScrollbarWidth.js
 let scrollbarWidth: number | null = null;
 
-export default function getScrollbarWidth() {
+export function getScrollbarWidth() {
   if (scrollbarWidth !== null) {
     return scrollbarWidth;
   }
@@ -31,11 +31,3 @@ export default function getScrollbarWidth() {
   }
   return scrollbarWidth || 0;
 }
-
-const hasNoOverlayScrollbars = getScrollbarWidth() > 0;
-
-export const addClassIfNoOverlayScrollbar = (classname: string, htmlElement: HTMLElement = document.body) => {
-  if (hasNoOverlayScrollbars) {
-    htmlElement.classList.add(classname);
-  }
-};
