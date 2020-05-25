@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
+import { PanelQueryRunner } from '../dashboard/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -51,8 +52,10 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onMetricsPanelMounted() {
-    const queryRunner = this.panel.getQueryRunner();
-    this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
+    const queryRunner = this.panel.getQueryRunner() as PanelQueryRunner;
+    this.querySubscription = queryRunner
+      .getData({ withTransforms: true, withFieldConfig: true })
+      .subscribe(this.panelDataObserver);
   }
 
   private onPanelTearDown() {
