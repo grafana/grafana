@@ -11,10 +11,13 @@ module.exports = async baseConfig => {
   } = baseConfig;
 
   if (CWD) {
+    // @todo: https://github.com/cypress-io/cypress/issues/6406
+    const jsonReporter = require.resolve('@mochajs/json-file-reporter');
+
     const projectConfig = {
       fixturesFolder: `${CWD}/cypress/fixtures`,
       integrationFolder: `${CWD}/cypress/integration`,
-      reporter: '@mochajs/json-file-reporter', // putting this in cypress.json caused weird errors
+      reporter: jsonReporter,
       reporterOptions: {
         output: `${CWD}/cypress/report.json`,
       },
