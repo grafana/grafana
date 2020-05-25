@@ -25,8 +25,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
     onChange(newOptions);
   };
 
-  // ??? OptionsEditorItem vs FieldOverrideEditorProps ???
-  const context: FieldOverrideContext = {
+  const context: StandardEditorContext = {
     data: data ?? [],
     replaceVariables: getTemplateSrv().replace,
   };
@@ -51,7 +50,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
                   value={lodashGet(options, e.path)}
                   onChange={value => onOptionChange(e.path, value)}
                   item={e}
-                  {...{ context }}
+                  context={context}
                 />
               </Field>
             );
