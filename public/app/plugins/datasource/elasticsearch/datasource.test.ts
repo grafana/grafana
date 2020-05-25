@@ -6,7 +6,7 @@ import { toUtc, dateTime } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, DataFrame } from '@grafana/data';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -228,6 +228,13 @@ describe('ElasticDatasource', function(this: any) {
       const links = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
+    });
+
+    it('should add search words to DataFrame metadata', async () => {
+      const { response } = await setupDataSource();
+      response.data.forEach((dataFrame: DataFrame) => {
+        expect(dataFrame.meta.searchWords).toEqual(['escape\\:test']);
+      });
     });
   });
 

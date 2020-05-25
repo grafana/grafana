@@ -404,8 +404,9 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       const er = new ElasticResponse(sentTargets, res);
       if (sentTargets.some(target => target.isLogsQuery)) {
         const response = er.getLogs(this.logMessageField, this.logLevelField);
+        const searchWords = targets.map(target => target.query);
         for (const dataFrame of response.data) {
-          this.enhanceDataFrame(dataFrame);
+          this.enhanceDataFrame(dataFrame, searchWords);
         }
         return response;
       }
@@ -585,7 +586,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return false;
   }
 
-  enhanceDataFrame(dataFrame: DataFrame) {
+  enhanceDataFrame(dataFrame: DataFrame, searchWords?: string[]) {
     if (this.dataLinks.length) {
       for (const field of dataFrame.fields) {
         const dataLink = this.dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
@@ -601,6 +602,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
       }
     }
+    dataFrame.meta = {
+      ...dataFrame.meta,
+      searchWords: searchWords ?? [],
+    };
   }
 
   private isPrimitive(obj: any) {
