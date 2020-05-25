@@ -10,26 +10,50 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 import {
-  DataFrame,
   DataTransformerConfig,
   FeatureState,
   GrafanaTheme,
   SelectableValue,
   standardTransformersRegistry,
   transformDataFrame,
+  DataFrame,
+  PanelData,
 } from '@grafana/data';
 import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
+import { Unsubscribable } from 'rxjs';
+import { PanelModel } from '../../state';
 
 interface Props {
+  panel: PanelModel;
   onChange: (transformations: DataTransformerConfig[]) => void;
   transformations: DataTransformerConfig[];
-  dataFrames: DataFrame[];
 }
 
-export class TransformationsEditor extends React.PureComponent<Props> {
+interface State {
+  data?: DataFrame[];
+}
+
+export class TransformationsEditor extends React.PureComponent<Props, State> {
+  subscription?: Unsubscribable;
+
+  componentDidMount() {
+    this.subscription = this.props.panel
+      .getQueryRunner()
+      .getData({ withTransforms: false, withFieldConfig: false })
+      .subscribe({
+        next: (panelData: PanelData) => this.setState({ data: panelData.series }),
+      });
+  }
+
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
+
   onTransformationAdd = (selectable: SelectableValue<string>) => {
     const { transformations, onChange } = this.props;
     onChange([
@@ -84,8 +108,10 @@ export class TransformationsEditor extends React.PureComponent<Props> {
   };
 
   renderTransformationEditors = () => {
-    const { transformations, dataFrames } = this.props;
-    const preTransformData = dataFrames;
+    const { transformations } = this.props;
+    const { data } = this.state;
+
+    const preTransformData = data ?? [];
 
     return (
       <>
