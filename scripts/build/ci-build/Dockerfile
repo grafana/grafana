@@ -1,3 +1,4 @@
+# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20200514 AS toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
@@ -71,7 +72,8 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-# base image to crossbuild grafana
+# Base image to crossbuild grafana.
+# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20200514
 
 ENV GOVERSION=1.14.1 \
