@@ -21,9 +21,9 @@ export const ReactProfileWrapper = () => (
               user={user}
             />
           )}
-          <Container margin="md" />
+          <Container margin="lg" />
           <SharedPreferences resourceUri="user" />
-          <Container margin="md" />
+          <Container margin="lg" />
           <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
           {!states.loadUser && (
             <UserOrganizations

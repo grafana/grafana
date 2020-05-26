@@ -39,7 +39,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           </>
         )}
       </Form>
-      <Container margin="md" />
+      <Container margin="lg" />
       <SharedPreferences resourceUri={`teams/${team.id}`} />
     </div>
   );

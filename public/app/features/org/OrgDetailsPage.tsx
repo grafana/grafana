@@ -47,7 +47,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
                 onSubmit={this.onUpdateOrganization}
                 orgName={organization.name}
               />
-              <Container margin="md" />
+              <Container margin="lg" />
               <SharedPreferences resourceUri="org" />
             </div>
           )}
