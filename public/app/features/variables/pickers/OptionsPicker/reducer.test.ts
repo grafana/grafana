@@ -51,7 +51,6 @@ describe('optionsPickerReducer', () => {
     ];
 
     const opA = { text: 'A', selected: true, value: 'A' };
-    const opANot = { text: 'A', selected: false, value: 'A' };
     const opASel = [{ text: 'A', value: 'A', selected: true }];
     const opBSel = [{ text: 'B', value: 'B', selected: true }];
     const opAllSel = [{ text: 'All', value: '$__all', selected: true }];
@@ -69,7 +68,11 @@ describe('optionsPickerReducer', () => {
       expOps: any;
       expSel: any;
     }) => {
-      const { initialState } = getVariableTestContext({ options: args.options, multi: args.multi });
+      const { initialState } = getVariableTestContext({
+        options: args.options,
+        multi: args.multi,
+        selectedValues: args.options.filter((o: any) => o.selected),
+      });
       const payload = { forceSelect: args.forceSelect, clearOthers: args.clearOthers, option: args.option };
 
       reducerTester<OptionsPickerState>()
@@ -87,15 +90,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with All selected', () => {
         const options = opsAll;
         it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expOps    | expSel
+          ${opA} | ${true}     | ${false}    | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
+          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -113,15 +112,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with A selected', () => {
         const options = opsA;
         it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expOps    | expSel
+          ${opA} | ${true}     | ${false}    | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
+          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -139,15 +134,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with B selected', () => {
         const options = opsB;
         it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${false}    | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opA}    | ${false}    | ${false}    | ${opsB}   | ${opBSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expOps    | expSel
+          ${opA} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
+          ${opA} | ${false}    | ${false}    | ${opsB}   | ${opBSel}
+          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -165,15 +156,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with A + B selected', () => {
         const options = opsAB;
         it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${false}    | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opA}    | ${false}    | ${false}    | ${opsB}   | ${opBSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expOps    | expSel
+          ${opA} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
+          ${opA} | ${false}    | ${false}    | ${opsB}   | ${opBSel}
+          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -195,15 +182,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with All selected', () => {
         const options = opsAll;
         it.each`
-          option    | forceSelect | clearOthers | expOps  | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
+          option | forceSelect | clearOthers | expOps  | expSel
+          ${opA} | ${true}     | ${false}    | ${opsA} | ${opASel}
+          ${opA} | ${false}    | ${false}    | ${opsA} | ${opASel}
+          ${opA} | ${true}     | ${true}     | ${opsA} | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsA} | ${opASel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -221,15 +204,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with A selected', () => {
         const options = opsA;
         it.each`
-          option    | forceSelect | clearOthers | expOps  | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
+          option | forceSelect | clearOthers | expOps    | expSel
+          ${opA} | ${true}     | ${false}    | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
+          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -247,15 +226,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with B selected', () => {
         const options = opsB;
         it.each`
-          option    | forceSelect | clearOthers | expOps  | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
+          option | forceSelect | clearOthers | expOps  | expSel
+          ${opA} | ${true}     | ${false}    | ${opsA} | ${opASel}
+          ${opA} | ${false}    | ${false}    | ${opsA} | ${opASel}
+          ${opA} | ${true}     | ${true}     | ${opsA} | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsA} | ${opASel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -706,6 +681,49 @@ describe('optionsPickerReducer', () => {
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
           queryValue: '',
           highlightIndex: 0,
+        });
+    });
+  });
+
+  describe('when value is toggled back and forth', () => {
+    it('then state should be correct', () => {
+      const options: VariableOption[] = [
+        { text: 'All', value: '$__all', selected: false },
+        { text: 'A', value: 'A', selected: false },
+        { text: 'B', value: 'B', selected: false },
+      ];
+
+      const toggleOptionAction = toggleOption({
+        option: options[2],
+        forceSelect: false,
+        clearOthers: false,
+      });
+
+      const { initialState } = getVariableTestContext({
+        options,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleOptionAction)
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+        })
+        .whenActionIsDispatched(toggleOptionAction)
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: true },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: false },
+          ],
+          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
         });
     });
   });

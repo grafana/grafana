@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isString } from 'lodash';
 import { VariableOption, VariableTag, VariableWithMultiSupport } from '../../../templating/types';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
+import { ALL_VARIABLE_VALUE } from '../../state/types';
 import { isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { containsSearchFilter } from '../../../templating/utils';
@@ -43,8 +43,41 @@ const getTags = (model: VariableWithMultiSupport) => {
   return [];
 };
 
-const updateSelectedValues = (state: OptionsPickerState): OptionsPickerState => {
-  state.selectedValues = state.options.filter(o => o.selected);
+const selectedToRecord = (selected: VariableOption[]): Record<string, VariableOption> => {
+  if (!Array.isArray(selected)) {
+    return {};
+  }
+
+  return selected.reduce((all: Record<string, VariableOption>, option) => {
+    if (isString(option.value)) {
+      all[option.value] = option;
+    }
+    return all;
+  }, {});
+};
+
+const updateOptions = (state: OptionsPickerState): OptionsPickerState => {
+  if (!Array.isArray(state.options)) {
+    state.options = [];
+    return state;
+  }
+
+  const selectedOptions = selectedToRecord(state.selectedValues);
+  state.selectedValues = Object.values(selectedOptions);
+
+  state.options = state.options.map(option => {
+    if (!isString(option.value)) {
+      return option;
+    }
+
+    const selected = !!selectedOptions[option.value];
+
+    if (option.selected === selected) {
+      return option;
+    }
+
+    return { ...option, selected };
+  });
   return state;
 };
 
@@ -52,14 +85,24 @@ const applyLimit = (options: VariableOption[]): VariableOption[] => {
   if (!Array.isArray(options)) {
     return [];
   }
-  return options.slice(0, Math.min(options.length, OPTIONS_LIMIT));
+  if (options.length <= OPTIONS_LIMIT) {
+    return options;
+  }
+  return options.slice(0, OPTIONS_LIMIT);
 };
 
 const updateDefaultSelection = (state: OptionsPickerState): OptionsPickerState => {
-  const { options } = state;
-  if (options.length > 0 && options.filter(o => o.selected).length === 0) {
-    options[0].selected = true;
+  const { options, selectedValues } = state;
+
+  if (options.length === 0 || selectedValues.length > 0) {
+    return state;
   }
+
+  if (!options[0] || options[0].value !== ALL_VARIABLE_VALUE) {
+    return state;
+  }
+
+  state.selectedValues = [{ ...options[0], selected: true }];
   return state;
 };
 
@@ -83,35 +126,47 @@ const optionsPickerSlice = createSlice({
         state.queryValue = queryHasSearchFilter && queryValue ? queryValue : '';
       }
 
-      return applyStateChanges(state, updateSelectedValues);
+      return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     hideOptions: (state, action: PayloadAction): OptionsPickerState => {
       return { ...initialState };
     },
     toggleOption: (state, action: PayloadAction<ToggleOption>): OptionsPickerState => {
-      const { option, forceSelect, clearOthers } = action.payload;
-      const { multi } = state;
-      const newOptions: VariableOption[] = state.options.map(o => {
-        if (o.value !== option.value) {
-          let selected = o.selected;
-          if (o.text === ALL_VARIABLE_TEXT || option.text === ALL_VARIABLE_TEXT) {
-            selected = false;
-          } else if (!multi) {
-            selected = false;
-          } else if (clearOthers) {
-            selected = false;
-          }
-          o.selected = selected;
-          return o;
-        }
-        o.selected = forceSelect ? true : multi ? !option.selected : true;
-        return o;
-      });
+      const { option, clearOthers, forceSelect } = action.payload;
+      const { multi, selectedValues } = state;
+      const selected = !selectedValues.find(o => o.value === option.value);
 
-      state.options = newOptions;
-      return applyStateChanges(state, updateDefaultSelection, updateSelectedValues);
+      if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
+        if (selected || forceSelect) {
+          state.selectedValues = [{ ...option, selected: true }];
+        } else {
+          state.selectedValues = [];
+        }
+        console.log(
+          'selected',
+          state.selectedValues.map(s => s.value)
+        );
+        return applyStateChanges(state, updateDefaultSelection, updateOptions);
+      }
+
+      if (forceSelect || selected) {
+        state.selectedValues.push({ ...option, selected: true });
+        console.log(
+          'selected',
+          state.selectedValues.map(s => s.value)
+        );
+        return applyStateChanges(state, updateDefaultSelection, updateOptions);
+      }
+
+      state.selectedValues = selectedValues.filter(o => o.value !== option.value);
+      console.log(
+        'selected',
+        state.selectedValues.map(s => s.value)
+      );
+      return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     toggleTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
+      const { selectedValues } = state;
       const tag = action.payload;
       const values = tag.values || [];
       const selected = !tag.selected;
@@ -133,20 +188,21 @@ const optionsPickerSlice = createSlice({
         return t;
       });
 
-      state.options = state.options.map(option => {
-        if (option.value === ALL_VARIABLE_VALUE && selected === true) {
-          option.selected = false;
-        }
+      const selectedByTags = state.options
+        .filter(option => {
+          if (option.value === ALL_VARIABLE_VALUE) {
+            return false;
+          }
+          return values.indexOf(option.value) !== -1;
+        })
+        .map(o => ({ ...o, selected }));
 
-        if (values.indexOf(option.value) === -1) {
-          return option;
-        }
+      if (selected) {
+        state.selectedValues = selectedValues.filter(option => option.value !== ALL_VARIABLE_VALUE);
+      }
 
-        option.selected = selected;
-        return option;
-      });
-
-      return applyStateChanges(state, updateDefaultSelection, updateSelectedValues);
+      state.selectedValues.push.apply(state.selectedValues, selectedByTags);
+      return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     moveOptionsHighlight: (state, action: PayloadAction<number>): OptionsPickerState => {
       let nextIndex = state.highlightIndex + action.payload;
@@ -163,13 +219,17 @@ const optionsPickerSlice = createSlice({
       };
     },
     toggleAllOptions: (state, action: PayloadAction): OptionsPickerState => {
-      const selected = !state.options.find(option => option.selected);
-      state.options = state.options.map(option => ({
+      if (state.selectedValues.length > 0) {
+        state.selectedValues = [];
+        return applyStateChanges(state, updateDefaultSelection, updateOptions);
+      }
+
+      state.selectedValues = state.options.map(option => ({
         ...option,
-        selected,
+        selected: true,
       }));
 
-      return applyStateChanges(state, updateSelectedValues);
+      return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     updateSearchQuery: (state, action: PayloadAction<string>): OptionsPickerState => {
       state.queryValue = action.payload;
@@ -186,13 +246,13 @@ const optionsPickerSlice = createSlice({
       state.options = applyLimit(filteredOptions);
       state.highlightIndex = 0;
 
-      return applyStateChanges(state, updateSelectedValues);
+      return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     updateOptionsFromSearch: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
       state.options = applyLimit(action.payload);
       state.highlightIndex = 0;
 
-      return applyStateChanges(state, updateSelectedValues);
+      return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
   },
 });
