@@ -187,7 +187,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Polly":             {"Operation"},
 	"AWS/RDS":               {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "Role", "SourceRegion"},
 	"AWS/Redshift":          {"ClusterIdentifier", "NodeID", "service class", "stage", "latency", "wlmid"},
-	"AWS/Route53":           {"HealthCheckId", "Region"},
+	"AWS/Route53":           {"HealthCheckId", "Region", "HostedZoneId"},
 	"AWS/Route53Resolver":   {"EndpointId"},
 	"AWS/S3":                {"BucketName", "FilterId", "StorageType"},
 	"AWS/SES":               {},
