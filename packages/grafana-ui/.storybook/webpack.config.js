@@ -1,37 +1,37 @@
-// Let's start optimizing this! :D
-const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+// // Let's start optimizing this! :D
+// const path = require('path');
+// const TerserPlugin = require('terser-webpack-plugin');
+// const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 module.exports = ({ config, mode }) => {
   config.module.rules = [
     ...(config.module.rules || []),
-    {
-      test: /\.tsx?$/,
-      use: [
-        {
-          loader: require.resolve('ts-loader'),
-          options: {
-            transpileOnly: mode === 'PRODUCTION',
-            configFile: path.resolve(__dirname, 'tsconfig.json'),
-          },
-        },
-        {
-          loader: require.resolve('react-docgen-typescript-loader'),
-          options: {
-            tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
-            // https://github.com/styleguidist/react-docgen-typescript#parseroptions
-            // @ts-ignore
-            propFilter: prop => {
-              if (prop.parent) {
-                return !prop.parent.fileName.includes('node_modules/@types/react/');
-              }
+    // {
+    //   test: /\.tsx?$/,
+    //   use: [
+    //     {
+    //       loader: require.resolve('ts-loader'),
+    //       options: {
+    //         transpileOnly: mode === 'PRODUCTION',
+    //         configFile: path.resolve(__dirname, 'tsconfig.json'),
+    //       },
+    //     },
+    //     {
+    //       loader: require.resolve('react-docgen-typescript-loader'),
+    //       options: {
+    //         tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
+    //         // https://github.com/styleguidist/react-docgen-typescript#parseroptions
+    //         // @ts-ignore
+    //         propFilter: prop => {
+    //           if (prop.parent) {
+    //             return !prop.parent.fileName.includes('node_modules/@types/react/');
+    //           }
 
-              return true;
-            },
-          },
-        },
-      ],
-    },
+    //           return true;
+    //         },
+    //       },
+    //     },
+    //   ],
+    // },
   ];
 
   config.module.rules.push({
@@ -77,17 +77,17 @@ module.exports = ({ config, mode }) => {
     ],
   });
 
-  config.optimization = {
-    nodeEnv: 'production',
-    minimizer: [
-      new TerserPlugin({
-        cache: false,
-        parallel: false,
-        sourceMap: false,
-      }),
-      new OptimizeCSSAssetsPlugin({}),
-    ],
-  };
+  // config.optimization = {
+  //   nodeEnv: 'production',
+  //   minimizer: [
+  //     new TerserPlugin({
+  //       cache: false,
+  //       parallel: false,
+  //       sourceMap: false,
+  //     }),
+  //     new OptimizeCSSAssetsPlugin({}),
+  //   ],
+  // };
 
   config.resolve.extensions.push('.ts', '.tsx', '.mdx');
 
