@@ -133,7 +133,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 
 			params := url.Values{}
 			params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
-			if timeGrain != "none" { // "none" or "None" - the other API was "None" IIRC - but wouldn't suprise me if the APIs are different.
+			if timeGrain != "none" {
 				params.Add("interval", timeGrain)
 			}
 			params.Add("aggregation", insightsJSONModel.Aggregation)

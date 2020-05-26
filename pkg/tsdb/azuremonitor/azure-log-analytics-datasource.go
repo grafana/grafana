@@ -86,17 +86,17 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 		azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
 		azlog.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
 
-		resultFormat := fmt.Sprintf("%v", azureLogAnalyticsTarget.ResultFormat)
+		resultFormat := azureLogAnalyticsTarget.ResultFormat
 		if resultFormat == "" {
 			resultFormat = "time_series"
 		}
 
 		urlComponents := map[string]string{}
-		urlComponents["workspace"] = fmt.Sprintf("%v", azureLogAnalyticsTarget.Workspace)
+		urlComponents["workspace"] = azureLogAnalyticsTarget.Workspace
 		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
 
 		params := url.Values{}
-		rawQuery, err := KqlInterpolate(query, timeRange, fmt.Sprintf("%v", azureLogAnalyticsTarget.Query), "TimeGenerated")
+		rawQuery, err := KqlInterpolate(query, timeRange, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
