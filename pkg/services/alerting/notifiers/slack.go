@@ -115,7 +115,7 @@ func init() {
         <span class="gf-form-label width-8">Token</span>
         <input type="text"
           class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.token"
+          ng-model="ctrl.model.secureSettings.token"
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
@@ -145,7 +145,9 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	token := model.Settings.Get("token").MustString()
+	secureSettings := model.SecureSettings.Decrypt()
+	token := secureSettings["token"]
+
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
