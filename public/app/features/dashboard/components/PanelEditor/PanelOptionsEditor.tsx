@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { PanelOptionsEditorItem, PanelPlugin, DataFrame, FieldOverrideContext } from '@grafana/data';
+import { PanelOptionsEditorItem, PanelPlugin, DataFrame, StandardEditorContext } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { Field, Label } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
