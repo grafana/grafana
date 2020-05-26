@@ -249,6 +249,9 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async getServiceLevelObjectives(projectName: string, serviceId: string): Promise<Array<SelectableValue<string>>> {
+    if (!serviceId) {
+      return Promise.resolve([]);
+    }
     let { projectName: p, serviceId: s } = this.interpolateProps({ projectName, serviceId });
     return this.api.get(`${p}/services/${s}/serviceLevelObjectives`, {
       responseMap: ({ name, displayName, goal }: { name: string; displayName: string; goal: number }) => ({

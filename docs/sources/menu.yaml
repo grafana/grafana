@@ -115,6 +115,8 @@
     name: Graphite
   - link: /features/datasources/influxdb/
     name: InfluxDB
+  - link: /features/datasources/jaeger/
+    name: Jaeger
   - link: /features/datasources/loki/
     name: Loki
   - link: /features/datasources/mssql/
@@ -129,6 +131,8 @@
     name: Prometheus
   - link: /features/datasources/testdata/
     name: TestData DB
+  - link: /features/datasources/zipkin/
+    name: Zipkin
 - name: Panels
   link: /panels/
   children:

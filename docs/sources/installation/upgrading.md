@@ -145,7 +145,7 @@ Read more [here]({{< relref "configuration/#disable-sanitize-html" >}}) about th
 
 ### Authentication and security
 
-If your using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.
+If you are using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.
 
 If you have `cookie_secure` set to `true` in the `session` section you probably want to change the `cookie_secure` to `true` in the `security` section as well. Ending up with a configuration like this:
 
