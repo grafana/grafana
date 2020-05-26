@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,12 +19,91 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestAzureMonitorDatasource(t *testing.T) {
-	Convey("AzureMonitorDatasource", t, func() {
-		datasource := &AzureMonitorDatasource{}
+func TestAzureMonitorBuildQueries(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
-		Convey("Parse queries from frontend and build AzureMonitor API queries", func() {
-			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+	tests := []struct {
+		name                         string
+		azureMonitorVariedProperties map[string]interface{}
+		azureMonitorQueryTarget      string
+		expectedInterval             string
+		queryIntervalMS              int64
+	}{
+		{
+			name: "Parse queries from frontend and build AzureMonitor API queries",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain": "PT1M",
+				"top":       "10",
+			},
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+		},
+		{
+			name: "time grain set to auto",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain": "auto",
+				"top":       "10",
+			},
+			queryIntervalMS:         400000,
+			expectedInterval:        "PT15M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT15M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+		},
+		{
+			name: "time grain set to auto",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":           "auto",
+				"allowedTimeGrainsMs": []int64{60000, 300000},
+				"top":                 "10",
+			},
+			queryIntervalMS:         400000,
+			expectedInterval:        "PT5M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT5M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+		},
+		{
+			name: "has a dimension filter",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":       "PT1M",
+				"dimension":       "blob",
+				"dimensionFilter": "*",
+				"top":             "30",
+			},
+			queryIntervalMS:         400000,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "has a dimension filter",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":       "PT1M",
+				"dimension":       "None",
+				"dimensionFilter": "*",
+				"top":             "10",
+			},
+			queryIntervalMS:         400000,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+		},
+	}
+
+	commonAzureModelProps := map[string]interface{}{
+		"aggregation":      "Average",
+		"resourceGroup":    "grafanastaging",
+		"resourceName":     "grafana",
+		"metricDefinition": "Microsoft.Compute/virtualMachines",
+		"metricNamespace":  "Microsoft.Compute-virtualMachines",
+		"metricName":       "Percentage CPU",
+
+		"alias":     "testalias",
+		"queryType": "Azure Monitor",
+	}
+
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+			for k, v := range commonAzureModelProps {
+				tt.azureMonitorVariedProperties[k] = v
+			}
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
@@ -37,135 +118,42 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						},
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
-							"azureMonitor": map[string]interface{}{
-								"timeGrain":        "PT1M",
-								"aggregation":      "Average",
-								"resourceGroup":    "grafanastaging",
-								"resourceName":     "grafana",
-								"metricDefinition": "Microsoft.Compute/virtualMachines",
-								"metricNamespace":  "Microsoft.Compute-virtualMachines",
-								"metricName":       "Percentage CPU",
-								"top":              "10",
-								"alias":            "testalias",
-								"queryType":        "Azure Monitor",
-							},
-						}),
-						RefId: "A",
+							"azureMonitor": tt.azureMonitorVariedProperties,
+						},
+						),
+						RefId:      "A",
+						IntervalMs: tt.queryIntervalMS,
 					},
 				},
 			}
-			Convey("and is a normal query", func() {
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-				So(err, ShouldBeNil)
 
-				So(len(queries), ShouldEqual, 1)
-				So(queries[0].RefID, ShouldEqual, "A")
-				So(queries[0].URL, ShouldEqual, "12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics")
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-				So(len(queries[0].Params), ShouldEqual, 6)
-				So(queries[0].Params["timespan"][0], ShouldEqual, "2018-03-15T13:00:00Z/2018-03-15T13:34:00Z")
-				So(queries[0].Params["api-version"][0], ShouldEqual, "2018-01-01")
-				So(queries[0].Params["aggregation"][0], ShouldEqual, "Average")
-				So(queries[0].Params["metricnames"][0], ShouldEqual, "Percentage CPU")
-				So(queries[0].Params["interval"][0], ShouldEqual, "PT1M")
-				So(queries[0].Alias, ShouldEqual, "testalias")
-			})
+			azureMonitorQuery := &AzureMonitorQuery{
+				URL: "12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				UrlComponents: map[string]string{
+					"metricDefinition": "Microsoft.Compute/virtualMachines",
+					"resourceGroup":    "grafanastaging",
+					"resourceName":     "grafana",
+					"subscription":     "12345678-aaaa-bbbb-cccc-123456789abc",
+				},
+				Target: tt.azureMonitorQueryTarget,
+				RefID:  "A",
+				Alias:  "testalias",
+			}
 
-			Convey("and has a time grain set to auto", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"azureMonitor": map[string]interface{}{
-						"timeGrain":        "auto",
-						"aggregation":      "Average",
-						"resourceGroup":    "grafanastaging",
-						"resourceName":     "grafana",
-						"metricDefinition": "Microsoft.Compute/virtualMachines",
-						"metricNamespace":  "Microsoft.Compute-virtualMachines",
-						"metricName":       "Percentage CPU",
-						"alias":            "testalias",
-						"queryType":        "Azure Monitor",
-					},
-				})
-				tsdbQuery.Queries[0].IntervalMs = 400000
-
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-				So(err, ShouldBeNil)
-
-				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
-			})
-
-			Convey("and has a time grain set to auto and the metric has a limited list of allowed time grains", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"azureMonitor": map[string]interface{}{
-						"timeGrain":           "auto",
-						"aggregation":         "Average",
-						"resourceGroup":       "grafanastaging",
-						"resourceName":        "grafana",
-						"metricDefinition":    "Microsoft.Compute/virtualMachines",
-						"metricNamespace":     "Microsoft.Compute-virtualMachines",
-						"metricName":          "Percentage CPU",
-						"alias":               "testalias",
-						"queryType":           "Azure Monitor",
-						"allowedTimeGrainsMs": []int64{60000, 300000},
-					},
-				})
-				tsdbQuery.Queries[0].IntervalMs = 400000
-
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-				So(err, ShouldBeNil)
-
-				So(queries[0].Params["interval"][0], ShouldEqual, "PT5M")
-			})
-
-			Convey("and has a dimension filter", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"azureMonitor": map[string]interface{}{
-						"timeGrain":        "PT1M",
-						"aggregation":      "Average",
-						"resourceGroup":    "grafanastaging",
-						"resourceName":     "grafana",
-						"metricDefinition": "Microsoft.Compute/virtualMachines",
-						"metricNamespace":  "Microsoft.Compute-virtualMachines",
-						"metricName":       "Percentage CPU",
-						"alias":            "testalias",
-						"queryType":        "Azure Monitor",
-						"dimension":        "blob",
-						"dimensionFilter":  "*",
-						"top":              "30",
-					},
-				})
-
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-				So(err, ShouldBeNil)
-
-				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30")
-
-			})
-
-			Convey("and has a dimension filter set to None", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"azureMonitor": map[string]interface{}{
-						"timeGrain":        "PT1M",
-						"aggregation":      "Average",
-						"resourceGroup":    "grafanastaging",
-						"resourceName":     "grafana",
-						"metricDefinition": "Microsoft.Compute/virtualMachines",
-						"metricNamespace":  "Microsoft.Compute-virtualMachines",
-						"metricName":       "Percentage CPU",
-						"alias":            "testalias",
-						"queryType":        "Azure Monitor",
-						"dimension":        "None",
-						"dimensionFilter":  "*",
-						"top":              "10",
-					},
-				})
-
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-				So(err, ShouldBeNil)
-
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-
-			})
+			queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+			if err != nil {
+				t.Error(err)
+			}
+			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(AzureMonitorQuery{}, "Params")); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
+	}
+}
+
+func TestAzureMonitorDatasource(t *testing.T) {
+	Convey("AzureMonitorDatasource", t, func() {
+		datasource := &AzureMonitorDatasource{}
 
 		Convey("Parse AzureMonitor API response in the time series format", func() {
 			Convey("when data from query aggregated as average to one time series", func() {
