@@ -7,3 +7,6 @@ identifier = "guides"
 weight = 3
 +++
 
+# Guides
+
+This section contains guides to help you use Grafana.

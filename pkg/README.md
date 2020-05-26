@@ -71,6 +71,10 @@ Refactor HTTP handlers so that the handler methods are on the HttpServer instanc
 
 Store newly introduced date columns in the database as epochs if they require date comparison. This permits a unified approach for comparing dates against all the supported databases instead of handling dates differently for each database. Also, by comparing epochs, we no longer need error pruning transformations to and from other time zones.
 
+### Avoid use of the simplejson package
+
+Use of the `simplejson` package (`pkg/components/simplejson`) in place of types (Go structs) results in code that is difficult to maintain. Instead, create types for objects and use the Go standard library's [`encoding/json`](https://golang.org/pkg/encoding/json/) package.
+
 ### Provisionable*
 
 All new features that require state should be possible to configure using config files. For example:

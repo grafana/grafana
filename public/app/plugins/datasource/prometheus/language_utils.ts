@@ -1,4 +1,5 @@
 import { PromMetricsMetadata } from './types';
+import { addLabelToQuery } from './add_label_to_query';
 
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
@@ -111,7 +112,47 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
   const ruleNames = Object.keys(mapping);
   const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
-  return query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
+  const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
+
+  // Split query into array, so if query uses operators, we can correctly add labels to each individual part.
+  const queryArray = expandedQuery.split(/(\+|\-|\*|\/|\%|\^)/);
+
+  // Regex that matches occurences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
+  const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
+  const correctlyExpandedQueryArray = queryArray.map(query => {
+    let expression = query;
+    if (expression.match(invalidLabelsRegex)) {
+      expression = addLabelsToExpression(expression, invalidLabelsRegex);
+    }
+    return expression;
+  });
+
+  return correctlyExpandedQueryArray.join('');
+}
+
+function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
+  // Split query into 2 parts - before the invalidLabelsRegex match and after.
+  const indexOfRegexMatch = expr.match(invalidLabelsRegexp).index;
+  const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
+  const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
+
+  // Create arrayOfLabelObjects with label objects that have key, operator and value.
+  const arrayOfLabelObjects: Array<{ key: string; operator: string; value: string }> = [];
+  exprAfterRegexMatch.replace(labelRegexp, (label, key, operator, value) => {
+    arrayOfLabelObjects.push({ key, operator, value });
+    return '';
+  });
+
+  // Loop trough all of the label objects and add them to query.
+  // As a starting point we have valid query without the labels.
+  let result = exprBeforeRegexMatch;
+  arrayOfLabelObjects.filter(Boolean).forEach(obj => {
+    // Remove extra set of quotes from obj.value
+    const value = obj.value.substr(1, obj.value.length - 2);
+    result = addLabelToQuery(result, obj.key, value, obj.operator);
+  });
+
+  return result;
 }
 
 /**

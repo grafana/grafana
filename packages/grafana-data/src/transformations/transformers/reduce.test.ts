@@ -58,7 +58,7 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature {A}', 'humidity {A}', 'temperature {B}', 'humidity {B}']),
+        values: new ArrayVector(['A temperature', 'A humidity', 'B temperature', 'B humidity']),
         config: {},
       },
       {
@@ -104,7 +104,7 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature {A}', 'temperature {B}']),
+        values: new ArrayVector(['A temperature', 'B temperature']),
         config: {},
       },
       {
@@ -150,7 +150,7 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature', 'humidity']),
+        values: new ArrayVector(['A temperature', 'A humidity']),
         config: {},
       },
       {
@@ -196,7 +196,7 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature']),
+        values: new ArrayVector(['A temperature']),
         config: {},
       },
       {
