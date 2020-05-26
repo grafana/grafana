@@ -5,6 +5,7 @@ import {
   DataSourceInstanceSettings,
   DataQuery,
   DataSourceJsonData,
+  ScopedVars,
 } from '@grafana/data';
 import { Observable, from } from 'rxjs';
 import { config } from '..';
@@ -54,8 +55,12 @@ export class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints, range, requestId } = request;
+    const { intervalMs, maxDataPoints, range, requestId } = request;
     const orgId = config.bootData.user.orgId;
+    let targets = request.targets;
+    if (this.filterQuery) {
+      targets = targets.filter(q => this.filterQuery!(q));
+    }
     const queries = targets.map(q => {
       if (q.datasource === ExpressionDatasourceID) {
         return {
@@ -70,7 +75,7 @@ export class DataSourceWithBackend<
         throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
-        ...this.applyTemplateVariables(q),
+        ...this.applyTemplateVariables(q, request.scopedVars),
         datasourceId: ds.id,
         intervalMs,
         maxDataPoints,
@@ -106,11 +111,18 @@ export class DataSourceWithBackend<
   }
 
   /**
+   * Override to skip executing a query
+   *
+   * @virtual
+   */
+  filterQuery?(query: TQuery): boolean;
+
+  /**
    * Override to apply template variables
    *
    * @virtual
    */
-  applyTemplateVariables(query: DataQuery) {
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
     return query;
   }
 

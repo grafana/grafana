@@ -1,29 +1,44 @@
 import AzureMonitorDatasource from '../datasource';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { toUtc, DataFrame, getFrameDisplayName } from '@grafana/data';
+import { toUtc, DataFrame, getFrameDisplayName, DataSourceInstanceSettings, DataQueryRequest } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { AzureDataSourceJsonData, AzureMonitorQuery } from '../types';
+import { config } from '@grafana/runtime';
+
+const templateSrv = new TemplateSrv();
+const testConfig = {
+  ...config,
+  datasources: {
+    test: { id: 1 }, // matches the name in the `instanceSettings` below
+  },
+};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => templateSrv,
+  config: testConfig,
 }));
 
+interface TestContext {
+  instanceSettings?: DataSourceInstanceSettings<AzureDataSourceJsonData>;
+  ds?: AzureMonitorDatasource;
+}
+
 describe('AzureMonitorDatasource', () => {
-  const ctx: any = {
-    templateSrv: new TemplateSrv(),
-  };
+  const ctx: TestContext = {};
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ctx.instanceSettings = {
+    ctx.instanceSettings = ({
+      name: 'test',
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f' },
       cloudName: 'azuremonitor',
-    };
-
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
+    } as unknown) as DataSourceInstanceSettings<AzureDataSourceJsonData>;
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
   });
 
   describe('When performing testDatasource', () => {
@@ -79,7 +94,7 @@ describe('AzureMonitorDatasource', () => {
   });
 
   describe('When performing query', () => {
-    const options = {
+    const options = ({
       range: {
         from: toUtc('2017-08-22T20:00:00Z'),
         to: toUtc('2017-08-22T23:59:00Z'),
@@ -100,7 +115,7 @@ describe('AzureMonitorDatasource', () => {
           },
         },
       ],
-    };
+    } as unknown) as DataQueryRequest<AzureMonitorQuery>;
 
     const response: any = {
       results: {
