@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -168,9 +169,9 @@ func TestAzureMonitorDatasource(t *testing.T) {
 
 		Convey("Parse AzureMonitor API response in the time series format", func() {
 			Convey("when data from query aggregated as average to one time series", func() {
-				data, err := loadTestFile("azuremonitor/1-azure-monitor-response-avg.json")
+				azData, err := loadTestFile("azuremonitor/1-azure-monitor-response-avg.json")
 				So(err, ShouldBeNil)
-				So(data.Interval, ShouldEqual, "PT1M")
+				So(azData.Interval, ShouldEqual, "PT1M")
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &AzureMonitorQuery{
@@ -181,31 +182,36 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Average"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
 
-				So(len(res.Series), ShouldEqual, 1)
-				So(res.Series[0].Name, ShouldEqual, "grafana.Percentage CPU")
-				So(len(res.Series[0].Points), ShouldEqual, 5)
+				So(len(res.Dataframes), ShouldEqual, 1)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+				So(err, ShouldBeNil)
+				So(len(frames), ShouldEqual, 1)
+				frame := frames[0]
 
-				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 2.0875)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549620780000))
+				So(frame.Fields[1].Name, ShouldEqual, "grafana.Percentage CPU")
+				So(frame.Fields[0].Len(), ShouldEqual, 5)
 
-				So(res.Series[0].Points[1][0].Float64, ShouldEqual, 2.1525)
-				So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1549620840000))
+				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC))
+				So(frame.At(1, 0), ShouldEqual, 2.0875)
 
-				So(res.Series[0].Points[2][0].Float64, ShouldEqual, 2.155)
-				So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1549620900000))
+				So(frame.At(0, 1), ShouldEqual, time.Date(2019, 2, 8, 10, 14, 0, 0, time.UTC))
+				So(frame.At(1, 1), ShouldEqual, 2.1525)
 
-				So(res.Series[0].Points[3][0].Float64, ShouldEqual, 3.6925)
-				So(res.Series[0].Points[3][1].Float64, ShouldEqual, int64(1549620960000))
+				So(frame.At(0, 2), ShouldEqual, time.Date(2019, 2, 8, 10, 15, 0, 0, time.UTC))
+				So(frame.At(1, 2), ShouldEqual, 2.155)
 
-				So(res.Series[0].Points[4][0].Float64, ShouldEqual, 2.44)
-				So(res.Series[0].Points[4][1].Float64, ShouldEqual, int64(1549621020000))
+				So(frame.At(0, 3), ShouldEqual, time.Date(2019, 2, 8, 10, 16, 0, 0, time.UTC))
+				So(frame.At(1, 3), ShouldEqual, 3.6925)
+
+				So(frame.At(0, 4), ShouldEqual, time.Date(2019, 2, 8, 10, 17, 0, 0, time.UTC))
+				So(frame.At(1, 4), ShouldEqual, 2.44)
 			})
 
 			Convey("when data from query aggregated as total to one time series", func() {
-				data, err := loadTestFile("azuremonitor/2-azure-monitor-response-total.json")
+				azData, err := loadTestFile("azuremonitor/2-azure-monitor-response-total.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -217,15 +223,21 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Total"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
 
-				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 8.26)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549718940000))
+				So(len(res.Dataframes), ShouldEqual, 1)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+				So(err, ShouldBeNil)
+				So(len(frames), ShouldEqual, 1)
+				frame := frames[0]
+
+				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC))
+				So(frame.At(1, 0), ShouldEqual, 8.26)
 			})
 
 			Convey("when data from query aggregated as maximum to one time series", func() {
-				data, err := loadTestFile("azuremonitor/3-azure-monitor-response-maximum.json")
+				azData, err := loadTestFile("azuremonitor/3-azure-monitor-response-maximum.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -237,15 +249,21 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Maximum"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
 
-				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 3.07)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549722360000))
+				So(len(res.Dataframes), ShouldEqual, 1)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+				So(err, ShouldBeNil)
+				So(len(frames), ShouldEqual, 1)
+				frame := frames[0]
+
+				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 14, 26, 0, 0, time.UTC))
+				So(frame.At(1, 0), ShouldEqual, 3.07)
 			})
 
 			Convey("when data from query aggregated as minimum to one time series", func() {
-				data, err := loadTestFile("azuremonitor/4-azure-monitor-response-minimum.json")
+				azData, err := loadTestFile("azuremonitor/4-azure-monitor-response-minimum.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -257,15 +275,21 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Minimum"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
 
-				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 1.51)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549723380000))
+				So(len(res.Dataframes), ShouldEqual, 1)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+				So(err, ShouldBeNil)
+				So(len(frames), ShouldEqual, 1)
+				frame := frames[0]
+
+				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 14, 43, 0, 0, time.UTC))
+				So(frame.At(1, 0), ShouldEqual, 1.51)
 			})
 
 			Convey("when data from query aggregated as Count to one time series", func() {
-				data, err := loadTestFile("azuremonitor/5-azure-monitor-response-count.json")
+				azData, err := loadTestFile("azuremonitor/5-azure-monitor-response-count.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -277,15 +301,21 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Count"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
 
-				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 4)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549723440000))
+				So(len(res.Dataframes), ShouldEqual, 1)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+				So(err, ShouldBeNil)
+				So(len(frames), ShouldEqual, 1)
+				frame := frames[0]
+
+				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC))
+				So(frame.At(1, 0), ShouldEqual, 4)
 			})
 
 			Convey("when data from query aggregated as total and has dimension filter", func() {
-				data, err := loadTestFile("azuremonitor/6-azure-monitor-response-multi-dimension.json")
+				azData, err := loadTestFile("azuremonitor/6-azure-monitor-response-multi-dimension.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -297,22 +327,24 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Average"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
-				So(len(res.Series), ShouldEqual, 3)
+				So(len(res.Dataframes), ShouldEqual, 3)
 
-				So(res.Series[0].Name, ShouldEqual, "grafana{blobtype=PageBlob}.Blob Count")
-				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 3)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
 
-				So(res.Series[1].Name, ShouldEqual, "grafana{blobtype=BlockBlob}.Blob Count")
-				So(res.Series[1].Points[0][0].Float64, ShouldEqual, 1)
+				So(frames[0].Fields[1].Name, ShouldEqual, "grafana{blobtype=PageBlob}.Blob Count")
+				So(frames[0].At(1, 0), ShouldEqual, 3)
 
-				So(res.Series[2].Name, ShouldEqual, "grafana{blobtype=Azure Data Lake Storage}.Blob Count")
-				So(res.Series[2].Points[0][0].Float64, ShouldEqual, 0)
+				So(frames[1].Fields[1].Name, ShouldEqual, "grafana{blobtype=BlockBlob}.Blob Count")
+				So(frames[1].At(1, 0), ShouldEqual, 1)
+
+				So(frames[2].Fields[1].Name, ShouldEqual, "grafana{blobtype=Azure Data Lake Storage}.Blob Count")
+				So(frames[2].At(1, 0), ShouldEqual, 0)
 			})
 
 			Convey("when data from query has alias patterns", func() {
-				data, err := loadTestFile("azuremonitor/2-azure-monitor-response-total.json")
+				azData, err := loadTestFile("azuremonitor/2-azure-monitor-response-total.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -325,14 +357,18 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Total"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
 
-				So(res.Series[0].Name, ShouldEqual, "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU")
+				So(len(res.Dataframes), ShouldEqual, 1)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+				So(err, ShouldBeNil)
+
+				So(frames[0].Fields[1].Name, ShouldEqual, "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU")
 			})
 
 			Convey("when data has dimension filters and alias patterns", func() {
-				data, err := loadTestFile("azuremonitor/6-azure-monitor-response-multi-dimension.json")
+				azData, err := loadTestFile("azuremonitor/6-azure-monitor-response-multi-dimension.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -345,12 +381,16 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Average"},
 					},
 				}
-				err = datasource.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, azData, query)
 				So(err, ShouldBeNil)
 
-				So(res.Series[0].Name, ShouldEqual, "blobtype=PageBlob")
-				So(res.Series[1].Name, ShouldEqual, "blobtype=BlockBlob")
-				So(res.Series[2].Name, ShouldEqual, "blobtype=Azure Data Lake Storage")
+				So(len(res.Dataframes), ShouldEqual, 3)
+				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+				So(err, ShouldBeNil)
+
+				So(frames[0].Fields[1].Name, ShouldEqual, "blobtype=PageBlob")
+				So(frames[1].Fields[1].Name, ShouldEqual, "blobtype=BlockBlob")
+				So(frames[2].Fields[1].Name, ShouldEqual, "blobtype=Azure Data Lake Storage")
 			})
 		})
 
@@ -380,13 +420,13 @@ func TestAzureMonitorDatasource(t *testing.T) {
 }
 
 func loadTestFile(name string) (AzureMonitorResponse, error) {
-	var data AzureMonitorResponse
+	var azData AzureMonitorResponse
 
 	path := filepath.Join("testdata", name)
 	jsonBody, err := ioutil.ReadFile(path)
 	if err != nil {
-		return data, err
+		return azData, err
 	}
-	err = json.Unmarshal(jsonBody, &data)
-	return data, err
+	err = json.Unmarshal(jsonBody, &azData)
+	return azData, err
 }
