@@ -51,7 +51,7 @@ export interface SelectFieldConfigSettings<T> {
   options: Array<SelectableValue<T>>;
 
   /** Optionally use the context to define the options */
-  getOptions?: (context: FieldOverrideContext) => Array<SelectableValue<T>>;
+  getOptions?: (context: FieldOverrideContext) => Promise<Array<SelectableValue<T>>>;
 }
 
 export const selectOverrideProcessor = (

@@ -81,7 +81,7 @@ export function addStandardDataReduceOptions(
       settings: {
         allowCustomValue: true,
         options: [],
-        getOptions: (context: FieldOverrideContext) => {
+        getOptions: async (context: FieldOverrideContext) => {
           const options = [
             { value: '', label: 'Numeric Fields' },
             { value: '/.*/', label: 'All Fields' },
@@ -94,7 +94,7 @@ export function addStandardDataReduceOptions(
               }
             }
           }
-          return options;
+          return Promise.resolve(options);
         },
       },
       defaultValue: '',
