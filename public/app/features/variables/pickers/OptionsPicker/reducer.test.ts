@@ -58,6 +58,10 @@ describe('optionsPickerReducer', () => {
       { text: 'A', value: 'A', selected: true },
       { text: 'B', value: 'B', selected: true },
     ];
+    const opBASel = [
+      { text: 'B', value: 'B', selected: true },
+      { text: 'A', value: 'A', selected: true },
+    ];
 
     const expectToggleOptionState = (args: {
       options: any;
@@ -90,11 +94,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with All selected', () => {
         const options = opsAll;
         it.each`
-          option | forceSelect | clearOthers | expOps    | expSel
-          ${opA} | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
-          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expOps  | expSel
+          ${opA} | ${true}     | ${false}    | ${opsA} | ${opASel}
+          ${opA} | ${false}    | ${false}    | ${opsA} | ${opASel}
+          ${opA} | ${true}     | ${true}     | ${opsA} | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsA} | ${opASel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
@@ -134,11 +138,11 @@ describe('optionsPickerReducer', () => {
       describe('and options with B selected', () => {
         const options = opsB;
         it.each`
-          option | forceSelect | clearOthers | expOps    | expSel
-          ${opA} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opA} | ${false}    | ${false}    | ${opsB}   | ${opBSel}
-          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expOps   | expSel
+          ${opA} | ${true}     | ${false}    | ${opsAB} | ${opBASel}
+          ${opA} | ${false}    | ${false}    | ${opsAB} | ${opBASel}
+          ${opA} | ${true}     | ${true}     | ${opsA}  | ${opASel}
+          ${opA} | ${false}    | ${true}     | ${opsA}  | ${opASel}
         `(
           'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>

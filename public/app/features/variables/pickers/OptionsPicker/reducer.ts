@@ -106,6 +106,14 @@ const updateDefaultSelection = (state: OptionsPickerState): OptionsPickerState =
   return state;
 };
 
+const updateAllSelection = (state: OptionsPickerState): OptionsPickerState => {
+  const { selectedValues } = state;
+  if (selectedValues.length > 1) {
+    state.selectedValues = selectedValues.filter(option => option.value !== ALL_VARIABLE_VALUE);
+  }
+  return state;
+};
+
 const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState,
@@ -136,6 +144,12 @@ const optionsPickerSlice = createSlice({
       const { multi, selectedValues } = state;
       const selected = !selectedValues.find(o => o.value === option.value);
 
+      console.log('selected', selected);
+      console.log('multi', multi);
+      console.log(
+        'sv',
+        selectedValues.map(c => c.value)
+      );
       if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
         if (selected || forceSelect) {
           state.selectedValues = [{ ...option, selected: true }];
@@ -143,27 +157,27 @@ const optionsPickerSlice = createSlice({
           state.selectedValues = [];
         }
         console.log(
-          'selected',
+          'selected 1',
           state.selectedValues.map(s => s.value)
         );
-        return applyStateChanges(state, updateDefaultSelection, updateOptions);
+        return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
       }
 
       if (forceSelect || selected) {
         state.selectedValues.push({ ...option, selected: true });
         console.log(
-          'selected',
+          'selected 2',
           state.selectedValues.map(s => s.value)
         );
-        return applyStateChanges(state, updateDefaultSelection, updateOptions);
+        return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
       }
 
       state.selectedValues = selectedValues.filter(o => o.value !== option.value);
       console.log(
-        'selected',
+        'selected 3',
         state.selectedValues.map(s => s.value)
       );
-      return applyStateChanges(state, updateDefaultSelection, updateOptions);
+      return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
     },
     toggleTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
       const { selectedValues } = state;
