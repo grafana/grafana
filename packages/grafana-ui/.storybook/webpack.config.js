@@ -11,7 +11,7 @@ module.exports = ({ config, mode }) => {
         {
           loader: require.resolve('ts-loader'),
           options: {
-            transpileOnly: true,
+            transpileOnly: mode === 'PRODUCTION',
             configFile: path.resolve(__dirname, 'tsconfig.json'),
           },
         },
