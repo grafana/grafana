@@ -27,36 +27,46 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
 
   console.log('fetching issues/PRs of the milestone ⏬');
 
-  // Get all the issues/PRs with the label cherry-pick
-  // Every pull request is actually an issue
-  const issuesRes = await client.get('/issues', {
-    params: {
-      state: 'closed',
-      labels: cherryPickLabel,
-      per_page: 100,
-      milestone: milestone,
-    },
-  });
+  let totalIssues = 0;
 
-  if (issuesRes.data.length < 1) {
-    console.log('no issues to remove label from');
-  } else {
-    console.log(`found ${issuesRes.data.length} issues to remove the cherry-pick label from 🔎`);
-  }
+  while (true) {
+    // Get first 100 issues/PRs with the label cherry-pick
+    // Every pull request is actually an issue
+    const issuesRes = await client.get('/issues', {
+      params: {
+        state: 'closed',
+        labels: cherryPickLabel,
+        per_page: 100,
+        milestone: milestone,
+      },
+    });
 
-  for (const issue of issuesRes.data) {
-    // the reason for using stdout.write is for achieving 'action -> result' on
-    // the same line
-    process.stdout.write(`🔧removing label from issue #${issue.number} 🗑...`);
-    const resDelete = await client.delete(`/issues/${issue.number}/labels/${cherryPickLabel}`, {});
-    if (resDelete.status === 200) {
-      process.stdout.write('done ✅\n');
-    } else {
-      console.log('failed ❌');
+    if (issuesRes.data.length < 1) {
+      break;
+    }
+
+    const comparativeStr = totalIssues === 0 ? ' ' : ' more ';
+    console.log(`found ${issuesRes.data.length}${comparativeStr}issues to remove the cherry-pick label from 🔎`);
+    totalIssues += issuesRes.data.length;
+
+    for (const issue of issuesRes.data) {
+      // the reason for using stdout.write is for achieving 'action -> result' on
+      // the same line
+      process.stdout.write(`🔧removing label from issue #${issue.number} 🗑...`);
+      const resDelete = await client.delete(`/issues/${issue.number}/labels/${cherryPickLabel}`, {});
+      if (resDelete.status === 200) {
+        process.stdout.write('done ✅\n');
+      } else {
+        console.log('failed ❌');
+      }
     }
   }
 
-  console.log(`cleaned up ${issuesRes.data.length} issues/prs ⚡️`);
+  if (totalIssues === 0) {
+    console.log('no issues to remove label from');
+  } else {
+    console.log(`cleaned up ${totalIssues} issues/prs ⚡️`);
+  }
 
   const resClose = await client.patch(`/milestones/${milestone}`, {
     state: 'closed',
