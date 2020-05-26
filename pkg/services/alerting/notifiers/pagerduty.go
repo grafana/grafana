@@ -44,6 +44,15 @@ func init() {
            tooltip="Resolve incidents in pagerduty once the alert goes back to ok.">
         </gf-form-switch>
       </div>
+      <div class="gf-form">
+        <gf-form-switch
+           class="gf-form"
+           label="Include message in details"
+           label-class="width-14"
+           checked="ctrl.model.settings.messageInDetails"
+           tooltip="Move the alert message from the PD summary into the custom details. This changes the custom details object and may break event rules you have configured">
+        </gf-form-switch>
+      </div>
     `,
 	})
 }
@@ -57,16 +66,18 @@ func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, e
 	severity := model.Settings.Get("severity").MustString("critical")
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
 	key := model.Settings.Get("integrationKey").MustString()
+	messageInDetails := model.Settings.Get("messageInDetails").MustBool(false)
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: NewNotifierBase(model),
-		Key:          key,
-		Severity:     severity,
-		AutoResolve:  autoResolve,
-		log:          log.New("alerting.notifier.pagerduty"),
+		NotifierBase:     NewNotifierBase(model),
+		Key:              key,
+		Severity:         severity,
+		AutoResolve:      autoResolve,
+		MessageInDetails: messageInDetails,
+		log:              log.New("alerting.notifier.pagerduty"),
 	}, nil
 }
 
@@ -74,10 +85,11 @@ func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, e
 // alert notifications to pagerduty
 type PagerdutyNotifier struct {
 	NotifierBase
-	Key         string
-	Severity    string
-	AutoResolve bool
-	log         log.Logger
+	Key              string
+	Severity         string
+	AutoResolve      bool
+	MessageInDetails bool
+	log              log.Logger
 }
 
 // buildEventPayload is responsible for building the event payload body for sending to Pagerduty v2 API
@@ -88,8 +100,17 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		eventType = "resolve"
 	}
 	customData := simplejson.New()
-	for _, evt := range evalContext.EvalMatches {
-		customData.Set(evt.Metric, evt.Value)
+	if pn.MessageInDetails {
+		queries := make(map[string]interface{})
+		for _, evt := range evalContext.EvalMatches {
+			queries[evt.Metric] = evt.Value
+		}
+		customData.Set("queries", queries)
+		customData.Set("message", evalContext.Rule.Message)
+	} else {
+		for _, evt := range evalContext.EvalMatches {
+			customData.Set(evt.Metric, evt.Value)
+		}
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
@@ -129,7 +150,12 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		}
 	}
 
-	summary := evalContext.Rule.Name + " - " + evalContext.Rule.Message
+	var summary string
+	if pn.MessageInDetails {
+		summary = evalContext.Rule.Name
+	} else {
+		summary = evalContext.Rule.Name + " - " + evalContext.Rule.Message
+	}
 	if len(summary) > 1024 {
 		summary = summary[0:1024]
 	}

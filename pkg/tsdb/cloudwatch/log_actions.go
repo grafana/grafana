@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -22,7 +21,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 
 	for _, query := range queryContext.Queries {
 		query := query
-
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, queryContext, query)
 			if err != nil {
@@ -34,12 +32,11 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 			// the query response is in, there does not seem to be a way to tell
 			// by the response alone if/how the results should be grouped.
 			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-			// the "groupResults" parameter is sent along with the query to the backend so that we
+			// the "statsGroups" parameter is sent along with the query to the backend so that we
 			// can correctly group the CloudWatch logs response.
-			if query.Model.Get("groupResults").MustBool() && len(dataframe.Fields) > 0 {
-				groupingFields := findGroupingFields(dataframe.Fields)
-
-				groupedFrames, err := groupResults(dataframe, groupingFields)
+			statsGroups := query.Model.Get("statsGroups").MustStringArray()
+			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
+				groupedFrames, err := groupResults(dataframe, statsGroups)
 				if err != nil {
 					return err
 				}
@@ -66,7 +63,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 			return nil
 		})
 	}
-
 	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
@@ -76,29 +72,11 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 	response := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-
 	for result := range resultChan {
 		response.Results[result.RefId] = result
 	}
 
 	return response, nil
-}
-
-func findGroupingFields(fields []*data.Field) []string {
-	groupingFields := make([]string, 0)
-	for _, field := range fields {
-		if field.Type().Numeric() || field.Type() == data.FieldTypeNullableTime || field.Type() == data.FieldTypeTime {
-			continue
-		}
-
-		if _, err := strconv.ParseFloat(*field.At(0).(*string), 64); err == nil {
-			continue
-		}
-
-		groupingFields = append(groupingFields, field.Name)
-	}
-
-	return groupingFields
 }
 
 func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext *tsdb.TsdbQuery, query *tsdb.Query) (*data.Frame, error) {
@@ -189,9 +167,9 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix").MustString("")
+
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
-
 	if len(logGroupNamePrefix) < 1 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
 			Limit: aws.Int64(parameters.Get("limit").MustInt64(50)),
@@ -202,7 +180,6 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
 		})
 	}
-
 	if err != nil || response == nil {
 		return nil, err
 	}
@@ -230,7 +207,7 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	}
 
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
+		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
 
 	// The fields @log and @logStream are always included in the results of a user's query
@@ -312,7 +289,6 @@ func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 	}
 
 	dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
-
 	if err != nil {
 		return nil, err
 	}

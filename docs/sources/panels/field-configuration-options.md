@@ -44,10 +44,10 @@ Standard field options are:
 
 You can apply standard field options to the following panel visualizations:
 
-- Bar gauge
-- Gauge
-- Stat
-- Table
+- [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
+- [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
+- [Stat]({{< relref "visualizations/stat-panel.md" >}})
+- [Table]({{< relref "visualizations/table-panel.md" >}})
 
 ### Custom field options
 
@@ -61,7 +61,7 @@ Custom field options are:
 
 ## Configure all fields
 
-To change how all fields display data, you apply a [field option](#field-options). Usually you apply changes that you want to most or all of the fields here, than apply field overrides to exceptions.
+To change how all fields display data, you apply a [field option](#field-options). Usually you apply changes that you want to most of or all of the fields here, rather than applying field overrides to exceptions.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Field** tab.

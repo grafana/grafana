@@ -343,7 +343,7 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
-const getLinksSupplier = (
+export const getLinksSupplier = (
   frame: DataFrame,
   field: Field,
   fieldScopedVars: ScopedVars,
@@ -366,7 +366,7 @@ const getLinksSupplier = (
 
     const info: LinkModel<Field> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
-      title: replaceVariables(link.title || ''),
+      title: link.title || '',
       target: link.targetBlank ? '_blank' : '_self',
       origin: field,
     };
@@ -402,7 +402,7 @@ const getLinksSupplier = (
       }
     }
 
-    info.href = replaceVariables(info.href, {
+    const variables = {
       ...fieldScopedVars,
       __value: {
         text: 'Value',
@@ -417,8 +417,10 @@ const getLinksSupplier = (
         text: variablesQuery,
         value: variablesQuery,
       },
-    });
+    };
 
+    info.href = replaceVariables(info.href, variables);
+    info.title = replaceVariables(info.title, variables);
     info.href = locationUtil.processUrl(info.href);
 
     return info;

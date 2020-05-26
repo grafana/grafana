@@ -34,7 +34,13 @@ describe('getRowContexts', () => {
 
       const result = await getRowContexts(getRowContextMock, row, 10);
 
-      expect(result).toEqual({ data: [[['3', '2']], [['6', '5', '4']]], errors: ['', ''] });
+      expect(result).toEqual({
+        data: [
+          ['3', '2'],
+          ['6', '5', '4'],
+        ],
+        errors: ['', ''],
+      });
     });
 
     it('then the result should be in correct format and filtered without uid', async () => {
@@ -63,7 +69,13 @@ describe('getRowContexts', () => {
 
       const result = await getRowContexts(getRowContextMock, row, 10);
 
-      expect(result).toEqual({ data: [[['3', '2', '1']], [['6', '5']]], errors: ['', ''] });
+      expect(result).toEqual({
+        data: [
+          ['3', '2', '1'],
+          ['6', '5'],
+        ],
+        errors: ['', ''],
+      });
     });
   });
 
@@ -93,17 +105,17 @@ describe('LogRowContextProvider', () => {
       const firstResult = new MutableDataFrame({
         refId: 'B',
         fields: [
-          { name: 'ts', type: FieldType.time, values: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] },
+          { name: 'ts', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
           {
             name: 'line',
             type: FieldType.string,
-            values: ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'],
+            values: ['10', '9', '8', '7', '6', '5'],
             labels: {},
           },
           {
             name: 'id',
             type: FieldType.string,
-            values: ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'],
+            values: ['10', '9', '8', '7', '6', '5'],
             labels: {},
           },
         ],
@@ -126,42 +138,34 @@ describe('LogRowContextProvider', () => {
         }
         return Promise.resolve({ data: [secondResult] });
       };
-      let wrapper: any;
-      await act(async () => {
-        wrapper = await mount(
-          <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
-            {({ result, errors, hasMoreContextRows, updateLimit, limit }) => {
-              return (
-                <div>
-                  <div className="result">
-                    <p className="result-before">{result.before?.toString()}</p>
-                    <p className="result-after">{result.after?.toString()}</p>
-                  </div>
-                  <div className="errors">
-                    <p className="errors-before">{errors.before}</p>
-                    <p className="errors-after">{errors.after}</p>
-                  </div>
-                  <div className="hasMoreContextRows">
-                    <p className="hasMoreContextRows-before">{String(hasMoreContextRows.before)}</p>
-                    <p className="hasMoreContextRows-after">{String(hasMoreContextRows.after)}</p>
-                  </div>
-                  <div className="limit">{limit}</div>
-                  <button className="updateLimit" onClick={updateLimit}>
-                    Update limit
-                  </button>
-                </div>
-              );
-            }}
-          </LogRowContextProvider>
-        );
+      let updateLimitCalled = false;
+
+      const mockedChildren = jest.fn((mockState: any) => {
+        const { result, errors, hasMoreContextRows, updateLimit, limit } = mockState;
+        if (!updateLimitCalled && result.before.length === 0) {
+          expect(result).toEqual({ before: [], after: [] });
+          expect(errors).toEqual({ before: undefined, after: undefined });
+          expect(hasMoreContextRows).toEqual({ before: true, after: true });
+          expect(limit).toBe(10);
+          return <></>;
+        }
+        if (!updateLimitCalled && result.before.length > 0) {
+          expect(result).toEqual({ before: ['10', '9', '8', '7', '6', '5'], after: ['14', '13', '12'] });
+          expect(errors).toEqual({ before: '', after: '' });
+          expect(hasMoreContextRows).toEqual({ before: true, after: true });
+          expect(limit).toBe(10);
+          updateLimit();
+          updateLimitCalled = true;
+          return <></>;
+        }
+        if (updateLimitCalled && result.before.length > 0 && limit > 10) {
+          expect(limit).toBe(20);
+        }
+        return <></>;
       });
-      expect(wrapper.find('.hasMoreContextRows-before').text()).toBe('true');
-      expect(wrapper.find('.hasMoreContextRows-after').text()).toBe('true');
-      expect(wrapper.find('.limit').text()).toBe('10');
-      await act(async () => wrapper.find('.updateLimit').simulate('click'));
-      expect(wrapper.find('.limit').text()).toBe('20');
-      expect(wrapper.find('.hasMoreContextRows-before').text()).toBe('true');
-      expect(wrapper.find('.hasMoreContextRows-after').text()).toBe('false');
+      await act(async () => {
+        await mount(<LogRowContextProvider row={row} getRowContext={getRowContextMock} children={mockedChildren} />);
+      });
     });
   });
 });

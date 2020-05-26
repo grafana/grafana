@@ -115,6 +115,8 @@
     name: Graphite
   - link: /features/datasources/influxdb/
     name: InfluxDB
+  - link: /features/datasources/jaeger/
+    name: Jaeger
   - link: /features/datasources/loki/
     name: Loki
   - link: /features/datasources/mssql/
@@ -129,43 +131,54 @@
     name: Prometheus
   - link: /features/datasources/testdata/
     name: TestData DB
+  - link: /features/datasources/zipkin/
+    name: Zipkin
 - name: Panels
   link: /panels/
   children:
-  - link: /features/panels/panels/
+  - link: /panels/panels-overview/
     name: Overview
-  - link: /features/panels/graph/
-    name: Graph
-  - link: /features/panels/table_panel/
-    name: Table
-  - link: /features/panels/stat/
-    name: Stat
-  - link: /features/panels/gauge/
-    name: Gauge
-  - link: /features/panels/bar_gauge/
-    name: Bar gauge
-  - link: /features/panels/logs/
-    name: Logs
-  - link: /features/panels/singlestat/
-    name: Singlestat
-  - link: /features/panels/heatmap/
-    name: Heatmap
-  - link: /features/panels/alertlist/
-    name: Alert list
-  - link: /features/panels/dashlist/
-    name: Dashboard list
-  - link: /panels/text-panel/
-    name: Text
-  - link: /panels/news-panel/
-    name: News
+  - link: /panels/add-a-panel/
+    name: Add panel
   - link: /panels/queries/
     name: Queries
   - link: /panels/transformations/
     name: Transformations
   - link: /panels/field-configuration-options/
     name: Field config options
-  - link: /panels/calculations-list/
-    name: Calculations list
+  - link: /panels/panel-editor/
+    name: Panel editor
+  - name: Visualizations
+    link: /panels/visualizations/
+    children:
+    - link: /panels/visualizations/alert-list-panel/
+      name: Alert list
+    - link: /panels/visualizations/bar-gauge-panel/
+      name: Bar gauge
+    - link: /panels/visualizations/dashboard-list-panel/
+      name: Dashboard list
+    - link: /panels/visualizations/gauge-panel/
+      name: Gauge
+    - link: /panels/visualizations/graph-panel/
+      name: Graph
+    - link: /panels/visualizations/heatmap/
+      name: Heatmap
+    - link: /panels/visualizations/logs-panel/
+      name: Logs
+    - link: /panels/visualizations/news-panel/
+      name: News
+    - link: /panels/visualizations/stat-panel/
+      name: Stat
+    - link: /panels/visualizations/table-panel/
+      name: Table
+    - link: /panels/visualizations/text-panel/
+      name: Text
+    - link: /panels/thresholds/
+      name: Thresholds
+    - link: /panels/inspect-panel/
+      name: Inspect panel
+    - link: /panels/calculations-list/
+      name: Calculations list
 - name: Dashboards
   link: /features/dashboard/
   children:
@@ -183,14 +196,10 @@
       name: Sharing a dashboard
     - link: /reference/share_panel/
       name: Sharing a panel
-    - link: /reference/timerange/
-      name: Time range
+    - link: /dashboards/time-range-controls/
+      name: Time range controls
     - link: /reference/export_import/
       name: Export and import
-    - link: /features/dashboard/links/
-      name: Navigation links
-    - link: /reference/datalinks/
-      name: Data links
     - link: /reference/dashboard_history/
       name: Dashboard version history
     - name: Keyboard Shortcuts
@@ -229,6 +238,8 @@
       link: /linking/dashboard-links/
     - name: Panel links
       link: /linking/panel-links/
+    - name: Data links
+      link: /linking/data-links/
 - name: Templates and variables
   link: /variables/
   children:
@@ -391,8 +402,10 @@
           link: /developers/plugins/add-support-for-annotations/
         - name: Add support for Explore queries
           link: /developers/plugins/add-support-for-explore-queries/
-        - name: Build a logs data source
-          link: /developers/plugins/build-a-logs-data-source/
+        - name: Build a logs data source plugin
+          link: /developers/plugins/build-a-logs-data-source-plugin/
+        - name: Build a streaming data source plugin
+          link: /developers/plugins/build-a-streaming-data-source-plugin/
         - name: Authentication
           link: /developers/plugins/authentication/
         - name: Backend plugins

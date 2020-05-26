@@ -17,8 +17,6 @@ import {
   DataQueryResponse,
   LoadingState,
   toDataFrame,
-  guessFieldTypes,
-  FieldType,
   LogRowModel,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
@@ -137,9 +135,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
               queryId: dataFrame.fields[0].values.get(0),
               region: dataFrame.meta?.custom?.['Region'] ?? 'default',
               refId: dataFrame.refId!,
-              groupResults: this.languageProvider.isStatsQuery(
-                options.targets.find(target => target.refId === dataFrame.refId)!.expression
-              ),
+              statsGroups: (options.targets.find(target => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
+                .statsGroups,
             }))
           )
         ),
@@ -205,7 +202,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   logsQuery(
-    queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; groupResults?: boolean }>
+    queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; statsGroups?: string[] }>
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach(param => {
@@ -257,19 +254,15 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
             }
           });
         }),
-        map(dataFrames => {
-          const correctedFrames = dataFrames.map(frame => correctFrameTypes(frame));
-
-          return {
-            data: correctedFrames,
-            key: 'test-key',
-            state: correctedFrames.every(
-              dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
-            )
-              ? LoadingState.Done
-              : LoadingState.Loading,
-          };
-        })
+        map(dataFrames => ({
+          data: dataFrames,
+          key: 'test-key',
+          state: dataFrames.every(
+            dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
+          )
+            ? LoadingState.Done
+            : LoadingState.Loading,
+        }))
       ),
       () => this.stopQueries()
     );
@@ -900,6 +893,14 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     return this.templateSrv.replace(target, scopedVars);
   }
+
+  getQueryDisplayText(query: CloudWatchQuery) {
+    if (query.queryMode === 'Logs') {
+      return query.expression;
+    } else {
+      return JSON.stringify(query);
+    }
+  }
 }
 
 function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => void): Observable<T> {
@@ -915,22 +916,6 @@ function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => v
       onUnsubscribe();
     };
   });
-}
-
-function correctFrameTypes(frame: DataFrame): DataFrame {
-  frame.fields.forEach(field => {
-    if (field.type === FieldType.string) {
-      field.type = FieldType.other;
-    }
-  });
-
-  const correctedFrame = guessFieldTypes(frame);
-  // const timeField = correctedFrame.fields.find(field => field.name === '@timestamp');
-  // if (timeField) {
-  //   timeField.type = FieldType.time;
-  // }
-
-  return correctedFrame;
 }
 
 function parseLogGroupName(logIdentifier: string): string {

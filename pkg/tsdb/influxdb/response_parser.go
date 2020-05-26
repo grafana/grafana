@@ -26,6 +26,9 @@ func (rp *ResponseParser) Parse(response *Response, query *Query) *tsdb.QueryRes
 
 	for _, result := range response.Results {
 		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
+		if result.Err != nil {
+			queryRes.Error = result.Err
+		}
 	}
 
 	return queryRes

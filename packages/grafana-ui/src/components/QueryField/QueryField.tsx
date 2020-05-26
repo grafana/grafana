@@ -17,6 +17,7 @@ import {
 } from '../../slate-plugins';
 
 import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface QueryFieldProps {
   additionalPlugins?: Plugin[];
@@ -197,7 +198,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     return (
       <div className={wrapperClassName}>
-        <div className="slate-query-field">
+        <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
           <Editor
             ref={editor => (this.editor = editor!)}
             schema={SCHEMA}

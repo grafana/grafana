@@ -309,7 +309,6 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return {
       suggestions: [
         {
-          prefixMatch: true,
           label: 'Fields',
           items: fields.map(field => ({
             label: field,

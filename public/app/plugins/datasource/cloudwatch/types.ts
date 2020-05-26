@@ -43,6 +43,7 @@ export interface CloudWatchLogsQuery extends DataQuery {
   namespace: string;
   expression: string;
   logGroupNames: string[];
+  statsGroups?: string[];
 }
 
 export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
