@@ -6,7 +6,7 @@
 * **Table**: Make last cell value visible when right aligned. [#24921](https://github.com/grafana/grafana/pull/24921), [@peterholmberg](https://github.com/peterholmberg)
 * **TablePanel**: Adding sort order persistance. [#24705](https://github.com/grafana/grafana/pull/24705), [@torkelo](https://github.com/torkelo)
 * **Transformations**: Display correct field name when using reduce transformation. [#25068](https://github.com/grafana/grafana/pull/25068), [@peterholmberg](https://github.com/peterholmberg)
-* **Transforms**: Allow custom number input for binary operations. [#24752](https://github.com/grafana/grafana/pull/24752), [@ryantxu](https://github.com/ryantxu)
+* **Transformations**: Allow custom number input for binary operations. [#24752](https://github.com/grafana/grafana/pull/24752), [@ryantxu](https://github.com/ryantxu)
 
 ### Bug Fixes
 * **Cloudwatch**: Fix AWS WAF and AWS DDoSProtection metrics. [#25071](https://github.com/grafana/grafana/pull/25071), [@papagian](https://github.com/papagian)
