@@ -83,16 +83,15 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 	for _, query := range queries {
 		var target string
-		//spew.Dump(query.Model)
 		queryBytes, err := query.Model.Encode()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to re-encode the Azure Monitor query into JSON: %w", err)
 		}
 
 		queryJSONModel := azureMonitorJSONQuery{}
 		err = json.Unmarshal(queryBytes, &queryJSONModel)
 		if err != nil {
-			return nil, err // TODO wrap this and above
+			return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
 		}
 
 		azJSONModel := queryJSONModel.AzureMonitor

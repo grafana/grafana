@@ -91,8 +91,7 @@ type column struct {
 	Type string `json:"type"`
 }
 
-// azureMonitorJSONQuery is the model for the JSON query sent for azure monitor requests
-// from the frontend.
+// azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type azureMonitorJSONQuery struct {
 	AzureMonitor struct {
 		Aggregation         string  `json:"aggregation"`
@@ -112,11 +111,12 @@ type azureMonitorJSONQuery struct {
 	Subscription string `json:"subscription"`
 }
 
+// insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
 type insightsJSONQuery struct {
 	AppInsights struct {
 		Aggregation         string  `json:"aggregation"`
 		Alias               string  `json:"alias"`
-		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"` // in the insights frontend this any, where as in azureMonitor it is type number.
+		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
 		Dimension           string  `json:"dimension"`
 		DimensionFilter     string  `json:"dimensionFilter"`
 		MetricName          string  `json:"metricName"`
@@ -128,4 +128,13 @@ type insightsJSONQuery struct {
 		SegmentColumn       string  `json:"segmentColumn"`
 	} `json:"appInsights"`
 	Raw *bool `json:"raw"`
+}
+
+// logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
+type logJSONQuery struct {
+	AzureLogAnalytics struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+		Workspace    string `json:"workspace"`
+	} `json:"azureLogAnalytics"`
 }

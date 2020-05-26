@@ -1,7 +1,6 @@
 package azuremonitor
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -82,14 +81,12 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 	for _, query := range queries {
 		queryBytes, err := query.Model.Encode()
 		if err != nil {
-			return nil, err // TODO wrap
+			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights query into JSON: %w", err)
 		}
 		queryJSONModel := insightsJSONQuery{}
-		d := json.NewDecoder(bytes.NewReader(queryBytes))
-		d.UseNumber()
-		err = d.Decode(&queryJSONModel)
+		err = json.Unmarshal(queryBytes, &queryJSONModel)
 		if err != nil {
-			return nil, err // TODO wrap
+			return nil, fmt.Errorf("failed to decode the Azure Application Insights query object from JSON: %w", err)
 		}
 
 		insightsJSONModel := queryJSONModel.AppInsights
