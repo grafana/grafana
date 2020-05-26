@@ -77,6 +77,30 @@ export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 ```
 
+## Variable expansion (7.1+)
+
+If any of your options contains the expression `$__<provider>{<argument>}`
+or `${<environment variable>}` they will be processed by Grafana's
+variable expander which will run the provider with the provided argument
+to get the final value of the option.
+
+There are two providers, `env` and `file`.
+
+The `env` provider can be used to expand an environment variable. If you
+set an option to `$__env{PORT}` the `PORT` environment variable will be
+used in its place. For environment variables you can also use the
+short-hand syntax `${PORT}`.
+
+`file` reads a file from the filesystem. It trims whitespace from the
+beginning and the end of files.
+The database password in the following example would be replaced by
+the content of the `/etc/secrets/gf_sql_password` file:
+
+```
+[database]
+password = $__file{/etc/secrets/gf_sql_password}
+```
+
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
 ## instance_name
