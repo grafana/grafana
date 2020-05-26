@@ -168,4 +168,8 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Remove unique index org_id_name", NewDropIndexMigration(alert_notification, &Index{
 		Cols: []string{"org_id", "name"}, Type: UniqueIndex,
 	}))
+
+	mg.AddMigration("Add secure settings data column", NewAddColumnMigration(alert_notification, &Column{
+		Name: "secure_settings", Type: DB_Text, Nullable: true,
+	}))
 }
