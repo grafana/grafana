@@ -15,7 +15,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { QueryVariableModel, VariableTag } from '../../../templating/types';
+import { QueryVariableModel, VariableTag, VariableOption } from '../../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -633,6 +633,80 @@ describe('optionsPickerReducer', () => {
             highlightIndex: 0,
           });
       });
+    });
+  });
+
+  describe('when value is selected and filter is applied but then removed', () => {
+    it('then state should be correct', () => {
+      const searchQuery = 'A';
+
+      const options: VariableOption[] = [
+        { text: 'All', value: '$__all', selected: false },
+        { text: 'A', value: 'A', selected: false },
+        { text: 'B', value: 'B', selected: false },
+      ];
+
+      const { initialState } = getVariableTestContext({
+        options,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleOption({ option: options[2], forceSelect: false, clearOthers: false }))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+        })
+        .whenActionIsDispatched(updateSearchQuery(searchQuery))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: searchQuery,
+        })
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: searchQuery,
+          highlightIndex: 0,
+        })
+        .whenActionIsDispatched(updateSearchQuery(''))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: '',
+          highlightIndex: 0,
+        })
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: '',
+          highlightIndex: 0,
+        });
     });
   });
 
