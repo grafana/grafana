@@ -1,10 +1,18 @@
 import AzureMonitorDatasource from '../datasource';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { toUtc, DataFrame, getFrameDisplayName, DataSourceInstanceSettings, DataQueryRequest } from '@grafana/data';
+import {
+  toUtc,
+  DataFrame,
+  getFrameDisplayName,
+  DataSourceInstanceSettings,
+  DataQueryRequest,
+  DataQueryResponse,
+} from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { AzureDataSourceJsonData, AzureMonitorQuery } from '../types';
 import { config } from '@grafana/runtime';
+import { Observable } from 'rxjs';
 
 const templateSrv = new TemplateSrv();
 const testConfig = {
@@ -143,13 +151,13 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('/api/tsdb/query');
+        expect(options.url).toContain('/api/ds/query');
         return Promise.resolve({ data: response, status: 200 });
       });
     });
 
     it('should return a list of datapoints', () => {
-      return ctx.ds.query(options).then((results: any) => {
+      return (ctx.ds.query(options) as Observable<DataQueryResponse>).toPromise().then((results: any) => {
         expect(results.data.length).toBe(1);
         const data = results.data[0] as DataFrame;
         expect(getFrameDisplayName(data)).toEqual('Percentage CPU');

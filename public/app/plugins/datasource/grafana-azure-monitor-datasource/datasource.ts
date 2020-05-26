@@ -3,8 +3,15 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
-import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  DataQueryResponse,
+  DataQueryResponseData,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { Observable } from 'rxjs';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -19,7 +26,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings, this.templateSrv);
   }
 
-  async query(options: DataQueryRequest<AzureMonitorQuery>) {
+  query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponseData> {
     const promises: any[] = [];
     const azureMonitorOptions = _.cloneDeep(options);
     const appInsightsOptions = _.cloneDeep(options);
