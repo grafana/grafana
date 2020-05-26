@@ -2,58 +2,28 @@
 
 exports[`Render should render component 1`] = `
 <div>
-  <h3
-    className="page-sub-heading"
-  >
+  <Component>
     Team Settings
-  </h3>
-  <form
-    className="gf-form-group"
-    name="teamDetailsForm"
+  </Component>
+  <Form
+    defaultValues={
+      Object {
+        "avatarUrl": "some/url/",
+        "email": "test@test.com",
+        "id": 1,
+        "memberCount": 1,
+        "name": "test",
+        "permission": 0,
+      }
+    }
     onSubmit={[Function]}
   >
-    <div
-      className="gf-form max-width-30"
-    >
-      <Component>
-        Name
-      </Component>
-      <Input
-        className="gf-form-input max-width-22"
-        onChange={[Function]}
-        required={true}
-        type="text"
-        value="test"
-      />
-    </div>
-    <div
-      className="gf-form max-width-30"
-    >
-      <Component
-        tooltip="This is optional and is primarily used to set the team profile avatar (via gravatar service)"
-      >
-        Email
-      </Component>
-      <Input
-        className="gf-form-input max-width-22"
-        onChange={[Function]}
-        placeholder="team@email.com"
-        type="email"
-        value="test@test.com"
-      />
-    </div>
-    <div
-      className="gf-form-button-row"
-    >
-      <button
-        className="btn btn-primary"
-        type="submit"
-      >
-        Update
-      </button>
-    </div>
-  </form>
-  <SharedPreferences
+    <Component />
+  </Form>
+  <Component
+    margin="md"
+  />
+  <Component
     resourceUri="teams/1"
   />
 </div>

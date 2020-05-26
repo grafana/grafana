@@ -27,18 +27,3 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 });
-
-describe('Functions', () => {
-  it('should update team', () => {
-    const { instance } = setup();
-    const mockEvent = { preventDefault: jest.fn() };
-
-    instance.setState({
-      name: 'test11',
-    });
-
-    instance.onUpdate(mockEvent);
-
-    expect(instance.props.updateTeam).toHaveBeenCalledWith('test11', 'test@test.com');
-  });
-});
