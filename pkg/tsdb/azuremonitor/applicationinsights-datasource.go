@@ -128,7 +128,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			timeGrain := insightsJSONModel.TimeGrain
 			timeGrains := insightsJSONModel.AllowedTimeGrainsMs
 			if timeGrain == "auto" {
-				timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
+				timeGrain, err = setAutoTimeGrainTyped(query.IntervalMs, timeGrains)
 				if err != nil {
 					return nil, err
 				}
