@@ -7,7 +7,7 @@ import {
   DataSourceJsonData,
   ScopedVars,
 } from '@grafana/data';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
 import { toDataQueryResponse } from './queryResponse';
@@ -54,7 +54,7 @@ export class DataSourceWithBackend<
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
     const { intervalMs, maxDataPoints, range, requestId } = request;
     const orgId = config.bootData.user.orgId;
     let targets = request.targets;
@@ -82,6 +82,11 @@ export class DataSourceWithBackend<
         orgId,
       };
     });
+
+    // Return early if no queries exist
+    if (!queries.length) {
+      return of({ data: [] });
+    }
 
     const body: any = {
       queries,
