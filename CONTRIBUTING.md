@@ -58,7 +58,7 @@ When you're ready to contribute, it's time to [Create a pull request](/contribut
 
 #### Contributor License Agreement (CLA)
 
-Before we can accept your pull request, you need to [sign our CLA](https://grafana.com/docs/contribute/cla/). If you haven't, our CLA assistant prompts you to when you create your pull request.
+Before we can accept your pull request, you need to [sign our CLA](https://grafana.com/docs/grafana/latest/developers/cla/). If you haven't, our CLA assistant prompts you to when you create your pull request.
 
 ## Where do I go from here?
 

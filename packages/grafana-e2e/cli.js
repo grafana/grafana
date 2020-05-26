@@ -1,5 +1,6 @@
 const execa = require('execa');
 const program = require('commander');
+const resolveBin = require('resolve-as-bin');
 const { resolve, sep } = require('path');
 
 const cypress = commandName => {
@@ -14,7 +15,7 @@ const cypress = commandName => {
     stdio: 'inherit',
   };
 
-  return execa(`${projectPath}/node_modules/.bin/cypress`, cypressOptions, execaOptions)
+  return execa(resolveBin('cypress'), cypressOptions, execaOptions)
     .then(() => {}) // no return value
     .catch(error => {
       console.error(error.message);

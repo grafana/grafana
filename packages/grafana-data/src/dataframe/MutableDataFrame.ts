@@ -152,7 +152,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       return Math.max(v, f.values.length);
     }, 0);
 
-    // Add empty elements until everything mastches
+    // Add empty elements until everything matches
     for (const field of this.fields) {
       while (field.values.length !== length) {
         field.values.add(MISSING_VALUE);

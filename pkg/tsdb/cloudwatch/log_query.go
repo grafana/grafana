@@ -1,6 +1,8 @@
 package cloudwatch
 
 import (
+	"sort"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -47,6 +49,8 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				// Check if field is time field
 				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
+				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
+					fieldValues[*resultField.Field] = make([]*float64, rowCount)
 				} else {
 					fieldValues[*resultField.Field] = make([]*string, rowCount)
 				}
@@ -59,6 +63,12 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				}
 
 				timeField[i] = &parsedTime
+			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
+				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
+				if err != nil {
+					return nil, err
+				}
+				numericField[i] = &parsedFloat
 			} else {
 				fieldValues[*resultField.Field].([]*string)[i] = resultField.Value
 			}
@@ -90,6 +100,8 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		},
 	}
 
+	// Results aren't guaranteed to come ordered by time (ascending), so we need to sort
+	sort.Sort(ByTime(*frame))
 	return frame, nil
 }
 

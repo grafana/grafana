@@ -208,10 +208,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  resetPlusButton(button: { html: any; value: any }) {
+  resetPlusButton(button: { html: any; value: any; type: any; fake: any }) {
     const plusButton = this.uiSegmentSrv.newPlusButton();
     button.html = plusButton.html;
     button.value = plusButton.value;
+    button.type = plusButton.type;
+    button.fake = plusButton.fake;
   }
 
   getTableSegments() {
