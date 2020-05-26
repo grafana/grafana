@@ -3,9 +3,10 @@ import GithubClient from '../utils/githubClient';
 
 interface CloseMilestoneOptions {
   milestone: string;
+  dryRun: boolean;
 }
 
-const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ milestone }) => {
+const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ milestone, dryRun }) => {
   const githubClient = new GithubClient({ required: true });
 
   const cherryPickLabel = 'cherry-pick needed';
@@ -14,6 +15,10 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
   if (!/^\d+$/.test(milestone)) {
     console.log('Use milestone number not title, find number in milestone url');
     return;
+  }
+
+  if (dryRun) {
+    console.log('dry run is enabled');
   }
 
   const milestoneRes = await client.get(`/milestones/${milestone}`, {});
@@ -53,11 +58,13 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
       // the reason for using stdout.write is for achieving 'action -> result' on
       // the same line
       process.stdout.write(`🔧removing label from issue #${issue.number} 🗑...`);
-      const resDelete = await client.delete(`/issues/${issue.number}/labels/${cherryPickLabel}`, {});
-      if (resDelete.status === 200) {
-        process.stdout.write('done ✅\n');
-      } else {
-        console.log('failed ❌');
+      if (!dryRun) {
+        const resDelete = await client.delete(`/issues/${issue.number}/labels/${cherryPickLabel}`, {});
+        if (resDelete.status === 200) {
+          process.stdout.write('done ✅\n');
+        } else {
+          console.log('failed ❌');
+        }
       }
     }
   }
@@ -68,15 +75,17 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
     console.log(`cleaned up ${totalIssues} issues/prs ⚡️`);
   }
 
-  const resClose = await client.patch(`/milestones/${milestone}`, {
-    state: 'closed',
-  });
+  if (!dryRun) {
+    const resClose = await client.patch(`/milestones/${milestone}`, {
+      state: 'closed',
+    });
 
-  if (resClose.status === 200) {
-    console.log('milestone closed 🙌');
-  } else {
-    console.log('failed to close the milestone, response:');
-    console.log(resClose);
+    if (resClose.status === 200) {
+      console.log('milestone closed 🙌');
+    } else {
+      console.log('failed to close the milestone, response:');
+      console.log(resClose);
+    }
   }
 };
 
