@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { cloneDeep, isString } from 'lodash';
+import { cloneDeep, isString, trim } from 'lodash';
 import { VariableOption, VariableTag, VariableWithMultiSupport } from '../../../templating/types';
 import { ALL_VARIABLE_VALUE } from '../../state/types';
 import { isQuery } from '../../guard';
@@ -233,7 +233,7 @@ const optionsPickerSlice = createSlice({
       return state;
     },
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
-      const searchQuery = (state.queryValue ?? '').toLowerCase();
+      const searchQuery = trim((state.queryValue ?? '').toLowerCase());
 
       const filteredOptions = action.payload.filter(option => {
         const text = Array.isArray(option.text) ? option.text.toString() : option.text;
