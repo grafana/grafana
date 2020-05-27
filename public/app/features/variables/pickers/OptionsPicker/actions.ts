@@ -155,20 +155,20 @@ const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreSt
 const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
 function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
-  const { options, queryValue: searchQuery, multi } = picker;
+  const { options, selectedValues, queryValue: searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {
     return { text: searchQuery, value: searchQuery, selected: false };
   }
 
   if (!multi) {
-    return options.find(o => o.selected);
+    return selectedValues.find(o => o.selected);
   }
 
   const texts: string[] = [];
   const values: string[] = [];
 
-  for (const option of options) {
+  for (const option of selectedValues) {
     if (!option.selected) {
       continue;
     }
