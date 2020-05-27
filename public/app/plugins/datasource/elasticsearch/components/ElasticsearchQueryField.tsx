@@ -65,7 +65,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
     return (
       <>
         <div className="gf-form-inline gf-form-inline--nowrap">
-          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
+          <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
               query={query.query}
