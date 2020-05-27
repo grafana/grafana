@@ -4,6 +4,7 @@ const {
 } = require('fs');
 const { resolve } = require('path');
 
+// @todo use https://github.com/bahmutov/cypress-extends when possible
 module.exports = async baseConfig => {
   // From CLI
   const {

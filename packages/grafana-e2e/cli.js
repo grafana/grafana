@@ -24,19 +24,14 @@ const cypress = commandName => {
 };
 
 module.exports = () => {
-  const configOption = '-c, --config <path>';
-  const configDescription = 'path to JSON file where configuration values are set; defaults to "cypress.json"';
-
   program
     .command('open')
     .description('runs tests within the interactive GUI')
-    .option(configOption, configDescription)
     .action(() => cypress('open'));
 
   program
     .command('run')
     .description('runs tests from the CLI without the GUI')
-    .option(configOption, configDescription)
     .action(() => cypress('run'));
 
   program.parse(process.argv);
