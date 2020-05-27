@@ -134,6 +134,7 @@ const optionsPickerSlice = createSlice({
         state.queryValue = queryHasSearchFilter && queryValue ? queryValue : '';
       }
 
+      state.selectedValues = state.options.filter(option => option.selected);
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     hideOptions: (state, action: PayloadAction): OptionsPickerState => {
@@ -217,7 +218,7 @@ const optionsPickerSlice = createSlice({
     toggleAllOptions: (state, action: PayloadAction): OptionsPickerState => {
       if (state.selectedValues.length > 0) {
         state.selectedValues = [];
-        return applyStateChanges(state, updateDefaultSelection, updateOptions);
+        return applyStateChanges(state, updateOptions);
       }
 
       state.selectedValues = state.options.map(option => ({
@@ -225,7 +226,7 @@ const optionsPickerSlice = createSlice({
         selected: true,
       }));
 
-      return applyStateChanges(state, updateDefaultSelection, updateOptions);
+      return applyStateChanges(state, updateOptions);
     },
     updateSearchQuery: (state, action: PayloadAction<string>): OptionsPickerState => {
       state.queryValue = action.payload;
