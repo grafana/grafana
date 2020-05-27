@@ -3,7 +3,7 @@ title = "Stat panel"
 description = "Stat panel documentation"
 keywords = ["grafana", "docs", "stat panel"]
 type = "docs"
-aliases =["/docs/grafana/latest/features/panels/stat/"]
+aliases =["/docs/grafana/latest/features/panels/stat/", "/docs/grafana/latest/features/panels/singlestat/", "/docs/grafana/latest/reference/singlestat/#coloring", "/docs/grafana/latest/reference/singlestat/#spark-lines", "/docs/grafana/latest/reference/singlestat/#value-to-text-mapping"]
 weight = 900
 +++
 
@@ -12,6 +12,8 @@ weight = 900
 The Stat panel shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds.
 
 {{< docs-imagebox img="/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
+
+> **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0.
 
 ## Data and field options
 
