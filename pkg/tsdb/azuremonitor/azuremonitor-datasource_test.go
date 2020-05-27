@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
@@ -304,6 +302,62 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 			},
 		},
+		{
+			name:         "with alias patterns in the query",
+			responseFile: "2-azure-monitor-response-total.json",
+			mockQuery: &AzureMonitorQuery{
+				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Total"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
+					data.NewField("custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU", nil, []float64{
+						8.26, 8.7, 14.82, 10.07, 8.52,
+					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+			},
+		},
+		{
+			name:         "multi dimension with alias",
+			responseFile: "6-azure-monitor-response-multi-dimension.json",
+			mockQuery: &AzureMonitorQuery{
+				Alias: "{{dimensionname}}={{DimensionValue}}",
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
+					data.NewField("blobtype=PageBlob", nil, []float64{
+						3, 3, 3, 3, 3, 0,
+					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
+					data.NewField("blobtype=BlockBlob", nil, []float64{
+						1, 1, 1, 1, 1, 0,
+					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
+					data.NewField("blobtype=Azure Data Lake Storage", nil, []float64{
+						0, 0, 0, 0, 0, 0,
+					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+			},
+		},
 	}
 
 	datasource := &AzureMonitorDatasource{}
@@ -325,86 +379,52 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	}
 }
 
-func TestAzureMonitorDatasource(t *testing.T) {
-	Convey("AzureMonitorDatasource", t, func() {
-
-		Convey("Parse AzureMonitor API response in the time series format", func() {
-			datasource := &AzureMonitorDatasource{}
-
-			Convey("when data from query has alias patterns", func() {
-				azData, err := loadTestFile("azuremonitor/2-azure-monitor-response-total.json")
-				So(err, ShouldBeNil)
-
-				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &AzureMonitorQuery{
-					Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
-					UrlComponents: map[string]string{
-						"resourceName": "grafana",
-					},
-					Params: url.Values{
-						"aggregation": {"Total"},
-					},
-				}
-				err = datasource.parseResponse(res, azData, query)
-				So(err, ShouldBeNil)
-
-				So(len(res.Dataframes), ShouldEqual, 1)
-				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
-				So(err, ShouldBeNil)
-
-				So(frames[0].Fields[1].Name, ShouldEqual, "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU")
-			})
-
-			Convey("when data has dimension filters and alias patterns", func() {
-				azData, err := loadTestFile("azuremonitor/6-azure-monitor-response-multi-dimension.json")
-				So(err, ShouldBeNil)
-
-				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &AzureMonitorQuery{
-					Alias: "{{dimensionname}}={{DimensionValue}}",
-					UrlComponents: map[string]string{
-						"resourceName": "grafana",
-					},
-					Params: url.Values{
-						"aggregation": {"Average"},
-					},
-				}
-				err = datasource.parseResponse(res, azData, query)
-				So(err, ShouldBeNil)
-
-				So(len(res.Dataframes), ShouldEqual, 3)
-				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
-				So(err, ShouldBeNil)
-
-				So(frames[0].Fields[1].Name, ShouldEqual, "blobtype=PageBlob")
-				So(frames[1].Fields[1].Name, ShouldEqual, "blobtype=BlockBlob")
-				So(frames[2].Fields[1].Name, ShouldEqual, "blobtype=Azure Data Lake Storage")
-			})
+func TestFindClosestAllowIntervalMS(t *testing.T) {
+	humanIntervalToMS := map[string]int64{
+		"3m":  180000,
+		"5m":  300000,
+		"10m": 600000,
+		"15m": 900000,
+		"1d":  86400000,
+		"2d":  172800000,
+	}
+	tests := []struct {
+		name              string
+		allowedTimeGrains []int64 // Note: Uses defaults when empty list
+		inputInterval     int64
+		expectedInterval  int64
+	}{
+		{
+			name:              "closest to 3m is 5m",
+			allowedTimeGrains: []int64{},
+			inputInterval:     humanIntervalToMS["3m"],
+			expectedInterval:  humanIntervalToMS["5m"],
+		},
+		{
+			name:              "closest to 10m is 15m",
+			allowedTimeGrains: []int64{},
+			inputInterval:     humanIntervalToMS["10m"],
+			expectedInterval:  humanIntervalToMS["15m"],
+		},
+		{
+			name:              "closest to 2d is 1d",
+			allowedTimeGrains: []int64{},
+			inputInterval:     humanIntervalToMS["2d"],
+			expectedInterval:  humanIntervalToMS["1d"],
+		},
+		{
+			name:              "closest to 3m is 1d when 1d is only allowed interval",
+			allowedTimeGrains: []int64{humanIntervalToMS["1d"]},
+			inputInterval:     humanIntervalToMS["2d"],
+			expectedInterval:  humanIntervalToMS["1d"],
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			interval := findClosestAllowedIntervalMS(tt.inputInterval, tt.allowedTimeGrains)
+			require.Equal(t, tt.expectedInterval, interval)
 		})
-
-		Convey("Find closest allowed interval for auto time grain", func() {
-			intervals := map[string]int64{
-				"3m":  180000,
-				"5m":  300000,
-				"10m": 600000,
-				"15m": 900000,
-				"1d":  86400000,
-				"2d":  172800000,
-			}
-
-			closest := findClosestAllowedIntervalMS(intervals["3m"], []int64{})
-			So(closest, ShouldEqual, intervals["5m"])
-
-			closest = findClosestAllowedIntervalMS(intervals["10m"], []int64{})
-			So(closest, ShouldEqual, intervals["15m"])
-
-			closest = findClosestAllowedIntervalMS(intervals["2d"], []int64{})
-			So(closest, ShouldEqual, intervals["1d"])
-
-			closest = findClosestAllowedIntervalMS(intervals["3m"], []int64{intervals["1d"]})
-			So(closest, ShouldEqual, intervals["1d"])
-		})
-	})
+	}
 }
 
 func loadTestFile(name string) (AzureMonitorResponse, error) {

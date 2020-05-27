@@ -274,7 +274,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		}
 		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], amr.Value[0].Name.LocalizedValue, metadataName, metadataValue, amr.Namespace, amr.Value[0].ID)
 
-		frame := data.NewFrameOfFieldTypes(query.Alias, len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.RefID
 		frame.Fields[1].Name = metricName
 		frame.Fields[1].SetConfig(&data.FieldConfig{
