@@ -24,7 +24,7 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         name: 'String Array',
         description: 'list of strings',
         settings: {
-          placeholder: 'Something here',
+          placeholder: 'Add a string value (text2 demo)',
         },
         defaultValue: ['hello', 'world'],
       })
