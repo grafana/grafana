@@ -118,10 +118,16 @@ To set up PagerDuty, all you have to do is to provide an integration key.
 Setting | Description
 ---------- | -----------
 Integration Key | Integration key for PagerDuty.
-Severity | Level for dynamic notifications, default is `critical`
+Severity | Level for dynamic notifications, default is `critical` (1)
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
+Message in details | Removes the Alert message from the PD summary field and puts it into custom details instead (2)
 
-**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
+>**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
+
+>Using Message In Details will change the structure of the `custom_details` field in the PagerDuty Event.
+This might break custom event rules in your PagerDuty rules if you rely on the fields in `payload.custom_details`.
+Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
+This behavior will become the default in a future version of Grafana.
 
 ### Webhook
 
@@ -195,6 +201,12 @@ Notifications can be sent by setting up an incoming webhook in Google Hangouts c
 ### Squadcast
 
 Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
+
+### Prometheus Alertmanager
+
+Alertmanager handles alerts sent by client applications such as Prometheus server or Grafana. It takes care of deduplicating, grouping, and routing them to the correct receiver. Grafana notifications can be sent to Alertmanager via a simple incoming webhook. Refer to the official [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/alertmanager) for configuration information.
+
+> **Caution:** In case of a high-availability setup, do not load balance traffic between Grafana and Alertmanagers to keep coherence between all your Alertmanager instances. Instead, point Grafana to a list of all Alertmanagers, by listing their URLs comma-separated in the notification channel configuration.
 
 ## Enable images in notifications {#external-image-store}
 

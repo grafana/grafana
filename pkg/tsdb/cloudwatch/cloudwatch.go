@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -98,7 +96,6 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwa
 
 	queryParams := queryContext.Queries[0].Model
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
-
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +125,6 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwa
 }
 
 func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	var result *tsdb.Response
 	e.DataSource = dsInfo
 
 	/*
@@ -139,15 +135,16 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	*/
 	queryParams := queryContext.Queries[0].Model
 	_, fromAlert := queryContext.Headers["FromAlert"]
-	isLogAlertQuery := fromAlert && queryParams.Get("mode").MustString("") == "Logs"
+	isLogAlertQuery := fromAlert && queryParams.Get("queryMode").MustString("") == "Logs"
 
 	if isLogAlertQuery {
 		return e.executeLogAlertQuery(ctx, queryContext)
 	}
 
 	queryType := queryParams.Get("type").MustString("")
-	var err error
 
+	var err error
+	var result *tsdb.Response
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
@@ -187,15 +184,43 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 
 	queryParams.Set("queryId", *result.QueryId)
 
-	// Get Query Results
+	// Get query results
 	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
 		return nil, err
 	}
 
-	dataframe, err := queryResultsToDataframe(getQueryResultsOutput)
+	dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
 	if err != nil {
 		return nil, err
+	}
+
+	statsGroups := queryParams.Get("statsGroups").MustStringArray()
+	if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
+		groupedFrames, err := groupResults(dataframe, statsGroups)
+		if err != nil {
+			return nil, err
+		}
+
+		encodedFrames := make([][]byte, 0)
+		for _, frame := range groupedFrames {
+			dataframeEnc, err := frame.MarshalArrow()
+			if err != nil {
+				return nil, err
+			}
+			encodedFrames = append(encodedFrames, dataframeEnc)
+		}
+
+		response := &tsdb.Response{
+			Results: make(map[string]*tsdb.QueryResult),
+		}
+
+		response.Results["A"] = &tsdb.QueryResult{
+			RefId:      "A",
+			Dataframes: encodedFrames,
+		}
+
+		return response, nil
 	}
 
 	dataframeEnc, err := dataframe.MarshalArrow()
@@ -204,65 +229,14 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	}
 
 	response := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+		Results: map[string]*tsdb.QueryResult{
+			"A": {
+				RefId:      "A",
+				Dataframes: [][]byte{dataframeEnc},
+			},
+		},
 	}
-
-	response.Results["A"] = &tsdb.QueryResult{
-		RefId:      "A",
-		Dataframes: [][]byte{dataframeEnc},
-	}
-
 	return response, nil
-}
-
-func queryResultsToDataframe(results *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
-	rowCount := len(results.Results)
-	fieldValues := make(map[string]interface{})
-	for i, row := range results.Results {
-		for _, resultField := range row {
-			// Strip @ptr field from results as it's not needed
-			if *resultField.Field == "@ptr" {
-				continue
-			}
-
-			if _, exists := fieldValues[*resultField.Field]; !exists {
-				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
-					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
-				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
-					fieldValues[*resultField.Field] = make([]*float64, rowCount)
-				} else {
-					continue
-				}
-			}
-
-			if timeField, ok := fieldValues[*resultField.Field].([]*time.Time); ok {
-				parsedTime, err := time.Parse(cloudWatchTSFormat, *resultField.Value)
-				if err != nil {
-					return nil, err
-				}
-
-				timeField[i] = &parsedTime
-			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
-				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
-				if err != nil {
-					return nil, err
-				}
-				numericField[i] = &parsedFloat
-			}
-		}
-	}
-
-	newFields := make([]*data.Field, 0)
-	for fieldName, vals := range fieldValues {
-		newFields = append(newFields, data.NewField(fieldName, nil, vals))
-
-		if fieldName == "@timestamp" {
-			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{Title: "Time"})
-		}
-	}
-
-	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
-	return frame, nil
 }
 
 func isTerminated(queryStatus string) bool {

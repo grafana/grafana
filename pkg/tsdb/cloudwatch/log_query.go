@@ -1,6 +1,8 @@
 package cloudwatch
 
 import (
+	"sort"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -32,7 +34,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	// Maintaining a list of field names in the order returned from CloudWatch
 	// as just iterating over fieldValues would not give a consistent order
-	fieldNames := make([]*string, 0)
+	fieldNames := make([]string, 0)
 
 	for i, row := range nonEmptyRows {
 		for _, resultField := range row {
@@ -42,11 +44,13 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			}
 
 			if _, exists := fieldValues[*resultField.Field]; !exists {
-				fieldNames = append(fieldNames, resultField.Field)
+				fieldNames = append(fieldNames, *resultField.Field)
 
 				// Check if field is time field
 				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
+				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
+					fieldValues[*resultField.Field] = make([]*float64, rowCount)
 				} else {
 					fieldValues[*resultField.Field] = make([]*string, rowCount)
 				}
@@ -59,6 +63,12 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				}
 
 				timeField[i] = &parsedTime
+			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
+				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
+				if err != nil {
+					return nil, err
+				}
+				numericField[i] = &parsedFloat
 			} else {
 				fieldValues[*resultField.Field].([]*string)[i] = resultField.Value
 			}
@@ -67,11 +77,11 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	newFields := make([]*data.Field, 0)
 	for _, fieldName := range fieldNames {
-		newFields = append(newFields, data.NewField(*fieldName, nil, fieldValues[*fieldName]))
+		newFields = append(newFields, data.NewField(fieldName, nil, fieldValues[fieldName]))
 
-		if *fieldName == "@timestamp" {
+		if fieldName == "@timestamp" {
 			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{Title: "Time"})
-		} else if *fieldName == logStreamIdentifierInternal || *fieldName == logIdentifierInternal {
+		} else if fieldName == logStreamIdentifierInternal || fieldName == logIdentifierInternal {
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
 					Custom: map[string]interface{}{
@@ -90,6 +100,8 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		},
 	}
 
+	// Results aren't guaranteed to come ordered by time (ascending), so we need to sort
+	sort.Sort(ByTime(*frame))
 	return frame, nil
 }
 
