@@ -172,8 +172,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	buildstamp := setting.BuildStamp
 
 	if setting.AnonymousHideVersion && !c.IsSignedIn {
-		version = "0.0.0-hidden"
-		commit = "0000000000"
+		version = ""
+		commit = ""
 		buildstamp = 0
 	}
 
