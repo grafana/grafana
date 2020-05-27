@@ -27,6 +27,8 @@ const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
   };
 };
 
+const createOption = (value: string, selected = false) => ({ text: value, value, selected });
+
 describe('optionsPickerReducer', () => {
   describe('when toggleOption is dispatched', () => {
     const opsAll = [

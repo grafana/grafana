@@ -144,39 +144,21 @@ const optionsPickerSlice = createSlice({
       const { multi, selectedValues } = state;
       const selected = !selectedValues.find(o => o.value === option.value);
 
-      console.log('selected', selected);
-      console.log('multi', multi);
-      console.log(
-        'sv',
-        selectedValues.map(c => c.value)
-      );
       if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
         if (selected || forceSelect) {
           state.selectedValues = [{ ...option, selected: true }];
         } else {
           state.selectedValues = [];
         }
-        console.log(
-          'selected 1',
-          state.selectedValues.map(s => s.value)
-        );
         return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
       }
 
       if (forceSelect || selected) {
         state.selectedValues.push({ ...option, selected: true });
-        console.log(
-          'selected 2',
-          state.selectedValues.map(s => s.value)
-        );
         return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
       }
 
       state.selectedValues = selectedValues.filter(o => o.value !== option.value);
-      console.log(
-        'selected 3',
-        state.selectedValues.map(s => s.value)
-      );
       return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
     },
     toggleTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
