@@ -275,6 +275,8 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
     name: displayName,
     field: {
       ...defaults,
+      max: defaults.max ?? 0,
+      min: defaults.min ?? 0,
     },
     display: {
       text,
