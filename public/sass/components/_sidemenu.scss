@@ -65,6 +65,7 @@ $mobile-menu-breakpoint: md;
       @include left-brand-border-gradient();
 
       .dropdown-menu {
+        border: none;
         margin: 0;
         display: block;
         opacity: 0;
@@ -84,7 +85,7 @@ $mobile-menu-breakpoint: md;
 }
 
 .sidemenu-link {
-  color: $side-menu-link-color !important;
+  color: $side-menu-icon-color !important;
   line-height: 42px;
   padding: 0px 10px 0px 10px;
   display: block;
@@ -128,11 +129,11 @@ $mobile-menu-breakpoint: md;
   white-space: nowrap;
   background-color: $side-menu-item-hover-bg;
   font-size: 17px;
-  color: $side-menu-link-color;
+  color: $side-menu-header-color;
 }
 
 .side-menu-header-link {
-  color: $side-menu-link-color !important;
+  color: $side-menu-header-color !important;
   border: none !important;
   padding: 0 !important;
 }

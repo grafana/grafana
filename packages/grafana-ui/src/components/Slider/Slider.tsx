@@ -75,6 +75,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => 
       .rc-slider-tooltip {
         cursor: grab;
         user-select: none;
+        z-index: ${theme.zIndex.tooltip};
       }
 
       .rc-slider-tooltip-inner {

@@ -5,7 +5,7 @@ import React from 'react';
 import { generateOptions } from '../Select/mockOptions';
 
 export default {
-  title: 'General/ValuePicker',
+  title: 'Pickers and Editors/ValuePicker',
   component: ValuePicker,
   decorators: [withCenteredStory],
 };

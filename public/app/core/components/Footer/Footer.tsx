@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import config from 'app/core/config';
+import { Icon, IconName } from '@grafana/ui';
 
 export interface FooterLink {
   text: string;
@@ -42,7 +43,7 @@ export let getVersionLinks = (): FooterLink[] => {
   if (buildInfo.hasUpdate) {
     links.push({
       text: `New version available!`,
-      icon: 'fa fa-download',
+      icon: 'download-alt',
       url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
       target: '_blank',
     });
@@ -69,7 +70,7 @@ export const Footer: FC = React.memo(() => {
           {links.map(link => (
             <li key={link.text}>
               <a href={link.url} target={link.target} rel="noopener">
-                <i className={link.icon} /> {link.text}
+                <Icon name={link.icon as IconName} /> {link.text}
               </a>
             </li>
           ))}

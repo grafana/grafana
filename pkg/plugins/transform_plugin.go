@@ -77,7 +77,9 @@ type TransformWrapper struct {
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	pbQuery := &pluginv2.QueryDataRequest{
-		Config:  &pluginv2.PluginConfig{},
+		PluginContext: &pluginv2.PluginContext{
+			// TODO: Things probably
+		},
 		Queries: []*pluginv2.DataQuery{},
 	}
 
@@ -91,6 +93,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			IntervalMS:    q.IntervalMs,
 			RefId:         q.RefId,
 			MaxDataPoints: q.MaxDataPoints,
+			QueryType:     q.QueryType,
 			TimeRange: &pluginv2.TimeRange{
 				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
 				FromEpochMS: query.TimeRange.GetFromAsMsEpoch(),
@@ -134,12 +137,12 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 
 	datasourceID := int64(0)
 
-	if req.Config.DatasourceConfig != nil {
-		datasourceID = req.Config.DatasourceConfig.Id
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		datasourceID = req.PluginContext.DataSourceInstanceSettings.Id
 	}
 
 	getDsInfo := &models.GetDataSourceByIdQuery{
-		OrgId: req.Config.OrgId,
+		OrgId: req.PluginContext.OrgId,
 		Id:    datasourceID,
 	}
 
@@ -158,6 +161,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 			RefId:         query.RefId,
 			IntervalMs:    query.IntervalMS,
 			MaxDataPoints: query.MaxDataPoints,
+			QueryType:     query.QueryType,
 			DataSource:    getDsInfo.Result,
 			Model:         sj,
 		}

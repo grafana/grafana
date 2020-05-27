@@ -13,7 +13,9 @@ export function transformDataFrame(options: DataTransformerConfig[], data: DataF
       return data;
     }
 
-    const transformer = info.transformation.transformer(config.options);
+    const defaultOptions = info.transformation.defaultOptions ?? {};
+    const options = { ...defaultOptions, ...config.options };
+    const transformer = info.transformation.transformer(options);
     const after = transformer(processed);
 
     // Add a key to the metadata if the data changed

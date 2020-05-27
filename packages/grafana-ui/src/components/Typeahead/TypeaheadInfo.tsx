@@ -8,6 +8,7 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
   return {
     typeaheadItem: css`
       label: type-ahead-item;
+      z-index: 11;
       padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
       border: ${selectThemeVariant(
@@ -27,6 +28,7 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
       width: 250px;
       height: ${height + parseInt(theme.spacing.xxs, 10)}px;
       position: relative;
+      word-break: break-word;
     `,
   };
 };

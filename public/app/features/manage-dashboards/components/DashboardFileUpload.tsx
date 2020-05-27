@@ -1,5 +1,5 @@
 import React, { FC, FormEvent } from 'react';
-import { Forms, stylesFactory, useTheme } from '@grafana/ui';
+import { getFormStyles, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -8,7 +8,7 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const buttonFormStyle = Forms.getFormStyles(theme, { variant: 'primary', invalid: false, size: 'md' }).button.button;
+  const buttonFormStyle = getFormStyles(theme, { variant: 'primary', invalid: false, size: 'md' }).button.button;
   return {
     fileUpload: css`
       display: none;

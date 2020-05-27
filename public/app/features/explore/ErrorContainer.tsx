@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { DataQueryError } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 export interface ErrorContainerProps {
@@ -17,7 +18,7 @@ export const ErrorContainer: FunctionComponent<ErrorContainerProps> = props => {
       <div className="alert-container">
         <div className="alert-error alert">
           <div className="alert-icon">
-            <i className="fa fa-exclamation-triangle" />
+            <Icon name="exclamation-triangle" />
           </div>
           <div className="alert-body">
             <div className="alert-title">{message}</div>

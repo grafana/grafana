@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
+import { LoadingPlaceholder, JSONFormatter, Icon } from '@grafana/ui';
 
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
@@ -83,12 +83,12 @@ export class TestRuleResult extends PureComponent<Props, State> {
 
     const collapse = (
       <>
-        <i className="fa fa-minus-square-o" /> Collapse All
+        <Icon name="minus-circle" /> Collapse All
       </>
     );
     const expand = (
       <>
-        <i className="fa fa-plus-square-o" /> Expand All
+        <Icon name="plus-circle" /> Expand All
       </>
     );
     return allNodesExpanded ? collapse : expand;
@@ -114,7 +114,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
             text={this.getTextForClipboard}
             onSuccess={this.onClipboardSuccess}
           >
-            <i className="fa fa-clipboard" /> Copy to Clipboard
+            <Icon name="copy" /> Copy to Clipboard
           </CopyToClipboard>
         </div>
 

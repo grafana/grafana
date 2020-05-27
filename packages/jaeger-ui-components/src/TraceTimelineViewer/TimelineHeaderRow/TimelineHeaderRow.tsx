@@ -22,26 +22,32 @@ import TimelineViewingLayer from './TimelineViewingLayer';
 import Ticks from '../Ticks';
 import TimelineRow from '../TimelineRow';
 import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
-import { createStyle } from '../../Theme';
+import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { ubFlex, ubPx2 } from '../../uberUtilityStyles';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     TimelineHeaderRow: css`
-      background: #ececec;
-      border-bottom: 1px solid #ccc;
+      label: TimelineHeaderRow;
+      background: ${autoColor(theme, '#ececec')};
+      border-bottom: 1px solid ${autoColor(theme, '#ccc')};
       height: 38px;
       line-height: 38px;
       width: 100%;
       z-index: 4;
       position: relative;
     `,
-    title: css`
+    TimelineHeaderRowTitle: css`
+      label: TimelineHeaderRowTitle;
       flex: 1;
       overflow: hidden;
       margin: 0;
       text-overflow: ellipsis;
       white-space: nowrap;
+    `,
+    TimelineHeaderWrapper: css`
+      label: TimelineHeaderWrapper;
+      align-items: center;
     `,
   };
 });
@@ -77,11 +83,11 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
     columnResizeHandleHeight,
   } = props;
   const [viewStart, viewEnd] = viewRangeTime.current;
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   return (
     <TimelineRow className={styles.TimelineHeaderRow} data-test-id="TimelineHeaderRow">
-      <TimelineRow.Cell className={cx(ubFlex, ubPx2)} width={nameColumnWidth}>
-        <h3 className={styles.TimelineHeaderRow}>Service &amp; Operation</h3>
+      <TimelineRow.Cell className={cx(ubFlex, ubPx2, styles.TimelineHeaderWrapper)} width={nameColumnWidth}>
+        <h4 className={styles.TimelineHeaderRowTitle}>Service &amp; Operation</h4>
         <TimelineCollapser
           onCollapseAll={onCollapseAll}
           onExpandAll={onExpandAll}

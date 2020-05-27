@@ -58,7 +58,7 @@ describe('<TimelineHeaderRow>', () => {
   });
 
   it('renders the title', () => {
-    expect(wrapper.find('h3').text()).toMatch(/Service.*?Operation/);
+    expect(wrapper.find('h4').text()).toMatch(/Service.*?Operation/);
   });
 
   it('renders the TimelineViewingLayer', () => {
@@ -88,12 +88,7 @@ describe('<TimelineHeaderRow>', () => {
 
   it('renders the TimelineColumnResizer', () => {
     const elm = (
-      <TimelineColumnResizer
-        position={nameColumnWidth}
-        onChange={props.onColummWidthChange}
-        min={0.2}
-        max={0.85}
-      />
+      <TimelineColumnResizer position={nameColumnWidth} onChange={props.onColummWidthChange} min={0.2} max={0.85} />
     );
     expect(wrapper.containsMatchingElement(elm)).toBe(true);
   });

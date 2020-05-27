@@ -18,7 +18,7 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tooltipPlacement?: TooltipPlacement;
 }
 
-type SurfaceType = 'body' | 'panel' | 'header';
+type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
   ({ name, size = 'md', surface = 'panel', iconType, tooltip, tooltipPlacement, className, ...restProps }, ref) => {
@@ -43,14 +43,16 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
   }
 );
 
+IconButton.displayName = 'IconButton';
+
 function getHoverColor(theme: GrafanaTheme, surface: SurfaceType): string {
   switch (surface) {
-    case 'body':
+    case 'dashboard':
       return theme.isLight ? theme.palette.gray95 : theme.palette.gray15;
     case 'panel':
-      return theme.isLight ? theme.palette.gray6 : theme.palette.gray25;
+      return theme.isLight ? theme.palette.gray6 : theme.palette.gray15;
     case 'header':
-      return theme.isLight ? theme.palette.gray85 : theme.palette.gray25;
+      return theme.isLight ? theme.colors.bg3 : theme.palette.gray25;
   }
 }
 
@@ -115,6 +117,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size
     `,
     icon: css`
       margin-bottom: 0;
+      vertical-align: baseline;
       display: flex;
     `,
   };

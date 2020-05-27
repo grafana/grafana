@@ -34,6 +34,8 @@ export const initialState: OptionsPickerState = {
   multi: false,
 };
 
+export const OPTIONS_LIMIT = 1000;
+
 const getTags = (model: VariableWithMultiSupport) => {
   if (isQuery(model) && Array.isArray(model.tags)) {
     return cloneDeep(model.tags);
@@ -50,7 +52,7 @@ const applyLimit = (options: VariableOption[]): VariableOption[] => {
   if (!Array.isArray(options)) {
     return [];
   }
-  return options.slice(0, Math.min(options.length, 1000));
+  return options.slice(0, Math.min(options.length, OPTIONS_LIMIT));
 };
 
 const updateDefaultSelection = (state: OptionsPickerState): OptionsPickerState => {
@@ -176,12 +178,13 @@ const optionsPickerSlice = createSlice({
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
       const searchQuery = (state.queryValue ?? '').toLowerCase();
 
-      state.options = applyLimit(action.payload);
-      state.highlightIndex = 0;
-      state.options = state.options.filter(option => {
+      const filteredOptions = action.payload.filter(option => {
         const text = Array.isArray(option.text) ? option.text.toString() : option.text;
         return text.toLowerCase().indexOf(searchQuery) !== -1;
       });
+
+      state.options = applyLimit(filteredOptions);
+      state.highlightIndex = 0;
 
       return applyStateChanges(state, updateSelectedValues);
     },

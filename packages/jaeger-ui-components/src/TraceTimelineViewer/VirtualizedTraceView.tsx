@@ -27,12 +27,12 @@ import {
   ViewedBoundsFunctionType,
 } from './utils';
 import { Accessors } from '../ScrollManager';
-import colorGenerator from '../utils/color-generator';
+import { getColorByKey } from '../utils/color-generator';
 import { TNil } from '../types';
 import { Log, Span, Trace, KeyValuePair, Link } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 
-import { createStyle } from '../Theme';
+import { createStyle, Theme, withTheme } from '../Theme';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
@@ -63,8 +63,6 @@ type TVirtualizedTraceViewOwnProps = {
   trace: Trace;
   focusSpan: (uiFind: string) => void;
   linksGetter: (span: Span, items: KeyValuePair[], itemIndex: number) => Link[];
-
-  // was from redux
   childrenToggle: (spanID: string) => void;
   clearShouldScrollToFirstUiFindMatch: () => void;
   detailLogItemToggle: (spanID: string, log: Log) => void;
@@ -79,6 +77,7 @@ type TVirtualizedTraceViewOwnProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
+  theme: Theme;
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -144,7 +143,7 @@ function getClipping(currentViewRange: [number, number]) {
 }
 
 // export from tests
-export default class VirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
+export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   clipping: { left: boolean; right: boolean };
   listView: ListView | TNil;
   rowStates: RowState[];
@@ -203,12 +202,12 @@ export default class VirtualizedTraceView extends React.Component<VirtualizedTra
     if (trace !== nextTrace || childrenHiddenIDs !== nextHiddenIDs || detailStates !== nextDetailStates) {
       this.rowStates = nextTrace ? generateRowStates(nextTrace.spans, nextHiddenIDs, nextDetailStates) : [];
     }
-    if (currentViewRangeTime !== nextViewRangeTime) {
+    if (currentViewRangeTime !== nextViewRangeTime || (trace !== nextTrace && nextTrace)) {
       this.clipping = getClipping(nextViewRangeTime);
       const [zoomStart, zoomEnd] = nextViewRangeTime;
       this.getViewedBounds = createViewedBoundsFunc({
-        min: trace.startTime,
-        max: trace.endTime,
+        min: nextTrace.startTime,
+        max: nextTrace.endTime,
         viewStart: zoomStart,
         viewEnd: zoomEnd,
       });
@@ -329,12 +328,13 @@ export default class VirtualizedTraceView extends React.Component<VirtualizedTra
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
+      theme,
     } = this.props;
     // to avert flow error
     if (!trace) {
       return null;
     }
-    const color = colorGenerator.getColorByKey(serviceName);
+    const color = getColorByKey(serviceName, theme);
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
@@ -347,7 +347,7 @@ export default class VirtualizedTraceView extends React.Component<VirtualizedTra
       if (rpcSpan) {
         const rpcViewBounds = this.getViewedBounds(rpcSpan.startTime, rpcSpan.startTime + rpcSpan.duration);
         rpc = {
-          color: colorGenerator.getColorByKey(rpcSpan.process.serviceName),
+          color: getColorByKey(rpcSpan.process.serviceName, theme),
           operationName: rpcSpan.operationName,
           serviceName: rpcSpan.process.serviceName,
           viewEnd: rpcViewBounds.end,
@@ -402,12 +402,13 @@ export default class VirtualizedTraceView extends React.Component<VirtualizedTra
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
       linksGetter,
+      theme,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
       return null;
     }
-    const color = colorGenerator.getColorByKey(serviceName);
+    const color = getColorByKey(serviceName, theme);
     const styles = getStyles();
     return (
       <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
@@ -454,3 +455,5 @@ export default class VirtualizedTraceView extends React.Component<VirtualizedTra
     );
   }
 }
+
+export default withTheme(UnthemedVirtualizedTraceView);

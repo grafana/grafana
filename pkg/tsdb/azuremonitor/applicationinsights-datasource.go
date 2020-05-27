@@ -5,6 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+	"time"
+
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -12,14 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"path"
-	"strings"
-	"time"
 )
 
 // ApplicationInsightsDatasource calls the application insights query API's
@@ -77,32 +79,30 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 	}
 
 	for _, query := range queries {
-		applicationInsightsTarget := query.Model.Get("appInsights").MustMap()
-		azlog.Debug("Application Insights", "target", applicationInsightsTarget)
-
-		rawQuery := false
-		if asInterface, ok := applicationInsightsTarget["rawQuery"]; ok {
-			if asBool, ok := asInterface.(bool); ok {
-				rawQuery = asBool
-			} else {
-				return nil, errors.New("'rawQuery' should be a boolean")
-			}
-		} else {
-			return nil, errors.New("missing 'rawQuery' property")
+		queryBytes, err := query.Model.Encode()
+		if err != nil {
+			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights query into JSON: %w", err)
+		}
+		queryJSONModel := insightsJSONQuery{}
+		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode the Azure Application Insights query object from JSON: %w", err)
 		}
 
-		if rawQuery {
+		insightsJSONModel := queryJSONModel.AppInsights
+		azlog.Debug("Application Insights", "target", insightsJSONModel)
+
+		if insightsJSONModel.RawQuery == nil {
+			return nil, fmt.Errorf("missing the 'rawQuery' property")
+		}
+
+		if *insightsJSONModel.RawQuery {
 			var rawQueryString string
-			if asInterface, ok := applicationInsightsTarget["rawQueryString"]; ok {
-				if asString, ok := asInterface.(string); ok {
-					rawQueryString = asString
-				}
-			}
-			if rawQueryString == "" {
+			if insightsJSONModel.RawQueryString == "" {
 				return nil, errors.New("rawQuery requires rawQueryString")
 			}
 
-			rawQueryString, err := KqlInterpolate(query, timeRange, fmt.Sprintf("%v", rawQueryString))
+			rawQueryString, err := KqlInterpolate(query, timeRange, insightsJSONModel.RawQueryString)
 			if err != nil {
 				return nil, err
 			}
@@ -115,20 +115,15 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 				IsRaw:             true,
 				ApiURL:            "query",
 				Params:            params,
-				TimeColumnName:    fmt.Sprintf("%v", applicationInsightsTarget["timeColumn"]),
-				ValueColumnName:   fmt.Sprintf("%v", applicationInsightsTarget["valueColumn"]),
-				SegmentColumnName: fmt.Sprintf("%v", applicationInsightsTarget["segmentColumn"]),
+				TimeColumnName:    insightsJSONModel.TimeColumn,
+				ValueColumnName:   insightsJSONModel.ValueColumn,
+				SegmentColumnName: insightsJSONModel.SegmentColumn,
 				Target:            params.Encode(),
 			})
 		} else {
-			alias := ""
-			if val, ok := applicationInsightsTarget["alias"]; ok {
-				alias = fmt.Sprintf("%v", val)
-			}
-
-			azureURL := fmt.Sprintf("metrics/%s", fmt.Sprintf("%v", applicationInsightsTarget["metricName"]))
-			timeGrain := fmt.Sprintf("%v", applicationInsightsTarget["timeGrain"])
-			timeGrains := applicationInsightsTarget["allowedTimeGrainsMs"]
+			azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
+			timeGrain := insightsJSONModel.TimeGrain
+			timeGrains := insightsJSONModel.AllowedTimeGrainsMs
 			if timeGrain == "auto" {
 				timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
 				if err != nil {
@@ -141,16 +136,17 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			if timeGrain != "none" {
 				params.Add("interval", timeGrain)
 			}
-			params.Add("aggregation", fmt.Sprintf("%v", applicationInsightsTarget["aggregation"]))
+			params.Add("aggregation", insightsJSONModel.Aggregation)
 
-			dimension := strings.TrimSpace(fmt.Sprintf("%v", applicationInsightsTarget["dimension"]))
-			if applicationInsightsTarget["dimension"] != nil && len(dimension) > 0 && !strings.EqualFold(dimension, "none") {
+			dimension := strings.TrimSpace(insightsJSONModel.Dimension)
+			// Azure Monitor combines this and the following logic such that if dimensionFilter, must also Dimension, should that be done here as well?
+			if dimension != "" && !strings.EqualFold(dimension, "none") {
 				params.Add("segment", dimension)
 			}
 
-			dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", applicationInsightsTarget["dimensionFilter"]))
-			if applicationInsightsTarget["dimensionFilter"] != nil && len(dimensionFilter) > 0 {
-				params.Add("filter", fmt.Sprintf("%v", dimensionFilter))
+			dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
+			if dimensionFilter != "" {
+				params.Add("filter", dimensionFilter)
 			}
 
 			applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
@@ -158,7 +154,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 				IsRaw:  false,
 				ApiURL: azureURL,
 				Params: params,
-				Alias:  alias,
+				Alias:  insightsJSONModel.Alias,
 				Target: params.Encode(),
 			})
 		}
@@ -209,8 +205,8 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	}
 
 	if res.StatusCode/100 != 2 {
-		azlog.Error("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf(string(body))
+		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
+		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
 	if query.IsRaw {
@@ -237,24 +233,22 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, errors.New("Unable to find datasource plugin Azure Application Insights")
 	}
 
-	var appInsightsRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == "appinsights" {
-			appInsightsRoute = route
-			break
-		}
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+	appInsightsRoute, pluginRouteName, err := e.getPluginRoute(plugin, cloudName)
+	if err != nil {
+		return nil, err
 	}
 
-	appInsightsAppId := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("appinsights/v1/apps/%s", appInsightsAppId)
+	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
+	proxyPass := fmt.Sprintf("%s/v1/apps/%s", pluginRouteName, appInsightsAppID)
 
 	u, _ := url.Parse(dsInfo.Url)
-	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppId))
+	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppID))
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		azlog.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		azlog.Debug("Failed to create request", "error", err)
+		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
@@ -264,11 +258,30 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 	return req, nil
 }
 
+func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
+	pluginRouteName := "appinsights"
+
+	if cloudName == "chinaazuremonitor" {
+		pluginRouteName = "chinaappinsights"
+	}
+
+	var pluginRoute *plugins.AppPluginRoute
+
+	for _, route := range plugin.Routes {
+		if route.Path == pluginRouteName {
+			pluginRoute = route
+			break
+		}
+	}
+
+	return pluginRoute, pluginRouteName, nil
+}
+
 func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, query *ApplicationInsightsQuery) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
 	var data ApplicationInsightsQueryResponse
 	err := json.Unmarshal(body, &data)
 	if err != nil {
-		azlog.Error("Failed to unmarshal Application Insights response", "error", err, "body", string(body))
+		azlog.Debug("Failed to unmarshal Application Insights response", "error", err, "body", string(body))
 		return nil, nil, err
 	}
 

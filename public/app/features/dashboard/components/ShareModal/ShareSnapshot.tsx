@@ -266,7 +266,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         <div className="gf-form" style={{ marginTop: '40px' }}>
           <div className="gf-form-row">
             <a href={snapshotUrl} className="large share-modal-link" target="_blank">
-              <i className="fa fa-external-link-square"></i> {snapshotUrl}
+              <Icon name="external-link-alt" /> {snapshotUrl}
             </a>
             <br />
             <ClipboardButton variant="secondary" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
@@ -304,7 +304,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         <div className="share-modal-header">
           {isLoading ? (
             <div className="share-modal-big-icon">
-              <i className="fa fa-spinner fa-spin"></i>
+              <Icon name="fa fa-spinner" className="fa-spin" />
             </div>
           ) : (
             <Icon name="camera" className="share-modal-big-icon" size="xxl" />

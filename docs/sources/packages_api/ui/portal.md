@@ -5,7 +5,6 @@
 title = "Portal"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Portal class

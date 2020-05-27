@@ -22,32 +22,36 @@ import AccordianKeyValues from './AccordianKeyValues';
 import { formatDuration } from '../utils';
 import { TNil } from '../../types';
 import { Log, KeyValuePair, Link } from '../../types/trace';
-import { createStyle } from '../../Theme';
+import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     AccordianLogs: css`
-      border: 1px solid #d8d8d8;
+      label: AccordianLogs;
+      border: 1px solid ${autoColor(theme, '#d8d8d8')};
       position: relative;
       margin-bottom: 0.25rem;
     `,
-    header: css`
-      background: #e4e4e4;
+    AccordianLogsHeader: css`
+      label: AccordianLogsHeader;
+      background: ${autoColor(theme, '#e4e4e4')};
       color: inherit;
       display: block;
       padding: 0.25rem 0.5rem;
       &:hover {
-        background: #dadada;
+        background: ${autoColor(theme, '#dadada')};
       }
     `,
-    content: css`
-      background: #f0f0f0;
-      border-top: 1px solid #d8d8d8;
+    AccordianLogsContent: css`
+      label: AccordianLogsContent;
+      background: ${autoColor(theme, '#f0f0f0')};
+      border-top: 1px solid ${autoColor(theme, '#d8d8d8')};
       padding: 0.5rem 0.5rem 0.25rem 0.5rem;
     `,
-    footer: css`
-      color: #999;
+    AccordianLogsFooter: css`
+      label: AccordianLogsFooter;
+      color: ${autoColor(theme, '#999')};
     `,
   };
 });
@@ -78,14 +82,14 @@ export default function AccordianLogs(props: AccordianLogsProps) {
     };
   }
 
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   return (
     <div className={styles.AccordianLogs}>
-      <HeaderComponent className={styles.header} {...headerProps}>
+      <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
         {arrow} <strong>Logs</strong> ({logs.length})
       </HeaderComponent>
       {isOpen && (
-        <div className={styles.content}>
+        <div className={styles.AccordianLogsContent}>
           {_sortBy(logs, 'timestamp').map((log, i) => (
             <AccordianKeyValues
               // `i` is necessary in the key because timestamps can repeat
@@ -100,7 +104,9 @@ export default function AccordianLogs(props: AccordianLogsProps) {
               onToggle={interactive && onItemToggle ? () => onItemToggle(log) : null}
             />
           ))}
-          <small className={styles.footer}>Log timestamps are relative to the start time of the full trace.</small>
+          <small className={styles.AccordianLogsFooter}>
+            Log timestamps are relative to the start time of the full trace.
+          </small>
         </div>
       )}
     </div>

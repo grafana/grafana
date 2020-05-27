@@ -12,10 +12,9 @@ import { Branding } from 'app/core/components/Branding/Branding';
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
-import { AngularSubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, CustomScrollbar } from '@grafana/ui';
+import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/reducers';
@@ -56,7 +55,7 @@ export interface Props {
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
-  isNewEditorOpen?: boolean;
+  isPanelEditorOpen?: boolean;
 }
 
 export interface State {
@@ -155,6 +154,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const { dashboard } = this.props;
 
     const panelId = parseInt(urlPanelId!, 10);
+    dashboard!.expandParentRowFor(panelId);
     const panel = dashboard!.getPanelById(panelId);
 
     if (!panel) {
@@ -163,16 +163,14 @@ export class DashboardPage extends PureComponent<Props, State> {
       // Clear url state
       this.props.updateLocation({
         query: {
-          edit: null,
-          fullscreen: null,
-          panelId: null,
+          editPanel: null,
+          viewPanel: null,
         },
         partial: true,
       });
       return;
     }
 
-    dashboard!.expandParentRowFor(panelId);
     callback(panel);
   }
 
@@ -216,7 +214,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     return (
       <div className="dashboard-loading">
         <div className="dashboard-loading__text">
-          <i className="fa fa-spinner fa-spin" /> {this.props.initPhase}
+          <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
         </div>
       </div>
     );
@@ -236,6 +234,22 @@ export class DashboardPage extends PureComponent<Props, State> {
     );
   }
 
+  getInspectPanel() {
+    const { dashboard, inspectPanelId } = this.props;
+    if (!dashboard || !inspectPanelId) {
+      return null;
+    }
+
+    const inspectPanel = dashboard.getPanelById(parseInt(inspectPanelId, 10));
+
+    // cannot inspect panels plugin is not already loaded
+    if (!inspectPanel) {
+      return null;
+    }
+
+    return inspectPanel;
+  }
+
   render() {
     const {
       dashboard,
@@ -243,9 +257,8 @@ export class DashboardPage extends PureComponent<Props, State> {
       $injector,
       isInitSlow,
       initError,
-      inspectPanelId,
       inspectTab,
-      isNewEditorOpen,
+      isPanelEditorOpen,
       updateLocation,
     } = this.props;
 
@@ -264,11 +277,9 @@ export class DashboardPage extends PureComponent<Props, State> {
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
 
-    // Find the panel to inspect
-    const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
-
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
+    const inspectPanel = this.getInspectPanel();
 
     return (
       <div>
@@ -284,20 +295,20 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {!editPanel && !featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
+              {!featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}
                 editPanel={editPanel}
-                isNewEditorOpen={isNewEditorOpen}
                 scrollTop={approximateScrollTop}
+                isPanelEditorOpen={isPanelEditorOpen}
               />
             </div>
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
         {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
       </div>
@@ -319,8 +330,8 @@ export const mapStateToProps = (state: StoreState) => ({
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel() as DashboardModel,
-  inspectTab: state.location.query.tab,
-  isNewEditorOpen: state.panelEditorNew.isOpen,
+  inspectTab: state.location.query.inspectTab,
+  isPanelEditorOpen: state.panelEditor.isOpen,
 });
 
 const mapDispatchToProps = {

@@ -16,16 +16,16 @@ import * as React from 'react';
 import { css } from 'emotion';
 
 import renderIntoCanvas from './render-into-canvas';
-import colorGenerator from '../../utils/color-generator';
+import { getRgbColorByKey } from '../../utils/color-generator';
 import { TNil } from '../../types';
 
-import { createStyle } from '../../Theme';
+import { autoColor, createStyle, Theme, withTheme } from '../../Theme';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     CanvasSpanGraph: css`
       label: CanvasSpanGraph;
-      background: #fafafa;
+      background: ${autoColor(theme, '#fafafa')};
       height: 60px;
       position: absolute;
       width: 100%;
@@ -36,17 +36,18 @@ const getStyles = createStyle(() => {
 type CanvasSpanGraphProps = {
   items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>;
   valueWidth: number;
+  theme: Theme;
 };
 
-const getColor = (hex: string) => colorGenerator.getRgbColorByKey(hex);
-
-export default class CanvasSpanGraph extends React.PureComponent<CanvasSpanGraphProps> {
+export class UnthemedCanvasSpanGraph extends React.PureComponent<CanvasSpanGraphProps> {
   _canvasElm: HTMLCanvasElement | TNil;
 
   constructor(props: CanvasSpanGraphProps) {
     super(props);
     this._canvasElm = undefined;
   }
+
+  getColor = (key: string) => getRgbColorByKey(key, this.props.theme);
 
   componentDidMount() {
     this._draw();
@@ -63,11 +64,13 @@ export default class CanvasSpanGraph extends React.PureComponent<CanvasSpanGraph
   _draw() {
     if (this._canvasElm) {
       const { valueWidth: totalValueWidth, items } = this.props;
-      renderIntoCanvas(this._canvasElm, items, totalValueWidth, getColor);
+      renderIntoCanvas(this._canvasElm, items, totalValueWidth, this.getColor, autoColor(this.props.theme, '#fff'));
     }
   }
 
   render() {
-    return <canvas className={getStyles().CanvasSpanGraph} ref={this._setCanvasRef} />;
+    return <canvas className={getStyles(this.props.theme).CanvasSpanGraph} ref={this._setCanvasRef} />;
   }
 }
+
+export default withTheme(UnthemedCanvasSpanGraph);

@@ -8,7 +8,9 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 import * as DefaultIcon from '@iconscout/react-unicons';
 import * as MonoIcon from './assets';
 
-interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
+const alwaysMonoIcons = ['grafana', 'favorite'];
+
+export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
@@ -41,6 +43,10 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const isFontAwesome = name?.includes('fa-');
     if (isFontAwesome) {
       return <i className={cx(name, className)} {...divElementProps} style={style} />;
+    }
+
+    if (alwaysMonoIcons.includes(name)) {
+      type = 'mono';
     }
 
     const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
@@ -82,7 +88,7 @@ export const getSvgSize = (size: IconSize) => {
     case 'lg':
       return 18;
     case 'xl':
-      return 28;
+      return 24;
     case 'xxl':
       return 36;
     case 'xxxl':

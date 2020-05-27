@@ -1,21 +1,59 @@
 import React from 'react';
-import { Container, CustomScrollbar, ValuePicker } from '@grafana/ui';
 import {
-  DataFrame,
+  Button,
+  Container,
+  CustomScrollbar,
+  FeatureInfoBox,
+  stylesFactory,
+  useTheme,
+  ValuePicker,
+  VerticalGroup,
+} from '@grafana/ui';
+import {
   DataTransformerConfig,
+  FeatureState,
+  GrafanaTheme,
   SelectableValue,
   standardTransformersRegistry,
   transformDataFrame,
+  DataFrame,
+  PanelData,
 } from '@grafana/data';
 import { TransformationOperationRow } from './TransformationOperationRow';
+import { Card, CardProps } from '../../../../core/components/Card/Card';
+import { css } from 'emotion';
+import { selectors } from '@grafana/e2e-selectors';
+import { Unsubscribable } from 'rxjs';
+import { PanelModel } from '../../state';
 
 interface Props {
+  panel: PanelModel;
   onChange: (transformations: DataTransformerConfig[]) => void;
   transformations: DataTransformerConfig[];
-  dataFrames: DataFrame[];
 }
 
-export class TransformationsEditor extends React.PureComponent<Props> {
+interface State {
+  data?: DataFrame[];
+}
+
+export class TransformationsEditor extends React.PureComponent<Props, State> {
+  subscription?: Unsubscribable;
+
+  componentDidMount() {
+    this.subscription = this.props.panel
+      .getQueryRunner()
+      .getData({ withTransforms: false, withFieldConfig: false })
+      .subscribe({
+        next: (panelData: PanelData) => this.setState({ data: panelData.series }),
+      });
+  }
+
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
+
   onTransformationAdd = (selectable: SelectableValue<string>) => {
     const { transformations, onChange } = this.props;
     onChange([
@@ -51,20 +89,29 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     });
 
     return (
-      <ValuePicker
-        size="md"
-        variant="secondary"
-        label="Add transformation"
-        options={availableTransformers}
-        onChange={this.onTransformationAdd}
-        isFullWidth={false}
-      />
+      <div
+        className={css`
+          max-width: 66%;
+        `}
+      >
+        <ValuePicker
+          size="md"
+          variant="secondary"
+          label="Add transformation"
+          options={availableTransformers}
+          onChange={this.onTransformationAdd}
+          isFullWidth={false}
+          menuPlacement="bottom"
+        />
+      </div>
     );
   };
 
   renderTransformationEditors = () => {
-    const { transformations, dataFrames } = this.props;
-    const preTransformData = dataFrames;
+    const { transformations } = this.props;
+    const { data } = this.state;
+
+    const preTransformData = data ?? [];
 
     return (
       <>
@@ -108,18 +155,84 @@ export class TransformationsEditor extends React.PureComponent<Props> {
     );
   };
 
+  renderNoAddedTransformsState() {
+    return (
+      <VerticalGroup spacing={'lg'}>
+        <Container grow={1}>
+          <FeatureInfoBox
+            title="Transformations"
+            featureState={FeatureState.beta}
+            // url={getDocsLink(DocsId.Transformations)}
+          >
+            <p>
+              Transformations allow you to join, calculate, re-order, hide and rename your query results before being
+              visualized. <br />
+              Many transforms are not suitable if you're using the Graph visualization as it currently only supports
+              time series. <br />
+              It can help to switch to Table visualization to understand what a transformation is doing. <br />
+            </p>
+            <p>Select one of the transformations below to start.</p>
+          </FeatureInfoBox>
+        </Container>
+        <VerticalGroup>
+          {standardTransformersRegistry.list().map(t => {
+            return (
+              <TransformationCard
+                key={t.name}
+                title={t.name}
+                description={t.description}
+                actions={<Button>Select</Button>}
+                onClick={() => {
+                  this.onTransformationAdd({ value: t.id });
+                }}
+              />
+            );
+          })}
+        </VerticalGroup>
+      </VerticalGroup>
+    );
+  }
+
   render() {
+    const hasTransformationsConfigured = this.props.transformations.length > 0;
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
-          <p className="muted text-center" style={{ padding: '8px' }}>
-            Transformations allow you to combine, re-order, hide and rename specific parts the the data set before being
-            visualized.
-          </p>
-          {this.renderTransformationEditors()}
-          {this.renderTransformationSelector()}
+          <div aria-label={selectors.components.TransformTab.content}>
+            {!hasTransformationsConfigured && this.renderNoAddedTransformsState()}
+            {hasTransformationsConfigured && this.renderTransformationEditors()}
+            {hasTransformationsConfigured && this.renderTransformationSelector()}
+          </div>
         </Container>
       </CustomScrollbar>
     );
   }
 }
+
+const TransformationCard: React.FC<CardProps> = props => {
+  const theme = useTheme();
+  const styles = getTransformationCardStyles(theme);
+  return <Card {...props} className={styles.card} />;
+};
+
+const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    card: css`
+      background: ${theme.colors.bg2};
+      width: 100%;
+      border: none;
+      padding: ${theme.spacing.sm};
+
+      // hack because these cards use classes from a very different card for some reason
+      .add-data-source-item-text {
+        font-size: ${theme.typography.size.md};
+      }
+
+      &:hover {
+        background: ${theme.colors.bg3};
+        box-shadow: none;
+        border: none;
+      }
+    `,
+  };
+});

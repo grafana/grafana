@@ -22,19 +22,19 @@ import cx from 'classnames';
 import { Span } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
-import { createStyle } from '../Theme';
+import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
-export const getStyles = createStyle(() => {
+export const getStyles = createStyle((theme: Theme) => {
   return {
     SpanTreeOffset: css`
       label: SpanTreeOffset;
-      color: #000;
+      color: ${autoColor(theme, '#000')};
       position: relative;
     `,
     SpanTreeOffsetParent: css`
       label: SpanTreeOffsetParent;
       &:hover {
-        background-color: #e8e8e8;
+        background-color: ${autoColor(theme, '#e8e8e8')};
         cursor: pointer;
       }
     `,
@@ -48,7 +48,7 @@ export const getStyles = createStyle(() => {
       &::before {
         content: '';
         padding-left: 1px;
-        background-color: lightgrey;
+        background-color: ${autoColor(theme, 'lightgrey')};
       }
     `,
     indentGuideActive: css`
@@ -58,7 +58,7 @@ export const getStyles = createStyle(() => {
       &::before {
         content: '';
         padding-left: 3px;
-        background-color: darkgrey;
+        background-color: ${autoColor(theme, 'darkgrey')};
       }
     `,
     iconWrapper: css`
@@ -78,9 +78,12 @@ type TProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
+  theme: Theme;
 };
 
-export default class SpanTreeOffset extends React.PureComponent<TProps> {
+export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
+  static displayName = 'UnthemedSpanTreeOffset';
+
   ancestorIds: string[];
 
   static defaultProps = {
@@ -134,11 +137,11 @@ export default class SpanTreeOffset extends React.PureComponent<TProps> {
   };
 
   render() {
-    const { childrenVisible, onClick, showChildrenIcon, span } = this.props;
+    const { childrenVisible, onClick, showChildrenIcon, span, theme } = this.props;
     const { hasChildren, spanID } = span;
     const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
     const icon = showChildrenIcon && hasChildren && (childrenVisible ? <IoIosArrowDown /> : <IoChevronRight />);
-    const styles = getStyles();
+    const styles = getStyles(theme);
     return (
       <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
         {this.ancestorIds.map(ancestorId => (
@@ -167,3 +170,5 @@ export default class SpanTreeOffset extends React.PureComponent<TProps> {
     );
   }
 }
+
+export default withTheme(UnthemedSpanTreeOffset);

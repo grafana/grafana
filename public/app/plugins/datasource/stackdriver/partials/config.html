@@ -86,7 +86,7 @@
         ></textarea>
       </div>
       <div ng-repeat="valError in ctrl.validationErrors" class="text-error p-l-1">
-        <i class="fa fa-warning"></i>
+        <icon name="'exclamation-triangle'"></icon>
         {{valError}}
       </div>
     </div>
@@ -130,7 +130,7 @@
   class="gf-form-label"
   ng-hide="ctrl.current.secureJsonFields.privateKey || ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType"
 >
-  <i class="fa fa-save"></i> Do not forget to save your changes after uploading a file.
+  <icon name="'save'"></icon> Do not forget to save your changes after uploading a file.
 </p>
 
 <div class="gf-form" ng-if="ctrl.gceError">
@@ -138,5 +138,5 @@
 </div>
 
 <p class="gf-form-label" ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType">
-  <i class="fa fa-save"></i> Verify GCE default service account by clicking Save & Test
+  <icon name="'save'"></icon> Verify GCE default service account by clicking Save & Test
 </p>

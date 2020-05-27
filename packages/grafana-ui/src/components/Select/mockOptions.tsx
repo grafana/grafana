@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { kebabCase } from 'lodash';
 
-export const generateOptions = () => {
+export const generateOptions = (desc = false) => {
   const values = [
     'Sharilyn Markowitz',
     'Naomi Striplin',
@@ -28,5 +28,6 @@ export const generateOptions = () => {
   return values.map<SelectableValue<string>>(name => ({
     value: kebabCase(name),
     label: name,
+    description: desc ? `This is a description of ${name}` : undefined,
   }));
 };

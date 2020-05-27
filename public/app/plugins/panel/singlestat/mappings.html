@@ -20,7 +20,7 @@
   <div class="gf-form-group">
     <div class="gf-form" ng-repeat="map in ctrl.panel.valueMaps">
       <span class="gf-form-label">
-        <icon class="'times'" ng-click="ctrl.removeValueMap(map)"></icon>
+        <icon name="'times'" ng-click="ctrl.removeValueMap(map)"></icon>
       </span>
       <input
         type="text"
@@ -43,7 +43,7 @@
 
     <div class="gf-form-button-row">
       <button class="btn btn-inverse" ng-click="ctrl.addValueMap();">
-        <i class="fa fa-plus"></i>
+        <icon name="'plus'"></icon>
         Add a value mapping
       </button>
     </div>
@@ -66,7 +66,7 @@
 
     <div class="gf-form-button-row">
       <button class="btn btn-inverse" ng-click="ctrl.addRangeMap()">
-        <i class="fa fa-plus"></i>
+        <icon name="'plus'"></icon>
         Add a range mapping
       </button>
     </div>

@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
-import { DataLink, ScopedVars, PanelMenuItem, PanelData, LoadingState, QueryResultMetaNotice } from '@grafana/data';
+import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
-import { ClickOutsideWrapper, Tooltip, Icon } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -25,6 +25,7 @@ export interface Props {
   angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
+  alertState?: string;
   isViewing: boolean;
   isEditing: boolean;
   data: PanelData;
@@ -89,7 +90,7 @@ export class PanelHeader extends Component<Props, State> {
   private renderLoadingState(): JSX.Element {
     return (
       <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
+        <Icon className="fa-spin" name="fa fa-spinner" />
       </div>
     );
   }
@@ -100,7 +101,7 @@ export class PanelHeader extends Component<Props, State> {
     e.stopPropagation();
 
     updateLocation({
-      query: { inspect: panel.id, tab },
+      query: { inspect: panel.id, inspectTab: tab },
       partial: true,
     });
   };
@@ -109,7 +110,7 @@ export class PanelHeader extends Component<Props, State> {
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
-          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice.inspect!)}>
+          <div className="panel-info-notice pointer" onClick={e => this.openInspect(e, notice.inspect!)}>
             <Icon name="info-circle" style={{ marginRight: '8px' }} />
           </div>
         ) : (
@@ -122,7 +123,7 @@ export class PanelHeader extends Component<Props, State> {
   };
 
   render() {
-    const { panel, scopedVars, error, isViewing, isEditing, data } = this.props;
+    const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
@@ -158,11 +159,18 @@ export class PanelHeader extends Component<Props, State> {
             className="panel-title-container"
             onClick={this.onMenuToggle}
             onMouseDown={this.onMouseDown}
-            aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.title(title)}
+            aria-label={selectors.components.Panels.Panel.title(title)}
           >
             <div className="panel-title">
               {Object.values(notices).map(this.renderNotice)}
-              <span className="icon-gf panel-alert-icon" />
+              {alertState && (
+                <Icon
+                  name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+                  className="icon-gf panel-alert-icon"
+                  style={{ marginRight: '4px' }}
+                  size="sm"
+                />
+              )}
               <span className="panel-title-text">
                 {title}
                 <Icon name="angle-down" className="panel-menu-toggle" />
@@ -174,7 +182,7 @@ export class PanelHeader extends Component<Props, State> {
               )}
               {data.request && data.request.timeInfo && (
                 <span className="panel-time-info">
-                  <Icon name="clock-nine" /> {data.request.timeInfo}
+                  <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
                 </span>
               )}
             </div>

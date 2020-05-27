@@ -7,7 +7,7 @@ import { SelectableValue } from '@grafana/data';
 import { Select, AsyncSelect } from './Select';
 
 export default {
-  title: 'General/Select/Select',
+  title: 'Forms/Legacy/Select',
   component: Select,
   decorators: [withCenteredStory, withKnobs],
 };

@@ -46,22 +46,10 @@ describe('<TraceTimelineViewer>', () => {
       search: null,
     },
   };
-  const options = {
-    context: {
-      store: {
-        getState() {
-          return { traceTimeline: { spanNameColumnWidth: 0.25 } };
-        },
-        subscribe() {},
-        dispatch() {},
-      },
-    },
-  };
-
   let wrapper;
 
   beforeEach(() => {
-    wrapper = shallow(<TraceTimelineViewer {...props} />, options);
+    wrapper = shallow(<TraceTimelineViewer {...props} />).dive().dive().dive();
   });
 
   it('it does not explode', () => {

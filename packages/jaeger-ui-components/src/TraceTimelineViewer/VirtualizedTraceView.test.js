@@ -21,6 +21,7 @@ import SpanDetailRow from './SpanDetailRow';
 import VirtualizedTraceView, { DEFAULT_HEIGHTS } from './VirtualizedTraceView';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
+import SpanTreeOffset from './SpanTreeOffset';
 
 jest.mock('./SpanTreeOffset');
 
@@ -82,12 +83,16 @@ describe('<VirtualizedTraceViewImpl>', () => {
   }
 
   beforeEach(() => {
+    SpanTreeOffset.mockReturnValue(<div />);
     Object.keys(props).forEach(key => {
       if (typeof props[key] === 'function') {
         props[key].mockReset();
       }
     });
-    wrapper = shallow(<VirtualizedTraceView {...props} />);
+    wrapper = shallow(<VirtualizedTraceView {...props} />)
+      .dive()
+      .dive()
+      .dive();
     instance = wrapper.instance();
   });
 
@@ -366,9 +371,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
 
     describe('shouldComponentUpdate', () => {
       it('returns true if props.shouldScrollToFirstUiFindMatch changes to true', () => {
-        expect(wrapper.instance().shouldComponentUpdate(propsWithTrueShouldScrollToFirstUiFindMatch)).toBe(
-          true
-        );
+        expect(wrapper.instance().shouldComponentUpdate(propsWithTrueShouldScrollToFirstUiFindMatch)).toBe(true);
       });
 
       it('returns true if props.shouldScrollToFirstUiFindMatch changes to false and another props change', () => {

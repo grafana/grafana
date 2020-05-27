@@ -10,8 +10,9 @@ import { AlertRule, CoreEvents, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { NavModel } from '@grafana/data';
+import { NavModel, SelectableValue } from '@grafana/data';
 import { setSearchQuery } from './state/reducers';
+import { Button, Select } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -27,13 +28,13 @@ export interface Props {
 
 export class AlertRuleList extends PureComponent<Props, any> {
   stateFilters = [
-    { text: 'All', value: 'all' },
-    { text: 'OK', value: 'ok' },
-    { text: 'Not OK', value: 'not_ok' },
-    { text: 'Alerting', value: 'alerting' },
-    { text: 'No Data', value: 'no_data' },
-    { text: 'Paused', value: 'paused' },
-    { text: 'Pending', value: 'pending' },
+    { label: 'All', value: 'all' },
+    { label: 'OK', value: 'ok' },
+    { label: 'Not OK', value: 'not_ok' },
+    { label: 'Alerting', value: 'alerting' },
+    { label: 'No Data', value: 'no_data' },
+    { label: 'Paused', value: 'paused' },
+    { label: 'Pending', value: 'pending' },
   ];
 
   componentDidMount() {
@@ -58,9 +59,9 @@ export class AlertRuleList extends PureComponent<Props, any> {
     return 'all';
   }
 
-  onStateFilterChanged = (evt: React.ChangeEvent<HTMLSelectElement>) => {
+  onStateFilterChanged = (option: SelectableValue) => {
     this.props.updateLocation({
-      query: { state: evt.target.value },
+      query: { state: option.value },
     });
   };
 
@@ -107,16 +108,18 @@ export class AlertRuleList extends PureComponent<Props, any> {
             <div className="gf-form">
               <label className="gf-form-label">States</label>
 
-              <div className="gf-form-select-wrapper width-13">
-                <select className="gf-form-input" onChange={this.onStateFilterChanged} value={this.getStateFilter()}>
-                  {this.stateFilters.map(this.alertStateFilterOption)}
-                </select>
+              <div className="width-13">
+                <Select
+                  options={this.stateFilters}
+                  onChange={this.onStateFilterChanged}
+                  value={this.getStateFilter()}
+                />
               </div>
             </div>
             <div className="page-action-bar__spacer" />
-            <a className="btn btn-secondary" onClick={this.onOpenHowTo}>
+            <Button variant="secondary" onClick={this.onOpenHowTo}>
               How to add an alert
-            </a>
+            </Button>
           </div>
           <section>
             <ol className="alert-rule-list">

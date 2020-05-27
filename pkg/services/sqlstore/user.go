@@ -41,6 +41,14 @@ func getOrgIdForNewUser(sess *DBSession, cmd *models.CreateUserCommand) (int64, 
 		return -1, nil
 	}
 
+	if setting.AutoAssignOrg && cmd.OrgId != 0 {
+		err := verifyExistingOrg(sess, cmd.OrgId)
+		if err != nil {
+			return -1, err
+		}
+		return cmd.OrgId, nil
+	}
+
 	orgName := cmd.OrgName
 	if len(orgName) == 0 {
 		orgName = util.StringsFallback2(cmd.Email, cmd.Login)

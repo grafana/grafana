@@ -19,12 +19,13 @@ import { css } from 'emotion';
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';
 import { TUpdateViewRangeTimeFunction, UIButton, ViewRange, ViewRangeTimeUpdate } from '../..';
+import { withTheme, Theme, autoColor } from '../../Theme';
 import { TNil } from '../..';
 import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
 
 import { createStyle } from '../../Theme';
 
-export const getStyles = createStyle(() => {
+export const getStyles = createStyle((theme: Theme) => {
   // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion
   // package and the selector won't work
   const ViewingLayerResetZoomHoverClassName = 'JaegerUiComponents__ViewingLayerResetZoomHoverClassName';
@@ -48,7 +49,7 @@ export const getStyles = createStyle(() => {
     `,
     ViewingLayerGraph: css`
       label: ViewingLayerGraph;
-      border: 1px solid #999;
+      border: 1px solid ${autoColor(theme, '#999')};
       /* need !important here to overcome something from semantic UI */
       overflow: visible !important;
       position: relative;
@@ -57,11 +58,11 @@ export const getStyles = createStyle(() => {
     `,
     ViewingLayerInactive: css`
       label: ViewingLayerInactive;
-      fill: rgba(214, 214, 214, 0.5);
+      fill: ${autoColor(theme, 'rgba(214, 214, 214, 0.5)')};
     `,
     ViewingLayerCursorGuide: css`
       label: ViewingLayerCursorGuide;
-      stroke: #f44;
+      stroke: ${autoColor(theme, '#f44')};
       stroke-width: 1;
     `,
     ViewingLayerDraggedShift: css`
@@ -70,7 +71,7 @@ export const getStyles = createStyle(() => {
     `,
     ViewingLayerDrag: css`
       label: ViewingLayerDrag;
-      fill: #44f;
+      fill: ${autoColor(theme, '#44f')};
     `,
     ViewingLayerFullOverlay: css`
       label: ViewingLayerFullOverlay;
@@ -93,6 +94,7 @@ type ViewingLayerProps = {
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   viewRange: ViewRange;
+  theme: Theme;
 };
 
 type ViewingLayerState = {
@@ -140,7 +142,7 @@ function getNextViewLayout(start: number, position: number) {
  * `ViewingLayer` is rendered on top of the Canvas rendering of the minimap and
  * handles showing the current view range and handles mouse UX for modifying it.
  */
-export default class ViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
+export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
   state: ViewingLayerState;
 
   _root: Element | TNil;
@@ -298,7 +300,7 @@ export default class ViewingLayer extends React.PureComponent<ViewingLayerProps,
    * @returns React.Node[]
    */
   _getMarkers(from: number, to: number) {
-    const styles = getStyles();
+    const styles = getStyles(this.props.theme);
     const layout = getNextViewLayout(from, to);
     return [
       <rect
@@ -321,7 +323,7 @@ export default class ViewingLayer extends React.PureComponent<ViewingLayerProps,
   }
 
   render() {
-    const { height, viewRange, numTicks } = this.props;
+    const { height, viewRange, numTicks, theme } = this.props;
     const { preventCursorLine } = this.state;
     const { current, cursor, shiftStart, shiftEnd, reframe } = viewRange.time;
     const haveNextTimeRange = shiftStart != null || shiftEnd != null || reframe != null;
@@ -338,7 +340,7 @@ export default class ViewingLayer extends React.PureComponent<ViewingLayerProps,
     if (!haveNextTimeRange && cursor != null && !preventCursorLine) {
       cursorPosition = `${cursor * 100}%`;
     }
-    const styles = getStyles();
+    const styles = getStyles(theme);
 
     return (
       <div aria-hidden className={styles.ViewingLayer} style={{ height }}>
@@ -406,3 +408,5 @@ export default class ViewingLayer extends React.PureComponent<ViewingLayerProps,
     );
   }
 }
+
+export default withTheme(UnthemedViewingLayer);

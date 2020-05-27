@@ -6,13 +6,12 @@ import { AppEvents } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { DashboardSearchHit } from 'app/types/search';
-import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
-import { ContextSrv, contextSrv } from './context_srv';
+import { DataSourceResponse } from 'app/types/events';
+import { DashboardSearchHit } from 'app/features/search/types';
+import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
+import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
-import { DataSourceResponse } from '../../types/events';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 
 export interface DatasourceRequestOptions {
@@ -260,11 +259,11 @@ export class BackendSrv implements BackendService {
   }
 
   saveDashboard(
-    dash: DashboardModel,
+    dashboard: DashboardDataDTO,
     { message = '', folderId, overwrite = false }: { message?: string; folderId?: number; overwrite?: boolean } = {}
   ) {
     return this.post('/api/dashboards/db/', {
-      dashboard: dash,
+      dashboard,
       folderId,
       overwrite,
       message,
@@ -319,13 +318,12 @@ export class BackendSrv implements BackendService {
 
   private async moveDashboard(uid: string, toFolder: FolderInfo) {
     const fullDash: DashboardDTO = await this.getDashboardByUid(uid);
-    const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
     if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
       return { alreadyInFolder: true };
     }
 
-    const clone = model.getSaveModelClone();
+    const clone = fullDash.dashboard;
     const options = {
       folderId: toFolder.id,
       overwrite: false,

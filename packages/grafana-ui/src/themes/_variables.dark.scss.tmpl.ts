@@ -2,6 +2,7 @@
 
 import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+import { styleMixins } from '.';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
@@ -12,10 +13,9 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-faint: ${theme.palette.blueFaint};
-$blue-light: ${theme.palette.blueLight};
-$blue-base: ${theme.palette.blueBase};
-$blue-shade: ${theme.palette.blueShade};
+$blue-light: ${theme.palette.blue95};
+$blue-base: ${theme.palette.blue80};
+$blue-shade: ${theme.palette.blue77};
 $red-base: ${theme.palette.redBase};
 $red-shade: ${theme.palette.redShade};
 $green-base: ${theme.palette.greenBase};
@@ -53,19 +53,18 @@ $gray-4: ${theme.palette.gray4};
 $gray-5: ${theme.palette.gray5};
 $gray-6: ${theme.palette.gray6};
 
-$gray-blue: ${theme.palette.grayBlue};
 $input-black: ${theme.colors.formInputBg};
 
 $white: ${theme.palette.white};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.palette.blue};
+$blue: ${theme.palette.blue85};
 $red: $red-base;
 $yellow: ${theme.palette.yellow};
 $orange: ${theme.palette.orange};
 $purple: ${theme.palette.purple};
-$variable: ${theme.palette.variable};
+$variable: ${theme.colors.textBlue};
 
 $brand-primary: ${theme.palette.brandPrimary};
 $brand-success: ${theme.palette.brandSuccess};
@@ -76,10 +75,9 @@ $query-red: ${theme.palette.queryRed};
 $query-green: ${theme.palette.queryGreen};
 $query-purple: ${theme.palette.queryPurple};
 $query-orange: ${theme.palette.orange};
-$query-keyword: ${theme.palette.queryKeyword};
 
 // Status colors
-// -------------------------
+// -------------------------¨
 $online: ${theme.palette.online};
 $warn: ${theme.palette.warn};
 $critical: ${theme.palette.critical};
@@ -90,11 +88,13 @@ $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.bodyBg};
 $dashboard-bg: ${theme.colors.dashboardBg};
 
-$text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
+$text-color: ${theme.colors.text};
+$text-color-semi-weak: ${theme.colors.textSemiWeak};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textEmphasis};
+$text-color-emphasis: ${theme.colors.textStrong};
+$text-blue: ${theme.colors.textBlue};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -112,7 +112,7 @@ $external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.headingColor};
+$headings-color: ${theme.colors.textHeading};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -122,7 +122,7 @@ $hr-border-color: $dark-9;
 // -------------------------
 $panel-bg: ${theme.colors.panelBg};
 $panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.bg3};
+$panel-header-hover-bg: ${theme.colors.bg2};
 $panel-corner: $panel-bg;
 
 // page header
@@ -136,21 +136,21 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: $dark-9;
 $tight-form-func-highlight-bg: $dark-10;
 
-$modal-backdrop-bg: #343b40;
+$modal-backdrop-bg: ${theme.colors.bg3};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: linear-gradient(135deg, $dark-4, $dark-3);
-$card-background-hover: linear-gradient(135deg, $dark-5, $dark-6);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
+$card-background: ${theme.colors.bg2};
+$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-shadow: none;
 
 // Lists
 $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
 $list-item-shadow: $card-shadow;
 
-$empty-list-cta-bg: $gray-blue;
+$empty-list-cta-bg: ${theme.colors.bg2};
 
 // Scrollbars
 $scrollbarBackground: #404357;
@@ -159,7 +159,7 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: $dark-6; // for striping
+$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)}; // for striping
 $table-border: $dark-6; // table and cell border
 
 $table-bg-odd: $dark-3;
@@ -203,13 +203,12 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: ${theme.colors.formInputText};
-$input-border-color: ${theme.palette.gray15};
-$input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
+$input-border-color: ${theme.colors.formInputBorder};
+$input-box-shadow: none;
 $input-border-focus: ${theme.palette.blue95};
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: ${theme.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.palette.gray15};
-$input-label-border-color: ${theme.palette.gray15};
+$input-label-bg: ${theme.colors.bg2};
 $input-color-select-arrow: $white;
 
 // Search
@@ -249,14 +248,15 @@ $navbar-button-border: #2f2f32;
 $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
-$side-menu-item-hover-bg: $dark-3;
+$side-menu-item-hover-bg: ${theme.colors.bg2};
 $side-menu-shadow: 0 0 20px black;
-$side-menu-link-color: ${theme.palette.gray70};
+$side-menu-icon-color: ${theme.palette.gray70};
+$side-menu-header-color: ${theme.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $dark-3;
+$menu-dropdown-bg: ${theme.colors.bg1};
+$menu-dropdown-hover-bg: ${theme.colors.bg2};
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
 // Tabs
@@ -354,7 +354,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
+$switch-slider-on-bg: ${theme.palette.blue95};
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox
@@ -378,10 +378,10 @@ $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
 $panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-blue;
+$panel-options-group-header-bg: ${theme.colors.bg2};
 
-$panel-grid-placeholder-bg: $blue-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
+$panel-grid-placeholder-bg: darken(${theme.palette.blue77}, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue80};
 
 // logs
 $logs-color-unkown: $gray-2;

@@ -1,7 +1,6 @@
-export const componentTpl = `
-import React, { FC } from 'react';
+export const componentTpl = `import React, { FC } from 'react';
 
-interface Props = {};
+interface Props {};
 
 export const <%= name %>: FC<Props> = (props) => {
   return (

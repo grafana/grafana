@@ -4,7 +4,7 @@ import { FormField } from '../FormField/FormField';
 import { Button } from '../Button/Button';
 import { css, cx } from 'emotion';
 
-interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
+export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
   // component (or do something else if required).
   onReset: (event: React.SyntheticEvent<HTMLButtonElement>) => void;

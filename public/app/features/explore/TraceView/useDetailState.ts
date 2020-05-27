@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { DetailState, Log } from '@jaegertracing/jaeger-ui-components';
 
 /**
@@ -8,36 +8,48 @@ import { DetailState, Log } from '@jaegertracing/jaeger-ui-components';
 export function useDetailState() {
   const [detailStates, setDetailStates] = useState(new Map<string, DetailState>());
 
-  function toggleDetail(spanID: string) {
-    const newDetailStates = new Map(detailStates);
-    if (newDetailStates.has(spanID)) {
-      newDetailStates.delete(spanID);
-    } else {
-      newDetailStates.set(spanID, new DetailState());
-    }
-    setDetailStates(newDetailStates);
-  }
+  const toggleDetail = useCallback(
+    function toggleDetail(spanID: string) {
+      const newDetailStates = new Map(detailStates);
+      if (newDetailStates.has(spanID)) {
+        newDetailStates.delete(spanID);
+      } else {
+        newDetailStates.set(spanID, new DetailState());
+      }
+      setDetailStates(newDetailStates);
+    },
+    [detailStates]
+  );
 
-  function detailLogItemToggle(spanID: string, log: Log) {
-    const old = detailStates.get(spanID);
-    if (!old) {
-      return;
-    }
-    const detailState = old.toggleLogItem(log);
-    const newDetailStates = new Map(detailStates);
-    newDetailStates.set(spanID, detailState);
-    return setDetailStates(newDetailStates);
-  }
+  const detailLogItemToggle = useCallback(
+    function detailLogItemToggle(spanID: string, log: Log) {
+      const old = detailStates.get(spanID);
+      if (!old) {
+        return;
+      }
+      const detailState = old.toggleLogItem(log);
+      const newDetailStates = new Map(detailStates);
+      newDetailStates.set(spanID, detailState);
+      return setDetailStates(newDetailStates);
+    },
+    [detailStates]
+  );
 
   return {
     detailStates,
     toggleDetail,
     detailLogItemToggle,
-    detailLogsToggle: makeDetailSubsectionToggle('logs', detailStates, setDetailStates),
-    detailWarningsToggle: makeDetailSubsectionToggle('warnings', detailStates, setDetailStates),
-    detailReferencesToggle: makeDetailSubsectionToggle('references', detailStates, setDetailStates),
-    detailProcessToggle: makeDetailSubsectionToggle('process', detailStates, setDetailStates),
-    detailTagsToggle: makeDetailSubsectionToggle('tags', detailStates, setDetailStates),
+    detailLogsToggle: useCallback(makeDetailSubsectionToggle('logs', detailStates, setDetailStates), [detailStates]),
+    detailWarningsToggle: useCallback(makeDetailSubsectionToggle('warnings', detailStates, setDetailStates), [
+      detailStates,
+    ]),
+    detailReferencesToggle: useCallback(makeDetailSubsectionToggle('references', detailStates, setDetailStates), [
+      detailStates,
+    ]),
+    detailProcessToggle: useCallback(makeDetailSubsectionToggle('process', detailStates, setDetailStates), [
+      detailStates,
+    ]),
+    detailTagsToggle: useCallback(makeDetailSubsectionToggle('tags', detailStates, setDetailStates), [detailStates]),
   };
 }
 

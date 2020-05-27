@@ -22,7 +22,7 @@ import cx from 'classnames';
 
 import SpanGraph from './SpanGraph';
 import TracePageSearchBar from './TracePageSearchBar';
-import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
+import { autoColor, Theme, TUpdateViewRangeTimeFunction, useTheme, ViewRange, ViewRangeTimeUpdate } from '..';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
@@ -34,8 +34,9 @@ import { getTraceLinks } from '../model/link-patterns';
 import ExternalLinks from '../common/ExternalLinks';
 import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
+import { useMemo } from 'react';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   const TracePageHeaderOverviewItemValueDetail = css`
     label: TracePageHeaderOverviewItemValueDetail;
     color: #aaa;
@@ -44,21 +45,19 @@ const getStyles = createStyle(() => {
     TracePageHeader: css`
       label: TracePageHeader;
       & > :first-child {
-        border-bottom: 1px solid #e8e8e8;
+        border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
       }
       & > :nth-child(2) {
-        background-color: #eee;
-        border-bottom: 1px solid #e4e4e4;
+        background-color: ${autoColor(theme, '#eee')};
+        border-bottom: 1px solid ${autoColor(theme, '#e4e4e4')};
       }
       & > :last-child {
-        background-color: #f8f8f8;
-        border-bottom: 1px solid #ccc;
+        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
       }
     `,
     TracePageHeaderTitleRow: css`
       label: TracePageHeaderTitleRow;
       align-items: center;
-      background-color: #fff;
       display: flex;
     `,
     TracePageHeaderBack: css`
@@ -81,7 +80,6 @@ const getStyles = createStyle(() => {
     TracePageHeaderTitleLink: css`
       label: TracePageHeaderTitleLink;
       align-items: center;
-      color: rgba(0, 0, 0, 0.85);
       display: flex;
       flex: 1;
 
@@ -118,7 +116,7 @@ const getStyles = createStyle(() => {
     TracePageHeaderOverviewItems: css`
       label: TracePageHeaderOverviewItems;
       border-bottom: 1px solid #e4e4e4;
-      padding: 0.25rem 0.5rem;
+      padding: 0.25rem 0.5rem !important;
     `,
     TracePageHeaderOverviewItemValueDetail,
     TracePageHeaderOverviewItemValue: css`
@@ -163,7 +161,7 @@ export const HEADER_ITEMS = [
     key: 'timestamp',
     label: 'Trace Start',
     renderer: (trace: Trace) => {
-      const styles = getStyles();
+      const styles = getStyles(useTheme());
       const dateStr = formatDatetime(trace.startTime);
       const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
       return match ? (
@@ -225,7 +223,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     return null;
   }
 
-  const links = getTraceLinks(trace);
+  const links = useMemo(() => getTraceLinks(trace), [trace]);
 
   const summaryItems =
     !hideSummary &&
@@ -235,7 +233,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
       return { ...rest, value: renderer(trace) };
     });
 
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
 
   const title = (
     <h1 className={cx(styles.TracePageHeaderTitle, canCollapse && styles.TracePageHeaderTitleCollapsible)}>

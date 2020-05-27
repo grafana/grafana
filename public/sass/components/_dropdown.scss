@@ -55,7 +55,6 @@
   margin: 2px 0 0; // override default ul
   list-style: none;
   background-color: $dropdownBackground;
-  border: 1px solid #ccc; // Fallback for IE7-8
   border: 1px solid $dropdownBorder;
   text-align: left;
 
@@ -111,7 +110,6 @@
     background: $menu-dropdown-bg;
     box-shadow: $menu-dropdown-shadow;
     margin-top: 0px;
-    border: none;
 
     > li > a {
       display: flex;

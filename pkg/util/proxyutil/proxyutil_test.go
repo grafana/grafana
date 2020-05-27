@@ -31,7 +31,7 @@ func TestPrepareProxyRequest(t *testing.T) {
 		require.Equal(t, "127.0.0.1", req.Header.Get("X-Forwarded-For"))
 	})
 
-	t.Run("Prepare proxy request should appent client ip at the end of X-Forwarded-For", func(t *testing.T) {
+	t.Run("Prepare proxy request should append client ip at the end of X-Forwarded-For", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		req.RemoteAddr = "127.0.0.1:1234"
 		req.Header.Add("X-Forwarded-For", "192.168.0.1")

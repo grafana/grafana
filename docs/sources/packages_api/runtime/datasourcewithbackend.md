@@ -5,10 +5,11 @@
 title = "DataSourceWithBackend"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceWithBackend class
+
+Extend this class to implement a data source plugin that is depending on the Grafana backend API.
 
 <b>Signature</b>
 
@@ -30,9 +31,12 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
-|  [query(request)](#query-method) |  | Ideally final -- any other implementation would be wrong! |
-|  [testDatasource()](#testdatasource-method) |  |  |
-|  [toDataQueryResponse(rsp)](#todataqueryresponse-method) |  | This makes the arrow library loading async. |
+|  [applyTemplateVariables(query)](#applytemplatevariables-method) |  | Override to apply template variables |
+|  [callHealthCheck()](#callhealthcheck-method) |  | Run the datasource healthcheck |
+|  [getResource(path, params)](#getresource-method) |  | Make a GET request to the datasource resource path |
+|  [postResource(path, body)](#postresource-method) |  | Send a POST request to the datasource resource path |
+|  [query(request)](#query-method) |  | Ideally final -- any other implementation may not work as expected |
+|  [testDatasource()](#testdatasource-method) |  | Checks the plugin health |
 
 ### constructor(instanceSettings)
 
@@ -49,9 +53,82 @@ constructor(instanceSettings: DataSourceInstanceSettings<TOptions>);
 |  --- | --- | --- |
 |  instanceSettings | <code>DataSourceInstanceSettings&lt;TOptions&gt;</code> |  |
 
+### applyTemplateVariables method
+
+Override to apply template variables
+
+<b>Signature</b>
+
+```typescript
+/** @virtual */
+applyTemplateVariables(query: DataQuery): DataQuery;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  query | <code>DataQuery</code> |  |
+
+<b>Returns:</b>
+
+`DataQuery`
+
+### callHealthCheck method
+
+Run the datasource healthcheck
+
+<b>Signature</b>
+
+```typescript
+callHealthCheck(): Promise<HealthCheckResult>;
+```
+<b>Returns:</b>
+
+`Promise<HealthCheckResult>`
+
+### getResource method
+
+Make a GET request to the datasource resource path
+
+<b>Signature</b>
+
+```typescript
+getResource(path: string, params?: any): Promise<any>;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  path | <code>string</code> |  |
+|  params | <code>any</code> |  |
+
+<b>Returns:</b>
+
+`Promise<any>`
+
+### postResource method
+
+Send a POST request to the datasource resource path
+
+<b>Signature</b>
+
+```typescript
+postResource(path: string, body?: any): Promise<any>;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  path | <code>string</code> |  |
+|  body | <code>any</code> |  |
+
+<b>Returns:</b>
+
+`Promise<any>`
+
 ### query method
 
-Ideally final -- any other implementation would be wrong!
+Ideally final -- any other implementation may not work as expected
 
 <b>Signature</b>
 
@@ -70,31 +147,14 @@ query(request: DataQueryRequest): Observable<DataQueryResponse>;
 
 ### testDatasource method
 
-<b>Signature</b>
-
-```typescript
-testDatasource(): Promise<{}>;
-```
-<b>Returns:</b>
-
-`Promise<{}>`
-
-### toDataQueryResponse method
-
-This makes the arrow library loading async.
+Checks the plugin health
 
 <b>Signature</b>
 
 ```typescript
-toDataQueryResponse(rsp: any): Promise<DataQueryResponse>;
+testDatasource(): Promise<any>;
 ```
-<b>Parameters</b>
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  rsp | <code>any</code> |  |
-
 <b>Returns:</b>
 
-`Promise<DataQueryResponse>`
+`Promise<any>`
 

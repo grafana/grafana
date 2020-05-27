@@ -17,15 +17,17 @@ RUN mkdir -p "$GF_PATHS_PLUGINS" && \
 RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
     apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y chromium-browser && \
+    apt-get install -y gdebi-core && \
+    cd /tmp && \
+    curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    gdebi --n google-chrome-stable_current_amd64.deb && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /usr/share/grafana/tools/phantomjs; \
+    rm -rf /var/lib/apt/lists/*; \
 fi
 
 USER grafana
 
-ENV GF_RENDERER_PLUGIN_CHROME_BIN="/usr/bin/chromium-browser"
+ENV GF_RENDERER_PLUGIN_CHROME_BIN="/usr/bin/google-chrome"
 
 RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
     grafana-cli \

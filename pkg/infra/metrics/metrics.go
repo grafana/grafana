@@ -98,6 +98,12 @@ var (
 
 	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
+
+	// MRenderingRequestTotal is a metric counter for image rendering requests
+	MRenderingRequestTotal *prometheus.CounterVec
+
+	// MRenderingQueue is a metric gauge for image rendering queue size
+	MRenderingQueue prometheus.Gauge
 )
 
 // Timers
@@ -107,6 +113,9 @@ var (
 
 	// MAlertingExecutionTime is a metric summary of alert exeuction duration
 	MAlertingExecutionTime prometheus.Summary
+
+	// MRenderingSummary is a metric summary for image rendering request duration
+	MRenderingSummary *prometheus.SummaryVec
 )
 
 // StatTotals
@@ -146,6 +155,9 @@ var (
 
 	// StatsTotalActiveAdmins is a metric total amount of active admins
 	StatsTotalActiveAdmins prometheus.Gauge
+
+	// StatsTotalDataSources is a metric total number of defined datasources, labeled by pluginId
+	StatsTotalDataSources *prometheus.GaugeVec
 
 	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
@@ -343,6 +355,31 @@ func init() {
 		Namespace:  ExporterName,
 	})
 
+	MRenderingRequestTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:      "rendering_request_total",
+			Help:      "counter for image rendering requests",
+			Namespace: ExporterName,
+		},
+		[]string{"status"},
+	)
+
+	MRenderingSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "rendering_request_duration_milliseconds",
+			Help:       "summary of image rendering request duration",
+			Objectives: objectiveMap,
+			Namespace:  ExporterName,
+		},
+		[]string{"status"},
+	)
+
+	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "rendering_queue_size",
+		Help:      "size of image rendering queue",
+		Namespace: ExporterName,
+	})
+
 	MDataSourceProxyReqTimer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dataproxy_request_all_milliseconds",
 		Help:       "summary for dataproxy request duration",
@@ -429,6 +466,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	StatsTotalDataSources = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "stat_totals_datasource",
+		Help:      "total number of defined datasources, labeled by pluginId",
+		Namespace: ExporterName,
+	}, []string{"plugin_id"})
+
 	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "build_info",
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
@@ -489,6 +532,9 @@ func initMetricVars() {
 		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
+		MRenderingRequestTotal,
+		MRenderingSummary,
+		MRenderingQueue,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalUsers,
@@ -501,6 +547,7 @@ func initMetricVars() {
 		StatsTotalActiveViewers,
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
+		StatsTotalDataSources,
 		grafanaBuildVersion,
 		grafanPluginBuildInfoDesc,
 	)

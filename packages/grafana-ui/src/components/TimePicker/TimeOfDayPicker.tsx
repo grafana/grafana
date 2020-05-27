@@ -4,10 +4,11 @@ import { css, cx } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
 import { useTheme, Icon } from '../../index';
 import { stylesFactory } from '../../themes';
-import { inputSizes, getFocusCss } from '../Forms/commonStyles';
+import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
+import { focusCss } from '../../themes/mixins';
 
-interface Props {
+export interface Props {
   onChange: (value: DateTime) => void;
   value: DateTime;
   showHour?: boolean;
@@ -73,10 +74,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: ${bgColor};
         border-radius: ${borderRadius};
         border-color: ${borderColor};
-        height: ${theme.spacing.formInputHeight};
+        height: ${theme.spacing.formInputHeight}px;
 
         &:focus {
-          ${getFocusCss(theme)}
+          ${focusCss(theme)}
         }
       }
     `,

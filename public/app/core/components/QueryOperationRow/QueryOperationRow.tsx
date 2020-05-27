@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { renderOrCallToRender, HorizontalGroup, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
 
 interface QueryOperationRowProps {
   title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
+  headerElement?: React.ReactNode;
   actions?:
     | ((props: { isOpen: boolean; openRow: () => void; closeRow: () => void }) => React.ReactNode)
     | React.ReactNode;
@@ -19,6 +20,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   children,
   actions,
   title,
+  headerElement,
   onClose,
   onOpen,
   isOpen,
@@ -64,8 +66,9 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
           >
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}
+            {headerElement}
           </div>
-          {actions && <div>{actionsElement}</div>}
+          {actions && actionsElement}
         </HorizontalGroup>
       </div>
       {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -74,40 +77,39 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
 };
 
 const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = theme.colors.border2;
-
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+      margin-bottom: ${theme.spacing.md};
     `,
     header: css`
-      padding: ${theme.spacing.sm};
+      padding: 0 ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
-      border: 1px solid ${borderColor};
-      background: ${theme.colors.bodyBg};
+      background: ${theme.colors.bg2};
+      height: ${theme.spacing.formInputHeight}px;
+      line-height: ${theme.spacing.formInputHeight}px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
+      &:hover {
+        color: ${theme.colors.text};
+      }
     `,
     titleWrapper: css`
       display: flex;
       align-items: center;
       cursor: pointer;
     `,
-
     title: css`
       font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.palette.blue95};
+      color: ${theme.colors.textBlue};
       margin-left: ${theme.spacing.sm};
     `,
     content: css`
-      border: 1px solid ${borderColor};
-      margin-top: -1px;
-      background: ${theme.colors.bodyBg};
-      margin-left: ${theme.spacing.xl};
-      border-top: 1px solid ${theme.colors.bodyBg};
-      border-radis: 0 ${theme.border.radius.sm};
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.lg};
+      margin-top: ${theme.spacing.inlineFormMargin};
+      margin-left: ${theme.spacing.lg};
     `,
   };
 });

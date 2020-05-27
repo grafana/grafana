@@ -29,9 +29,9 @@ import Ticks from './Ticks';
 
 import { TNil } from '../types';
 import { Span } from '../types/trace';
-import { createStyle } from '../Theme';
+import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   const spanBar = css`
     label: spanBar;
   `;
@@ -40,12 +40,12 @@ const getStyles = createStyle(() => {
   `;
   const nameWrapper = css`
     label: nameWrapper;
-    background: #f8f8f8;
+    background: ${autoColor(theme, '#f8f8f8')};
     line-height: 27px;
     overflow: hidden;
     display: flex;
     &:hover {
-      border-right: 1px solid #bbb;
+      border-right: 1px solid ${autoColor(theme, '#bbb')};
       float: left;
       min-width: calc(100% + 1px);
       overflow: visible;
@@ -54,12 +54,12 @@ const getStyles = createStyle(() => {
 
   const nameWrapperMatchingFilter = css`
     label: nameWrapperMatchingFilter;
-    background-color: #fffce4;
+    background-color: ${autoColor(theme, '#fffce4')};
   `;
 
   const endpointName = css`
     label: endpointName;
-    color: #808080;
+    color: ${autoColor(theme, '#808080')};
   `;
 
   const view = css`
@@ -69,14 +69,14 @@ const getStyles = createStyle(() => {
 
   const viewExpanded = css`
     label: viewExpanded;
-    background: #f8f8f8;
-    outline: 1px solid #ddd;
+    background: ${autoColor(theme, '#f8f8f8')};
+    outline: 1px solid ${autoColor(theme, '#ddd')};
   `;
 
   const viewExpandedAndMatchingFilter = css`
     label: viewExpandedAndMatchingFilter;
-    background: #fff3d7;
-    outline: 1px solid #ddd;
+    background: ${autoColor(theme, '#fff3d7')};
+    outline: 1px solid ${autoColor(theme, '#ddd')};
   `;
 
   const nameColumn = css`
@@ -105,15 +105,20 @@ const getStyles = createStyle(() => {
         opacity: 1;
       }
       &:hover .${spanBarLabel} {
-        color: #000;
+        color: ${autoColor(theme, '#000')};
       }
       &:hover .${nameWrapper} {
         background: #f8f8f8;
-        background: linear-gradient(90deg, #fafafa, #f8f8f8 75%, #eee);
+        background: linear-gradient(
+          90deg,
+          ${autoColor(theme, '#fafafa')},
+          ${autoColor(theme, '#f8f8f8')} 75%,
+          ${autoColor(theme, '#eee')}
+        );
       }
       &:hover .${view} {
-        background-color: #f5f5f5;
-        outline: 1px solid #ddd;
+        background-color: ${autoColor(theme, '#f5f5f5')};
+        outline: 1px solid ${autoColor(theme, '#ddd')};
       }
     `,
     rowClippingLeft: css`
@@ -123,7 +128,11 @@ const getStyles = createStyle(() => {
         height: 100%;
         position: absolute;
         width: 6px;
-        background-image: linear-gradient(to right, rgba(25, 25, 25, 0.25), rgba(32, 32, 32, 0));
+        background-image: linear-gradient(
+          to right,
+          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
+          ${autoColor(theme, 'rgba(32, 32, 32, 0)')}
+        );
         left: 100%;
         z-index: -1;
       }
@@ -135,7 +144,11 @@ const getStyles = createStyle(() => {
         height: 100%;
         position: absolute;
         width: 6px;
-        background-image: linear-gradient(to left, rgba(25, 25, 25, 0.25), rgba(32, 32, 32, 0));
+        background-image: linear-gradient(
+          to left,
+          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
+          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')}
+        );
         right: 0%;
         z-index: 1;
       }
@@ -146,41 +159,46 @@ const getStyles = createStyle(() => {
         opacity: 1;
       }
       & .${spanBarLabel} {
-        color: #000;
+        color: ${autoColor(theme, '#000')};
       }
       & .${nameWrapper}, &:hover .${nameWrapper} {
-        background: #f0f0f0;
-        box-shadow: 0 1px 0 #ddd;
+        background: ${autoColor(theme, '#f0f0f0')};
+        box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
       }
       & .${nameWrapperMatchingFilter} {
-        background: #fff3d7;
+        background: ${autoColor(theme, '#fff3d7')};
       }
       &:hover .${view} {
-        background: #eee;
+        background: ${autoColor(theme, '#eee')};
       }
     `,
     rowMatchingFilter: css`
       label: rowMatchingFilter;
-      background-color: #fffce4;
+      background-color: ${autoColor(theme, '#fffce4')};
       &:hover .${nameWrapper} {
-        background: linear-gradient(90deg, #fff5e1, #fff5e1 75%, #ffe6c9);
+        background: linear-gradient(
+          90deg,
+          ${autoColor(theme, '#fff5e1')},
+          ${autoColor(theme, '#fff5e1')} 75%,
+          ${autoColor(theme, '#ffe6c9')}
+        );
       }
       &:hover .${view} {
-        background-color: #fff3d7;
-        outline: 1px solid #ddd;
+        background-color: ${autoColor(theme, '#fff3d7')};
+        outline: 1px solid ${autoColor(theme, '#ddd')};
       }
     `,
 
     rowExpandedAndMatchingFilter: css`
       label: rowExpandedAndMatchingFilter;
       &:hover .${view} {
-        background: #ffeccf;
+        background: ${autoColor(theme, '#ffeccf')};
       }
     `,
 
     name: css`
       label: name;
-      color: #000;
+      color: ${autoColor(theme, '#000')};
       cursor: pointer;
       flex: 1 1 auto;
       outline: none;
@@ -213,7 +231,7 @@ const getStyles = createStyle(() => {
         text-decoration: none;
       }
       &:hover > .${endpointName} {
-        color: #000;
+        color: ${autoColor(theme, '#000')};
       }
     `,
     nameDetailExpanded: css`
@@ -234,9 +252,9 @@ const getStyles = createStyle(() => {
     `,
     errorIcon: css`
       label: errorIcon;
-      background: #db2828;
+      background: ${autoColor(theme, '#db2828')};
       border-radius: 6.5px;
-      color: #fff;
+      color: ${autoColor(theme, '#fff')};
       font-size: 0.85em;
       margin-right: 0.25rem;
       padding: 1px;
@@ -265,6 +283,7 @@ const getStyles = createStyle(() => {
 
 type SpanBarRowProps = {
   className?: string;
+  theme: Theme;
   color: string;
   columnDivision: number;
   isChildrenExpanded: boolean;
@@ -302,7 +321,8 @@ type SpanBarRowProps = {
  * handlers to the onClick props. E.g. for now, the PureComponent is more
  * performance than the stateless function.
  */
-export default class SpanBarRow extends React.PureComponent<SpanBarRowProps> {
+export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
+  static displayName = 'UnthemedSpanBarRow';
   static defaultProps: Partial<SpanBarRowProps> = {
     className: '',
     rpc: null,
@@ -336,6 +356,7 @@ export default class SpanBarRow extends React.PureComponent<SpanBarRowProps> {
       removeHoverIndentGuideId,
       clippingLeft,
       clippingRight,
+      theme,
     } = this.props;
     const {
       duration,
@@ -347,7 +368,7 @@ export default class SpanBarRow extends React.PureComponent<SpanBarRowProps> {
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
-    const styles = getStyles();
+    const styles = getStyles(theme);
 
     const labelDetail = `${serviceName}::${operationName}`;
     let longLabel;
@@ -459,3 +480,5 @@ export default class SpanBarRow extends React.PureComponent<SpanBarRowProps> {
     );
   }
 }
+
+export default withTheme(UnthemedSpanBarRow);

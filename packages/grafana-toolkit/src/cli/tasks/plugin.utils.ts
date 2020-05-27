@@ -102,6 +102,7 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
           line[1].push('--dry-run');
         }
 
+        // Exit if the plugin is NOT an enterprise plugin
         if (pluginJson.enterprise && !opts['enterprise']) {
           continue;
         }

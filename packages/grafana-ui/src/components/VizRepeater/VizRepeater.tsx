@@ -145,7 +145,9 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     let vizHeight = height;
     let vizWidth = width;
 
-    switch (this.getOrientation()) {
+    let resolvedOrientation = this.getOrientation();
+
+    switch (resolvedOrientation) {
       case VizOrientation.Horizontal:
         repeaterStyle.flexDirection = 'column';
         itemStyles.marginBottom = `${itemSpacing}px`;
@@ -170,7 +172,13 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
         {values.map((value, index) => {
           return (
             <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
-              {renderValue({ value, width: vizWidth, height: vizHeight, alignmentFactors, orientation })}
+              {renderValue({
+                value,
+                width: vizWidth,
+                height: vizHeight,
+                alignmentFactors,
+                orientation: resolvedOrientation,
+              })}
             </div>
           );
         })}

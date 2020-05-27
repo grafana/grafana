@@ -1,4 +1,4 @@
-import { UrlQueryMap } from '@grafana/runtime';
+import { UrlQueryMap } from '@grafana/data';
 
 import { getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';

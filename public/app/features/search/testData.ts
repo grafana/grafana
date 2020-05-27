@@ -9,7 +9,7 @@ export const searchResults = [
     url: '/dashboards/f/JB_zdOUWk/gdev-dashboards',
     icon: 'folder',
     score: 0,
-    checked: false,
+    checked: true,
   },
   {
     id: 0,
@@ -26,7 +26,7 @@ export const searchResults = [
         //@ts-ignore
         tags: [],
         isStarred: false,
-        checked: false,
+        checked: true,
       },
       {
         id: 46,
@@ -38,7 +38,7 @@ export const searchResults = [
         type: 'dash-db',
         tags: [],
         isStarred: false,
-        checked: false,
+        checked: true,
       },
     ],
     icon: 'folder-open',

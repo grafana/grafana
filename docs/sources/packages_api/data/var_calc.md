@@ -5,7 +5,6 @@
 title = "VAR_CALC"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VAR\_CALC variable

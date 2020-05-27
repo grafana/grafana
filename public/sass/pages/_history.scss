@@ -87,6 +87,9 @@
 // Basic
 .diff-circle {
   margin-right: 0.5em;
+  * {
+    margin-bottom: 1px;
+  }
 }
 .diff-circle-changed {
   color: #f59433;
@@ -206,5 +209,5 @@
 }
 
 .diff-list-circle {
-  font-size: 10px;
+  margin-bottom: 3px;
 }

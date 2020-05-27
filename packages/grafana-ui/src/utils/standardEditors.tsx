@@ -4,7 +4,6 @@ import {
   dataLinksOverrideProcessor,
   FieldConfigPropertyItem,
   FieldType,
-  identityOverrideProcessor,
   NumberFieldConfigSettings,
   numberOverrideProcessor,
   standardEditorsRegistry,
@@ -20,8 +19,9 @@ import {
   ThresholdsMode,
   TimeZone,
 } from '@grafana/data';
-import { NumberValueEditor, Forms, StringValueEditor, Select, TimeZoneValueEditor } from '../components';
-import { Switch } from '../components/Forms/Switch';
+
+import { Switch } from '../components/Switch/Switch';
+import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select, TimeZoneValueEditor } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -33,12 +33,12 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const category = ['Standard field options'];
-  const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-    id: 'title',
-    path: 'title',
-    name: 'Title',
-    description: "Field's title",
+  const category = ['Standard options'];
+  const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+    id: 'displayName',
+    path: 'displayName',
+    name: 'Display name',
+    description: 'Change the field or series name',
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
     process: stringOverrideProcessor,
@@ -46,7 +46,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'none',
       expandTemplateVars: true,
     },
-    shouldApply: field => field.type !== FieldType.time,
+    shouldApply: () => true,
     category,
   };
 
@@ -107,7 +107,6 @@ export const getStandardFieldConfigs = () => {
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
-    description: '',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
@@ -128,7 +127,6 @@ export const getStandardFieldConfigs = () => {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-    description: '',
 
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
@@ -142,14 +140,14 @@ export const getStandardFieldConfigs = () => {
       ],
     },
     shouldApply: field => field.type === FieldType.number,
-    category: ['Color & thresholds'],
+    category: ['Thresholds'],
+    getItemsCount: value => (value ? value.steps.length : 0),
   };
 
   const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
     id: 'mappings',
     path: 'mappings',
     name: 'Value mappings',
-    description: '',
 
     editor: standardEditorsRegistry.get('mappings').editor as any,
     override: standardEditorsRegistry.get('mappings').editor as any,
@@ -158,6 +156,7 @@ export const getStandardFieldConfigs = () => {
     defaultValue: [],
     shouldApply: field => field.type === FieldType.number,
     category: ['Value mappings'],
+    getItemsCount: (value?) => (value ? value.length : 0),
   };
 
   const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -181,8 +180,7 @@ export const getStandardFieldConfigs = () => {
   const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
-    name: 'DataLinks',
-    description: 'Manage date links',
+    name: 'Data links',
     editor: standardEditorsRegistry.get('links').editor as any,
     override: standardEditorsRegistry.get('links').editor as any,
     process: dataLinksOverrideProcessor,
@@ -191,24 +189,25 @@ export const getStandardFieldConfigs = () => {
     },
     shouldApply: () => true,
     category: ['Data links'],
+    getItemsCount: value => (value ? value.length : 0),
   };
 
-  const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-    id: 'color',
-    path: 'color',
-    name: 'Color',
-    description: 'Customise color',
-    editor: standardEditorsRegistry.get('color').editor as any,
-    override: standardEditorsRegistry.get('color').editor as any,
-    process: identityOverrideProcessor,
-    settings: {
-      placeholder: '-',
-    },
-    shouldApply: () => true,
-    category: ['Color & thresholds'],
-  };
+  // const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+  //   id: 'color',
+  //   path: 'color',
+  //   name: 'Color',
+  //   description: 'Customise color',
+  //   editor: standardEditorsRegistry.get('color').editor as any,
+  //   override: standardEditorsRegistry.get('color').editor as any,
+  //   process: identityOverrideProcessor,
+  //   settings: {
+  //     placeholder: '-',
+  //   },
+  //   shouldApply: () => true,
+  //   category: ['Color & thresholds'],
+  // };
 
-  return [unit, min, max, decimals, title, noValue, color, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
 };
 
 /**
@@ -249,7 +248,7 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <Forms.RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />,
+    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} />,
   };
 
   const unit: StandardEditorsRegistryItem<string> = {
@@ -297,7 +296,7 @@ export const getStandardOptionEditors = () => {
   const timeZone: StandardEditorsRegistryItem<TimeZone> = {
     id: 'timezone',
     name: 'Time Zone',
-    description: 'Allows color selection',
+    description: 'Time zone selection',
     editor: TimeZoneValueEditor as any,
   };
 

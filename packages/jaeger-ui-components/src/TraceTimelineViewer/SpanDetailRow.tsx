@@ -19,11 +19,11 @@ import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
-import { createStyle } from '../Theme';
+import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
 import { Log, Span, KeyValuePair, Link } from '../types/trace';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     expandedAccent: css`
       cursor: pointer;
@@ -57,8 +57,8 @@ const getStyles = createStyle(() => {
       }
     `,
     infoWrapper: css`
-      background: #f5f5f5;
-      border: 1px solid #d3d3d3;
+      background: ${autoColor(theme, '#f5f5f5')};
+      border: 1px solid ${autoColor(theme, '#d3d3d3')};
       border-top: 3px solid;
       padding: 0.75rem;
     `,
@@ -83,9 +83,10 @@ type SpanDetailRowProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
+  theme: Theme;
 };
 
-export default class SpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
+export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
   _detailToggle = () => {
     this.props.onDetailToggled(this.props.span.spanID);
   };
@@ -112,8 +113,9 @@ export default class SpanDetailRow extends React.PureComponent<SpanDetailRowProp
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
+      theme,
     } = this.props;
-    const styles = getStyles();
+    const styles = getStyles(theme);
     return (
       <TimelineRow>
         <TimelineRow.Cell width={columnDivision}>
@@ -156,3 +158,5 @@ export default class SpanDetailRow extends React.PureComponent<SpanDetailRowProp
     );
   }
 }
+
+export default withTheme(UnthemedSpanDetailRow);

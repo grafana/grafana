@@ -24,8 +24,11 @@ apt-get update -y && apt-get install -y adduser libfontconfig1 locate && /bin/rm
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "38f2442892027f61a07f52c845818750261b2ba58bffb043a582495339d37c05"
+    "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
 chmod +x /usr/local/bin/cc-test-reporter
+
+wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.4.4/grabpl"
+chmod +x /usr/local/bin/grabpl
 
 # Install Mage
 mkdir -pv /tmp/mage $HOME/go/bin

@@ -4,6 +4,7 @@ import uniqueId from 'lodash/uniqueId';
 import { DataSourceSettings } from '@grafana/data';
 import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
+import { Icon } from '../Icon/Icon';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
 import { stylesFactory } from '../../themes';
 
@@ -77,7 +78,7 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
         onBlur={onBlur}
       />
       <Button variant="secondary" size="xs" onClick={_e => onRemove(header.id)}>
-        <i className="fa fa-trash" />
+        <Icon name="trash-alt" />
       </Button>
     </div>
   );

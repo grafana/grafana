@@ -3,11 +3,11 @@ package wrapper
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,39 +25,40 @@ type DatasourcePluginWrapperV2 struct {
 	pluginType string
 }
 
-func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func ModelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
 	jsonDataBytes, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	pbQuery := &pluginv2.QueryDataRequest{
-		Config: &pluginv2.PluginConfig{
-			OrgId:         ds.OrgId,
-			PluginId:      tw.pluginId,
-			LastUpdatedMS: ds.Updated.UnixNano() / int64(time.Millisecond),
-			DatasourceConfig: &pluginv2.DataSourceConfig{
-				Id:                      ds.Id,
-				Name:                    ds.Name,
-				Url:                     ds.Url,
-				Database:                ds.Database,
-				User:                    ds.User,
-				BasicAuthEnabled:        ds.BasicAuth,
-				BasicAuthUser:           ds.BasicAuthUser,
-				JsonData:                jsonDataBytes,
-				DecryptedSecureJsonData: ds.DecryptedValues(),
-			},
-		},
-		Queries: []*pluginv2.DataQuery{},
+	return &backend.DataSourceInstanceSettings{
+		ID:                      ds.Id,
+		Name:                    ds.Name,
+		URL:                     ds.Url,
+		Database:                ds.Database,
+		User:                    ds.User,
+		BasicAuthEnabled:        ds.BasicAuth,
+		BasicAuthUser:           ds.BasicAuthUser,
+		JSONData:                jsonDataBytes,
+		DecryptedSecureJSONData: ds.DecryptedValues(),
+		Updated:                 ds.Updated,
+	}, nil
+}
+
+func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	instanceSettings, err := ModelToInstanceSettings(ds)
+	if err != nil {
+		return nil, err
 	}
 
-	if query.User != nil {
-		pbQuery.User = &pluginv2.User{
-			Name:  query.User.Name,
-			Login: query.User.Login,
-			Email: query.User.Email,
-			Role:  string(query.User.OrgRole),
-		}
+	pbQuery := &pluginv2.QueryDataRequest{
+		PluginContext: &pluginv2.PluginContext{
+			OrgId:                      ds.OrgId,
+			PluginId:                   tw.pluginId,
+			User:                       backend.ToProto().User(BackendUserFromSignedInUser(query.User)),
+			DataSourceInstanceSettings: backend.ToProto().DataSourceInstanceSettings(instanceSettings),
+		},
+		Queries: []*pluginv2.DataQuery{},
 	}
 
 	for _, q := range query.Queries {
@@ -74,6 +75,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
 				FromEpochMS: query.TimeRange.GetFromAsMsEpoch(),
 			},
+			QueryType: q.QueryType,
 		})
 	}
 
@@ -109,4 +111,18 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	}
 
 	return tR, nil
+}
+
+// BackendUserFromSignedInUser converts Grafana's SignedInUser model
+// to the backend plugin's model.
+func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
+	if su == nil {
+		return nil
+	}
+	return &backend.User{
+		Login: su.Login,
+		Name:  su.Name,
+		Email: su.Name,
+		Role:  string(su.OrgRole),
+	}
 }

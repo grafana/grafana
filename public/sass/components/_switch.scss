@@ -21,6 +21,7 @@ gf-form-switch[disabled] {
 .gf-form-switch-container {
   display: flex;
   cursor: pointer;
+  margin-right: $space-xs;
 }
 
 .gf-form-switch {
@@ -30,7 +31,6 @@ gf-form-switch[disabled] {
   height: $input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
-  border-left: none;
   border-radius: $input-border-radius;
   align-items: center;
   justify-content: center;

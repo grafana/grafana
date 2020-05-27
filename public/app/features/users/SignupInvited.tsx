@@ -1,14 +1,15 @@
 import React, { FC, useState } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
-import { UrlQueryValue, getBackendSrv } from '@grafana/runtime';
-import { Forms, Button, Input } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import { Button, Field, Form, Input } from '@grafana/ui';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getConfig } from 'app/core/config';
+import { UrlQueryValue } from '@grafana/data';
 
 interface ConnectedProps {
   code?: UrlQueryValue;
@@ -69,12 +70,11 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
           <br />
           Please complete the following and choose a password to accept your invitation and continue:
         </div>
-        <Forms.Form defaultValues={initFormModel} onSubmit={onSubmit}>
+        <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>
-              <Forms.Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
+              <Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
                 <Input
-                  size="md"
                   placeholder="email@example.com"
                   name="email"
                   ref={register({
@@ -85,40 +85,26 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                     },
                   })}
                 />
-              </Forms.Field>
-              <Forms.Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
-                <Input size="md" placeholder="Name (optional)" name="name" ref={register} />
-              </Forms.Field>
-              <Forms.Field
-                invalid={!!errors.username}
-                error={!!errors.username && errors.username.message}
-                label="Username"
-              >
+              </Field>
+              <Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
+                <Input placeholder="Name (optional)" name="name" ref={register} />
+              </Field>
+              <Field invalid={!!errors.username} error={!!errors.username && errors.username.message} label="Username">
+                <Input placeholder="Username" name="username" ref={register({ required: 'Username is required' })} />
+              </Field>
+              <Field invalid={!!errors.password} error={!!errors.password && errors.password.message} label="Password">
                 <Input
-                  size="md"
-                  placeholder="Username"
-                  name="username"
-                  ref={register({ required: 'Username is required' })}
-                />
-              </Forms.Field>
-              <Forms.Field
-                invalid={!!errors.password}
-                error={!!errors.password && errors.password.message}
-                label="Password"
-              >
-                <Input
-                  size="md"
                   type="password"
                   placeholder="Password"
                   name="password"
                   ref={register({ required: 'Password is required' })}
                 />
-              </Forms.Field>
+              </Field>
 
               <Button type="submit">Sign Up</Button>
             </>
           )}
-        </Forms.Form>
+        </Form>
       </Page.Contents>
     </Page>
   );

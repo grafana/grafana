@@ -9,6 +9,7 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
   dimensions,
   activeDimensions,
   pos,
+  timeZone,
 }) => {
   // When
   // [1] no active dimension or
@@ -19,9 +20,16 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
   }
 
   if (mode === 'single') {
-    return <SingleModeGraphTooltip dimensions={dimensions} activeDimensions={activeDimensions} />;
+    return <SingleModeGraphTooltip dimensions={dimensions} activeDimensions={activeDimensions} timeZone={timeZone} />;
   } else {
-    return <MultiModeGraphTooltip dimensions={dimensions} activeDimensions={activeDimensions} pos={pos} />;
+    return (
+      <MultiModeGraphTooltip
+        dimensions={dimensions}
+        activeDimensions={activeDimensions}
+        pos={pos}
+        timeZone={timeZone}
+      />
+    );
   }
 };
 

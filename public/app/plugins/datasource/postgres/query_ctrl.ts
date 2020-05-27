@@ -197,7 +197,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       appEvents.emit(CoreEvents.showConfirmModal, {
         title: 'Warning',
         text2: 'Switching to query builder may overwrite your raw SQL.',
-        icon: 'fa-exclamation',
+        icon: 'exclamation-triangle',
         yesText: 'Switch',
         onConfirm: () => {
           this.target.rawQuery = !this.target.rawQuery;
@@ -208,10 +208,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  resetPlusButton(button: { html: any; value: any }) {
+  resetPlusButton(button: { html: any; value: any; type: any; fake: any }) {
     const plusButton = this.uiSegmentSrv.newPlusButton();
     button.html = plusButton.html;
     button.value = plusButton.value;
+    button.type = plusButton.type;
+    button.fake = plusButton.fake;
   }
 
   getTableSegments() {

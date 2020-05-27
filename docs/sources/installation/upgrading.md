@@ -13,7 +13,7 @@ weight = 800
 # Upgrade Grafana
 
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
-In order make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
+In order to make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
 Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
@@ -145,7 +145,7 @@ Read more [here]({{< relref "configuration/#disable-sanitize-html" >}}) about th
 
 ### Authentication and security
 
-If your using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.
+If you are using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.
 
 If you have `cookie_secure` set to `true` in the `session` section you probably want to change the `cookie_secure` to `true` in the `security` section as well. Ending up with a configuration like this:
 
@@ -238,3 +238,17 @@ Due to this change in Chrome, the `[security]` setting `cookie_samesite` configu
 
 This version of Chrome also rejects insecure `SameSite=None` cookies. See https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
 change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
+
+## Upgrading to v7.0
+
+### PhantomJS removed
+
+PhantomJS was deprecated in [Grafana v6.4]({{< relref "../guides/whats-new-in-v6-4.md#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
+
+### Dashboard minimum refresh interval enforced
+
+A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. Read more [here]({{< relref "configuration/#min-refresh-interval" >}}) about this setting.
+
+### Backend plugins
+
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "configuration/#allow-loading-unsigned-plugins" >}}) about this setting.

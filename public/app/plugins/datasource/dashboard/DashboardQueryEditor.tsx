@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { LegacyForms } from '@grafana/ui';
+import { LegacyForms, Icon } from '@grafana/ui';
 import { DataQuery, DataQueryError, PanelData, DataFrame, SelectableValue } from '@grafana/data';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
@@ -118,7 +118,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
                 <a href={editURL}>
                   {target.query}
                   &nbsp;
-                  <i className="fa fa-external-link" />
+                  <Icon name="external-link-alt" />
                 </a>
               </div>
             </div>
@@ -177,7 +177,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     }
 
     // Same as current URL, but different panelId
-    const editURL = `d/${dashboard.uid}/${dashboard.title}?&fullscreen&edit&panelId=${query.panelId}`;
+    const editURL = `d/${dashboard.uid}/${dashboard.title}?&editPanel=${query.panelId}`;
 
     return (
       <div>

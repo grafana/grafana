@@ -1,5 +1,4 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { text } from '@storybook/addon-knobs';
 
 import { Legend } from './Legend';
@@ -10,10 +9,13 @@ const getKnobs = () => {
   };
 };
 
-const story = storiesOf('Forms', module);
+export default {
+  title: 'Forms/Legend',
+  component: Legend,
+};
 
-story.add('Legend', () => {
+export const basic = () => {
   const { label } = getKnobs();
 
   return <Legend>{label}</Legend>;
-});
+};

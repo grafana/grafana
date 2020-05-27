@@ -52,12 +52,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-interface Props extends Themeable {
+export interface Props extends Themeable {
   className?: string;
   size?: ComponentSize;
   confirmText?: string;
   disabled?: boolean;
   confirmVariant?: ButtonVariant;
+  closeOnConfirm?: boolean;
 
   onConfirm(): void;
   onClick?(): void;
@@ -105,6 +106,14 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       this.props.onCancel();
     }
   };
+  onConfirm = (event: SyntheticEvent) => {
+    this.props.onConfirm();
+    if (this.props.closeOnConfirm) {
+      this.setState({
+        showConfirm: false,
+      });
+    }
+  };
 
   render() {
     const {
@@ -114,7 +123,6 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       disabled,
       confirmText,
       confirmVariant: confirmButtonVariant,
-      onConfirm,
       children,
     } = this.props;
     const styles = getStyles(theme);
@@ -147,7 +155,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
             <Button size={size} variant="link" onClick={this.onClickCancel}>
               Cancel
             </Button>
-            <Button size={size} variant={confirmButtonVariant} onClick={onConfirm}>
+            <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm}>
               {confirmText}
             </Button>
           </span>

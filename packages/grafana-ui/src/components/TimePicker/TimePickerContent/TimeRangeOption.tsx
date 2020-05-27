@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, TimeOption } from '@grafana/data';
 import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
+import { Icon } from '../../Icon/Icon';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const background = selectThemeVariant(
@@ -48,7 +49,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false 
   return (
     <div className={styles.container} onClick={() => onSelect(value)} tabIndex={-1}>
       <span>{value.display}</span>
-      {selected ? <i className="fa fa-check" /> : null}
+      {selected ? <Icon name="check" /> : null}
     </div>
   );
 });

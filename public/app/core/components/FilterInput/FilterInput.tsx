@@ -15,8 +15,8 @@ export const FilterInput: FC<Props> = props => (
     // Replaces the usage of ref
     autoFocus
     prefix={<Icon name="search" />}
+    width={40}
     type="text"
-    size="md"
     value={props.value ? unEscapeStringFromRegex(props.value) : ''}
     onChange={event => props.onChange(escapeStringForRegex(event.currentTarget.value))}
     placeholder={props.placeholder ?? ''}

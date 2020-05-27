@@ -1,169 +1,239 @@
 <div class="gf-form-inline">
-	<div class="gf-form">
-		<label class="gf-form-label query-keyword width-7">
-			<span ng-show="isFirst">Group by</span>
-			<span ng-hide="isFirst">Then by</span>
-		</label>
+  <div class="gf-form">
+    <label class="gf-form-label query-keyword width-7">
+      <span ng-show="isFirst">Group by</span>
+      <span ng-hide="isFirst">Then by</span>
+    </label>
 
-		<gf-form-dropdown model="agg.type"
-											lookup-text="true"
-											get-options="getBucketAggTypes()"
-											on-change="onTypeChanged()"
-											allow-custom="false"
-											label-mode="true"
-											css-class="width-10">
-		</gf-form-dropdown>
-		<gf-form-dropdown ng-if="agg.field"
-											model="agg.field"
-											get-options="getFieldsInternal()"
-											on-change="onChange()"
-											allow-custom="false"
-											label-mode="true"
-											css-class="width-12">
-		</gf-form-dropdown>
-	</div>
+    <gf-form-dropdown
+      model="agg.type"
+      lookup-text="true"
+      get-options="getBucketAggTypes()"
+      on-change="onTypeChanged()"
+      allow-custom="false"
+      label-mode="true"
+      css-class="width-10"
+    >
+    </gf-form-dropdown>
+    <gf-form-dropdown
+      ng-if="agg.field"
+      model="agg.field"
+      get-options="getFieldsInternal()"
+      on-change="onChange()"
+      allow-custom="false"
+      label-mode="true"
+      css-class="width-12"
+    >
+    </gf-form-dropdown>
+  </div>
 
-	<div class="gf-form gf-form--grow">
-		<label class="gf-form-label gf-form-label--grow">
-			<a ng-click="toggleOptions()">
-				<i class="fa fa-caret-down" ng-show="showOptions"></i>
-				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
-				{{settingsLinkText}}
-			</a>
-		</label>
-	</div>
+  <div class="gf-form gf-form--grow">
+    <label class="gf-form-label gf-form-label--grow">
+      <a ng-click="toggleOptions()">
+        <icon name="'angle-down'" ng-show="showOptions"></icon>
+        <icon name="'angle-right'" ng-hide="showOptions"></icon>
+        {{settingsLinkText}}
+      </a>
+    </label>
+  </div>
 
-	<div class="gf-form">
-		<label class="gf-form-label" ng-if="isFirst">
-			<a class="pointer" ng-click="addBucketAgg()"><i class="fa fa-plus"></i></a>
-		</label>
-		<label class="gf-form-label" ng-if="bucketAggCount > 1">
-			<a class="pointer" ng-click="removeBucketAgg()"><i class="fa fa-minus"></i></a>
-		</label>
-	</div>
+  <div class="gf-form">
+    <label class="gf-form-label" ng-if="isFirst">
+      <a class="pointer" ng-click="addBucketAgg()"><icon name="'plus'"></icon></a>
+    </label>
+    <label class="gf-form-label" ng-if="bucketAggCount > 1">
+      <a class="pointer" ng-click="removeBucketAgg()"><icon name="'minus'"></icon></a>
+    </label>
+  </div>
 </div>
 
 <div class="gf-form-group" ng-if="showOptions">
-	<div ng-if="agg.type === 'date_histogram'">
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Interval</label>
-			<gf-form-dropdown model="agg.settings.interval"
-												get-options="getIntervalOptions()"
-												on-change="onChangeInternal()"
-												allow-custom="true"
-												label-mode="true"
-												css-class="width-12">
-			</gf-form-dropdown>
-		</div>
+  <div ng-if="agg.type === 'date_histogram'">
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Interval</label>
+      <gf-form-dropdown
+        model="agg.settings.interval"
+        get-options="getIntervalOptions()"
+        on-change="onChangeInternal()"
+        allow-custom="true"
+        label-mode="true"
+        css-class="width-12"
+      >
+      </gf-form-dropdown>
+    </div>
 
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Min Doc Count</label>
-			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()">
-		</div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Min Doc Count</label>
+      <input
+        type="number"
+        class="gf-form-input max-width-12"
+        ng-model="agg.settings.min_doc_count"
+        ng-blur="onChangeInternal()"
+      />
+    </div>
 
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">
-				Trim edges
-				<info-popover mode="right-normal">
-					Trim the edges on the timeseries datapoints
-				</info-popover>
-			</label>
-			<input class="gf-form-input max-width-12" type="number" ng-model="agg.settings.trimEdges" ng-change="onChangeInternal()">
-		</div>
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">
-				Offset
-				<info-popover mode="right-normal">
-					Change the start value of each bucket by the specified positive (+) or negative offset (-) duration, such as 1h for an hour, or 1d for a day
-				</info-popover>
-			</label>
-			<input class="gf-form-input max-width-12" type="text" ng-model="agg.settings.offset" ng-change="onChangeInternal()">
-		</div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">
+        Trim edges
+        <info-popover mode="right-normal">
+          Trim the edges on the timeseries datapoints
+        </info-popover>
+      </label>
+      <input
+        class="gf-form-input max-width-12"
+        type="number"
+        ng-model="agg.settings.trimEdges"
+        ng-change="onChangeInternal()"
+      />
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">
+        Offset
+        <info-popover mode="right-normal">
+          Change the start value of each bucket by the specified positive (+) or negative offset (-) duration, such as
+          1h for an hour, or 1d for a day
+        </info-popover>
+      </label>
+      <input
+        class="gf-form-input max-width-12"
+        type="text"
+        ng-model="agg.settings.offset"
+        ng-change="onChangeInternal()"
+      />
+    </div>
+  </div>
 
-	</div>
+  <div ng-if="agg.type === 'histogram'">
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Interval</label>
+      <input
+        type="number"
+        class="gf-form-input max-width-12"
+        ng-model="agg.settings.interval"
+        ng-blur="onChangeInternal()"
+      />
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Min Doc Count</label>
+      <input
+        type="number"
+        class="gf-form-input max-width-12"
+        ng-model="agg.settings.min_doc_count"
+        ng-blur="onChangeInternal()"
+      />
+    </div>
+  </div>
 
-	<div ng-if="agg.type === 'histogram'">
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Interval</label>
-			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.interval" ng-blur="onChangeInternal()">
-		</div>
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Min Doc Count</label>
-			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()">
-		</div>
-	</div>
+  <div ng-if="agg.type === 'terms'">
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Order</label>
+      <gf-form-dropdown
+        model="agg.settings.order"
+        lookup-text="true"
+        get-options="getOrderOptions()"
+        on-change="onChangeInternal()"
+        label-mode="true"
+        css-class="width-12"
+      >
+      </gf-form-dropdown>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Size</label>
+      <gf-form-dropdown
+        model="agg.settings.size"
+        lookup-text="true"
+        get-options="getSizeOptions()"
+        on-change="onChangeInternal()"
+        label-mode="true"
+        allow-custom="true"
+        css-class="width-12"
+      >
+      </gf-form-dropdown>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Min Doc Count</label>
+      <input
+        type="number"
+        class="gf-form-input max-width-12"
+        ng-model="agg.settings.min_doc_count"
+        ng-blur="onChangeInternal()"
+      />
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Order By</label>
+      <gf-form-dropdown
+        model="agg.settings.orderBy"
+        lookup-text="true"
+        get-options="getOrderByOptions()"
+        on-change="onChangeInternal()"
+        label-mode="true"
+        css-class="width-12"
+      >
+      </gf-form-dropdown>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">
+        Missing
+        <info-popover mode="right-normal">
+          The missing parameter defines how documents that are missing a value should be treated. By default they will
+          be ignored but it is also possible to treat them as if they had a value
+        </info-popover>
+      </label>
+      <input
+        type="text"
+        class="gf-form-input max-width-12"
+        empty-to-null
+        ng-model="agg.settings.missing"
+        ng-blur="onChangeInternal()"
+        spellcheck="false"
+      />
+    </div>
+  </div>
 
-	<div ng-if="agg.type === 'terms'">
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Order</label>
-			<gf-form-dropdown model="agg.settings.order"
-											  lookup-text="true"
-												get-options="getOrderOptions()"
-												on-change="onChangeInternal()"
-												label-mode="true"
-												css-class="width-12">
-			</gf-form-dropdown>
-		</div>
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Size</label>
-			<gf-form-dropdown model="agg.settings.size"
-											  lookup-text="true"
-												get-options="getSizeOptions()"
-												on-change="onChangeInternal()"
-												label-mode="true"
-                        allow-custom="true"
-												css-class="width-12">
-			</gf-form-dropdown>
-		</div>
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Min Doc Count</label>
-			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()">
-		</div>
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Order By</label>
-			<gf-form-dropdown model="agg.settings.orderBy"
-											  lookup-text="true"
-												get-options="getOrderByOptions()"
-												on-change="onChangeInternal()"
-												label-mode="true"
-												css-class="width-12">
-			</gf-form-dropdown>
-		</div>
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">
-				Missing
-				<info-popover mode="right-normal">
-					The missing parameter defines how documents that are missing a value should be treated. By default they will be ignored but it is also possible to treat them as if they had a value
-				</info-popover>
-			</label>
-			<input type="text" class="gf-form-input max-width-12" empty-to-null ng-model="agg.settings.missing" ng-blur="onChangeInternal()" spellcheck='false'>
-		</div>
-	</div>
+  <div ng-if="agg.type === 'filters'">
+    <div class="gf-form-inline offset-width-7" ng-repeat="filter in agg.settings.filters">
+      <div class="gf-form">
+        <label class="gf-form-label width-10">Query {{$index + 1}}</label>
+        <input
+          type="text"
+          class="gf-form-input max-width-12"
+          ng-model="filter.query"
+          spellcheck="false"
+          placeholder="Lucene query"
+          ng-blur="onChangeInternal()"
+        />
+        <label class="gf-form-label width-10">Label {{$index + 1}}</label>
+        <input
+          type="text"
+          class="gf-form-input max-width-12"
+          ng-model="filter.label"
+          spellcheck="false"
+          placeholder="Label"
+          ng-blur="onChangeInternal()"
+        />
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label" ng-if="$first">
+          <a class="pointer" ng-click="addFiltersQuery()"><icon name="'plus'"></icon></a>
+        </label>
+        <label class="gf-form-label" ng-if="!$first">
+          <a class="pointer" ng-click="removeFiltersQuery(filter)"><icon name="'minus'"></icon></a>
+        </label>
+      </div>
+    </div>
+  </div>
 
-	<div ng-if="agg.type === 'filters'">
-		<div class="gf-form-inline offset-width-7" ng-repeat="filter in agg.settings.filters">
-			<div class="gf-form">
-				<label class="gf-form-label width-10">Query {{$index + 1}}</label>
-				<input type="text" class="gf-form-input max-width-12" ng-model="filter.query" spellcheck='false' placeholder="Lucene query" ng-blur="onChangeInternal()">
-				<label class="gf-form-label width-10">Label {{$index + 1}}</label>
-				<input type="text" class="gf-form-input max-width-12" ng-model="filter.label" spellcheck='false' placeholder="Label" ng-blur="onChangeInternal()">
-			</div>
-			<div class="gf-form">
-				<label class="gf-form-label" ng-if="$first">
-					<a class="pointer" ng-click="addFiltersQuery()"><i class="fa fa-plus"></i></a>
-				</label>
-				<label class="gf-form-label" ng-if="!$first">
-					<a class="pointer" ng-click="removeFiltersQuery(filter)"><i class="fa fa-minus"></i></a>
-				</label>
-			</div>
-		</div>
-	</div>
-
-	<div ng-if="agg.type === 'geohash_grid'">
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Precision</label>
-			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.precision" spellcheck='false' placeholder="3" ng-blur="onChangeInternal()">
-		</div>
-	</div>
-
+  <div ng-if="agg.type === 'geohash_grid'">
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Precision</label>
+      <input
+        type="number"
+        class="gf-form-input max-width-12"
+        ng-model="agg.settings.precision"
+        spellcheck="false"
+        placeholder="3"
+        ng-blur="onChangeInternal()"
+      />
+    </div>
+  </div>
 </div>

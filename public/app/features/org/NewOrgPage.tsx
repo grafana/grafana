@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
-import { Forms, Button, Input } from '@grafana/ui';
+import { Button, Input, Field, Form } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
 import { hot } from 'react-hot-loader';
@@ -49,17 +49,12 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
           deployments.{' '}
         </p>
 
-        <Forms.Form<CreateOrgFormDTO> onSubmit={createOrg}>
+        <Form<CreateOrgFormDTO> onSubmit={createOrg}>
           {({ register, errors }) => {
             return (
               <>
-                <Forms.Field
-                  label="Organization name"
-                  invalid={!!errors.name}
-                  error={errors.name && errors.name.message}
-                >
+                <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
                   <Input
-                    size="md"
                     placeholder="Org. name"
                     name="name"
                     ref={register({
@@ -67,12 +62,12 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
                       validate: async orgName => await validateOrg(orgName),
                     })}
                   />
-                </Forms.Field>
+                </Field>
                 <Button type="submit">Create</Button>
               </>
             );
           }}
-        </Forms.Form>
+        </Form>
       </Page.Contents>
     </Page>
   );

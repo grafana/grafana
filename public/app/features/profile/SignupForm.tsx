@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Forms, Button, LinkButton, Input } from '@grafana/ui';
+import { Button, LinkButton, Input, Form, Field } from '@grafana/ui';
 import { css } from 'emotion';
 
 import { getConfig } from 'app/core/config';
@@ -60,26 +60,25 @@ export const SignupForm: FC<Props> = props => {
   };
 
   return (
-    <Forms.Form defaultValues={defaultValues} onSubmit={onSubmit}>
+    <Form defaultValues={defaultValues} onSubmit={onSubmit}>
       {({ register, errors }) => {
         return (
           <>
             {verifyEmailEnabled && (
-              <Forms.Field label="Email verification code (sent to your email)">
-                <Input name="code" size="md" ref={register} placeholder="Code" />
-              </Forms.Field>
+              <Field label="Email verification code (sent to your email)">
+                <Input name="code" ref={register} placeholder="Code" />
+              </Field>
             )}
             {!autoAssignOrg && (
-              <Forms.Field label="Org. name">
-                <Input size="md" name="orgName" placeholder="Org. name" ref={register} />
-              </Forms.Field>
+              <Field label="Org. name">
+                <Input name="orgName" placeholder="Org. name" ref={register} />
+              </Field>
             )}
-            <Forms.Field label="Your name">
-              <Input size="md" name="name" placeholder="(optional)" ref={register} />
-            </Forms.Field>
-            <Forms.Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
+            <Field label="Your name">
+              <Input name="name" placeholder="(optional)" ref={register} />
+            </Field>
+            <Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
               <Input
-                size="md"
                 name="email"
                 type="email"
                 placeholder="Email"
@@ -91,20 +90,15 @@ export const SignupForm: FC<Props> = props => {
                   },
                 })}
               />
-            </Forms.Field>
-            <Forms.Field
-              label="Password"
-              invalid={!!errors.password}
-              error={!!errors.password && errors.password.message}
-            >
+            </Field>
+            <Field label="Password" invalid={!!errors.password} error={!!errors.password && errors.password.message}>
               <Input
-                size="md"
                 name="password"
                 type="password"
                 placeholder="Password"
                 ref={register({ required: 'Password is required' })}
               />
-            </Forms.Field>
+            </Field>
 
             <Button type="submit">Submit</Button>
             <span className={buttonSpacing}>
@@ -115,6 +109,6 @@ export const SignupForm: FC<Props> = props => {
           </>
         );
       }}
-    </Forms.Form>
+    </Form>
   );
 };

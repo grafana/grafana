@@ -5,7 +5,6 @@
 title = "FieldMatcherID"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldMatcherID enum
@@ -28,6 +27,9 @@ import { FieldMatcherID } from '@grafana/data';
 |  Member | Value | Description |
 |  --- | --- | --- |
 |  byName | <code>&quot;byName&quot;</code> |  |
+|  byNames | <code>&quot;byNames&quot;</code> |  |
+|  byRegexp | <code>&quot;byRegexp&quot;</code> |  |
+|  byRegexpOrNames | <code>&quot;byRegexpOrNames&quot;</code> |  |
 |  byType | <code>&quot;byType&quot;</code> |  |
 |  numeric | <code>&quot;numeric&quot;</code> |  |
 |  time | <code>&quot;time&quot;</code> |  |

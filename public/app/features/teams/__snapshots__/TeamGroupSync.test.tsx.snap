@@ -108,8 +108,8 @@ exports[`Render should render groups table 1`] = `
       className="btn btn-primary pull-right"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-plus"
+      <Icon
+        name="plus"
       />
        Add group
     </button>
@@ -200,6 +200,11 @@ exports[`Render should render groups table 1`] = `
             >
               <Icon
                 name="times"
+                style={
+                  Object {
+                    "marginBottom": 0,
+                  }
+                }
               />
             </a>
           </td>
@@ -223,6 +228,11 @@ exports[`Render should render groups table 1`] = `
             >
               <Icon
                 name="times"
+                style={
+                  Object {
+                    "marginBottom": 0,
+                  }
+                }
               />
             </a>
           </td>
@@ -246,6 +256,11 @@ exports[`Render should render groups table 1`] = `
             >
               <Icon
                 name="times"
+                style={
+                  Object {
+                    "marginBottom": 0,
+                  }
+                }
               />
             </a>
           </td>

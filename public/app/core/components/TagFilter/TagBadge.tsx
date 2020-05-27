@@ -15,11 +15,12 @@ export class TagBadge extends React.Component<Props, any> {
 
   render() {
     const { label, removeIcon, count } = this.props;
-    const { color, borderColor } = getTagColorsFromName(label);
+    const { color } = getTagColorsFromName(label);
+
     const tagStyle = {
       backgroundColor: color,
-      borderColor: borderColor,
     };
+
     const countLabel = count !== 0 && <span className="tag-count-label">{`(${count})`}</span>;
 
     return (

@@ -5,6 +5,8 @@ import { selectThemeVariant, ThemeContext } from '../../index';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
+import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types';
 import { LinkTarget } from '@grafana/data';
 
 export interface ContextMenuItem {
@@ -140,13 +142,8 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     icon: css`
       opacity: 0.7;
-      width: 12px;
-      height: 12px;
-      display: inline-block;
       margin-right: 10px;
       color: ${theme.colors.linkDisabled};
-      position: relative;
-      top: 4px;
     `,
   };
 });
@@ -226,7 +223,7 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
             }
           }}
         >
-          {icon && <i className={cx(`${icon}`, styles.icon)} />} {label}
+          {icon && <Icon name={icon as IconName} className={styles.icon} />} {label}
         </a>
       </div>
     );

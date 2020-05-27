@@ -71,6 +71,20 @@ describe('DashboardModel', () => {
 
       expect(panels.length).toBe(1);
     });
+
+    it('should save model in edit mode', () => {
+      const model = new DashboardModel({});
+      model.addPanel({ type: 'graph' });
+
+      const panel = model.initEditPanel(model.panels[0]);
+      panel.title = 'updated';
+
+      const saveModel = model.getSaveModelClone();
+      const savedPanel = saveModel.panels[0];
+
+      expect(savedPanel.title).toBe('updated');
+      expect(savedPanel.id).toBe(model.panels[0].id);
+    });
   });
 
   describe('row and panel manipulation', () => {

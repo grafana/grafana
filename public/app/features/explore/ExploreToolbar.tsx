@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { ToggleButtonGroup, ToggleButton, Tooltip, LegacyForms, SetInterval, Icon } from '@grafana/ui';
+import { ToggleButtonGroup, ToggleButton, Tooltip, LegacyForms, SetInterval, Icon, IconButton } from '@grafana/ui';
 const { ButtonSelect } = LegacyForms;
 import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
@@ -191,6 +191,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
+    const showModeToggle = supportedModes.length > 1;
+
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
         <div className="explore-toolbar-item">
@@ -211,9 +213,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               )}
             </div>
             {splitted && (
-              <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
-                <Icon name="times" />
-              </a>
+              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
             )}
           </div>
         </div>
@@ -235,7 +235,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
-                {supportedModes.length > 1 ? (
+                {showModeToggle ? (
                   <div className="query-type-toggle">
                     <ToggleButtonGroup label="" transparent={true}>
                       <ToggleButton
@@ -283,7 +283,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 <ResponsiveButton
                   splitted={splitted}
                   title="Split"
-                  onClick={split}
+                  /* This way ResponsiveButton doesn't add event as a parameter when invoking split function
+                   * which breaks splitting functionality
+                   */
+                  onClick={() => split()}
                   icon="columns"
                   iconClassName="icon-margin-right"
                   disabled={isLive}
@@ -321,6 +324,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 refreshInterval={refreshInterval}
                 onChangeRefreshInterval={this.onChangeRefreshInterval}
                 splitted={splitted}
+                isLive={isLive}
                 loading={loading || (isLive && !isPaused)}
                 onRun={this.onRunQuery}
                 showDropdown={!isLive}

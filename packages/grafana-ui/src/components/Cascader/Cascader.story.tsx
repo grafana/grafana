@@ -6,7 +6,7 @@ import mdx from './Cascader.mdx';
 import React from 'react';
 
 export default {
-  title: 'General/Cascader',
+  title: 'Forms/Cascader',
   component: Cascader,
   decorators: [withCenteredStory],
   parameters: {
@@ -57,7 +57,6 @@ export const withCustomValue = () => {
       formatCreateLabel={val => onCreateLabel + val}
       initialValue="Custom Initial Value"
       onSelect={val => console.log(val)}
-      size="md"
     />
   );
 };

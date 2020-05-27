@@ -22,53 +22,61 @@ import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
 import { TNil } from '../../types';
 import { KeyValuePair, Link } from '../../types/trace';
-import { createStyle } from '../../Theme';
+import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
-export const getStyles = createStyle(() => {
+export const getStyles = createStyle((theme: Theme) => {
   return {
     header: css`
+      label: header;
       cursor: pointer;
       overflow: hidden;
       padding: 0.25em 0.1em;
       text-overflow: ellipsis;
       white-space: nowrap;
       &:hover {
-        background: #e8e8e8;
+        background: ${autoColor(theme, '#e8e8e8')};
       }
     `,
     headerEmpty: css`
+      label: headerEmpty;
       background: none;
       cursor: initial;
     `,
     headerHighContrast: css`
+      label: headerHighContrast;
       &:hover {
-        background: #ddd;
+        background: ${autoColor(theme, '#ddd')};
       }
     `,
     emptyIcon: css`
-      color: #aaa;
+      label: emptyIcon;
+      color: ${autoColor(theme, '#aaa')};
     `,
     summary: css`
+      label: summary;
       display: inline;
       list-style: none;
       padding: 0;
     `,
     summaryItem: css`
+      label: summaryItem;
       display: inline;
       margin-left: 0.7em;
       padding-right: 0.5rem;
-      border-right: 1px solid #ddd;
+      border-right: 1px solid ${autoColor(theme, '#ddd')};
       &:last-child {
         padding-right: 0;
         border-right: none;
       }
     `,
     summaryLabel: css`
-      color: #777;
+      label: summaryLabel;
+      color: ${autoColor(theme, '#777')};
     `,
     summaryDelim: css`
-      color: #bbb;
+      label: summaryDelim;
+      color: ${autoColor(theme, '#bbb')};
       padding: 0 0.2em;
     `,
   };
@@ -91,7 +99,7 @@ export function KeyValuesSummary(props: { data?: KeyValuePair[] }) {
   if (!Array.isArray(data) || !data.length) {
     return null;
   }
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   return (
     <ul className={styles.summary}>
       {data.map((item, i) => (
@@ -113,7 +121,7 @@ KeyValuesSummary.defaultProps = {
 export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   const { className, data, highContrast, interactive, isOpen, label, linksGetter, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   const iconCls = cx(uAlignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;

@@ -54,7 +54,7 @@ export const FunctionEditorControls = (
         justifyContent: 'space-between',
       }}
     >
-      <span className="pointer fa fa-arrow-left" onClick={() => onMoveLeft(func)} />
+      <Icon name="arrow-left" onClick={() => onMoveLeft(func)} />
       <FunctionHelpButton
         name={func.def.name}
         description={func.def.description}

@@ -1,44 +1,47 @@
-import React, { useCallback, useState, CSSProperties } from 'react';
+import React, { CSSProperties, useCallback, useState } from 'react';
 import Transition from 'react-transition-group/Transition';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, Select, useTheme, Icon, Input } from '@grafana/ui';
+import { CustomScrollbar, Icon, Input, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { usePanelLatestData } from './usePanelLatestData';
+import { selectors } from '@grafana/e2e-selectors';
 
-export const OptionsPaneContent: React.FC<{
+interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
-  data: PanelData;
   width: number;
   dashboard: DashboardModel;
   onClose: () => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
-}> = ({
+}
+
+export const OptionsPaneContent: React.FC<Props> = ({
   plugin,
   panel,
-  data,
   width,
   onFieldConfigsChange,
   onPanelOptionsChanged,
   onPanelConfigChange,
   onClose,
   dashboard,
-}) => {
+}: Props) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
+  const [currentData, hasSeries] = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig) {
+      if (!fieldConfig || !hasSeries) {
         return null;
       }
 
@@ -47,18 +50,18 @@ export const OptionsPaneContent: React.FC<{
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          data={currentData.series}
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [currentData, plugin, panel, onFieldConfigsChange]
   );
 
   const renderFieldOverrideOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig) {
+      if (!fieldConfig || !hasSeries) {
         return null;
       }
 
@@ -67,42 +70,42 @@ export const OptionsPaneContent: React.FC<{
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          data={currentData.series}
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [currentData, plugin, panel, onFieldConfigsChange]
   );
 
   // When the panel has no query only show the main tab
   const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
 
   return (
-    <div className={styles.panelOptionsPane}>
+    <div className={styles.panelOptionsPane} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
       {plugin && (
         <div className={styles.wrapper}>
           <TabsBar className={styles.tabsBar}>
             <TabsBarContent
               width={width}
-              showFields={!plugin.meta.skipDataQuery}
+              plugin={plugin}
               isSearching={isSearching}
               styles={styles}
               activeTab={activeTab}
               onClose={onClose}
               setSearchMode={setSearchMode}
               setActiveTab={setActiveTab}
+              panel={panel}
             />
           </TabsBar>
           <TabContent className={styles.tabContent}>
-            <CustomScrollbar>
+            <CustomScrollbar autoHeightMin="100%">
               {showMainTab ? (
                 <PanelOptionsTab
                   panel={panel}
                   plugin={plugin}
                   dashboard={dashboard}
-                  data={data}
+                  data={currentData}
                   onPanelConfigChange={onPanelConfigChange}
-                  onFieldConfigsChange={onFieldConfigsChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
                 />
               ) : (
@@ -121,14 +124,18 @@ export const OptionsPaneContent: React.FC<{
 
 export const TabsBarContent: React.FC<{
   width: number;
-  showFields: boolean;
+  plugin: PanelPlugin;
   isSearching: boolean;
   activeTab: string;
   styles: OptionsPaneStyles;
   onClose: () => void;
   setSearchMode: (mode: boolean) => void;
   setActiveTab: (tab: string) => void;
-}> = ({ width, showFields, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles }) => {
+  panel: PanelModel;
+}> = ({ width, plugin, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles, panel }) => {
+  const overridesCount =
+    panel.getFieldConfig().overrides.length === 0 ? undefined : panel.getFieldConfig().overrides.length;
+
   if (isSearching) {
     const defaultStyles = {
       transition: 'width 50ms ease-in-out',
@@ -167,7 +174,9 @@ export const TabsBarContent: React.FC<{
   // Show the appropriate tabs
   let tabs = tabSelections;
   let active = tabs.find(v => v.value === activeTab);
-  if (!showFields) {
+
+  // If no field configs hide Fields & Override tab
+  if (plugin.fieldConfigRegistry.isEmpty()) {
     active = tabSelections[0];
     tabs = [active];
   }
@@ -175,7 +184,7 @@ export const TabsBarContent: React.FC<{
   return (
     <>
       {width < 352 ? (
-        <div className="flex-grow-1">
+        <div className="flex-grow-1" aria-label={selectors.components.PanelEditor.OptionsPane.select}>
           <Select
             options={tabs}
             value={active}
@@ -190,24 +199,16 @@ export const TabsBarContent: React.FC<{
             <Tab
               key={item.value}
               label={item.label}
+              counter={item.value === 'overrides' ? overridesCount : undefined}
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
+              title={item.tooltip}
+              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label)}
             />
           ))}
           <div className="flex-grow-1" />
         </>
       )}
-
-      {/* 
-      <div className={styles.tabsButton}>
-        <DashNavButton
-          icon="search"
-          iconSize="md"
-          tooltip="Search all options"
-          classSuffix="search-options"
-          onClick={() => setSearchMode(true)}
-        />
-      </div> */}
       <div className={styles.tabsButton}>
         <DashNavButton
           icon="angle-right"
@@ -225,14 +226,17 @@ const tabSelections: Array<SelectableValue<string>> = [
   {
     label: 'Panel',
     value: 'options',
+    tooltip: 'Configure panel display options',
   },
   {
-    label: 'Fields',
+    label: 'Field',
     value: 'defaults',
+    tooltip: 'Configure field options',
   },
   {
     label: 'Overrides',
     value: 'overrides',
+    tooltip: 'Configure field option overrides',
   },
 ];
 

@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type mockedEc2 struct {
@@ -44,7 +44,7 @@ func (m mockedRGTA) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesI
 
 func TestCloudWatchMetrics(t *testing.T) {
 
-	Convey("When calling getMetricsForCustomMetrics", t, func() {
+	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
 		dsInfo := &DatasourceInfo{
 			Region:        "us-east-1",
 			Namespace:     "Foo",
@@ -65,14 +65,13 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			}, nil
 		}
-		metrics, _ := getMetricsForCustomMetrics(dsInfo, f)
+		metrics, err := getMetricsForCustomMetrics(dsInfo, f)
+		require.NoError(t, err)
 
-		Convey("Should contain Test_MetricName", func() {
-			So(metrics, ShouldContain, "Test_MetricName")
-		})
+		assert.Contains(t, metrics, "Test_MetricName")
 	})
 
-	Convey("When calling getDimensionsForCustomMetrics", t, func() {
+	t.Run("When calling getDimensionsForCustomMetrics", func(t *testing.T) {
 		dsInfo := &DatasourceInfo{
 			Region:        "us-east-1",
 			Namespace:     "Foo",
@@ -93,14 +92,13 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			}, nil
 		}
-		dimensionKeys, _ := getDimensionsForCustomMetrics(dsInfo, f)
+		dimensionKeys, err := getDimensionsForCustomMetrics(dsInfo, f)
+		require.NoError(t, err)
 
-		Convey("Should contain Test_DimensionName", func() {
-			So(dimensionKeys, ShouldContain, "Test_DimensionName")
-		})
+		assert.Contains(t, dimensionKeys, "Test_DimensionName")
 	})
 
-	Convey("When calling handleGetRegions", t, func() {
+	t.Run("When calling handleGetRegions", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			ec2Svc: mockedEc2{RespRegions: ec2.DescribeRegionsOutput{
 				Regions: []*ec2.Region{
@@ -117,16 +115,15 @@ func TestCloudWatchMetrics(t *testing.T) {
 			SecureJsonData: securejsondata.SecureJsonData{},
 		}
 
-		result, _ := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
+		result, err := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
+		require.NoError(t, err)
 
-		Convey("Should return regions", func() {
-			So(result[0].Text, ShouldEqual, "ap-east-1")
-			So(result[1].Text, ShouldEqual, "ap-northeast-1")
-			So(result[2].Text, ShouldEqual, "ap-northeast-2")
-		})
+		assert.Equal(t, "ap-east-1", result[0].Text)
+		assert.Equal(t, "ap-northeast-1", result[1].Text)
+		assert.Equal(t, "ap-northeast-2", result[2].Text)
 	})
 
-	Convey("When calling handleGetEc2InstanceAttribute", t, func() {
+	t.Run("When calling handleGetEc2InstanceAttribute", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			ec2Svc: mockedEc2{Resp: ec2.DescribeInstancesOutput{
 				Reservations: []*ec2.Reservation{
@@ -153,15 +150,13 @@ func TestCloudWatchMetrics(t *testing.T) {
 		filters := make(map[string]interface{})
 		filters["tag:Environment"] = []string{"production"}
 		json.Set("filters", filters)
-		result, _ := executor.handleGetEc2InstanceAttribute(context.Background(), json, &tsdb.TsdbQuery{})
+		result, err := executor.handleGetEc2InstanceAttribute(context.Background(), json, &tsdb.TsdbQuery{})
+		require.NoError(t, err)
 
-		Convey("Should equal production InstanceId", func() {
-			So(result[0].Text, ShouldEqual, "i-12345678")
-		})
+		assert.Equal(t, "i-12345678", result[0].Text)
 	})
 
-	Convey("When calling handleGetEbsVolumeIds", t, func() {
-
+	t.Run("When calling handleGetEbsVolumeIds", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			ec2Svc: mockedEc2{Resp: ec2.DescribeInstancesOutput{
 				Reservations: []*ec2.Reservation{
@@ -208,22 +203,21 @@ func TestCloudWatchMetrics(t *testing.T) {
 		json := simplejson.New()
 		json.Set("region", "us-east-1")
 		json.Set("instanceId", "{i-1, i-2, i-3, i-4}")
-		result, _ := executor.handleGetEbsVolumeIds(context.Background(), json, &tsdb.TsdbQuery{})
+		result, err := executor.handleGetEbsVolumeIds(context.Background(), json, &tsdb.TsdbQuery{})
+		require.NoError(t, err)
 
-		Convey("Should return all 8 VolumeIds", func() {
-			So(len(result), ShouldEqual, 8)
-			So(result[0].Text, ShouldEqual, "vol-1-1")
-			So(result[1].Text, ShouldEqual, "vol-1-2")
-			So(result[2].Text, ShouldEqual, "vol-2-1")
-			So(result[3].Text, ShouldEqual, "vol-2-2")
-			So(result[4].Text, ShouldEqual, "vol-3-1")
-			So(result[5].Text, ShouldEqual, "vol-3-2")
-			So(result[6].Text, ShouldEqual, "vol-4-1")
-			So(result[7].Text, ShouldEqual, "vol-4-2")
-		})
+		require.Len(t, result, 8)
+		assert.Equal(t, "vol-1-1", result[0].Text)
+		assert.Equal(t, "vol-1-2", result[1].Text)
+		assert.Equal(t, "vol-2-1", result[2].Text)
+		assert.Equal(t, "vol-2-2", result[3].Text)
+		assert.Equal(t, "vol-3-1", result[4].Text)
+		assert.Equal(t, "vol-3-2", result[5].Text)
+		assert.Equal(t, "vol-4-1", result[6].Text)
+		assert.Equal(t, "vol-4-2", result[7].Text)
 	})
 
-	Convey("When calling handleGetResourceArns", t, func() {
+	t.Run("When calling handleGetResourceArns", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			rgtaSvc: mockedRGTA{
 				Resp: resourcegroupstaggingapi.GetResourcesOutput{
@@ -257,15 +251,13 @@ func TestCloudWatchMetrics(t *testing.T) {
 		tags := make(map[string]interface{})
 		tags["Environment"] = []string{"production"}
 		json.Set("tags", tags)
-		result, _ := executor.handleGetResourceArns(context.Background(), json, &tsdb.TsdbQuery{})
+		result, err := executor.handleGetResourceArns(context.Background(), json, &tsdb.TsdbQuery{})
+		require.NoError(t, err)
 
-		Convey("Should return all two instances", func() {
-			So(result[0].Text, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567")
-			So(result[0].Value, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567")
-			So(result[1].Text, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321")
-			So(result[1].Value, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321")
-
-		})
+		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567", result[0].Text)
+		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567", result[0].Value)
+		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321", result[1].Text)
+		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321", result[1].Value)
 	})
 }
 
@@ -281,5 +273,4 @@ func TestParseMultiSelectValue(t *testing.T) {
 
 	values = parseMultiSelectValue("i-{01}")
 	assert.Equal(t, []string{"i-{01}"}, values)
-
 }

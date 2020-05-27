@@ -1,6 +1,6 @@
 import React from 'react';
 import { css, cx } from 'emotion';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory, Icon } from '@grafana/ui';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -28,7 +28,7 @@ export function SecondaryActions(props: Props) {
           onClick={props.onClickAddQueryRowButton}
           disabled={props.addQueryRowButtonDisabled}
         >
-          <i className={'fa fa-fw fa-plus icon-margin-right'} />
+          <Icon className="icon-margin-right" name="plus" size="sm" />
           <span className="btn-title">{'\xA0' + 'Add query'}</span>
         </button>
       )}
@@ -39,7 +39,7 @@ export function SecondaryActions(props: Props) {
         })}
         onClick={props.onClickRichHistoryButton}
       >
-        <i className={'fa fa-fw fa-history icon-margin-right '} />
+        <Icon className="icon-margin-right" name="history" size="sm" />
         <span className="btn-title">{'\xA0' + 'Query history'}</span>
       </button>
     </div>

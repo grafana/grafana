@@ -11,7 +11,7 @@ export const ApiKeysAddedModal = (props: Props) => {
     <div className="modal-body">
       <div className="modal-header">
         <h2 className="modal-header-title">
-          <Icon name="key-skeleton-alt" />
+          <Icon name="key-skeleton-alt" size="lg" />
           <span className="p-l-1">API Key Created</span>
         </h2>
 

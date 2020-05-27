@@ -31,7 +31,6 @@ interface ScenarioContext {
 
   // Options used in setup
   maxDataPoints?: number | null;
-  widthPixels: number;
   dsInterval?: string;
   minInterval?: string;
   scopedVars: ScopedVars;
@@ -53,7 +52,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       getTransformations: () => undefined,
     };
     const ctx: ScenarioContext = {
-      widthPixels: 200,
+      maxDataPoints: 200,
       scopedVars: {
         server: { text: 'Server1', value: 'server-1' },
       },
@@ -93,19 +92,18 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         datasource,
         scopedVars: ctx.scopedVars,
         minInterval: ctx.minInterval,
-        widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
         timeRange: {
           from: grafanaData.dateTime().subtract(1, 'days'),
           to: grafanaData.dateTime(),
-          raw: { from: '1h', to: 'now' },
+          raw: { from: '1d', to: 'now' },
         },
         panelId: 1,
         queries: [{ refId: 'A', test: 1 }],
       };
 
       ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
-      ctx.runner.getData().subscribe({
+      ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
         next: (data: PanelData) => {
           ctx.res = data;
           ctx.events?.push(data);
@@ -137,10 +135,9 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('with no maxDataPoints or minInterval', ctx => {
+  describeQueryRunnerScenario('with maxDataPoints', ctx => {
     ctx.setup(() => {
-      ctx.maxDataPoints = null;
-      ctx.widthPixels = 200;
+      ctx.maxDataPoints = 200;
     });
 
     it('should return data', async () => {
@@ -163,7 +160,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario('with no panel min interval but datasource min interval', ctx => {
     ctx.setup(() => {
-      ctx.widthPixels = 20000;
+      ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
     });
 
@@ -174,7 +171,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario('with panel min interval and data source min interval', ctx => {
     ctx.setup(() => {
-      ctx.widthPixels = 20000;
+      ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
       ctx.minInterval = '30s';
     });
@@ -192,6 +189,10 @@ describe('PanelQueryRunner', () => {
     it('should pass maxDataPoints if specified', async () => {
       expect(ctx.queryCalledWith?.maxDataPoints).toBe(10);
     });
+
+    it('should use instead of width to calculate interval', async () => {
+      expect(ctx.queryCalledWith?.interval).toBe('2h');
+    });
   });
 
   describeQueryRunnerScenario(
@@ -200,7 +201,7 @@ describe('PanelQueryRunner', () => {
       it('should apply when field override options are set', async () => {
         const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
 
-        ctx.runner.getData().subscribe({
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
@@ -229,8 +230,9 @@ describe('PanelQueryRunner', () => {
     ctx => {
       it('should apply when transformations are set', async () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
 
-        ctx.runner.getData().subscribe({
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
@@ -241,6 +243,50 @@ describe('PanelQueryRunner', () => {
     },
     {
       getFieldOverrideOptions: () => undefined,
+      // @ts-ignore
+      getTransformations: () => [{}],
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'getData',
+    ctx => {
+      it('should not apply transformations when transform option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+
+      it('should not apply field config when applyFieldConfig option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+        spy.mockClear();
+        ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: v => v,
+        theme: {} as GrafanaTheme,
+      }),
       // @ts-ignore
       getTransformations: () => [{}],
     }

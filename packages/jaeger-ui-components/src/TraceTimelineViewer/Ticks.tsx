@@ -18,27 +18,31 @@ import cx from 'classnames';
 
 import { formatDuration } from './utils';
 import { TNil } from '../types';
-import { createStyle } from '../Theme';
+import { autoColor, createStyle, Theme, useTheme } from '../Theme';
 
-const getStyles = createStyle(() => {
+const getStyles = createStyle((theme: Theme) => {
   return {
     Ticks: css`
+      label: Ticks;
       pointer-events: none;
     `,
-    tick: css`
+    TicksTick: css`
+      label: TicksTick;
       position: absolute;
       height: 100%;
       width: 1px;
-      background: #d8d8d8;
+      background: ${autoColor(theme, '#d8d8d8')};
       &:last-child {
         width: 0;
       }
     `,
-    tickLabel: css`
+    TicksTickLabel: css`
+      label: TicksTickLabel;
       left: 0.25rem;
       position: absolute;
     `,
-    tickLabelEndAnchor: css`
+    TicksTickLabelEndAnchor: css`
+      label: TicksTickLabelEndAnchor;
       left: initial;
       right: 0.25rem;
     `,
@@ -64,20 +68,22 @@ export default function Ticks(props: TicksProps) {
       labels.push(formatDuration(durationAtTick));
     }
   }
-  const styles = getStyles();
+  const styles = getStyles(useTheme());
   const ticks: React.ReactNode[] = [];
   for (let i = 0; i < numTicks; i++) {
     const portion = i / (numTicks - 1);
     ticks.push(
       <div
         key={portion}
-        className={styles.tick}
+        className={styles.TicksTick}
         style={{
           left: `${portion * 100}%`,
         }}
       >
         {labels && (
-          <span className={cx(styles.tickLabel, { [styles.tickLabelEndAnchor]: portion >= 1 })}>{labels[i]}</span>
+          <span className={cx(styles.TicksTickLabel, { [styles.TicksTickLabelEndAnchor]: portion >= 1 })}>
+            {labels[i]}
+          </span>
         )}
       </div>
     );
