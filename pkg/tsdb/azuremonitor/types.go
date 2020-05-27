@@ -90,3 +90,51 @@ type column struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
+
+// azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
+type azureMonitorJSONQuery struct {
+	AzureMonitor struct {
+		Aggregation         string  `json:"aggregation"`
+		Alias               string  `json:"alias"`
+		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+		Dimension           string  `json:"dimension"`
+		DimensionFilter     string  `json:"dimensionFilter"`
+		Format              string  `json:"format"`
+		MetricDefinition    string  `json:"metricDefinition"`
+		MetricName          string  `json:"metricName"`
+		MetricNamespace     string  `json:"metricNamespace"`
+		ResourceGroup       string  `json:"resourceGroup"`
+		ResourceName        string  `json:"resourceName"`
+		TimeGrain           string  `json:"timeGrain"`
+		Top                 string  `json:"top"`
+	} `json:"azureMonitor"`
+	Subscription string `json:"subscription"`
+}
+
+// insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
+type insightsJSONQuery struct {
+	AppInsights struct {
+		Aggregation         string  `json:"aggregation"`
+		Alias               string  `json:"alias"`
+		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+		Dimension           string  `json:"dimension"`
+		DimensionFilter     string  `json:"dimensionFilter"`
+		MetricName          string  `json:"metricName"`
+		RawQuery            *bool   `json:"rawQuery"`
+		RawQueryString      string  `json:"rawQueryString"`
+		TimeGrain           string  `json:"timeGrain"`
+		TimeColumn          string  `json:"timeColumn"`
+		ValueColumn         string  `json:"valueColumn"`
+		SegmentColumn       string  `json:"segmentColumn"`
+	} `json:"appInsights"`
+	Raw *bool `json:"raw"`
+}
+
+// logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
+type logJSONQuery struct {
+	AzureLogAnalytics struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+		Workspace    string `json:"workspace"`
+	} `json:"azureLogAnalytics"`
+}

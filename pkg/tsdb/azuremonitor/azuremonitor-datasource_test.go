@@ -104,7 +104,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"metricName":          "Percentage CPU",
 						"alias":               "testalias",
 						"queryType":           "Azure Monitor",
-						"allowedTimeGrainsMs": []interface{}{"auto", json.Number("60000"), json.Number("300000")},
+						"allowedTimeGrainsMs": []int64{60000, 300000},
 					},
 				})
 				tsdbQuery.Queries[0].IntervalMs = 400000
