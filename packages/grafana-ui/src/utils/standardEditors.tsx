@@ -27,6 +27,7 @@ import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
+import { ColorValueEditor } from '../components/OptionsUI/color';
 import { FieldColorEditor } from '../components/OptionsUI/fieldColor';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
 
@@ -270,6 +271,13 @@ export const getStandardOptionEditors = () => {
     editor: ValueMappingsValueEditor as any,
   };
 
+  const color: StandardEditorsRegistryItem<string> = {
+    id: 'color',
+    name: 'Color',
+    description: 'Allows color selection',
+    editor: ColorValueEditor as any,
+  };
+
   const fieldColor: StandardEditorsRegistryItem<FieldColor> = {
     id: 'fieldColor',
     name: 'Field Color',
@@ -291,5 +299,5 @@ export const getStandardOptionEditors = () => {
     description: '',
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, fieldColor, statsPicker];
+  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, fieldColor, statsPicker];
 };
