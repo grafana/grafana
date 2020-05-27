@@ -266,8 +266,6 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 	}
 
 	for _, series := range amr.Value[0].Timeseries {
-		//points := []tsdb.TimePoint{}
-
 		metadataName := ""
 		metadataValue := ""
 		if len(series.Metadatavalues) > 0 {
@@ -277,6 +275,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], amr.Value[0].Name.LocalizedValue, metadataName, metadataValue, amr.Namespace, amr.Value[0].ID)
 
 		frame := data.NewFrameOfFieldTypes(query.Alias, len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame.RefID = query.RefID
 		frame.Fields[1].Name = metricName
 		frame.Fields[1].SetConfig(&data.FieldConfig{
 			Unit: amr.Value[0].Unit,
@@ -302,8 +301,6 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			}
 
 			frame.SetRow(i, point.TimeStamp, value)
-
-			//points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.TimeStamp).Unix())*1000))
 		}
 
 		encodedFrame, err := frame.MarshalArrow()
@@ -313,7 +310,6 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 
 		queryRes.Dataframes = append(queryRes.Dataframes, encodedFrame)
 	}
-	queryRes.Meta.Set("unit", amr.Value[0].Unit)
 
 	return nil
 }
