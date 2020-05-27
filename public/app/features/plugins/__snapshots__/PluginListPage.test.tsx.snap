@@ -20,6 +20,7 @@ exports[`Render should render component 1`] = `
       linkButton={
         Object {
           "href": "https://grafana.com/plugins?utm_source=grafana_plugin_list",
+          "target": "_blank",
           "title": "Find more plugins on Grafana.com",
         }
       }
@@ -50,6 +51,7 @@ exports[`Render should render list 1`] = `
       linkButton={
         Object {
           "href": "https://grafana.com/plugins?utm_source=grafana_plugin_list",
+          "target": "_blank",
           "title": "Find more plugins on Grafana.com",
         }
       }

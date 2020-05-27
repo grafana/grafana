@@ -12,7 +12,7 @@ weight = -17
 
 # What's new in Grafana v7.0
 
-This topic includes the release notes for the Grafana v7.0, which is currently in beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.0. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 This major release of Grafana is the next step in our Observability story. It includes powerful new features for manipulating, transforming, and doing math on data. Grafana Enterprise has the first version of Usage analytics, which will help Grafana Admins better manage large, corporate Grafana ecosystems.
 
@@ -144,7 +144,7 @@ Plugins can be monitored with the new metrics and health check capabilities. The
 
 With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
-To learn more, start with the [overview]({{< relref "../developers/plugins/backend/_index.md" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafaba Alerting]({{< relref "../alerting/alerts-overview.md" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
+To learn more, start with the [overview]({{< relref "../developers/plugins/backend/_index.md" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting/alerts-overview.md" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
 
 ## New tutorials
 
