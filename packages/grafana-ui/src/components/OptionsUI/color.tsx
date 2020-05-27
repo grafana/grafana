@@ -1,10 +1,15 @@
 import React from 'react';
-import { FieldConfigEditorProps, ColorFieldConfigSettings, GrafanaTheme } from '@grafana/data';
+import {
+  FieldConfigEditorProps,
+  ColorFieldConfigSettings,
+  GrafanaTheme,
+  getColorFromHexRgbOrName,
+} from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { getTheme, stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { css } from 'emotion';
-import { Input } from '../Input/Input';
+import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
 export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFieldConfigSettings>> = ({
   value,
@@ -14,51 +19,59 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFiel
   const { settings } = item;
   const theme = getTheme();
   const styles = getStyles(theme);
-  let prefix: React.ReactNode = null;
-  let suffix: React.ReactNode = null;
-  if (value && settings.allowUndefined) {
-    suffix = <Icon className={styles.trashIcon} name="trash-alt" onClick={() => onChange(undefined)} />;
-  }
 
-  prefix = (
-    <div className={styles.inputPrefix}>
-      <div className={styles.colorPicker}>
-        <ColorPicker
-          color={value || (item.defaultValue as string) || theme.colors.panelBg}
-          onChange={onChange}
-          enableNamedColors={!settings.disableNamedColors}
-        />
-      </div>
-    </div>
-  );
+  const color = value || (item.defaultValue as string) || theme.colors.panelBg;
 
   return (
-    <div>
-      <Input
-        type="text"
-        value={value || settings.defaultText || 'Pick Color'}
-        onBlur={(v: any) => {
-          console.log('CLICK');
-        }}
-        prefix={prefix}
-        suffix={suffix}
-      />
-    </div>
+    <ColorPicker color={color} onChange={onChange} enableNamedColors={!settings.disableNamedColors}>
+      {({ ref, showColorPicker, hideColorPicker }) => {
+        return (
+          <div className={styles.spot} onBlur={hideColorPicker}>
+            <div className={styles.colorPicker}>
+              <ColorPickerTrigger
+                ref={ref}
+                onClick={showColorPicker}
+                onMouseLeave={hideColorPicker}
+                color={getColorFromHexRgbOrName(color, theme.type)}
+              />
+            </div>
+            <div className={styles.colorText} onClick={showColorPicker}>
+              {value ?? settings.textWhenUndefined ?? 'Pick Color'}
+            </div>
+            {value && settings.allowUndefined && (
+              <Icon className={styles.trashIcon} name="trash-alt" onClick={() => onChange(undefined)} />
+            )}
+          </div>
+        );
+      }}
+    </ColorPicker>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    spot: css`
+      color: ${theme.colors.text};
+      background: ${theme.colors.formInputBg};
+      padding: 3px;
+      border: 1px solid ${theme.colors.formInputBorder};
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      &:hover {
+        border: 1px solid ${theme.colors.formInputBorderHover};
+      }
+    `,
     colorPicker: css`
       padding: 0 ${theme.spacing.sm};
     `,
-    inputPrefix: css`
-      display: flex;
-      align-items: center;
+    colorText: css`
+      cursor: pointer;
+      flex-grow: 1;
     `,
     trashIcon: css`
-      color: ${theme.colors.textWeak};
       cursor: pointer;
+      color: ${theme.colors.textWeak};
       &:hover {
         color: ${theme.colors.text};
       }
