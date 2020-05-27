@@ -649,7 +649,7 @@ describe('AzureMonitorDatasource', () => {
     });
 
     it('should return list of Resource Groups', () => {
-      return ctx.ds.getResourceGroups().then((results: Array<{ text: string; value: string }>) => {
+      return ctx.ds.getResourceGroups('subscriptionId').then((results: Array<{ text: string; value: string }>) => {
         expect(results.length).toEqual(2);
         expect(results[0].text).toEqual('grp1');
         expect(results[0].value).toEqual('grp1');
