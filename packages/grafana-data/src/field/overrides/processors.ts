@@ -1,4 +1,5 @@
 import { DataLink, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
+import isArray from 'lodash/isArray';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
   return value;
@@ -76,6 +77,22 @@ export const stringOverrideProcessor = (
     return context.replaceVariables(value, context.field!.state!.scopedVars);
   }
   return `${value}`;
+};
+
+export const stringArrayOverrideProcessor = (
+  value: any,
+  context: FieldOverrideContext,
+  settings?: StringFieldConfigSettings
+) => {
+  if (value === null || value === undefined) {
+    return value;
+  }
+  if (isArray(value)) {
+    return value.map(v => {
+      return stringOverrideProcessor(v, context, settings);
+    });
+  }
+  return [stringOverrideProcessor(value, context, settings)];
 };
 
 export interface ThresholdsFieldConfigSettings {

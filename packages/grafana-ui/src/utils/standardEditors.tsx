@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
-import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select } from '../components';
+import { NumberValueEditor, RadioButtonGroup, StringValueEditor, StringArrayEditor, Select } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -227,6 +227,13 @@ export const getStandardOptionEditors = () => {
     editor: StringValueEditor as any,
   };
 
+  const strings: StandardEditorsRegistryItem<string[]> = {
+    id: 'strings',
+    name: 'String array',
+    description: 'An array of strings',
+    editor: StringArrayEditor as any,
+  };
+
   const boolean: StandardEditorsRegistryItem<boolean> = {
     id: 'boolean',
     name: 'Boolean',
@@ -292,5 +299,5 @@ export const getStandardOptionEditors = () => {
     description: '',
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker];
+  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker, strings];
 };

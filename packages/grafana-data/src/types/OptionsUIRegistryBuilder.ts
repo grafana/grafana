@@ -72,6 +72,10 @@ export interface OptionsUIRegistryBuilderAPI<
   ): this;
 
   addTextInput?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(
+    config: OptionEditorConfig<TOptions, TSettings, string[]>
+  ): this;
+
+  addStringArray?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(
     config: OptionEditorConfig<TOptions, TSettings, string>
   ): this;
 
