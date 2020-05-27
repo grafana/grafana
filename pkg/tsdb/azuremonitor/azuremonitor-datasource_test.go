@@ -151,18 +151,25 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 	}
 }
 
+func makeDates(startDate time.Time, count int, interval time.Duration) (times []time.Time) {
+	for i := 0; i < count; i++ {
+		times = append(times, startDate.Add(interval*time.Duration(i)))
+	}
+	return
+}
+
 func TestAzureMonitorParseResponse(t *testing.T) {
 	tests := []struct {
-		name              string
-		responseFile      string
-		azureMonitorQuery *AzureMonitorQuery
-		expectedFrames    data.Frames
-		queryIntervalMS   int64
+		name            string
+		responseFile    string
+		mockQuery       *AzureMonitorQuery
+		expectedFrames  data.Frames
+		queryIntervalMS int64
 	}{
 		{
-			name:         "average aggregate time series query",
+			name:         "average aggregate time series response",
 			responseFile: "1-azure-monitor-response-avg.json",
-			azureMonitorQuery: &AzureMonitorQuery{
+			mockQuery: &AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -172,16 +179,129 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil, []time.Time{
-						time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC),
-						time.Date(2019, 2, 8, 10, 14, 0, 0, time.UTC),
-						time.Date(2019, 2, 8, 10, 15, 0, 0, time.UTC),
-						time.Date(2019, 2, 8, 10, 16, 0, 0, time.UTC),
-						time.Date(2019, 2, 8, 10, 17, 0, 0, time.UTC),
-					}),
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("grafana.Percentage CPU", nil, []float64{
 						2.0875, 2.1525, 2.155, 3.6925, 2.44,
 					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+			},
+		},
+		{
+			name:         "total aggregate time series response",
+			responseFile: "2-azure-monitor-response-total.json",
+			mockQuery: &AzureMonitorQuery{
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Total"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
+					data.NewField("grafana.Percentage CPU", nil, []float64{
+						8.26, 8.7, 14.82, 10.07, 8.52,
+					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+			},
+		},
+		{
+			name:         "maximum aggregate time series response",
+			responseFile: "3-azure-monitor-response-maximum.json",
+			mockQuery: &AzureMonitorQuery{
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Maximum"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 14, 26, 0, 0, time.UTC), 5, time.Minute)),
+					data.NewField("grafana.Percentage CPU", nil, []float64{
+						3.07, 2.92, 2.87, 2.27, 2.52,
+					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+			},
+		},
+		{
+			name:         "minimum aggregate time series response",
+			responseFile: "4-azure-monitor-response-minimum.json",
+			mockQuery: &AzureMonitorQuery{
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Minimum"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 14, 43, 0, 0, time.UTC), 5, time.Minute)),
+					data.NewField("grafana.Percentage CPU", nil, []float64{
+						1.51, 2.38, 1.69, 2.27, 1.96,
+					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+			},
+		},
+		{
+			name:         "count aggregate time series response",
+			responseFile: "5-azure-monitor-response-count.json",
+			mockQuery: &AzureMonitorQuery{
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Count"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC), 5, time.Minute)),
+					data.NewField("grafana.Percentage CPU", nil, []float64{
+						4, 4, 4, 4, 4,
+					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+			},
+		},
+		{
+			name:         "multi dimension time series response",
+			responseFile: "6-azure-monitor-response-multi-dimension.json",
+			mockQuery: &AzureMonitorQuery{
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			// Regarding multi-dimensional response:
+			// - It seems they all share the same time index, so maybe can be a wide frame.
+			// - Due to the type for the Azure monitor response, nulls currently become 0.
+			// - blogtype=X should maybe become labels.
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
+					data.NewField("grafana{blobtype=PageBlob}.Blob Count", nil, []float64{
+						3, 3, 3, 3, 3, 0,
+					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
+					data.NewField("grafana{blobtype=BlockBlob}.Blob Count", nil, []float64{
+						1, 1, 1, 1, 1, 0,
+					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
+					data.NewField("grafana{blobtype=Azure Data Lake Storage}.Blob Count", nil, []float64{
+						0, 0, 0, 0, 0, 0,
+					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 			},
 		},
 	}
@@ -193,7 +313,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			azData, err := loadTestFile("azuremonitor/" + tt.responseFile)
 			require.NoError(t, err)
 			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-			err = datasource.parseResponse(res, azData, tt.azureMonitorQuery)
+			err = datasource.parseResponse(res, azData, tt.mockQuery)
 			require.NoError(t, err)
 
 			frames, err := data.UnmarshalArrowFrames(res.Dataframes)
@@ -210,140 +330,6 @@ func TestAzureMonitorDatasource(t *testing.T) {
 
 		Convey("Parse AzureMonitor API response in the time series format", func() {
 			datasource := &AzureMonitorDatasource{}
-
-			Convey("when data from query aggregated as total to one time series", func() {
-				azData, err := loadTestFile("azuremonitor/2-azure-monitor-response-total.json")
-				So(err, ShouldBeNil)
-
-				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &AzureMonitorQuery{
-					UrlComponents: map[string]string{
-						"resourceName": "grafana",
-					},
-					Params: url.Values{
-						"aggregation": {"Total"},
-					},
-				}
-				err = datasource.parseResponse(res, azData, query)
-				So(err, ShouldBeNil)
-
-				So(len(res.Dataframes), ShouldEqual, 1)
-				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
-				So(err, ShouldBeNil)
-				So(len(frames), ShouldEqual, 1)
-				frame := frames[0]
-
-				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC))
-				So(frame.At(1, 0), ShouldEqual, 8.26)
-			})
-
-			Convey("when data from query aggregated as maximum to one time series", func() {
-				azData, err := loadTestFile("azuremonitor/3-azure-monitor-response-maximum.json")
-				So(err, ShouldBeNil)
-
-				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &AzureMonitorQuery{
-					UrlComponents: map[string]string{
-						"resourceName": "grafana",
-					},
-					Params: url.Values{
-						"aggregation": {"Maximum"},
-					},
-				}
-				err = datasource.parseResponse(res, azData, query)
-				So(err, ShouldBeNil)
-
-				So(len(res.Dataframes), ShouldEqual, 1)
-				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
-				So(err, ShouldBeNil)
-				So(len(frames), ShouldEqual, 1)
-				frame := frames[0]
-
-				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 14, 26, 0, 0, time.UTC))
-				So(frame.At(1, 0), ShouldEqual, 3.07)
-			})
-
-			Convey("when data from query aggregated as minimum to one time series", func() {
-				azData, err := loadTestFile("azuremonitor/4-azure-monitor-response-minimum.json")
-				So(err, ShouldBeNil)
-
-				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &AzureMonitorQuery{
-					UrlComponents: map[string]string{
-						"resourceName": "grafana",
-					},
-					Params: url.Values{
-						"aggregation": {"Minimum"},
-					},
-				}
-				err = datasource.parseResponse(res, azData, query)
-				So(err, ShouldBeNil)
-
-				So(len(res.Dataframes), ShouldEqual, 1)
-				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
-				So(err, ShouldBeNil)
-				So(len(frames), ShouldEqual, 1)
-				frame := frames[0]
-
-				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 14, 43, 0, 0, time.UTC))
-				So(frame.At(1, 0), ShouldEqual, 1.51)
-			})
-
-			Convey("when data from query aggregated as Count to one time series", func() {
-				azData, err := loadTestFile("azuremonitor/5-azure-monitor-response-count.json")
-				So(err, ShouldBeNil)
-
-				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &AzureMonitorQuery{
-					UrlComponents: map[string]string{
-						"resourceName": "grafana",
-					},
-					Params: url.Values{
-						"aggregation": {"Count"},
-					},
-				}
-				err = datasource.parseResponse(res, azData, query)
-				So(err, ShouldBeNil)
-
-				So(len(res.Dataframes), ShouldEqual, 1)
-				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
-				So(err, ShouldBeNil)
-				So(len(frames), ShouldEqual, 1)
-				frame := frames[0]
-
-				So(frame.At(0, 0), ShouldEqual, time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC))
-				So(frame.At(1, 0), ShouldEqual, 4)
-			})
-
-			Convey("when data from query aggregated as total and has dimension filter", func() {
-				azData, err := loadTestFile("azuremonitor/6-azure-monitor-response-multi-dimension.json")
-				So(err, ShouldBeNil)
-
-				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &AzureMonitorQuery{
-					UrlComponents: map[string]string{
-						"resourceName": "grafana",
-					},
-					Params: url.Values{
-						"aggregation": {"Average"},
-					},
-				}
-				err = datasource.parseResponse(res, azData, query)
-				So(err, ShouldBeNil)
-				So(len(res.Dataframes), ShouldEqual, 3)
-
-				frames, err := data.UnmarshalArrowFrames(res.Dataframes)
-				So(err, ShouldBeNil)
-
-				So(frames[0].Fields[1].Name, ShouldEqual, "grafana{blobtype=PageBlob}.Blob Count")
-				So(frames[0].At(1, 0), ShouldEqual, 3)
-
-				So(frames[1].Fields[1].Name, ShouldEqual, "grafana{blobtype=BlockBlob}.Blob Count")
-				So(frames[1].At(1, 0), ShouldEqual, 1)
-
-				So(frames[2].Fields[1].Name, ShouldEqual, "grafana{blobtype=Azure Data Lake Storage}.Blob Count")
-				So(frames[2].At(1, 0), ShouldEqual, 0)
-			})
 
 			Convey("when data from query has alias patterns", func() {
 				azData, err := loadTestFile("azuremonitor/2-azure-monitor-response-total.json")
