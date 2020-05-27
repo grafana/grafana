@@ -27,7 +27,7 @@ import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
-import { ColorValueEditor } from '../components/OptionsUI/color';
+import { FieldColorEditor } from '../components/OptionsUI/fieldColor';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
 
 /**
@@ -198,8 +198,8 @@ export const getStandardFieldConfigs = () => {
     path: 'color',
     name: 'Color',
     description: 'Define how field/series color is determined',
-    editor: standardEditorsRegistry.get('color').editor as any,
-    override: standardEditorsRegistry.get('color').editor as any,
+    editor: standardEditorsRegistry.get('fieldColor').editor as any,
+    override: standardEditorsRegistry.get('fieldColor').editor as any,
     process: identityOverrideProcessor,
     shouldApply: () => true,
     category,
@@ -270,11 +270,11 @@ export const getStandardOptionEditors = () => {
     editor: ValueMappingsValueEditor as any,
   };
 
-  const color: StandardEditorsRegistryItem<string> = {
-    id: 'color',
-    name: 'Color',
-    description: 'Allows color selection',
-    editor: ColorValueEditor as any,
+  const fieldColor: StandardEditorsRegistryItem<FieldColor> = {
+    id: 'fieldColor',
+    name: 'Field Color',
+    description: 'Field color selection',
+    editor: FieldColorEditor as any,
   };
 
   const links: StandardEditorsRegistryItem<DataLink[]> = {
@@ -291,5 +291,5 @@ export const getStandardOptionEditors = () => {
     description: '',
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker];
+  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, fieldColor, statsPicker];
 };
