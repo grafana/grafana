@@ -30,37 +30,19 @@ const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
 describe('optionsPickerReducer', () => {
   describe('when toggleOption is dispatched', () => {
     const opsAll = [
-      { text: 'All', value: '$__all', selected: true },
+      { text: '$__all', value: '$__all', selected: true },
       { text: 'A', value: 'A', selected: false },
       { text: 'B', value: 'B', selected: false },
     ];
     const opsA = [
-      { text: 'All', value: '$__all', selected: false },
+      { text: '$__all', value: '$__all', selected: false },
       { text: 'A', value: 'A', selected: true },
       { text: 'B', value: 'B', selected: false },
     ];
-    const opsB = [
-      { text: 'All', value: '$__all', selected: false },
-      { text: 'A', value: 'A', selected: false },
-      { text: 'B', value: 'B', selected: true },
-    ];
     const opsAB = [
-      { text: 'All', value: '$__all', selected: false },
+      { text: '$__all', value: '$__all', selected: false },
       { text: 'A', value: 'A', selected: true },
       { text: 'B', value: 'B', selected: true },
-    ];
-
-    const opA = { text: 'A', selected: true, value: 'A' };
-    const opASel = [{ text: 'A', value: 'A', selected: true }];
-    const opBSel = [{ text: 'B', value: 'B', selected: true }];
-    const opAllSel = [{ text: 'All', value: '$__all', selected: true }];
-    const opABSel = [
-      { text: 'A', value: 'A', selected: true },
-      { text: 'B', value: 'B', selected: true },
-    ];
-    const opBASel = [
-      { text: 'B', value: 'B', selected: true },
-      { text: 'A', value: 'A', selected: true },
     ];
 
     const expectToggleOptionState = (args: {
@@ -69,113 +51,114 @@ describe('optionsPickerReducer', () => {
       forceSelect: any;
       clearOthers: any;
       option: any;
-      expOps: any;
-      expSel: any;
+      expectSelected: any;
     }) => {
       const { initialState } = getVariableTestContext({
         options: args.options,
         multi: args.multi,
         selectedValues: args.options.filter((o: any) => o.selected),
       });
-      const payload = { forceSelect: args.forceSelect, clearOthers: args.clearOthers, option: args.option };
+      const payload = {
+        forceSelect: args.forceSelect,
+        clearOthers: args.clearOthers,
+        option: { text: args.option, value: args.option, selected: true },
+      };
+      const expectedAsRecord: any = args.expectSelected.reduce((all: any, current: any) => {
+        all[current] = current;
+        return all;
+      }, {});
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
         .whenActionIsDispatched(toggleOption(payload))
         .thenStateShouldEqual({
           ...initialState,
-          selectedValues: args.expSel,
-          options: args.expOps,
+          selectedValues: args.expectSelected.map((value: any) => ({ value, text: value, selected: true })),
+          options: args.options.map((option: any) => {
+            return { ...option, selected: !!expectedAsRecord[option.value] };
+          }),
         });
     };
 
     describe('toggleOption for multi value variable', () => {
       const multi = true;
-      describe('and options with All selected', () => {
+      describe('and value All is selected in options', () => {
         const options = opsAll;
         it.each`
-          option | forceSelect | clearOthers | expOps  | expSel
-          ${opA} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsA} | ${opASel}
+          option      | forceSelect | clearOthers | expectSelected
+          ${'A'}      | ${true}     | ${false}    | ${['A']}
+          ${'A'}      | ${false}    | ${false}    | ${['A']}
+          ${'A'}      | ${true}     | ${true}     | ${['A']}
+          ${'A'}      | ${false}    | ${true}     | ${['A']}
+          ${'B'}      | ${true}     | ${false}    | ${['B']}
+          ${'B'}      | ${false}    | ${false}    | ${['B']}
+          ${'B'}      | ${true}     | ${true}     | ${['B']}
+          ${'B'}      | ${false}    | ${true}     | ${['B']}
+          ${'$__all'} | ${true}     | ${false}    | ${['$__all']}
+          ${'$__all'} | ${false}    | ${false}    | ${['$__all']}
+          ${'$__all'} | ${true}     | ${true}     | ${['$__all']}
+          ${'$__all'} | ${false}    | ${true}     | ${['$__all']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
-      describe('and options with A selected', () => {
+      describe('and value A is selected in options', () => {
         const options = opsA;
         it.each`
-          option | forceSelect | clearOthers | expOps    | expSel
-          ${opA} | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
-          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expectSelected
+          ${'A'} | ${true}     | ${false}    | ${['A']}
+          ${'A'} | ${false}    | ${false}    | ${['$__all']}
+          ${'A'} | ${true}     | ${true}     | ${['A']}
+          ${'A'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${true}     | ${['B']}
+          ${'B'} | ${false}    | ${true}     | ${['B']}
+          ${'B'} | ${true}     | ${false}    | ${['A', 'B']}
+          ${'B'} | ${false}    | ${false}    | ${['A', 'B']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
-      describe('and options with B selected', () => {
-        const options = opsB;
-        it.each`
-          option | forceSelect | clearOthers | expOps   | expSel
-          ${opA} | ${true}     | ${false}    | ${opsAB} | ${opBASel}
-          ${opA} | ${false}    | ${false}    | ${opsAB} | ${opBASel}
-          ${opA} | ${true}     | ${true}     | ${opsA}  | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsA}  | ${opASel}
-        `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectToggleOptionState({
-              options,
-              multi,
-              option,
-              clearOthers,
-              forceSelect,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with A + B selected', () => {
+
+      describe('and values A + B is selected in options', () => {
         const options = opsAB;
         it.each`
-          option | forceSelect | clearOthers | expOps    | expSel
-          ${opA} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opA} | ${false}    | ${false}    | ${opsB}   | ${opBSel}
-          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expectSelected
+          ${'A'} | ${true}     | ${false}    | ${['A', 'B']}
+          ${'A'} | ${false}    | ${false}    | ${['B']}
+          ${'A'} | ${true}     | ${true}     | ${['A']}
+          ${'A'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${true}     | ${['B']}
+          ${'B'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${false}    | ${['A', 'B']}
+          ${'B'} | ${false}    | ${false}    | ${['A']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
@@ -183,69 +166,57 @@ describe('optionsPickerReducer', () => {
 
     describe('toggleOption for single value variable', () => {
       const multi = false;
-      describe('and options with All selected', () => {
+      describe('and value All is selected in options', () => {
         const options = opsAll;
         it.each`
-          option | forceSelect | clearOthers | expOps  | expSel
-          ${opA} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsA} | ${opASel}
+          option      | forceSelect | clearOthers | expectSelected
+          ${'A'}      | ${true}     | ${false}    | ${['A']}
+          ${'A'}      | ${false}    | ${false}    | ${['A']}
+          ${'A'}      | ${true}     | ${true}     | ${['A']}
+          ${'A'}      | ${false}    | ${true}     | ${['A']}
+          ${'B'}      | ${true}     | ${false}    | ${['B']}
+          ${'B'}      | ${false}    | ${false}    | ${['B']}
+          ${'B'}      | ${true}     | ${true}     | ${['B']}
+          ${'B'}      | ${false}    | ${true}     | ${['B']}
+          ${'$__all'} | ${true}     | ${false}    | ${['$__all']}
+          ${'$__all'} | ${false}    | ${false}    | ${['$__all']}
+          ${'$__all'} | ${true}     | ${true}     | ${['$__all']}
+          ${'$__all'} | ${false}    | ${true}     | ${['$__all']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
-      describe('and options with A selected', () => {
+      describe('and value A is selected in options', () => {
         const options = opsA;
         it.each`
-          option | forceSelect | clearOthers | expOps    | expSel
-          ${opA} | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
-          ${opA} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expectSelected
+          ${'A'} | ${true}     | ${false}    | ${['A']}
+          ${'A'} | ${false}    | ${false}    | ${['$__all']}
+          ${'A'} | ${true}     | ${true}     | ${['A']}
+          ${'A'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${false}    | ${['B']}
+          ${'B'} | ${false}    | ${false}    | ${['B']}
+          ${'B'} | ${true}     | ${true}     | ${['B']}
+          ${'B'} | ${false}    | ${true}     | ${['B']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with B selected', () => {
-        const options = opsB;
-        it.each`
-          option | forceSelect | clearOthers | expOps  | expSel
-          ${opA} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA} | ${false}    | ${true}     | ${opsA} | ${opASel}
-        `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectToggleOptionState({
-              options,
-              multi,
-              option,
-              clearOthers,
-              forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
