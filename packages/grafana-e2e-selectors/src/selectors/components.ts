@@ -125,7 +125,11 @@ export const Components = {
   FolderPicker: {
     container: 'Folder picker select container',
   },
+  DataSourcePicker: {
+    container: 'Data source picker select container',
+  },
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  QueryField: { container: 'Query field' },
 };

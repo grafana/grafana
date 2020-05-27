@@ -3222,6 +3222,28 @@
     js-yaml "~3.13.1"
     resolve "1.8.1"
 
+"@grafana/data@7.0.0", "@grafana/data@next":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-7.0.0.tgz#89dff54c6a9bf21536beb21e2882880572a84837"
+  integrity sha512-02PxXuzGYf0oAHCwqYn5V4oaN9j/UwAJ9d+zxRe9XJNIPymRhJ+IjK1JoumDekvXn+pJwDH5yMIvSkPsfKynyQ==
+  dependencies:
+    "@braintree/sanitize-url" "4.0.0"
+    apache-arrow "0.16.0"
+    lodash "4.17.15"
+    rxjs "6.5.5"
+    xss "1.0.6"
+
+"@grafana/e2e-selectors@7.0.0":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@grafana/e2e-selectors/-/e2e-selectors-7.0.0.tgz#0f19014390fb8d60fcda23ecec2946ab962e8c27"
+  integrity sha512-gm7WZ9AvkGv/K83z/1+X13ibjNwis0fPM1LT/iJhmN/IYB/+/FydDE+uZSBFYRckZpCXMIaoBWMFgFGBtZxneg==
+  dependencies:
+    "@grafana/tsconfig" "^1.0.0-rc1"
+    commander "5.0.0"
+    execa "4.0.0"
+    typescript "3.7.5"
+    yaml "^1.8.3"
+
 "@grafana/eslint-config@^1.0.0-rc1":
   version "1.0.0-rc1"
   resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-1.0.0-rc1.tgz#3b0a1abddfea900a57abc9526ad31abb1da2d42c"
@@ -3253,6 +3275,53 @@
   version "1.0.0-rc1"
   resolved "https://registry.yarnpkg.com/@grafana/tsconfig/-/tsconfig-1.0.0-rc1.tgz#d07ea16755a50cae21000113f30546b61647a200"
   integrity sha512-nucKPGyzlSKYSiJk5RA8GzMdVWhdYNdF+Hh65AXxjD9PlY69JKr5wANj8bVdQboag6dgg0BFKqgKPyY+YtV4Iw==
+
+"@grafana/ui@next":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@grafana/ui/-/ui-7.0.0.tgz#9e434adc4eb3806e560ede3524803113db64621e"
+  integrity sha512-b5BMXCjpitKn6OtF0G3rHq0ZhuOl14wXeyPNxBXhw98f62usJfhSLZOZ4w6h4y1sMY70zHnL8tyM23SB2KJ3/w==
+  dependencies:
+    "@emotion/core" "^10.0.27"
+    "@grafana/data" "7.0.0"
+    "@grafana/e2e-selectors" "7.0.0"
+    "@grafana/slate-react" "0.22.9-grafana"
+    "@grafana/tsconfig" "^1.0.0-rc1"
+    "@iconscout/react-unicons" "^1.0.0"
+    "@torkelo/react-select" "3.0.8"
+    "@types/react-beautiful-dnd" "12.1.2"
+    "@types/react-color" "3.0.1"
+    "@types/react-select" "3.0.8"
+    "@types/react-table" "7.0.12"
+    "@types/slate" "0.47.1"
+    "@types/slate-react" "0.22.5"
+    bizcharts "^3.5.8"
+    classnames "2.2.6"
+    d3 "5.15.0"
+    emotion "10.0.27"
+    immutable "3.8.2"
+    jquery "3.4.1"
+    lodash "4.17.15"
+    moment "2.24.0"
+    papaparse "4.6.3"
+    rc-cascader "1.0.1"
+    rc-drawer "3.1.3"
+    rc-slider "8.7.1"
+    rc-time-picker "^3.7.3"
+    react "16.12.0"
+    react-beautiful-dnd "13.0.0"
+    react-calendar "2.19.2"
+    react-color "2.18.0"
+    react-custom-scrollbars "4.2.1"
+    react-dom "16.12.0"
+    react-highlight-words "0.16.0"
+    react-hook-form "5.1.3"
+    react-popper "1.3.3"
+    react-storybook-addon-props-combinations "1.1.0"
+    react-table "7.0.0"
+    react-transition-group "4.3.0"
+    slate "0.47.8"
+    storybook-dark-mode "0.4.0"
+    tinycolor2 "1.4.1"
 
 "@icons/material@^0.2.4":
   version "0.2.4"
@@ -4236,6 +4305,11 @@
   resolved "https://registry.yarnpkg.com/@microsoft/tsdoc/-/tsdoc-0.12.14.tgz#0e0810a0a174e50e22dfe8edb30599840712f22d"
   integrity sha512-518yewjSga1jLdiLrcmpMFlaba5P+50b0TWNFUpC+SL9Yzf0kMi57qw+bMl+rQ08cGqH1vLx4eg9YFUbZXgZ0Q==
 
+"@mochajs/json-file-reporter@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@mochajs/json-file-reporter/-/json-file-reporter-1.2.0.tgz#036917c90c0291dab5dd4e14323da813108295c8"
+  integrity sha512-uAxHLKG+x0qkYnyQRBoHhXJCF7r2BS87Sdz3VKj19QB6Cxjs25yjIgO4X0PJpfa6CawA4BST+V2Q6y9iiNrWqg==
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
@@ -5055,6 +5129,11 @@
   version "1.6.56"
   resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.56.tgz#20124077bd44061e018c7283c0bb83f4b00322dd"
   integrity sha512-HxtqilvklZ7i6XOaiP7uIJIrFXEVEhfbSY45nfv2DeBRngncI58Y4ZOUMiUkcT8sqgLL1ablmbfylChUg7A3GA==
+
+"@types/antlr4@^4.7.1":
+  version "4.7.1"
+  resolved "https://registry.yarnpkg.com/@types/antlr4/-/antlr4-4.7.1.tgz#09a8f985e29149c73e92b161d08691a1fd8425ef"
+  integrity sha512-mjQv+WtdJnwI5qhNh5yJkZ9rVFdRClUyaO5KebaLSJFHT6uSyDLAK9jUke4zLKZXk6vQQ/QJN2j7QV2q7l5Slw==
 
 "@types/anymatch@*":
   version "1.3.1"
@@ -7049,6 +7128,11 @@ ansi-to-html@^0.6.11:
   integrity sha512-qBkIqLW979675mP76yB7yVkzeAWtATegdnDQ0RA3CZzknx0yUlNxMSML4xFdBfTs2GWYFQ1FELfbGbVSPzJ+LA==
   dependencies:
     entities "^1.1.2"
+
+antlr4@^4.8.0:
+  version "4.8.0"
+  resolved "https://registry.yarnpkg.com/antlr4/-/antlr4-4.8.0.tgz#f938ec171be7fc2855cd3a533e87647185b32b6a"
+  integrity sha512-en/MxQ4OkPgGJQ3wD/muzj1uDnFSzdFIhc2+c6bHZokWkuBb6RRvFjpWhPxWLbgQvaEzldJZ0GSQpfSAaE3hqg==
 
 any-observable@^0.3.0:
   version "0.3.0"
@@ -21734,6 +21818,13 @@ resize-observer-polyfill@^1.5.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/resize-observer-polyfill/-/resize-observer-polyfill-1.5.1.tgz#0e9020dd3d21024458d4ebd27e23e40269810464"
   integrity sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==
+
+resolve-as-bin@2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/resolve-as-bin/-/resolve-as-bin-2.1.0.tgz#25638f52e13203eae97125ab26f54082ab98c6e1"
+  integrity sha512-ileUuPIOP+xj+GS/d/EbB2XqRA8T2IeZTFkMggNIW2Mo72VyBMbq+HvIAxdW0ED9D44aEzJwHvUtbMm2PJT5Kw==
+  dependencies:
+    cross-spawn "^6.0.5"
 
 resolve-cwd@^2.0.0:
   version "2.0.0"
