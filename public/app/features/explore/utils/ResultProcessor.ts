@@ -51,12 +51,15 @@ export class ResultProcessor {
     }
 
     const onlyTables = this.dataFrames
-      .filter(frame => shouldShowInVisualisationType(frame, 'table'))
-      .sort((frameA, frameB) => {
-        if (frameA.refId > frameB.refId) {
+      .filter((frame: DataFrame) => shouldShowInVisualisationType(frame, 'table'))
+      .sort((frameA: DataFrame, frameB: DataFrame) => {
+        const frameARefId = frameA.refId!;
+        const frameBRefId = frameB.refId!;
+
+        if (frameARefId > frameBRefId) {
           return 1;
         }
-        if (frameA.refId < frameB.refId) {
+        if (frameARefId < frameBRefId) {
           return -1;
         }
         return 0;
