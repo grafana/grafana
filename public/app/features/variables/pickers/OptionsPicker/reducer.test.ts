@@ -27,8 +27,6 @@ const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
   };
 };
 
-const createOption = (value: string, selected = false) => ({ text: value, value, selected });
-
 describe('optionsPickerReducer', () => {
   describe('when toggleOption is dispatched', () => {
     const opsAll = [
@@ -251,6 +249,35 @@ describe('optionsPickerReducer', () => {
             })
         );
       });
+    });
+  });
+
+  describe('when showOptions is dispatched', () => {
+    it('then correct values should be selected', () => {
+      const { initialState } = getVariableTestContext({});
+      const payload = {
+        type: 'query',
+        query: '',
+        options: [
+          { text: 'All', value: '$__all', selected: false },
+          { text: 'A', value: 'A', selected: false },
+          { text: 'B', value: 'B', selected: true },
+        ],
+        multi: false,
+        id: '0',
+      } as QueryVariableModel;
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(showOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: payload.options,
+          id: payload.id!,
+          multi: payload.multi,
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: '',
+        });
     });
   });
 
@@ -535,12 +562,14 @@ describe('optionsPickerReducer', () => {
   });
 
   describe('when toggleAllOptions is dispatched', () => {
-    it('then state should be correct', () => {
+    it('should toggle all values to true', () => {
       const { initialState } = getVariableTestContext({
         options: [
+          { text: 'All', value: '$__all', selected: false },
           { text: 'A', value: 'A', selected: false },
           { text: 'B', value: 'B', selected: false },
         ],
+        selectedValues: [],
         multi: true,
       });
 
@@ -550,13 +579,65 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: [
+            { text: 'All', value: '$__all', selected: true },
             { text: 'A', value: 'A', selected: true },
             { text: 'B', value: 'B', selected: true },
           ],
           selectedValues: [
+            { text: 'All', value: '$__all', selected: true },
             { text: 'A', value: 'A', selected: true },
             { text: 'B', value: 'B', selected: true },
           ],
+        });
+    });
+
+    it('should toggle all values to false when $_all is selected', () => {
+      const { initialState } = getVariableTestContext({
+        options: [
+          { text: 'All', value: '$__all', selected: true },
+          { text: 'A', value: 'A', selected: false },
+          { text: 'B', value: 'B', selected: false },
+        ],
+        selectedValues: [{ text: 'All', value: '$__all', selected: true }],
+        multi: true,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleAllOptions())
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: false },
+          ],
+          selectedValues: [],
+        });
+    });
+
+    it('should toggle all values to false when a option is selected', () => {
+      const { initialState } = getVariableTestContext({
+        options: [
+          { text: 'All', value: '$__all', selected: false },
+          { text: 'A', value: 'A', selected: false },
+          { text: 'B', value: 'B', selected: true },
+        ],
+        selectedValues: [{ text: 'B', value: 'B', selected: true }],
+        multi: true,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleAllOptions())
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: false },
+          ],
+          selectedValues: [],
         });
     });
   });
