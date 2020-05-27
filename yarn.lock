@@ -23258,6 +23258,14 @@ storybook-dark-mode@0.4.0:
     fast-deep-equal "^3.0.0"
     memoizerific "^1.11.3"
 
+storybook-dark-mode@0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/storybook-dark-mode/-/storybook-dark-mode-0.6.1.tgz#0527567ac5853c49f6f7a6f68f792fe9322c5a5a"
+  integrity sha512-E8LIHnVfFhOsPqBc2fLshVBnspziYMXHdwQc/qAjpf4h5ewzrDzeqy4QfJioE+jDoyyZXEtIMugzb0wIaK10Uw==
+  dependencies:
+    fast-deep-equal "^3.0.0"
+    memoizerific "^1.11.3"
+
 stream-browserify@^2.0.1:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/stream-browserify/-/stream-browserify-2.0.2.tgz#87521d38a44aa7ee91ce1cd2a47df0cb49dd660b"
