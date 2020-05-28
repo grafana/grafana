@@ -42,19 +42,22 @@ func init() {
 		Options: []alerting.Option{
 			{
 				Label:       "Url",
-				Type:        "input",
+				Element:     "input",
+				ElementType: "text",
 				Placeholder: "http://localhost:9093",
 				ModelValue:  "url",
 			},
 			{
 				Label:       "Basic Auth User",
-				Type:        "input",
+				Element:     "input",
+				ElementType: "text",
 				Placeholder: "",
 				ModelValue:  "basicAuthUser",
 			},
 			{
 				Label:       "Basic Auth Password",
-				Type:        "input",
+				Element:     "input",
+				ElementType: "password",
 				Placeholder: "",
 				ModelValue:  "basicAuthPassword",
 			},

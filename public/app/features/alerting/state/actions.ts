@@ -1,9 +1,9 @@
 import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { AlertRuleDTO, ThunkResult } from 'app/types';
+import { AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
-import { loadAlertRules, loadedAlertRules } from './reducers';
+import { loadAlertRules, loadedAlertRules, setNotificationChannels } from './reducers';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async dispatch => {
@@ -32,5 +32,28 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
       .catch(error => {
         appEvents.emit(AppEvents.alertError, [error.data.error]);
       });
+  };
+}
+
+export function loadNotificationTypes(): ThunkResult<void> {
+  return async dispatch => {
+    const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers`);
+
+    const notificationTypes = alertNotifiers
+      .map((option: NotifierDTO) => {
+        return {
+          value: `notifier-options-${option.type}`,
+          label: option.name,
+          ...option,
+        };
+      })
+      .sort((o1, o2) => {
+        if (o1.name > o2.name) {
+          return 1;
+        }
+        return -1;
+      });
+
+    dispatch(setNotificationChannels(notificationTypes));
   };
 }

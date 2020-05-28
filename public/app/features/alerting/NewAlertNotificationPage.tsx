@@ -1,139 +1,69 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { AsyncSelect, Button, Field, Form, HorizontalGroup, Input, InputControl, Switch } from '@grafana/ui';
+import { Form } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from '../../types';
-import { createNotificationChannel } from './state/actions';
-import { getBackendSrv } from '@grafana/runtime';
-
-type OptionSwitch = { label: string; name: string; description: string };
-const switches: OptionSwitch[] = [
-  {
-    label: 'Default',
-    description: 'Use this notification for all alerts',
-    name: 'isDefault',
-  },
-  {
-    label: 'Include image',
-    description: 'Captures an image and include it in the notification',
-    name: 'uploadImage',
-  },
-  {
-    label: 'Disable Resolve Message',
-    description: 'Disable the resolve message [OK] that is sent when alerting state returns to false',
-    name: 'disableResolveMessage',
-  },
-  {
-    label: 'Send reminders',
-    description: 'Send additional notifications for triggered alerts',
-    name: 'sendReminder',
-  },
-];
-
-type NotifierType =
-  | 'discord'
-  | 'hipchat'
-  | 'email'
-  | 'sensu'
-  | 'googlechat'
-  | 'threema'
-  | 'teams'
-  | 'slack'
-  | 'pagerduty'
-  | 'prometheus-alertmanager'
-  | 'telegram'
-  | 'opsgenie'
-  | 'dingding'
-  | 'webhook'
-  | 'victorops'
-  | 'pushover'
-  | 'LINE'
-  | 'kafka';
-
-interface Notifier {
-  name: string;
-  description: string;
-  optionsTemplate: string;
-  type: NotifierType;
-}
+import { createNotificationChannel, loadNotificationTypes } from './state/actions';
+import { NotificationChannel, StoreState } from '../../types';
+import { NewNotificationChannelForm } from './components/NewNotificationChannelForm';
 
 interface OwnProps {}
 
 interface ConnectedProps {
   navModel: NavModel;
+  notificationChannels: NotificationChannel[];
 }
 
 interface DispatchProps {
   createNotificationChannel: typeof createNotificationChannel;
+  loadNotificationTypes: typeof loadNotificationTypes;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class NewAlertNotificationPage extends PureComponent<Props> {
+  componentDidMount() {
+    this.props.loadNotificationTypes();
+  }
+
   onSubmit = (data: any) => {
     this.props.createNotificationChannel(data);
   };
 
-  loadTypeOptions = async () => {
-    console.log('loadoptions');
-    const typeOptions: Notifier[] = await getBackendSrv().get(`/api/alert-notifiers`);
-
-    return typeOptions.map((option: Notifier) => {
+  render() {
+    const { navModel, notificationChannels } = this.props;
+    const selectableChannels = notificationChannels.map(channel => {
       return {
-        value: `notifier-options-${option.type}`,
-        label: option.name,
-        description: option.description,
+        value: channel.value,
+        label: channel.label,
+        description: channel.description,
       };
     });
-  };
-
-  render() {
-    const { navModel } = this.props;
 
     return (
       <Page navModel={navModel}>
         <Page.Contents>
           <h2>New Notification Channel</h2>
           <Form onSubmit={this.onSubmit} validateOn="onChange">
-            {({ register, errors, control, getValues }) => (
-              <>
-                <Field label="Name" invalid={!!errors.name} error={errors.name}>
-                  <Input name="name" ref={register({ required: 'Name is required' })} />
-                </Field>
-                <Field label="Type">
-                  <InputControl
-                    name="type"
-                    as={AsyncSelect}
-                    defaultOptions
-                    loadOptions={this.loadTypeOptions}
-                    control={control}
-                    rules={{ required: true }}
-                    noOptionsMessage="No types found"
-                  />
-                </Field>
-                {switches.map((item: OptionSwitch, index: number) => {
-                  return (
-                    <Field label={item.label} description={item.description} key={`${item.name}-${index}`}>
-                      <Switch name={item.name} ref={register} />
-                    </Field>
-                  );
-                })}
-                {}
-                <HorizontalGroup>
-                  <Button type="submit" onClick={this.onSubmit}>
-                    Save
-                  </Button>
-                  <Button type="button" variant="secondary">
-                    Test
-                  </Button>
-                  <Button type="button" variant="secondary">
-                    Back
-                  </Button>
-                </HorizontalGroup>
-              </>
-            )}
+            {({ register, errors, control, getValues, watch }) => {
+              const selectedChannel =
+                getValues().type && notificationChannels.find(c => c.value === getValues().type.value);
+
+              console.log(selectedChannel);
+              return (
+                <NewNotificationChannelForm
+                  selectableChannels={selectableChannels}
+                  selectedChannel={selectedChannel}
+                  onSubmit={this.onSubmit}
+                  register={register}
+                  errors={errors}
+                  getValues={getValues}
+                  control={control}
+                  watch={watch}
+                />
+              );
+            }}
           </Form>
         </Page.Contents>
       </Page>
@@ -144,11 +74,13 @@ class NewAlertNotificationPage extends PureComponent<Props> {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   return {
     navModel: getNavModel(state.navIndex, 'channels'),
+    notificationChannels: state.alertRules.notificationChannels,
   };
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   createNotificationChannel,
+  loadNotificationTypes,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(NewAlertNotificationPage);

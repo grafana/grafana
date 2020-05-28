@@ -42,20 +42,23 @@ func init() {
 		Options: []alerting.Option{
 			{
 				Label:       "Hip Chat Url",
-				Type:        "input",
+				Element:     "input",
+				ElementType: "text",
 				Placeholder: "HipChat URL (ex https://grafana.hipchat.com)",
 				ModelValue:  "url",
 			},
 			{
 				Label:       "API Key",
-				Type:        "input",
+				Element:     "input",
+				ElementType: "text",
 				Placeholder: "HipChat API Key",
 				ModelValue:  "apiKey",
 			},
 			{
-				Label:      "Room ID",
-				Type:       "input",
-				ModelValue: "roomid",
+				Label:       "Room ID",
+				Element:     "input",
+				ElementType: "text",
+				ModelValue:  "roomid",
 			},
 		},
 	})

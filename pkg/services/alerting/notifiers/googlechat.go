@@ -19,6 +19,7 @@ func init() {
 		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message " +
 			"format (https://developers.google.com/hangouts/chat/reference/message-formats/).",
 		Factory: newGoogleChatNotifier,
+		Heading: "Google Hangouts Chat settings",
 		OptionsTemplate: `
       <h3 class="page-heading">Google Hangouts Chat settings</h3>
       <div class="gf-form max-width-30">
@@ -26,6 +27,15 @@ func init() {
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Google Hangouts Chat incoming webhook url"></input>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Url",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "Google Hangouts Chat incoming webhook url",
+				ModelValue:  "url",
+			},
+		},
 	})
 }
 

@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+
 export interface AlertRuleDTO {
   id: number;
   dashboardId: number;
@@ -33,10 +35,59 @@ export interface AlertRule {
   evalData?: { noData?: boolean; evalMatches?: any };
 }
 
+export type NotifierType =
+  | 'discord'
+  | 'hipchat'
+  | 'email'
+  | 'sensu'
+  | 'googlechat'
+  | 'threema'
+  | 'teams'
+  | 'slack'
+  | 'pagerduty'
+  | 'prometheus-alertmanager'
+  | 'telegram'
+  | 'opsgenie'
+  | 'dingding'
+  | 'webhook'
+  | 'victorops'
+  | 'pushover'
+  | 'LINE'
+  | 'kafka';
+
+export interface NotifierDTO {
+  name: string;
+  description: string;
+  optionsTemplate: string;
+  type: NotifierType;
+  heading: string;
+  options: Option[];
+}
+
+export interface NotificationChannel {
+  value: string;
+  label: string;
+  description: string;
+  type: NotifierType;
+  heading: string;
+  options: Option[];
+}
+
+export interface Option {
+  element: 'input' | 'select' | 'switch' | 'textarea';
+  elementType: string;
+  label: string;
+  description: string;
+  placeholder: string;
+  modelValue: string;
+  selectOptions: Array<SelectableValue<string>>;
+}
+
 export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
   isLoading: boolean;
+  notificationChannels: NotificationChannel[];
 }
 
 export interface AlertNotification {

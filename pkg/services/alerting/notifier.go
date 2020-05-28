@@ -32,10 +32,18 @@ type NotifierPlugin struct {
 }
 
 type Option struct {
-	Type        string
-	Label       string
-	Placeholder string
-	ModelValue  string
+	Element       string         `json:"element"`
+	ElementType   string         `json:"elementType"`
+	Label         string         `json:"label"`
+	Description   string         `json:"description"`
+	Placeholder   string         `json:"placeholder"`
+	ModelValue    string         `json:"modelValue"`
+	SelectOptions []SelectOption `json:"selectOptions"`
+}
+
+type SelectOption struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
 }
 
 func newNotificationService(renderService rendering.Service) *notificationService {

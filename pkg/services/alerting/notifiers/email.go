@@ -18,6 +18,7 @@ func init() {
 		Name:        "Email",
 		Description: "Sends notifications using Grafana server configured SMTP settings",
 		Factory:     NewEmailNotifier,
+		Heading:     "Email settings",
 		OptionsTemplate: `
 			<h3 class="page-heading">Email settings</h3>
 			<div class="gf-form">
@@ -39,6 +40,20 @@ func init() {
 				<span>You can enter multiple email addresses using a ";" separator</span>
 			</div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Single email",
+				Description: "Send a single email to all recipients",
+				Element:     "switch",
+				ModelValue:  "singleEmail",
+			},
+			{
+				Label:       "Addresses",
+				Description: "You can enter multiple email addresses using a \";\" separator",
+				Element:     "textarea",
+				ModelValue:  "addresses",
+			},
+		},
 	})
 }
 

@@ -22,6 +22,7 @@ func init() {
 		Name:        "Discord",
 		Description: "Sends notifications to Discord",
 		Factory:     newDiscordNotifier,
+		Heading:     "Discord settings",
 		OptionsTemplate: `
       <h3 class="page-heading">Discord settings</h3>
       <div class="gf-form max-width-30">
@@ -40,6 +41,22 @@ func init() {
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Message Content",
+				Description: "Mention a group using @ or a user using <@ID> when notifying in a channel",
+				Element:     "input",
+				ElementType: "text",
+				ModelValue:  "content",
+			},
+			{
+				Label:       "Webhook URL",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "Discord webhook URL",
+				ModelValue:  "url",
+			},
+		},
 	})
 }
 
