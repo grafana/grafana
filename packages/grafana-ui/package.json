@@ -66,7 +66,6 @@
     "react-table": "7.0.0",
     "react-transition-group": "4.3.0",
     "slate": "0.47.8",
-    "storybook-dark-mode": "0.4.0",
     "tinycolor2": "1.4.1"
   },
   "devDependencies": {
@@ -104,7 +103,7 @@
     "rollup-plugin-terser": "5.3.0",
     "rollup-plugin-typescript2": "0.26.0",
     "rollup-plugin-visualizer": "3.3.1",
-    "storybook-dark-mode": "0.3.1",
+    "storybook-dark-mode": "0.6.1",
     "ts-loader": "6.2.1",
     "typescript": "3.7.5"
   },
