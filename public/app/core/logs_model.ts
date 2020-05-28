@@ -206,26 +206,8 @@ export function dataFrameToLogsModel(
       // Create histogram metrics from logs using the interval as bucket size for the line count
       if (intervalMs && logsModel.rows.length > 0) {
         const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-        let resolutionIntervalMs = intervalMs;
-        // Buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
-        const pxPerBar = 20;
-        let bucketSize = resolutionIntervalMs * pxPerBar;
-        // Clamp time range to visible logs otherwise big parts of the graph might look empty
-        if (absoluteRange) {
-          const earliest = sortedRows[0].timeEpochMs;
-          const latest = absoluteRange.to;
-          const visibleRangeMs = latest - earliest;
-          if (visibleRangeMs > 0) {
-            // Adjust interval bucket size for potentially shorter visible range
-            const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
-            resolutionIntervalMs *= clampingFactor;
-            // Minimum bucketsize of 1s for nicer graphing
-            bucketSize = Math.max(resolutionIntervalMs * pxPerBar, 1000);
-            // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
-            const adjustedEarliest = Math.floor(earliest / bucketSize) * bucketSize;
-            logsModel.visibleRange = { from: adjustedEarliest, to: latest };
-          }
-        }
+        const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+        logsModel.visibleRange = visibleRange;
         logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
       } else {
         logsModel.series = [];
@@ -254,6 +236,43 @@ export function dataFrameToLogsModel(
     meta: [],
     series: [],
   };
+}
+
+/**
+ * Returns a clamped time range and interval based on the visible logs and the given range.
+ *
+ * @param sortedRows Log rows from the query response
+ * @param intervalMs Dynamnic data interval based on available pixel width
+ * @param absoluteRange Requested time range
+ * @param pxPerBar Default: 20, buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
+ */
+export function getSeriesProperties(
+  sortedRows: LogRowModel[],
+  intervalMs: number,
+  absoluteRange: AbsoluteTimeRange,
+  pxPerBar = 20,
+  minimumBucketSize = 1000
+) {
+  let visibleRange = absoluteRange;
+  let resolutionIntervalMs = intervalMs;
+  let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
+  // Clamp time range to visible logs otherwise big parts of the graph might look empty
+  if (absoluteRange) {
+    const earliest = sortedRows[0].timeEpochMs;
+    const latest = absoluteRange.to;
+    const visibleRangeMs = latest - earliest;
+    if (visibleRangeMs > 0) {
+      // Adjust interval bucket size for potentially shorter visible range
+      const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+      resolutionIntervalMs *= clampingFactor;
+      // Minimum bucketsize of 1s for nicer graphing
+      bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
+      // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
+      const adjustedEarliest = Math.floor(earliest / bucketSize) * bucketSize;
+      visibleRange = { from: adjustedEarliest, to: latest };
+    }
+  }
+  return { bucketSize, visibleRange };
 }
 
 function separateLogsAndMetrics(dataFrames: DataFrame[]) {
