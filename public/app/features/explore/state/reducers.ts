@@ -374,7 +374,15 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       return state;
     }
 
-    const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
+    // removes a query under a given index and reassigns query keys and refIds to keep everything in order
+    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
+      return { ...query, key: undefined, refId: undefined };
+    });
+    const nextQueries: DataQuery[] = [];
+
+    queriesAfterRemoval.forEach((query, i) => {
+      nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
+    });
     const nextQueryKeys = [...queryKeys.slice(0, index), ...queryKeys.slice(index + 1)];
 
     return {
