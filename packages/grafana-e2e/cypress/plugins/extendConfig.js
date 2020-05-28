@@ -11,9 +11,16 @@ module.exports = async baseConfig => {
   } = baseConfig;
 
   if (CWD) {
+    // @todo: https://github.com/cypress-io/cypress/issues/6406
+    const jsonReporter = require.resolve('@mochajs/json-file-reporter');
+
     const projectConfig = {
       fixturesFolder: `${CWD}/cypress/fixtures`,
       integrationFolder: `${CWD}/cypress/integration`,
+      reporter: jsonReporter,
+      reporterOptions: {
+        output: `${CWD}/cypress/report.json`,
+      },
       screenshotsFolder: `${CWD}/cypress/screenshots`,
       videosFolder: `${CWD}/cypress/videos`,
     };
@@ -46,14 +53,23 @@ module.exports = async baseConfig => {
       .catch(error => {
         if (error.code === 'ENOENT') {
           // File is optional
-          return null;
+          return {};
         } else {
           // Unexpected error
           throw error;
         }
       });
 
-    return { ...baseConfig, ...projectConfig, ...customProjectConfig };
+    return {
+      ...baseConfig,
+      ...projectConfig,
+      ...customProjectConfig,
+      reporterOptions: {
+        ...baseConfig.reporterOptions,
+        ...projectConfig.reporterOptions,
+        ...customProjectConfig.reporterOptions,
+      },
+    };
   } else {
     // Temporary legacy support for Grafana core (using `yarn start`)
     return baseConfig;

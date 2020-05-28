@@ -35,7 +35,6 @@ import {
   setTimeZoneResolver,
 } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
 import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
@@ -47,7 +46,7 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { getStandardFieldConfigs, getStandardOptionEditors, getScrollbarWidth } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
@@ -75,7 +74,6 @@ export class GrafanaApp {
   preBootModules: any[] | null;
 
   constructor() {
-    addClassIfNoOverlayScrollbar('no-overlay-scrollbar');
     this.preBootModules = [];
     this.registerFunctions = {};
     this.ngModuleDependencies = [];
@@ -94,6 +92,7 @@ export class GrafanaApp {
   init() {
     const app = angular.module('grafana', []);
 
+    addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timeZone);
 
@@ -213,6 +212,12 @@ export class GrafanaApp {
     window.addEventListener('DOMContentLoaded', () => {
       reportPerformance('dcl', Math.round(performance.now()));
     });
+  }
+}
+
+function addClassIfNoOverlayScrollbar() {
+  if (getScrollbarWidth() > 0) {
+    document.body.classList.add('no-overlay-scrollbar');
   }
 }
 
