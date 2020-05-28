@@ -34,8 +34,8 @@ export interface QueryResultMeta {
   preferredVisualisationType?: PreferredVisualisationType;
 
   /**
-   * This is the query actually sent to the underlying system.
-   * When Specified, this value will be shown in the query inspector
+   * This is the raw query sent to the underlying system.  All macros and templating
+   * as been applied.  When metadata contains this value, it will be shown in the query inspector
    */
   executedQueryString?: string;
 

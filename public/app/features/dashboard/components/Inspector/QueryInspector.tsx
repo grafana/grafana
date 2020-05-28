@@ -221,7 +221,7 @@ export class QueryInspector extends PureComponent<Props, State> {
       <div>
         {executedQueries.map(info => {
           return (
-            <div>
+            <div key={info.query}>
               {showName && <h3>{info.name}</h3>}
               <pre>{info.query}</pre>
             </div>

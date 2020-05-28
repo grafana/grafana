@@ -153,7 +153,6 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 			continue
 		}
 
-		queryResult.Meta.Set("sql", rawSQL)
 		queryResult.Meta.Set("executedQueryString", rawSQL)
 
 		wg.Add(1)
