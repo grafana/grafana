@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { chain } from 'lodash';
 import { AppEvents, PanelData, SelectableValue } from '@grafana/data';
-import { Button, ClipboardButton, Field, JSONFormatter, Select, TextArea } from '@grafana/ui';
+import { Button, Field, Select, CodeEditor } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { appEvents } from 'app/core/core';
@@ -49,20 +49,18 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     super(props);
     this.state = {
       show: ShowContent.PanelJSON,
-      text: getSaveModelJSON(props.panel),
+      text: getPrettyJSON(props.panel.getSaveModel()),
     };
   }
 
   onSelectChanged = (item: SelectableValue<ShowContent>) => {
-    let text = '';
-    if (item.value === ShowContent.PanelJSON) {
-      text = getSaveModelJSON(this.props.panel);
-    }
+    const show = this.getJSONObject(item.value);
+    const text = getPrettyJSON(show);
     this.setState({ text, show: item.value });
   };
 
-  onTextChanged = (e: React.FormEvent<HTMLTextAreaElement>) => {
-    const text = e.currentTarget.value;
+  // Called onBlur
+  onTextChanged = (text: string) => {
     this.setState({ text });
   };
 
@@ -93,17 +91,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       return this.props.panel.getSaveModel();
     }
 
-    return { note: 'Unknown Object', show };
-  };
-
-  getClipboardText = () => {
-    const { show } = this.state;
-    const obj = this.getJSONObject(show);
-    return JSON.stringify(obj, null, 2);
-  };
-
-  onClipboardCopied = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
+    return { note: `Unknown Object: ${show}` };
   };
 
   onApplyPanelModel = () => {
@@ -126,12 +114,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     onClose();
   };
 
-  renderPanelJSON(styles: any) {
-    return (
-      <TextArea spellCheck={false} value={this.state.text} onChange={this.onTextChanged} className={styles.editor} />
-    );
-  }
-
   render() {
     const { dashboard } = this.props;
     const { show } = this.state;
@@ -146,14 +128,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           <Field label="Select source" className="flex-grow-1">
             <Select options={options} value={selected} onChange={this.onSelectChanged} />
           </Field>
-          <ClipboardButton
-            variant="secondary"
-            className={styles.toolbarItem}
-            getText={this.getClipboardText}
-            onClipboardCopy={this.onClipboardCopied}
-          >
-            Copy to clipboard
-          </ClipboardButton>
           {isPanelJSON && canEdit && (
             <Button className={styles.toolbarItem} onClick={this.onApplyPanelModel}>
               Apply
@@ -161,19 +135,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           )}
         </div>
         <div className={styles.content}>
-          {isPanelJSON ? (
-            this.renderPanelJSON(styles)
-          ) : (
-            <div className={styles.viewer}>
-              <JSONFormatter json={this.getJSONObject(show)} />
-            </div>
-          )}
+          <CodeEditor language="json" text={this.state.text} readOnly={!isPanelJSON} onChange={this.onTextChanged} />;
         </div>
       </>
     );
   }
 }
 
-function getSaveModelJSON(panel: PanelModel): string {
-  return JSON.stringify(panel.getSaveModel(), null, 2);
+function getPrettyJSON(obj: any): string {
+  return JSON.stringify(obj, null, 2);
 }
