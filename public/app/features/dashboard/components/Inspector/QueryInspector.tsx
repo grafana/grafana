@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { AppEvents, PanelEvents } from '@grafana/data';
+import { AppEvents, PanelEvents, DataFrame, getFrameDisplayName } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
@@ -15,8 +15,15 @@ interface DsQuery {
   response: {};
 }
 
+interface ExecutedQueryInfo {
+  refId: string;
+  name: string;
+  query: string;
+}
+
 interface Props {
   panel: PanelModel;
+  data: DataFrame[];
 }
 
 interface State {
@@ -24,6 +31,7 @@ interface State {
   isMocking: boolean;
   mockedResponse: string;
   dsQuery: DsQuery;
+  executedQueries: ExecutedQueryInfo[];
 }
 
 export class QueryInspector extends PureComponent<Props, State> {
@@ -33,6 +41,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      executedQueries: [],
       allNodesExpanded: null,
       isMocking: false,
       mockedResponse: '',
@@ -47,6 +56,30 @@ export class QueryInspector extends PureComponent<Props, State> {
     appEvents.on(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
     appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
     this.props.panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
+    this.updateQueryList();
+  }
+
+  componentDidUpdate(oldProps: Props) {
+    if (this.props.data !== oldProps.data) {
+      this.updateQueryList();
+    }
+  }
+
+  updateQueryList() {
+    const { data } = this.props;
+    const executedQueries: ExecutedQueryInfo[] = [];
+    if (data?.length) {
+      data.forEach((frame, idx) => {
+        if (frame.meta?.executedQueryString) {
+          executedQueries.push({
+            refId: frame.refId || '?',
+            name: getFrameDisplayName(frame, idx),
+            query: frame.meta!.executedQueryString,
+          });
+        }
+      });
+    }
+    this.setState({ executedQueries });
   }
 
   onIssueNewQuery = () => {
@@ -182,8 +215,24 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
+  renderExecutedQueries(executedQueries: ExecutedQueryInfo[]) {
+    const showName = executedQueries.length > 1;
+    return (
+      <div>
+        {executedQueries.map(info => {
+          return (
+            <div>
+              {showName && <h3>{info.name}</h3>}
+              <pre>{info.query}</pre>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   render() {
-    const { allNodesExpanded } = this.state;
+    const { allNodesExpanded, executedQueries } = this.state;
     const { response, isLoading } = this.state.dsQuery;
     const openNodes = this.getNrOfOpenNodes();
     const styles = getPanelInspectorStyles();
@@ -202,6 +251,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             new query. Hit refresh button below to trigger a new query.
           </p>
         </div>
+        {executedQueries.length && this.renderExecutedQueries(executedQueries)}
         <div className={styles.toolbar}>
           <Button
             icon="sync"

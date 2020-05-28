@@ -34,6 +34,12 @@ export interface QueryResultMeta {
   preferredVisualisationType?: PreferredVisualisationType;
 
   /**
+   * This is the query actually sent to the underlying system.
+   * When Specified, this value will be shown in the query inspector
+   */
+  executedQueryString?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
