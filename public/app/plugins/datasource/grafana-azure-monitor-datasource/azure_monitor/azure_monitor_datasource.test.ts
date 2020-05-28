@@ -14,12 +14,12 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 interface TestContext {
-  instanceSettings?: DataSourceInstanceSettings<AzureDataSourceJsonData>;
-  ds?: AzureMonitorDatasource;
+  instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
+  ds: AzureMonitorDatasource;
 }
 
 describe('AzureMonitorDatasource', () => {
-  const ctx: TestContext = {};
+  const ctx: TestContext = {} as TestContext;
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
   beforeEach(() => {
