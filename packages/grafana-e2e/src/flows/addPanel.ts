@@ -14,29 +14,39 @@ const DEFAULT_ADD_PANEL_CONFIG: AddPanelConfig = {
   visualizationName: 'Graph',
 };
 
-export const addPanel = (config?: Partial<AddPanelConfig>) => {
+// @todo this actually returns type `Cypress.Chainable`
+export const addPanel = (config?: Partial<AddPanelConfig>): any => {
   const { dashboardUid, dataSourceName, queriesForm, visualizationName } = { ...DEFAULT_ADD_PANEL_CONFIG, ...config };
+  const panelTitle = `e2e-${Date.now()}`;
 
-  getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
-    e2e.flows.openDashboard(dashboardUid ?? lastAddedDashboardUid);
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-    e2e.pages.AddDashboard.addNewPanel().click();
+  return getScenarioContext()
+    .then(({ lastAddedDashboardUid }: any) => {
+      e2e.flows.openDashboard(dashboardUid ?? lastAddedDashboardUid);
+      e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
+      e2e.pages.AddDashboard.addNewPanel().click();
 
-    e2e()
-      .get('.ds-picker')
-      .click()
-      .contains('[id^="react-select-"][id*="-option-"]', dataSourceName)
-      .click();
+      e2e()
+        .get('.ds-picker')
+        .click()
+        .contains('[id^="react-select-"][id*="-option-"]', dataSourceName)
+        .click();
 
-    toggleOptionsGroup('type');
-    e2e()
-      .find(`[aria-label="Plugin visualization item ${visualizationName}"]`)
-      .scrollIntoView()
-      .click();
-    toggleOptionsGroup('type');
+      getOptionsGroup('settings')
+        .find('[value="Panel Title"]')
+        .clear()
+        .type(panelTitle);
+      toggleOptionsGroup('settings');
 
-    queriesForm();
-  });
+      toggleOptionsGroup('type');
+      e2e()
+        .get(`[aria-label="Plugin visualization item ${visualizationName}"]`)
+        .scrollIntoView()
+        .click();
+      toggleOptionsGroup('type');
+
+      queriesForm();
+    })
+    .then(() => panelTitle);
 };
 
 const getOptionsGroup = (name: string) => e2e().get(`.options-group:has([aria-label="Options group Panel ${name}"])`);
