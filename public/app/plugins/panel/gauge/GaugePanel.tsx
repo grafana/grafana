@@ -62,7 +62,8 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   render() {
-    const { height, width, data, renderCounter } = this.props;
+    const { height, width, data, renderCounter, options } = this.props;
+
     return (
       <VizRepeater
         getValues={this.getValues}
@@ -72,8 +73,18 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         source={data}
         autoGrid={true}
         renderCounter={renderCounter}
-        orientation={VizOrientation.Auto}
+        orientation={swapHorizontalVertical(options.orientation)}
       />
     );
   }
+}
+
+export function swapHorizontalVertical(orientation: VizOrientation): VizOrientation {
+  if (orientation === VizOrientation.Horizontal) {
+    return VizOrientation.Vertical;
+  }
+  if (orientation === VizOrientation.Vertical) {
+    return VizOrientation.Horizontal;
+  }
+  return orientation;
 }

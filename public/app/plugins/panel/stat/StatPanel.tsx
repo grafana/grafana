@@ -19,6 +19,7 @@ import {
 import { config } from 'app/core/config';
 import { StatPanelOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { swapHorizontalVertical } from '../gauge/GaugePanel';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   renderComponent = (
@@ -107,7 +108,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         itemSpacing={3}
         renderCounter={renderCounter}
         autoGrid={true}
-        orientation={options.orientation}
+        orientation={swapHorizontalVertical(options.orientation)}
       />
     );
   }
