@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
+import { selectors } from '@grafana/e2e-selectors';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransformerOptions>> = ({
@@ -18,7 +19,9 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form--grow">
-        <div className="gf-form-label width-8">Calculations</div>
+        <div className="gf-form-label width-8" aria-label={selectors.components.Transforms.Reduce.calculationsLabel}>
+          Calculations
+        </div>
         <StatsPicker
           className="flex-grow-1"
           placeholder="Choose Stat"
