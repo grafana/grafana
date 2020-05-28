@@ -19,16 +19,6 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         },
         defaultValue: 'markdown',
       })
-      .addColorPicker({
-        path: 'color',
-        name: 'Color',
-        description: 'just a test... no color pickers in core?',
-        settings: {
-          defaultText: 'Pick background',
-          disableNamedColors: false,
-          allowUndefined: true,
-        },
-      })
       .addTextInput({
         path: 'content',
         name: 'Content',
