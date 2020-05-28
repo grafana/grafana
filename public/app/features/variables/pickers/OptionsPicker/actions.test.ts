@@ -221,7 +221,7 @@ describe('options picker actions', () => {
         ] = actions;
         const expectedNumberOfActions = 6;
 
-        expect(toggleOptionAction).toEqual(toggleOption({ option: options[1], forceSelect: false, clearOthers }));
+        expect(toggleOptionAction).toEqual(toggleOption({ option: options[1], forceSelect: true, clearOthers }));
         expect(setCurrentValue).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
         expect(changeQueryValue).toEqual(
           changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))

@@ -38,7 +38,7 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
     }
 
     if (key === NavigationKey.selectAndClose) {
-      dispatch(toggleOptionByHighlight(clearOthers));
+      dispatch(toggleOptionByHighlight(clearOthers, true));
       return await dispatch(commitChangesToVariable());
     }
 
@@ -92,11 +92,11 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
   };
 };
 
-export const toggleOptionByHighlight = (clearOthers: boolean): ThunkResult<void> => {
+export const toggleOptionByHighlight = (clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { highlightIndex, options } = getState().templating.optionsPicker;
     const option = options[highlightIndex];
-    dispatch(toggleOption({ option, forceSelect: false, clearOthers }));
+    dispatch(toggleOption({ option, forceSelect, clearOthers }));
   };
 };
 
