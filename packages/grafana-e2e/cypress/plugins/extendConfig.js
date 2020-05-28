@@ -8,7 +8,7 @@ const { resolve } = require('path');
 module.exports = async baseConfig => {
   // From CLI
   const {
-    env: { CWD },
+    env: { CWD, UPDATE_SCREENSHOTS },
   } = baseConfig;
 
   if (CWD) {
@@ -22,7 +22,7 @@ module.exports = async baseConfig => {
       reporterOptions: {
         output: `${CWD}/cypress/report.json`,
       },
-      screenshotsFolder: `${CWD}/cypress/screenshots`,
+      screenshotsFolder: `${CWD}/cypress/screenshots/${UPDATE_SCREENSHOTS ? 'expected' : 'actual'}`,
       videosFolder: `${CWD}/cypress/videos`,
     };
 
