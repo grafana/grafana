@@ -46,8 +46,16 @@ const property3 = {
   shouldApply: () => true,
 } as any;
 
+const shouldApplyFalse = {
+  id: 'custom.shouldApplyFalse', // Match field properties
+  path: 'shouldApplyFalse', // Match field properties
+  isCustom: true,
+  process: (value: any) => value,
+  shouldApply: () => false,
+} as any;
+
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-  return [property1, property2, property3, ...mockStandardProperties()];
+  return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
 });
 
 describe('Global MinMax', () => {
@@ -351,6 +359,27 @@ describe('setDynamicConfigValue', () => {
     );
 
     expect(config.custom.property1).toEqual('applied');
+  });
+
+  it('applies overrides even when shouldApply returns false', () => {
+    const config: FieldConfig = {
+      custom: {},
+    };
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'custom.shouldApplyFalse',
+        value: 'applied',
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.custom.shouldApplyFalse).toEqual('applied');
   });
 
   it('applies nested custom dynamic config values', () => {

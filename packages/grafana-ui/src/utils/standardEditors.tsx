@@ -63,7 +63,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'none',
     },
 
-    shouldApply: () => true,
+    shouldApply: field => field.type === FieldType.number,
     category,
   };
 
