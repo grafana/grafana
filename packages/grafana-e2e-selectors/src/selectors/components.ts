@@ -97,6 +97,12 @@ export const Components = {
   },
   TransformTab: {
     content: 'Transform editor tab content',
+    newTransform: (title: string) => `New transform ${title}`,
+  },
+  Transforms: {
+    Reduce: {
+      calculationsLabel: 'Transform calculations label',
+    },
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
