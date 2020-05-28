@@ -79,6 +79,12 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   }
 }
 
+/**
+ * The names vertical/horizontal work well with the bar gauge
+ * but should be the oposite with gauge and stats.
+ *
+ * This function swaps the setting before sending it to the repeater
+ */
 export function swapHorizontalVertical(orientation: VizOrientation): VizOrientation {
   if (orientation === VizOrientation.Horizontal) {
     return VizOrientation.Vertical;
