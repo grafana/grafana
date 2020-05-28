@@ -50,7 +50,20 @@ export class ResultProcessor {
       return null;
     }
 
-    const onlyTables = this.dataFrames.filter(frame => shouldShowInVisualisationType(frame, 'table'));
+    const onlyTables = this.dataFrames
+      .filter((frame: DataFrame) => shouldShowInVisualisationType(frame, 'table'))
+      .sort((frameA: DataFrame, frameB: DataFrame) => {
+        const frameARefId = frameA.refId!;
+        const frameBRefId = frameB.refId!;
+
+        if (frameARefId > frameBRefId) {
+          return 1;
+        }
+        if (frameARefId < frameBRefId) {
+          return -1;
+        }
+        return 0;
+      });
 
     if (onlyTables.length === 0) {
       return null;
