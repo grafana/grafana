@@ -1,16 +1,7 @@
 import { ComponentType } from 'react';
-import {
-  MatcherConfig,
-  FieldConfig,
-  Field,
-  DataFrame,
-  VariableSuggestionsScope,
-  VariableSuggestion,
-  GrafanaTheme,
-  TimeZone,
-} from '../types';
+import { MatcherConfig, FieldConfig, Field, DataFrame, GrafanaTheme, TimeZone } from '../types';
 import { InterpolateFunction } from './panel';
-import { StandardEditorProps, FieldConfigOptionsRegistry } from '../field';
+import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {
@@ -31,14 +22,11 @@ export interface FieldConfigSource<TOptions extends object = any> {
   overrides: ConfigOverrideRule[];
 }
 
-export interface FieldOverrideContext {
+export interface FieldOverrideContext extends StandardEditorContext {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
   data: DataFrame[]; // All results
-  replaceVariables?: InterpolateFunction;
-  getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }
-
 export interface FieldConfigEditorProps<TValue, TSettings>
   extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
   item: FieldConfigPropertyItem<TValue, TSettings>; // The property info
