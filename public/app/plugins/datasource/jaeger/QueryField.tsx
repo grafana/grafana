@@ -21,7 +21,7 @@ function findRootSpan(spans: Span[]): Span | undefined {
 function getLabelFromTrace(trace: TraceData & { spans: Span[] }): string {
   const rootSpan = findRootSpan(trace.spans);
   if (rootSpan) {
-    return `${rootSpan.operationName} [${rootSpan.duration} ms]`;
+    return `${rootSpan.operationName} [${rootSpan.duration / 1000} ms]`;
   }
   return trace.traceID;
 }
