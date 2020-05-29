@@ -118,7 +118,11 @@ RUN apt-get update && \
       | tar -xz -C /usr/local && \
     git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
 
-ARG CHKSUM_ARMV7_MUSL=a4aa497ca7aab6451d2f9dd82a649d92c4e280aa8cab9eabf5c2139472839b34549f3fbfc73d6d2435519f204ff9a419a470105530be346fcfcfe7d0322549f8
+
+# We build our own musl cross-compilers via the musl-cross-make project, on the same OS as this image's base image,
+# to ensure compatibility. We also make sure to target musl 1.1.x, since musl 1.2.x introduces 64-bit time types
+# that breaks compatibility on some 32-bit architectures (https://github.com/grafana/grafana/issues/23500).
+ARG CHKSUM_ARMV7_MUSL=5db487fb0a4aa61667de45a9cfbf7940360bd7256583b8a1e7810b4d9dd0e02a8aac737ca634b57bf269195e776ef503832ed22a6689a1c8fcdcc956f846bef7
 ARG CHKSUM_ARMV8_MUSL=50f4899cc2f637dbc39470bbe307074ccf7f40da2ab730218d13a9f75d578266311db6a0785919dcdcb5e7ce4517b13ee8d4a56d76e6fca7c6d4c2510d71aa8b
 ARG CHKSUM_AMD64_MUSL=493a79e9e29a1eab3fdff6435bac6509253d2e54ac30ad9098ce5da638bbb8ad18a7ebf3520bcaf2f9588befeff23402d8bbf54fa3809bfe18c984a4ecabcb12
 

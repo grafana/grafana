@@ -173,12 +173,12 @@
       name: Table
     - link: /panels/visualizations/text-panel/
       name: Text
-    - link: /panels/thresholds/
-      name: Thresholds
-    - link: /panels/inspect-panel/
-      name: Inspect panel
-    - link: /panels/calculations-list/
-      name: Calculations list
+  - link: /panels/thresholds/
+    name: Thresholds
+  - link: /panels/inspect-panel/
+    name: Inspect panel
+  - link: /panels/calculations-list/
+    name: Calculations list
 - name: Dashboards
   link: /features/dashboard/
   children:

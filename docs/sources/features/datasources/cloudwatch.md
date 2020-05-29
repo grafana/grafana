@@ -80,7 +80,7 @@ Here is a minimal policy example:
         "logs:StartQuery",
         "logs:StopQuery",
         "logs:GetQueryResults",
-        "logs:GetLogEvents",
+        "logs:GetLogEvents"
       ],
       "Resource": "*"
     },
