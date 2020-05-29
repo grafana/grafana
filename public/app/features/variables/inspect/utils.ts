@@ -225,3 +225,29 @@ export const transformUsagesToNetwork = (usages: Array<{ variable: VariableModel
 
   return results;
 };
+
+const countLeaves = (object: any): number => {
+  const total = Object.values(object).reduce((count: number, value: any) => {
+    if (typeof value === 'object') {
+      return count + countLeaves(value);
+    }
+
+    return count + 1;
+  }, 0);
+
+  return (total as unknown) as number;
+};
+
+export const getVariableUsages = (
+  variableId: string,
+  variables: VariableModel[],
+  dashboard: DashboardModel
+): number => {
+  const { usages } = createUsagesNetwork(variables, dashboard);
+  const usage = usages.find(usage => usage.variable.id === variableId);
+  if (!usage) {
+    return 0;
+  }
+
+  return countLeaves(usage.tree);
+};

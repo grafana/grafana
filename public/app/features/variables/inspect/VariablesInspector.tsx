@@ -1,5 +1,5 @@
 import React, { FC, MouseEvent, useCallback, useState } from 'react';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 // @ts-ignore
 import { VariableModel } from '../../templating/types';
 import { store } from '../../../store/store';
@@ -10,6 +10,8 @@ import { VariablesDependencies } from './VariablesDependencies';
 import { VariablesUnUsed } from './VariablesUnUsed';
 import { VariablesUsagesGraph } from './VariablesUsagesGraph';
 import { VariablesUnknownGraph } from './VariablesUnknownGraph';
+import { DashboardModel } from '../../dashboard/state';
+import { StoreState } from '../../../types';
 
 interface OwnProps {
   variables: VariableModel[];
@@ -37,6 +39,7 @@ enum VariableTabs {
 type TabType = { id: string; text: string; active: boolean };
 
 const UnProvidedVariablesInspector: FC<Props> = props => {
+  const dashboard: DashboardModel = useSelector((state: StoreState) => state.dashboard.getModel());
   const [tabs, setTabs] = useState<TabType[]>([
     { id: VariableTabs.Variables, text: 'List', active: true },
     { id: VariableTabs.Dependencies, text: 'Dependencies', active: false },
@@ -74,7 +77,7 @@ const UnProvidedVariablesInspector: FC<Props> = props => {
         ))}
       </TabsBar>
       <TabContent>
-        {activeTab.id === VariableTabs.Variables && <VariableEditorList {...props} />}
+        {activeTab.id === VariableTabs.Variables && <VariableEditorList {...props} dashboard={dashboard} />}
         {activeTab.id === VariableTabs.Dependencies && <VariablesDependencies {...props} />}
         {activeTab.id === VariableTabs.Usages && <VariablesUsagesGraph {...props} />}
         {activeTab.id === VariableTabs.UnUsed && <VariablesUnUsed {...props} />}

@@ -5,9 +5,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel, VariableModel } from '../../templating/types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { DashboardModel } from '../../dashboard/state';
+import { getVariableUsages } from '../inspect/utils';
+import { isAdHoc } from '../guard';
 
 export interface Props {
   variables: VariableModel[];
+  dashboard: DashboardModel;
   onAddClick: (event: MouseEvent<HTMLAnchorElement>) => void;
   onEditClick: (identifier: VariableIdentifier) => void;
   onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
@@ -79,12 +83,14 @@ export class VariableEditorList extends PureComponent<Props> {
                   <tr>
                     <th>Variable</th>
                     <th>Definition</th>
+                    <th style={{ textAlign: 'right' }}>Used</th>
                     <th colSpan={5} />
                   </tr>
                 </thead>
                 <tbody>
                   {this.props.variables.map((state, index) => {
                     const variable = state as QueryVariableModel;
+                    const usages = getVariableUsages(variable.id, this.props.variables, this.props.dashboard);
                     return (
                       <tr key={`${variable.name}-${index}`}>
                         <td style={{ width: '1%' }}>
@@ -109,6 +115,11 @@ export class VariableEditorList extends PureComponent<Props> {
                           {variable.definition ? variable.definition : variable.query}
                         </td>
 
+                        <td style={{ width: '1%', textAlign: 'right' }}>
+                          {usages === 0 && !isAdHoc(variable) && <Icon name="times" style={{ color: 'red' }} />}
+                          {(usages > 0 || isAdHoc(variable)) && <Icon name="check" style={{ color: 'green' }} />}
+                        </td>
+
                         <td style={{ width: '1%' }}>
                           {index > 0 && (
                             <Icon
@@ -120,6 +131,7 @@ export class VariableEditorList extends PureComponent<Props> {
                             />
                           )}
                         </td>
+
                         <td style={{ width: '1%' }}>
                           {index < this.props.variables.length - 1 && (
                             <Icon
@@ -131,6 +143,7 @@ export class VariableEditorList extends PureComponent<Props> {
                             />
                           )}
                         </td>
+
                         <td style={{ width: '1%' }}>
                           <a
                             onClick={event => this.onDuplicateVariable(event, toVariableIdentifier(variable))}
@@ -142,6 +155,7 @@ export class VariableEditorList extends PureComponent<Props> {
                             Duplicate
                           </a>
                         </td>
+
                         <td style={{ width: '1%' }}>
                           <a
                             onClick={event => this.onRemoveVariable(event, toVariableIdentifier(variable))}
