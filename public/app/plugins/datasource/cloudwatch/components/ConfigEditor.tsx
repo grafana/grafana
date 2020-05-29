@@ -17,7 +17,6 @@ import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/Cancela
 
 const authProviderOptions = [
   { label: 'AWS SDK Default', value: 'sdk' },
-  { label: 'Assume Role', value: 'arn' },
   { label: 'Access & secret key', value: 'keys' },
   { label: 'Credentials file', value: 'credentials' },
 ] as SelectableValue[];
@@ -230,26 +229,24 @@ export class ConfigEditor extends PureComponent<Props, State> {
               )}
             </div>
           )}
-          {options.jsonData.authType === 'arn' && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel
-                  className="width-14"
-                  tooltip="ARN of role to assume. The AWS SDK Default credentials-chain will be used to assume it."
-                >
-                  Assume Role ARN
-                </InlineFormLabel>
-                <div className="width-30">
-                  <Input
-                    className="width-30"
-                    placeholder="arn:aws:iam:*"
-                    value={options.jsonData.assumeRoleArn || ''}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
-                  />
-                </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel
+                className="width-14"
+                tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+              >
+                Assume Role ARN
+              </InlineFormLabel>
+              <div className="width-30">
+                <Input
+                  className="width-30"
+                  placeholder="arn:aws:iam:*"
+                  value={options.jsonData.assumeRoleArn || ''}
+                  onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
+                />
               </div>
             </div>
-          )}
+          </div>
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel

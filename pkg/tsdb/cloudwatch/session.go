@@ -52,25 +52,14 @@ func (s *sessionCache) newAwsSession(dsInfo *DatasourceInfo) (*session.Session, 
 		Region: aws.String(dsInfo.Region),
 	}
 
+	var (
+		sess *session.Session
+		err  error
+	)
+
 	switch dsInfo.AuthType {
-	case "arn":
-		stsSess, err := session.NewSession(regionConfiguration)
-		if err != nil {
-			return nil, fmt.Errorf("creating session for AssumeRoleProvider failed: %w", err)
-		}
-
-		provider := &stscreds.AssumeRoleProvider{
-			Client:          sts.New(stsSess),
-			RoleARN:         dsInfo.AssumeRoleArn,
-			RoleSessionName: "GrafanaSession",
-			Duration:        15 * time.Minute,
-		}
-
-		return session.NewSession(regionConfiguration, &aws.Config{
-			Credentials: credentials.NewCredentials(provider),
-		})
 	case "credentials":
-		return session.NewSession(regionConfiguration, &aws.Config{
+		sess, err = session.NewSession(regionConfiguration, &aws.Config{
 			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
 		})
 	case "keys":
@@ -78,14 +67,32 @@ func (s *sessionCache) newAwsSession(dsInfo *DatasourceInfo) (*session.Session, 
 			AccessKeyID:     dsInfo.AccessKey,
 			SecretAccessKey: dsInfo.SecretKey,
 		}}
-		return session.NewSession(regionConfiguration, &aws.Config{
+		sess, err = session.NewSession(regionConfiguration, &aws.Config{
 			Credentials: credentials.NewCredentials(provider),
 		})
 	case "sdk":
-		return session.NewSession(regionConfiguration)
+		sess, err = session.NewSession(regionConfiguration)
+	default:
+		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "credentials", "keys" or "sdk"`, dsInfo.AuthType)
 	}
 
-	return nil, fmt.Errorf(`%q is not a valid authentication type - expected "arn", "credentials", "keys" or "sdk"`, dsInfo.AuthType)
+	if err != nil {
+		return sess, err
+	}
+
+	if dsInfo.AssumeRoleArn != "" {
+		provider := &stscreds.AssumeRoleProvider{
+			Client:          sts.New(sess),
+			RoleARN:         dsInfo.AssumeRoleArn,
+			RoleSessionName: "GrafanaSession",
+			Duration:        15 * time.Minute,
+		}
+		return session.NewSession(regionConfiguration, &aws.Config{
+			Credentials: credentials.NewCredentials(provider),
+		})
+	}
+
+	return sess, nil
 }
 
 // session returns an appropriate session.Session for the configuration given in the

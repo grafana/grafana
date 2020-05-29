@@ -52,10 +52,6 @@ exports[`Render should disable access key id field 1`] = `
                 "value": "sdk",
               },
               Object {
-                "label": "Assume Role",
-                "value": "arn",
-              },
-              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
@@ -118,6 +114,30 @@ exports[`Render should disable access key id field 1`] = `
               value=""
             />
           </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
         </div>
       </div>
     </div>
@@ -237,10 +257,6 @@ exports[`Render should render component 1`] = `
                 "value": "sdk",
               },
               Object {
-                "label": "Assume Role",
-                "value": "arn",
-              },
-              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
@@ -303,6 +319,30 @@ exports[`Render should render component 1`] = `
               value=""
             />
           </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
         </div>
       </div>
     </div>
@@ -422,10 +462,6 @@ exports[`Render should show access key and secret access key fields 1`] = `
                 "value": "sdk",
               },
               Object {
-                "label": "Assume Role",
-                "value": "arn",
-              },
-              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
@@ -488,6 +524,30 @@ exports[`Render should show access key and secret access key fields 1`] = `
               value=""
             />
           </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
         </div>
       </div>
     </div>
@@ -607,10 +667,6 @@ exports[`Render should show arn role field 1`] = `
                 "value": "sdk",
               },
               Object {
-                "label": "Assume Role",
-                "value": "arn",
-              },
-              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
@@ -673,6 +729,30 @@ exports[`Render should show arn role field 1`] = `
               value=""
             />
           </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
         </div>
       </div>
     </div>
@@ -792,10 +872,6 @@ exports[`Render should show credentials profile name field 1`] = `
                 "value": "sdk",
               },
               Object {
-                "label": "Assume Role",
-                "value": "arn",
-              },
-              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
@@ -858,6 +934,30 @@ exports[`Render should show credentials profile name field 1`] = `
               value=""
             />
           </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
         </div>
       </div>
     </div>

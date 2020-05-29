@@ -32,6 +32,7 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 | _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                  |
 | _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                      |
 | _Authentication Provider_  | Specify which method Grafana uses to find the AWS credentials.                                          |
+| _Assume Role ARN_          | Which role to assume using the specified credentials. Leave blank to use the credentials directly.      |
 
 ## Authentication
 
@@ -41,8 +42,6 @@ Currently all access to CloudWatch is done server side by the Grafana backend us
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
-
-> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
 
 ## IAM Policies
 
@@ -100,14 +99,12 @@ Here is a minimal policy example:
 
 ### AWS credentials
 
-There are four different authentication providers available. The `AWS SDK Default` provider will do no custom configuration at all and instead use the
+There are three different authentication providers available. The `AWS SDK Default` provider will do no custom configuration at all and instead use the
 [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go. This requires you to configure
 your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if
 you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html),
 [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)
 or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
-The `Assume Role` authentication provider works similarly, but it will instead use the `AWS SDK Default` authentication provider to assume the specified role,
-which it will then use to query the CloudWatch API.
 
 The `Credentials file` authentication provider corresponds directly to the
 [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider)
@@ -118,6 +115,16 @@ messing with environment variables. This option will not do any implicit fallbac
 The `Access & secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider)
 and will use the given access key id and the secret key to authenticate. If this provider fails for whatever reason, then the authentication will fail.
 No implicit fallbacks exist.
+
+### Assuming a Role
+
+The `Assume Role ARN` field allows you to specify which IAM role should be assumed, if any.
+When left blank the provided credentials will be used directly and the associated role or user should have the required permissions.
+If an `Assume Role ARN` is specified then the provided credentials will be used to perform
+a [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
+
+When providing an `Assume Role ARN` make sure that the role or user associated with the credentials is allowed to assume the 
+given role *and* that the given role has an up-to-date trust policy.
 
 ### AWS credentials file
 
