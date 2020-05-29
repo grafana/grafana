@@ -56,7 +56,7 @@ All options in the configuration file can be overridden using environment variab
 GF_<SectionName>_<KeyName>
 ```
 
-Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
+Where the section name is the text within the brackets. Everything should be uppercase, `.` and `-` should be replaced by `_`. For example, if you have these configuration settings:
 
 ```bash
 # default section
@@ -67,6 +67,9 @@ admin_user = admin
 
 [auth.google]
 client_secret = 0ldS3cretKey
+
+[plugin.grafana-image-renderer]
+rendering_ignore_https_errors = true
 ```
 
 You can override them on Linux machines with:
@@ -75,6 +78,7 @@ You can override them on Linux machines with:
 export GF_DEFAULT_INSTANCE_NAME=my-instance
 export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 ```
 
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
@@ -849,7 +853,7 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 
 ### allow_loading_unsigned_plugins
 
-Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature. 
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
 ## [feature_toggles]
 ### enable
