@@ -8,10 +8,6 @@ import { css } from 'emotion';
 type Props = FieldConfigEditorProps<string[], StringFieldConfigSettings>;
 
 export class StringArrayEditor extends React.PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   onRemoveString = (index: number) => {
     const { value, onChange } = this.props;
     const copy = [...value];
