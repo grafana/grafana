@@ -251,7 +251,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             new query. Hit refresh button below to trigger a new query.
           </p>
         </div>
-        {executedQueries.length && this.renderExecutedQueries(executedQueries)}
+        {this.renderExecutedQueries(executedQueries)}
         <div className={styles.toolbar}>
           <Button
             icon="sync"
