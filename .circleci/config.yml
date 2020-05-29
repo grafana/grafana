@@ -41,7 +41,7 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.16
+      - image: grafana/build-container:1.2.17
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.10
+            VERSION=0.4.11
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -889,18 +889,13 @@ jobs:
           when: on_success
 
   build-docs-website:
-    executor: grafana-build
+    executor: base
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
-      - run:
-          name: Install docker
-          command: |
-            apt-get update
-            apt-get install -y docker.io
       - run:
           name: Build Grafana docs website
           command: |
