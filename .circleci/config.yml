@@ -41,7 +41,7 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.17
+      - image: grafana/build-container:1.2.18
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
