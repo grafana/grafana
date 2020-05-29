@@ -28,9 +28,8 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   }
 
   const {
-    graph: { showLines, showBars, showPoints },
+    graph: { showLines, showBars, showPoints, useMicroPlot },
     legend: legendOptions,
-    useMicroPlot,
     tooltipOptions,
   } = options;
 

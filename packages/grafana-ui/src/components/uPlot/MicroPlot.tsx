@@ -11,11 +11,11 @@ interface Props {
   height: number;
 }
 
-interface PlotState {
+interface State {
   // ?? over info?
 }
 
-export class MicroPlot extends PureComponent<Props, PlotState> {
+export class MicroPlot extends PureComponent<Props, State> {
   plot: any;
 
   componentDidUpdate(oldProps: Props) {
@@ -85,25 +85,25 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
         },
         {
           show: true,
-          label: 'Right Axis AAA',
+          label: '0000 Axis AAA',
           labelSize: 30,
           labelFont: 'bold 12px Arial',
           font: '12px Arial',
           gap: 5,
           size: 50,
           stroke: 'red',
-          side: 1,
+          side: 0,
         },
         {
           show: true,
-          label: 'Right Axis BBB',
+          label: '2222 Axis BBB',
           labelSize: 30,
           labelFont: 'bold 12px Arial',
           font: '12px Arial',
           gap: 5,
           size: 50,
           stroke: 'red',
-          side: 1,
+          side: 2,
         },
         {
           show: true,
@@ -156,9 +156,9 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
         setCursor: [
           (u: any) => {
             const { left, top, idx } = u.cursor;
-            const x = u.data[0][idx];
-            const y = u.data[1][idx];
-            console.log('CURSOR', { x, y, left, top });
+            // const x = u.data[0][idx];
+            // const y = u.data[1][idx];
+            console.log('CURSOR', { left, top, idx });
           },
         ],
       },
