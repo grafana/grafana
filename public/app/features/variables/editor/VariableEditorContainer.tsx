@@ -11,7 +11,7 @@ import { getVariables } from '../state/selectors';
 import { VariableModel } from '../../templating/types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
-import { VariablesExplorer } from '../explorer/VariablesExplorer';
+import { VariablesInspector } from '../inspect/VariablesInspector';
 
 interface OwnProps {}
 
@@ -68,14 +68,12 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
       <div>
         <div className="page-action-bar">
           <h3 className="dashboard-settings__header">
-            {this.props.idInEditor && (
-              <a
-                onClick={this.onChangeToListMode}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.headerLink}
-              >
-                Variables
-              </a>
-            )}
+            <a
+              onClick={this.onChangeToListMode}
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.headerLink}
+            >
+              Variables
+            </a>
             {this.props.idInEditor === NEW_VARIABLE_ID && (
               <span>
                 <Icon
@@ -110,7 +108,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
         </div>
 
         {!variableToEdit && (
-          <VariablesExplorer
+          <VariablesInspector
             variables={this.props.variables}
             onAddClick={this.onNewVariable}
             onEditClick={this.onEditVariable}
@@ -118,14 +116,6 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             onDuplicateVariable={this.onDuplicateVariable}
             onRemoveVariable={this.onRemoveVariable}
           />
-          // <VariableEditorList
-          //   variables={this.props.variables}
-          //   onAddClick={this.onNewVariable}
-          //   onEditClick={this.onEditVariable}
-          //   onChangeVariableOrder={this.onChangeVariableOrder}
-          //   onDuplicateVariable={this.onDuplicateVariable}
-          //   onRemoveVariable={this.onRemoveVariable}
-          // />
         )}
         {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}
       </div>

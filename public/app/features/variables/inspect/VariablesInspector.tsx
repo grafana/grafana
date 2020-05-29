@@ -7,6 +7,9 @@ import { VariableIdentifier } from '../state/types';
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 import { VariableEditorList } from '../editor/VariableEditorList';
 import { VariablesDependencies } from './VariablesDependencies';
+import { VariablesUsages } from './VariablesUsages';
+import { VariablesUnUsed } from './VariablesUnUsed';
+import { VariablesUnknown } from './VariablesUnknown';
 
 interface OwnProps {
   variables: VariableModel[];
@@ -27,15 +30,19 @@ enum VariableTabs {
   Variables = 'variables',
   Dependencies = 'dependencies',
   Usages = 'usages',
+  UnUsed = 'unused',
+  Unknown = 'unknown',
 }
 
 type TabType = { id: string; text: string; active: boolean };
 
-const UnProvidedVariablesExplorer: FC<Props> = props => {
+const UnProvidedVariablesInspector: FC<Props> = props => {
   const [tabs, setTabs] = useState<TabType[]>([
-    { id: VariableTabs.Variables, text: 'Variables', active: true },
+    { id: VariableTabs.Variables, text: 'List', active: true },
     { id: VariableTabs.Dependencies, text: 'Dependencies', active: false },
     { id: VariableTabs.Usages, text: 'Usages', active: false },
+    { id: VariableTabs.UnUsed, text: 'Not used', active: false },
+    { id: VariableTabs.Unknown, text: 'Unknown', active: false },
   ]);
   const [activeTab, setActiveTab] = useState<TabType>(tabs[0]);
 
@@ -69,13 +76,16 @@ const UnProvidedVariablesExplorer: FC<Props> = props => {
       <TabContent>
         {activeTab.id === VariableTabs.Variables && <VariableEditorList {...props} />}
         {activeTab.id === VariableTabs.Dependencies && <VariablesDependencies {...props} />}
+        {activeTab.id === VariableTabs.Usages && <VariablesUsages {...props} />}
+        {activeTab.id === VariableTabs.UnUsed && <VariablesUnUsed {...props} />}
+        {activeTab.id === VariableTabs.Unknown && <VariablesUnknown {...props} />}
       </TabContent>
     </>
   );
 };
 
-export const VariablesExplorer: FC<Props> = props => (
+export const VariablesInspector: FC<Props> = props => (
   <Provider store={store}>
-    <UnProvidedVariablesExplorer {...props} />
+    <UnProvidedVariablesInspector {...props} />
   </Provider>
 );

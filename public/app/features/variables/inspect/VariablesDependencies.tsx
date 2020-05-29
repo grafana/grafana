@@ -6,7 +6,13 @@ import vis from 'visjs-network';
 import { StoreState } from '../../../types';
 import { getVariable, getVariables } from '../state/selectors';
 import { VariableModel } from '../../templating/types';
-import { createEdges, createNodes, toVisNetworkEdges, toVisNetworkNodes } from './utils';
+import {
+  createDependencyEdges,
+  createDependencyNodes,
+  filterNodesWithDependencies,
+  toVisNetworkEdges,
+  toVisNetworkNodes,
+} from './utils';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 
 interface OwnProps {
@@ -20,25 +26,24 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VariablesDependencies: FC<Props> = ({ onEditClick }) => {
+  let network: any = null;
+  let ref: any = null;
   const variables: VariableModel[] = useSelector((state: StoreState) => getVariables(state));
-  const nodes = useMemo(() => createNodes(variables), [variables]);
-  const edges = useMemo(() => createEdges(variables), [variables]);
+  const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
+  const edges = useMemo(() => createDependencyEdges(variables), [variables]);
   const onDoubleClick = useCallback(
     (params: { nodes: string[] }) => {
       onEditClick(toVariableIdentifier(getVariable(params.nodes[0])));
     },
     [variables]
   );
-  let network: any = null;
-  let ref: any = null;
-
   useEffect(() => {
     if (!ref) {
       return null;
     }
 
     const data = {
-      nodes: toVisNetworkNodes(nodes),
+      nodes: toVisNetworkNodes(filterNodesWithDependencies(nodes, edges)),
       edges: toVisNetworkEdges(edges),
     };
 
