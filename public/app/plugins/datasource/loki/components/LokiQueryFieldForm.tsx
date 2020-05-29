@@ -164,7 +164,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className={'gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin'}>
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
