@@ -19,6 +19,15 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         },
         defaultValue: 'markdown',
       })
+      .addStringArray({
+        path: 'strings',
+        name: 'String Array',
+        description: 'list of strings',
+        settings: {
+          placeholder: 'Add a string value (text2 demo)',
+        },
+        defaultValue: ['hello', 'world'],
+      })
       .addTextInput({
         path: 'content',
         name: 'Content',
