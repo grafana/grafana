@@ -188,7 +188,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   };
 
-  renderTags = (tags: string[], remove: boolean): JSX.Element | null => {
+  renderTags = (tags?: string[], remove?: boolean): JSX.Element | null => {
     if (!tags || !tags.length) {
       return null;
     }
