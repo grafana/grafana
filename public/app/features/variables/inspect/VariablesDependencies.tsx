@@ -2,6 +2,8 @@ import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 // @ts-ignore
 import vis from 'visjs-network';
+import { FeatureInfoBox } from '@grafana/ui';
+import { FeatureState } from '@grafana/data';
 
 import { StoreState } from '../../../types';
 import { getVariable, getVariables } from '../state/selectors';
@@ -48,6 +50,8 @@ export const VariablesDependencies: FC<Props> = ({ onEditClick }) => {
     };
 
     const options = {
+      width: '100%',
+      height: '100%',
       autoResize: true,
       layout: {
         improvedLayout: true,
@@ -76,6 +80,10 @@ export const VariablesDependencies: FC<Props> = ({ onEditClick }) => {
 
   return (
     <>
+      <FeatureInfoBox title="Dependencies" featureState={FeatureState.alpha}>
+        Dependencies shows variables that depend on other variables as a Dependency Graph. <br /> Double click on a
+        variable to edit it.
+      </FeatureInfoBox>
       <div ref={r => (ref = r)} style={{ width: '100%', height: '50vh' }} />
     </>
   );

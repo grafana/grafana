@@ -5,8 +5,9 @@ import { getVariables } from '../state/selectors';
 import { VariableModel } from '../../templating/types';
 import { DashboardModel } from '../../dashboard/state';
 import { createUsagesNetwork } from './utils';
-import { Icon } from '@grafana/ui';
+import { FeatureInfoBox, Icon } from '@grafana/ui';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { FeatureState } from '@grafana/data';
 
 interface OwnProps {
   onEditClick: (identifier: VariableIdentifier) => void;
@@ -26,6 +27,10 @@ export const VariablesUnUsed: FC<Props> = ({ onEditClick, onRemoveVariable }) =>
 
   return (
     <div>
+      <FeatureInfoBox title="Not used" featureState={FeatureState.alpha}>
+        Not used shows variables that are not used.
+      </FeatureInfoBox>
+
       {unUsed.length > 0 && (
         <div>
           <table className="filter-table filter-table--hover">

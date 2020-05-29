@@ -5,7 +5,8 @@ import { getVariables } from '../state/selectors';
 import { VariableModel } from '../../templating/types';
 import { DashboardModel } from '../../dashboard/state';
 import { createUsagesNetwork } from './utils';
-import { JSONFormatter } from '@grafana/ui';
+import { FeatureInfoBox, JSONFormatter } from '@grafana/ui';
+import { FeatureState } from '@grafana/data';
 
 interface OwnProps {}
 
@@ -22,6 +23,10 @@ export const VariablesUnknown: FC<Props> = props => {
 
   return (
     <div>
+      <FeatureInfoBox title="Unknown" featureState={FeatureState.alpha}>
+        Unknown shows variables that don't exist any longer.
+      </FeatureInfoBox>
+
       {Object.keys(unknown).length > 0 && (
         <div>
           <table className="filter-table filter-table--hover">
