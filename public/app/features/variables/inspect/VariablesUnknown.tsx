@@ -5,7 +5,7 @@ import { getVariables } from '../state/selectors';
 import { VariableModel } from '../../templating/types';
 import { DashboardModel } from '../../dashboard/state';
 import { createUsagesNetwork } from './utils';
-import { FeatureInfoBox, JSONFormatter } from '@grafana/ui';
+import { FeatureInfoBox } from '@grafana/ui';
 import { FeatureState } from '@grafana/data';
 
 interface OwnProps {}
@@ -46,9 +46,7 @@ export const VariablesUnknown: FC<Props> = props => {
                       <span>{key}</span>
                     </td>
                     <td style={{ width: '1%' }} />
-                    <td style={{ maxWidth: '200px' }}>
-                      <JSONFormatter json={unknown[key]} open={0} />
-                    </td>
+                    <td style={{ maxWidth: '200px' }}>{/*<JSONFormatter json={unknown[key]} open={0} />*/}</td>
                     <td style={{ width: '1%' }} />
                     <td style={{ width: '1%' }} />
                     <td style={{ width: '1%' }} />

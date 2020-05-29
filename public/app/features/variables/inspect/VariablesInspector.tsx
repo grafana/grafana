@@ -7,9 +7,9 @@ import { VariableIdentifier } from '../state/types';
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 import { VariableEditorList } from '../editor/VariableEditorList';
 import { VariablesDependencies } from './VariablesDependencies';
-import { VariablesUsages } from './VariablesUsages';
 import { VariablesUnUsed } from './VariablesUnUsed';
-import { VariablesUnknown } from './VariablesUnknown';
+import { VariablesUsagesGraph } from './VariablesUsagesGraph';
+import { VariablesUnknownGraph } from './VariablesUnknownGraph';
 
 interface OwnProps {
   variables: VariableModel[];
@@ -76,9 +76,9 @@ const UnProvidedVariablesInspector: FC<Props> = props => {
       <TabContent>
         {activeTab.id === VariableTabs.Variables && <VariableEditorList {...props} />}
         {activeTab.id === VariableTabs.Dependencies && <VariablesDependencies {...props} />}
-        {activeTab.id === VariableTabs.Usages && <VariablesUsages {...props} />}
+        {activeTab.id === VariableTabs.Usages && <VariablesUsagesGraph {...props} />}
         {activeTab.id === VariableTabs.UnUsed && <VariablesUnUsed {...props} />}
-        {activeTab.id === VariableTabs.Unknown && <VariablesUnknown {...props} />}
+        {activeTab.id === VariableTabs.Unknown && <VariablesUnknownGraph {...props} />}
       </TabContent>
     </>
   );

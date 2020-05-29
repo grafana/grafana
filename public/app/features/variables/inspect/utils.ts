@@ -158,24 +158,22 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
 
 export interface VariableUsages {
   unUsed: VariableModel[];
-  unknown: any;
+  unknown: Array<{ variable: VariableModel; tree: any }>;
   usages: Array<{ variable: VariableModel; tree: any }>;
 }
 
 export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel): VariableUsages => {
   const unUsed: VariableModel[] = [];
   let usages: Array<{ variable: VariableModel; tree: any }> = [];
-  let unknown: any = {};
+  let unknown: Array<{ variable: VariableModel; tree: any }> = [];
   const model = dashboard.getSaveModelClone();
 
   const unknownVariables = getUnknownVariableStrings(variables, model);
   for (const unknownVariable of unknownVariables) {
     const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
     if (Object.keys(props).length) {
-      unknown = {
-        ...unknown,
-        [unknownVariable]: props,
-      };
+      const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
+      unknown.push({ variable, tree: props });
     }
   }
 
@@ -192,4 +190,55 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
   }
 
   return { unUsed, unknown, usages };
+};
+
+export interface UsagesToNetwork {
+  variable: VariableModel;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  showGraph: boolean;
+}
+
+export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value: any }): UsagesToNetwork => {
+  const { id, value } = parent;
+  const { nodes, edges } = usage;
+
+  if (value && typeof value === 'string') {
+    const leafId = `${parent.id}-${value}`;
+    nodes.push({ id: leafId, label: value });
+    edges.push({ from: leafId, to: id });
+
+    return usage;
+  }
+
+  if (value && typeof value === 'object') {
+    const keys = Object.keys(value);
+    for (const key of keys) {
+      const leafId = `${parent.id}-${key}`;
+      nodes.push({ id: leafId, label: key });
+      edges.push({ from: leafId, to: id });
+      usage = traverseTree(usage, { id: leafId, value: value[key] });
+    }
+
+    return usage;
+  }
+
+  return usage;
+};
+
+export const transformUsagesToNetwork = (usages: Array<{ variable: VariableModel; tree: any }>): UsagesToNetwork[] => {
+  const results: UsagesToNetwork[] = [];
+
+  for (const usage of usages) {
+    const { variable, tree } = usage;
+    const result: UsagesToNetwork = {
+      variable,
+      nodes: [{ id: 'dashboard', label: 'dashboard' }],
+      edges: [],
+      showGraph: false,
+    };
+    results.push(traverseTree(result, { id: 'dashboard', value: tree }));
+  }
+
+  return results;
 };
