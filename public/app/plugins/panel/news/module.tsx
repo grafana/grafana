@@ -18,7 +18,7 @@ export const plugin = new PanelPlugin<NewsOptions>(NewsPanel).setPanelOptions(bu
       name: 'Use Proxy',
       description: 'If the feed is unable to connect, consider a CORS proxy',
       showIf: (currentConfig: NewsOptions) => {
-        return currentConfig.feedUrl && !currentConfig.feedUrl.startsWith(PROXY_PREFIX);
+        return !!(currentConfig.feedUrl && !currentConfig.feedUrl.startsWith(PROXY_PREFIX));
       },
     });
 });
