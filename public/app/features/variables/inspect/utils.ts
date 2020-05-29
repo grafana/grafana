@@ -112,31 +112,15 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     return all;
   }, {});
 
-  const arrayValues = Object.keys(parent.value).reduce((all, key) => {
-    const value = parent.value[key];
-    if (value && Array.isArray(value) && value.length) {
-      for (const val of value) {
-        const newResult = getPropsWithVariable(variableId, { key, value: val }, {});
-        if (Object.keys(newResult).length) {
-          all = {
-            ...all,
-            [key]: newResult,
-          };
-        }
-      }
-    }
-
-    return all;
-  }, {});
-
   const objectValues = Object.keys(parent.value).reduce((all, key) => {
     const value = parent.value[key];
     if (value && typeof value === 'object' && Object.keys(value).length) {
+      const id = value.title || value.name || value.id || key;
       const newResult = getPropsWithVariable(variableId, { key, value }, {});
       if (Object.keys(newResult).length) {
         all = {
           ...all,
-          [key]: newResult,
+          [id]: newResult,
         };
       }
     }
@@ -144,11 +128,10 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     return all;
   }, {});
 
-  if (Object.keys(stringValues).length || Object.keys(arrayValues).length || Object.keys(objectValues).length) {
+  if (Object.keys(stringValues).length || Object.keys(objectValues).length) {
     result = {
       ...result,
       ...stringValues,
-      ...arrayValues,
       ...objectValues,
     };
   }
