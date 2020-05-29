@@ -39,7 +39,7 @@ Set to complete URL to override menu logo.
 
 ### fav_icon
 
-Set to complete url to override fav icon (icon shown in browser tab).
+Set to complete URL to override fav icon (icon shown in browser tab).
 
 ### apple_touch_icon
 
