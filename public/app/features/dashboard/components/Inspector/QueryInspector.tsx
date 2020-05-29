@@ -216,13 +216,15 @@ export class QueryInspector extends PureComponent<Props, State> {
   };
 
   renderExecutedQueries(executedQueries: ExecutedQueryInfo[]) {
-    const showName = executedQueries.length > 1;
+    if(!executedQueries.length) {
+      return null;
+    }
     return (
       <div>
         {executedQueries.map(info => {
           return (
             <div key={info.query}>
-              {showName && <h3>{info.name}</h3>}
+              <h3>{info.name}</h3>
               <pre>{info.query}</pre>
             </div>
           );
