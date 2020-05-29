@@ -35,7 +35,7 @@ login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg
 
 ### menu_logo
 
-Set to complete url to override menu logo.
+Set to complete URL to override menu logo.
 
 ### fav_icon
 
