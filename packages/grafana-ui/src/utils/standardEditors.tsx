@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
-import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select } from '../components';
+import { NumberValueEditor, RadioButtonGroup, StringValueEditor, SelectValueEditor } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -238,9 +238,7 @@ export const getStandardOptionEditors = () => {
     id: 'select',
     name: 'Select',
     description: 'Allows option selection',
-    editor: props => (
-      <Select value={props.value} onChange={e => props.onChange(e.value)} options={props.item.settings?.options} />
-    ),
+    editor: SelectValueEditor as any,
   };
 
   const radio: StandardEditorsRegistryItem<any> = {
