@@ -7,6 +7,7 @@ import { stylesFactory } from '../../themes';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 import { focusCss } from '../../themes/mixins';
+import { Moment } from 'moment';
 
 export interface Props {
   onChange: (value: DateTime) => void;
