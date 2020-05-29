@@ -4,10 +4,18 @@ import { Input } from '../Input/Input';
 import { Icon } from '../Icon/Icon';
 import { stylesFactory, getTheme } from '../../themes';
 import { css } from 'emotion';
+import { Button } from '../Button';
 
 type Props = FieldConfigEditorProps<string[], StringFieldConfigSettings>;
+interface State {
+  showAdd: boolean;
+}
 
-export class StringArrayEditor extends React.PureComponent<Props> {
+export class StringArrayEditor extends React.PureComponent<Props, State> {
+  state = {
+    showAdd: false,
+  };
+
   onRemoveString = (index: number) => {
     const { value, onChange } = this.props;
     const copy = [...value];
@@ -31,6 +39,7 @@ export class StringArrayEditor extends React.PureComponent<Props> {
         evt.currentTarget.value = ''; // reset last value
         onChange([...value, v]);
       }
+      this.setState({ showAdd: false });
       return;
     }
 
@@ -45,7 +54,9 @@ export class StringArrayEditor extends React.PureComponent<Props> {
 
   render() {
     const { value, item } = this.props;
+    const { showAdd } = this.state;
     const styles = getStyles(getTheme());
+    const placeholder = item.settings?.placeholder || 'Add text';
     return (
       <div>
         {value.map((v, index) => {
@@ -53,7 +64,6 @@ export class StringArrayEditor extends React.PureComponent<Props> {
             <Input
               className={styles.textInput}
               key={`${index}/${v}`}
-              placeholder={item.settings?.placeholder}
               defaultValue={v || ''}
               onBlur={e => this.onValueChange(e, index)}
               onKeyDown={e => this.onValueChange(e, index)}
@@ -62,14 +72,21 @@ export class StringArrayEditor extends React.PureComponent<Props> {
           );
         })}
 
-        <Input
-          className={styles.textInput}
-          placeholder={item.settings?.placeholder || 'Enter text'}
-          defaultValue={''}
-          onBlur={e => this.onValueChange(e, -1)}
-          onKeyDown={e => this.onValueChange(e, -1)}
-          suffix={<Icon name="plus-circle" />}
-        />
+        {showAdd ? (
+          <Input
+            autoFocus
+            className={styles.textInput}
+            placeholder={placeholder}
+            defaultValue={''}
+            onBlur={e => this.onValueChange(e, -1)}
+            onKeyDown={e => this.onValueChange(e, -1)}
+            suffix={<Icon name="plus-circle" />}
+          />
+        ) : (
+          <Button icon="plus" size="sm" variant="secondary" onClick={() => this.setState({ showAdd: true })}>
+            {placeholder}
+          </Button>
+        )}
       </div>
     );
   }
