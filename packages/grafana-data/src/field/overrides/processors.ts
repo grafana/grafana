@@ -45,7 +45,13 @@ export const valueMappingsOverrideProcessor = (
 };
 
 export interface SelectFieldConfigSettings<T> {
+  allowCustomValue?: boolean;
+
+  /** The default options */
   options: Array<SelectableValue<T>>;
+
+  /** Optionally use the context to define the options */
+  getOptions?: (context: FieldOverrideContext) => Promise<Array<SelectableValue<T>>>;
 }
 
 export const selectOverrideProcessor = (
