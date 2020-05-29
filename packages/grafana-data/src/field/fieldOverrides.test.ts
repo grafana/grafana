@@ -22,13 +22,14 @@ import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
 import { locationUtil } from '../utils';
-const property1 = {
+
+const property1: any = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
 
 const property2 = {
   id: 'custom.property2', // Match field properties
@@ -36,23 +37,23 @@ const property2 = {
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
 
-const property3 = {
+const property3: any = {
   id: 'custom.property3.nested', // Match field properties
   path: 'property3.nested', // Match field properties
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
 
-const shouldApplyFalse = {
+const shouldApplyFalse: any = {
   id: 'custom.shouldApplyFalse', // Match field properties
   path: 'shouldApplyFalse', // Match field properties
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => false,
-} as any;
+};
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
   return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
