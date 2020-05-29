@@ -9,6 +9,8 @@ import { CoreEvents } from 'app/types';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
 import { supportsDataQuery } from '../PanelEditor/utils';
+import { config } from '@grafana/runtime';
+import { css } from 'emotion';
 
 interface DsQuery {
   isLoading: boolean;
@@ -17,8 +19,9 @@ interface DsQuery {
 
 interface ExecutedQueryInfo {
   refId: string;
-  name: string;
   query: string;
+  frames: number;
+  rows: number;
 }
 
 interface Props {
@@ -65,17 +68,30 @@ export class QueryInspector extends PureComponent<Props, State> {
     }
   }
 
+  /**
+   * Find the list of executed queries
+   */
   updateQueryList() {
     const { data } = this.props;
     const executedQueries: ExecutedQueryInfo[] = [];
     if (data?.length) {
+      let last: ExecutedQueryInfo | undefined = undefined;
       data.forEach((frame, idx) => {
-        if (frame.meta?.executedQueryString) {
-          executedQueries.push({
-            refId: frame.refId || '?',
-            name: getFrameDisplayName(frame, idx),
-            query: frame.meta!.executedQueryString,
-          });
+        const query = frame.meta?.executedQueryString;
+        if (query) {
+          const refId = frame.refId || '?';
+          if (last?.refId === refId) {
+            last.frames++;
+            last.rows += frame.length;
+          } else {
+            last = {
+              refId,
+              frames: 0,
+              rows: frame.length,
+              query,
+            };
+            executedQueries.push(last);
+          }
         }
       });
     }
@@ -216,15 +232,28 @@ export class QueryInspector extends PureComponent<Props, State> {
   };
 
   renderExecutedQueries(executedQueries: ExecutedQueryInfo[]) {
-    if(!executedQueries.length) {
+    if (!executedQueries.length) {
       return null;
     }
+
+    const styles = {
+      refId: css`
+        font-weight: ${config.theme.typography.weight.semibold};
+        color: ${config.theme.colors.textBlue};
+        margin-right: 8px;
+      `,
+    };
+
     return (
       <div>
         {executedQueries.map(info => {
           return (
-            <div key={info.query}>
-              <h3>{info.name}</h3>
+            <div key={info.refId}>
+              <div>
+                <span className={styles.refId}>{info.refId}:</span>
+                {info.frames > 1 && <span>{info.frames} frames, </span>}
+                <span>{info.rows} rows</span>
+              </div>
               <pre>{info.query}</pre>
             </div>
           );
