@@ -50,6 +50,7 @@
     "blink-diff": "1.0.13",
     "commander": "5.0.0",
     "cypress": "4.5.0",
+    "cypress-log-to-output": "^1.0.8",
     "execa": "4.0.0",
     "resolve-as-bin": "2.1.0",
     "ts-loader": "6.2.1",

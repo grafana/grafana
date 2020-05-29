@@ -22,6 +22,7 @@ Cypress.Commands.add('compareSnapshot', (args: CompareSnapshotArgs) => {
   });
 });
 
+// @todo remove
 Cypress.Commands.add('logToConsole', (message: string, optional?: any) => {
   cy.task('log', { message, optional });
 });
