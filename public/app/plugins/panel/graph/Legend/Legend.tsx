@@ -231,13 +231,13 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
     let sortDesc = this.props.sortDesc;
     let sortBy = this.props.sort;
     if (stat !== sortBy) {
-      sortDesc = null;
+      sortDesc = undefined;
     }
 
     // if already sort ascending, disable sorting
     if (sortDesc === false) {
-      sortBy = null;
-      sortDesc = null;
+      sortBy = undefined;
+      sortDesc = undefined;
     } else {
       sortDesc = !sortDesc;
       sortBy = stat;
@@ -272,18 +272,19 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
           </tr>
         </thead>
         <tbody>
-          {seriesList.map((series, i) => (
-            <LegendItem
-              key={`${series.id}-${i}`}
-              asTable={true}
-              series={series}
-              hidden={hiddenSeries[series.alias]}
-              onLabelClick={this.props.onToggleSeries}
-              onColorChange={this.props.onColorChange}
-              onToggleAxis={this.props.onToggleAxis}
-              {...seriesValuesProps}
-            />
-          ))}
+          {seriesList &&
+            seriesList.map((series, i) => (
+              <LegendItem
+                key={`${series.id}-${i}`}
+                asTable={true}
+                series={series}
+                hidden={hiddenSeries[series.alias]}
+                onLabelClick={this.props.onToggleSeries}
+                onColorChange={this.props.onColorChange}
+                onToggleAxis={this.props.onToggleAxis}
+                {...seriesValuesProps}
+              />
+            ))}
         </tbody>
       </table>
     );
@@ -296,7 +297,12 @@ interface LegendTableHeaderProps {
 }
 
 class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & LegendSortProps> {
-  onClick = () => this.props.onClick(this.props.statName);
+  onClick = () => {
+    const { onClick } = this.props;
+    if (onClick) {
+      onClick(this.props.statName);
+    }
+  };
 
   render() {
     const { statName, sort, sortDesc } = this.props;
