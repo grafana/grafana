@@ -249,7 +249,7 @@ export function dataFrameToLogsModel(
 export function getSeriesProperties(
   sortedRows: LogRowModel[],
   intervalMs: number,
-  absoluteRange: AbsoluteTimeRange,
+  absoluteRange?: AbsoluteTimeRange,
   pxPerBar = 20,
   minimumBucketSize = 1000
 ) {
