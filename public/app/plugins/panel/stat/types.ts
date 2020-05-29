@@ -90,7 +90,8 @@ export function addStandardDataReduceOptions(
             for (const frame of context.data) {
               for (const field of frame.fields) {
                 const name = getFieldDisplayName(field, frame, context.data);
-                options.push({ value: escapeStringForRegex(name), label: name });
+                const value = `/^${escapeStringForRegex(name)}$/`;
+                options.push({ value, label: name });
               }
             }
           }

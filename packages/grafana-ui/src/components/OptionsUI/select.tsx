@@ -1,10 +1,9 @@
 import React from 'react';
 import { FieldConfigEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
-import { Icon } from '../Icon/Icon';
 
 interface State<T> {
-  loading: boolean;
+  isLoading: boolean;
   options: Array<SelectableValue<T>>;
 }
 
@@ -12,7 +11,7 @@ type Props<T> = FieldConfigEditorProps<T, SelectFieldConfigSettings<T>>;
 
 export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>> {
   state: State<T> = {
-    loading: true,
+    isLoading: true,
     options: [],
   };
 
@@ -43,17 +42,14 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
     }
     if (this.state.options !== options) {
       this.setState({
-        loading: false,
+        isLoading: false,
         options,
       });
     }
   };
 
   render() {
-    const { options, loading } = this.state;
-    if (loading) {
-      return <Icon name="fa fa-spinner" />;
-    }
+    const { options, isLoading } = this.state;
     const { value, onChange, item } = this.props;
 
     const { settings } = item;
@@ -67,6 +63,7 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
     }
     return (
       <Select<T>
+        isLoading={isLoading}
         value={current}
         defaultValue={value}
         allowCustomValue={allowCustomValue}
