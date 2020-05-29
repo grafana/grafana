@@ -32,7 +32,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   formats: any[];
   queryModel: PostgresQuery;
   metaBuilder: PostgresMetaQuery;
-  lastQueryError: string;
+  lastQueryError: string | null;
   showHelp: boolean;
   tableSegment: any;
   whereAdd: any;

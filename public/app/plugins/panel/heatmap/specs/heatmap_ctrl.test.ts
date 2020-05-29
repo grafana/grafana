@@ -70,7 +70,7 @@ describe('HeatmapCtrl', () => {
     });
 
     it('should set datapointsOutside', () => {
-      expect(ctx.ctrl.dataWarning).toBe(undefined);
+      expect(ctx.ctrl.dataWarning).toBe(null);
     });
   });
 

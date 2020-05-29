@@ -12,9 +12,9 @@ import appEvents from 'app/core/app_events';
 import { css, cx } from 'emotion';
 
 interface UserInfo {
-  id: number;
-  login: string;
-  email: string;
+  id?: number;
+  login?: string;
+  email?: string;
 }
 
 interface Props extends PanelProps<AnnoOptions> {}
@@ -161,7 +161,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     return t.add(incr, unit as DurationUnit).valueOf();
   }
 
-  onTagClick = (e: React.SyntheticEvent, tag: string, remove: boolean) => {
+  onTagClick = (e: React.SyntheticEvent, tag: string, remove?: boolean) => {
     e.stopPropagation();
     const queryTags = remove ? this.state.queryTags.filter(item => item !== tag) : [...this.state.queryTags, tag];
 

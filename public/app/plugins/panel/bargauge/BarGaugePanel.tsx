@@ -29,7 +29,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         height={height}
         orientation={orientation}
         field={field}
-        display={view?.getFieldDisplayProcessor(colIndex || 0)}
+        display={view!.getFieldDisplayProcessor(colIndex)}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}
