@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 	"golang.org/x/oauth2/google"
@@ -328,7 +329,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriv
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
-	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
+	queryResult.Meta.Set(sqleng.MetaKeyExecutedQueryString, req.URL.RawQuery)
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
 	if ok {
