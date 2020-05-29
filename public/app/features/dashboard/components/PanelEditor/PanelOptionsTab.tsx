@@ -83,6 +83,7 @@ export const PanelOptionsTab: FC<Props> = ({
         key="panel options"
         options={panel.getOptions()}
         onChange={onPanelOptionsChanged}
+        replaceVariables={panel.replaceVariables}
         plugin={plugin}
         data={data?.series}
       />

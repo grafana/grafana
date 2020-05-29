@@ -1,19 +1,31 @@
 import React, { useMemo } from 'react';
-import { PanelOptionsEditorItem, PanelPlugin, DataFrame, StandardEditorContext } from '@grafana/data';
+import {
+  PanelOptionsEditorItem,
+  PanelPlugin,
+  DataFrame,
+  StandardEditorContext,
+  InterpolateFunction,
+} from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { Field, Label } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
-import { getTemplateSrv } from '@grafana/runtime';
 
 interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
   data?: DataFrame[];
+  replaceVariables: InterpolateFunction;
   options: TOptions;
   onChange: (options: TOptions) => void;
 }
 
-export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plugin, options, onChange, data }) => {
+export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
+  plugin,
+  options,
+  onChange,
+  data,
+  replaceVariables,
+}) => {
   const optionEditors = useMemo<Record<string, PanelOptionsEditorItem[]>>(() => {
     return groupBy(plugin.optionEditors.list(), i => {
       return i.category ? i.category[0] : 'Display';
@@ -27,7 +39,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({ plu
 
   const context: StandardEditorContext = {
     data: data ?? [],
-    replaceVariables: getTemplateSrv().replace,
+    replaceVariables,
   };
 
   return (
