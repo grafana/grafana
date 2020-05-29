@@ -1,4 +1,4 @@
-const compareSnapshotsPlugin = require('./compareSnapshots');
+const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
 const typescriptPreprocessor = require('./typescriptPreprocessor');
@@ -6,7 +6,7 @@ const { install: installConsoleLogger } = require('cypress-log-to-output');
 
 module.exports = (on, config) => {
   on('file:preprocessor', typescriptPreprocessor);
-  on('task', { compareSnapshotsPlugin, readProvisions });
+  on('task', { compareScreenshots, readProvisions });
   on('task', {
     // @todo remove
     log({ message, optional }) {
