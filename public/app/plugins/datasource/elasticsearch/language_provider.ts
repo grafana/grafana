@@ -7,7 +7,7 @@ import { PromQuery } from '../prometheus/types';
 
 const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
 
-async function getNameLabelValue(promQuery: string) {
+function getNameLabelValue(promQuery: string) {
   const openBracketIndex = promQuery.indexOf('{');
   const lastOpenParenthesis = promQuery.lastIndexOf('(');
   var startNameLabelIndex = 0;
@@ -26,12 +26,13 @@ async function getNameLabelValue(promQuery: string) {
   let nameLabelValue = promQuery.substring(startNameLabelIndex, lastNameLabelIndex);
   return nameLabelValue;
 }
-async function extractPrometheusLabels(promQuery: string): Promise<string[][]> {
+
+function extractPrometheusLabels(promQuery: string): string[][] {
   var labels: string[][] = [];
   if (!promQuery || promQuery.length === 0) {
     return labels;
   }
-  const nameLabelValue = await getNameLabelValue(promQuery);
+  const nameLabelValue = getNameLabelValue(promQuery);
   if (nameLabelValue && nameLabelValue.length > 0) {
     labels.push(['__name__', '=', '"' + nameLabelValue + '"']);
   }
@@ -42,7 +43,8 @@ async function extractPrometheusLabels(promQuery: string): Promise<string[][]> {
   }
   return labels;
 }
-async function getElasticsearchQuery(prometheusLabels: string[][]): Promise<string> {
+
+function getElasticsearchQuery(prometheusLabels: string[][]): string {
   var elasticsearchLuceneLabels = [];
   for (let keyOperatorValue of prometheusLabels) {
     switch (keyOperatorValue[1]) {
@@ -88,7 +90,7 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
       return Promise.all(
         queries.map(async query => {
           let prometheusQuery: PromQuery = query as PromQuery;
-          const expr = await getElasticsearchQuery(await extractPrometheusLabels(prometheusQuery.expr));
+          const expr = getElasticsearchQuery(extractPrometheusLabels(prometheusQuery.expr));
           return {
             isLogsQuery: true,
             query: expr,
