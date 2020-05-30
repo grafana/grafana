@@ -3,6 +3,7 @@ import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import Editor from '@monaco-editor/react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { checkSetup } from './setup';
 
 export interface Props extends Themeable {
   text: string;
@@ -16,15 +17,26 @@ export interface Props extends Themeable {
 }
 
 class UnthemedCodeEditor extends React.PureComponent<Props> {
-  getEditorValue: any | undefined;
+  constructor(props: Props) {
+    super(props);
+    checkSetup();
+  }
+
+  getEditorValue = () => '';
 
   onBlur = () => {
     const val = this.getEditorValue();
     this.props.onChange(val);
   };
 
-  onEditorDidMount = (getEditorValue: any) => {
+  onEditorDidMount = (getEditorValue: () => string, editor: object) => {
     this.getEditorValue = getEditorValue;
+
+    // Listen for save command
+    console.log('Register save commnad!!!');
+    // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+    //   console.log('SAVE pressed!');
+    // });
   };
 
   render() {
