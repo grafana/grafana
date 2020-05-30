@@ -1,0 +1,5 @@
+name: lint-backend
+description: Lint Grafana back-end code
+runs:
+  using: docker
+  image: Dockerfile

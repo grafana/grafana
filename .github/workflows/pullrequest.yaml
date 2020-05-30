@@ -1,0 +1,92 @@
+name: Test pull request
+on:
+  pull_request
+jobs:
+  download-grabpl:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download Grafana Build Pipeline Tool
+        uses: ./.github/actions/download-grabpl
+      - uses: actions/upload-artifact@v2
+        with:
+          name: grabpl
+          path: grabpl
+  lint-backend:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache Go dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: go-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            go-
+      - uses: ./.github/actions/lint-backend
+  # TODO: Make enterprise variety
+  build-oss-backend:
+    runs-on: self-hosted
+    needs:
+      - download-grabpl
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: grabpl
+      - name: Cache Go dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: go-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            go-
+      - uses: ./.github/actions/build-backend
+      - uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: bin/
+  # TODO: Make enterprise variety
+  build-oss-frontend:
+    runs-on: self-hosted
+    needs:
+      - download-grabpl
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: grabpl
+      - name: Cache Node dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            node-
+      - uses: ./.github/actions/build-frontend
+      - uses: actions/upload-artifact@v2
+        with:
+          name: frontend
+          path: public/
+  # TODO: Make enterprise variety
+  build-oss-plugins:
+    runs-on: self-hosted
+    needs:
+      - download-grabpl
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: grabpl
+      - name: Cache Node dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: node-plugins-${{ hashFiles('plugins-bundled/**/package-lock.json') }}
+          restore-keys: |
+            node-plugins
+      - uses: ./.github/actions/build-plugins
+      - uses: actions/upload-artifact@v2
+        with:
+          name: plugins
+          path: plugins-bundled/dist

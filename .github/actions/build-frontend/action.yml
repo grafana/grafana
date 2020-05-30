@@ -1,0 +1,5 @@
+name: build-frontend
+description: Build Grafana front-end
+runs:
+  using: docker
+  image: Dockerfile
