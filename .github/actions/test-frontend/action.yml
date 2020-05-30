@@ -1,0 +1,5 @@
+name: test-frontend
+description: Test Grafana front-end
+runs:
+  using: docker
+  image: Dockerfile

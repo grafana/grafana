@@ -1,0 +1,5 @@
+name: build-backend
+description: Build Grafana back-end binaries
+runs:
+  using: docker
+  image: Dockerfile

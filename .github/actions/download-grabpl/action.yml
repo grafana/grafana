@@ -1,0 +1,7 @@
+name: download-grabpl
+description: Download the Grafana Build Pipeline Tool
+runs:
+  using: docker
+  image: Dockerfile
+  env:
+    GRABPL_VERSION: 0.4.12

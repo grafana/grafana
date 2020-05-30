@@ -1,0 +1,5 @@
+name: build-plugins
+description: Build Grafana bundled plugins
+runs:
+  using: docker
+  image: Dockerfile
