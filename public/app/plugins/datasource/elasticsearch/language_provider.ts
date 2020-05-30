@@ -5,47 +5,66 @@ import { ElasticDatasource } from './datasource';
 
 import { PromQuery } from '../prometheus/types';
 
-const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
+import Prism, { Token } from 'prismjs';
+import grammar from '../prometheus/promql';
 
-function getNameLabelValue(promQuery: string) {
-  const openBracketIndex = promQuery.indexOf('{');
-  const lastOpenParenthesis = promQuery.lastIndexOf('(');
-  var startNameLabelIndex = 0;
-  if (lastOpenParenthesis !== -1) {
-    startNameLabelIndex = lastOpenParenthesis + 1;
-  }
-  let lastNameLabelIndex = openBracketIndex;
-  if (openBracketIndex === -1) {
-    const openBraceIndex = promQuery.indexOf('[');
-    if (openBraceIndex === -1) {
-      lastNameLabelIndex = promQuery.length;
-    } else {
-      lastNameLabelIndex = openBraceIndex;
+function getNameLabelValue(promQuery: string, tokens: any): string {
+  let nameLabelValue: string;
+  for (let prop in tokens) {
+    if (typeof tokens[prop] === 'string') {
+      nameLabelValue = tokens[prop] as string;
+      break;
     }
   }
-  let nameLabelValue = promQuery.substring(startNameLabelIndex, lastNameLabelIndex);
   return nameLabelValue;
 }
 
 function extractPrometheusLabels(promQuery: string): string[][] {
-  var labels: string[][] = [];
+  const labels: string[][] = [];
   if (!promQuery || promQuery.length === 0) {
     return labels;
   }
-  const nameLabelValue = getNameLabelValue(promQuery);
+  const tokens = Prism.tokenize(promQuery, grammar);
+  const nameLabelValue = getNameLabelValue(promQuery, tokens);
   if (nameLabelValue && nameLabelValue.length > 0) {
     labels.push(['__name__', '=', '"' + nameLabelValue + '"']);
   }
 
-  let m;
-  while ((m = labelRegexp.exec(promQuery)) != null) {
-    labels.push([m[1], m[2], m[3]]);
+  for (let prop in tokens) {
+    if (tokens[prop] instanceof Token) {
+      let token: Token = tokens[prop] as Token;
+      if (token.type === 'context-labels') {
+        let labelKey: string;
+        let labelValue: string;
+        let labelOperator: string;
+        let contentTokens: any[] = token.content as any[];
+        for (let currentToken in contentTokens) {
+          if (typeof contentTokens[currentToken] === 'string') {
+            let currentStr: string;
+            currentStr = contentTokens[currentToken] as string;
+            if (currentStr === '=' || currentStr === '!=' || currentStr === '=~' || currentStr === '!~') {
+              labelOperator = currentStr;
+            }
+          } else if (contentTokens[currentToken] instanceof Token) {
+            switch (contentTokens[currentToken].type) {
+              case 'label-key':
+                labelKey = contentTokens[currentToken].content as string;
+                break;
+              case 'label-value':
+                labelValue = contentTokens[currentToken].content as string;
+                labels.push([labelKey, labelOperator, labelValue]);
+                break;
+            }
+          }
+        }
+      }
+    }
   }
   return labels;
 }
 
 function getElasticsearchQuery(prometheusLabels: string[][]): string {
-  var elasticsearchLuceneLabels = [];
+  let elasticsearchLuceneLabels = [];
   for (let keyOperatorValue of prometheusLabels) {
     switch (keyOperatorValue[1]) {
       case '=': {
