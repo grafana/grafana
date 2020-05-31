@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVersionComparsion(t *testing.T) {
+func TestVersionComparison(t *testing.T) {
 	t.Run("Validate that version is outdated", func(t *testing.T) {
 		versions := []models.Version{
 			{Version: "1.1.1"},

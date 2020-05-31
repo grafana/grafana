@@ -153,7 +153,8 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.ConditionEvals, ShouldEqual, "[[false OR false] OR false] = false")
 		})
 
-		Convey("Should retuasdfrn no data if one condition has nodata", func() {
+		// FIXME: What should the actual test case name be here?
+		Convey("Should retuasdfrn no data if one condition has no data", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "or", noData: false},
@@ -166,7 +167,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.NoDataFound, ShouldBeFalse)
 		})
 
-		Convey("Should return no data if one condition has nodata", func() {
+		Convey("Should return no data if one condition has no data", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "and", noData: true},
