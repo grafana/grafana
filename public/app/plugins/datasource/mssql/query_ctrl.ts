@@ -31,7 +31,7 @@ export class MssqlQueryCtrl extends QueryCtrl {
 
   formats: any[];
   target: MssqlQuery;
-  lastQueryError: string;
+  lastQueryError: string | null;
   showHelp: boolean;
 
   /** @ngInject */

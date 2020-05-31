@@ -29,7 +29,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
-  lastQueryError: string;
+  lastQueryError: string | null;
   showHelp: boolean;
 
   queryModel: MysqlQuery;
