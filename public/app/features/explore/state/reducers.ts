@@ -376,7 +376,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
 
     // removes a query under a given index and reassigns query keys and refIds to keep everything in order
     const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
-      return { ...query, refId: undefined };
+      return { ...query, refId: '' };
     });
     const nextQueries: DataQuery[] = [];
 
