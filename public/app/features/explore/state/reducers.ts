@@ -88,9 +88,9 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
  */
 export const makeExploreItemState = (): ExploreItemState => ({
   containerWidth: 0,
-  datasourceInstance: null,
+  datasourceInstance: undefined,
   requestedDatasourceName: null,
-  datasourceLoading: null,
+  datasourceLoading: undefined,
   datasourceMissing: false,
   history: [],
   queries: [],
@@ -105,7 +105,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
     to: null,
   },
   scanning: false,
-  scanRange: null,
+  scanRange: undefined,
   showingGraph: true,
   showingTable: true,
   loading: false,
@@ -125,7 +125,7 @@ export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
   request: {} as DataQueryRequest<DataQuery>,
   series: [],
-  error: null,
+  error: undefined,
   timeRange: DefaultTimeRange,
 });
 
@@ -190,9 +190,9 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return {
       ...state,
       mode: action.payload.mode,
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
+      graphResult: undefined,
+      tableResult: undefined,
+      logsResult: undefined,
       queryResponse: createEmptyQueryResponse(),
       loading: false,
     };
@@ -228,9 +228,9 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return {
       ...state,
       queries: queries.slice(),
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
+      graphResult: undefined,
+      tableResult: undefined,
+      logsResult: undefined,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
       queryResponse: createEmptyQueryResponse(),
       loading: false,
@@ -296,9 +296,9 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return {
       ...state,
       datasourceInstance: updatedDatasourceInstance,
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
+      graphResult: undefined,
+      tableResult: undefined,
+      logsResult: undefined,
       latency: 0,
       queryResponse: createEmptyQueryResponse(),
       loading: false,
@@ -417,7 +417,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       return { ...state, showingGraph };
     }
 
-    return { ...state, showingGraph, graphResult: null };
+    return { ...state, showingGraph, graphResult: undefined };
   }
 
   if (toggleTableAction.match(action)) {
@@ -426,7 +426,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       return { ...state, showingTable };
     }
 
-    return { ...state, showingTable, tableResult: null };
+    return { ...state, showingTable, tableResult: undefined };
   }
 
   if (queriesImportedAction.match(action)) {
@@ -524,9 +524,9 @@ export const processQueryResponse = (
       ...state,
       loading: false,
       queryResponse: response,
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
+      graphResult: undefined,
+      tableResult: undefined,
+      logsResult: undefined,
       update: makeInitialUpdateState(),
     };
   }
