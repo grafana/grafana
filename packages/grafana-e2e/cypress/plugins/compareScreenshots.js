@@ -3,7 +3,7 @@ const BlinkDiff = require('blink-diff');
 const { resolve } = require('path');
 
 // @todo use npmjs.com/pixelmatch or an available cypress plugin
-const compareSceenshots = async ({ config, screenshotsFolder, specName }) => {
+const compareScreenshots = async ({ config, screenshotsFolder, specName }) => {
   const name = config.name || config; // @todo use `??`
   const threshold = config.threshold || 0.001; // @todo use `??`
 
@@ -46,4 +46,4 @@ const compareSceenshots = async ({ config, screenshotsFolder, specName }) => {
   }
 };
 
-module.exports = compareSceenshots;
+module.exports = compareScreenshots;

@@ -1,10 +1,10 @@
-interface CompareSceenshotsConfig {
+interface CompareScreenshotsConfig {
   name: string;
   threshold?: number;
 }
 
-Cypress.Commands.add('compareSceenshots', (config: CompareSceenshotsConfig | string) => {
-  cy.task('compareSceenshots', {
+Cypress.Commands.add('compareScreenshots', (config: CompareScreenshotsConfig | string) => {
+  cy.task('compareScreenshots', {
     config,
     screenshotsFolder: Cypress.config('screenshotsFolder'),
     specName: Cypress.spec.name,
