@@ -27,11 +27,15 @@ export const basic = () => {
   const { text, language } = getKnobs();
   return (
     <CodeEditor
-      text={text}
+      value={text}
       language={language}
-      onChange={(text: string) => {
-        console.log('Changed: ', text);
-        action('Text changed')(text);
+      onBlur={(text: string) => {
+        console.log('Blur: ', text);
+        action('code blur')(text);
+      }}
+      onSave={(text: string) => {
+        console.log('Save: ', text);
+        action('code saved')(text);
       }}
     />
   );
