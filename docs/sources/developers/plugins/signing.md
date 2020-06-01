@@ -9,7 +9,7 @@ Plugin signing is a security measure to make sure plugins haven't been tampered 
 
 > Note: All Grafana Labs authored backend plugins, including Enterprise plugins, are signed. We're looking into providing a process for allowing  community plugins to be signed in an upcoming version of Grafana.
 
-## Signing a plugin
+## Sign a plugin
 
 Signing a plugin is the process of creating a signed manifest file, _MANIFEST.txt_. The first step is to create the plugin manifest. This is a JSON file that should contain the same plugin id and version found in `plugin.json`. The list of plugin files with their respective checksums (SHA256) should all be included as `files`. Example plugin manifest:
 
@@ -81,4 +81,8 @@ If a [backend plugin]({{< relref "backend/_index.md" >}}) is not signed then Gra
 
 ### Allow unsigned plugins
 
-It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "../../installation/configuration.md#allow-loading-unsigned-plugins" >}}) about this setting. Running an unsiged backend plugin will write a warning message to the Grafana server log `Running an unsigned backend plugin   pluginID=<plugin id>`.
+While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. If you run an unsigned backend plugin, then Grafana writes a warning message to the server log.
+
+    Running an unsigned backend plugin   pluginID=<plugin id>
+
+For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../../installation/configuration.md#allow-loading-unsigned-plugins" >}}). 
