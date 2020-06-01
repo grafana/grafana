@@ -6,19 +6,19 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 export type CodeEditorChangeHandler = (value: string) => void;
 
-export interface CodeEditorProps extends Themeable {
+interface CodeEditorProps extends Themeable {
   value: string;
   language: string;
   readOnly?: boolean;
   width?: number | string;
   height?: number | string;
 
-  /**
-   * Callback after the editor has mounted that gives you raw access to monaco
-   *
-   * @experimental
-   */
-  onEditorDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
+  // /**
+  //  * Callback after the editor has mounted that gives you raw access to monaco
+  //  *
+  //  * @experimental
+  //  */
+  // onEditorDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
 
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
@@ -42,7 +42,7 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
   };
 
   editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-    const { onSave, onEditorDidMount } = this.props;
+    const { onSave } = this.props;
 
     this.getEditorValue = () => editor.getValue();
 
@@ -52,9 +52,9 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
       });
     }
 
-    if (onEditorDidMount) {
-      onEditorDidMount(editor);
-    }
+    // if (onEditorDidMount) {
+    //   onEditorDidMount(editor);
+    // }
   };
 
   render() {
