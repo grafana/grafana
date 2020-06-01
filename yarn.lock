@@ -8912,6 +8912,14 @@ chownr@^1.1.1, chownr@^1.1.2:
   resolved "https://registry.yarnpkg.com/chownr/-/chownr-1.1.3.tgz#42d837d5239688d55f303003a508230fa6727142"
   integrity sha512-i70fVHhmV3DtTl6nqvZOnIjbY0Pe4kAUjwHj8z0zAdgBtYrJyYwLKCCuRBQ5ppkyL0AkN7HKRnETdmdp1zqNXw==
 
+chrome-remote-interface@^0.27.1:
+  version "0.27.2"
+  resolved "https://registry.yarnpkg.com/chrome-remote-interface/-/chrome-remote-interface-0.27.2.tgz#e5605605f092b7ef8575d95304e004039c9d0ab9"
+  integrity sha512-pVLljQ29SAx8KIv5tSa9sIf8GrEsAZdPJoeWOmY3/nrIzFmE+EryNNHvDkddGod0cmAFTv+GmPG0uvzxi2NWsA==
+  dependencies:
+    commander "2.11.x"
+    ws "^6.1.0"
+
 chrome-trace-event@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/chrome-trace-event/-/chrome-trace-event-1.0.2.tgz#234090ee97c7d4ad1a2c4beae27505deffc608a4"
@@ -9300,6 +9308,11 @@ commander@2, commander@^2.18.0, commander@^2.19.0, commander@^2.20.0, commander@
   version "2.20.3"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
   integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
+
+commander@2.11.x:
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-2.11.0.tgz#157152fd1e7a6c8d98a5b715cf376df928004563"
+  integrity sha512-b0553uYA5YAEGgyYIGYROzKQ7X5RAqedkfjiZxwi0kL1g3bOaBNNZfYkzt/CL0umgD5wc9Jec2FbB98CjkMRvQ==
 
 commander@2.17.x:
   version "2.17.1"
@@ -10200,6 +10213,14 @@ cyclist@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-1.0.1.tgz#596e9698fd0c80e12038c2b82d6eb1b35b6224d9"
   integrity sha1-WW6WmP0MgOEgOMK4LW6xs1tiJNk=
+
+cypress-log-to-output@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/cypress-log-to-output/-/cypress-log-to-output-1.0.8.tgz#8698db2cd68b88fd62e7f9ea8d1eece20bb210cf"
+  integrity sha512-o0PwNSXSZho2QLTOa4I/KgyPfZwgqNBqNcz+jBMcKJHPsRBZDUElaosigqSXI28uuSlprUlvcYjpcb/791u/lg==
+  dependencies:
+    chalk "^2.4.2"
+    chrome-remote-interface "^0.27.1"
 
 cypress@4.5.0:
   version "4.5.0"
