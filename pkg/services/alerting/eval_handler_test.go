@@ -179,7 +179,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.NoDataFound, ShouldBeTrue)
 		})
 
-		Convey("Should return no data if both conditions have no data and using AND", func() {
+		Convey("Should not return no data if at least one condition has no data and using AND", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "and", noData: true},
@@ -191,7 +191,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.NoDataFound, ShouldBeFalse)
 		})
 
-		Convey("Should not return no data if both conditions have no data and using OR", func() {
+		Convey("Should return no data if at least one condition has no data and using OR", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "or", noData: true},
