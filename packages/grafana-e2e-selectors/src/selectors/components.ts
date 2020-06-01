@@ -97,6 +97,12 @@ export const Components = {
   },
   TransformTab: {
     content: 'Transform editor tab content',
+    newTransform: (title: string) => `New transform ${title}`,
+  },
+  Transforms: {
+    Reduce: {
+      calculationsLabel: 'Transform calculations label',
+    },
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
@@ -125,7 +131,11 @@ export const Components = {
   FolderPicker: {
     container: 'Folder picker select container',
   },
+  DataSourcePicker: {
+    container: 'Data source picker select container',
+  },
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  QueryField: { container: 'Query field' },
 };

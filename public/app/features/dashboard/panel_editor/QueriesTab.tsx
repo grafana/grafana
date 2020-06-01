@@ -71,7 +71,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
 
-    this.querySubscription = queryRunner.getData({ withTransforms: false }).subscribe({
+    this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
