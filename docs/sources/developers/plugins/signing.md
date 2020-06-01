@@ -86,10 +86,12 @@ EROR[06-01|16:45:59] Failed to load plugin   error=plugin <plugin id> is unsigne
 
 ### Allow unsigned plugins
 
-While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. If you run an unsigned backend plugin, then Grafana writes a warning message to the server log:
+While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../../installation/configuration.md#allow-loading-unsigned-plugins" >}}).
+
+If you run an unsigned backend plugin, then Grafana writes a warning message to the server log:
 
 ```bash
 WARN[06-01|16:45:59] Running an unsigned backend plugin   pluginID=<plugin id>
 ```
 
-For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../../installation/configuration.md#allow-loading-unsigned-plugins" >}}).
+If you're developing plugins and run Grafana from source the development mode will be enabled per default and also allow you to run unsigned backend plugins.
