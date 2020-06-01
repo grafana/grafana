@@ -1,81 +1,68 @@
 import React from 'react';
-import { withTheme } from '../../themes';
-import { Themeable } from '../../types';
 import MonacoEditor from 'react-monaco-editor';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import { useTheme } from '../../themes';
+import { CodeEditorChangeHandler, useMonaco } from './useMonaco';
 
-export enum CodeEditorUpdateAction {
-  Blur = 'blur',
-  Save = 'save',
+export enum CodeEditorLanguage {
+  JSON = 'json',
+  JavaScript = 'javascript',
 }
 
-export interface Props extends Themeable {
-  text: string;
-
-  language: string;
-
+interface CodeEditorProps {
+  value: string;
+  language: CodeEditorLanguage;
   readOnly?: boolean;
-
-  onChange: (text: string, action: CodeEditorUpdateAction) => void;
+  /** Handler to be performed on any change in the editor */
+  onChange?: CodeEditorChangeHandler;
+  /** Handler to be performed when editor is blurred */
+  onBlur?: CodeEditorChangeHandler;
+  /** Handler to be performed when Cmd/Ctrl+S is pressed */
+  onSave?: CodeEditorChangeHandler;
 }
 
-class UnthemedCodeEditor extends React.PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
+export const CodeEditor: React.FC<CodeEditorProps> = ({ value, language, onChange, onBlur, onSave, readOnly }) => {
+  const theme = useTheme();
+  const { initializeEditor, getValue } = useMonaco({
+    commands: {
+      [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S]: () => {
+        if (onSave) {
+          onSave(getValue());
+        }
+      },
+    },
+    eventHandlers: {
+      onBlur,
+    },
+  });
 
-  getEditorValue = () => '';
-
-  onBlur = () => {
-    const val = this.getEditorValue();
-    this.props.onChange(val, CodeEditorUpdateAction.Blur);
-  };
-
-  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-    console.log('editorDidMount', editor);
-
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
-      const val = this.getEditorValue();
-      this.props.onChange(val, CodeEditorUpdateAction.Save);
-    });
-    this.getEditorValue = () => editor.getValue();
-  };
-
-  render() {
-    const { text, theme, language } = this.props;
-    const longText = text.length > 100;
-
-    return (
-      <AutoSizer disableWidth>
-        {({ height }) => (
-          <div onBlur={this.onBlur}>
-            <MonacoEditor
-              height={height}
-              language={language}
-              width="100%"
-              theme={theme.isDark ? 'vs-dark' : 'vs-light'}
-              value={text}
-              options={{
-                wordWrap: 'off',
-                codeLens: false, // too small to bother (and not compiled)
-                minimap: {
-                  enabled: longText,
-                  renderCharacters: false,
-                },
-                readOnly: this.props.readOnly,
-                lineNumbersMinChars: 4,
-                lineDecorationsWidth: 0,
-                overviewRulerBorder: false,
-                automaticLayout: true,
-              }}
-              editorDidMount={this.editorDidMount}
-            />
-          </div>
-        )}
-      </AutoSizer>
-    );
-  }
-}
-
-export const CodeEditor = withTheme(UnthemedCodeEditor);
+  return (
+    <AutoSizer disableWidth>
+      {({ height }) => (
+        <MonacoEditor
+          height={height}
+          language={language}
+          width="100%"
+          theme={theme.isDark ? 'vs-dark' : 'vs-light'}
+          value={value}
+          options={{
+            wordWrap: 'off',
+            codeLens: false, // too small to bother (and not compiled)
+            minimap: {
+              enabled: value.length > 100,
+              renderCharacters: false,
+            },
+            readOnly,
+            lineNumbersMinChars: 4,
+            lineDecorationsWidth: 0,
+            overviewRulerBorder: false,
+            automaticLayout: true,
+          }}
+          editorDidMount={initializeEditor}
+          onChange={onChange}
+        />
+      )}
+    </AutoSizer>
+  );
+};

@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { chain } from 'lodash';
 import { AppEvents, PanelData, SelectableValue } from '@grafana/data';
-import { Button, Field, Select, CodeEditor } from '@grafana/ui';
+import { Button, CodeEditor, CodeEditorLanguage, Field, Select } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from '../../state';
 import { getPanelInspectorStyles } from './styles';
@@ -135,7 +134,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           )}
         </div>
         <div className={styles.content}>
-          <CodeEditor language="json" text={this.state.text} readOnly={!isPanelJSON} onChange={this.onTextChanged} />;
+          <CodeEditor
+            language={CodeEditorLanguage.JSON}
+            value={this.state.text}
+            readOnly={!isPanelJSON}
+            onChange={this.onTextChanged}
+          />
+          ;
         </div>
       </>
     );

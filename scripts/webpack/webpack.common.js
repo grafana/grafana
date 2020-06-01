@@ -63,26 +63,7 @@ module.exports = {
   plugins: [
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      languages: [
-        'css',
-        'dockerfile',
-        'handlebars',
-        'html',
-        'ini',
-        'javascript',
-        'json',
-        'less',
-        'markdown',
-        'msdax',
-        'mysql',
-        'pgsql',
-        'powerquery',
-        'scss',
-        'sql',
-        'typescript',
-        'xml',
-        'yaml',
-      ],
+      languages: ['javascript', 'json'],
       features: ['!gotoSymbol', '!codelens'],
     }),
   ],
