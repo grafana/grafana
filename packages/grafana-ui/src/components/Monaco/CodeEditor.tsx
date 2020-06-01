@@ -1,68 +1,92 @@
 import React from 'react';
+import { withTheme } from '../../themes';
+import { Themeable } from '../../types';
 import MonacoEditor from 'react-monaco-editor';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
-import { useTheme } from '../../themes';
-import { CodeEditorChangeHandler, useMonaco } from './useMonaco';
 
-export enum CodeEditorLanguage {
-  JSON = 'json',
-  JavaScript = 'javascript',
-}
+export type CodeEditorChangeHandler = (value: string) => void;
 
-interface CodeEditorProps {
+export interface CodeEditorProps extends Themeable {
   value: string;
-  language: CodeEditorLanguage;
+  language: string;
   readOnly?: boolean;
-  /** Handler to be performed on any change in the editor */
-  onChange?: CodeEditorChangeHandler;
+  width?: number | string;
+  height?: number | string;
+
+  /**
+   * Callback after the editor has mounted that gives you raw access to monaco
+   *
+   * @experimental
+   */
+  onEditorDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
+
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
+
   /** Handler to be performed when Cmd/Ctrl+S is pressed */
   onSave?: CodeEditorChangeHandler;
 }
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ value, language, onChange, onBlur, onSave, readOnly }) => {
-  const theme = useTheme();
-  const { initializeEditor, getValue } = useMonaco({
-    commands: {
-      [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S]: () => {
-        if (onSave) {
-          onSave(getValue());
-        }
-      },
-    },
-    eventHandlers: {
-      onBlur,
-    },
-  });
+class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
+  constructor(props: CodeEditorProps) {
+    super(props);
+  }
 
-  return (
-    <AutoSizer disableWidth>
-      {({ height }) => (
+  getEditorValue = () => '';
+
+  onBlur = () => {
+    const { onBlur } = this.props;
+    if (onBlur) {
+      onBlur(this.getEditorValue());
+    }
+  };
+
+  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+    const { onSave, onEditorDidMount } = this.props;
+
+    this.getEditorValue = () => editor.getValue();
+
+    if (onSave) {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+        onSave(this.getEditorValue());
+      });
+    }
+
+    if (onEditorDidMount) {
+      onEditorDidMount(editor);
+    }
+  };
+
+  render() {
+    const { value, theme, language, width, height } = this.props;
+    const longText = value.length > 100;
+
+    return (
+      <div onBlur={this.onBlur}>
         <MonacoEditor
+          width={width}
           height={height}
           language={language}
-          width="100%"
           theme={theme.isDark ? 'vs-dark' : 'vs-light'}
           value={value}
           options={{
             wordWrap: 'off',
             codeLens: false, // too small to bother (and not compiled)
             minimap: {
-              enabled: value.length > 100,
+              enabled: longText,
               renderCharacters: false,
             },
-            readOnly,
+            readOnly: this.props.readOnly,
             lineNumbersMinChars: 4,
             lineDecorationsWidth: 0,
             overviewRulerBorder: false,
             automaticLayout: true,
           }}
-          editorDidMount={initializeEditor}
-          onChange={onChange}
+          editorDidMount={this.editorDidMount}
         />
-      )}
-    </AutoSizer>
-  );
-};
+      </div>
+    );
+  }
+}
+
+export const CodeEditor = withTheme(UnthemedCodeEditor);

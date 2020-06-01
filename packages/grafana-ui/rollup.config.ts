@@ -25,7 +25,15 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom', '@grafana/data', 'moment', '@grafana/e2e-selectors'],
+    external: [
+      'react',
+      'react-dom',
+      '@grafana/data',
+      '@grafana/e2e-selectors',
+      'moment',
+      'monaco-editor', // Monaco should not be used directly
+      'react-monaco-editor',
+    ],
     plugins: [
       commonjs({
         include: /node_modules/,

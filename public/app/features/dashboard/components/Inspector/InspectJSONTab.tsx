@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { chain } from 'lodash';
 import { AppEvents, PanelData, SelectableValue } from '@grafana/data';
-import { Button, CodeEditor, CodeEditorLanguage, Field, Select } from '@grafana/ui';
+import { Button, CodeEditor, Field, Select } from '@grafana/ui';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { selectors } from '@grafana/e2e-selectors';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from '../../state';
@@ -134,13 +135,18 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           )}
         </div>
         <div className={styles.content}>
-          <CodeEditor
-            language={CodeEditorLanguage.JSON}
-            value={this.state.text}
-            readOnly={!isPanelJSON}
-            onChange={this.onTextChanged}
-          />
-          ;
+          <AutoSizer disableWidth>
+            {({ height }) => (
+              <CodeEditor
+                width="100%"
+                height={height}
+                language="json"
+                value={this.state.text}
+                readOnly={!isPanelJSON}
+                onBlur={this.onTextChanged}
+              />
+            )}
+          </AutoSizer>
         </div>
       </>
     );
