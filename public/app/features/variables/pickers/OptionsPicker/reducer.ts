@@ -43,12 +43,12 @@ const getTags = (model: VariableWithMultiSupport) => {
   return [];
 };
 
-const selectedToRecord = (selected: VariableOption[]): Record<string, VariableOption> => {
-  if (!Array.isArray(selected)) {
+const optionsToRecord = (options: VariableOption[]): Record<string, VariableOption> => {
+  if (!Array.isArray(options)) {
     return {};
   }
 
-  return selected.reduce((all: Record<string, VariableOption>, option) => {
+  return options.reduce((all: Record<string, VariableOption>, option) => {
     if (isString(option.value)) {
       all[option.value] = option;
     }
@@ -62,7 +62,7 @@ const updateOptions = (state: OptionsPickerState): OptionsPickerState => {
     return state;
   }
 
-  const selectedOptions = selectedToRecord(state.selectedValues);
+  const selectedOptions = optionsToRecord(state.selectedValues);
   state.selectedValues = Object.values(selectedOptions);
 
   state.options = state.options.map(option => {
@@ -163,7 +163,6 @@ const optionsPickerSlice = createSlice({
       return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
     },
     toggleTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
-      const { selectedValues } = state;
       const tag = action.payload;
       const values = tag.values || [];
       const selected = !tag.selected;
@@ -185,20 +184,20 @@ const optionsPickerSlice = createSlice({
         return t;
       });
 
-      const selectedByTags = state.options
-        .filter(option => {
-          if (option.value === ALL_VARIABLE_VALUE) {
-            return false;
-          }
-          return values.indexOf(option.value) !== -1;
-        })
-        .map(o => ({ ...o, selected }));
+      const availableOptions = optionsToRecord(state.options);
 
-      if (selected) {
-        state.selectedValues = selectedValues.filter(option => option.value !== ALL_VARIABLE_VALUE);
+      if (!selected) {
+        state.selectedValues = state.selectedValues.filter(
+          option => !isString(option.value) || !availableOptions[option.value]
+        );
+        return applyStateChanges(state, updateDefaultSelection, updateOptions);
       }
 
-      state.selectedValues.push.apply(state.selectedValues, selectedByTags);
+      const optionsFromTag = values
+        .filter(value => value !== ALL_VARIABLE_VALUE && !!availableOptions[value])
+        .map(value => ({ selected, value, text: value }));
+
+      state.selectedValues.push.apply(state.selectedValues, optionsFromTag);
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     moveOptionsHighlight: (state, action: PayloadAction<number>): OptionsPickerState => {
