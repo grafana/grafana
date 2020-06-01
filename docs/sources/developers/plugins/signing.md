@@ -62,27 +62,34 @@ FJnPwM6Y2tTdq7AkpVTTAb3RTFadA8dRmLfajxgHxmDf5yUv9M2M6sa1eTSG
 
 ```
 
-## Verifying a plugin
+## Verify a plugin
 
 When Grafana starts it discovers plugins to load. For each discovered plugin it verifies the authenticity of it, and then decides whether to load it or not based on the state of the plugin signature:
 
-1. If plugin is a core plugin built into Grafana, plugin signature is `internal`.
-1. If no _MANIFEST.txt_ file is found, plugin signature is `unsigned`.
-1. Using the public key (compiled with Grafana), if the digital signature of _MANIFEST.txt_ is not valid, plugin signature is `invalid`.
-1. If manifest plugin id or version have been changed, plugin signature is `modified`.
-1. If manifest files checksums doesn't match, plugin signature is `modified`.
-1. If all earlier steps passes, plugin signature is `valid`.
+| Plugin signature | Description |
+| ---------------- | ----------- |
+| internal | Core plugin built into Grafana. |
+| unsigned | Plugin don't have a _MANIFEST.txt_ file. |
+| invalid  | Digital signature of _MANIFEST.txt_ file is not valid. |
+| modified | Manifest plugin id or version have been changed or files checksums doesn't match. |
+| valid    | If any of the above descriptions is false. |
 
 The plugin signature state can be inspected for each plugin in the plugins listing page (Configuration -> Plugins).
 
 ### Backend plugins
 
-If a [backend plugin]({{< relref "backend/_index.md" >}}) is not signed then Grafana will not load or start it. Trying to load a backend plugin with an invalid signature will result in an error message in Grafana server's log in the format of `plugin <plugin id> is unsigned`.
+If a [backend plugin]({{< relref "backend/_index.md" >}}) is not signed then Grafana will not load or start it. Trying to load a backend plugin with an invalid signature, then Grafana writes an error message to the server log:
+
+```bash
+EROR[06-01|16:45:59] Failed to load plugin   error=plugin <plugin id> is unsigned
+```
 
 ### Allow unsigned plugins
 
-While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. If you run an unsigned backend plugin, then Grafana writes a warning message to the server log.
+While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. If you run an unsigned backend plugin, then Grafana writes a warning message to the server log:
 
-    Running an unsigned backend plugin   pluginID=<plugin id>
+```bash
+WARN[06-01|16:45:59] Running an unsigned backend plugin   pluginID=<plugin id>
+```
 
-For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../../installation/configuration.md#allow-loading-unsigned-plugins" >}}). 
+For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../../installation/configuration.md#allow-loading-unsigned-plugins" >}}).
