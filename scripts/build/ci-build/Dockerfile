@@ -74,10 +74,10 @@ RUN cd /tmp && \
 # base image to crossbuild grafana
 FROM ubuntu:20.04
 
-ENV GOVERSION=1.14.1 \
+ENV GOVERSION=1.14.3 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.13.0
+    NODEVERSION=12.17.0
 
 ARG DEBIAN_FRONTEND=noninteractive
 
