@@ -34,10 +34,15 @@ export interface QueryResultMeta {
   preferredVisualisationType?: PreferredVisualisationType;
 
   /**
+   * This is the raw query sent to the underlying system.  All macros and templating
+   * as been applied.  When metadata contains this value, it will be shown in the query inspector
+   */
+  executedQueryString?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
-  rawQuery?: string; // used by stackdriver
   alignmentPeriod?: string; // used by stackdriver
   query?: string; // used by azure log
   searchWords?: string[]; // used by log models and loki
