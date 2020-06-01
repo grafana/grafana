@@ -28,7 +28,6 @@ WHERE
 export class PostgresQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  showLastQuerySQL: boolean;
   formats: any[];
   queryModel: PostgresQuery;
   metaBuilder: PostgresMetaQuery;
