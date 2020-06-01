@@ -1,7 +1,9 @@
 package azuremonitor
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -14,7 +16,10 @@ func LogTableToFrame(table *AzureLogAnalyticsTable) (*data.Frame, error) {
 	}
 	for rowIdx, row := range table.Rows {
 		for fieldIdx, field := range row {
-			converterFrame.Set(fieldIdx, rowIdx, field)
+			err = converterFrame.Set(fieldIdx, rowIdx, field)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return converterFrame.Frame, nil
@@ -45,8 +50,14 @@ func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverte
 
 var converterMap = map[string]data.FieldConverter{
 	"string":   stringConverter,
+	"guid":     stringConverter,
+	"timespan": stringConverter,
+	"dynamic":  stringConverter,
 	"datetime": timeConverter,
+	"int":      intConverter,
+	"long":     longConverter,
 	"real":     realConverter,
+	"bool":     boolConverter,
 }
 
 var stringConverter = data.FieldConverter{
@@ -92,11 +103,69 @@ var realConverter = data.FieldConverter{
 		if v == nil {
 			return af, nil
 		}
-		f, ok := v.(float64)
+		jN, ok := v.(json.Number)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected float64 got %T", v)
+			return nil, fmt.Errorf("unexpected type, expected json.Number got %T", v)
 		}
-		af = &f
-		return af, nil
+		f, err := jN.Float64()
+		if err != nil {
+			return nil, err
+		}
+		return &f, err
+	},
+}
+
+var boolConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableBool,
+	Converter: func(v interface{}) (interface{}, error) {
+		var ab *bool
+		if v == nil {
+			return ab, nil
+		}
+		b, ok := v.(bool)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type, expected bool got %T", v)
+		}
+		return &b, nil
+	},
+}
+
+var intConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableInt32,
+	Converter: func(v interface{}) (interface{}, error) {
+		var ai *int32
+		if v == nil {
+			return ai, nil
+		}
+		jN, ok := v.(json.Number)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type, expected json.Number got %T", v)
+		}
+		var err error
+		iv, err := strconv.ParseInt(jN.String(), 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		aInt := int32(iv)
+		return &aInt, nil
+	},
+}
+
+var longConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableInt64,
+	Converter: func(v interface{}) (interface{}, error) {
+		var ai *int64
+		if v == nil {
+			return ai, nil
+		}
+		jN, ok := v.(json.Number)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type, expected json.Number got %T", v)
+		}
+		out, err := jN.Int64()
+		if err != nil {
+			return nil, err
+		}
+		return &out, err
 	},
 }
