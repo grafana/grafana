@@ -154,7 +154,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		})
 
 		// FIXME: What should the actual test case name be here?
-		Convey("Should retuasdfrn no data if one condition has no data", func() {
+		Convey("Should not return NoDataFound if all conditions have data and using OR", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "or", noData: false},
