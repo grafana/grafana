@@ -473,7 +473,7 @@ The cookie name for storing the auth token, default is `grafana_session`.
 ### oauth_state_cookie_max_age
 
 How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
-Administrators can increase it if they experience OAuth login state mismatch errors.
+Administrators can increase this if they experience OAuth login state mismatch errors.
 
 ## [dataproxy]
 
