@@ -28,7 +28,7 @@ Signing a plugin is the process of creating a signed manifest file, _MANIFEST.tx
 }
 ```
 
-Next the plugin manifest is signed with a private key and create the _MANIFEST.txt_. The manifest signing process is offloaded to the grafana.com HTTP API and is currently only available for Grafana Labs authored plugins. The HTTP API result is stored as _MANIFEST.txt_ side by side with `plugin.json` and other plugin files. The last step is to archive the plugin as a zip-file.
+Next, the plugin manifest is signed with a private key and the _MANIFEST.txt_ is created. The manifest signing process is offloaded to the grafana.com HTTP API and is currently only available for Grafana Labs authored plugins. The HTTP API result is stored as _MANIFEST.txt_ side by side with `plugin.json` and other plugin files. The last step is to archive the plugin as a zip-file.
 
 ```txt
 // MANIFEST.txt
