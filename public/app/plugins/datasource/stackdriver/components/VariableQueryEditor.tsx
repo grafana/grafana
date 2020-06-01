@@ -33,6 +33,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     selectedSLOService: '',
     projects: [],
     projectName: '',
+    loading: true,
   };
 
   constructor(props: VariableQueryProps) {
@@ -79,9 +80,16 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       projects: projects.map(({ value, label }: any) => ({ value, name: label })),
       ...(await this.getLabels(selectedMetricType, this.state.projectName)),
       sloServices: sloServices.map(({ value, label }: any) => ({ value, name: label })),
+      loading: false,
     };
-    this.setState(state);
+    this.setState(state, () => this.onPropsChange());
   }
+
+  onPropsChange = () => {
+    const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
+    const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
+    this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+  };
 
   async onQueryTypeChange(queryType: string) {
     const state: any = {
@@ -146,9 +154,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     const selecQueryTypeChanged = prevState.selectedQueryType !== this.state.selectedQueryType;
     const selectSLOServiceChanged = this.state.selectedSLOService !== prevState.selectedSLOService;
     if (selecQueryTypeChanged || selectSLOServiceChanged) {
-      const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
-      const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
-      this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+      this.onPropsChange();
     }
   }
 
@@ -282,6 +288,19 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   }
 
   render() {
+    if (this.state.loading) {
+      return (
+        <div className="gf-form max-width-21">
+          <span className="gf-form-label width-10 query-keyword">Query Type</span>
+          <div className="gf-form-select-wrapper max-width-12">
+            <select className="gf-form-input">
+              <option>Loading...</option>
+            </select>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
         <SimpleSelect
