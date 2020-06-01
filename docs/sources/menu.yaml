@@ -408,6 +408,8 @@
           link: /developers/plugins/build-a-streaming-data-source-plugin/
         - name: Authentication
           link: /developers/plugins/authentication/
+        - name: Signing
+          link: /developers/plugins/signing/
         - name: Backend plugins
           children:
             - link: /developers/plugins/backend/
