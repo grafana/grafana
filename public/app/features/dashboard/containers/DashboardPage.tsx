@@ -152,6 +152,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const { dashboard } = this.props;
 
     const panelId = parseInt(urlPanelId!, 10);
+    dashboard!.expandParentRowFor(panelId);
     const panel = dashboard!.getPanelById(panelId);
 
     if (!panel) {
@@ -168,7 +169,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    dashboard!.expandParentRowFor(panelId);
     callback(panel);
   }
 

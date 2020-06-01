@@ -354,7 +354,7 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
             )}
             {activeTab === InspectTab.Error && this.renderErrorTab(error)}
             {activeTab === InspectTab.Stats && this.renderStatsTab()}
-            {activeTab === InspectTab.Query && <QueryInspector panel={panel} />}
+            {activeTab === InspectTab.Query && <QueryInspector panel={panel} data={last.series} />}
           </TabContent>
         </CustomScrollbar>
       </Drawer>

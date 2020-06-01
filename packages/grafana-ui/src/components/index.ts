@@ -118,6 +118,7 @@ export { Slider } from './Slider/Slider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';
+export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';

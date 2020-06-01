@@ -56,6 +56,7 @@ export class MysqlDatasource {
           ...query,
           datasource: this.name,
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
+          rawQuery: true,
         };
         return expandedQuery;
       });

@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 import { IconName, stylesFactory, Tab, TabContent, TabsBar } from '@grafana/ui';
-import { DataTransformerConfig, LoadingState, PanelData } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { DashboardModel } from '../../state';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
@@ -15,12 +14,12 @@ interface PanelEditorTabsProps {
   dashboard: DashboardModel;
   tabs: PanelEditorTab[];
   onChangeTab: (tab: PanelEditorTab) => void;
-  data: PanelData;
 }
 
-export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboard, tabs, data, onChangeTab }) => {
+export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboard, tabs, onChangeTab }) => {
   const styles = getPanelEditorTabsStyles();
   const activeTab = tabs.find(item => item.active);
+
   const getCounter = useCallback(
     (tab: PanelEditorTab) => {
       switch (tab.id) {
@@ -42,10 +41,6 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
     return null;
   }
 
-  const onTransformersChange = (transformers: DataTransformerConfig[]) => {
-    panel.setTransformations(transformers);
-  };
-
   return (
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
@@ -65,13 +60,7 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
-        {activeTab.id === PanelEditorTabId.Transform && data.state !== LoadingState.NotStarted && (
-          <TransformationsEditor
-            transformations={panel.transformations || []}
-            onChange={onTransformersChange}
-            dataFrames={data.series}
-          />
-        )}
+        {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
       </TabContent>
     </div>
   );

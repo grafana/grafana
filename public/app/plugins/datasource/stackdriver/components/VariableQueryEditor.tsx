@@ -143,7 +143,9 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   }
 
   componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
-    if (prevState.selectedQueryType !== this.state.selectedQueryType) {
+    const selecQueryTypeChanged = prevState.selectedQueryType !== this.state.selectedQueryType;
+    const selectSLOServiceChanged = this.state.selectedSLOService !== prevState.selectedSLOService;
+    if (selecQueryTypeChanged || selectSLOServiceChanged) {
       const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
       const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
       this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
