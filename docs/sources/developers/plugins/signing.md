@@ -5,13 +5,13 @@ type = "docs"
 
 # Signing
 
-Signing is an additional security measure to make sure plugins you authored, installed or using haven't been tampered with. Grafana will verify whether a plugin is signed or unsigned when starting up and loading plugins by inspecting and verifying its digital signature, if any.
+Plugin signing is a security measure to make sure plugins haven't been tampered with. Grafana will verify if a plugin is signed or unsigned when loading it by inspecting and verifying its digital signature.
 
 > Note: All Grafana Labs authored backend plugins, including Enterprise plugins, are signed. We're looking into providing a process for allowing  community plugins to be signed in an upcoming version of Grafana.
 
 ## Signing a plugin
 
-Signing a plugin is the process of creating a signed manifest file, _MANIFEST.txt_. The first step is to create the plugin manifest. This is a JSON file that should contain the same plugin id and version found in `plugin.json`. The list of plugin files with their respective checksums (SHA256) should alow be included as `files`. Example plugin manifest:
+Signing a plugin is the process of creating a signed manifest file, _MANIFEST.txt_. The first step is to create the plugin manifest. This is a JSON file that should contain the same plugin id and version found in `plugin.json`. The list of plugin files with their respective checksums (SHA256) should all be included as `files`. Example plugin manifest:
 
 ```json
 {
@@ -64,7 +64,7 @@ FJnPwM6Y2tTdq7AkpVTTAb3RTFadA8dRmLfajxgHxmDf5yUv9M2M6sa1eTSG
 
 ## Verifying a plugin
 
-When Grafana starts up it discover which plugins to load. For each plugin it verifies the authenticity of it, whether to load it or not based on the state of the plugin signature.
+When Grafana starts it discovers plugins to load. For each discovered plugin it verifies the authenticity of it, and then decides whether to load it or not based on the state of the plugin signature:
 
 1. If plugin is a core plugin built into Grafana, plugin signature is `internal`.
 1. If no _MANIFEST.txt_ file is found, plugin signature is `unsigned`.
@@ -77,7 +77,7 @@ The plugin signature state can be inspected for each plugin in the plugins listi
 
 ### Backend plugins
 
-If a [backend plugin]({{< relref "backend/_index.md" >}}) is not signed Grafana will not load/start it. Trying to load a backend plugin with an invalid sigature will write an error message to the Grafana server log `plugin <plugin id> is unsigned`.
+If a [backend plugin]({{< relref "backend/_index.md" >}}) is not signed then Grafana will not load or start it. Trying to load a backend plugin with an invalid signature will result in an error message in Grafana server's log in the format of `plugin <plugin id> is unsigned`.
 
 ### Allow unsigned plugins
 
