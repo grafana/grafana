@@ -39,11 +39,12 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       const val = this.getEditorValue();
       this.props.onChange(val, CodeEditorUpdateAction.Save);
     });
-    this.getEditorValue = () => editor.getModel().getValue();
+    this.getEditorValue = () => editor.getValue();
   };
 
   render() {
     const { text, theme, language } = this.props;
+    const longText = text.length > 100;
 
     return (
       <AutoSizer disableWidth>
@@ -54,12 +55,12 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
               language={language}
               width="100%"
               theme={theme.isDark ? 'vs-dark' : 'vs-light'}
-              defaultValue={text}
+              value={text}
               options={{
                 wordWrap: 'off',
                 codeLens: false, // too small to bother (and not compiled)
                 minimap: {
-                  enabled: false,
+                  enabled: longText,
                   renderCharacters: false,
                 },
                 readOnly: this.props.readOnly,
