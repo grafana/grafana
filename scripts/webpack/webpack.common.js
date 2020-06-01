@@ -2,8 +2,6 @@ const path = require('path');
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
-const MONACO_DIR = path.resolve(__dirname, './node_modules/monaco-editor');
-
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
   // There is external js code inside this which needs to be processed by babel.
@@ -68,14 +66,12 @@ module.exports = {
       languages: [
         'css',
         'dockerfile',
-        'go',
         'handlebars',
         'html',
         'ini',
         'javascript',
         'json',
         'less',
-        'lua',
         'markdown',
         'msdax',
         'mysql',
