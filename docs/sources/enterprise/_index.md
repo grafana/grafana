@@ -100,7 +100,7 @@ In your configuration file:
 root_url = https://grafana.blah.com/
 ```
 
-Or with the environment variable:
+Or with an environment variable:
 
 ```
 GF_SERVER_ROOT_URL=https://grafana.blah.com/
