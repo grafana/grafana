@@ -1,6 +1,8 @@
 const path = require('path');
 
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+
+const MONACO_DIR = path.resolve(__dirname, './node_modules/monaco-editor');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
@@ -61,43 +63,32 @@ module.exports = {
     fs: 'empty',
   },
   plugins: [
-    new CopyWebpackPlugin([
-      {
-        context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
-        from: 'min/vs/**',
-        to: 'monaco/', // inside the public/build folder
-        globOptions: {
-          ignore: [
-            // Ignore editor localizations
-            // needs at least one? '**/editor.main.nls.*',
-
-            // Skip unnecessary languages
-            '**/basic-languages/apex/**',
-            '**/basic-languages/azcli/**',
-            '**/basic-languages/bat/**',
-            '**/basic-languages/solidity/**',
-            '**/basic-languages/fsharp/**',
-            '**/basic-languages/clojure/**',
-            '**/basic-languages/coffee/**',
-            '**/basic-languages/cpp/**',
-            '**/basic-languages/csharp/**',
-            '**/basic-languages/csp/**',
-            '**/basic-languages/java/**',
-            '**/basic-languages/lua/**',
-            '**/basic-languages/objective-c/**',
-            '**/basic-languages/php/**',
-            '**/basic-languages/python/**',
-            '**/basic-languages/perl/**',
-            '**/basic-languages/r/**',
-            '**/basic-languages/razor/**',
-            '**/basic-languages/ruby/**',
-            '**/basic-languages/rust/**',
-            '**/basic-languages/vb/**',
-            '**/basic-languages/st/**',
-          ],
-        },
-      },
-    ]),
+    new MonacoWebpackPlugin({
+      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
+      languages: [
+        'css',
+        'dockerfile',
+        'go',
+        'handlebars',
+        'html',
+        'ini',
+        'javascript',
+        'json',
+        'less',
+        'lua',
+        'markdown',
+        'msdax',
+        'mysql',
+        'pgsql',
+        'powerquery',
+        'scss',
+        'sql',
+        'typescript',
+        'xml',
+        'yaml',
+      ],
+      features: ['!gotoSymbol', '!codelens'],
+    }),
   ],
   module: {
     rules: [
@@ -148,6 +139,11 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.css$/,
+        // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
+        use: ['style-loader', 'css-loader'],
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,

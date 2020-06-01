@@ -1,9 +1,14 @@
 import React from 'react';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
-import Editor from '@monaco-editor/react';
+import MonacoEditor from 'react-monaco-editor';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { checkSetup } from './setup';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
+export enum CodeEditorUpdateAction {
+  Blur = 'blur',
+  Save = 'save',
+}
 
 export interface Props extends Themeable {
   text: string;
@@ -12,31 +17,29 @@ export interface Props extends Themeable {
 
   readOnly?: boolean;
 
-  /** only called onblur */
-  onChange: (text: string) => void;
+  onChange: (text: string, action: CodeEditorUpdateAction) => void;
 }
 
 class UnthemedCodeEditor extends React.PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-    checkSetup();
   }
 
   getEditorValue = () => '';
 
   onBlur = () => {
     const val = this.getEditorValue();
-    this.props.onChange(val);
+    this.props.onChange(val, CodeEditorUpdateAction.Blur);
   };
 
-  onEditorDidMount = (getEditorValue: () => string, editor: object) => {
-    this.getEditorValue = getEditorValue;
+  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+    console.log('editorDidMount', editor);
 
-    // Listen for save command
-    console.log('Register save commnad!!!');
-    // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
-    //   console.log('SAVE pressed!');
-    // });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+      const val = this.getEditorValue();
+      this.props.onChange(val, CodeEditorUpdateAction.Save);
+    });
+    this.getEditorValue = () => editor.getModel().getValue();
   };
 
   render() {
@@ -46,15 +49,15 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       <AutoSizer disableWidth>
         {({ height }) => (
           <div onBlur={this.onBlur}>
-            <Editor
+            <MonacoEditor
               height={height}
               language={language}
-              value={text}
-              editorDidMount={this.onEditorDidMount}
-              theme={theme.isDark ? 'dark' : 'light'}
+              width="100%"
+              theme={theme.isDark ? 'vs-dark' : 'vs-light'}
+              defaultValue={text}
               options={{
                 wordWrap: 'off',
-                codeLens: false, // too small to bother
+                codeLens: false, // too small to bother (and not compiled)
                 minimap: {
                   enabled: false,
                   renderCharacters: false,
@@ -65,6 +68,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
                 overviewRulerBorder: false,
                 automaticLayout: true,
               }}
+              editorDidMount={this.editorDidMount}
             />
           </div>
         )}
