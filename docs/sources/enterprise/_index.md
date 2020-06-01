@@ -93,7 +93,7 @@ Update the [`root_url`](../installation/configuration/#root-url) in your configu
 
 This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`](../installation/configuration/#root-url) in your configuration. 
 
-In `grafana.ini`:
+In your configuration file:
 
 ```
 [server]
