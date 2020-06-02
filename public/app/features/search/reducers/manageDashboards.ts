@@ -1,4 +1,4 @@
-import { DashboardSectionItem, SearchAction } from '../types';
+import { DashboardSection, DashboardSectionItem, SearchAction } from '../types';
 import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, MOVE_ITEMS, DELETE_ITEMS } from './actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from './dashboardSearch';
 import { mergeReducers } from '../utils';
@@ -46,13 +46,18 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
         }),
       };
     case MOVE_ITEMS: {
-      const { dashboards, folder } = action.payload;
-      const uids = dashboards.map((d: DashboardSectionItem) => d.uid);
+      const dashboards: DashboardSectionItem[] = action.payload.dashboards;
+      const folder: DashboardSection = action.payload.folder;
+      const uids = dashboards.map(db => db.uid);
       return {
         ...state,
         results: state.results.map(result => {
           if (folder.id === result.id) {
-            return { ...result, items: [...result.items, ...dashboards] };
+            return {
+              ...result,
+              items: [...result.items, ...dashboards.map(db => ({ ...db, checked: false }))],
+              checked: false,
+            };
           } else {
             return { ...result, items: result.items.filter(item => !uids.includes(item.uid)) };
           }
