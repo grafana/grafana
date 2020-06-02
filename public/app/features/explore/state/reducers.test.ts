@@ -77,9 +77,9 @@ describe('Explore item reducer', () => {
           .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
           .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
             expect(resultingState.mode).toEqual(ExploreMode.Logs);
-            expect(resultingState.logsResult).toBeUndefined();
-            expect(resultingState.graphResult).toBeUndefined();
-            expect(resultingState.tableResult).toBeUndefined();
+            expect(resultingState.logsResult).toBeNull();
+            expect(resultingState.graphResult).toBeNull();
+            expect(resultingState.tableResult).toBeNull();
             return true;
           });
       });
@@ -109,9 +109,9 @@ describe('Explore item reducer', () => {
             datasourceInstance,
             queries,
             queryKeys,
-            graphResult: undefined,
-            logsResult: undefined,
-            tableResult: undefined,
+            graphResult: null,
+            logsResult: null,
+            tableResult: null,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
             latency: 0,
@@ -180,7 +180,7 @@ describe('Explore item reducer', () => {
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(({ showingGraph: true, graphResult: [] } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingGraph: false } as unknown) as ExploreItemState);
+          .thenStateShouldEqual(({ showingGraph: false, graphResult: null } as unknown) as ExploreItemState);
       });
     });
 
@@ -202,7 +202,7 @@ describe('Explore item reducer', () => {
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(({ showingTable: true, tableResult: table } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingTable: false } as unknown) as ExploreItemState);
+          .thenStateShouldEqual(({ showingTable: false, tableResult: null } as unknown) as ExploreItemState);
       });
     });
   });
