@@ -35,6 +35,7 @@ type Bus interface {
 	// callback returns an error.
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 
+	RemoveHandler(handler HandlerFunc)
 	AddHandler(handler HandlerFunc)
 	AddHandlerCtx(handler HandlerFunc)
 	AddEventListener(handler HandlerFunc)
@@ -152,6 +153,12 @@ func (b *InProcBus) Publish(msg Msg) error {
 	return nil
 }
 
+func (b *InProcBus) RemoveHandler(handler HandlerFunc) {
+	handlerType := reflect.TypeOf(handler)
+	queryTypeName := handlerType.In(0).Elem().Name()
+	delete(b.handlers, queryTypeName)
+}
+
 func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
@@ -174,20 +181,26 @@ func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	b.listeners[eventName] = append(b.listeners[eventName], handler)
 }
 
-// AddHandler attach a handler function to the global bus
-// Package level function
+// RemoveHandler removes the handler function provided from the bus.
+// Package level function.
+func RemoveHandler(handler HandlerFunc) {
+	globalBus.RemoveHandler(handler)
+}
+
+// AddHandler attaches a handler function to the global bus.
+// Package level function.
 func AddHandler(implName string, handler HandlerFunc) {
 	globalBus.AddHandler(handler)
 }
 
-// AddHandlerCtx attach a handler function to the global bus context
-// Package level functions
+// AddHandlerCtx attaches a handler function to the global bus context.
+// Package level function.
 func AddHandlerCtx(implName string, handler HandlerFunc) {
 	globalBus.AddHandlerCtx(handler)
 }
 
-// AddEventListener attach a handler function to the event listener
-// Package level functions
+// AddEventListener attaches a handler function to the event listener.
+// Package level function.
 func AddEventListener(handler HandlerFunc) {
 	globalBus.AddEventListener(handler)
 }

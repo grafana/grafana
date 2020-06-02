@@ -271,7 +271,6 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		extUser.Login = auth.header
 	default:
 		return 0, newError("Auth proxy header property invalid", nil)
-
 	}
 
 	auth.headersIterator(func(field string, header string) {
