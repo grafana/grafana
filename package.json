@@ -286,6 +286,7 @@
     "whatwg-fetch": "3.0.0"
   },
   "resolutions": {
+    "moment": "2.24.0",
     "caniuse-db": "1.0.30000772"
   },
   "workspaces": {

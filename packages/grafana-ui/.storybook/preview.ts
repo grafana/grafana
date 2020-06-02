@@ -15,7 +15,7 @@ import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
 import darkTheme from '../../../public/sass/grafana.dark.scss';
 import { GrafanaLight, GrafanaDark } from './storybookTheme';
-import { configure, addDecorator, addParameters } from '@storybook/react';
+import { addDecorator, addParameters } from '@storybook/react';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -56,6 +56,3 @@ addParameters({
     escapeHTML: false,
   },
 });
-
-// @ts-ignore
-configure(require.context('../src', true, /\.story\.(js|jsx|ts|tsx|mdx)$/), module);

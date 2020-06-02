@@ -7,9 +7,9 @@ if (process.env.NODE_ENV !== 'production') {
 module.exports = {
   stories: stories,
   addons: [
-    '@storybook/addon-knobs/register',
-    '@storybook/addon-actions/preset',
     '@storybook/addon-docs',
+    '@storybook/addon-actions/register',
+    '@storybook/addon-knobs',
     'storybook-dark-mode/register',
     '@storybook/addon-storysource',
   ],
