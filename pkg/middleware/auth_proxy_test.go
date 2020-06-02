@@ -15,6 +15,10 @@ import (
 	macaron "gopkg.in/macaron.v1"
 )
 
+// Test initContextWithAuthProxy with a cached user ID that is no longer valid.
+//
+// In this case, the cache entry should be ignored/cleared and another attempt should be done to sign the user
+// in without cache.
 func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	const name = "markelog"
 	const userID = int64(1)
