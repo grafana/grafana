@@ -152,7 +152,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResult, nil
 	}
 
-	logResponse, err := e.unmarshalResponse(res, query.ResultFormat == "table")
+	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, nil
@@ -161,28 +161,29 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	// I don't get why queryResult would be logged here, guessing logResponse was intendended.
 	//azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
 
+	frames := data.Frames{}
 	if query.ResultFormat == "table" {
 		// queryResult.Tables, queryResult.Meta, err = e.parseToTables(logResponse, query.Model, query.Params)
 		// if err != nil {
 		// 	return nil, err
 		// }
-		frames, err := e.parseToFrameTables(logResponse, query.Model, query.Params)
-		if err != nil {
-			queryResult.Error = err
-			return queryResult, nil
-		}
-		queryResult.Dataframes, err = frames.MarshalArrow() // can move this down after done both series and this
+		frames, err = e.parseToFrameTables(logResponse, query.Model, query.Params)
 		if err != nil {
 			queryResult.Error = err
 			return queryResult, nil
 		}
 	} else {
-		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(logResponse, query.Model, query.Params)
+		frames, err = e.parseToFrameTimeSeries(logResponse, query.Model, query.Params)
 		if err != nil {
-			return nil, err
+			queryResult.Error = err
+			return queryResult, nil
 		}
 	}
-
+	queryResult.Dataframes, err = frames.MarshalArrow() // can move this down after done both series and this
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
 	return queryResult, nil
 }
 
@@ -237,7 +238,7 @@ func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourceP
 	return logAnalyticsRoute, pluginRouteName, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response, useNumber bool) (AzureLogAnalyticsResponse, error) {
+func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 
@@ -252,9 +253,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response, useN
 
 	var data AzureLogAnalyticsResponse
 	d := json.NewDecoder(bytes.NewReader(body))
-	if useNumber {
-		d.UseNumber()
-	}
+	d.UseNumber()
 	err = d.Decode(&data)
 	if err != nil {
 		azlog.Debug("Failed to unmarshal Azure Log Analytics response", "error", err, "status", res.Status, "body", string(body))
@@ -307,6 +306,29 @@ func (e *AzureLogAnalyticsDatasource) parseToFrameTables(logResponse AzureLogAna
 			frame, err := LogTableToFrame(&t)
 			if err != nil {
 				return nil, err
+			}
+			return data.Frames{frame}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no data as no PrimaryResult table was returned in the response")
+}
+
+func (e *AzureLogAnalyticsDatasource) parseToFrameTimeSeries(logResponse AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (data.Frames, error) {
+	// TODO: Metadata
+
+	for _, t := range logResponse.Tables {
+		if t.Name == "PrimaryResult" {
+			frame, err := LogTableToFrame(&t)
+			if err != nil {
+				return nil, err
+			}
+			tsSchema := frame.TimeSeriesSchema()
+			if tsSchema.Type == data.TimeSeriesTypeLong {
+				wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
+				if err == nil {
+					frame = wideFrame
+				}
 			}
 			return data.Frames{frame}, nil
 		}
