@@ -384,7 +384,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
     });
 
-    const nextQueryKeys: string[] = [...nextQueries.map(query => query.key)];
+    const nextQueryKeys: string[] = nextQueries.map(query => query.key);
 
     return {
       ...state,
