@@ -2,6 +2,7 @@ import memoizeOne from 'memoize-one';
 import { LocationState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from '../types';
+import { config } from '@grafana/runtime';
 
 export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: PanelPlugin) => {
   const tabs: PanelEditorTab[] = [];
@@ -34,7 +35,7 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     });
   }
 
-  if (plugin.meta.id === 'graph') {
+  if (config.alertingEnabled && plugin.meta.id === 'graph') {
     tabs.push({
       id: PanelEditorTabId.Alert,
       text: 'Alert',
