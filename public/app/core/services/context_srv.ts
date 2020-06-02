@@ -15,8 +15,6 @@ export class User {
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
-  name?: string;
-  email?: string;
   hasEditPermissionInFolders: boolean;
 
   constructor() {
