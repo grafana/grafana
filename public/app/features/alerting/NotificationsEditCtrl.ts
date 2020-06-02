@@ -122,7 +122,7 @@ export class AlertNotificationEditCtrl {
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: 'Do you want to delete this notification channel?',
-      text2: `Deleting this notification channel will not delete any references to it from dashboard alerts`,
+      text2: `Deleting this notification channel will not delete from alerts any references to it`,
       icon: 'trash-alt',
       confirmText: 'Delete',
       yesText: 'Delete',

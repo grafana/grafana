@@ -9,38 +9,43 @@ import { HorizontalGroup, Button, LinkButton } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 import { AlertNotification } from 'app/types/alerting';
 
-const deleteNotification = async (id: number) => {
-  appEvents.emit(CoreEvents.showConfirmModal, {
-    title: 'Delete',
-    text: 'Do you want to delete this notification channel?',
-    text2: `Deleting this notification channel will not delete any references to it from dashboard alerts`,
-    icon: 'trash-alt',
-    confirmText: 'Delete',
-    yesText: 'Delete',
-    onConfirm: () => {
-      deleteNotificationConfirmed(id);
-    },
-  });
-};
-
-const deleteNotificationConfirmed = async (id: number) => {
-  return await getBackendSrv().delete(`/api/alert-notifications/${id}`);
-};
-
-const getNotifications = async () => {
-  return await getBackendSrv().get(`/api/alert-notifications`);
-};
-
 const NotificationsListPage: FC = () => {
   const navModel = useNavModel('channels');
 
   const [notifications, setNotifications] = useState<AlertNotification[]>([]);
+
+  const getNotifications = async () => {
+    return await getBackendSrv().get(`/api/alert-notifications`);
+  };
+
   const [state, fetchNotifications] = useAsyncFn(getNotifications);
   useEffect(() => {
     fetchNotifications().then(res => {
       setNotifications(res);
     });
   }, []);
+
+  const deleteNotification = (id: number) => {
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Delete',
+      text: 'Do you want to delete this notification channel?',
+      text2: `Deleting this notification channel will not delete from alerts any references to it`,
+      icon: 'trash-alt',
+      confirmText: 'Delete',
+      yesText: 'Delete',
+      onConfirm: async () => {
+        deleteNotificationConfirmed(id);
+      },
+    });
+  };
+
+  const deleteNotificationConfirmed = async (id: number) => {
+    const res = await getBackendSrv().delete(`/api/alert-notifications/${id}`);
+    fetchNotifications().then(res => {
+      setNotifications(res);
+    });
+    return res;
+  };
 
   return (
     <Page navModel={navModel}>
@@ -86,7 +91,6 @@ const NotificationsListPage: FC = () => {
                           size="sm"
                           onClick={() => {
                             deleteNotification(notification.id);
-                            fetchNotifications();
                           }}
                         />
                       </HorizontalGroup>
