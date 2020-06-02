@@ -2,7 +2,7 @@ import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable } from '../types';
-import { DataQueryResponse, ScopedVars, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQueryResponse, ScopedVars, DataSourceInstanceSettings, QueryResultMeta } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
@@ -156,10 +156,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return res;
   }
 
-  private async buildDeepLink(queryRes: QueryResultMeta) {
-    const base64Enc = encodeURIComponent(queryRes.meta.encodedQuery);
-    const workspaceId = queryRes.meta.workspace;
-    const subscription = queryRes.meta.subscription;
+  private async buildDeepLink(meta: QueryResultMeta) {
+    const base64Enc = encodeURIComponent(meta.custom.encodedQuery);
+    const workspaceId = meta.custom.workspace;
+    const subscription = meta.custom.subscription;
 
     const details = await this.getWorkspaceDetails(workspaceId);
     if (!details.workspace || !details.resourceGroup) {
@@ -198,7 +198,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     };
   }
 
-  metricFindQuery(query: string) {
+  metricFindQuery(query: string): Promise<MetricFindValue[]> {
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
       return this.getWorkspaces(this.subscriptionId);
