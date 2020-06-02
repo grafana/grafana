@@ -111,7 +111,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 	return int64(value * multiplier), nil
 }
 
-// NewRuleFromDBAlert mappes an db version of
+// NewRuleFromDBAlert maps a db version of
 // alert to an in-memory version.
 func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	model := &Rule{}
@@ -130,7 +130,7 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 
 	model.Frequency = ruleDef.Frequency
 	// frequency cannot be zero since that would not execute the alert rule.
-	// so we fallback to 60 seconds if `Freqency` is missing
+	// so we fallback to 60 seconds if `Frequency` is missing
 	if model.Frequency == 0 {
 		model.Frequency = 60
 	}
