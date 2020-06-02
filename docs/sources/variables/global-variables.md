@@ -56,9 +56,7 @@ This variable is the ID of the current organization.
 > Only available in Grafana v7.1+
 
 `${__user.id}` is the ID of the current user.
-`${__user.name}` is the name of the current user.
 `${__user.login}` is the login handle of the current user.
-`${__user.email}` is the email of the current user.
 
 ## $__range
 
