@@ -41,7 +41,51 @@ func TestLogTableToFrame(t *testing.T) {
 			),
 		},
 		{
-			name:     "all types",
+			name:     "response table",
+			testFile: "loganalytics/6-log-analytics-response-table.json",
+			expectedFrame: data.NewFrame("",
+				data.NewField("TenantId", nil, []*string{
+					pointer.String("a2c1b44e-3e57-4410-b027-6cc0ae6dee67"),
+					pointer.String("a2c1b44e-3e57-4410-b027-6cc0ae6dee67"),
+					pointer.String("a2c1b44e-3e57-4410-b027-6cc0ae6dee67"),
+				}),
+				data.NewField("Computer", nil, []*string{
+					pointer.String("grafana-vm"),
+					pointer.String("grafana-vm"),
+					pointer.String("grafana-vm"),
+				}),
+				data.NewField("ObjectName", nil, []*string{
+					pointer.String("Memory"),
+					pointer.String("Memory"),
+					pointer.String("Memory"),
+				}),
+				data.NewField("CounterName", nil, []*string{
+					pointer.String("Available MBytes Memory"),
+					pointer.String("Available MBytes Memory"),
+					pointer.String("Available MBytes Memory"),
+				}),
+				data.NewField("InstanceName", nil, []*string{
+					pointer.String("Memory"),
+					pointer.String("Memory"),
+					pointer.String("Memory"),
+				}),
+				data.NewField("Min", nil, []*float64{nil, nil, nil}),
+				data.NewField("Max", nil, []*float64{nil, nil, nil}),
+				data.NewField("SampleCount", nil, []*int32{nil, nil, nil}),
+				data.NewField("CounterValue", nil, []*float64{
+					pointer.Float64(2040),
+					pointer.Float64(2066),
+					pointer.Float64(2066),
+				}),
+				data.NewField("TimeGenerated", nil, []*time.Time{
+					pointer.Time(time.Date(2020, 4, 23, 11, 46, 3, 857e6, time.UTC)),
+					pointer.Time(time.Date(2020, 4, 23, 11, 46, 13, 857e6, time.UTC)),
+					pointer.Time(time.Date(2020, 4, 23, 11, 46, 23, 857e6, time.UTC)),
+				}),
+			),
+		},
+		{
+			name:     "all supported field types",
 			testFile: "loganalytics/7-log-analytics-all-types-table.json",
 			expectedFrame: data.NewFrame("",
 				data.NewField("XBool", nil, []*bool{pointer.Bool(true)}),

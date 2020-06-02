@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// LogTableToFrame converts an AzureLogAnalyticsTable to a data.Frame.
 func LogTableToFrame(table *AzureLogAnalyticsTable) (*data.Frame, error) {
 	converterFrame, err := converterFrameForTable(table)
 	if err != nil {
@@ -43,7 +44,10 @@ func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverte
 		return nil, err
 	}
 
-	fic.Frame.SetFieldNames(colNames...)
+	err = fic.Frame.SetFieldNames(colNames...)
+	if err != nil {
+		return nil, err
+	}
 
 	return fic, nil
 }
