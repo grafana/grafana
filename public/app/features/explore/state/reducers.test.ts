@@ -257,27 +257,6 @@ describe('Explore item reducer', () => {
     it('removes a query row', () => {
       reducerTester<ExploreItemState>()
         .givenReducer(itemReducer, ({
-          queries: [],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'A', key: 'mockKey' },
-            index: 0,
-          })
-        )
-        .thenStateShouldEqual(({
-          queries: [{ refId: 'A', key: 'mockKey' }],
-          queryKeys: ['mockKey-0'],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'B', key: 'mockKey' },
-            index: 1,
-          })
-        )
-        .thenStateShouldEqual(({
           queries: [
             { refId: 'A', key: 'mockKey' },
             { refId: 'B', key: 'mockKey' },
@@ -301,38 +280,6 @@ describe('Explore item reducer', () => {
     it('reassigns query refId after removing a query to keep queries in order', () => {
       reducerTester<ExploreItemState>()
         .givenReducer(itemReducer, ({
-          queries: [],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'A' },
-            index: 0,
-          })
-        )
-        .thenStateShouldEqual(({
-          queries: [{ refId: 'A' }],
-          queryKeys: ['undefined-0'],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'B' },
-            index: 1,
-          })
-        )
-        .thenStateShouldEqual(({
-          queries: [{ refId: 'A' }, { refId: 'B' }],
-          queryKeys: ['undefined-0', 'undefined-1'],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'C' },
-            index: 2,
-          })
-        )
-        .thenStateShouldEqual(({
           queries: [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }],
           queryKeys: ['undefined-0', 'undefined-1', 'undefined-2'],
         } as unknown) as ExploreItemState)
