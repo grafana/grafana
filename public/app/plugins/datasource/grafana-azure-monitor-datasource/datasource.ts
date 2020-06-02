@@ -10,7 +10,6 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
 } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { Observable } from 'rxjs';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
@@ -18,11 +17,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
 
-  /** @ngInject */
-  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.templateSrv);
+    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
   }
 

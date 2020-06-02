@@ -20,8 +20,7 @@ export default class AppInsightsDatasource {
   applicationId: string;
   logAnalyticsColumns: { [key: string]: LogAnalyticsColumn[] } = {};
 
-  /** @ngInject */
-  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     this.id = instanceSettings.id;
     this.applicationId = instanceSettings.jsonData.appInsightsAppId || '';
 
@@ -66,7 +65,7 @@ export default class AppInsightsDatasource {
       raw: false,
       appInsights: {
         rawQuery: true,
-        rawQueryString: this.templateSrv.replace(item.rawQueryString, options.scopedVars),
+        rawQueryString: getTemplateSrv().replace(item.rawQueryString, options.scopedVars),
         timeColumn: item.timeColumn,
         valueColumn: item.valueColumn,
         segmentColumn: item.segmentColumn,
@@ -91,17 +90,19 @@ export default class AppInsightsDatasource {
       item.dimensionFilter = item.filter;
     }
 
+    const templateSrv = getTemplateSrv();
+
     return {
       type: 'timeSeriesQuery',
       raw: false,
       appInsights: {
         rawQuery: false,
-        timeGrain: this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars),
+        timeGrain: templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars),
         allowedTimeGrainsMs: item.allowedTimeGrainsMs,
-        metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
-        aggregation: this.templateSrv.replace(item.aggregation, options.scopedVars),
-        dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
-        dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
+        metricName: templateSrv.replace(item.metricName, options.scopedVars),
+        aggregation: templateSrv.replace(item.aggregation, options.scopedVars),
+        dimension: templateSrv.replace(item.dimension, options.scopedVars),
+        dimensionFilter: templateSrv.replace(item.dimensionFilter, options.scopedVars),
         alias: item.alias,
         format: target.format,
       },
