@@ -24,6 +24,12 @@ if (Cypress.env('SLOWMO')) {
   }
 }
 
+// @todo remove when possible: https://github.com/cypress-io/cypress/issues/95
+Cypress.on('window:before:load', win => {
+  // @ts-ignore
+  delete win.fetch;
+});
+
 // uncomment below to prevent Cypress from failing tests when unhandled errors are thrown
 // Cypress.on('uncaught:exception', (err, runnable) => {
 //   // returning false here prevents Cypress from

@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (server *HTTPServer) AdminProvisioningReloadDasboards(c *models.ReqContext) Response {
+func (server *HTTPServer) AdminProvisioningReloadDashboards(c *models.ReqContext) Response {
 	err := server.ProvisioningService.ProvisionDashboards()
 	if err != nil && err != context.Canceled {
 		return Error(500, "", err)
