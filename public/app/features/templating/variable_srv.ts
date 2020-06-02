@@ -73,9 +73,7 @@ export class VariableSrv {
         });
         this.templateSrv.setGlobalVariable('__user', {
           value: {
-            name: contextSrv.user.name,
             login: contextSrv.user.login,
-            email: contextSrv.user.email,
             id: contextSrv.user.id,
             toString: function() {
               return this.id;

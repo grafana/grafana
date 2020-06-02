@@ -104,9 +104,7 @@ export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkRes
     });
     templateSrv.setGlobalVariable('__user', {
       value: {
-        name: contextSrv.user.name,
         login: contextSrv.user.login,
-        email: contextSrv.user.email,
         id: contextSrv.user.id,
         toString: function() {
           return this.id;
