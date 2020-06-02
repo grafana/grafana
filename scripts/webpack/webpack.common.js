@@ -1,29 +1,5 @@
 const path = require('path');
 
-// https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
-function shouldExclude(filename) {
-  // There is external js code inside this which needs to be processed by babel.
-  if (filename.indexOf(`jaeger-ui-components`) > 0) {
-    return false;
-  }
-
-  const packagesToProcessbyBabel = [
-    'debug',
-    'lru-cache',
-    'yallist',
-    'apache-arrow',
-    'react-hook-form',
-    'rc-trigger',
-    '@iconscout/react-unicons',
-  ];
-  for (const package of packagesToProcessbyBabel) {
-    if (filename.indexOf(`node_modules/${package}`) > 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
 console.log(path.resolve());
 module.exports = {
   target: 'web',
@@ -60,14 +36,8 @@ module.exports = {
   },
   module: {
     rules: [
-      /**
-       * Some npm packages are bundled with es2015 syntax, ie. debug
-       * To make them work with PhantomJS we need to transpile them
-       * to get rid of unsupported syntax.
-       */
       {
         test: /\.js$/,
-        exclude: shouldExclude,
         use: [
           {
             loader: 'babel-loader',
