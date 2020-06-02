@@ -2,7 +2,13 @@ import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable } from '../types';
-import { DataQueryResponse, ScopedVars, DataSourceInstanceSettings, QueryResultMeta } from '@grafana/data';
+import {
+  DataQueryResponse,
+  ScopedVars,
+  DataSourceInstanceSettings,
+  QueryResultMeta,
+  MetricFindValue,
+} from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
@@ -231,7 +237,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
             throw { message: err.error.data.error.message };
           }
         });
-    });
+    }) as Promise<MetricFindValue[]>; // ??
   }
 
   private buildQuery(query: string, options: any, workspace: any) {
@@ -345,10 +351,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
   }
 
-  testDatasource() {
+  testDatasource(): Promise<any> {
     const validationError = this.isValidConfig();
     if (validationError) {
-      return validationError;
+      return Promise.resolve(validationError);
     }
 
     return this.getDefaultOrFirstWorkspace()
