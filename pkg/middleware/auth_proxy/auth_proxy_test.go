@@ -69,7 +69,8 @@ func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.Remot
 func TestMiddlewareContext(t *testing.T) {
 	logger := log.New("test")
 	Convey("auth_proxy helper", t, func() {
-		req, _ := http.NewRequest("POST", "http://example.com", nil)
+		req, err := http.NewRequest("POST", "http://example.com", nil)
+		So(err, ShouldBeNil)
 		setting.AuthProxyHeaderName = "X-Killa"
 		store := remotecache.NewFakeStore(t)
 
@@ -77,7 +78,6 @@ func TestMiddlewareContext(t *testing.T) {
 		req.Header.Add(setting.AuthProxyHeaderName, name)
 
 		Convey("when the cache only contains the main header", func() {
-
 			Convey("with a simple cache key", func() {
 				// Set cache key
 				key := fmt.Sprintf(CachePrefix, HashCacheKey(name))
@@ -86,10 +86,11 @@ func TestMiddlewareContext(t *testing.T) {
 
 				// Set up the middleware
 				auth := prepareMiddleware(t, req, store)
+				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f")
+
 				id, err := auth.Login(logger, false)
 				So(err, ShouldBeNil)
 
-				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f")
 				So(id, ShouldEqual, 33)
 			})
 
@@ -103,14 +104,11 @@ func TestMiddlewareContext(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				auth := prepareMiddleware(t, req, store)
+				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0")
 
 				id, err := auth.Login(logger, false)
 				So(err, ShouldBeNil)
-				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0")
 				So(id, ShouldEqual, 33)
-			})
-
-			Convey("when the does not exist", func() {
 			})
 		})
 

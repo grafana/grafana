@@ -39,7 +39,7 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 		return false
 	}
 
-	// If the there is no header - we can't move forward
+	// If there is no header - we can't move forward
 	if !auth.HasHeader() {
 		return false
 	}
