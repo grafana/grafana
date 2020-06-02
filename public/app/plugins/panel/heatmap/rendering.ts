@@ -371,10 +371,7 @@ export class HeatmapRenderer {
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
-    if (
-      (tickValues && tickValues.length <= ticks) ||
-      (this.panel.yBucketBound === 'middle' && tickValues && tickValues.length)
-    ) {
+    if (tickValues && tickValues.length <= ticks) {
       yAxis.tickValues(tickValues);
     } else {
       yAxis.ticks(ticks);
