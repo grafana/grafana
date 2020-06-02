@@ -14,6 +14,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -151,21 +152,32 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResult, nil
 	}
 
-	data, err := e.unmarshalResponse(res)
+	logResponse, err := e.unmarshalResponse(res, query.ResultFormat == "table")
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, nil
 	}
 
-	azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
+	// I don't get why queryResult would be logged here, guessing logResponse was intendended.
+	//azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
 
 	if query.ResultFormat == "table" {
-		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Model, query.Params)
+		// queryResult.Tables, queryResult.Meta, err = e.parseToTables(logResponse, query.Model, query.Params)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		frames, err := e.parseToFrameTables(logResponse, query.Model, query.Params)
 		if err != nil {
-			return nil, err
+			queryResult.Error = err
+			return queryResult, nil
+		}
+		queryResult.Dataframes, err = frames.MarshalArrow() // can move this down after done both series and this
+		if err != nil {
+			queryResult.Error = err
+			return queryResult, nil
 		}
 	} else {
-		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Model, query.Params)
+		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(logResponse, query.Model, query.Params)
 		if err != nil {
 			return nil, err
 		}
@@ -225,7 +237,7 @@ func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourceP
 	return logAnalyticsRoute, pluginRouteName, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
+func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response, useNumber bool) (AzureLogAnalyticsResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 
@@ -239,7 +251,11 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}
 
 	var data AzureLogAnalyticsResponse
-	err = json.Unmarshal(body, &data)
+	d := json.NewDecoder(bytes.NewReader(body))
+	if useNumber {
+		d.UseNumber()
+	}
+	err = d.Decode(&data)
 	if err != nil {
 		azlog.Debug("Failed to unmarshal Azure Log Analytics response", "error", err, "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, err
@@ -281,6 +297,22 @@ func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsRespon
 	}
 
 	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
+}
+
+func (e *AzureLogAnalyticsDatasource) parseToFrameTables(logResponse AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (data.Frames, error) {
+	// TODO: Metadata
+
+	for _, t := range logResponse.Tables {
+		if t.Name == "PrimaryResult" {
+			frame, err := LogTableToFrame(&t)
+			if err != nil {
+				return nil, err
+			}
+			return data.Frames{frame}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no data as no PrimaryResult table was returned in the response")
 }
 
 func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
