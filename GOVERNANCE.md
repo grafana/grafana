@@ -94,7 +94,7 @@ The current team members are:
 * Stephanie Closson ([Grafana Labs](https://grafana.com/))
 * Tobias Skarhed ([Grafana Labs](https://grafana.com/))
 * Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
-* Utkarsh Bhatnagar
+* Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
 
 ### Maintainers
 
