@@ -1,5 +1,5 @@
-import { LinkSrv } from '../link_srv';
-import { DataLinkBuiltInVars, locationUtil, VariableModel } from '@grafana/data';
+import { getFieldVars, LinkSrv } from '../link_srv';
+import { DataLinkBuiltInVars, FieldType, locationUtil, MutableDataFrame, VariableModel } from '@grafana/data';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
@@ -265,5 +265,41 @@ describe('linkSrv', () => {
         expect(link).toBe(expected);
       }
     );
+  });
+});
+
+describe('getFieldVars', () => {
+  it('return field labels suggestions', () => {
+    const df1 = new MutableDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'field1',
+          type: FieldType.number,
+          labels: {
+            label1: 'value1',
+          },
+          values: [10, 20],
+        },
+      ],
+    });
+    const df2 = new MutableDataFrame({
+      name: 'B',
+      fields: [
+        {
+          name: 'field2',
+          type: FieldType.number,
+          labels: {
+            label2: 'value2',
+          },
+          values: [10, 20],
+        },
+      ],
+    });
+    const results = getFieldVars([df1, df2]);
+
+    expect(results).toHaveLength(3);
+    expect(results[1].value).toEqual('__field.label.label1');
+    expect(results[2].value).toEqual('__field.label.label2');
   });
 });

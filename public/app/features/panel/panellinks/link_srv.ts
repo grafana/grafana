@@ -91,7 +91,7 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...timeRangeVars,
 ];
 
-const getFieldVars = (dataFrames: DataFrame[]) => {
+export const getFieldVars = (dataFrames: DataFrame[]) => {
   const all = [];
   for (const df of dataFrames) {
     for (const f of df.fields) {
@@ -116,8 +116,8 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
       origin: VariableOrigin.Field,
     },
     ...labels.map(label => ({
-      value: `__field.labels${buildLabelPath(label)}`,
-      label: `labels.${label}`,
+      value: `__field.label${buildLabelPath(label)}`,
+      label: `label.${label}`,
       documentation: `${label} label value`,
       origin: VariableOrigin.Field,
     })),
