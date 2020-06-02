@@ -44,10 +44,13 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     if (azureLogAnalyticsOptions.targets.length > 0) {
-      const alaPromise = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsOptions);
-      if (alaPromise) {
-        promises.push(alaPromise);
+      const obs = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsOptions);
+      if (!promises.length) {
+        return obs; // return the observable directly
       }
+      // NOTE: this only includes the data!
+      // When all three query types are ready to be observale, they should all use observable
+      promises.push(obs.toPromise().then(r => r.data));
     }
 
     if (azureMonitorOptions.targets.length > 0) {
