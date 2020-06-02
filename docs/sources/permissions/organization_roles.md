@@ -7,7 +7,7 @@ type = "docs"
 name = "Organization Roles"
 identifier = "organization-roles"
 parent = "permissions"
-weight = 2
+weight = 30
 +++
 
 # Organization Roles

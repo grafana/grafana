@@ -5,6 +5,7 @@ import { MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from '../reducers/actionTypes'
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
 import { findSelected } from '../utils';
 import { useSearch } from './useSearch';
+import { locationUtil } from '@grafana/data';
 
 export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => void) => {
   const reducer = useReducer(searchReducer, dashboardsSearchState);
@@ -31,7 +32,9 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
           if (selectedItem.type === DashboardSearchItemType.DashFolder) {
             onToggleSection(selectedItem as DashboardSection);
           } else {
-            getLocationSrv().update({ path: selectedItem.url });
+            getLocationSrv().update({
+              path: locationUtil.stripBaseFromUrl(selectedItem.url),
+            });
             // Delay closing to prevent current page flicker
             setTimeout(onCloseSearch, 0);
           }

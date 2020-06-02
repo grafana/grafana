@@ -50,19 +50,19 @@ describe('OrganizeFields Transformer', () => {
           labels: undefined,
           name: 'temperature',
           state: {
-            title: 'temperature',
+            displayName: 'temperature',
           },
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
         },
         {
           config: {
-            title: 'renamed_humidity',
+            displayName: 'renamed_humidity',
           },
           labels: undefined,
           name: 'humidity',
           state: {
-            title: 'renamed_humidity',
+            displayName: 'renamed_humidity',
           },
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
@@ -105,11 +105,11 @@ describe('OrganizeFields Transformer', () => {
         {
           labels: undefined,
           config: {
-            title: 'renamed_time',
+            displayName: 'renamed_time',
           },
           name: 'time',
           state: {
-            title: 'renamed_time',
+            displayName: 'renamed_time',
           },
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
@@ -119,7 +119,7 @@ describe('OrganizeFields Transformer', () => {
           labels: undefined,
           name: 'pressure',
           state: {
-            title: 'pressure',
+            displayName: 'pressure',
           },
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),

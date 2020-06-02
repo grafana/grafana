@@ -12,7 +12,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export interface FieldCalcs 
+export interface FieldCalcs extends Record<string, any> 
 ```
 <b>Import</b>
 

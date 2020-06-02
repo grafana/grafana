@@ -3,7 +3,7 @@ import { supportsDataQuery } from './utils';
 
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {
-    title: 'Hello',
+    displayName: 'Hello',
     min: 10,
     max: 10,
     decimals: 10,
