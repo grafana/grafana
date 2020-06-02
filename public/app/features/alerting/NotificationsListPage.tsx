@@ -3,11 +3,27 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
 import { getBackendSrv } from '@grafana/runtime';
 import { useAsyncFn } from 'react-use';
+import { appEvents } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { HorizontalGroup, Button, LinkButton } from '@grafana/ui';
+import { CoreEvents } from 'app/types';
 import { AlertNotification } from 'app/types/alerting';
 
 const deleteNotification = async (id: number) => {
+  appEvents.emit(CoreEvents.showConfirmModal, {
+    title: 'Delete',
+    text: 'Do you want to delete this notification channel?',
+    text2: `Deleting this notification channel will not delete any references to it from dashboard alerts`,
+    icon: 'trash-alt',
+    confirmText: 'Delete',
+    yesText: 'Delete',
+    onConfirm: () => {
+      deleteNotificationConfirmed(id);
+    },
+  });
+};
+
+const deleteNotificationConfirmed = async (id: number) => {
   return await getBackendSrv().delete(`/api/alert-notifications/${id}`);
 };
 
@@ -70,7 +86,6 @@ const NotificationsListPage: FC = () => {
                           size="sm"
                           onClick={() => {
                             deleteNotification(notification.id);
-                            setNotifications(notifications.filter(notify => notify.id !== notification.id));
                             fetchNotifications();
                           }}
                         />
