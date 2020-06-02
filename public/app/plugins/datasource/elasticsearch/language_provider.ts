@@ -9,7 +9,7 @@ import Prism, { Token } from 'prismjs';
 import grammar from '../prometheus/promql';
 
 function getNameLabelValue(promQuery: string, tokens: any): string {
-  let nameLabelValue: string;
+  let nameLabelValue = '';
   for (let prop in tokens) {
     if (typeof tokens[prop] === 'string') {
       nameLabelValue = tokens[prop] as string;
@@ -34,9 +34,9 @@ function extractPrometheusLabels(promQuery: string): string[][] {
     if (tokens[prop] instanceof Token) {
       let token: Token = tokens[prop] as Token;
       if (token.type === 'context-labels') {
-        let labelKey: string;
-        let labelValue: string;
-        let labelOperator: string;
+        let labelKey = '';
+        let labelValue = '';
+        let labelOperator = '';
         let contentTokens: any[] = token.content as any[];
         for (let currentToken in contentTokens) {
           if (typeof contentTokens[currentToken] === 'string') {
