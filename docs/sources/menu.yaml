@@ -337,6 +337,8 @@
       link: /plugins/
     - name: Install plugins
       link: /plugins/installation/
+    - name: Plugin signature verification
+      link: /plugins/plugin-signature-verification/
 - name: HTTP APIs
   link: /http_api/
   children:
@@ -408,6 +410,8 @@
           link: /developers/plugins/build-a-streaming-data-source-plugin/
         - name: Authentication
           link: /developers/plugins/authentication/
+        - name: Sign a plugin
+          link: /developers/plugins/sign-a-plugin/
         - name: Backend plugins
           children:
             - link: /developers/plugins/backend/
