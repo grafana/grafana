@@ -1,11 +1,11 @@
 # 7.0.3 (2020-06-03)
 
 ### Features / Enhancements
-* **Dashboard**: Get panels in collapsed rows. [#25079](https://github.com/grafana/grafana/pull/25079), [@peterholmberg](https://github.com/peterholmberg)
 * **Stats**: include all fields. [#24829](https://github.com/grafana/grafana/pull/24829), [@ryantxu](https://github.com/ryantxu)
 * **Variables**: change VariableEditorList row action Icon to IconButton. [#25217](https://github.com/grafana/grafana/pull/25217), [@hshoff](https://github.com/hshoff)
 
 ### Bug Fixes
+* **Dashboard**: Get panels in collapsed rows. [#25079](https://github.com/grafana/grafana/pull/25079), [@peterholmberg](https://github.com/peterholmberg)
 * **Cloudwatch**: Fix dimensions of DDoSProtection. [#25317](https://github.com/grafana/grafana/pull/25317), [@papagian](https://github.com/papagian)
 * **Configuration**: Fix env var override of sections containing hyphen. [#25178](https://github.com/grafana/grafana/pull/25178), [@marefr](https://github.com/marefr)
 * **Do not show alerts tab when alerting is disabled**. [#25285](https://github.com/grafana/grafana/pull/25285), [@dprokop](https://github.com/dprokop)
