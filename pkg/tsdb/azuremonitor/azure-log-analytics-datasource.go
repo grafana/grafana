@@ -55,11 +55,7 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query, originalQueries, timeRange)
-		if err != nil {
-			queryRes.Error = err
-		}
-		result.Results[query.RefID] = queryRes
+		result.Results[query.RefID] = e.executeQuery(ctx, query, originalQueries, timeRange)
 	}
 
 	return result, nil
@@ -112,13 +108,17 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, error) {
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) *tsdb.QueryResult {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+
+	queryResultError := func(err error) *tsdb.QueryResult {
+		queryResult.Error = err
+		return queryResult
+	}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -137,21 +137,18 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	// I don't get why queryResult would be logged here, guessing logResponse was intendended.
@@ -159,14 +156,12 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	frame, err := LogTableToFrame(t)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	setAdditionalFrameMeta(frame,
@@ -180,16 +175,17 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 			wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
 			if err == nil {
 				frame = wideFrame
+			} else {
+				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
 			}
 		}
 	}
 	frames := data.Frames{frame}
 	queryResult.Dataframes, err = frames.MarshalArrow()
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
-	return queryResult, nil
+	return queryResult
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
