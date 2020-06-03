@@ -62,21 +62,25 @@ export class DataSourceWithBackend<
       targets = targets.filter(q => this.filterQuery!(q));
     }
     const queries = targets.map(q => {
+      let datasourceId = this.id;
       if (q.datasource === ExpressionDatasourceID) {
         return {
           ...q,
-          datasourceId: this.id,
+          datasourceId,
           orgId,
         };
       }
-      const dsName = q.datasource && q.datasource !== 'default' ? q.datasource : config.defaultDatasource;
-      const ds = config.datasources[dsName];
-      if (!ds) {
-        throw new Error('Unknown Datasource: ' + q.datasource);
+      if (q.datasource) {
+        const dsName = q.datasource === 'default' ? config.defaultDatasource : q.datasource;
+        const ds = config.datasources[dsName];
+        if (!ds) {
+          throw new Error('Unknown Datasource: ' + q.datasource);
+        }
+        datasourceId = ds.id;
       }
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
-        datasourceId: ds.id,
+        datasourceId,
         intervalMs,
         maxDataPoints,
         orgId,
