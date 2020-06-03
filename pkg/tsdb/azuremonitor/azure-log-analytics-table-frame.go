@@ -29,9 +29,11 @@ func LogTableToFrame(table *AzureLogAnalyticsTable) (*data.Frame, error) {
 func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverter, error) {
 	converters := []data.FieldConverter{}
 	colNames := make([]string, len(t.Columns))
+	colTypes := make([]string, len(t.Columns)) // for metadata
 
 	for i, col := range t.Columns {
 		colNames[i] = col.Name
+		colTypes[i] = col.Type
 		converter, ok := converterMap[col.Type]
 		if !ok {
 			return nil, fmt.Errorf("unsupported analytics column type %v", col.Type)
@@ -47,6 +49,10 @@ func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverte
 	err = fic.Frame.SetFieldNames(colNames...)
 	if err != nil {
 		return nil, err
+	}
+
+	fic.Frame.Meta = &data.FrameMeta{
+		Custom: map[string]interface{}{"azureColumnTypes": colTypes},
 	}
 
 	return fic, nil
