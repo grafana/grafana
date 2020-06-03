@@ -40,11 +40,9 @@ const NotificationsListPage: FC = () => {
   };
 
   const deleteNotificationConfirmed = async (id: number) => {
-    const res = await getBackendSrv().delete(`/api/alert-notifications/${id}`);
-    fetchNotifications().then(res => {
-      setNotifications(res);
-    });
-    return res;
+    await getBackendSrv().delete(`/api/alert-notifications/${id}`);
+    const notifications = await fetchNotifications();
+    setNotifications(notifications);
   };
 
   return (
