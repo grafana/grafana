@@ -102,6 +102,15 @@ export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkRes
         },
       },
     });
+    templateSrv.setGlobalVariable('__user', {
+      value: {
+        login: contextSrv.user.login,
+        id: contextSrv.user.id,
+        toString: function() {
+          return this.id;
+        },
+      },
+    });
   };
 };
 
@@ -308,7 +317,9 @@ export const validateVariableSelectionState = (
     // 3. use the first value
     if (variableInState.options) {
       const option = variableInState.options[0];
-      return setValue(variableInState, option);
+      if (option) {
+        return setValue(variableInState, option);
+      }
     }
 
     // 4... give up

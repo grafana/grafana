@@ -5,10 +5,12 @@ import {
   DataSourceInstanceSettings,
   DataQuery,
   DataSourceJsonData,
+  ScopedVars,
 } from '@grafana/data';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
+import { toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -52,9 +54,13 @@ export class DataSourceWithBackend<
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints, range, requestId } = request;
+  query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
+    const { intervalMs, maxDataPoints, range, requestId } = request;
     const orgId = config.bootData.user.orgId;
+    let targets = request.targets;
+    if (this.filterQuery) {
+      targets = targets.filter(q => this.filterQuery!(q));
+    }
     const queries = targets.map(q => {
       if (q.datasource === ExpressionDatasourceID) {
         return {
@@ -69,13 +75,18 @@ export class DataSourceWithBackend<
         throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
-        ...this.applyTemplateVariables(q),
+        ...this.applyTemplateVariables(q, request.scopedVars),
         datasourceId: ds.id,
         intervalMs,
         maxDataPoints,
         orgId,
       };
     });
+
+    // Return early if no queries exist
+    if (!queries.length) {
+      return of({ data: [] });
+    }
 
     const body: any = {
       queries,
@@ -94,29 +105,30 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp?.data);
+        return toDataQueryResponse(rsp);
+      })
+      .catch(err => {
+        err.isHandled = true; // Avoid extra popup warning
+        return toDataQueryResponse(err);
       });
 
     return from(req);
   }
 
   /**
+   * Override to skip executing a query
+   *
+   * @virtual
+   */
+  filterQuery?(query: TQuery): boolean;
+
+  /**
    * Override to apply template variables
    *
    * @virtual
    */
-  applyTemplateVariables(query: DataQuery) {
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
     return query;
-  }
-
-  /**
-   * This makes the arrow library loading async.
-   */
-  async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    const { resultsToDataFrames } = await import(
-      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/ArrowDataFrame'
-    );
-    return { data: resultsToDataFrames(rsp) };
   }
 
   /**

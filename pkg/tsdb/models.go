@@ -21,6 +21,7 @@ type Query struct {
 	DataSource    *models.DataSource
 	MaxDataPoints int64
 	IntervalMs    int64
+	QueryType     string
 }
 
 type Response struct {

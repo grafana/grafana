@@ -4,7 +4,7 @@ import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
-import { DashboardSection, OnToggleChecked, SearchLayout, DashboardSearchHit } from '../types';
+import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
@@ -15,7 +15,7 @@ export interface Props {
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
-  results: DashboardSearchHit[];
+  results: DashboardSection[];
   layout?: string;
 }
 

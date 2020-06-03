@@ -56,7 +56,16 @@ export function TraceView(props: Props) {
 
   const theme = useTheme();
   const traceTheme = useMemo(
-    () => ({ type: theme.isDark ? ThemeType.Dark : ThemeType.Light, servicesColorPalette: colors } as ThemeOptions),
+    () =>
+      ({
+        type: theme.isDark ? ThemeType.Dark : ThemeType.Light,
+        servicesColorPalette: colors,
+        components: {
+          TraceName: {
+            fontSize: theme.typography.size.lg,
+          },
+        },
+      } as ThemeOptions),
     [theme]
   );
   const traceTimeline: TTraceTimeline = useMemo(
@@ -75,7 +84,7 @@ export function TraceView(props: Props) {
     <ThemeProvider value={traceTheme}>
       <UIElementsContext.Provider value={UIElements}>
         <TracePageHeader
-          canCollapse={true}
+          canCollapse={false}
           clearSearch={useCallback(() => {}, [])}
           focusUiFindMatches={useCallback(() => {}, [])}
           hideMap={false}

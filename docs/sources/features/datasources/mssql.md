@@ -452,7 +452,7 @@ Please note that any macro function will not work inside a stored procedure.
 ### Examples
 
 {{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
-For the following examples the database table defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
+For the following examples the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
 
 **First query:**
 

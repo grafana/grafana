@@ -1,15 +1,16 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
-
 import { GraphLegend } from './GraphLegend';
 import { action } from '@storybook/addon-actions';
 import { select, number } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { generateLegendItems } from '../Legend/Legend.story';
+import { generateLegendItems } from '../Legend/Legend';
 import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
 
-const GraphLegendStories = storiesOf('Visualizations/Graph/GraphLegend', module);
-GraphLegendStories.addDecorator(withHorizontallyCenteredStory);
+export default {
+  title: 'Visualizations/Graph/GraphLegend',
+  component: GraphLegend,
+  decororators: [withHorizontallyCenteredStory],
+};
 
 const getStoriesKnobs = (isList = false) => {
   const statsToDisplay = select<any>(
@@ -54,7 +55,7 @@ const getStoriesKnobs = (isList = false) => {
   };
 };
 
-GraphLegendStories.add('list', () => {
+export const list = () => {
   const { statsToDisplay, numberOfSeries, containerWidth, legendPlacement } = getStoriesKnobs(true);
   return (
     <div style={{ width: containerWidth }}>
@@ -77,9 +78,9 @@ GraphLegendStories.add('list', () => {
       />
     </div>
   );
-});
+};
 
-GraphLegendStories.add('table', () => {
+export const table = () => {
   const { statsToDisplay, numberOfSeries, containerWidth, legendPlacement } = getStoriesKnobs();
   return (
     <div style={{ width: containerWidth }}>
@@ -102,4 +103,4 @@ GraphLegendStories.add('table', () => {
       />
     </div>
   );
-});
+};

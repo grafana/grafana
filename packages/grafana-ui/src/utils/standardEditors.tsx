@@ -20,7 +20,13 @@ import {
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
-import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select } from '../components';
+import {
+  NumberValueEditor,
+  RadioButtonGroup,
+  StringValueEditor,
+  StringArrayEditor,
+  SelectValueEditor,
+} from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -33,11 +39,11 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  */
 export const getStandardFieldConfigs = () => {
   const category = ['Standard options'];
-  const title: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-    id: 'title',
-    path: 'title',
-    name: 'Title',
-    description: "Field's title",
+  const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+    id: 'displayName',
+    path: 'displayName',
+    name: 'Display name',
+    description: 'Change the field or series name',
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
     process: stringOverrideProcessor,
@@ -45,7 +51,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'none',
       expandTemplateVars: true,
     },
-    shouldApply: field => field.type !== FieldType.time,
+    shouldApply: () => true,
     category,
   };
 
@@ -206,7 +212,7 @@ export const getStandardFieldConfigs = () => {
   //   category: ['Color & thresholds'],
   // };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
 };
 
 /**
@@ -227,6 +233,13 @@ export const getStandardOptionEditors = () => {
     editor: StringValueEditor as any,
   };
 
+  const strings: StandardEditorsRegistryItem<string[]> = {
+    id: 'strings',
+    name: 'String array',
+    description: 'An array of strings',
+    editor: StringArrayEditor as any,
+  };
+
   const boolean: StandardEditorsRegistryItem<boolean> = {
     id: 'boolean',
     name: 'Boolean',
@@ -238,9 +251,7 @@ export const getStandardOptionEditors = () => {
     id: 'select',
     name: 'Select',
     description: 'Allows option selection',
-    editor: props => (
-      <Select value={props.value} onChange={e => props.onChange(e.value)} options={props.item.settings?.options} />
-    ),
+    editor: SelectValueEditor as any,
   };
 
   const radio: StandardEditorsRegistryItem<any> = {
@@ -292,5 +303,5 @@ export const getStandardOptionEditors = () => {
     description: '',
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker];
+  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker, strings];
 };

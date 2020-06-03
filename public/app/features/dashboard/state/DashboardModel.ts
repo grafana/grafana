@@ -12,13 +12,13 @@ import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
   AppEvent,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
   DateTimeInput,
   PanelEvents,
   TimeRange,
   TimeZone,
   UrlQueryValue,
-  dateTimeFormat,
-  dateTimeFormatTimeAgo,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
@@ -31,6 +31,20 @@ export interface CloneOptions {
   saveVariables?: boolean;
   saveTimerange?: boolean;
   message?: string;
+}
+
+type DashboardLinkType = 'link' | 'dashboards';
+
+export interface DashboardLink {
+  icon: string;
+  title: string;
+  tooltip: string;
+  type: DashboardLinkType;
+  url: string;
+  asDropdown: boolean;
+  tags: any[];
+  searchHits?: any[];
+  targetBlank: boolean;
 }
 
 export class DashboardModel {
@@ -55,7 +69,7 @@ export class DashboardModel {
   schemaVersion: number;
   version: number;
   revision: number;
-  links: any;
+  links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
@@ -341,6 +355,7 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
+    this.panelInEdit.destroy();
     this.panelInEdit = undefined;
   }
 

@@ -246,5 +246,29 @@ datasources:
     access: proxy
     url: http://localhost:3100
     editable: false
+    jsonData:
+      derivedFields:
+        - name: "traceID"
+          matcherRegex: "traceID=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: gdev-jaeger
+        - name: "traceID"
+          matcherRegex: "traceID=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: gdev-zipkin
+
+  - name: gdev-jaeger
+    type: jaeger
+    uid: gdev-jaeger
+    access: proxy
+    url: http://localhost:16686
+    editable: false
+
+  - name: gdev-zipkin
+    type: zipkin
+    uid: gdev-zipkin
+    access: proxy
+    url: http://localhost:9411
+    editable: false
 
 

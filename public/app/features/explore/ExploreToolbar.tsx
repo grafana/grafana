@@ -324,6 +324,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 refreshInterval={refreshInterval}
                 onChangeRefreshInterval={this.onChangeRefreshInterval}
                 splitted={splitted}
+                isLive={isLive}
                 loading={loading || (isLive && !isPaused)}
                 onRun={this.onRunQuery}
                 showDropdown={!isLive}
