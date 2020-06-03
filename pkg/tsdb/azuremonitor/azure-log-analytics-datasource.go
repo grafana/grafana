@@ -307,6 +307,9 @@ func (e *AzureLogAnalyticsDatasource) parseToFrameTables(logResponse AzureLogAna
 			if err != nil {
 				return nil, err
 			}
+			frame.Meta = &data.FrameMeta{
+				ExecutedQueryString: params.Get("query"),
+			}
 			return data.Frames{frame}, nil
 		}
 	}
@@ -320,6 +323,9 @@ func (e *AzureLogAnalyticsDatasource) parseToFrameTimeSeries(logResponse AzureLo
 	for _, t := range logResponse.Tables {
 		if t.Name == "PrimaryResult" {
 			frame, err := LogTableToFrame(&t)
+			frame.Meta = &data.FrameMeta{
+				ExecutedQueryString: params.Get("query"),
+			}
 			if err != nil {
 				return nil, err
 			}
