@@ -1,7 +1,12 @@
 import { e2e } from '../index';
 import { fromBaseUrl } from '../support/url';
 
-export const deleteDataSource = (name: string) => {
+export interface DeleteDataSourceConfig {
+  id: string;
+  name: string;
+}
+
+export const deleteDataSource = ({ id, name }: DeleteDataSourceConfig) => {
   e2e().logToConsole('Deleting data source with name:', name);
   e2e().request('DELETE', fromBaseUrl(`/api/datasources/name/${name}`));
 
@@ -21,4 +26,12 @@ export const deleteDataSource = (name: string) => {
     }
   });
   */
+
+  e2e.getScenarioContext().then(({ addedDataSources }: any) => {
+    e2e.setScenarioContext({
+      addedDataSources: addedDataSources.filter((dataSource: DeleteDataSourceConfig) => {
+        return dataSource.id !== id && dataSource.name !== name;
+      }),
+    });
+  });
 };

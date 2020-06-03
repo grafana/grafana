@@ -1,3 +1,4 @@
+import { DeleteDashboardConfig } from './deleteDashboard';
 import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
 
@@ -34,9 +35,10 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
     .then((url: string) => {
       const uid = getDashboardUid(url);
 
-      e2e.setScenarioContext({
-        lastAddedDashboard: title,
-        lastAddedDashboardUid: uid,
+      e2e.getScenarioContext().then(({ addedDashboards }: any) => {
+        e2e.setScenarioContext({
+          addedDashboards: [...addedDashboards, { title, uid } as DeleteDashboardConfig],
+        });
       });
 
       // @todo remove `wrap` when possible

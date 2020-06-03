@@ -1,3 +1,4 @@
+import { DeleteDataSourceConfig } from './deleteDataSource';
 import { e2e } from '../index';
 import { fromBaseUrl, getDataSourceId } from '../support/url';
 
@@ -42,9 +43,10 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
     .then((url: string) => {
       const id = getDataSourceId(url);
 
-      e2e.setScenarioContext({
-        lastAddedDataSource: name,
-        lastAddedDataSourceId: id,
+      e2e.getScenarioContext().then(({ addedDataSources }: any) => {
+        e2e.setScenarioContext({
+          addedDataSources: [...addedDataSources, { id, name } as DeleteDataSourceConfig],
+        });
       });
 
       if (checkHealth) {
