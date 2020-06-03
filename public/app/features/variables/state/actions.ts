@@ -102,6 +102,15 @@ export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkRes
         },
       },
     });
+    templateSrv.setGlobalVariable('__user', {
+      value: {
+        login: contextSrv.user.login,
+        id: contextSrv.user.id,
+        toString: function() {
+          return this.id;
+        },
+      },
+    });
   };
 };
 

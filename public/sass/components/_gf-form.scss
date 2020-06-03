@@ -87,6 +87,14 @@ $input-border: 1px solid $input-border-color;
     flex-wrap: nowrap;
   }
 
+  &--xs-view-flex-column {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    @include media-breakpoint-down(xs) {
+      flex-direction: column;
+    }
+  }
+
   .select-container {
     margin-right: $space-xs;
   }

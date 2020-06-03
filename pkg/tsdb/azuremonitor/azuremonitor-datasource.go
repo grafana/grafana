@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -20,7 +21,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -260,25 +260,32 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data AzureMonitorResponse, query *AzureMonitorQuery) error {
-	if len(data.Value) == 0 {
+func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr AzureMonitorResponse, query *AzureMonitorQuery) error {
+	if len(amr.Value) == 0 {
 		return nil
 	}
 
-	for _, series := range data.Value[0].Timeseries {
-		points := []tsdb.TimePoint{}
-
+	for _, series := range amr.Value[0].Timeseries {
 		metadataName := ""
 		metadataValue := ""
 		if len(series.Metadatavalues) > 0 {
 			metadataName = series.Metadatavalues[0].Name.LocalizedValue
 			metadataValue = series.Metadatavalues[0].Value
 		}
-		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue, data.Namespace, data.Value[0].ID)
+		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], amr.Value[0].Name.LocalizedValue, metadataName, metadataValue, amr.Namespace, amr.Value[0].ID)
 
-		for _, point := range series.Data {
+		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame.RefID = query.RefID
+		frame.Fields[1].Name = metricName
+		frame.Fields[1].SetConfig(&data.FieldConfig{
+			Unit: amr.Value[0].Unit,
+		})
+
+		requestedAgg := query.Params.Get("aggregation")
+
+		for i, point := range series.Data {
 			var value float64
-			switch query.Params.Get("aggregation") {
+			switch requestedAgg {
 			case "Average":
 				value = point.Average
 			case "Total":
@@ -292,15 +299,17 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 			default:
 				value = point.Count
 			}
-			points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.TimeStamp).Unix())*1000))
+
+			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   metricName,
-			Points: points,
-		})
+		encodedFrame, err := frame.MarshalArrow()
+		if err != nil {
+			queryRes.Error = fmt.Errorf("failed to encode dataframe response into arrow: %w", err)
+		}
+
+		queryRes.Dataframes = append(queryRes.Dataframes, encodedFrame)
 	}
-	queryRes.Meta.Set("unit", data.Value[0].Unit)
 
 	return nil
 }
