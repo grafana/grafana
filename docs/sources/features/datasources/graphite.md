@@ -104,7 +104,7 @@ Query | Description
 *tag_values(server, server=~backend\*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
 *tag_values(server, server=~backend\*, app=~${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
 
-For more details, see the [Graphite docs on the autocomplete api for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
+For more details, see the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
 ### Query variable
 

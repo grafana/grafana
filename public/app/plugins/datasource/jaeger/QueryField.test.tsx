@@ -67,7 +67,7 @@ describe('JaegerQueryField', function() {
 
     wrapper.update();
     expect(wrapper.find(ButtonCascader).props().options[0].children[1].children[0]).toEqual({
-      label: 'rootOp [99 ms]',
+      label: 'rootOp [0.099 ms]',
       value: '12345',
     });
   });

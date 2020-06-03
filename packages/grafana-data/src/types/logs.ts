@@ -1,6 +1,7 @@
 import { Labels } from './data';
 import { GraphSeriesXY } from './graph';
 import { DataFrame } from './dataFrame';
+import { AbsoluteTimeRange } from './time';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -60,6 +61,9 @@ export interface LogRowModel {
   searchWords?: string[];
   timeFromNow: string;
   timeEpochMs: number;
+  // timeEpochNs stores time with nanosecond-level precision,
+  // as millisecond-level precision is usually not enough for proper sorting of logs
+  timeEpochNs: string;
   timeLocal: string;
   timeUtc: string;
   uid: string;
@@ -71,6 +75,7 @@ export interface LogsModel {
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: GraphSeriesXY[];
+  visibleRange?: AbsoluteTimeRange;
 }
 
 export interface LogSearchMatch {

@@ -63,6 +63,15 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery('{x="y"} |="yy"', 'bar', 'baz')).toBe('{bar="baz",x="y"} |="yy"');
     expect(addLabelToQuery('{x="y"} |="yy" !~"xx"', 'bar', 'baz')).toBe('{bar="baz",x="y"} |="yy" !~"xx"');
   });
+
+  it('should add label to query properly with Loki datasource', () => {
+    expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt', undefined, true)).toBe(
+      '{filename="test.txt",job="grafana"} |= "foo-bar"'
+    );
+    expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt')).toBe(
+      '{filename="test.txt",job="grafana"} |= "foo{filename="test.txt"}-bar"'
+    );
+  });
 });
 
 describe('addLabelToSelector()', () => {

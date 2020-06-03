@@ -26,7 +26,7 @@ import (
 // Use the docker/blocks/mysql_tests/docker-compose.yaml to spin up a
 // preconfigured MySQL server suitable for running these tests.
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
-// use to verify that the generated data are vizualized as expected, see
+// use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestMySQL(t *testing.T) {
 	// change to true to run the MySQL tests
@@ -336,7 +336,7 @@ func TestMySQL(t *testing.T) {
 					So(err, ShouldBeNil)
 					queryResult := resp.Results["A"]
 					So(queryResult.Error, ShouldBeNil)
-					So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+					So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
 				})
 			})
 
@@ -778,7 +778,7 @@ func TestMySQL(t *testing.T) {
 			So(err, ShouldBeNil)
 			queryResult := resp.Results["A"]
 			So(queryResult.Error, ShouldBeNil)
-			So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+			So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
 
 		})
 

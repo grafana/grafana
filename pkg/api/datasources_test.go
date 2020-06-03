@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/bus"
 	. "github.com/smartystreets/goconvey/convey"
@@ -55,4 +56,108 @@ func TestDataSourcesProxy(t *testing.T) {
 			})
 		})
 	})
+}
+
+// Adding data sources with invalid URLs should lead to an error.
+func TestAddDataSource_InvalidURL(t *testing.T) {
+	defer bus.ClearBusHandlers()
+
+	sc := setupScenarioContext("/api/datasources")
+	// TODO: Make this an argument to setupScenarioContext
+	sc.t = t
+
+	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
+		return AddDataSource(c, models.AddDataSourceCommand{
+			Name: "Test",
+			Url:  "invalid:url",
+		})
+	}))
+
+	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+	assert.Equal(t, 400, sc.resp.Code)
+}
+
+// Adding data sources with URLs not specifying protocol should work.
+func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
+	defer bus.ClearBusHandlers()
+
+	const name = "Test"
+	const url = "localhost:5432"
+
+	// Stub handler
+	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+		assert.Equal(t, name, cmd.Name)
+		assert.Equal(t, url, cmd.Url)
+
+		cmd.Result = &models.DataSource{}
+		return nil
+	})
+
+	sc := setupScenarioContext("/api/datasources")
+	// TODO: Make this an argument to setupScenarioContext
+	sc.t = t
+
+	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
+		return AddDataSource(c, models.AddDataSourceCommand{
+			Name: name,
+			Url:  url,
+		})
+	}))
+
+	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+	assert.Equal(t, 200, sc.resp.Code)
+}
+
+// Updating data sources with invalid URLs should lead to an error.
+func TestUpdateDataSource_InvalidURL(t *testing.T) {
+	defer bus.ClearBusHandlers()
+
+	sc := setupScenarioContext("/api/datasources/1234")
+	// TODO: Make this an argument to setupScenarioContext
+	sc.t = t
+
+	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
+		return AddDataSource(c, models.AddDataSourceCommand{
+			Name: "Test",
+			Url:  "invalid:url",
+		})
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+
+	assert.Equal(t, 400, sc.resp.Code)
+}
+
+// Updating data sources with URLs not specifying protocol should work.
+func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
+	defer bus.ClearBusHandlers()
+
+	const name = "Test"
+	const url = "localhost:5432"
+
+	// Stub handler
+	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+		assert.Equal(t, name, cmd.Name)
+		assert.Equal(t, url, cmd.Url)
+
+		cmd.Result = &models.DataSource{}
+		return nil
+	})
+
+	sc := setupScenarioContext("/api/datasources/1234")
+	// TODO: Make this an argument to setupScenarioContext
+	sc.t = t
+
+	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
+		return AddDataSource(c, models.AddDataSourceCommand{
+			Name: name,
+			Url:  url,
+		})
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+
+	assert.Equal(t, 200, sc.resp.Code)
 }

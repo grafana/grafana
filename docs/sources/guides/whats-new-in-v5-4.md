@@ -26,7 +26,7 @@ Grafana v5.4 brings new features, many enhancements and bug fixes. This article 
 
 Grafana v5.4 ships with a new alert rule setting named `For` which is great for removing false positives. If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications. Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers.
 
-In the screenshot you can see an example timeline of an alert using the `For` setting. At ~16:04 the alert state changes to `Pending` and after 4 minutes it changes to `Alerting` which is when alert notifications are sent. Once the series falls back to normal the alert rule goes back to `OK`. [Learn more](/alerting/rules/#for).
+In the screenshot you can see an example timeline of an alert using the `For` setting. At ~16:04 the alert state changes to `Pending` and after 4 minutes it changes to `Alerting` which is when alert notifications are sent. Once the series falls back to normal the alert rule goes back to `OK`. [Learn more](/alerting/alerts-overview/#for).
 
 Additionally, there's now support for disable the sending of `OK` alert notifications. [Learn more](/alerting/notifications/#disable-resolve-message).
 

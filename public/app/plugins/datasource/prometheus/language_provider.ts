@@ -5,7 +5,7 @@ import { Value } from 'slate';
 import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 
-import { parseSelector, processLabels, processHistogramLabels } from './language_utils';
+import { parseSelector, processLabels, processHistogramLabels, fixSummariesMetadata } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
@@ -118,7 +118,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     this.metrics = await this.request('/api/v1/label/__name__/values', []);
     this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
-    this.metricsMetadata = await this.request('/api/v1/metadata', {});
+    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
 
     return [];

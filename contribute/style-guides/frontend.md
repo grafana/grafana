@@ -8,7 +8,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
   - [Table of Contents](#table-of-contents)
   - [Basic rules](#basic-rules)
   - [Naming conventions](#naming-conventions)
-  - [Files and directories naming conventions](#files-and-directories-naming-conventions)
+  - [File and directory naming conventions](#file-and-directory-naming-conventions)
   - [Code organization](#code-organization)
     - [Exports](#exports)
   - [Comments](#comments)

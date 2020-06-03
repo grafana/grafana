@@ -3,8 +3,15 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
-import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  DataQueryResponse,
+  DataQueryResponseData,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { Observable } from 'rxjs';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -14,13 +21,12 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   /** @ngInject */
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
     super(instanceSettings);
-    this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.templateSrv);
+    this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.templateSrv);
-
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings, this.templateSrv);
   }
 
-  async query(options: DataQueryRequest<AzureMonitorQuery>) {
+  query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponseData> {
     const promises: any[] = [];
     const azureMonitorOptions = _.cloneDeep(options);
     const appInsightsOptions = _.cloneDeep(options);
@@ -29,13 +35,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     azureMonitorOptions.targets = _.filter(azureMonitorOptions.targets, ['queryType', 'Azure Monitor']);
     appInsightsOptions.targets = _.filter(appInsightsOptions.targets, ['queryType', 'Application Insights']);
     azureLogAnalyticsOptions.targets = _.filter(azureLogAnalyticsOptions.targets, ['queryType', 'Azure Log Analytics']);
-
-    if (azureMonitorOptions.targets.length > 0) {
-      const amPromise = this.azureMonitorDatasource.query(azureMonitorOptions);
-      if (amPromise) {
-        promises.push(amPromise);
-      }
-    }
 
     if (appInsightsOptions.targets.length > 0) {
       const aiPromise = this.appInsightsDatasource.query(appInsightsOptions);
@@ -49,6 +48,16 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       if (alaPromise) {
         promises.push(alaPromise);
       }
+    }
+
+    if (azureMonitorOptions.targets.length > 0) {
+      const obs = this.azureMonitorDatasource.query(azureMonitorOptions);
+      if (!promises.length) {
+        return obs; // return the observable directly
+      }
+      // NOTE: this only includes the data!
+      // When all three query types are ready to be observale, they should all use observable
+      promises.push(obs.toPromise().then(r => r.data));
     }
 
     if (promises.length === 0) {
