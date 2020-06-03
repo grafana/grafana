@@ -468,7 +468,7 @@ below.
 
 ### login_cookie_name
 
-The cookie name for storing the auth token, default is `grafana_session`.
+The cookie name for storing the auth token, the default is `grafana_session`.
 
 ### oauth_state_cookie_max_age
 
