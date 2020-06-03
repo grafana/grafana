@@ -139,7 +139,7 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		&timeA, &timeB, &timeC,
 	}
 	timeField := data.NewField("@timestamp", nil, timeVals)
-	timeField.SetConfig(&data.FieldConfig{Title: "Time"})
+	timeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	lineField := data.NewField("line", nil, []*string{
 		aws.String("test message 1"),
