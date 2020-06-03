@@ -157,20 +157,33 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	// I don't get why queryResult would be logged here, guessing logResponse was intendended.
 	//azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
 
-	frames := data.Frames{}
-	if query.ResultFormat == "table" {
-		frames, err = e.parseToFrameTables(logResponse, query.Model, query.Params)
-		if err != nil {
-			queryResult.Error = err
-			return queryResult, nil
-		}
-	} else {
-		frames, err = e.parseToFrameTimeSeries(logResponse, query.Model, query.Params)
-		if err != nil {
-			queryResult.Error = err
-			return queryResult, nil
+	t, err := logResponse.GetPrimaryResultTable()
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
+
+	frame, err := LogTableToFrame(t)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
+
+	setAdditionalFrameMeta(frame,
+		query.Params.Get("query"),
+		query.Model.Get("subscriptionId").MustString(),
+		query.Model.Get("azureLogAnalytics").Get("workspace").MustString())
+
+	if query.ResultFormat == "time_series" {
+		tsSchema := frame.TimeSeriesSchema()
+		if tsSchema.Type == data.TimeSeriesTypeLong {
+			wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
+			if err == nil {
+				frame = wideFrame
+			}
 		}
 	}
+	frames := data.Frames{frame}
 	queryResult.Dataframes, err = frames.MarshalArrow()
 	if err != nil {
 		queryResult.Error = err
@@ -230,6 +243,17 @@ func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourceP
 	return logAnalyticsRoute, pluginRouteName, nil
 }
 
+// GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
+// error if there is no table by that name.
+func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalyticsTable, error) {
+	for _, t := range ar.Tables {
+		if t.Name == "PrimaryResult" {
+			return &t, nil
+		}
+	}
+	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the the response")
+}
+
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
@@ -253,54 +277,6 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}
 
 	return data, nil
-}
-
-func (e *AzureLogAnalyticsDatasource) parseToFrameTables(logResponse AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (data.Frames, error) {
-	// TODO: Metadata
-
-	for _, t := range logResponse.Tables {
-		if t.Name == "PrimaryResult" {
-			frame, err := LogTableToFrame(&t)
-			if err != nil {
-				return nil, err
-			}
-			setAdditionalFrameMeta(frame,
-				params.Get("query"),
-				model.Get("subscriptionId").MustString(),
-				model.Get("azureLogAnalytics").Get("workspace").MustString())
-
-			return data.Frames{frame}, nil
-		}
-	}
-
-	return nil, fmt.Errorf("no data as no PrimaryResult table was returned in the response")
-}
-
-func (e *AzureLogAnalyticsDatasource) parseToFrameTimeSeries(logResponse AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (data.Frames, error) {
-	// TODO: Metadata
-
-	for _, t := range logResponse.Tables {
-		if t.Name == "PrimaryResult" {
-			frame, err := LogTableToFrame(&t)
-			if err != nil {
-				return nil, err
-			}
-			setAdditionalFrameMeta(frame,
-				params.Get("query"),
-				model.Get("subscriptionId").MustString(),
-				model.Get("azureLogAnalytics").Get("workspace").MustString())
-			tsSchema := frame.TimeSeriesSchema()
-			if tsSchema.Type == data.TimeSeriesTypeLong {
-				wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
-				if err == nil {
-					frame = wideFrame
-				}
-			}
-			return data.Frames{frame}, nil
-		}
-	}
-
-	return nil, fmt.Errorf("no data as no PrimaryResult table was returned in the response")
 }
 
 func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) {
