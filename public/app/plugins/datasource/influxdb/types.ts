@@ -3,10 +3,17 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 export interface InfluxOptions extends DataSourceJsonData {
   timeInterval: string;
   httpMode: string;
+
+  // Influx 2.0
+  enableFlux?: boolean;
+  organization?: string;
+  defaultBucket?: string;
+  maxSeries?: number;
 }
 
 export interface InfluxSecureJsonData {
   password?: string;
+  token?: string;
 }
 
 export interface InfluxQueryPart {

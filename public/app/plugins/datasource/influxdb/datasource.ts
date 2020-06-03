@@ -11,7 +11,7 @@ import { Observable, from } from 'rxjs';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
-  urls: any;
+  urls: string[];
   username: string;
   password: string;
   name: string;
@@ -21,6 +21,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   interval: any;
   responseParser: any;
   httpMode: string;
+  enableFlux: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>) {
     super(instanceSettings);
@@ -39,6 +40,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
+    this.enableFlux = !!settingsData.enableFlux;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
@@ -57,19 +59,26 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           target.queryType = InfluxQueryType.InfluxQL;
         } else if (target.queryType === InfluxQueryType.InfluxQL) {
           target.rawQuery = true; // so the old version works
+        } else {
+          target.queryType = InfluxQueryType.Classic; // Explicitly set it to classic
+          delete target.rawQuery;
         }
       }
     }
 
     // Proces flux queries (data frame request)
     if (hasFlux) {
+      if (!this.enableFlux) {
+        throw 'Flux not enabled for this datasource';
+      }
       if (!allFlux) {
         throw 'All queries must be flux';
       }
+      // Calls /api/tsdb/query
       return super.query(request);
     }
 
-    // Fallback to classic query style
+    // Fallback to classic query support
     return from(this.classicQuery(request));
   }
 
