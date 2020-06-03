@@ -310,6 +310,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ).join('&');
   }
 
+  // TODO: remove this so that everything gets sent to /healthcheck!
   testDatasource() {
     const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
