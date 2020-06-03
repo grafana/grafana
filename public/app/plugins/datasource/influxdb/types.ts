@@ -22,7 +22,14 @@ export interface InfluxQueryTag {
   value: string;
 }
 
+export enum InfluxQueryType {
+  Classic = 'Classic', // IFQL query builder
+  InfluxQL = 'InfluxQL', // raw ifql
+  Flux = 'Flux',
+}
+
 export interface InfluxQuery extends DataQuery {
+  queryType?: InfluxQueryType;
   policy?: string;
   measurement?: string;
   resultFormat?: 'time_series' | 'table';
@@ -34,6 +41,6 @@ export interface InfluxQuery extends DataQuery {
   slimit?: string;
   tz?: string;
   fill?: string;
-  rawQuery?: boolean;
+  rawQuery?: boolean; // deprecated (use raw InfluxQL)
   query?: string;
 }
