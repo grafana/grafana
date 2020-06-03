@@ -256,7 +256,3 @@ Grafana now requires backend plugins to be signed. If a backend plugin is not si
 ### Cookie path
 
 Starting from Grafana v7.0.0, the cookie path does not include the trailing slash if Grafana is served from a subpath in order to align with [RFC 6265](https://tools.ietf.org/html/rfc6265#section-5.1.4). However, stale session cookies (set before the upgrade) can result in unsuccessful logins because they can not be deleted during the standard login phase due to the changed cookie path. Therefore users experiencing login problems are advised to manually delete old session cookies, or administrators can fix this for all users by changing the [`login_cookie_name`]({{< relref "configuration/#login-cookie-name" >}}), so the old cookie would get ignored.
-
-### Alert notification channel translation to UIDs
-
-Grafana now translates alert notification channel IDs to UIDs and raises an `Alert validation error: Unable to translate notification id to uid` error if such an alert notification channel is not found for the specific organization. This can happen if an alert notification channel is deleted but there are alerts still referencing it. In that case the users should remove the reference to the missing notification channel by updating and saving the dashboard JSON. Note that identifying and deleting outdated references from all the alerts programmatically whenever an alert notification channel is deleted would be useful but it would put a big extra load on the grafana server.
