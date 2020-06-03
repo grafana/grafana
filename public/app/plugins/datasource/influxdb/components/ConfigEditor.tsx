@@ -59,43 +59,38 @@ export class ConfigEditor extends PureComponent<Props> {
               tooltip="Suport flux query endpoint"
             />
           </div>
-          {/* 
-          organization?: string;
-  defaultBucket?: string;
-  maxSeries?: number; */}
 
           {options.jsonData.enableFlux && (
             <>
-              <div className="gf-form-group">
-                <div className="gf-form-inline">
-                  <div className="gf-form">
-                    <InlineFormLabel className="width-10">Organization</InlineFormLabel>
-                    <div className="width-10">
-                      <Input
-                        className="width-10"
-                        placeholder="enter organization"
-                        value={options.jsonData.organization || ''}
-                        onChange={onUpdateDatasourceJsonDataOption(this.props, 'organization')}
-                      />
-                    </div>
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-10">Organization</InlineFormLabel>
+                  <div className="width-10">
+                    <Input
+                      className="width-10"
+                      placeholder="enter organization"
+                      value={options.jsonData.organization || ''}
+                      onChange={onUpdateDatasourceJsonDataOption(this.props, 'organization')}
+                    />
                   </div>
                 </div>
               </div>
-              <div className="gf-form-group">
-                <div className="gf-form-inline">
-                  <div className="gf-form">
-                    <InlineFormLabel className="width-10">Default Bucket</InlineFormLabel>
-                    <div className="width-10">
-                      <Input
-                        className="width-10"
-                        placeholder="default bucket"
-                        value={options.jsonData.defaultBucket || ''}
-                        onChange={onUpdateDatasourceJsonDataOption(this.props, 'defaultBucket')}
-                      />
-                    </div>
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-10">Default Bucket</InlineFormLabel>
+                  <div className="width-10">
+                    <Input
+                      className="width-10"
+                      placeholder="default bucket"
+                      value={options.jsonData.defaultBucket || ''}
+                      onChange={onUpdateDatasourceJsonDataOption(this.props, 'defaultBucket')}
+                    />
                   </div>
                 </div>
               </div>
+
+              <br />
+              <br />
             </>
           )}
 
