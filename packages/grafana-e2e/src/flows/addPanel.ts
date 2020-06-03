@@ -60,7 +60,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .click();
 
     // @todo remove `wrap` when possible
-    return e2e().wrap(fullConfig);
+    return e2e().wrap({ config: fullConfig });
   });
 
 const getOptionsGroup = (name: string) => e2e().get(`.options-group:has([aria-label="Options group Panel ${name}"])`);

@@ -1,19 +1,48 @@
 import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
 
-export const addDashboard = () => {
-  e2e().logToConsole('Adding dashboard');
+export interface AddDashboardConfig {
+  title: string;
+}
+
+// @todo this actually returns type `Cypress.Chainable`
+export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
+  const fullConfig = {
+    title: `e2e-${Date.now()}`,
+    ...config,
+  } as AddDashboardConfig;
+
+  const { title } = fullConfig;
+
+  e2e().logToConsole('Adding dashboard with title:', title);
+
   e2e.pages.AddDashboard.visit();
 
-  const dashboardTitle = e2e.flows.saveNewDashboard();
-  e2e().logToConsole('Added dashboard with title:', dashboardTitle);
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').click();
 
-  e2e()
+  e2e.pages.SaveDashboardAsModal.newName()
+    .clear()
+    .type(title);
+  e2e.pages.SaveDashboardAsModal.save().click();
+
+  e2e.flows.assertSuccessNotification();
+
+  e2e().logToConsole('Added dashboard with title:', title);
+
+  return e2e()
     .url()
     .then((url: string) => {
+      const uid = getDashboardUid(url);
+
       e2e.setScenarioContext({
-        lastAddedDashboard: dashboardTitle,
-        lastAddedDashboardUid: getDashboardUid(url),
+        lastAddedDashboard: title,
+        lastAddedDashboardUid: uid,
+      });
+
+      // @todo remove `wrap` when possible
+      return e2e().wrap({
+        config: fullConfig,
+        uid,
       });
     });
 };
