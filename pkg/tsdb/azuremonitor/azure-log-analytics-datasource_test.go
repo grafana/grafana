@@ -1,11 +1,8 @@
 package azuremonitor
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/url"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -158,16 +155,4 @@ func TestPluginRoutes(t *testing.T) {
 		})
 	}
 
-}
-
-func loadLogAnalyticsTestFile(name string) (AzureLogAnalyticsResponse, error) {
-	var data AzureLogAnalyticsResponse
-
-	path := filepath.Join("testdata", name)
-	jsonBody, err := ioutil.ReadFile(path)
-	if err != nil {
-		return data, err
-	}
-	err = json.Unmarshal(jsonBody, &data)
-	return data, err
 }
