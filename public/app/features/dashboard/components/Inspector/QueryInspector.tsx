@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { AppEvents, PanelEvents } from '@grafana/data';
+import { AppEvents, PanelEvents, DataFrame } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
@@ -9,14 +9,24 @@ import { CoreEvents } from 'app/types';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
 import { supportsDataQuery } from '../PanelEditor/utils';
+import { config } from '@grafana/runtime';
+import { css } from 'emotion';
 
 interface DsQuery {
   isLoading: boolean;
   response: {};
 }
 
+interface ExecutedQueryInfo {
+  refId: string;
+  query: string;
+  frames: number;
+  rows: number;
+}
+
 interface Props {
   panel: PanelModel;
+  data: DataFrame[];
 }
 
 interface State {
@@ -24,6 +34,7 @@ interface State {
   isMocking: boolean;
   mockedResponse: string;
   dsQuery: DsQuery;
+  executedQueries: ExecutedQueryInfo[];
 }
 
 export class QueryInspector extends PureComponent<Props, State> {
@@ -33,6 +44,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      executedQueries: [],
       allNodesExpanded: null,
       isMocking: false,
       mockedResponse: '',
@@ -47,6 +59,43 @@ export class QueryInspector extends PureComponent<Props, State> {
     appEvents.on(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
     appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
     this.props.panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
+    this.updateQueryList();
+  }
+
+  componentDidUpdate(oldProps: Props) {
+    if (this.props.data !== oldProps.data) {
+      this.updateQueryList();
+    }
+  }
+
+  /**
+   * Find the list of executed queries
+   */
+  updateQueryList() {
+    const { data } = this.props;
+    const executedQueries: ExecutedQueryInfo[] = [];
+    if (data?.length) {
+      let last: ExecutedQueryInfo | undefined = undefined;
+      data.forEach((frame, idx) => {
+        const query = frame.meta?.executedQueryString;
+        if (query) {
+          const refId = frame.refId || '?';
+          if (last?.refId === refId) {
+            last.frames++;
+            last.rows += frame.length;
+          } else {
+            last = {
+              refId,
+              frames: 0,
+              rows: frame.length,
+              query,
+            };
+            executedQueries.push(last);
+          }
+        }
+      });
+    }
+    this.setState({ executedQueries });
   }
 
   onIssueNewQuery = () => {
@@ -182,8 +231,39 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
+  renderExecutedQueries(executedQueries: ExecutedQueryInfo[]) {
+    if (!executedQueries.length) {
+      return null;
+    }
+
+    const styles = {
+      refId: css`
+        font-weight: ${config.theme.typography.weight.semibold};
+        color: ${config.theme.colors.textBlue};
+        margin-right: 8px;
+      `,
+    };
+
+    return (
+      <div>
+        {executedQueries.map(info => {
+          return (
+            <div key={info.refId}>
+              <div>
+                <span className={styles.refId}>{info.refId}:</span>
+                {info.frames > 1 && <span>{info.frames} frames, </span>}
+                <span>{info.rows} rows</span>
+              </div>
+              <pre>{info.query}</pre>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   render() {
-    const { allNodesExpanded } = this.state;
+    const { allNodesExpanded, executedQueries } = this.state;
     const { response, isLoading } = this.state.dsQuery;
     const openNodes = this.getNrOfOpenNodes();
     const styles = getPanelInspectorStyles();
@@ -202,6 +282,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             new query. Hit refresh button below to trigger a new query.
           </p>
         </div>
+        {this.renderExecutedQueries(executedQueries)}
         <div className={styles.toolbar}>
           <Button
             icon="sync"

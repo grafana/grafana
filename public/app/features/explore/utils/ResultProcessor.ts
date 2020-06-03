@@ -117,7 +117,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;

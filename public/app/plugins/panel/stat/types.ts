@@ -1,5 +1,12 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import { ReducerID, SelectableValue, standardEditorsRegistry } from '@grafana/data';
+import {
+  ReducerID,
+  SelectableValue,
+  standardEditorsRegistry,
+  FieldOverrideContext,
+  getFieldDisplayName,
+  escapeStringForRegex,
+} from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 // Structure copied from angular
@@ -26,7 +33,8 @@ export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
 
 export function addStandardDataReduceOptions(
   builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
-  includeOrientation = true
+  includeOrientation = true,
+  includeFieldMatcher = true
 ) {
   builder.addRadio({
     path: 'reduceOptions.values',
@@ -64,6 +72,35 @@ export function addStandardDataReduceOptions(
     // Hides it when all values mode is on
     showIf: currentConfig => currentConfig.reduceOptions.values === false,
   });
+
+  if (includeFieldMatcher) {
+    builder.addSelect({
+      path: 'reduceOptions.fields',
+      name: 'Fields',
+      description: 'Select the fields that should be included in the panel',
+      settings: {
+        allowCustomValue: true,
+        options: [],
+        getOptions: async (context: FieldOverrideContext) => {
+          const options = [
+            { value: '', label: 'Numeric Fields' },
+            { value: '/.*/', label: 'All Fields' },
+          ];
+          if (context && context.data) {
+            for (const frame of context.data) {
+              for (const field of frame.fields) {
+                const name = getFieldDisplayName(field, frame, context.data);
+                const value = `/^${escapeStringForRegex(name)}$/`;
+                options.push({ value, label: name });
+              }
+            }
+          }
+          return Promise.resolve(options);
+        },
+      },
+      defaultValue: '',
+    });
+  }
 
   if (includeOrientation) {
     builder.addRadio({

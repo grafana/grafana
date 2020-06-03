@@ -1,23 +1,21 @@
-const compareSnapshotsPlugin = require('./compareSnapshots');
+const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
 const typescriptPreprocessor = require('./typescriptPreprocessor');
+const { install: installConsoleLogger } = require('cypress-log-to-output');
 
 module.exports = (on, config) => {
-  // yarn build fails with:
-  // >> /Users/hugo/go/src/github.com/grafana/grafana/node_modules/stringmap/stringmap.js:99
-  // >>             throw new Error("StringMap expected string key");
-  // on('task', {
-  //   failed: require('cypress-failed-log/src/failed')(),
-  // });
   on('file:preprocessor', typescriptPreprocessor);
-  on('task', { compareSnapshotsPlugin, readProvisions });
+  on('task', { compareScreenshots, readProvisions });
   on('task', {
+    // @todo remove
     log({ message, optional }) {
       optional ? console.log(message, optional) : console.log(message);
       return null;
     },
   });
+
+  installConsoleLogger(on);
 
   // Always extend with this library's config and return for diffing
   // @todo remove this when possible: https://github.com/cypress-io/cypress/issues/5674
