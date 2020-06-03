@@ -430,11 +430,11 @@
               "value": "currencyBTC"
             },
             {
-              "text": "micro Bitcoin (mBTC)",
+              "text": "Milli Bitcoin (mBTC)",
               "value": "currencymBTC"
             },
             {
-              "text": "milli Bitcoin (μBTC)",
+              "text": "Micro Bitcoin (μBTC)",
               "value": "currencyμBTC"
             }
           ],
