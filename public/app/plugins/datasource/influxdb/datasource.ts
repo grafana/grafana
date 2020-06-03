@@ -86,7 +86,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
    * Only applied on flux queries
    */
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
-    return query;
+    return {
+      ...query,
+      query: getTemplateSrv().replace(query.query, scopedVars), // The raw query text
+    };
   }
 
   /**

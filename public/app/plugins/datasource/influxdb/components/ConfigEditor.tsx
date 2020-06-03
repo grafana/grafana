@@ -30,7 +30,7 @@ export class ConfigEditor extends PureComponent<Props> {
       ...options,
       jsonData: {
         ...options.jsonData,
-        enableFlux: !options.jsonData.enableFlux, // toggle
+        enableFlux: !options.jsonData.enableFlux,
       },
     });
   };

@@ -40,7 +40,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
     ];
 
     // Show a dropdown for flux
-    console.log('FLUX', this);
     if (this.datasource.enableFlux) {
       this.queryTypes = [
         { text: 'Classic', value: InfluxQueryType.Classic },
