@@ -1,7 +1,6 @@
 import { TimeSeries, toDataFrame } from '@grafana/data';
 import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
@@ -199,7 +198,7 @@ export default class AppInsightsDatasource {
     const appInsightsGroupByQuery = query.match(/^AppInsightsGroupBys\(([^\)]+?)(,\s?([^,]+?))?\)/i);
     if (appInsightsGroupByQuery) {
       const metricName = appInsightsGroupByQuery[1];
-      return this.getGroupBys(this.templateSrv.replace(metricName));
+      return this.getGroupBys(getTemplateSrv().replace(metricName));
     }
 
     return undefined;
