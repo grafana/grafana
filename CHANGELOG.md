@@ -1,3 +1,7 @@
+# 7.0.2 (2020-06-03)
+
+- **Security**: Urgent security patch release. Please read more in our [blog](https://grafana.com/blog/2020/06/03/grafana-6.7.4-and-7.0.2-released-with-important-security-fix/)
+
 # 7.0.1 (2020-05-26)
 
 ### Features / Enhancements
@@ -362,6 +366,10 @@ We have also extended the time zone options so you can select any of the standar
 - **Logs**: Fix error when non-string log level supplied. [#23654](https://github.com/grafana/grafana/pull/23654), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Rich history**: Fix create url and run query for various datasources. [#23627](https://github.com/grafana/grafana/pull/23627), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Security**: Fix XSS vulnerability in table panel. [#23816](https://github.com/grafana/grafana/pull/23816), [@torkelo](https://github.com/torkelo)
+
+# 6.7.4 (2020-06-03)
+
+- **Security**: Urgent security patch release. Please read more in our [blog](https://grafana.com/blog/2020/06/03/grafana-6.7.4-and-7.0.2-released-with-important-security-fix/)
 
 # 6.7.3 (2020-04-23)
 
