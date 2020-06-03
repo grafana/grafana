@@ -20,6 +20,7 @@ func init() {
 		Type:        "threema",
 		Name:        "Threema Gateway",
 		Description: "Sends notifications to Threema using the Threema Gateway",
+		Heading:     "Threema Gateway settings",
 		Factory:     NewThreemaNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Threema Gateway settings</h3>
@@ -64,6 +65,31 @@ func init() {
         </info-popover>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Gateway ID",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "*3MAGWID",
+				Description: "Your 8 character Threema Gateway ID (starting with a *).",
+				ModelValue:  "gateway_id",
+			},
+			{
+				Label:       "Recipient ID",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "YOUR3MID",
+				Description: "The 8 character Threema ID that should receive the alerts.",
+				ModelValue:  "recipient_id",
+			},
+			{
+				Label:       "API Secret",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Your Threema Gateway API secret.",
+				ModelValue:  "api_secret",
+			},
+		},
 	})
 
 }

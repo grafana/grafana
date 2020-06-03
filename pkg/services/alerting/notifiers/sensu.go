@@ -16,6 +16,7 @@ func init() {
 		Type:        "sensu",
 		Name:        "Sensu",
 		Description: "Sends HTTP POST request to a Sensu API",
+		Heading:     "Sensu settings",
 		Factory:     NewSensuNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Sensu settings</h3>
@@ -40,6 +41,41 @@ func init() {
         <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Url",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "http://sensu-api.local:4567/results",
+				ModelValue:  "url",
+			},
+			{
+				Label:       "Source",
+				Element:     "input",
+				ElementType: "text",
+				Description: "If empty rule id will be used",
+				ModelValue:  "source",
+			},
+			{
+				Label:       "Handler",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "default",
+				ModelValue:  "handler",
+			},
+			{
+				Label:       "Username",
+				Element:     "input",
+				ElementType: "text",
+				ModelValue:  "username",
+			},
+			{
+				Label:       "Password",
+				Element:     "input",
+				ElementType: "password",
+				ModelValue:  "passsword ",
+			},
+		},
 	})
 
 }

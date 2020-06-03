@@ -26,6 +26,7 @@ func init() {
 		Type:        "telegram",
 		Name:        "Telegram",
 		Description: "Sends notifications to Telegram",
+		Heading:     "Telegram API settings",
 		Factory:     NewTelegramNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Telegram API settings</h3>
@@ -48,6 +49,22 @@ func init() {
         </info-popover>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "BOT API Token",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "Telegram BOT API Token",
+				ModelValue:  "bottoken",
+			},
+			{
+				Label:       "Chat ID",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Integer Telegram Chat Identifier",
+				ModelValue:  "chatid",
+			},
+		},
 	})
 
 }

@@ -39,11 +39,17 @@ type Option struct {
 	Placeholder   string         `json:"placeholder"`
 	ModelValue    string         `json:"modelValue"`
 	SelectOptions []SelectOption `json:"selectOptions"`
+	Show          ShowIf         `json:"show"`
 }
 
 type SelectOption struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
+}
+
+type ShowIf struct {
+	Field string `json:"field"`
+	Is    string `json:"is"`
 }
 
 func newNotificationService(renderService rendering.Service) *notificationService {

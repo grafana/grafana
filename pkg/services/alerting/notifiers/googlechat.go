@@ -14,12 +14,11 @@ import (
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type: "googlechat",
-		Name: "Google Hangouts Chat",
-		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message " +
-			"format (https://developers.google.com/hangouts/chat/reference/message-formats/).",
-		Factory: newGoogleChatNotifier,
-		Heading: "Google Hangouts Chat settings",
+		Type:        "googlechat",
+		Name:        "Google Hangouts Chat",
+		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+		Factory:     newGoogleChatNotifier,
+		Heading:     "Google Hangouts Chat settings",
 		OptionsTemplate: `
       <h3 class="page-heading">Google Hangouts Chat settings</h3>
       <div class="gf-form max-width-30">

@@ -17,6 +17,7 @@ func init() {
 		Type:        "kafka",
 		Name:        "Kafka REST Proxy",
 		Description: "Sends notifications to Kafka Rest Proxy",
+		Heading:     "Kafka settings",
 		Factory:     NewKafkaNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Kafka settings</h3>
@@ -29,6 +30,22 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.kafkaTopic" placeholder="topic1"></input>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Kafka REST Proxy",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "http://localhost:8082",
+				ModelValue:  "kafkaRestProxy",
+			},
+			{
+				Label:       "Topic",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "topic1",
+				ModelValue:  "kafkaTopic",
+			},
+		},
 	})
 }
 

@@ -81,6 +81,7 @@ export interface Option {
   placeholder: string;
   modelValue: string;
   selectOptions: Array<SelectableValue<string>>;
+  show: { field: string; is: string };
 }
 
 export interface AlertRulesState {

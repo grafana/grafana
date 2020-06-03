@@ -24,6 +24,7 @@ func init() {
 		Type:        "slack",
 		Name:        "Slack",
 		Description: "Sends notifications to Slack via Slack Webhooks",
+		Heading:     "Slack settings",
 		Factory:     NewSlackNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Slack settings</h3>
@@ -123,6 +124,84 @@ func init() {
         </info-popover>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Url",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "Slack incoming webhook url",
+				ModelValue:  "url",
+			},
+			{
+				Label:       "Recipient",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Override default channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID",
+				ModelValue:  "recipient",
+			},
+			{
+				Label:       "Username",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Set the username for the bot's message",
+				ModelValue:  "username",
+			},
+			{
+				Label:       "Icon emoji",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
+				ModelValue:  "icon_emoji",
+			},
+			{
+				Label:       "Icon URL",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Provide a URL to an image to use as the icon for the bot's message",
+				ModelValue:  "icon_url",
+			},
+			{
+				Label:       "Mention Users",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Mention one or more users (comma separated) when notifying in a channel, by ID (you can copy this from the user's Slack profile)",
+				ModelValue:  "mentionUsers",
+			},
+			{
+				Label:       "Mention Groups",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Mention one or more groups (comma separated) when notifying in a channel (you can copy this from the group's Slack profile URL)",
+				ModelValue:  "mentionGroups",
+			},
+			{
+				Label:   "Mention Channel",
+				Element: "select",
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "",
+						Label: "Disabled",
+					},
+					{
+						Value: "here",
+						Label: "Every active channel member",
+					},
+					{
+						Value: "channel",
+						Label: "Every channel member",
+					},
+				},
+				Description: "Mention whole channel or just active members when notifying",
+				ModelValue:  "mentionChannel",
+			},
+			{
+				Label:       "Token",
+				Element:     "input",
+				ElementType: "text",
+				Description: "Provide a bot token to use the Slack file.upload API (starts with \"xoxb\"). Specify Recipient for this to work",
+				ModelValue:  "token",
+			},
+		},
 	})
 }
 

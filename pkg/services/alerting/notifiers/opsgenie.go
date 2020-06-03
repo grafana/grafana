@@ -16,6 +16,7 @@ func init() {
 		Type:        "opsgenie",
 		Name:        "OpsGenie",
 		Description: "Sends notifications to OpsGenie",
+		Heading:     "OpsGenie settings",
 		Factory:     NewOpsGenieNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">OpsGenie settings</h3>
@@ -46,6 +47,33 @@ func init() {
         </gf-form-switch>
   </div>
 `,
+		Options: []alerting.Option{
+			{
+				Label:       "API Key",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "OpsGenie API Key",
+				ModelValue:  "apiKey",
+			},
+			{
+				Label:       "Alert API Url",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "https://api.opsgenie.com/v2/alerts",
+				ModelValue:  "apiUrl",
+			},
+			{
+				Label:       "Auto close incidents",
+				Element:     "switch",
+				Description: "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+				ModelValue:  "autoClose",
+			}, {
+				Label:       "Override priority",
+				Element:     "switch",
+				Description: "Allow the alert priority to be set using the og_priority tag",
+				ModelValue:  "overridePriority",
+			},
+		},
 	})
 }
 

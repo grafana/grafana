@@ -14,6 +14,7 @@ func init() {
 		Type:        "teams",
 		Name:        "Microsoft Teams",
 		Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",
+		Heading:     "Teams settings",
 		Factory:     NewTeamsNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Teams settings</h3>
@@ -22,6 +23,15 @@ func init() {
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Teams incoming webhook url"></input>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "URL",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "Teams incoming webhook url",
+				ModelValue:  "url",
+			},
+		},
 	})
 
 }

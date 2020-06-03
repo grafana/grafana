@@ -18,6 +18,7 @@ func init() {
 		Type:        "pagerduty",
 		Name:        "PagerDuty",
 		Description: "Sends notifications to PagerDuty",
+		Heading:     "PagerDuty settings",
 		Factory:     NewPagerdutyNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">PagerDuty settings</h3>
@@ -54,6 +55,44 @@ func init() {
         </gf-form-switch>
       </div>
     `,
+		Options: []alerting.Option{
+			{
+				Label:       "Integration Key",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "Pagerduty Integration Key",
+				ModelValue:  "settings",
+			},
+			{
+				Label:   "Severity",
+				Element: "select",
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "critical",
+						Label: "Critical",
+					},
+					{
+						Value: "error",
+						Label: "Error",
+					},
+					{
+						Value: "warning",
+						Label: "Warning",
+					},
+					{
+						Value: "info",
+						Label: "Info",
+					},
+				},
+				ModelValue: "severity",
+			},
+			{
+				Label:       "Auto resolve incidents",
+				Element:     "switch",
+				Description: "Resolve incidents in pagerduty once the alert goes back to ok.",
+				ModelValue:  "autoResolve",
+			},
+		},
 	})
 }
 

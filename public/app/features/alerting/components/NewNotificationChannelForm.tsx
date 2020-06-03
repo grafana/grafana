@@ -39,8 +39,8 @@ export const NewNotificationChannelForm: FC<Props> = ({
   const styles = getStyles(useTheme());
   useEffect(() => {
     watch('type');
+    watch('priority');
   }, []);
-  console.log(getValues());
   return (
     <>
       <div className={styles.basicSettings}>
@@ -68,6 +68,10 @@ export const NewNotificationChannelForm: FC<Props> = ({
         <>
           <h3>{selectedChannel.heading}</h3>
           {selectedChannel.options.map((option: Option, index: number) => {
+            const selectedOptionValue = getValues()[option.show.field] && getValues()[option.show.field].value;
+            if (option.show.field && selectedOptionValue !== option.show.is) {
+              return null;
+            }
             return (
               <Field key={`${option.label}-${index}`} label={option.label} description={option.description}>
                 <OptionElement option={option} register={register} control={control} />

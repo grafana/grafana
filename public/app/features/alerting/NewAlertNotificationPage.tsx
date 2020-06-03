@@ -50,7 +50,6 @@ class NewAlertNotificationPage extends PureComponent<Props> {
               const selectedChannel =
                 getValues().type && notificationChannels.find(c => c.value === getValues().type.value);
 
-              console.log(selectedChannel);
               return (
                 <NewNotificationChannelForm
                   selectableChannels={selectableChannels}

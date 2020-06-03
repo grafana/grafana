@@ -15,6 +15,7 @@ func init() {
 		Type:        "LINE",
 		Name:        "LINE",
 		Description: "Send notifications to LINE notify",
+		Heading:     "LINE notify settings",
 		Factory:     NewLINENotifier,
 		OptionsTemplate: `
     <div class="gf-form-group">
@@ -25,6 +26,14 @@ func init() {
       </div>
     </div>
 `,
+		Options: []alerting.Option{
+			{
+				Label:       "Token",
+				Element:     "input",
+				ElementType: "text",
+				Placeholder: "LINE notify token key",
+				ModelValue:  "token",
+			}},
 	})
 }
 
