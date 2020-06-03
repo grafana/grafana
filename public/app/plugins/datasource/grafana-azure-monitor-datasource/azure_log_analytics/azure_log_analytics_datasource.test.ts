@@ -21,9 +21,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     datasourceRequestMock.mockImplementation(jest.fn());
   });
 
-  const ctx: any = {
-    templateSrv: new TemplateSrv(),
-  };
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.instanceSettings = {
@@ -31,7 +29,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       url: 'http://azureloganalyticsapi',
     };
 
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
   describe('When the config option "Same as Azure Monitor" has been chosen', () => {
@@ -70,7 +68,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       ctx.instanceSettings.jsonData.tenantId = 'xxx';
       ctx.instanceSettings.jsonData.clientId = 'xxx';
       ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
-      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
 
       datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
