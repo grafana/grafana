@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -279,4 +280,25 @@ func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace 
 	frame.Meta.ExecutedQueryString = query
 	frame.Meta.Custom["subscriptionId"] = subscriptionID
 	frame.Meta.Custom["workspace"] = workspace
+	encodedQuery, err := encodeQuery(query)
+	if err == nil {
+		frame.Meta.Custom["encodedQuery"] = encodedQuery
+		return
+	}
+	azlog.Error("failed to encode the query into the encodedQuery property")
+}
+
+// encodeQuery encodes the query in gzip so the frontend can build links.
+func encodeQuery(rawQuery string) ([]byte, error) {
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	if _, err := gz.Write([]byte(rawQuery)); err != nil {
+		return nil, err
+	}
+
+	if err := gz.Close(); err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
