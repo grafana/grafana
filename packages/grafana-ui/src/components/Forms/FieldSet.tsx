@@ -16,10 +16,8 @@ export const FieldSet: FC<Props> = ({ label, children, className, ...rest }) => 
 
   return (
     <fieldset className={cx(styles.wrapper, className)} {...rest}>
-      <>
-        {label && <Legend>{label}</Legend>}
-        {children}
-      </>
+      {label && <Legend>{label}</Legend>}
+      {children}
     </fieldset>
   );
 };
@@ -27,7 +25,7 @@ export const FieldSet: FC<Props> = ({ label, children, className, ...rest }) => 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.xl};
+      margin-bottom: ${theme.spacing.formSpacingBase * 4}px;
     `,
   };
 });
