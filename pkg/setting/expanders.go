@@ -12,7 +12,7 @@ import (
 )
 
 type Expander interface {
-	Init(file *ini.File) error
+	SetupExpander(file *ini.File) error
 	Expand(string) (string, error)
 }
 
@@ -51,7 +51,7 @@ func expandConfig(file *ini.File) error {
 	})
 
 	for _, expander := range expanders {
-		err := expander.expander.Init(file)
+		err := expander.expander.SetupExpander(file)
 		if err != nil {
 			return fmt.Errorf("got error during initilazation of expander '%s': %w", expander.name, err)
 		}
@@ -110,7 +110,7 @@ func applyExpander(s string, e registeredExpander) (string, error) {
 type envExpander struct {
 }
 
-func (e envExpander) Init(file *ini.File) error {
+func (e envExpander) SetupExpander(file *ini.File) error {
 	return nil
 }
 
@@ -128,7 +128,7 @@ func (e envExpander) Expand(s string) (string, error) {
 type fileExpander struct {
 }
 
-func (e fileExpander) Init(file *ini.File) error {
+func (e fileExpander) SetupExpander(file *ini.File) error {
 	return nil
 }
 
