@@ -1,7 +1,18 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 
-import { Select, Field, Form, Tooltip, Icon, Legend, stylesFactory, Label, Button } from '@grafana/ui';
+import {
+  Select,
+  Field,
+  Form,
+  Tooltip,
+  Icon,
+  Legend,
+  stylesFactory,
+  Label,
+  Button,
+  RadioButtonGroup,
+} from '@grafana/ui';
 import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -19,7 +30,7 @@ export interface State {
   dashboards: DashboardSearchHit[];
 }
 
-const themes = [
+const themes: SelectableValue[] = [
   { value: '', label: 'Default' },
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
@@ -86,9 +97,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   }
 
-  onSubmitForm = async (event: React.SyntheticEvent) => {
-    event.preventDefault();
-
+  onSubmitForm = async () => {
     const { homeDashboardId, theme, timezone } = this.state;
 
     await backendSrv.put(`/api/${this.props.resourceUri}/preferences`, {
@@ -99,11 +108,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     window.location.reload();
   };
 
-  onThemeChanged = (theme: SelectableValue<string>) => {
-    if (!theme || typeof theme.value !== 'string') {
-      return;
-    }
-    this.setState({ theme: theme.value });
+  onThemeChanged = (value: string) => {
+    this.setState({ theme: value });
   };
 
   onTimeZoneChanged = (timezone: SelectableValue<string>) => {
@@ -129,20 +135,20 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const styles = getStyles();
 
     return (
-      <div className={styles.wrapper}>
+      <>
         <Legend>Preferences</Legend>
         <Form onSubmit={this.onSubmitForm}>
           {() => {
             return (
               <>
                 <Field label="UI Theme">
-                  <Select
-                    isSearchable={false}
-                    value={themes.find(item => item.value === theme)}
+                  <RadioButtonGroup
                     options={themes}
+                    value={themes.find(item => item.value === theme)?.value}
                     onChange={this.onThemeChanged}
                   />
                 </Field>
+
                 <Field
                   label={
                     <Label>
@@ -162,6 +168,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     placeholder="Choose default dashboard"
                   />
                 </Field>
+
                 <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
                   <Select
                     isSearchable={true}
@@ -177,7 +184,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             );
           }}
         </Form>
-      </div>
+      </>
     );
   }
 }
@@ -186,9 +193,6 @@ export default SharedPreferences;
 
 const getStyles = stylesFactory(() => {
   return {
-    wrapper: css`
-      margin-bottom: 24px;
-    `,
     labelText: css`
       margin-right: 6px;
     `,
