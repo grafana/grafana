@@ -321,14 +321,12 @@
   top: 50%;
   left: 8px;
   transform: translateX(-50%) translateY(-50%) rotate(-90deg);
-  -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
 }
 
 .right-yaxis-label {
   top: 50%;
   right: 8px;
   transform: translateX(50%) translateY(-50%) rotate(90deg);
-  -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 
 .axisLabel {
