@@ -83,6 +83,7 @@ The current team members are:
 * Kyle Brandt ([Grafana Labs](https://grafana.com/))
 * Leonard Gram ([Grafana Labs](https://grafana.com/))
 * Lukas Siatka ([Grafana Labs](https://grafana.com/))
+* Malcolm Holmes ([Grafana Labs](https://grafana.com/))
 * Marcus Andersson ([Grafana Labs](https://grafana.com/))
 * Marcus Efraimsson ([Grafana Labs](https://grafana.com/))
 * Marcus Olsson ([Grafana Labs](https://grafana.com/))
@@ -95,7 +96,6 @@ The current team members are:
 * Tobias Skarhed ([Grafana Labs](https://grafana.com/))
 * Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 * Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
-* Malcolm Holmes ([Grafana Labs](https://grafana.com/))
 
 ### Maintainers
 
