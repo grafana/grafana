@@ -1,5 +1,5 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { QueryVariableModel, VariableHide } from '../../templating/types';
+import { QueryVariableModel, VariableHide } from '../types';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { cleanVariables, variablesReducer, VariablesState } from './variablesReducer';
@@ -36,6 +36,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
         '1': {
           id: '1',
@@ -55,6 +56,7 @@ describe('variablesReducer', () => {
           index: 2,
           label: 'Label-2',
           skipUrlSync: false,
+          global: false,
         },
         '3': {
           id: '3',
@@ -107,6 +109,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
       };
       variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);
@@ -134,6 +137,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
       };
       variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);
@@ -157,6 +161,7 @@ describe('variablesReducer', () => {
           index: 0,
           label: 'Label-0',
           skipUrlSync: false,
+          global: false,
         },
       };
       variableAdapters.get('mock').reducer = jest.fn().mockReturnValue(initialState);

@@ -12,14 +12,14 @@ import {
   DataQueryResponseData,
   DataSourceInstanceSettings,
   dateTime,
+  getFieldDisplayName,
   LoadingState,
   toDataFrame,
-  getFieldDisplayName,
 } from '@grafana/data';
 import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { CustomVariable } from 'app/features/templating/custom_variable';
+import { VariableHide } from '../../../features/variables/types';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
@@ -447,9 +447,25 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('When interpolating variables', () => {
-    let customVariable: CustomVariable;
+    let customVariable: any;
     beforeEach(() => {
-      customVariable = new CustomVariable({}, {} as any);
+      customVariable = {
+        id: '',
+        global: false,
+        multi: false,
+        includeAll: false,
+        allValue: null,
+        query: '',
+        options: [],
+        current: {},
+        name: '',
+        type: 'custom',
+        label: null,
+        hide: VariableHide.dontHide,
+        skipUrlSync: false,
+        index: -1,
+        initLock: null,
+      };
     });
 
     describe('and value is a string', () => {
