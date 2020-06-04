@@ -95,6 +95,7 @@ The current team members are:
 * Tobias Skarhed ([Grafana Labs](https://grafana.com/))
 * Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 * Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
+* Chris Trott ([Grafana Labs](https://grafana.com/))
 
 ### Maintainers
 
