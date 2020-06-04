@@ -468,13 +468,7 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	}
 
 	if query.AuthModule != "" {
-		whereConditions = append(
-			whereConditions,
-			`u.id IN (SELECT user_id
-			FROM user_auth
-			WHERE auth_module=?)`,
-		)
-
+		whereConditions = append(whereConditions, `auth_module=?`)
 		whereParams = append(whereParams, query.AuthModule)
 	}
 
@@ -493,6 +487,11 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	// get total
 	user := models.User{}
 	countSess := x.Table("user").Alias("u")
+
+	// Join with user_auth table if users filtered by auth_module
+	if query.AuthModule != "" {
+		countSess.Join("LEFT", "user_auth", joinCondition)
+	}
 
 	if len(whereConditions) > 0 {
 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)

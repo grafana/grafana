@@ -8,7 +8,7 @@ import { DashboardState } from '../../../types';
 import { createIntervalVariableAdapter } from '../interval/adapter';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
-import { VariableRefresh } from '../../templating/types';
+import { VariableRefresh } from '../types';
 import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);

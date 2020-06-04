@@ -121,7 +121,7 @@ func TestLDAPLogin(t *testing.T) {
 			So(resp.Login, ShouldEqual, "markelog")
 		})
 
-		Convey("Should perform unauthentificate bind without admin", func() {
+		Convey("Should perform unauthenticated bind without admin", func() {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "test",
@@ -147,7 +147,7 @@ func TestLDAPLogin(t *testing.T) {
 			So(connection.UnauthenticatedBindCalled, ShouldBeTrue)
 		})
 
-		Convey("Should perform authentificate binds", func() {
+		Convey("Should perform authenticated binds", func() {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "test",

@@ -18,7 +18,7 @@ import {
 } from 'app/core/constants';
 import { isMulti, isQuery } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableTag } from '../../templating/types';
+import { VariableTag } from '../../variables/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -240,7 +240,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.getVariables(), templateVariable => {
+      _.each(this.dashboard.getVariables(), (templateVariable: any) => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }

@@ -4,7 +4,7 @@ import renderer from 'react-test-renderer';
 import { StackdriverVariableQueryEditor } from './VariableQueryEditor';
 import { VariableQueryProps } from 'app/types/plugins';
 import { MetricFindQueryTypes } from '../types';
-import { VariableModel } from 'app/features/templating/types';
+import { VariableModel } from 'app/features/variables/types';
 
 jest.mock('../functions', () => ({
   getMetricTypes: (): any => ({ metricTypes: [], selectedMetricType: '' }),
@@ -46,6 +46,7 @@ describe('VariableQueryEditor', () => {
   });
 
   describe('and a new variable is created', () => {
+    // these test need to be updated to reflect the changes from old variables system to new
     it('should trigger a query using the first query type in the array', done => {
       props.onChange = (query, definition) => {
         expect(definition).toBe('Stackdriver - Projects');
@@ -56,6 +57,7 @@ describe('VariableQueryEditor', () => {
   });
 
   describe('and an existing variable is edited', () => {
+    // these test need to be updated to reflect the changes from old variables system to new
     it('should trigger new query using the saved query type', done => {
       props.query = { selectedQueryType: MetricFindQueryTypes.LabelKeys };
       props.onChange = (query, definition) => {

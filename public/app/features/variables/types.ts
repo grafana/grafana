@@ -1,4 +1,3 @@
-import { assignModelProperties } from 'app/core/utils/model_utils';
 import { Deferred } from '../../core/utils/deferred';
 import { VariableModel as BaseVariableModel } from '@grafana/data';
 
@@ -93,33 +92,10 @@ export interface VariableWithOptions extends VariableModel {
 }
 
 export interface VariableModel extends BaseVariableModel {
-  id?: string; // only exists for variables in redux state
-  global?: boolean; // only exists for variables in redux state
+  id: string;
+  global: boolean;
   hide: VariableHide;
   skipUrlSync: boolean;
-  index?: number;
+  index: number;
   initLock?: Deferred | null;
 }
-
-export interface VariableActions {
-  setValue(option: any): any;
-  updateOptions(searchFilter?: string): any;
-  dependsOn(variable: any): any;
-  setValueFromUrl(urlValue: any): any;
-  getValueForUrl(): any;
-  getSaveModel(): any;
-}
-
-export type CtorType = new (...args: any[]) => {};
-
-export interface VariableTypes {
-  [key: string]: {
-    name: string;
-    ctor: CtorType;
-    description: string;
-    supportsMulti?: boolean;
-  };
-}
-
-export let variableTypes: VariableTypes = {};
-export { assignModelProperties };

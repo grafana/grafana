@@ -7,6 +7,7 @@ import { BackendSrv, getBackendSrv } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { CoreEvents } from '../../types';
+import { describe, expect } from '../../../test/lib/common';
 
 const getTestContext = (overides?: object) => {
   const defaults = {
@@ -569,6 +570,89 @@ describe('backendSrv', () => {
           expectDataSourceRequestCallChain({ url, method: 'GET' });
         });
       });
+    });
+  });
+
+  describe('cancelAllInFlightRequests', () => {
+    describe('when called with 2 separate requests and then cancelAllInFlightRequests is called', () => {
+      enum RequestType {
+        request,
+        dataSourceRequest,
+      }
+
+      const url = '/api/dashboard/';
+      const options = {
+        url,
+        method: 'GET',
+      };
+
+      const dataSourceRequestResult = {
+        data: ([] as unknown[]) as any[],
+        status: -1,
+        statusText: 'Request was aborted',
+        config: options,
+      };
+
+      const getRequestObservable = (message: string, unsubscribe: any) =>
+        new Observable(subscriber => {
+          subscriber.next({
+            ok: true,
+            status: 200,
+            statusText: 'Ok',
+            text: () => Promise.resolve(JSON.stringify({ message })),
+            headers: {
+              map: {
+                'content-type': 'application/json',
+              },
+            },
+            redirected: false,
+            type: 'basic',
+            url,
+          });
+          return unsubscribe;
+        }).pipe(delay(10000));
+
+      it.each`
+        firstRequestType                 | secondRequestType                | firstRequestResult         | secondRequestResult
+        ${RequestType.request}           | ${RequestType.request}           | ${[]}                      | ${[]}
+        ${RequestType.dataSourceRequest} | ${RequestType.dataSourceRequest} | ${dataSourceRequestResult} | ${dataSourceRequestResult}
+        ${RequestType.request}           | ${RequestType.dataSourceRequest} | ${[]}                      | ${dataSourceRequestResult}
+        ${RequestType.dataSourceRequest} | ${RequestType.request}           | ${dataSourceRequestResult} | ${[]}
+      `(
+        'then it both requests should be cancelled and unsubscribed',
+        async ({ firstRequestType, secondRequestType, firstRequestResult, secondRequestResult }) => {
+          const unsubscribe = jest.fn();
+          const { backendSrv, fromFetchMock } = getTestContext({ url });
+          const firstObservable = getRequestObservable('First', unsubscribe);
+          const secondObservable = getRequestObservable('Second', unsubscribe);
+
+          fromFetchMock.mockImplementationOnce(() => firstObservable);
+          fromFetchMock.mockImplementation(() => secondObservable);
+
+          const options = {
+            url,
+            method: 'GET',
+          };
+
+          const firstRequest =
+            firstRequestType === RequestType.request
+              ? backendSrv.request(options)
+              : backendSrv.datasourceRequest(options);
+
+          const secondRequest =
+            secondRequestType === RequestType.request
+              ? backendSrv.request(options)
+              : backendSrv.datasourceRequest(options);
+
+          backendSrv.cancelAllInFlightRequests();
+
+          const result = await Promise.all([firstRequest, secondRequest]);
+
+          expect(result[0]).toEqual(firstRequestResult);
+          expect(result[1]).toEqual(secondRequestResult);
+          expect(unsubscribe).toHaveBeenCalledTimes(2);
+        }
+      );
     });
   });
 });
