@@ -13,73 +13,53 @@ interface Props {
 }
 
 interface State {
-  searchHits: DashboardSearchHit[];
+  resolvedLinks: ResolvedLinkDTO[];
 }
 
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
-  state = { searchHits: [] as DashboardSearchHit[] };
-  componentDidMount() {
-    if (!this.props.link.asDropdown) {
-      this.onDropDownClick();
+  state: State = { resolvedLinks: [] };
+
+  componentDidUpdate(prevProps: Readonly<Props>) {
+    if (!this.props.link.asDropdown && prevProps.linkInfo !== this.props.linkInfo) {
+      this.onResolveLinks();
     }
   }
 
-  onDropDownClick = () => {
+  onResolveLinks = async () => {
     const { dashboardId, link } = this.props;
 
-    const limit = 7;
-    getBackendSrv()
-      .search({ tag: link.tags, limit })
-      .then((dashboards: DashboardSearchHit[]) => {
-        const processed = dashboards
-          .filter(dash => dash.id !== dashboardId)
-          .map(dash => {
-            return {
-              ...dash,
-              url: getLinkSrv().getLinkUrl(dash),
-            };
-          });
+    const searchHits = await searchForTags(link);
+    const resolvedLinks = resolveLinks(dashboardId, link, searchHits);
 
-        this.setState({
-          searchHits: processed,
-        });
-      });
+    this.setState({ resolvedLinks });
   };
 
-  renderElement = (linkElement: JSX.Element) => {
+  renderElement = (linkElement: JSX.Element, key: string) => {
     const { link } = this.props;
 
-    if (link.tooltip) {
-      return (
-        <div className="gf-form">
-          <Tooltip content={link.tooltip}>{linkElement}</Tooltip>;
-        </div>
-      );
-    } else {
-      return <div className="gf-form">{linkElement}</div>;
-    }
+    return (
+      <div className="gf-form" key={key}>
+        {link.tooltip && <Tooltip content={link.tooltip}>{linkElement}</Tooltip>}
+        {!link.tooltip && <>{linkElement}</>}
+      </div>
+    );
   };
 
   renderList = () => {
     const { link } = this.props;
-    const { searchHits } = this.state;
+    const { resolvedLinks } = this.state;
 
     return (
       <>
-        {searchHits.length > 0 &&
-          searchHits.map((dashboard: any, index: number) => {
+        {resolvedLinks.length > 0 &&
+          resolvedLinks.map((resolvedLink, index) => {
             const linkElement = (
-              <a
-                key={`${dashboard.id}-${index}`}
-                className="gf-form-label"
-                href={sanitizeUrl(dashboard.url)}
-                target={link.targetBlank ? '_blank' : '_self'}
-              >
+              <a className="gf-form-label" href={resolvedLink.url} target={link.targetBlank ? '_blank' : '_self'}>
                 <Icon name="apps" style={{ marginRight: '4px' }} />
-                <span>{sanitize(dashboard.title)}</span>
+                <span>{resolvedLink.title}</span>
               </a>
             );
-            return this.renderElement(linkElement);
+            return this.renderElement(linkElement, `dashlinks-list-item-${resolvedLink.id}-${index}`);
           })}
       </>
     );
@@ -87,13 +67,13 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
 
   renderDropdown = () => {
     const { link, linkInfo } = this.props;
-    const { searchHits } = this.state;
+    const { resolvedLinks } = this.state;
 
     const linkElement = (
       <>
         <a
           className="gf-form-label pointer"
-          onClick={this.onDropDownClick}
+          onClick={this.onResolveLinks}
           data-placement="bottom"
           data-toggle="dropdown"
         >
@@ -101,12 +81,12 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
           <span>{linkInfo.title}</span>
         </a>
         <ul className="dropdown-menu pull-right" role="menu">
-          {searchHits.length > 0 &&
-            searchHits.map((dashboard: any, index: number) => {
+          {resolvedLinks.length > 0 &&
+            resolvedLinks.map((resolvedLink, index) => {
               return (
-                <li key={`${dashboard.id}-${index}`}>
-                  <a href={sanitizeUrl(dashboard.url)} target={link.targetBlank ? '_blank' : '_self'}>
-                    {sanitize(dashboard.title)}
+                <li key={`dashlinks-dropdown-item-${resolvedLink.id}-${index}`}>
+                  <a href={resolvedLink.url} target={link.targetBlank ? '_blank' : '_self'}>
+                    {resolvedLink.title}
                   </a>
                 </li>
               );
@@ -115,14 +95,52 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
       </>
     );
 
-    return this.renderElement(linkElement);
+    return this.renderElement(linkElement, 'dashlinks-dropdown');
   };
 
   render() {
     if (this.props.link.asDropdown) {
       return this.renderDropdown();
-    } else {
-      return this.renderList();
     }
+
+    return this.renderList();
   }
+}
+
+interface ResolvedLinkDTO {
+  id: any;
+  url: string;
+  title: string;
+}
+
+export async function searchForTags(
+  link: DashboardLink,
+  dependencies: { getBackendSrv: typeof getBackendSrv } = { getBackendSrv }
+): Promise<DashboardSearchHit[]> {
+  const limit = 100;
+  const searchHits: DashboardSearchHit[] = await dependencies.getBackendSrv().search({ tag: link.tags, limit });
+
+  return searchHits;
+}
+
+export function resolveLinks(
+  dashboardId: any,
+  link: DashboardLink,
+  searchHits: DashboardSearchHit[],
+  dependencies: { getLinkSrv: typeof getLinkSrv; sanitize: typeof sanitize; sanitizeUrl: typeof sanitizeUrl } = {
+    getLinkSrv,
+    sanitize,
+    sanitizeUrl,
+  }
+): ResolvedLinkDTO[] {
+  return searchHits
+    .filter(searchHit => searchHit.id !== dashboardId)
+    .map(searchHit => {
+      const id = searchHit.id;
+      const title = dependencies.sanitize(searchHit.title);
+      const resolvedLink = dependencies.getLinkSrv().getLinkUrl({ ...link, url: searchHit.url });
+      const url = dependencies.sanitizeUrl(resolvedLink);
+
+      return { id, title, url };
+    });
 }

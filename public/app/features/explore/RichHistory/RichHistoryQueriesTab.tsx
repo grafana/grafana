@@ -40,7 +40,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 
   /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
   const cardWidth = '100% - 134px';
-  const sliderHeight = `${height - 200}px`;
+  const sliderHeight = `${height - 180}px`;
   return {
     container: css`
       display: flex;
@@ -161,10 +161,7 @@ export function RichHistoryQueriesTab(props: Props) {
     <div className={styles.container}>
       <div className={styles.containerSlider}>
         <div className={styles.slider}>
-          <div className="label-slider">
-            Filter history <br />
-            between
-          </div>
+          <div className="label-slider">Filter history</div>
           <div className="label-slider">{mapNumbertoTimeInSlider(sliderRetentionFilter[0])}</div>
           <div className="slider">
             <Slider

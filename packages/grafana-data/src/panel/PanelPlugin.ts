@@ -29,7 +29,7 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   standardOptions?: FieldConfigProperty[];
 
   /**
-   * Object specyfing standard option properties default values
+   * Object specifying standard option properties default values
    *
    * @example
    * ```typescript
@@ -243,7 +243,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   }
 
   /**
-   * Allows specyfing which standard field config options panel should use and defining default values
+   * Allows specifying which standard field config options panel should use and defining default values
    *
    * @example
    * ```typescript

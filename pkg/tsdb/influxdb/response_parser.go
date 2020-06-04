@@ -51,7 +51,7 @@ func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResul
 				}
 			}
 			result = append(result, &tsdb.TimeSeries{
-				Name:   rp.formatSerieName(row, column, query),
+				Name:   rp.formatSeriesName(row, column, query),
 				Points: points,
 				Tags:   row.Tags,
 			})
@@ -61,9 +61,9 @@ func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResul
 	return result
 }
 
-func (rp *ResponseParser) formatSerieName(row Row, column string, query *Query) string {
+func (rp *ResponseParser) formatSeriesName(row Row, column string, query *Query) string {
 	if query.Alias == "" {
-		return rp.buildSerieNameFromQuery(row, column)
+		return rp.buildSeriesNameFromQuery(row, column)
 	}
 
 	nameSegment := strings.Split(row.Name, ".")
@@ -102,7 +102,7 @@ func (rp *ResponseParser) formatSerieName(row Row, column string, query *Query) 
 	return string(result)
 }
 
-func (rp *ResponseParser) buildSerieNameFromQuery(row Row, column string) string {
+func (rp *ResponseParser) buildSeriesNameFromQuery(row Row, column string) string {
 	var tags []string
 
 	for k, v := range row.Tags {

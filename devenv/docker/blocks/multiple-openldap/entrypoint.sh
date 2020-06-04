@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# When not limiting the open file descritors limit, the memory consumption of
+# When not limiting the open file descriptors limit, the memory consumption of
 # slapd is absurdly high. See https://github.com/docker/docker/issues/8231
 ulimit -n 8192
 
