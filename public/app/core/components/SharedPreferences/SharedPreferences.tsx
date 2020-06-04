@@ -7,11 +7,11 @@ import {
   Form,
   Tooltip,
   Icon,
-  Legend,
   stylesFactory,
   Label,
   Button,
   RadioButtonGroup,
+  FieldSet,
 } from '@grafana/ui';
 import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -135,56 +135,53 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const styles = getStyles();
 
     return (
-      <>
-        <Legend>Preferences</Legend>
-        <Form onSubmit={this.onSubmitForm}>
-          {() => {
-            return (
-              <>
-                <Field label="UI Theme">
-                  <RadioButtonGroup
-                    options={themes}
-                    value={themes.find(item => item.value === theme)?.value}
-                    onChange={this.onThemeChanged}
-                  />
-                </Field>
+      <Form onSubmit={this.onSubmitForm}>
+        {() => {
+          return (
+            <FieldSet label="Preferences">
+              <Field label="UI Theme">
+                <RadioButtonGroup
+                  options={themes}
+                  value={themes.find(item => item.value === theme)?.value}
+                  onChange={this.onThemeChanged}
+                />
+              </Field>
 
-                <Field
-                  label={
-                    <Label>
-                      <span className={styles.labelText}>Home Dashboard</span>
-                      <Tooltip content="Not finding dashboard you want? Star it first, then it should appear in this select box.">
-                        <Icon name="info-circle" />
-                      </Tooltip>
-                    </Label>
-                  }
-                >
-                  <Select
-                    value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
-                    getOptionValue={i => i.id}
-                    getOptionLabel={this.getFullDashName}
-                    onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
-                    options={dashboards}
-                    placeholder="Choose default dashboard"
-                  />
-                </Field>
+              <Field
+                label={
+                  <Label>
+                    <span className={styles.labelText}>Home Dashboard</span>
+                    <Tooltip content="Not finding dashboard you want? Star it first, then it should appear in this select box.">
+                      <Icon name="info-circle" />
+                    </Tooltip>
+                  </Label>
+                }
+              >
+                <Select
+                  value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
+                  getOptionValue={i => i.id}
+                  getOptionLabel={this.getFullDashName}
+                  onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
+                  options={dashboards}
+                  placeholder="Choose default dashboard"
+                />
+              </Field>
 
-                <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
-                  <Select
-                    isSearchable={true}
-                    value={timeZones.find(item => item.value === timezone)}
-                    onChange={this.onTimeZoneChanged}
-                    options={timeZones}
-                  />
-                </Field>
-                <div className="gf-form-button-row">
-                  <Button variant="primary">Save</Button>
-                </div>
-              </>
-            );
-          }}
-        </Form>
-      </>
+              <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
+                <Select
+                  isSearchable={true}
+                  value={timeZones.find(item => item.value === timezone)}
+                  onChange={this.onTimeZoneChanged}
+                  options={timeZones}
+                />
+              </Field>
+              <div className="gf-form-button-row">
+                <Button variant="primary">Save</Button>
+              </div>
+            </FieldSet>
+          );
+        }}
+      </Form>
     );
   }
 }
