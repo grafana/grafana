@@ -117,32 +117,23 @@ export class UserProvider extends PureComponent<Props, State> {
     await getBackendSrv()
       .get('/api/user/auth-tokens')
       .then((sessions: UserSession[]) => {
-        sessions.reverse();
-
-        const found = sessions.findIndex((session: UserSession) => {
-          return session.isActive;
-        });
-
-        if (found) {
-          const now = sessions[found];
-          sessions.splice(found, found);
-          sessions.unshift(now);
-        }
-
-        sessions = sessions.map((session: UserSession) => {
-          return {
-            id: session.id,
-            isActive: session.isActive,
-            seenAt: dateTimeFormatTimeAgo(session.seenAt),
-            createdAt: dateTimeFormat(session.createdAt, { format: 'MMMM DD, YYYY' }),
-            clientIp: session.clientIp,
-            browser: session.browser,
-            browserVersion: session.browserVersion,
-            os: session.os,
-            osVersion: session.osVersion,
-            device: session.device,
-          };
-        });
+        sessions = sessions
+          // Show active sessions first
+          .sort((a, b) => Number(b.isActive) - Number(a.isActive))
+          .map((session: UserSession) => {
+            return {
+              id: session.id,
+              isActive: session.isActive,
+              seenAt: dateTimeFormatTimeAgo(session.seenAt),
+              createdAt: dateTimeFormat(session.createdAt, { format: 'MMMM DD, YYYY' }),
+              clientIp: session.clientIp,
+              browser: session.browser,
+              browserVersion: session.browserVersion,
+              os: session.os,
+              osVersion: session.osVersion,
+              device: session.device,
+            };
+          });
 
         this.setState({ sessions, loadingStates: { ...this.state.loadingStates, loadSessions: false } });
       });
@@ -155,10 +146,7 @@ export class UserProvider extends PureComponent<Props, State> {
       })
       .then(() => {
         const sessions = this.state.sessions.filter((session: UserSession) => {
-          if (session.id === tokenId) {
-            return false;
-          }
-          return true;
+          return session.id !== tokenId;
         });
 
         this.setState({ sessions });
@@ -183,9 +171,7 @@ export class UserProvider extends PureComponent<Props, State> {
     this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: true } });
     await getBackendSrv()
       .put('/api/user', payload)
-      .then(() => {
-        this.loadUser();
-      })
+      .then(this.loadUser)
       .catch(e => console.log(e))
       .finally(() => {
         this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: false } });
