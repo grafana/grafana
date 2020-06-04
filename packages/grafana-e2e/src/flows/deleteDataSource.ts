@@ -8,6 +8,9 @@ export interface DeleteDataSourceConfig {
 
 export const deleteDataSource = ({ id, name }: DeleteDataSourceConfig) => {
   e2e().logToConsole('Deleting data source with name:', name);
+
+  // Avoid datasources page errors
+  e2e.pages.Home.visit();
   e2e().request('DELETE', fromBaseUrl(`/api/datasources/name/${name}`));
 
   /* https://github.com/cypress-io/cypress/issues/2831

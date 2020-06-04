@@ -8,6 +8,9 @@ export interface DeleteDashboardConfig {
 
 export const deleteDashboard = ({ title, uid }: DeleteDashboardConfig) => {
   e2e().logToConsole('Deleting dashboard with uid:', uid);
+
+  // Avoid dashboard page errors
+  e2e.pages.Home.visit();
   e2e().request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}`));
 
   /* https://github.com/cypress-io/cypress/issues/2831
