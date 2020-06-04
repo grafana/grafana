@@ -1,15 +1,14 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import config, { getConfig } from 'app/core/config';
+import config from 'app/core/config';
 import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
+import { isTableData, PanelEvents, PanelPlugin, PanelProps } from '@grafana/data';
 import { dispatch } from 'app/store/store';
 import { ComponentType } from 'react';
-import { PanelProps } from '@grafana/data';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 
 export class TablePanelCtrl extends MetricsPanelCtrl {
@@ -52,13 +51,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor(
-    $scope: any,
-    $injector: any,
-    private annotationsSrv: any,
-    private $sanitize: any,
-    private variableSrv: any
-  ) {
+  constructor($scope: any, $injector: any, private annotationsSrv: any, private $sanitize: any) {
     super($scope, $injector);
 
     this.pageIndex = 0;
@@ -242,11 +235,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
         operator: filterData.operator,
       };
 
-      if (getConfig().featureToggles.newVariables) {
-        dispatch(applyFilterFromTable(options));
-      } else {
-        ctrl.variableSrv.setAdhocFilter(options);
-      }
+      dispatch(applyFilterFromTable(options));
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);
