@@ -10,7 +10,7 @@ rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
 sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
-apk add nodejs npm yarn build-base openssh 
+apk add nodejs npm yarn build-base openssh git-lfs perl-utils
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.
@@ -23,12 +23,12 @@ get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "08df79b46b0adf49
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-filename="golangci-lint-1.23.7-linux-amd64.tar.gz"
-get_file "https://github.com/golangci/golangci-lint/releases/download/v1.23.7/$filename" \
-    "/tmp/$filename" \
-    "34df1794a2ea8e168b3c98eed3cc0f3e13ed4cba735e4e40ef141df5c41bc086"
-untar_file "/tmp/$filename"
-ln -s /usr/local/golangci-lint-1.23.7-linux-amd64/golangci-lint /usr/local/bin/golangci-lint
+filename="golangci-lint-1.26.0-linux-amd64"
+get_file "https://github.com/golangci/golangci-lint/releases/download/v1.26.0/$filename.tar.gz" \
+    "/tmp/$filename.tar.gz" \
+    "59b0e49a4578fea574648a2fd5174ed61644c667ea1a1b54b8082fde15ef94fd"
+untar_file "/tmp/$filename.tar.gz"
+ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
 ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 chmod 755 /usr/local/bin/golangci-lint
@@ -59,6 +59,11 @@ sh -l -c "go get -u github.com/mgechev/revive"
 for file in $(ls $HOME/go/bin); do
 	mv -v $HOME/go/bin/$file /usr/local/bin/$file
 done
+
+# Install grafana-toolkit deps
+current_dir=$PWD
+cd /usr/local/grafana-toolkit && yarn install && cd $current_dir
+ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
 
 # Cleanup after yourself
 /bin/rm -rf /tmp/mage 

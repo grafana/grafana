@@ -18,11 +18,17 @@ import {
   dashboardInitSlow,
 } from './reducers';
 // Types
-import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DashboardDTO,
+  DashboardRouteInfo,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+  DashboardInitPhase,
+} from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
-import { getConfig } from '../../../core/config';
-import { initDashboardTemplating, processVariables, completeDashboardTemplating } from '../../variables/state/actions';
+import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
@@ -62,6 +68,11 @@ async function fetchDashboard(
       case DashboardRouteInfo.Home: {
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
+
+        // if above all is cancelled it will return an array
+        if (!dashDTO.meta) {
+          return null;
+        }
 
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
@@ -177,20 +188,19 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dashboard.meta.fromExplore = !!(panelId && queries);
     }
 
-    // template values service needs to initialize completely before
-    // the rest of the dashboard can load
-    try {
-      if (!getConfig().featureToggles.newVariables) {
-        await variableSrv.init(dashboard);
-      }
-      if (getConfig().featureToggles.newVariables) {
-        dispatch(initDashboardTemplating(dashboard.templating.list));
-        await dispatch(processVariables());
-        dispatch(completeDashboardTemplating(dashboard));
-      }
-    } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
-      console.log(err);
+    // template values service needs to initialize completely before the rest of the dashboard can load
+    await dispatch(initVariablesTransaction(args.urlUid, dashboard, variableSrv));
+
+    if (getState().templating.transaction.uid !== args.urlUid) {
+      // if a previous dashboard has slow running variable queries the batch uid will be the new one
+      // but the args.urlUid will be the same as before initVariablesTransaction was called so then we can't continue initializing
+      // the previous dashboard.
+      return;
+    }
+
+    // If dashboard is in a different init phase it means it cancelled during service init
+    if (getState().dashboard.initPhase !== DashboardInitPhase.Services) {
+      return;
     }
 
     try {

@@ -79,32 +79,30 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 	}
 
 	for _, query := range queries {
-		applicationInsightsTarget := query.Model.Get("appInsights").MustMap()
-		azlog.Debug("Application Insights", "target", applicationInsightsTarget)
-
-		rawQuery := false
-		if asInterface, ok := applicationInsightsTarget["rawQuery"]; ok {
-			if asBool, ok := asInterface.(bool); ok {
-				rawQuery = asBool
-			} else {
-				return nil, errors.New("'rawQuery' should be a boolean")
-			}
-		} else {
-			return nil, errors.New("missing 'rawQuery' property")
+		queryBytes, err := query.Model.Encode()
+		if err != nil {
+			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights query into JSON: %w", err)
+		}
+		queryJSONModel := insightsJSONQuery{}
+		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode the Azure Application Insights query object from JSON: %w", err)
 		}
 
-		if rawQuery {
+		insightsJSONModel := queryJSONModel.AppInsights
+		azlog.Debug("Application Insights", "target", insightsJSONModel)
+
+		if insightsJSONModel.RawQuery == nil {
+			return nil, fmt.Errorf("missing the 'rawQuery' property")
+		}
+
+		if *insightsJSONModel.RawQuery {
 			var rawQueryString string
-			if asInterface, ok := applicationInsightsTarget["rawQueryString"]; ok {
-				if asString, ok := asInterface.(string); ok {
-					rawQueryString = asString
-				}
-			}
-			if rawQueryString == "" {
+			if insightsJSONModel.RawQueryString == "" {
 				return nil, errors.New("rawQuery requires rawQueryString")
 			}
 
-			rawQueryString, err := KqlInterpolate(query, timeRange, fmt.Sprintf("%v", rawQueryString))
+			rawQueryString, err := KqlInterpolate(query, timeRange, insightsJSONModel.RawQueryString)
 			if err != nil {
 				return nil, err
 			}
@@ -117,20 +115,15 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 				IsRaw:             true,
 				ApiURL:            "query",
 				Params:            params,
-				TimeColumnName:    fmt.Sprintf("%v", applicationInsightsTarget["timeColumn"]),
-				ValueColumnName:   fmt.Sprintf("%v", applicationInsightsTarget["valueColumn"]),
-				SegmentColumnName: fmt.Sprintf("%v", applicationInsightsTarget["segmentColumn"]),
+				TimeColumnName:    insightsJSONModel.TimeColumn,
+				ValueColumnName:   insightsJSONModel.ValueColumn,
+				SegmentColumnName: insightsJSONModel.SegmentColumn,
 				Target:            params.Encode(),
 			})
 		} else {
-			alias := ""
-			if val, ok := applicationInsightsTarget["alias"]; ok {
-				alias = fmt.Sprintf("%v", val)
-			}
-
-			azureURL := fmt.Sprintf("metrics/%s", fmt.Sprintf("%v", applicationInsightsTarget["metricName"]))
-			timeGrain := fmt.Sprintf("%v", applicationInsightsTarget["timeGrain"])
-			timeGrains := applicationInsightsTarget["allowedTimeGrainsMs"]
+			azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
+			timeGrain := insightsJSONModel.TimeGrain
+			timeGrains := insightsJSONModel.AllowedTimeGrainsMs
 			if timeGrain == "auto" {
 				timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
 				if err != nil {
@@ -143,16 +136,17 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			if timeGrain != "none" {
 				params.Add("interval", timeGrain)
 			}
-			params.Add("aggregation", fmt.Sprintf("%v", applicationInsightsTarget["aggregation"]))
+			params.Add("aggregation", insightsJSONModel.Aggregation)
 
-			dimension := strings.TrimSpace(fmt.Sprintf("%v", applicationInsightsTarget["dimension"]))
-			if applicationInsightsTarget["dimension"] != nil && len(dimension) > 0 && !strings.EqualFold(dimension, "none") {
+			dimension := strings.TrimSpace(insightsJSONModel.Dimension)
+			// Azure Monitor combines this and the following logic such that if dimensionFilter, must also Dimension, should that be done here as well?
+			if dimension != "" && !strings.EqualFold(dimension, "none") {
 				params.Add("segment", dimension)
 			}
 
-			dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", applicationInsightsTarget["dimensionFilter"]))
-			if applicationInsightsTarget["dimensionFilter"] != nil && len(dimensionFilter) > 0 {
-				params.Add("filter", fmt.Sprintf("%v", dimensionFilter))
+			dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
+			if dimensionFilter != "" {
+				params.Add("filter", dimensionFilter)
 			}
 
 			applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
@@ -160,7 +154,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 				IsRaw:  false,
 				ApiURL: azureURL,
 				Params: params,
-				Alias:  alias,
+				Alias:  insightsJSONModel.Alias,
 				Target: params.Encode(),
 			})
 		}
