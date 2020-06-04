@@ -152,9 +152,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResultError(err)
 	}
 
-	// I don't get why queryResult would be logged here, guessing logResponse was intendended.
-	//azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
-
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
 		return queryResultError(err)
