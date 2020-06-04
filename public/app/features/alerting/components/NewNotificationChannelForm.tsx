@@ -14,12 +14,27 @@ import {
   Switch,
   useTheme,
 } from '@grafana/ui';
-import { NotificationChannel, Option } from '../../../types';
 import { OptionElement } from './OptionElement';
+import { NotificationChannel, Option } from '../../../types';
 
 type OptionSwitch = { label: string; name: string; description: string };
 
-interface Props extends Omit<FormAPI<any>, 'formState'> {
+interface NotificationChannelDTO {
+  name: string;
+  type: SelectableValue<string>;
+  sendReminder: boolean;
+  disableResolveMessage: boolean;
+  frequency: string;
+  settings: {
+    httpMethod: string;
+    autoResolve: boolean;
+    severity: string;
+    uploadImage: boolean;
+  };
+  isDefault: boolean;
+}
+
+interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel: NotificationChannel;
 
@@ -44,7 +59,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
   return (
     <>
       <div className={styles.basicSettings}>
-        <Field label="Name" invalid={!!errors.name} error={errors.name}>
+        <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
           <Input name="name" ref={register({ required: 'Name is required' })} />
         </Field>
         <Field label="Type">
@@ -81,9 +96,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
         </>
       )}
       <HorizontalGroup>
-        <Button type="submit" onClick={onSubmit}>
-          Save
-        </Button>
+        <Button type="submit">Save</Button>
         <Button type="button" variant="secondary">
           Test
         </Button>

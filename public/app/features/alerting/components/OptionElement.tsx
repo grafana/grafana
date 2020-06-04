@@ -7,7 +7,7 @@ interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
 }
 
 export const OptionElement: FC<Props> = ({ control, option, register }) => {
-  const modelValue = `${option.modelValue}`;
+  const modelValue = `settings.${option.modelValue}`;
   switch (option.element) {
     case 'input':
       return (
