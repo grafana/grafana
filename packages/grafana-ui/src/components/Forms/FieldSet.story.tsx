@@ -18,7 +18,7 @@ export default {
   },
 };
 
-export const single = () => {
+export const basic = () => {
   return (
     <Form onSubmit={() => console.log('Submit')}>
       {() => (
