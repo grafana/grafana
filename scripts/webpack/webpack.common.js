@@ -17,6 +17,7 @@ function shouldExclude(filename) {
     'react-hook-form',
     'rc-trigger',
     '@iconscout/react-unicons',
+    'monaco-editor',
   ];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
