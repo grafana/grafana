@@ -14,7 +14,7 @@ import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
-import { updateLocation } from 'app/core/actions';
+import { notifyApp, updateLocation } from 'app/core/actions';
 import {
   addInitLock,
   addVariable,
@@ -31,6 +31,17 @@ import { alignCurrentWithMulti } from '../shared/multiOptions';
 import { isMulti } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { getConfig } from '../../../core/config';
+import { createErrorNotification } from '../../../core/copy/appNotification';
+import { VariableSrv } from '../../templating/variable_srv';
+import {
+  TransactionStatus,
+  variablesClearTransaction,
+  variablesCompleteTransaction,
+  variablesInitTransaction,
+} from './transactionReducer';
+import { getBackendSrv } from '../../../core/services/backend_srv';
+import { cleanVariables } from './variablesReducer';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -456,4 +467,50 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   }
 
   return queryParamsNew;
+};
+
+export const initVariablesTransaction = (
+  dashboardUid: string,
+  dashboard: DashboardModel,
+  variableSrv: VariableSrv
+): ThunkResult<void> => async (dispatch, getState) => {
+  try {
+    const transactionState = getState().templating.transaction;
+    if (transactionState.status === TransactionStatus.Fetching) {
+      // previous dashboard is still fetching variables, cancel all requests
+      dispatch(cancelVariables());
+    }
+
+    dispatch(variablesInitTransaction({ uid: dashboardUid }));
+
+    const newVariables = getConfig().featureToggles.newVariables;
+
+    if (!newVariables) {
+      await variableSrv.init(dashboard);
+    }
+
+    if (newVariables) {
+      dispatch(initDashboardTemplating(dashboard.templating.list));
+      await dispatch(processVariables());
+      dispatch(completeDashboardTemplating(dashboard));
+    }
+
+    dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
+  } catch (err) {
+    dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
+    console.log(err);
+  }
+};
+
+export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
+  dispatch(cleanVariables());
+  dispatch(variablesClearTransaction());
+};
+
+type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
+export const cancelVariables = (
+  dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }
+): ThunkResult<void> => dispatch => {
+  dependencies.getBackendSrv().cancelAllInFlightRequests();
+  dispatch(cleanUpVariables());
 };
