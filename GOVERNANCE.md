@@ -77,6 +77,7 @@ The current team members are:
 * Emil Tullstedt ([Grafana Labs](https://grafana.com/))
 * Hugo Häggmark ([Grafana Labs](https://grafana.com/))
 * Ivana Huckova ([Grafana Labs](https://grafana.com/))
+* Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
 * Jessica Müller ([Grafana Labs](https://grafana.com/))
 * Julien Pivotto ([Inuits](https://inuits.eu/))
 * Kay Delaney ([Grafana Labs](https://grafana.com/))
@@ -95,7 +96,6 @@ The current team members are:
 * Tobias Skarhed ([Grafana Labs](https://grafana.com/))
 * Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 * Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
-* Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
 
 ### Maintainers
 
