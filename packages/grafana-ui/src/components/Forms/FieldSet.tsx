@@ -1,20 +1,21 @@
 import React, { FC, HTMLProps } from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme } from '../../themes';
 import { Legend } from './Legend';
 
 export interface Props extends HTMLProps<HTMLFieldSetElement> {
   children: React.ReactNode[] | React.ReactNode;
-  /** Text for the fieldset's Legend **/
+  /** Text for the fieldset's legend */
   label?: string;
 }
 
-export const FieldSet: FC<Props> = ({ label, children, className, ...props }) => {
+export const FieldSet: FC<Props> = ({ label, children, className, ...rest }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+
   return (
-    <fieldset className={cx(styles.wrapper, className)} {...props}>
+    <fieldset className={cx(styles.wrapper, className)} {...rest}>
       <>
         {label && <Legend>{label}</Legend>}
         {children}
