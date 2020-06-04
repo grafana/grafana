@@ -69,6 +69,7 @@ The current team members are:
 * Arve Knudsen ([Grafana Labs](https://grafana.com/))
 * Brian Gann ([Grafana Labs](https://grafana.com/))
 * Carl Bergquist ([Grafana Labs](https://grafana.com/))
+* Chris Trott ([Grafana Labs](https://grafana.com/))
 * Daniel Lee ([Grafana Labs](https://grafana.com/))
 * David Kaltschmidt ([Grafana Labs](https://grafana.com/))
 * Diana Payton ([Grafana Labs](https://grafana.com/))
@@ -95,7 +96,6 @@ The current team members are:
 * Tobias Skarhed ([Grafana Labs](https://grafana.com/))
 * Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 * Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
-* Chris Trott ([Grafana Labs](https://grafana.com/))
 
 ### Maintainers
 
