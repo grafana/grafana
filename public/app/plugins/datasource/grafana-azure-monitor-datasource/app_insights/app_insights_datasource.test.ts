@@ -173,14 +173,17 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of datapoints', () => {
-        return ctx.ds.query(options).then((results: any) => {
-          expect(results.data.length).toBe(1);
-          const data = results.data[0] as DataFrame;
-          expect(getFrameDisplayName(data)).toEqual('PrimaryResult');
-          expect(data.fields[0].values.length).toEqual(1);
-          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
-          expect(data.fields[1].values.get(0)).toEqual(2.2075);
-        });
+        return ctx.ds
+          .query(options)
+          .toPromise()
+          .then((results: any) => {
+            expect(results.data.length).toBe(1);
+            const data = results.data[0] as DataFrame;
+            expect(getFrameDisplayName(data)).toEqual('PrimaryResult');
+            expect(data.fields[0].values.length).toEqual(1);
+            expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+            expect(data.fields[1].values.get(0)).toEqual(2.2075);
+          });
       });
     });
 
@@ -277,13 +280,16 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a single datapoint', () => {
-        return ctx.ds.query(options).then((results: any) => {
-          expect(results.data.length).toBe(1);
-          const data = results.data[0] as DataFrame;
-          expect(getFrameDisplayName(data)).toEqual('exceptions/server');
-          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
-          expect(data.fields[1].values.get(0)).toEqual(2.2075);
-        });
+        return ctx.ds
+          .query(options)
+          .toPromise()
+          .then((results: any) => {
+            expect(results.data.length).toBe(1);
+            const data = results.data[0] as DataFrame;
+            expect(getFrameDisplayName(data)).toEqual('exceptions/server');
+            expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+            expect(data.fields[1].values.get(0)).toEqual(2.2075);
+          });
       });
     });
 
