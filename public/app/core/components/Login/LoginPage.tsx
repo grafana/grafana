@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { cx, keyframes, css } from 'emotion';
 
 // Components
@@ -11,9 +11,11 @@ import { ChangePassword } from './ChangePassword';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { ForgottenPassword } from './ForgottenPassword';
 
 export const LoginPage: FC = () => {
   const loginStyles = useStyles(getLoginStyles);
+  const [forgotPassword, setForgotPassword] = useState(false);
   return (
     <Branding.LoginBackground className={loginStyles.container}>
       <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground())}>
@@ -39,26 +41,38 @@ export const LoginPage: FC = () => {
             isChangingPassword,
           }) => (
             <div className={loginStyles.loginOuterBox}>
-              {!isChangingPassword && (
+              {!(isChangingPassword || forgotPassword) && (
                 <div className={`${loginStyles.loginInnerBox} ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
                   {!disableLoginForm && (
-                    <LoginForm
-                      displayForgotPassword={!(ldapEnabled || authProxyEnabled)}
-                      onSubmit={login}
-                      loginHint={loginHint}
-                      passwordHint={passwordHint}
-                      isLoggingIn={isLoggingIn}
-                    />
+                    <>
+                      <LoginForm
+                        onSubmit={login}
+                        loginHint={loginHint}
+                        passwordHint={passwordHint}
+                        isLoggingIn={isLoggingIn}
+                      >
+                        {!(ldapEnabled || authProxyEnabled) && (
+                          <a className={forgottenPasswordStyles} onClick={() => setForgotPassword(true)}>
+                            Forgot your password?
+                          </a>
+                        )}
+                      </LoginForm>
+                    </>
                   )}
 
                   <LoginServiceButtons />
                   {!disableUserSignUp && <UserSignup />}
                 </div>
               )}
-
               {isChangingPassword && (
                 <div className={cx(loginStyles.loginInnerBox, loginStyles.enterAnimation)}>
                   <ChangePassword onSubmit={changePassword} onSkip={skipPasswordChange as any} />
+                </div>
+              )}
+
+              {forgotPassword && (
+                <div className={cx(loginStyles.loginInnerBox, loginStyles.enterAnimation)}>
+                  <ForgottenPassword />
                 </div>
               )}
             </div>
@@ -70,6 +84,12 @@ export const LoginPage: FC = () => {
     </Branding.LoginBackground>
   );
 };
+
+const forgottenPasswordStyles = css`
+  display: inline-block;
+  margin-top: 16px;
+  float: right;
+`;
 
 const flyInAnimation = keyframes`
 from{
