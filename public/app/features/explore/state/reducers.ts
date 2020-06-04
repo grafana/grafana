@@ -70,7 +70,6 @@ import {
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
-import { Emitter } from 'app/core/core';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -115,7 +114,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   update: makeInitialUpdateState(),
   latency: 0,
   supportedModes: [],
-  mode: (null as unknown) as ExploreMode,
+  mode: null,
   isLive: false,
   isPaused: false,
   urlReplaced: false,
@@ -124,7 +123,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   graphResult: null,
   logsResult: null,
   dedupStrategy: LogsDedupStrategy.none,
-  eventBridge: (null as unknown) as Emitter,
+  eventBridge: null,
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({

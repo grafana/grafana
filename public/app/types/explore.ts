@@ -74,7 +74,7 @@ export interface ExploreItemState {
   /**
    * Emitter to send events to the rest of Grafana.
    */
-  eventBridge: Emitter;
+  eventBridge: Emitter | null;
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
@@ -165,7 +165,7 @@ export interface ExploreItemState {
 
   latency: number;
   supportedModes: ExploreMode[];
-  mode: ExploreMode;
+  mode: ExploreMode | null;
 
   /**
    * If true, the view is in live tailing mode.
