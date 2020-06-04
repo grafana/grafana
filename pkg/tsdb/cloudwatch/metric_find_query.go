@@ -138,7 +138,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Cognito":           {"Operation", "RiskLevel", "UserPoolId"},
 	"AWS/Connect":           {"InstanceId", "MetricGroup", "Participant", "QueueName", "Stream Type", "Type of Connection"},
 	"AWS/DataSync":          {"AgentId", "TaskId"},
-	"AWS/DDoSProtection":    {"ACKFlood", "ChargenReflection", "DNSReflection", "GenericUDPReflection", "MemcachedReflection", "MSSQLReflection", "NetBIOSReflection", "NTPReflection", "PortMapper", "RequestFlood", "RIPReflection", "SNMPReflection", "SSDPReflection", "SYNFlood", "UDPFragment", "UDPTraffic", "UDPReflection"},
+	"AWS/DDoSProtection":    {"ResourceArn", "AttackVector"},
 	"AWS/DMS":               {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
 	"AWS/DocDB":             {"DBClusterIdentifier", "DBInstanceIdentifier", "Role"},
 	"AWS/DX":                {"ConnectionId"},

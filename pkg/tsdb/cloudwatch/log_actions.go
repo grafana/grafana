@@ -149,7 +149,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	timestampField := data.NewField("ts", nil, timestamps)
-	timestampField.SetConfig(&data.FieldConfig{Title: "Time"})
+	timestampField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	messageField := data.NewField("line", nil, messages)
 
