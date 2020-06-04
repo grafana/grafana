@@ -69,6 +69,7 @@ The current team members are:
 * Arve Knudsen ([Grafana Labs](https://grafana.com/))
 * Brian Gann ([Grafana Labs](https://grafana.com/))
 * Carl Bergquist ([Grafana Labs](https://grafana.com/))
+* Chris Trott ([Grafana Labs](https://grafana.com/))
 * Daniel Lee ([Grafana Labs](https://grafana.com/))
 * David Kaltschmidt ([Grafana Labs](https://grafana.com/))
 * Diana Payton ([Grafana Labs](https://grafana.com/))
