@@ -457,11 +457,6 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
-### oauth_state_cookie_max_age
-
-How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
-Administrators can increase it if they experience OAuth login state mismatch errors.
-
 - [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
 - [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
@@ -470,6 +465,15 @@ Administrators can increase it if they experience OAuth login state mismatch err
 - [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
 - [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
 - [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
+
+### login_cookie_name
+
+The cookie name for storing the auth token, the default is `grafana_session`.
+
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase this if they experience OAuth login state mismatch errors.
 
 ## [dataproxy]
 
