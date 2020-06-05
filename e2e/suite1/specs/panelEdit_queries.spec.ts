@@ -50,7 +50,7 @@ e2e.scenario({
       .should('be.visible')
       .click();
 
-    cy.wait('@apiPostQuery');
+    e2e().wait('@apiPostQuery');
 
     // We expect row with refId B to exist and be visible
     e2e.components.QueryEditorRows.rows().within(rows => {
@@ -73,7 +73,7 @@ e2e.scenario({
       .eq(1)
       .select('CSV Metric Values');
 
-    cy.wait('@apiPostQuery');
+    e2e().wait('@apiPostQuery');
 
     // Change order or query rows
     // Check the order of the rows before
@@ -94,7 +94,7 @@ e2e.scenario({
       .eq(1)
       .click();
 
-    cy.wait('@apiPostQuery');
+    e2e().wait('@apiPostQuery');
 
     // Check the order of the rows after change
     e2e.components.QueryEditorRows.rows()
@@ -122,7 +122,7 @@ e2e.scenario({
       .should('be.visible')
       .click();
 
-    cy.wait('@apiPostQuery');
+    e2e().wait('@apiPostQuery');
 
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
@@ -135,7 +135,7 @@ e2e.scenario({
       .should('be.visible')
       .click();
 
-    cy.wait('@apiPostQuery');
+    e2e().wait('@apiPostQuery');
 
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
@@ -154,7 +154,7 @@ const expectInspectorResultAndClose = (expectCallBack: (keys: any[]) => void) =>
     .should('be.visible')
     .click();
 
-  cy.wait('@apiPostQuery');
+  e2e().wait('@apiPostQuery');
 
   e2e.components.PanelInspector.Query.jsonObjectKeys()
     .should('be.visible')
