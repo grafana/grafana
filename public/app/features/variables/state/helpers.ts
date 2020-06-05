@@ -1,7 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
 import { NEW_VARIABLE_ID } from './types';
-import { VariableHide, VariableModel } from '../../templating/types';
+import { VariableHide, VariableModel } from '../types';
 import { VariablesState } from './variablesReducer';
 import { locationReducer } from '../../../core/reducers/location';
 import { VariableAdapter } from '../adapters';
@@ -24,6 +24,7 @@ export const getVariableState = (
       index,
       label: `Label-${index}`,
       skipUrlSync: false,
+      global: false,
     };
   }
 
@@ -36,6 +37,7 @@ export const getVariableState = (
       index: noOfVariables,
       label: `Label-${NEW_VARIABLE_ID}`,
       skipUrlSync: false,
+      global: false,
     };
   }
 
