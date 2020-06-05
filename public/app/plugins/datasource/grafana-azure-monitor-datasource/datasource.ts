@@ -13,11 +13,14 @@ import {
 } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
+import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
+  insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
+
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
   optionsKey: Record<AzureQueryType, any>;
 
@@ -26,12 +29,13 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
+    this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
 
     const pseudoDatasource: any = {};
     pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
-    pseudoDatasource[AzureQueryType.AzureMonitor] = this.appInsightsDatasource;
-    pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.appInsightsDatasource;
-    pseudoDatasource[AzureQueryType.LogAnalytics] = this.appInsightsDatasource;
+    pseudoDatasource[AzureQueryType.AzureMonitor] = this.azureMonitorDatasource;
+    pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
+    pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
     this.pseudoDatasource = pseudoDatasource;
 
     const optionsKey: any = {};
