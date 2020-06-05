@@ -72,11 +72,17 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
           console.log('UNKNOWN Type:', schema);
       }
 
+      const config = parseOptionalMeta(col.metadata.get('config')) || {};
+      if (config.custom?.fieldType) {
+        // HACK until we sort out something like: https://github.com/grafana/grafana/pull/22083
+        type = config.custom?.fieldType;
+      }
+
       fields.push({
         name: stripFieldNamePrefix(col.name),
         type,
         values,
-        config: parseOptionalMeta(col.metadata.get('config')) || {},
+        config,
         labels: parseOptionalMeta(col.metadata.get('labels')),
       });
     }
