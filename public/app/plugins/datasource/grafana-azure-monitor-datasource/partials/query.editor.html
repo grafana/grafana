@@ -303,7 +303,7 @@
       <div class="gf-form gf-form--grow">
         <kusto-editor
           class="gf-form gf-form--grow"
-          query="ctrl.target.appInsights.rawQueryString"
+          query="ctrl.target.insightsAnalytics.rawQueryString"
           placeholder="'Application Insights Query'"
           change="ctrl.onAppInsightsQueryChange"
           execute="ctrl.onAppInsightsQueryExecute"
@@ -315,7 +315,7 @@
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">X-axis</label>
           <gf-form-dropdown
-            model="ctrl.target.appInsights.timeColumn"
+            model="ctrl.target.insightsAnalytics.timeColumn"
             allow-custom="true"
             placeholder="eg. 'timestamp'"
             get-options="ctrl.getAppInsightsColumns($query)"
@@ -327,7 +327,7 @@
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">Y-axis</label>
           <gf-form-dropdown
-            model="ctrl.target.appInsights.valueColumn"
+            model="ctrl.target.insightsAnalytics.valueColumn"
             allow-custom="true"
             get-options="ctrl.getAppInsightsColumns($query)"
             on-change="ctrl.onAppInsightsColumnChange()"

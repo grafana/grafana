@@ -109,10 +109,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  filterQuery(item: AzureMonitorQuery): boolean {
-    return item.hide !== true && !!item.azureLogAnalytics;
-  }
-
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
     const item = target.azureLogAnalytics;
 
