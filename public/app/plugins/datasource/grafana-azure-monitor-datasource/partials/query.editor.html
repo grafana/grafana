@@ -303,7 +303,7 @@
       <div class="gf-form gf-form--grow">
         <kusto-editor
           class="gf-form gf-form--grow"
-          query="ctrl.target.insightsAnalytics.rawQueryString"
+          query="ctrl.target.insightsAnalytics.query"
           placeholder="'Application Insights Query'"
           change="ctrl.onInsightsAnalyticsQueryChange"
           execute="ctrl.onQueryExecute"
@@ -311,50 +311,24 @@
           getSchema="ctrl.getAppInsightsQuerySchema"
         />
       </div>
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <label class="gf-form-label query-keyword width-9">X-axis</label>
-          <gf-form-dropdown
-            model="ctrl.target.insightsAnalytics.timeColumn"
-            allow-custom="true"
-            placeholder="eg. 'timestamp'"
-            get-options="ctrl.getAppInsightsColumns($query)"
-            on-change="ctrl.onAppInsightsColumnChange()"
-            css-class="min-width-20"
-          >
-          </gf-form-dropdown>
-        </div>
-        <div class="gf-form">
-          <label class="gf-form-label query-keyword width-9">Y-axis</label>
-          <gf-form-dropdown
-            model="ctrl.target.insightsAnalytics.valueColumn"
-            allow-custom="true"
-            get-options="ctrl.getAppInsightsColumns($query)"
-            on-change="ctrl.onAppInsightsColumnChange()"
-            css-class="min-width-20"
-          >
-          </gf-form-dropdown>
-        </div>
-        <div class="gf-form gf-form--grow">
-          <div class="gf-form-label gf-form-label--grow"></div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">Format As</label>
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input gf-size-auto"
+            ng-model="ctrl.target.azureLogAnalytics.resultFormat"
+            ng-options="f.value as f.text for f in ctrl.resultFormats"
+            ng-change="ctrl.refresh()"
+          ></select>
         </div>
       </div>
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <label class="gf-form-label query-keyword width-9">Split On</label>
-          <gf-form-dropdown
-            model="ctrl.target.appInsights.segmentColumn"
-            allow-custom="true"
-            get-options="ctrl.getAppInsightsColumns($query)"
-            on-change="ctrl.onAppInsightsColumnChange()"
-            css-class="min-width-20"
-          >
-          </gf-form-dropdown>
-        </div>
-        <div class="gf-form gf-form--grow">
-          <div class="gf-form-label gf-form-label--grow"></div>
-        </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
       </div>
+    </div>
+
   </div>
 
   <div ng-if="ctrl.target.queryType === 'Application Insights'">

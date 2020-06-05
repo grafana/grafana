@@ -65,10 +65,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       allowedTimeGrainsMs: number[];
     };
     insightsAnalytics: {
-      rawQueryString: any;
-      timeColumn: string; // X-axis
-      valueColumn: string; // Y-axis
-      segmentColumn: string;
+      query: any;
+      resultFormat: string;
     };
   };
 

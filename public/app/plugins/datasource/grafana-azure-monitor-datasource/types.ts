@@ -79,10 +79,8 @@ export interface ApplicationInsightsQuery {
 }
 
 export interface InsightsAnalyticsQuery {
-  rawQueryString: any;
-  timeColumn: string; // X-axis
-  valueColumn: string; // Y-axis
-  segmentColumn: string;
+  query: string;
+  resultFormat: string;
 }
 
 // Azure Monitor API Types

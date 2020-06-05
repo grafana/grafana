@@ -15,16 +15,8 @@ export default class InsightsAnalyticsDatasource extends AppInsightsDatasource {
 
     // Old name migrations
     const old: any = item;
-    if (old.xaxis && !item.timeColumn) {
-      item.timeColumn = old.xaxis;
-    }
-
-    if (old.yaxis && !item.valueColumn) {
-      item.valueColumn = old.yaxis;
-    }
-
-    if (old.spliton && !item.segmentColumn) {
-      item.segmentColumn = old.spliton;
+    if (old.rawQueryString && !item.query) {
+      item.query = old.rawQueryString;
     }
 
     return {
@@ -32,10 +24,8 @@ export default class InsightsAnalyticsDatasource extends AppInsightsDatasource {
       refId: target.refId,
       queryType: AzureQueryType.InsightsAnalytics,
       insightsAnalytics: {
-        rawQueryString: getTemplateSrv().replace(item.rawQueryString, scopedVars),
-        timeColumn: item.timeColumn,
-        valueColumn: item.valueColumn,
-        segmentColumn: item.segmentColumn,
+        query: getTemplateSrv().replace(item.query, scopedVars),
+        format: target.format,
       },
     };
   }
