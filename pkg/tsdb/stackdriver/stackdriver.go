@@ -329,6 +329,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriv
 			return queryResult, stackdriverResponse{}, nil
 		}
 		projectName = defaultProject
+		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
 	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries"))
