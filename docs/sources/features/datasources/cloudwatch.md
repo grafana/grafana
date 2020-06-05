@@ -123,8 +123,21 @@ When left blank the provided credentials will be used directly and the associate
 If an `Assume Role ARN` is specified then the provided credentials will be used to perform
 a [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
 
-When providing an `Assume Role ARN` make sure that the role or user associated with the credentials is allowed to assume the 
+When providing an `Assume Role ARN` make sure that the role or user associated with the credentials is allowed to assume the
 given role *and* that the given role has an up-to-date trust policy.
+
+### EKS IAM Roles for Service Accounts
+
+The Grafana process in the container runs as user 472 (called grafana). When Kubernetes mounts your projected credentials they will by default
+only be available to the root user. In order to allow user 472 to access the credentials (and avoid it falling back to the IAM role attached to the EC2 instance)
+you will need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for you pod.
+
+```
+securityContext:
+	fsGroup: 472
+	runAsUser: 472
+	runAsGroup: 472
+```
 
 ### AWS credentials file
 
