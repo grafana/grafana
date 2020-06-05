@@ -11,11 +11,12 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariable } from 'app/features/templating/custom_variable';
 import { makeMockLokiDatasource } from './mocks';
 import { of } from 'rxjs';
 import omit from 'lodash/omit';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { backendSrv } from 'app/core/services/backend_srv';
+import { CustomVariableModel } from '../../../features/variables/types';
+import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -192,13 +193,13 @@ describe('LokiDatasource', () => {
 
   describe('When interpolating variables', () => {
     let ds: LokiDatasource;
-    let variable: CustomVariable;
+    let variable: CustomVariableModel;
 
     beforeEach(() => {
       const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
       const customSettings = { ...instanceSettings, jsonData: customData };
       ds = new LokiDatasource(customSettings, templateSrvMock);
-      variable = new CustomVariable({}, {} as any);
+      variable = { ...initialCustomVariableModelState };
     });
 
     it('should only escape single quotes', () => {

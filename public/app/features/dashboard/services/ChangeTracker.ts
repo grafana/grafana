@@ -134,7 +134,7 @@ export class ChangeTracker {
     });
 
     // ignore template variable values
-    _.each(dash.getVariables(), variable => {
+    _.each(dash.getVariables(), (variable: any) => {
       variable.current = null;
       variable.options = null;
       variable.filters = null;

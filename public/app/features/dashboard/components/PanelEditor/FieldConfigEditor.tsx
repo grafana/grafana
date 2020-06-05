@@ -171,14 +171,11 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : (defaults as any)[item.path];
 
-      const label =
-        categoryItemCount > 1 ? (
-          <Label description={item.description} category={item.category?.slice(1)}>
-            {item.name}
-          </Label>
-        ) : (
-          undefined
-        );
+      const label = (
+        <Label description={item.description} category={item.category?.slice(1)}>
+          {item.name}
+        </Label>
+      );
 
       return (
         <Field label={label} key={`${item.id}/${item.isCustom}`}>

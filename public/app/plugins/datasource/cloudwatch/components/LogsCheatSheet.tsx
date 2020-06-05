@@ -1,10 +1,13 @@
 import React, { PureComponent } from 'react';
 import { stripIndent, stripIndents } from 'common-tags';
-import { ExploreStartPageProps, DataQuery, ExploreMode } from '@grafana/data';
+import { ExploreStartPageProps, ExploreMode } from '@grafana/data';
 import Prism from 'prismjs';
 import tokenizer from '../syntax';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 import { css, cx } from 'emotion';
+import { CloudWatchLogsQuery } from '../types';
+import { changeModeAction } from 'app/features/explore/state/actionTypes';
+import { dispatch } from 'app/store/store';
 
 interface QueryExample {
   category: string;
@@ -214,14 +217,33 @@ const exampleCategory = css`
 `;
 
 export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps, { userExamples: string[] }> {
-  renderExpression(expr: string, keyPrefix: string) {
-    const { onClickExample } = this.props;
+  switchToMetrics = (query: CloudWatchLogsQuery) => {
+    const { onClickExample, exploreId } = this.props;
 
+    const nextQuery: CloudWatchLogsQuery = {
+      ...(query as CloudWatchLogsQuery),
+      apiMode: 'Logs',
+      queryMode: 'Logs',
+    };
+
+    dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
+    onClickExample(nextQuery);
+  };
+
+  onClickExample(query: CloudWatchLogsQuery) {
+    if (query.expression.includes('stats')) {
+      this.switchToMetrics(query);
+    } else {
+      this.props.onClickExample(query);
+    }
+  }
+
+  renderExpression(expr: string, keyPrefix: string) {
     return (
       <div
         className="cheat-sheet-item__example"
         key={expr}
-        onClick={e => onClickExample({ refId: 'A', expression: expr } as DataQuery)}
+        onClick={e => this.onClickExample({ refId: 'A', expression: expr } as CloudWatchLogsQuery)}
       >
         <pre>{renderHighlightedMarkup(expr, keyPrefix)}</pre>
       </div>
@@ -248,8 +270,21 @@ export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps,
   }
 
   render() {
-    const { exploreMode } = this.props;
-
-    return exploreMode === ExploreMode.Logs && this.renderLogsCheatSheet();
+    return (
+      <div>
+        <h2>CloudWatch Logs Cheat Sheet</h2>
+        {CLIQ_EXAMPLES.map(cat => (
+          <div>
+            <div className={`cheat-sheet-item__title ${cx(exampleCategory)}`}>{cat.category}</div>
+            {cat.examples.map((item, i) => (
+              <div className="cheat-sheet-item" key={`item-${i}`}>
+                <h4>{item.title}</h4>
+                {this.renderExpression(item.expr, `item-${i}`)}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
   }
 }

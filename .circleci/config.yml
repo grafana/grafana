@@ -15,7 +15,9 @@ aliases:
     tags:
       ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
     branches:
-      ignore: master
+      ignore:
+        - master
+        - chore/test-release-pipeline
   - &filter-only-master
     branches:
       only: master
@@ -39,7 +41,7 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.16
+      - image: grafana/build-container:1.2.19
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -54,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.4
+            VERSION=0.4.11
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -72,7 +74,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -86,15 +88,15 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
-                --variants << parameters.variant >> v6.7.0-beta1
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
+                --variants << parameters.variant >> v7.0.0-test
             else
               # A master or PR build
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
@@ -124,7 +126,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -153,7 +155,17 @@ jobs:
             - node_modules
       - run:
           name: Build Grafana frontend
-          command: /tmp/grabpl build-frontend --edition << parameters.edition >>
+          command: |
+            if [[ -n $CIRCLE_TAG ]]; then
+              # A release build
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> $CIRCLE_TAG
+            elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> 7.0.0-test
+            else
+              # A master or PR build
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
+            fi
       - run:
           name: Move artifacts
           command: mkdir << parameters.edition >> && cp -r public << parameters.edition >>/
@@ -180,7 +192,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -398,18 +410,24 @@ jobs:
               source scripts/build/gpg-test-vars.sh
             fi
 
+            # Necessary for signing bundled plugins
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition oss $CIRCLE_TAG
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition oss v6.7.0-beta1
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
+            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # A forked PR build, don't sign as it requires an API secret
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             else
-              # A PR build
-              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+              # A non-forked PR build
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -453,18 +471,25 @@ jobs:
       - run:
           name: Package Grafana
           command: |
+            # Necessary for signing bundled plugins
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition enterprise $CIRCLE_TAG
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition enterprise v6.7.0-beta1
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
+            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              # A forked PR build, don't sign as it requires an API secret
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             else
               # A PR build
-              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -583,7 +608,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -597,6 +622,14 @@ jobs:
           # This version is necessary for building cross-platform images
           version: 18.09.3
       - install-grabpl
+      - run:
+          name: Install gcloud SDK
+          command: |
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
+              sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+              sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            sudo apt-get update && sudo apt-get install google-cloud-sdk
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
@@ -760,7 +793,7 @@ jobs:
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
-          command: 'echo -e "unknwon\nreferer\nerrorstring\neror" > words_to_ignore.txt'
+          command: 'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt'
       - run:
           name: check documentation spelling errors
           command: "codespell -I ./words_to_ignore.txt docs/"
@@ -856,18 +889,13 @@ jobs:
           when: on_success
 
   build-docs-website:
-    executor: grafana-build
+    executor: base
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
-      - run:
-          name: Install docker
-          command: |
-            apt-get update
-            apt-get install -y docker.io
       - run:
           name: Build Grafana docs website
           command: |
@@ -920,6 +948,14 @@ jobs:
           name: npm - Prepare auth token
           command: "echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc"
       - run:
+          name: Exit if release pipeline test
+          command: |
+            if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              echo "We're testing the release pipeline, so stopping before publishing"
+              circleci step halt
+            fi
+      - run:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
       - run:
@@ -931,7 +967,13 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  scan-docker-images:
+  scan-docker-image:
+    description: "Scans a docker image for vulnerabilities using trivy"
+    parameters:
+      image:
+        type: string
+      tag:
+        type: string
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -954,29 +996,11 @@ jobs:
           name: Clear trivy cache
           command: trivy --clear-cache
       - run:
-          name: Scan grafana/grafana:master
-          command: trivy --exit-code 1 grafana/grafana:master
+          name: Scan Docker image for unkown/low/medium vulnerabilities
+          command: trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM << parameters.image >>:<< parameters.tag >>
       - run:
-          name: Scan grafana/grafana:master-ubuntu
-          command: trivy --exit-code 1 grafana/grafana:master-ubuntu
-      - run:
-          name: Scan grafana/grafana-enterprise:master
-          command: trivy --exit-code 1 grafana/grafana-enterprise:master
-      - run:
-          name: Scan grafana/grafana-enterprise:master-ubuntu
-          command: trivy --exit-code 1 grafana/grafana-enterprise:master-ubuntu
-      - run:
-          name: Scan grafana/grafana:latest
-          command: trivy --exit-code 1 grafana/grafana:latest
-      - run:
-          name: Scan grafana/grafana:latest-ubuntu
-          command: trivy --exit-code 1 grafana/grafana:latest-ubuntu
-      - run:
-          name: Scan grafana/grafana-enterprise:latest
-          command: trivy --exit-code 1 grafana/grafana-enterprise:latest
-      - run:
-          name: Scan grafana/grafana-enterprise:latest-ubuntu
-          command: trivy --exit-code 1 grafana/grafana-enterprise:latest-ubuntu
+          name: Scan Docker image for high/critical vulnerabilities
+          command: trivy --exit-code 1 --severity HIGH,CRITICAL << parameters.image >>:<< parameters.tag >>
       - save_cache:
           key: vulnerability-db
           paths:
@@ -991,172 +1015,146 @@ workflows:
           variant: armv6
           name: build-oss-backend-armv6
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-frontend:
           filters: *filter-all
           name: build-oss-frontend
           edition: oss
-          requires:
-            - test-backend
-            - test-frontend
       - build-plugins:
           filters: *filter-all
           name: build-oss-plugins
           edition: oss
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv6
           edition: enterprise
           variant: armv6
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7
           edition: enterprise
           variant: armv7
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-armv7-musl
           edition: enterprise
           variant: armv7-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64
           edition: enterprise
           variant: arm64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-master-or-release
           name: build-enterprise-backend-arm64-musl
           edition: enterprise
           variant: arm64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-backend:
           filters: *filter-all
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-frontend:
           filters: *filter-all
           name: build-enterprise-frontend
           edition: enterprise
-          requires:
-            - test-backend
-            - test-frontend
       - build-plugins:
           filters: *filter-all
           name: build-enterprise-plugins
           edition: enterprise
           requires:
-            - test-backend
-            - test-frontend
+            - lint-go
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:
@@ -1328,4 +1326,8 @@ workflows:
           cron: "0 0 * * *"
           filters: *filter-only-master
     jobs:
-      - scan-docker-images
+      - scan-docker-image:
+          matrix:
+            parameters:
+              image: [grafana/grafana, grafana/grafana-enterprise]
+              tag: [latest, master, latest-ubuntu, master-ubuntu]

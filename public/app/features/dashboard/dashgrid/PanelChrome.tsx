@@ -26,6 +26,7 @@ import {
   PanelPlugin,
   FieldConfigSource,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -69,7 +70,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard, isEditing } = this.props;
+    const { panel, dashboard } = this.props;
 
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
@@ -86,29 +87,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
-    } else {
-      if (isEditing) {
-        this.querySubscription = panel
-          .getQueryRunner()
-          .getData()
-          .subscribe({
-            next: data => this.onDataUpdate(data),
-          });
-      }
-
-      if (!this.wantsQueryExecution) {
-        this.setState({ isFirstLoad: false });
-      }
+      return;
     }
 
-    if (!this.querySubscription) {
-      this.querySubscription = panel
-        .getQueryRunner()
-        .getData()
-        .subscribe({
-          next: data => this.onDataUpdate(data),
-        });
+    if (!this.wantsQueryExecution) {
+      this.setState({ isFirstLoad: false });
     }
+
+    this.querySubscription = panel
+      .getQueryRunner()
+      .getData({ withTransforms: true, withFieldConfig: true })
+      .subscribe({
+        next: data => this.onDataUpdate(data),
+      });
   }
 
   componentWillUnmount() {
@@ -208,6 +199,9 @@ export class PanelChrome extends PureComponent<Props, State> {
         cacheTimeout: panel.cacheTimeout,
         transformations: panel.transformations,
       });
+    } else {
+      // The panel should render on refresh as well if it doesn't have a query, like clock panel
+      this.onRender();
     }
   };
 
@@ -329,7 +323,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}

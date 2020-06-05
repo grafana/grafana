@@ -12,14 +12,14 @@ import {
   DataQueryResponseData,
   DataSourceInstanceSettings,
   dateTime,
+  getFieldDisplayName,
   LoadingState,
   toDataFrame,
-  getFieldTitle,
 } from '@grafana/data';
 import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { CustomVariable } from 'app/features/templating/custom_variable';
+import { VariableHide } from '../../../features/variables/types';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
@@ -447,9 +447,25 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('When interpolating variables', () => {
-    let customVariable: CustomVariable;
+    let customVariable: any;
     beforeEach(() => {
-      customVariable = new CustomVariable({}, {} as any);
+      customVariable = {
+        id: '',
+        global: false,
+        multi: false,
+        includeAll: false,
+        allValue: null,
+        query: '',
+        options: [],
+        current: {},
+        name: '',
+        type: 'custom',
+        label: null,
+        hide: VariableHide.dontHide,
+        skipUrlSync: false,
+        index: -1,
+        initLock: null,
+      };
     });
 
     describe('and value is a string', () => {
@@ -590,7 +606,7 @@ describe('PrometheusDatasource', () => {
       it('should return series list', async () => {
         const frame = toDataFrame(results.data[0]);
         expect(results.data.length).toBe(1);
-        expect(getFieldTitle(frame.fields[1])).toBe('test{job="testjob"}');
+        expect(getFieldDisplayName(frame.fields[1])).toBe('test{job="testjob"}');
       });
     });
 
@@ -736,7 +752,7 @@ describe('PrometheusDatasource', () => {
       const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
       expect(frame.name).toBe('test{job="testjob"}');
-      expect(getFieldTitle(frame.fields[1])).toBe('Value');
+      expect(getFieldDisplayName(frame.fields[1])).toBe('test{job="testjob"}');
     });
   });
 
@@ -1641,7 +1657,7 @@ describe('PrometheusDatasource for POST', () => {
     it('should return series list', () => {
       const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
-      expect(getFieldTitle(frame.fields[1])).toBe('test{job="testjob"}');
+      expect(getFieldDisplayName(frame.fields[1])).toBe('test{job="testjob"}');
     });
   });
 

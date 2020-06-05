@@ -8,16 +8,14 @@ import classNames from 'classnames';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { Branding } from 'app/core/components/Branding/Branding';
-
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Icon, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { cleanUpDashboard } from '../state/reducers';
 import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
@@ -30,8 +28,9 @@ import {
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
-import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
+import { cleanUpDashboardAndVariables } from '../state/actions';
+import { cancelVariables } from '../../variables/state/actions';
 
 export interface Props {
   urlUid?: string;
@@ -51,11 +50,12 @@ export interface Props {
   dashboard: DashboardModel | null;
   initError?: DashboardInitError;
   initDashboard: typeof initDashboard;
-  cleanUpDashboard: typeof cleanUpDashboard;
+  cleanUpDashboardAndVariables: typeof cleanUpDashboardAndVariables;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
   isPanelEditorOpen?: boolean;
+  cancelVariables: typeof cancelVariables;
 }
 
 export interface State {
@@ -90,10 +90,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.props.dashboard) {
-      this.props.cleanUpDashboard();
-      this.setPanelFullscreenClass(false);
-    }
+    this.props.cleanUpDashboardAndVariables();
+    this.setPanelFullscreenClass(false);
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -154,6 +152,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const { dashboard } = this.props;
 
     const panelId = parseInt(urlPanelId!, 10);
+    dashboard!.expandParentRowFor(panelId);
     const panel = dashboard!.getPanelById(panelId);
 
     if (!panel) {
@@ -170,7 +169,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    dashboard!.expandParentRowFor(panelId);
     callback(panel);
   }
 
@@ -210,11 +208,24 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
+  cancelVariables = () => {
+    this.props.updateLocation({ path: '/' });
+  };
+
   renderSlowInitState() {
     return (
       <div className="dashboard-loading">
         <div className="dashboard-loading__text">
-          <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+          <VerticalGroup spacing="md">
+            <HorizontalGroup align="center" justify="center" spacing="xs">
+              <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+            </HorizontalGroup>{' '}
+            <HorizontalGroup align="center" justify="center">
+              <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
+                Cancel loading dashboard
+              </Button>
+            </HorizontalGroup>
+          </VerticalGroup>
         </div>
       </div>
     );
@@ -263,7 +274,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     } = this.props;
 
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
-    const { featureToggles } = getConfig();
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -295,8 +305,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {!featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
-              {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
+              {!editPanel && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}
@@ -336,9 +345,10 @@ export const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = {
   initDashboard,
-  cleanUpDashboard,
+  cleanUpDashboardAndVariables,
   notifyApp,
   updateLocation,
+  cancelVariables,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

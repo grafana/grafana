@@ -103,5 +103,6 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     align-items: center;
     flex-shrink: 0;
     flex-grow: 1;
+    height: 100%;
   `,
 }));

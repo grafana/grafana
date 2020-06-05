@@ -6,10 +6,9 @@ import { AppEvents } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DataSourceResponse } from 'app/types/events';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
+import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
@@ -53,6 +52,8 @@ enum CancellationType {
   request,
   dataSourceRequest,
 }
+
+const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
@@ -183,6 +184,10 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(requestId);
   }
 
+  cancelAllInFlightRequests() {
+    this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
+  }
+
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
     // A requestId is provided by the datasource as a unique identifier for a
     // particular query. Every observable below has a takeUntil that subscribes to this.inFlightRequests and
@@ -260,11 +265,11 @@ export class BackendSrv implements BackendService {
   }
 
   saveDashboard(
-    dash: DashboardModel,
+    dashboard: DashboardDataDTO,
     { message = '', folderId, overwrite = false }: { message?: string; folderId?: number; overwrite?: boolean } = {}
   ) {
     return this.post('/api/dashboards/db/', {
-      dashboard: dash,
+      dashboard,
       folderId,
       overwrite,
       message,
@@ -319,13 +324,12 @@ export class BackendSrv implements BackendService {
 
   private async moveDashboard(uid: string, toFolder: FolderInfo) {
     const fullDash: DashboardDTO = await this.getDashboardByUid(uid);
-    const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
     if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
       return { alreadyInFolder: true };
     }
 
-    const clone = model.getSaveModelClone();
+    const clone = fullDash.dashboard;
     const options = {
       folderId: toFolder.id,
       overwrite: false,
@@ -530,12 +534,18 @@ export class BackendSrv implements BackendService {
         this.inFlightRequests.pipe(
           filter(requestId => {
             let cancelRequest = false;
+
             if (options && options.requestId && options.requestId === requestId) {
               // when a new requestId is started it will be published to inFlightRequests
               // if a previous long running request that hasn't finished yet has the same requestId
               // we need to cancel that request
               cancelRequest = true;
             }
+
+            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
+              cancelRequest = true;
+            }
+
             return cancelRequest;
           })
         )

@@ -4,6 +4,7 @@ import {
   setFieldConfigDefaults,
   setDynamicConfigValue,
   applyFieldOverrides,
+  getLinksSupplier,
 } from './fieldOverrides';
 import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
@@ -19,8 +20,8 @@ import { Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
-import { getFieldTitle } from './fieldState';
-
+import { getFieldDisplayName } from './fieldState';
+import { locationUtil } from '../utils';
 const property1 = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
@@ -84,7 +85,7 @@ describe('applyFieldOverrides', () => {
         matcher: { id: FieldMatcherID.numeric },
         properties: [
           { id: 'decimals', value: 1 }, // Numeric
-          { id: 'title', value: 'Kittens' }, // Text
+          { id: 'displayName', value: 'Kittens' }, // Text
         ],
       },
     ],
@@ -117,8 +118,8 @@ describe('applyFieldOverrides', () => {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "label": undefined,
-              "labels": "",
+              "formattedLabels": "",
+              "labels": undefined,
               "name": "A message",
             },
           },
@@ -136,8 +137,8 @@ describe('applyFieldOverrides', () => {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "label": undefined,
-              "labels": "",
+              "formattedLabels": "",
+              "labels": undefined,
               "name": "B info",
             },
           },
@@ -163,7 +164,7 @@ describe('applyFieldOverrides', () => {
       dateFormat: '', // should be ignored
       max: parseFloat('NOPE'), // should be ignored
       min: null, // should alo be ignored!
-      title: 'newTitle',
+      displayName: 'newTitle',
     };
 
     const f: DataFrame = toDataFrame({
@@ -186,7 +187,7 @@ describe('applyFieldOverrides', () => {
     expect(outField.config.min).toEqual(0);
     expect(outField.config.max).toEqual(100);
     expect(outField.config.unit).toEqual('ms');
-    expect(getFieldTitle(outField, f)).toEqual('newTitle');
+    expect(getFieldDisplayName(outField, f)).toEqual('newTitle');
   });
 
   it('will apply field overrides', () => {
@@ -210,7 +211,7 @@ describe('applyFieldOverrides', () => {
     expect(config.unit).toEqual('xyz');
 
     // The default value applied
-    expect(config.title).toEqual('Kittens');
+    expect(config.displayName).toEqual('Kittens');
 
     // The override applied
     expect(config.decimals).toEqual(1);
@@ -309,13 +310,13 @@ describe('setFieldConfigDefaults', () => {
 describe('setDynamicConfigValue', () => {
   it('applies dynamic config values', () => {
     const config = {
-      title: 'test',
+      displayName: 'test',
     };
 
     setDynamicConfigValue(
       config,
       {
-        id: 'title',
+        id: 'displayName',
         value: 'applied',
       },
       {
@@ -326,7 +327,7 @@ describe('setDynamicConfigValue', () => {
       }
     );
 
-    expect(config.title).toEqual('applied');
+    expect(config.displayName).toEqual('applied');
   });
 
   it('applies custom dynamic config values', () => {
@@ -379,7 +380,7 @@ describe('setDynamicConfigValue', () => {
 
   it('removes properties', () => {
     const config = {
-      title: 'title',
+      displayName: 'title',
       custom: {
         property3: {
           nested: 1,
@@ -403,7 +404,7 @@ describe('setDynamicConfigValue', () => {
     setDynamicConfigValue(
       config,
       {
-        id: 'title',
+        id: 'displayName',
         value: undefined,
       },
       {
@@ -415,6 +416,43 @@ describe('setDynamicConfigValue', () => {
     );
 
     expect(config.custom.property3).toEqual({});
-    expect(config.title).toBeUndefined();
+    expect(config.displayName).toBeUndefined();
+  });
+});
+
+describe('getLinksSupplier', () => {
+  it('will replace variables in url and title of the data link', () => {
+    locationUtil.initialize({
+      getConfig: () => ({} as any),
+      buildParamsFromVariables: (() => {}) as any,
+      getTimeRangeForUrl: (() => {}) as any,
+    });
+
+    const f0 = new MutableDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+          config: {
+            links: [
+              {
+                url: 'url to be interpolated',
+                title: 'title to be interpolated',
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const replaceSpy = jest.fn();
+    const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy, { theme: {} as GrafanaTheme });
+    supplier({});
+
+    expect(replaceSpy).toBeCalledTimes(2);
+    expect(replaceSpy.mock.calls[0][0]).toEqual('url to be interpolated');
+    expect(replaceSpy.mock.calls[1][0]).toEqual('title to be interpolated');
   });
 });

@@ -15,7 +15,7 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-type PreferredVisualisationType = 'graph' | 'table';
+export type PreferredVisualisationType = 'graph' | 'table';
 
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
@@ -34,10 +34,15 @@ export interface QueryResultMeta {
   preferredVisualisationType?: PreferredVisualisationType;
 
   /**
+   * This is the raw query sent to the underlying system.  All macros and templating
+   * as been applied.  When metadata contains this value, it will be shown in the query inspector
+   */
+  executedQueryString?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
-  rawQuery?: string; // used by stackdriver
   alignmentPeriod?: string; // used by stackdriver
   query?: string; // used by azure log
   searchWords?: string[]; // used by log models and loki
@@ -46,7 +51,7 @@ export interface QueryResultMeta {
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
-  title: string;
+  displayName: string;
   value: number;
 }
 
@@ -96,6 +101,7 @@ export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
   unit?: string;
+  custom?: Record<string, any>;
 }
 
 export interface TableData extends QueryResultBase {

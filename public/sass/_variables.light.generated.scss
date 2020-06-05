@@ -219,7 +219,7 @@ $typeahead-selected-color: $yellow;
 $dropdownBackground: $white;
 $dropdownBorder: $gray-4;
 $dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $white;
+$dropdownDividerBottom: $gray-4;
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;

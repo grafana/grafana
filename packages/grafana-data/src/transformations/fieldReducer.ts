@@ -245,7 +245,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     delta: 0,
     step: Number.MAX_VALUE,
 
-    // Just used for calcutations -- not exposed as a stat
+    // Just used for calculations -- not exposed as a stat
     previousDeltaUp: true,
   } as FieldCalcs;
 

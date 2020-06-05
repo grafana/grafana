@@ -18,6 +18,7 @@ export const Components = {
     Panel: {
       title: (title: string) => `Panel header title item ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
+      containerByTitle: (title: string) => `Panel container title ${title}`,
     },
     Visualization: {
       Graph: {
@@ -27,6 +28,9 @@ export const Components = {
         Legend: {
           legendItemAlias: (name: string) => `gpl alias ${name}`,
           showLegendSwitch: 'gpl show legend',
+        },
+        xAxis: {
+          labels: () => 'div.flot-x-axis > div.flot-tick-label',
         },
       },
     },
@@ -49,6 +53,7 @@ export const Components = {
       close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
       open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
       select: 'Panel editor option pane select',
+      tab: (title: string) => `Panel editor option pane tab ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
@@ -92,6 +97,12 @@ export const Components = {
   },
   TransformTab: {
     content: 'Transform editor tab content',
+    newTransform: (title: string) => `New transform ${title}`,
+  },
+  Transforms: {
+    Reduce: {
+      calculationsLabel: 'Transform calculations label',
+    },
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
@@ -109,6 +120,7 @@ export const Components = {
   Select: {
     option: 'Select option',
     input: () => 'input[id*="react-select-"]',
+    singleValue: () => 'div[class*="-singleValue"]',
   },
   FieldConfigEditor: {
     content: 'Field config editor content',
@@ -119,4 +131,11 @@ export const Components = {
   FolderPicker: {
     container: 'Folder picker select container',
   },
+  DataSourcePicker: {
+    container: 'Data source picker select container',
+  },
+  TimeZonePicker: {
+    container: 'Time zone picker select container',
+  },
+  QueryField: { container: 'Query field' },
 };

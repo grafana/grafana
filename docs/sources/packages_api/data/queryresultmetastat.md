@@ -23,15 +23,15 @@ import { QueryResultMetaStat } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [title](#title-property) | <code>string</code> |  |
+|  [displayName](#displayname-property) | <code>string</code> |  |
 |  [value](#value-property) | <code>number</code> |  |
 
-### title property
+### displayName property
 
 <b>Signature</b>
 
 ```typescript
-title: string;
+displayName: string;
 ```
 
 ### value property

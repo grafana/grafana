@@ -20,6 +20,17 @@ export class CopyToClipboard extends PureComponent<Props> {
   }
 
   componentDidMount() {
+    this.initClipboardJS();
+  }
+
+  componentDidUpdate() {
+    if (this.clipboardjs) {
+      this.clipboardjs.destroy();
+    }
+    this.initClipboardJS();
+  }
+
+  initClipboardJS = () => {
     const { text, onSuccess, onError } = this.props;
 
     this.clipboardjs = new ClipboardJS(this.myRef.current, {
@@ -40,7 +51,7 @@ export class CopyToClipboard extends PureComponent<Props> {
         onError(evt);
       });
     }
-  }
+  };
 
   componentWillUnmount() {
     if (this.clipboardjs) {

@@ -11,24 +11,21 @@ weight = 1
 
 # User Authentication Overview
 
-Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user
-permissions and org memberships.
+Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-## OAuth Integrations
+Here is a table showing all supported authentication providers and the features available for them. [Team sync]({{< relref "../enterprise/team-sync.md" >}}) and [active sync]({{< relref "../enterprise/enhanced_ldap.md#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
-- [Google OAuth]({{< relref "google.md" >}})
-- [GitHub OAuth]({{< relref "github.md" >}})
-- [Gitlab OAuth]({{< relref "gitlab.md" >}})
-- [Generic OAuth]({{< relref "generic-oauth.md" >}}) (Okta2, BitBucket, Azure, OneLogin, Auth0)
-
-## LDAP integrations
-
-- [LDAP Authentication]({{< relref "ldap.md" >}}) (OpenLDAP, ActiveDirectory, etc)
-
-## Auth proxy
-
-- [Auth Proxy]({{< relref "auth-proxy.md" >}}) If you want to handle authentication outside Grafana using a reverse
-    proxy.
+Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active sync<br> *(Enterprise only)*
+-------- | :-----: | :----------: | :-------: | :---------: 
+[Auth Proxy]({{< relref "auth-proxy.md" >}})       | v2.1+ | - | v6.3+ | - 
+[Azure AD OAuth]({{< relref "azuread.md" >}})      | v6.7+ | v6.7+ | v6.7+ | - 
+[Generic OAuth]({{< relref "generic-oauth.md" >}}) | v4.0+ | v6.5+ | - | - 
+[GitHub OAuth]({{< relref "github.md" >}})         | v2.0+ | - | v6.3+ | -
+[GitLab OAuth]({{< relref "gitlab.md" >}})         | v5.3+ | - | v6.4+ | -
+[Google OAuth]({{< relref "google.md" >}})         | v2.0+ | - | - | - 
+[LDAP]({{< relref "ldap.md" >}})                   | v2.1+ | v2.1+ | v5.3+ | v6.3+
+[Okta OAuth]({{< relref "okta.md" >}})             | v7.0+ | v7.0+ | v7.0+ | - 
+[SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | - 
 
 ## Grafana Auth
 
@@ -71,7 +68,7 @@ login_maximum_lifetime_days = 30
 # How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
 token_rotation_interval_minutes = 10
 
-# The maximum lifetime (seconds) an api key can be used. If it is set all the api keys should have limited lifetime that is lower than this value.
+# The maximum lifetime (seconds) an API key can be used. If it is set all the API keys should have limited lifetime that is lower than this value.
 api_key_max_seconds_to_live = -1
 ```
 
@@ -137,7 +134,7 @@ disable_signout_menu = true
 
 ### URL redirect after signing out
 
-URL to redirect the user to after signing out from Grafana. This can for example be used to enable signout from oauth provider.
+URL to redirect the user to after signing out from Grafana. This can for example be used to enable signout from OAuth provider.
 
 ```bash
 [auth]

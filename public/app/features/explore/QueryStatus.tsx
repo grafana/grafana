@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import ElapsedTime from './ElapsedTime';
+import { ElapsedTime } from './ElapsedTime';
 import { PanelData, LoadingState } from '@grafana/data';
 
 function formatLatency(value: number) {

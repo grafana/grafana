@@ -11,6 +11,8 @@ type = "docs"
 
 ### dateTimeFormat variable
 
+Helper function to format date and time according to the specified options. If no options are supplied, then default values are used. For more details, see [DateTimeOptionsWithFormat](./data/datetimeoptionswithformat.md)<!-- -->.
+
 <b>Signature</b>
 
 ```typescript
