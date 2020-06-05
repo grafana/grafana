@@ -54,7 +54,6 @@ func (e *CloudWatchExecutor) getLogsClient(region string) (*cloudwatchlogs.Cloud
 
 	dsInfo := retrieveDsInfo(e.DataSource, region)
 	newLogsClient, err := retrieveLogsClient(dsInfo)
-
 	if err != nil {
 		return nil, err
 	}

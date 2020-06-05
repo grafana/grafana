@@ -30,6 +30,7 @@ type cache struct {
 var awsCredentialCache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
+/*
 func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
 	credentialCacheLock.RLock()
@@ -121,6 +122,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 
 	return creds, nil
 }
+*/
 
 func webIdentityProvider(sess *session.Session) credentials.Provider {
 	svc := sts.New(sess)
@@ -183,33 +185,68 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 	return datasourceInfo
 }
 
-func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
-	creds, err := GetCredentials(dsInfo)
+func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
+	cfgs := []*aws.Config{
+		{Region: aws.String(dsInfo.Region)},
+	}
+	switch dsInfo.AuthType {
+	case "arn":
+		plog.Debug("Authenticating towards AWS with AssumeRoleProvider", "arn", dsInfo.AssumeRoleArn, "region",
+			dsInfo.Region)
+
+		stsSess, err := session.NewSession(cfgs...)
+		if err != nil {
+			return nil, fmt.Errorf("creating session for AssumeRoleProvider failed: %w", err)
+		}
+
+		provider := &stscreds.AssumeRoleProvider{
+			Client:          sts.New(stsSess),
+			RoleARN:         dsInfo.AssumeRoleArn,
+			RoleSessionName: "GrafanaSession",
+			Duration:        15 * time.Minute,
+		}
+
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewCredentials(provider),
+		})
+	case "credentials":
+		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
+			"region", dsInfo.Region)
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
+		})
+	case "keys":
+		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
+		provider := &credentials.StaticProvider{Value: credentials.Value{
+			AccessKeyID:     dsInfo.AccessKey,
+			SecretAccessKey: dsInfo.SecretKey,
+		}}
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewCredentials(provider),
+		})
+	case "sdk":
+		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
+	default:
+		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "arn", "credentials", "keys" or "sdk"`,
+			dsInfo.AuthType)
+	}
+
+	sess, err := session.NewSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-
-	return cfg, nil
+	plog.Debug("Successfully authenticated towards AWS")
+	return sess, nil
 }
 
 func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
 	datasourceInfo := e.getDsInfo(region)
-	cfg, err := getAwsConfig(datasourceInfo)
+	sess, err := newAWSSession(datasourceInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess, cfg)
+	client := cloudwatch.New(sess)
 
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
@@ -219,17 +256,13 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 }
 
 func retrieveLogsClient(datasourceInfo *DatasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	cfg, err := getAwsConfig(datasourceInfo)
+	plog.Debug("Creating CloudWatch logs client")
+	sess, err := newAWSSession(datasourceInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess, cfg)
+	client := cloudwatchlogs.New(sess)
 
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

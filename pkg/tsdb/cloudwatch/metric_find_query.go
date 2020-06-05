@@ -12,7 +12,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -477,15 +476,11 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 func (e *CloudWatchExecutor) ensureClientSession(region string) error {
 	if e.ec2Svc == nil {
 		dsInfo := e.getDsInfo(region)
-		cfg, err := getAwsConfig(dsInfo)
+		sess, err := newAWSSession(dsInfo)
 		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
+			return err
 		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-		}
-		e.ec2Svc = ec2.New(sess, cfg)
+		e.ec2Svc = ec2.New(sess)
 	}
 	return nil
 }
@@ -604,15 +599,11 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 func (e *CloudWatchExecutor) ensureRGTAClientSession(region string) error {
 	if e.rgtaSvc == nil {
 		dsInfo := e.getDsInfo(region)
-		cfg, err := getAwsConfig(dsInfo)
+		sess, err := newAWSSession(dsInfo)
 		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
+			return err
 		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-		}
-		e.rgtaSvc = resourcegroupstaggingapi.New(sess, cfg)
+		e.rgtaSvc = resourcegroupstaggingapi.New(sess)
 	}
 	return nil
 }
@@ -736,19 +727,11 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	creds, err := GetCredentials(cwData)
+	sess, err := newAWSSession(cwData)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
-	cfg := &aws.Config{
-		Region:      aws.String(cwData.Region),
-		Credentials: creds,
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return cloudwatch.ListMetricsOutput{}, err
-	}
-	svc := cloudwatch.New(sess, cfg)
+	svc := cloudwatch.New(sess)
 
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(cwData.Namespace),
