@@ -12,7 +12,7 @@
 		</div>
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Alias</label>
-			<input type="text" class="gf-form-input width-14" placeholder="optional" ng-model="ctrl.target.alias" ng-model-onblur pattern='[^<>&\\"]+'>
+			<input type="text" class="gf-form-input width-14" placeholder="optional" ng-model="ctrl.target.alias" ng-model-onblur ng-change="ctrl.refresh()" pattern='[^<>&\\"]+'>
 		</div>
 		<div ng-if="ctrl.showLabels" class="gf-form gf-form--grow">
 			<label class="gf-form-label query-keyword width-7">
