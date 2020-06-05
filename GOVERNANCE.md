@@ -84,6 +84,7 @@ The current team members are:
 * Kyle Brandt ([Grafana Labs](https://grafana.com/))
 * Leonard Gram ([Grafana Labs](https://grafana.com/))
 * Lukas Siatka ([Grafana Labs](https://grafana.com/))
+* Malcolm Holmes ([Grafana Labs](https://grafana.com/))
 * Marcus Andersson ([Grafana Labs](https://grafana.com/))
 * Marcus Efraimsson ([Grafana Labs](https://grafana.com/))
 * Marcus Olsson ([Grafana Labs](https://grafana.com/))
