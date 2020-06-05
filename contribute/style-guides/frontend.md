@@ -16,7 +16,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
     - [Props](#props)
   - [State management](#state-management)
   
-  - [Removing or replacing Angular dependencies proposal](https://github.com/grafana/grafana/pull/23048)
+  - [Proposal for removing or replacing Angular dependencies](https://github.com/grafana/grafana/pull/23048)
 
 ## Basic rules
 
