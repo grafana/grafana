@@ -326,6 +326,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriv
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
+			queryResult.Error = err
 			return queryResult, stackdriverResponse{}, nil
 		}
 		projectName = defaultProject
