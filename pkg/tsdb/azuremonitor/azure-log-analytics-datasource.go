@@ -275,7 +275,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 
 func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) {
 	frame.Meta.ExecutedQueryString = query
-	frame.Meta.Custom["subscriptionId"] = subscriptionID
+	frame.Meta.Custom["subscription"] = subscriptionID
 	frame.Meta.Custom["workspace"] = workspace
 	encodedQuery, err := encodeQuery(query)
 	if err == nil {
