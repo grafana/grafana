@@ -15,6 +15,8 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
   - [React](#react)
     - [Props](#props)
   - [State management](#state-management)
+  
+  - [Proposal for removing or replacing Angular dependencies](https://github.com/grafana/grafana/pull/23048)
 
 ## Basic rules
 
@@ -324,6 +326,6 @@ static defaultProps: Partial<Props> = { ... }
 ## State management
 
 - Don't mutate state in reducers or thunks.
-- Use helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. See [Redux framework](redux.md) for more details.
+- Use `createSlice`. See [Redux Toolkit](https://redux-toolkit.js.org/) for more details.
 - Use `reducerTester` to test reducers. See [Redux framework](redux.md) for more details.
 - Use state selectors to access state instead of accessing state directly.
