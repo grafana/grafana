@@ -81,7 +81,9 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 ```
 
-## Variable expansion (7.1+)
+## Variable expansion
+
+> Only available in Grafana 7.1+.
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}` they will be processed by Grafana's
