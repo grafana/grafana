@@ -71,10 +71,6 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     };
   }
 
-  filterQuery(item: AzureMonitorQuery): boolean {
-    return item.hide !== true && !!item.azureLogAnalytics;
-  }
-
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
     const item = target.appInsights;
 
