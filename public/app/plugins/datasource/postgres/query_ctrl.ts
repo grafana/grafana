@@ -9,7 +9,7 @@ import { auto } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
 import { PanelEvents } from '@grafana/data';
-import { VariableWithMultiSupport } from 'app/features/templating/types';
+import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { getLocationSrv } from '@grafana/runtime';
 
 export interface QueryMeta {

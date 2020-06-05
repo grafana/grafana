@@ -29,9 +29,11 @@ func LogTableToFrame(table *AzureLogAnalyticsTable) (*data.Frame, error) {
 func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverter, error) {
 	converters := []data.FieldConverter{}
 	colNames := make([]string, len(t.Columns))
+	colTypes := make([]string, len(t.Columns)) // for metadata
 
 	for i, col := range t.Columns {
 		colNames[i] = col.Name
+		colTypes[i] = col.Type
 		converter, ok := converterMap[col.Type]
 		if !ok {
 			return nil, fmt.Errorf("unsupported analytics column type %v", col.Type)
@@ -47,6 +49,10 @@ func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverte
 	err = fic.Frame.SetFieldNames(colNames...)
 	if err != nil {
 		return nil, err
+	}
+
+	fic.Frame.Meta = &data.FrameMeta{
+		Custom: map[string]interface{}{"azureColumnTypes": colTypes},
 	}
 
 	return fic, nil
@@ -73,7 +79,7 @@ var stringConverter = data.FieldConverter{
 		}
 		s, ok := v.(string)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected string got %T", v)
+			return nil, fmt.Errorf("unexpected type, expected string but got %T", v)
 		}
 		as = &s
 		return as, nil
@@ -89,7 +95,7 @@ var timeConverter = data.FieldConverter{
 		}
 		s, ok := v.(string)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected string got %T", v)
+			return nil, fmt.Errorf("unexpected type, expected string but got %T", v)
 		}
 		t, err := time.Parse(time.RFC3339Nano, s)
 		if err != nil {
@@ -109,7 +115,7 @@ var realConverter = data.FieldConverter{
 		}
 		jN, ok := v.(json.Number)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected json.Number got %T", v)
+			return nil, fmt.Errorf("unexpected type, expected json.Number but got %T", v)
 		}
 		f, err := jN.Float64()
 		if err != nil {
@@ -128,7 +134,7 @@ var boolConverter = data.FieldConverter{
 		}
 		b, ok := v.(bool)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected bool got %T", v)
+			return nil, fmt.Errorf("unexpected type, expected bool but got %T", v)
 		}
 		return &b, nil
 	},
@@ -143,7 +149,7 @@ var intConverter = data.FieldConverter{
 		}
 		jN, ok := v.(json.Number)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected json.Number got %T", v)
+			return nil, fmt.Errorf("unexpected type, expected json.Number but got %T", v)
 		}
 		var err error
 		iv, err := strconv.ParseInt(jN.String(), 10, 32)
@@ -164,7 +170,7 @@ var longConverter = data.FieldConverter{
 		}
 		jN, ok := v.(json.Number)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected json.Number got %T", v)
+			return nil, fmt.Errorf("unexpected type, expected json.Number but got %T", v)
 		}
 		out, err := jN.Int64()
 		if err != nil {
