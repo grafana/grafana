@@ -8,6 +8,7 @@ export interface AddPanelConfig {
   queriesForm: (config: AddPanelConfig) => void;
   panelTitle: string;
   visualizationName: string;
+  waitForChartData: boolean;
 }
 
 // @todo this actually returns type `Cypress.Chainable`
@@ -19,6 +20,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       panelTitle: `e2e-${Date.now()}`,
       queriesForm: () => {},
       visualizationName: 'Table',
+      waitForChartData: true,
       ...config,
     } as AddPanelConfig;
 
@@ -56,7 +58,14 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .click();
     closeOptionsGroup('type');
 
+    e2e().server();
+    e2e()
+      .route('POST', '/api/ds/query')
+      .as('chartData');
+
     queriesForm(fullConfig);
+
+    e2e().wait('@chartData');
 
     // @todo enable when plugins have this implemented
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
