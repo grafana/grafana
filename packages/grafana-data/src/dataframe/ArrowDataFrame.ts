@@ -12,6 +12,7 @@ import {
   Bool,
   Column,
 } from 'apache-arrow';
+import { vectorator, ArrayVector } from '../vector';
 
 export interface ArrowDataFrame extends DataFrame {
   table: Table;
@@ -48,7 +49,7 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
     if (col) {
       const schema = table.schema.fields[i];
       let type = FieldType.other;
-      const values: Vector<any> = col;
+      let values: Vector<any> = col;
       switch ((schema.typeId as unknown) as ArrowType) {
         case ArrowType.Decimal:
         case ArrowType.Int:
@@ -76,6 +77,17 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
       if (config.custom?.fieldType) {
         // HACK until we sort out something like: https://github.com/grafana/grafana/pull/22083
         type = config.custom?.fieldType;
+      }
+
+      // Convert trace json string to objects
+      if (type === FieldType.trace) {
+        const traces = vectorator(values).map((str: string) => {
+          try {
+            return JSON.parse(str);
+          } catch {}
+          return { error: 'parsing trace json' };
+        });
+        values = new ArrayVector(traces);
       }
 
       fields.push({
