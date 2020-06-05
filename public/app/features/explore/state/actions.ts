@@ -165,6 +165,7 @@ export function changeDatasource(exploreId: ExploreId, datasourceName: string): 
 export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
     dispatch(changeModeAction({ exploreId, mode }));
+    dispatch(stateSave());
   };
 }
 
@@ -547,7 +548,7 @@ export const deleteRichHistory = (): ThunkResult<void> => {
   };
 };
 
-const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+export const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
   if (isDateTime(from)) {
     from = from.valueOf().toString(10);

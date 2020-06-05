@@ -2,9 +2,9 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/types';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
-import { changeVariableProp, setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
@@ -19,7 +19,7 @@ import {
   removeVariableEditorError,
   setIdInEditor,
 } from '../editor/reducer';
-import DefaultVariableQueryEditor from '../../templating/DefaultVariableQueryEditor';
+import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { expect } from 'test/lib/common';
 
 const mocks: Record<string, any> = {
@@ -170,7 +170,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -198,7 +198,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {

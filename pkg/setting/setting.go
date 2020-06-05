@@ -372,6 +372,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 
 func envKey(sectionName string, keyName string) string {
 	sN := strings.ToUpper(strings.Replace(sectionName, ".", "_", -1))
+	sN = strings.Replace(sN, "-", "_", -1)
 	kN := strings.ToUpper(strings.Replace(keyName, ".", "_", -1))
 	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
 	return envKey
@@ -729,8 +730,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
-	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(false)
-	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(false)
+	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
 	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)

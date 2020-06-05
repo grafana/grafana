@@ -51,7 +51,7 @@ func TestPluginDashboards(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		Convey("should return 2 dashboarrd", func() {
+		Convey("should return 2 dashboards", func() {
 			So(len(dashboards), ShouldEqual, 2)
 		})
 

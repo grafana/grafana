@@ -21,6 +21,7 @@ import {
 import { toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -145,7 +146,7 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
   // If any query has an expression, use the expression endpoint
   for (const target of request.targets) {
     if (target.datasource === ExpressionDatasourceID) {
-      return expressionDatasource.query(request);
+      return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
     }
   }
 

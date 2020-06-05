@@ -1,7 +1,6 @@
 package azuremonitor
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -92,7 +91,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 						"metricName":          "Percentage CPU",
 						"alias":               "testalias",
 						"queryType":           "Application Insights",
-						"allowedTimeGrainsMs": []interface{}{"auto", json.Number("60000"), json.Number("300000")},
+						"allowedTimeGrainsMs": []int64{60000, 300000},
 					},
 				})
 				tsdbQuery.Queries[0].IntervalMs = 400000
