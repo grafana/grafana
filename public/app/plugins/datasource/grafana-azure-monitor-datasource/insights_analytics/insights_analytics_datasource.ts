@@ -20,10 +20,10 @@ export default class InsightsAnalyticsDatasource extends AppInsightsDatasource {
     }
 
     return {
-      type: 'timeSeriesQuery',
       refId: target.refId,
       queryType: AzureQueryType.InsightsAnalytics,
       insightsAnalytics: {
+        type: 'timeSeriesQuery',
         query: getTemplateSrv().replace(item.query, scopedVars),
         format: target.format,
       },
