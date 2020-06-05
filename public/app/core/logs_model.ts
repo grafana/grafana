@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { colors, ansicolor } from '@grafana/ui';
+import tinycolor from 'tinycolor2';
 
 import {
   Labels,
@@ -28,12 +29,13 @@ import {
   textUtil,
   dateTime,
   AbsoluteTimeRange,
+  FieldColorMode,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
-import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
+import { deduplicateLogRowsById, sortInAscendingOrder } from 'app/core/utils/explore';
 import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -86,9 +88,7 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
     return logRows;
   }
 
-  return logRows.filter((row: LogRowModel) => {
-    return !hiddenLogLevels.has(row.logLevel);
-  });
+  return logRows.filter((row: LogRowModel) => !hiddenLogLevels.has(row.logLevel));
 }
 
 export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number, timeZone: TimeZone): GraphSeriesXY[] {
@@ -151,8 +151,12 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
     valueField.config = {
       ...valueField.config,
-      color: series.color,
+      color: {
+        mode: FieldColorMode.Fixed,
+        fixedColor: series.color,
+      },
     };
+    valueField.display = getDisplayProcessor({ field: valueField });
 
     const points = getFlotPairs({
       xField: timeField,
@@ -165,6 +169,9 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
       label: series.alias,
       data: points,
       isVisible: true,
+      showBars: true,
+      showPoints: false,
+      showLines: false,
       yAxis: {
         index: 1,
         min: 0,
@@ -176,14 +183,32 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
       // for now setting the time step to be 0,
       // and handle the bar width by setting lineWidth instead of barWidth in flot options
       timeStep: 0,
+      highlightColor: tinycolor(series.color)
+        .darken(15)
+        .toString(),
     };
 
     return graphSeries;
   });
 }
 
-function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+// Checks if the data frame has at least one string field and one time field
+function isLogsData(dataFrame: DataFrame) {
+  let hasTimeField = false;
+  let hasStringField = false;
+  for (const field of dataFrame.fields) {
+    if (field.type === FieldType.time) {
+      hasTimeField = true;
+    } else if (field.type === FieldType.string) {
+      hasStringField = true;
+    }
+
+    if (hasTimeField && hasStringField) {
+      break;
+    }
+  }
+
+  return hasTimeField && hasStringField;
 }
 
 /**
@@ -193,15 +218,16 @@ function isLogsData(series: DataFrame) {
  * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
  */
 export function dataFrameToLogsModel(
-  dataFrame: DataFrame[],
+  dataFrames: DataFrame[],
   intervalMs: number | undefined,
   timeZone: TimeZone,
-  absoluteRange?: AbsoluteTimeRange
+  absoluteRange?: AbsoluteTimeRange,
+  unifiedDataSource = false
 ): LogsModel {
-  const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
+  const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrames);
   const logsModel = logSeriesToLogsModel(logSeries);
 
-  if (logsModel) {
+  if (logsModel && !unifiedDataSource) {
     if (metricSeries.length === 0) {
       // Create histogram metrics from logs using the interval as bucket size for the line count
       if (intervalMs && logsModel.rows.length > 0) {
@@ -230,12 +256,26 @@ export function dataFrameToLogsModel(
     return logsModel;
   }
 
-  return {
-    hasUniqueLabels: false,
-    rows: [],
-    meta: [],
-    series: [],
-  };
+  if (!logsModel) {
+    return {
+      hasUniqueLabels: false,
+      rows: [],
+      meta: [],
+      series: [],
+    };
+  }
+
+  // Create histogram metrics from logs using the interval as bucket size for the line count
+  if (intervalMs && logsModel.rows.length > 0) {
+    const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
+    const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+    logsModel.visibleRange = visibleRange;
+    logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
+  } else {
+    logsModel.series = [];
+  }
+
+  return logsModel;
 }
 
 /**

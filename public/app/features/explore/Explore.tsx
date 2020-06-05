@@ -19,6 +19,9 @@ import {
   RawTimeRange,
   TimeRange,
   TimeZone,
+  DataFrame,
+  LogsModel,
+  LogLevel,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -26,6 +29,8 @@ import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
+
+// Actions
 import {
   addQueryRow,
   changeSize,
@@ -54,7 +59,7 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
-import { scanStopAction } from './state/actionTypes';
+import { scanStopAction, toggleLogLevelAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
@@ -107,12 +112,15 @@ export interface ExploreProps {
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
   graphResult?: GraphSeriesXY[];
+  tableResult?: DataFrame;
+  logsResult?: LogsModel;
   loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
   showingGraph?: boolean;
   showingTable?: boolean;
   timeZone?: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
+  toggleLogLevelAction: typeof toggleLogLevelAction;
   toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
@@ -251,6 +259,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     toggleGraph(exploreId, showingGraph);
   };
 
+  onToggleLogLevel = (hiddenRawLevels: string[]) => {
+    const { exploreId } = this.props;
+    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map(level => LogLevel[level as LogLevel]);
+
+    this.props.toggleLogLevelAction({
+      exploreId,
+      hiddenLogLevels,
+    });
+  };
+
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -280,6 +298,55 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
+  renderUnifiedExplore = (width: number) => {
+    const {
+      exploreId,
+      graphResult,
+      logsResult,
+      loading,
+      absoluteRange,
+      showingGraph,
+      showingTable,
+      timeZone,
+      syncedTimes,
+    } = this.props;
+
+    const visibleRange = logsResult && logsResult.visibleRange;
+    return (
+      <>
+        {graphResult && (
+          <ExploreGraphPanel
+            series={graphResult}
+            width={width}
+            loading={loading}
+            absoluteRange={visibleRange || absoluteRange}
+            isStacked={false}
+            showPanel={true}
+            showBars={true}
+            showingGraph={showingGraph}
+            showingTable={showingTable}
+            timeZone={timeZone}
+            onToggleGraph={this.onToggleGraph}
+            onUpdateTimeRange={this.onUpdateTimeRange}
+            onHiddenSeriesChanged={this.onToggleLogLevel}
+          />
+        )}
+        {logsResult && (
+          <LogsContainer
+            width={width}
+            exploreId={exploreId}
+            syncedTimes={syncedTimes}
+            onClickFilterLabel={this.onClickFilterLabel}
+            onClickFilterOutLabel={this.onClickFilterOutLabel}
+            onStartScanning={this.onStartScanning}
+            onStopScanning={this.onStopScanning}
+            onClickCell={this.onClickFilterLabel}
+          />
+        )}
+      </>
+    );
+  };
+
   render() {
     const {
       datasourceInstance,
@@ -289,6 +356,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryKeys,
       mode,
       graphResult,
+      logsResult,
       loading,
       absoluteRange,
       showingGraph,
@@ -304,11 +372,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+    const isUnifiedDatasource = datasourceInstance?.meta?.unified;
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
+    const visibleRange = logsResult && logsResult.visibleRange;
     return (
       <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
@@ -346,47 +416,74 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           />
                         </div>
                       )}
-                      {!showStartPage && (
-                        <>
-                          {mode === ExploreMode.Metrics && (
-                            <ExploreGraphPanel
-                              series={graphResult}
-                              width={width}
-                              loading={loading}
-                              absoluteRange={absoluteRange}
-                              isStacked={false}
-                              showPanel={true}
-                              showingGraph={showingGraph}
-                              showingTable={showingTable}
-                              timeZone={timeZone}
-                              onToggleGraph={this.onToggleGraph}
-                              onUpdateTimeRange={this.onUpdateTimeRange}
-                              showBars={false}
-                              showLines={true}
-                            />
-                          )}
-                          {mode === ExploreMode.Metrics && (
-                            <TableContainer width={width} exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
-                          )}
-                          {mode === ExploreMode.Logs && (
-                            <LogsContainer
-                              width={width}
-                              exploreId={exploreId}
-                              syncedTimes={syncedTimes}
-                              onClickFilterLabel={this.onClickFilterLabel}
-                              onClickFilterOutLabel={this.onClickFilterOutLabel}
-                              onStartScanning={this.onStartScanning}
-                              onStopScanning={this.onStopScanning}
-                            />
-                          )}
-                          {mode === ExploreMode.Tracing &&
-                            // We expect only one trace at the moment to be in the dataframe
-                            // If there is not data (like 404) we show a separate error so no need to show anything here
-                            queryResponse.series[0] && (
-                              <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                      {!showStartPage &&
+                        (isUnifiedDatasource ? (
+                          this.renderUnifiedExplore(width)
+                        ) : (
+                          <>
+                            {mode === ExploreMode.Metrics && (
+                              <ExploreGraphPanel
+                                series={graphResult}
+                                width={width}
+                                loading={loading}
+                                absoluteRange={absoluteRange}
+                                isStacked={false}
+                                showPanel={true}
+                                showingGraph={showingGraph}
+                                showingTable={showingTable}
+                                timeZone={timeZone}
+                                onToggleGraph={this.onToggleGraph}
+                                onUpdateTimeRange={this.onUpdateTimeRange}
+                                showBars={false}
+                                showLines={true}
+                              />
                             )}
-                        </>
-                      )}
+                            {mode === ExploreMode.Metrics && (
+                              <TableContainer
+                                width={width}
+                                exploreId={exploreId}
+                                onClickCell={this.onClickFilterLabel}
+                              />
+                            )}
+                            {mode === ExploreMode.Logs && (
+                              <>
+                                <ExploreGraphPanel
+                                  series={graphResult}
+                                  width={width}
+                                  loading={loading}
+                                  absoluteRange={visibleRange || absoluteRange}
+                                  isStacked={false}
+                                  showPanel={true}
+                                  showingGraph={showingGraph}
+                                  showingTable={showingTable}
+                                  showBars={true}
+                                  showLines={false}
+                                  timeZone={timeZone}
+                                  onToggleGraph={this.onToggleGraph}
+                                  onUpdateTimeRange={this.onUpdateTimeRange}
+                                  onHiddenSeriesChanged={this.onToggleLogLevel}
+                                />
+                                <LogsContainer
+                                  width={width}
+                                  exploreId={exploreId}
+                                  syncedTimes={syncedTimes}
+                                  onClickFilterLabel={this.onClickFilterLabel}
+                                  onClickFilterOutLabel={this.onClickFilterOutLabel}
+                                  onStartScanning={this.onStartScanning}
+                                  onStopScanning={this.onStopScanning}
+                                  onClickCell={this.onClickFilterLabel}
+                                  allowFormattingAsTable={false}
+                                />
+                              </>
+                            )}
+                            {mode === ExploreMode.Tracing &&
+                              // We expect only one trace at the moment to be in the dataframe
+                              // If there is not data (like 404) we show a separate error so no need to show anything here
+                              queryResponse.series[0] && (
+                                <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                              )}
+                          </>
+                        ))}
                       {showRichHistory && (
                         <RichHistoryContainer
                           width={width}
@@ -425,6 +522,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     supportedModes,
     mode,
     graphResult,
+    tableResult,
+    logsResult,
     loading,
     showingGraph,
     showingTable,
@@ -440,7 +539,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     ? getTimeRangeFromUrlMemoized(urlRange, timeZone)
     : getTimeRange(timeZone, DEFAULT_RANGE);
 
-  let newMode: ExploreMode | undefined;
+  let newMode: ExploreMode | undefined = undefined;
 
   if (supportedModes.length) {
     const urlModeIsValid = supportedModes.includes(urlMode);
@@ -473,6 +572,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     initialUI,
     isLive,
     graphResult,
+    tableResult,
+    logsResult,
     loading,
     showingGraph,
     showingTable,
@@ -495,6 +596,7 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   updateTimeRange,
   toggleGraph,
   addQueryRow,
+  toggleLogLevelAction,
 };
 
 export default compose(

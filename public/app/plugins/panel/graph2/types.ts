@@ -10,6 +10,8 @@ export interface GraphOptions {
   showBars: boolean;
   showLines: boolean;
   showPoints: boolean;
+
+  yaxis?: number;
 }
 
 export interface Options {

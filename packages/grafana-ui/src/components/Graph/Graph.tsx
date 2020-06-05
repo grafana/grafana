@@ -1,9 +1,9 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import uniqBy from 'lodash/uniqBy';
+
 // Types
-import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
+import { TimeRange, TimeZone, createDimension, GraphSeriesXY, graphSeriesToFlotSeries } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
@@ -101,15 +101,18 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     if (series.length === 0) {
       return [{ show: true, min: -1, max: 1 }];
     }
-    return uniqBy(
+
+    const showLeftYAxis = series.some(s => s.yAxis.index === 1);
+
+    return _.uniqBy(
       series.map(s => {
-        const index = s.yAxis ? s.yAxis.index : 1;
+        const index = s.yAxis?.index ?? 1;
         const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
         const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
         return {
           show: true,
-          index,
-          position: index === 1 ? 'left' : 'right',
+          index: index === 2 && !showLeftYAxis ? 1 : index,
+          position: showLeftYAxis && index === 2 ? 'right' : 'left',
           min,
           tickDecimals,
         };
@@ -156,17 +159,17 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
     const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
     // Indicates column(field) index in y-axis dimension
-    const seriesIndex = activeItem ? activeItem.series.seriesIndex : 0;
+    const seriesIndex = activeItem ? activeItem.seriesIndex : 0;
     // Indicates row index in active field values
     const rowIndex = activeItem ? activeItem.dataIndex : undefined;
 
     const activeDimensions: ActiveDimensions<GraphDimensions> = {
-      // Described x-axis active item
+      // Describes x-axis active item
       // When hovering over an item - let's take it's dataIndex, otherwise undefined
       // Tooltip itself needs to figure out correct datapoint display information based on pos passed to it
       xAxis: [seriesIndex, rowIndex],
       // Describes y-axis active item
-      yAxis: activeItem ? [activeItem.series.seriesIndex, activeItem.dataIndex] : null,
+      yAxis: activeItem ? [activeItem.seriesIndex, activeItem.dataIndex] : null,
     };
 
     const tooltipContentProps: TooltipContentProps<GraphDimensions> = {
@@ -294,7 +297,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         stack: isStacked,
         lines: {
           show: showLines,
-          lineWidth: lineWidth,
+          lineWidth,
           zero: false,
         },
         points: {
@@ -306,10 +309,10 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         bars: {
           show: showBars,
           fill: 1,
-          // Dividig the width by 1.5 to make the bars not touch each other
+          // Dividing the width by 1.5 to make the bars not touch each other
           barWidth: showBars ? this.getBarWidth() / 1.5 : 1,
           zero: false,
-          lineWidth: lineWidth,
+          lineWidth: 5,
         },
         shadowSize: 0,
       },
@@ -335,7 +338,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         color: '#a1a1a1',
         margin: { left: 0, right: 0 },
         labelMarginX: 0,
-        mouseActiveRadius: 30,
+        mouseActiveRadius: 15,
       },
       selection: {
         mode: onHorizontalRegionSelected ? 'x' : null,
@@ -346,14 +349,17 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       },
     };
 
+    const flotSeries = series
+      .filter(s => s.isVisible)
+      .map(s => {
+        const f = graphSeriesToFlotSeries(s);
+        f.yaxis = f.yaxis && f.yaxis <= yaxes.length ? f.yaxis : 1;
+        return f;
+      });
     try {
-      $.plot(
-        this.element,
-        series.filter(s => s.isVisible),
-        flotOptions
-      );
+      $.plot(this.element, flotSeries, flotOptions);
     } catch (err) {
-      console.log('Graph rendering error', err, flotOptions, series);
+      console.log('Graph rendering error', err, flotOptions, flotSeries);
       throw new Error('Error rendering panel');
     }
   }

@@ -25,11 +25,14 @@ export class ResultProcessor {
   ) {}
 
   getGraphResult(): GraphSeriesXY[] | null {
-    if (this.state.mode !== ExploreMode.Metrics) {
+    if (this.state.mode !== ExploreMode.Metrics && !this.state.datasourceInstance.meta.unified) {
       return null;
     }
 
-    const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
+    const timeSeriesChecker = this.state.datasourceInstance?.meta.unified ? isTimeSeries : isTimeSeriesLegacy;
+    const onlyTimeSeries = this.dataFrames.filter(frame =>
+      timeSeriesChecker(frame, this.state.datasourceInstance?.meta.id)
+    );
     const timeSeriesToShowInGraph = onlyTimeSeries.filter(frame => shouldShowInVisualisationType(frame, 'graph'));
 
     if (timeSeriesToShowInGraph.length === 0) {
@@ -40,13 +43,13 @@ export class ResultProcessor {
       timeSeriesToShowInGraph,
       this.timeZone,
       {},
-      { showBars: false, showLines: true, showPoints: false },
+      { showBars: false, showLines: true, showPoints: false, yaxis: 2 },
       { asTable: false, isVisible: true, placement: 'under' }
     );
   }
 
   getTableResult(): DataFrame | null {
-    if (this.state.mode !== ExploreMode.Metrics) {
+    if (this.state.mode !== ExploreMode.Metrics && !this.state.datasourceInstance.meta.unified) {
       return null;
     }
 
@@ -109,15 +112,27 @@ export class ResultProcessor {
       });
     }
 
+    // Make time column first column
+    const timeColIndex = data.fields.findIndex(field => field.type === FieldType.time);
+    data.fields.unshift(data.fields[timeColIndex]);
+    data.fields.splice(timeColIndex + 1, 1);
+
     return data;
   }
 
   getLogsResult(): LogsModel | null {
-    if (this.state.mode !== ExploreMode.Logs) {
+    const isUnifiedDatasource = this.state.datasourceInstance?.meta.unified;
+    if (this.state.mode !== ExploreMode.Logs && !isUnifiedDatasource) {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
+    const newResults = dataFrameToLogsModel(
+      this.dataFrames,
+      this.intervalMs,
+      this.timeZone,
+      this.state.absoluteRange,
+      isUnifiedDatasource
+    );
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
@@ -127,18 +142,27 @@ export class ResultProcessor {
 }
 
 function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
+  if (frame.meta?.responseType) {
+    return frame.meta.responseType === 'Metrics';
+  }
+
+  if (frame.meta?.instant) {
+    return false;
+  }
+
+  return (
+    frame.fields.some(field => field.type === FieldType.time) &&
+    frame.fields.some(field => field.type === FieldType.number)
+  );
+}
+
+export function isTimeSeriesLegacy(frame: DataFrame, datasource?: string): boolean {
   // TEMP: Temporary hack. Remove when logs/metrics unification is done
   if (datasource && datasource === 'cloudwatch') {
     return isTimeSeriesCloudWatch(frame);
   }
 
-  if (frame.fields.length === 2) {
-    if (frame.fields[0].type === FieldType.time) {
-      return true;
-    }
-  }
-
-  return false;
+  return frame.fields.length === 2 && frame.fields[0].type === FieldType.time;
 }
 
 function shouldShowInVisualisationType(frame: DataFrame, visualisation: PreferredVisualisationType) {

@@ -63,6 +63,7 @@ interface StateProps {
   hasLiveOption: boolean;
   isLive: boolean;
   isPaused: boolean;
+  isUnified: boolean;
   originPanelId?: number;
   queries: DataQuery[];
   datasourceLoading?: boolean;
@@ -176,6 +177,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       hasLiveOption,
       isLive,
       isPaused,
+      isUnified,
       originPanelId,
       datasourceLoading,
       containerWidth,
@@ -235,7 +237,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
-                {showModeToggle ? (
+                {showModeToggle && !isUnified ? (
                   <div className="query-type-toggle">
                     <ToggleButtonGroup label="" transparent={true}>
                       <ToggleButton
@@ -376,7 +378,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     containerWidth,
   } = exploreItem;
 
-  const hasLiveOption = !!(datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs);
+  const isUnified = datasourceInstance?.meta?.unified;
+  const hasLiveOption = datasourceInstance?.meta?.streaming && (mode === ExploreMode.Logs || isUnified) ? true : false;
 
   return {
     datasourceMissing,
@@ -391,6 +394,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     hasLiveOption,
     isLive,
     isPaused,
+    isUnified,
     originPanelId,
     queries,
     syncedTimes,

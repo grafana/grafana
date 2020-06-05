@@ -111,6 +111,11 @@ function getInitialState(props: Props, columns: Column[]): Partial<ReactTableInt
 
 export const Table: FC<Props> = memo((props: Props) => {
   const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = true } = props;
+
+  if (!data) {
+    return <></>;
+  }
+
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
 

@@ -80,13 +80,13 @@ export const getGraphSeriesModel = (
         }
 
         let color: FieldColor;
-        if (seriesOptions[field.name] && seriesOptions[field.name].color) {
+        if (seriesOptions[field.name]?.color) {
           // Case when panel has settings provided via SeriesOptions, i.e. graph panel
           color = {
             mode: FieldColorMode.Fixed,
             fixedColor: seriesOptions[field.name].color,
           };
-        } else if (field.config && field.config.color) {
+        } else if (field.config?.color) {
           // Case when color settings are set on field, i.e. Explore logs histogram (see makeSeriesForLogs)
           color = field.config.color;
         } else {
@@ -129,13 +129,16 @@ export const getGraphSeriesModel = (
           info: statsDisplayValues,
           isVisible: true,
           yAxis: {
-            index: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
+            index: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || graphOptions.yaxis || 1,
           },
           // This index is used later on to retrieve appropriate series/time for X and Y axes
           seriesIndex: fieldColumnIndex,
           timeField: { ...timeField },
           valueField: { ...field },
           timeStep,
+          showBars: graphOptions.showBars,
+          showPoints: graphOptions.showPoints,
+          showLines: graphOptions.showLines,
         });
       }
     }

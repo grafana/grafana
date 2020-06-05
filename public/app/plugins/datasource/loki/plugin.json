@@ -6,6 +6,7 @@
 
   "logs": true,
   "metrics": true,
+  "unified": true,
   "alerting": false,
   "annotations": true,
   "streaming": true,

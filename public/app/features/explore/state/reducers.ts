@@ -533,9 +533,17 @@ export const processQueryResponse = (
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
   const processor = new ResultProcessor(state, series, request.intervalMs, request.timezone as TimeZone);
-  const graphResult = processor.getGraphResult();
+
+  let graphResult = processor.getGraphResult();
+
   const tableResult = processor.getTableResult();
   const logsResult = processor.getLogsResult();
+
+  if (graphResult && logsResult) {
+    graphResult.unshift(...logsResult.series);
+  } else if (!graphResult && logsResult) {
+    graphResult = logsResult.series;
+  }
 
   // Send legacy data to Angular editors
   if (state.datasourceInstance.components.QueryCtrl) {

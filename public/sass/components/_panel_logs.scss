@@ -10,6 +10,16 @@ $column-horizontal-spacing: 10px;
   flex-direction: column;
 }
 
+.results-panel-options {
+  display: flex;
+  background-color: $page-bg;
+  padding: $space-sm $space-md $space-sm $space-md;
+  border-radius: $border-radius;
+  margin: 0 0 $space-sm;
+  border: $panel-border;
+  flex-direction: column;
+}
+
 .logs-panel-controls {
   display: flex;
   justify-items: flex-start;
@@ -18,6 +28,27 @@ $column-horizontal-spacing: 10px;
 
   > * {
     margin-right: $spacer * 2;
+  }
+
+  > .align-right {
+    margin-left: auto;
+    margin-right: 0px;
+  }
+}
+
+.results-panel-controls {
+  display: flex;
+  justify-items: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+
+  > * {
+    margin-right: $spacer * 2;
+  }
+
+  > .align-right {
+    margin-left: auto;
+    margin-right: 0px;
   }
 }
 

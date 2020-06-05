@@ -14,7 +14,7 @@ import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Explore, ExploreProps } from './Explore';
-import { scanStopAction } from './state/actionTypes';
+import { scanStopAction, toggleLogLevelAction } from './state/actionTypes';
 import { toggleGraph } from './state/actions';
 import { SecondaryActions } from './SecondaryActions';
 import { TraceView } from './TraceView/TraceView';
@@ -51,6 +51,7 @@ const dummyProps: ExploreProps = {
   },
   scanStart: jest.fn(),
   scanStopAction: scanStopAction,
+  toggleLogLevelAction: toggleLogLevelAction,
   setQueries: jest.fn(),
   split: false,
   queryKeys: [],
