@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable } from '../types';
+import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
 import {
   DataQueryResponse,
   ScopedVars,
@@ -129,7 +129,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return {
       refId: target.refId,
       format: target.format,
-      queryType: 'Azure Log Analytics',
+      queryType: AzureQueryType.LogAnalytics,
       subscriptionId: subscriptionId,
       azureLogAnalytics: {
         resultFormat: item.resultFormat,

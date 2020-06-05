@@ -637,10 +637,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.refresh();
   }
 
-  toggleEditorMode() {
-    this.target.appInsights.rawQuery = !this.target.appInsights.rawQuery;
-  }
-
   updateTimeGrainType() {
     if (this.target.appInsights.timeGrainType === 'specific') {
       this.target.appInsights.timeGrainCount = '1';

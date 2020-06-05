@@ -2,12 +2,22 @@ import { DataQuery, DataSourceJsonData, DataSourceSettings } from '@grafana/data
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
+export enum AzureQueryType {
+  AzureMonitor = 'Azure Monitor',
+  ApplicationInsights = 'Application Insights',
+  InsightsAnalytics = 'Insights Analytics',
+  LogAnalytics = 'Azure Log Analytics',
+}
+
 export interface AzureMonitorQuery extends DataQuery {
+  queryType: AzureQueryType;
   format: string;
   subscription: string;
+
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   appInsights: ApplicationInsightsQuery;
+  insightsAnalytics: InsightsAnalyticsQuery;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
@@ -58,8 +68,6 @@ export interface AzureLogsQuery {
 }
 
 export interface ApplicationInsightsQuery {
-  rawQuery: boolean;
-  rawQueryString: any;
   metricName: string;
   timeGrainUnit: string;
   timeGrain: string;
@@ -68,6 +76,13 @@ export interface ApplicationInsightsQuery {
   dimension: string;
   dimensionFilter: string;
   alias: string;
+}
+
+export interface InsightsAnalyticsQuery {
+  rawQueryString: any;
+  timeColumn: string; // X-axis
+  valueColumn: string; // Y-axis
+  segmentColumn: string;
 }
 
 // Azure Monitor API Types
