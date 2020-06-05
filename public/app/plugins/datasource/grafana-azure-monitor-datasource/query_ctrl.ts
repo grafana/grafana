@@ -108,9 +108,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       timeGrain: 'auto',
     },
     insightsAnalytics: {
-      rawQueryString: '',
-      timeColumn: 'timestamp',
-      valueColumn: '',
+      query: '',
+      resultFormat: 'time_series',
     },
   };
 
@@ -615,7 +614,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   onInsightsAnalyticsQueryChange = (nextQuery: string) => {
-    this.target.insightsAnalytics.rawQueryString = nextQuery;
+    this.target.insightsAnalytics.query = nextQuery;
   };
 
   onQueryExecute = () => {
