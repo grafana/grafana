@@ -35,7 +35,7 @@ export function getTextAlign(field?: Field): TextAlignProperty {
 }
 
 export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
-  const columns: Column[] = [];
+  const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
   for (const [fieldIndex, field] of data.fields.entries()) {
@@ -58,6 +58,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       accessor: (row: any, i: number) => {
         return field.values.get(i);
       },
+      sortType: 'basic',
       width: fieldTableOptions.width,
       minWidth: 50,
     });
