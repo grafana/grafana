@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -106,9 +107,17 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	switch setting.Protocol {
 	case setting.HTTP, setting.HTTPS, setting.HTTP2:
 		var err error
-		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+
+		if os.Getenv("LISTEN_PID") == strconv.Itoa(os.Getpid()) {
+			listener, err = net.FileListener(os.NewFile(3, "socket-activated"))
+			if err != nil {
+				return errutil.Wrapf(err, "failed to obtain socket from systemd%s", hs.httpSrv.Addr)
+			}
+		} else {
+			listener, err = net.Listen("tcp", hs.httpSrv.Addr)
+			if err != nil {
+				return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+			}
 		}
 	case setting.SOCKET:
 		var err error
