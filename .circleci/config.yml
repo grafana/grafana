@@ -41,7 +41,7 @@ executors:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.16
+      - image: grafana/build-container:1.2.19
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.9
+            VERSION=0.4.11
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -74,7 +74,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -88,15 +88,15 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> v7.0.0-test
             else
               # A master or PR build
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
@@ -126,7 +126,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -158,13 +158,13 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl build-frontend --edition << parameters.edition >> $CIRCLE_TAG
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl build-frontend --edition << parameters.edition >> 7.0.0-test
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> 7.0.0-test
             else
               # A master or PR build
-              /tmp/grabpl build-frontend --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
           name: Move artifacts
@@ -192,7 +192,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -414,20 +414,20 @@ jobs:
             export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition oss --sign $CIRCLE_TAG
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition oss --sign v7.0.0-test
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
               # A forked PR build, don't sign as it requires an API secret
-              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
               # A non-forked PR build
-              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -476,20 +476,20 @@ jobs:
 
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign $CIRCLE_TAG
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign v7.0.0-test
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
               # A forked PR build, don't sign as it requires an API secret
-              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
               # A PR build
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -608,7 +608,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -889,18 +889,13 @@ jobs:
           when: on_success
 
   build-docs-website:
-    executor: grafana-build
+    executor: base
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
-      - run:
-          name: Install docker
-          command: |
-            apt-get update
-            apt-get install -y docker.io
       - run:
           name: Build Grafana docs website
           command: |

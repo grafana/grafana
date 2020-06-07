@@ -9,7 +9,8 @@ import { auto } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
 import { PanelEvents } from '@grafana/data';
-import { VariableWithMultiSupport } from 'app/features/templating/types';
+import { VariableWithMultiSupport } from 'app/features/variables/types';
+import { getLocationSrv } from '@grafana/runtime';
 
 export interface QueryMeta {
   sql: string;
@@ -27,12 +28,10 @@ WHERE
 export class PostgresQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  showLastQuerySQL: boolean;
   formats: any[];
   queryModel: PostgresQuery;
   metaBuilder: PostgresMetaQuery;
-  lastQueryMeta: QueryMeta;
-  lastQueryError: string;
+  lastQueryError: string | null;
   showHelp: boolean;
   tableSegment: any;
   whereAdd: any;
@@ -106,6 +105,13 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
+  }
+
+  showQueryInspector() {
+    getLocationSrv().update({
+      query: { inspect: this.panel.id, inspectTab: 'query' },
+      partial: true,
+    });
   }
 
   updateRawSqlAndRefresh() {
@@ -306,21 +312,13 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   onDataReceived(dataList: any) {
-    this.lastQueryMeta = null;
     this.lastQueryError = null;
-    console.log('postgres query data received', dataList);
-
-    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
-    if (anySeriesFromQuery) {
-      this.lastQueryMeta = anySeriesFromQuery.meta;
-    }
   }
 
   onDataError(err: any) {
     if (err.data && err.data.results) {
       const queryRes = err.data.results[this.target.refId];
       if (queryRes) {
-        this.lastQueryMeta = queryRes.meta;
         this.lastQueryError = queryRes.error;
       }
     }
