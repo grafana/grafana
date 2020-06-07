@@ -127,6 +127,8 @@ Configure the Grafana server to start at boot:
 sudo systemctl enable grafana-server.service
 ```
 
+Grafana also supports the systemd socket activation mechanism.
+
 ### Start the server with init.d
 
 To start the service and verify that the service has started:
