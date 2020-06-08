@@ -78,19 +78,6 @@ type AzureLogAnalyticsTable struct {
 	Rows [][]interface{} `json:"rows"`
 }
 
-type metadata struct {
-	Columns      []column `json:"columns"`
-	Subscription string   `json:"subscription"`
-	Workspace    string   `json:"workspace"`
-	Query        string   `json:"query"`
-	EncodedQuery string   `json:"encodedQuery"`
-}
-
-type column struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-}
-
 // azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type azureMonitorJSONQuery struct {
 	AzureMonitor struct {

@@ -201,7 +201,6 @@ describeInitScenario('Initializing home dashboard', ctx => {
   ctx.setup(() => {
     ctx.args.routeInfo = DashboardRouteInfo.Home;
     ctx.backendSrv.get.mockResolvedValue({
-      meta: {},
       redirectUri: '/u/123/my-home',
     });
   });
@@ -209,6 +208,17 @@ describeInitScenario('Initializing home dashboard', ctx => {
   it('Should redirect to custom home dashboard', () => {
     expect(ctx.actions[1].type).toBe(updateLocation.type);
     expect(ctx.actions[1].payload.path).toBe('/u/123/my-home');
+  });
+});
+
+describeInitScenario('Initializing home dashboard cancelled', ctx => {
+  ctx.setup(() => {
+    ctx.args.routeInfo = DashboardRouteInfo.Home;
+    ctx.backendSrv.get.mockResolvedValue([]);
+  });
+
+  it('Should abort init process', () => {
+    expect(ctx.actions.length).toBe(1);
   });
 });
 
