@@ -89,76 +89,57 @@ func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 	}
 }
 
+// DataFrames interface for retrieving encoded and decoded data frames.
 type DataFrames interface {
 	Encoded() ([][]byte, error)
 	Decoded() (data.Frames, error)
 }
 
-type decodedDataFrames struct {
+type dataFrames struct {
 	decoded data.Frames
 	encoded [][]byte
 }
 
+// NewDecodedDataFrames create new DataFrames from decoded frames.
 func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
-	return &decodedDataFrames{
+	return &dataFrames{
 		decoded: decodedFrames,
 	}
 }
 
-func (ddf *decodedDataFrames) Encoded() ([][]byte, error) {
-	if ddf.encoded == nil {
-		encoded, err := ddf.decoded.MarshalArrow()
-		if err != nil {
-			return nil, err
-		}
-		ddf.encoded = encoded
-	}
-
-	return ddf.encoded, nil
-}
-
-func (ddf *decodedDataFrames) Decoded() (data.Frames, error) {
-	return ddf.decoded, nil
-}
-
-func (ddf *decodedDataFrames) MarshalJSON() ([]byte, error) {
-	encoded, err := ddf.Encoded()
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(encoded)
-}
-
-type encodedDataFrames struct {
-	encoded [][]byte
-	decoded data.Frames
-}
-
+// NewEncodedDataFrames create new DataFrames from encoded frames.
 func NewEncodedDataFrames(encodedFrames [][]byte) DataFrames {
-	return &encodedDataFrames{
+	return &dataFrames{
 		encoded: encodedFrames,
 	}
 }
 
-func (edf *encodedDataFrames) Encoded() ([][]byte, error) {
-	return edf.encoded, nil
-}
-
-func (edf *encodedDataFrames) Decoded() (data.Frames, error) {
-	if edf.decoded == nil {
-		decoded, err := data.UnmarshalArrowFrames(edf.encoded)
+func (df *dataFrames) Encoded() ([][]byte, error) {
+	if df.encoded == nil {
+		encoded, err := df.decoded.MarshalArrow()
 		if err != nil {
 			return nil, err
 		}
-		edf.decoded = decoded
+		df.encoded = encoded
 	}
 
-	return edf.decoded, nil
+	return df.encoded, nil
 }
 
-func (edf *encodedDataFrames) MarshalJSON() ([]byte, error) {
-	encoded, err := edf.Encoded()
+func (df *dataFrames) Decoded() (data.Frames, error) {
+	if df.decoded == nil {
+		decoded, err := data.UnmarshalArrowFrames(df.encoded)
+		if err != nil {
+			return nil, err
+		}
+		df.decoded = decoded
+	}
+
+	return df.decoded, nil
+}
+
+func (df *dataFrames) MarshalJSON() ([]byte, error) {
+	encoded, err := df.Encoded()
 	if err != nil {
 		return nil, err
 	}
