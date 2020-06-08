@@ -1,6 +1,9 @@
 package tsdb
 
 import (
+	"encoding/json"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -36,7 +39,7 @@ type QueryResult struct {
 	Meta        *simplejson.Json `json:"meta,omitempty"`
 	Series      TimeSeriesSlice  `json:"series"`
 	Tables      []*Table         `json:"tables"`
-	Dataframes  [][]byte         `json:"dataframes"`
+	Dataframes  DataFrames       `json:"dataframes"`
 }
 
 type TimeSeries struct {
@@ -84,4 +87,89 @@ func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 		Name:   name,
 		Points: points,
 	}
+}
+
+type DataFrames interface {
+	Encoded() ([][]byte, error)
+	Decoded() (data.Frames, error)
+}
+
+type decodedDataFrames struct {
+	decoded data.Frames
+	encoded [][]byte
+}
+
+func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
+	return &decodedDataFrames{
+		decoded: decodedFrames,
+	}
+}
+
+func (ddf *decodedDataFrames) Encoded() ([][]byte, error) {
+	if len(ddf.encoded) == 0 {
+		encoded, err := ddf.decoded.MarshalArrow()
+		if err != nil {
+			return nil, err
+		}
+		ddf.encoded = encoded
+	}
+
+	return ddf.encoded, nil
+}
+
+func (ddf *decodedDataFrames) Decoded() (data.Frames, error) {
+	return ddf.decoded, nil
+}
+
+func (ddf *decodedDataFrames) MarshalJSON() ([]byte, error) {
+	encoded, err := ddf.Encoded()
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(&struct {
+		Dataframes [][]byte `json:"dataframes"`
+	}{
+		Dataframes: encoded,
+	})
+}
+
+type encodedDataFrames struct {
+	encoded [][]byte
+	decoded data.Frames
+}
+
+func NewEncodedDataFrames(encodedFrames [][]byte) DataFrames {
+	return &encodedDataFrames{
+		encoded: encodedFrames,
+	}
+}
+
+func (edf *encodedDataFrames) Encoded() ([][]byte, error) {
+	return edf.encoded, nil
+}
+
+func (edf *encodedDataFrames) Decoded() (data.Frames, error) {
+	if len(edf.decoded) == 0 {
+		decoded, err := data.UnmarshalArrowFrames(edf.encoded)
+		if err != nil {
+			return nil, err
+		}
+		edf.decoded = decoded
+	}
+
+	return edf.decoded, nil
+}
+
+func (edf *encodedDataFrames) MarshalJSON() ([]byte, error) {
+	encoded, err := edf.Encoded()
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(&struct {
+		Dataframes [][]byte `json:"dataframes"`
+	}{
+		Dataframes: encoded,
+	})
 }
