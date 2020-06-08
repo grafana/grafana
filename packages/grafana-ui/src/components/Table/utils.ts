@@ -50,6 +50,15 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       fieldCountWithoutWidth -= 1;
     }
 
+    const selectSortType = (type: FieldType): string => {
+      switch (type) {
+        case FieldType.number:
+        case FieldType.time:
+          return 'basic';
+        default:
+          return 'alphanumeric';
+      }
+    };
     const Cell = getCellComponent(fieldTableOptions.displayMode, field);
     columns.push({
       Cell,
@@ -58,7 +67,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       accessor: (row: any, i: number) => {
         return field.values.get(i);
       },
-      sortType: 'basic',
+      sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: 50,
     });
