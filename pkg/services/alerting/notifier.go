@@ -32,14 +32,16 @@ type NotifierPlugin struct {
 }
 
 type Option struct {
-	Element       string         `json:"element"`
-	ElementType   string         `json:"elementType"`
-	Label         string         `json:"label"`
-	Description   string         `json:"description"`
-	Placeholder   string         `json:"placeholder"`
-	ModelValue    string         `json:"modelValue"`
-	SelectOptions []SelectOption `json:"selectOptions"`
-	Show          ShowIf         `json:"show"`
+	Element        string         `json:"element"`
+	InputType      string         `json:"inputType"`
+	Label          string         `json:"label"`
+	Description    string         `json:"description"`
+	Placeholder    string         `json:"placeholder"`
+	ModelValue     string         `json:"modelValue"`
+	SelectOptions  []SelectOption `json:"selectOptions"`
+	Show           Show           `json:"show"`
+	Required       bool           `json:"required"`
+	ValidationRule string         `json:"validationRule"`
 }
 
 type SelectOption struct {
@@ -47,7 +49,7 @@ type SelectOption struct {
 	Label string `json:"label"`
 }
 
-type ShowIf struct {
+type Show struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`
 }

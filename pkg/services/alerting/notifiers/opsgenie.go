@@ -51,16 +51,18 @@ func init() {
 			{
 				Label:       "API Key",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "OpsGenie API Key",
 				ModelValue:  "apiKey",
+				Required:    true,
 			},
 			{
 				Label:       "Alert API Url",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "https://api.opsgenie.com/v2/alerts",
 				ModelValue:  "apiUrl",
+				Required:    true,
 			},
 			{
 				Label:       "Auto close incidents",

@@ -53,16 +53,18 @@ func init() {
 			{
 				Label:       "BOT API Token",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "Telegram BOT API Token",
 				ModelValue:  "bottoken",
+				Required:    true,
 			},
 			{
 				Label:       "Chat ID",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Description: "Integer Telegram Chat Identifier",
 				ModelValue:  "chatid",
+				Required:    true,
 			},
 		},
 	})

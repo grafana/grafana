@@ -171,21 +171,23 @@ func init() {
 			{
 				Label:       "API Token",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "Application token",
 				ModelValue:  "apiToken",
+				Required:    true,
 			},
 			{
 				Label:       "User key(s)",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "comma-separated list",
 				ModelValue:  "userKey",
+				Required:    true,
 			},
 			{
 				Label:       "Device(s) (optional)",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "comma-separated list; leave empty to send to all devices",
 				ModelValue:  "device",
 			},
@@ -219,10 +221,10 @@ func init() {
 			{
 				Label:       "Retry",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "minimum 30 seconds",
 				ModelValue:  "retry",
-				Show: alerting.ShowIf{
+				Show: alerting.Show{
 					Field: "priority",
 					Is:    "2",
 				},
@@ -230,10 +232,10 @@ func init() {
 			{
 				Label:       "Expire",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "maximum 86400 seconds",
 				ModelValue:  "expire",
-				Show: alerting.ShowIf{
+				Show: alerting.Show{
 					Field: "priority",
 					Is:    "2",
 				},

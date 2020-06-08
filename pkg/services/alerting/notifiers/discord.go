@@ -46,15 +46,16 @@ func init() {
 				Label:       "Message Content",
 				Description: "Mention a group using @ or a user using <@ID> when notifying in a channel",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				ModelValue:  "content",
 			},
 			{
 				Label:       "Webhook URL",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "Discord webhook URL",
 				ModelValue:  "url",
+				Required:    true,
 			},
 		},
 	})

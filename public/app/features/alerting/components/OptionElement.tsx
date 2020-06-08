@@ -14,7 +14,10 @@ export const OptionElement: FC<Props> = ({ control, option, register }) => {
         <Input
           type={option.elementType}
           name={`${modelValue}`}
-          ref={register({ required: true })}
+          ref={register({
+            required: option.required ? 'Required' : false,
+            validate: v => option.validationRule && validateOption(v, option.validationRule),
+          })}
           placeholder={option.placeholder}
         />
       );
@@ -23,9 +26,28 @@ export const OptionElement: FC<Props> = ({ control, option, register }) => {
       return <InputControl as={Select} options={option.selectOptions} control={control} name={`${modelValue}`} />;
 
     case 'textarea':
-      return <TextArea name={`${modelValue}`} ref={register} />;
+      return (
+        <TextArea
+          name={`${modelValue}`}
+          ref={register({
+            required: option.required ? 'Required' : false,
+            validate: v => option.validationRule && validateOption(v, option.validationRule),
+          })}
+        />
+      );
 
     case 'switch':
-      return <Switch name={`${modelValue}`} ref={register} />;
+      return (
+        <Switch
+          name={`${modelValue}`}
+          ref={register({
+            required: option.required ? 'Required' : false,
+          })}
+        />
+      );
   }
+};
+
+const validateOption = (value: string, validationRule: string) => {
+  return RegExp(validationRule).test(value) ? true : 'Invalid format';
 };

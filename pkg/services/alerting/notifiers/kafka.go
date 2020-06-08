@@ -34,16 +34,18 @@ func init() {
 			{
 				Label:       "Kafka REST Proxy",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "http://localhost:8082",
 				ModelValue:  "kafkaRestProxy",
+				Required:    true,
 			},
 			{
 				Label:       "Topic",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "topic1",
 				ModelValue:  "kafkaTopic",
+				Required:    true,
 			},
 		},
 	})

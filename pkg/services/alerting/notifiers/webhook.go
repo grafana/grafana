@@ -39,10 +39,11 @@ func init() {
     `,
 		Options: []alerting.Option{
 			{
-				Label:       "Url",
-				Element:     "input",
-				ElementType: "text",
-				ModelValue:  "url",
+				Label:      "Url",
+				Element:    "input",
+				InputType:  "text",
+				ModelValue: "url",
+				Required:   true,
 			},
 			{
 				Label:   "Http Method",
@@ -60,16 +61,16 @@ func init() {
 				ModelValue: "httpMethod",
 			},
 			{
-				Label:       "Username",
-				Element:     "input",
-				ElementType: "text",
-				ModelValue:  "username",
+				Label:      "Username",
+				Element:    "input",
+				InputType:  "text",
+				ModelValue: "username",
 			},
 			{
-				Label:       "Password",
-				Element:     "input",
-				ElementType: "password",
-				ModelValue:  "password",
+				Label:      "Password",
+				Element:    "input",
+				InputType:  "password",
+				ModelValue: "password",
 			},
 		},
 	})

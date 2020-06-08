@@ -15,24 +15,9 @@ import {
   useTheme,
 } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
-import { NotificationChannel, Option } from '../../../types';
+import { NotificationChannel, NotificationChannelDTO, Option } from '../../../types';
 
 type OptionSwitch = { label: string; name: string; description: string };
-
-interface NotificationChannelDTO {
-  name: string;
-  type: SelectableValue<string>;
-  sendReminder: boolean;
-  disableResolveMessage: boolean;
-  frequency: string;
-  settings: {
-    httpMethod: string;
-    autoResolve: boolean;
-    severity: string;
-    uploadImage: boolean;
-  };
-  isDefault: boolean;
-}
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
@@ -44,7 +29,6 @@ interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
 export const NewNotificationChannelForm: FC<Props> = ({
   control,
   errors,
-  onSubmit,
   selectedChannel,
   selectableChannels,
   register,
@@ -52,10 +36,12 @@ export const NewNotificationChannelForm: FC<Props> = ({
   getValues,
 }) => {
   const styles = getStyles(useTheme());
+
   useEffect(() => {
     watch('type');
     watch('priority');
   }, []);
+
   return (
     <>
       <div className={styles.basicSettings}>
@@ -67,6 +53,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
             name="type"
             as={Select}
             options={selectableChannels}
+            defaultValue={selectedChannel}
             control={control}
             rules={{ required: true }}
           />
@@ -87,8 +74,17 @@ export const NewNotificationChannelForm: FC<Props> = ({
             if (option.show.field && selectedOptionValue !== option.show.is) {
               return null;
             }
+
             return (
-              <Field key={`${option.label}-${index}`} label={option.label} description={option.description}>
+              <Field
+                key={`${option.label}-${index}`}
+                label={option.label}
+                description={option.description}
+                invalid={!!errors.settings && !!errors.settings[option.modelValue]}
+                error={
+                  errors.settings && errors.settings[option.modelValue] && errors.settings[option.modelValue].message
+                }
+              >
                 <OptionElement option={option} register={register} control={control} />
               </Field>
             );

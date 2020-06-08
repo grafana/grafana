@@ -52,6 +52,7 @@ func init() {
 				Description: "You can enter multiple email addresses using a \";\" separator",
 				Element:     "textarea",
 				ModelValue:  "addresses",
+				Required:    true,
 			},
 		},
 	})

@@ -36,9 +36,10 @@ func init() {
 			{
 				Label:       "Url",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx",
 				ModelValue:  "url",
+				Required:    true,
 			},
 			{
 				Label:      "Message Type",

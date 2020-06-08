@@ -20,14 +20,14 @@ func init() {
       <h3 class="page-heading">Teams settings</h3>
       <div class="gf-form max-width-30">
         <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Teams incoming webhook url"></input>
+        <input type="text" InputType class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Teams incoming webhook url"></input>
       </div>
     `,
 		Options: []alerting.Option{
 			{
 				Label:       "URL",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "Teams incoming webhook url",
 				ModelValue:  "url",
 			},

@@ -59,9 +59,10 @@ func init() {
 			{
 				Label:       "Integration Key",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "Pagerduty Integration Key",
-				ModelValue:  "settings",
+				ModelValue:  "integrationKey",
+				Required:    true,
 			},
 			{
 				Label:   "Severity",

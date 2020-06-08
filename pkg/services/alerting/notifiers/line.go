@@ -30,9 +30,10 @@ func init() {
 			{
 				Label:       "Token",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "LINE notify token key",
 				ModelValue:  "token",
+				Required:    true,
 			}},
 	})
 }

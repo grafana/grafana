@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { NavModel, SelectableValue } from '@grafana/data';
 import { Form } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { createNotificationChannel, loadNotificationTypes } from './state/actions';
-import { NotificationChannel, StoreState } from '../../types';
+import { NotificationChannel, NotificationChannelDTO, StoreState } from '../../types';
 import { NewNotificationChannelForm } from './components/NewNotificationChannelForm';
 
 interface OwnProps {}
@@ -55,7 +55,8 @@ const actual = {
   uploadImage: false,
 };
 
-const defaultValues = {
+const defaultValues: NotificationChannelDTO = {
+  name: '',
   type: { value: 'notifier-options-email' },
   sendReminder: false,
   disableResolveMessage: false,
@@ -90,9 +91,19 @@ class NewAlertNotificationPage extends PureComponent<Props> {
               const selectedChannel =
                 getValues().type && notificationChannels.find(c => c.value === getValues().type.value);
 
+              /*
+               Need to transform these as we have options on notificationchannels,
+                this will render a dropdown within the select
+               */
+              const selectableChannels: Array<SelectableValue<string>> = notificationChannels.map(channel => ({
+                value: channel.value,
+                label: channel.label,
+                description: channel.description,
+              }));
+
               return (
                 <NewNotificationChannelForm
-                  selectableChannels={notificationChannels}
+                  selectableChannels={selectableChannels}
                   selectedChannel={selectedChannel}
                   onSubmit={this.onSubmit}
                   register={register}

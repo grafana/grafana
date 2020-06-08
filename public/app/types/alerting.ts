@@ -73,6 +73,21 @@ export interface NotificationChannel {
   options: Option[];
 }
 
+export interface NotificationChannelDTO {
+  name: string;
+  type: SelectableValue<string>;
+  sendReminder: boolean;
+  disableResolveMessage: boolean;
+  frequency: string;
+  settings: Partial<{
+    httpMethod: string;
+    autoResolve: boolean;
+    severity: string;
+    uploadImage: boolean;
+  }>;
+  isDefault: boolean;
+}
+
 export interface Option {
   element: 'input' | 'select' | 'switch' | 'textarea';
   elementType: string;
@@ -82,6 +97,8 @@ export interface Option {
   modelValue: string;
   selectOptions: Array<SelectableValue<string>>;
   show: { field: string; is: string };
+  required: boolean;
+  validationRule: string;
 }
 
 export interface AlertRulesState {

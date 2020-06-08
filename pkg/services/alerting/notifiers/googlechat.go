@@ -30,9 +30,10 @@ func init() {
 			{
 				Label:       "Url",
 				Element:     "input",
-				ElementType: "text",
+				InputType:   "text",
 				Placeholder: "Google Hangouts Chat incoming webhook url",
 				ModelValue:  "url",
+				Required:    true,
 			},
 		},
 	})
