@@ -367,15 +367,24 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (removeQueryRowAction.match(action)) {
-    const { queries, queryKeys } = state;
+    const { queries } = state;
     const { index } = action.payload;
 
     if (queries.length <= 1) {
       return state;
     }
 
-    const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
-    const nextQueryKeys = [...queryKeys.slice(0, index), ...queryKeys.slice(index + 1)];
+    // removes a query under a given index and reassigns query keys and refIds to keep everything in order
+    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
+      return { ...query, refId: '' };
+    });
+    const nextQueries: DataQuery[] = [];
+
+    queriesAfterRemoval.forEach((query, i) => {
+      nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
+    });
+
+    const nextQueryKeys: string[] = nextQueries.map(query => query.key);
 
     return {
       ...state,
