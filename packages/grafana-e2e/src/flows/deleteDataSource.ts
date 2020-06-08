@@ -30,6 +30,8 @@ export const deleteDataSource = ({ id, name }: DeleteDataSourceConfig) => {
   });
   */
 
+  e2e().logToConsole('Deleted data source with name:', name);
+
   e2e.getScenarioContext().then(({ addedDataSources }: any) => {
     e2e.setScenarioContext({
       addedDataSources: addedDataSources.filter((dataSource: DeleteDataSourceConfig) => {

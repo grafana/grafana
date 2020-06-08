@@ -34,6 +34,8 @@ export const deleteDashboard = ({ title, uid }: DeleteDashboardConfig) => {
   });
   */
 
+  e2e().logToConsole('Deleted dashboard with uid:', uid);
+
   e2e.getScenarioContext().then(({ addedDashboards }: any) => {
     e2e.setScenarioContext({
       addedDashboards: addedDashboards.filter((dashboard: DeleteDashboardConfig) => {
