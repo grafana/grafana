@@ -106,7 +106,7 @@ func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
 }
 
 func (ddf *decodedDataFrames) Encoded() ([][]byte, error) {
-	if len(ddf.encoded) == 0 {
+	if ddf.encoded == nil {
 		encoded, err := ddf.decoded.MarshalArrow()
 		if err != nil {
 			return nil, err
@@ -127,11 +127,7 @@ func (ddf *decodedDataFrames) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return json.Marshal(&struct {
-		Dataframes [][]byte `json:"dataframes"`
-	}{
-		Dataframes: encoded,
-	})
+	return json.Marshal(encoded)
 }
 
 type encodedDataFrames struct {
@@ -150,7 +146,7 @@ func (edf *encodedDataFrames) Encoded() ([][]byte, error) {
 }
 
 func (edf *encodedDataFrames) Decoded() (data.Frames, error) {
-	if len(edf.decoded) == 0 {
+	if edf.decoded == nil {
 		decoded, err := data.UnmarshalArrowFrames(edf.encoded)
 		if err != nil {
 			return nil, err
@@ -167,9 +163,5 @@ func (edf *encodedDataFrames) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return json.Marshal(&struct {
-		Dataframes [][]byte `json:"dataframes"`
-	}{
-		Dataframes: encoded,
-	})
+	return json.Marshal(encoded)
 }
