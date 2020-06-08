@@ -76,10 +76,10 @@ RUN cd /tmp && \
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20200514
 
-ENV GOVERSION=1.14.1 \
+ENV GOVERSION=1.14.3 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.13.0
+    NODEVERSION=12.17.0
 
 ARG DEBIAN_FRONTEND=noninteractive
 

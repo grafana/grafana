@@ -12,7 +12,7 @@ import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
 import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { DataSourceVariableModel } from '../templating/types';
+import { DataSourceVariableModel } from '../variables/types';
 
 export class DatasourceSrv implements DataSourceService {
   datasources: Record<string, DataSourceApi> = {};

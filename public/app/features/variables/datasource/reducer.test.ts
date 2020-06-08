@@ -1,7 +1,7 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { VariablesState } from '../state/variablesReducer';
 import { createDataSourceOptions, dataSourceVariableReducer } from './reducer';
-import { DataSourceVariableModel } from '../../templating/types';
+import { DataSourceVariableModel } from '../types';
 import { getVariableTestContext } from '../state/helpers';
 import cloneDeep from 'lodash/cloneDeep';
 import { createDataSourceVariableAdapter } from './adapter';
