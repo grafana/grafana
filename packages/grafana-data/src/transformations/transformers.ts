@@ -11,6 +11,7 @@ import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
 import { renameFieldsTransformer } from './transformers/rename';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
+import { occurrencesTransformer } from './transformers/occurrences';
 
 export const standardTransformers = {
   noopTransformer,
@@ -27,4 +28,5 @@ export const standardTransformers = {
   renameFieldsTransformer,
   labelsToFieldsTransformer,
   ensureColumnsTransformer,
+  occurrencesTransformer,
 };

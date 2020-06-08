@@ -15,4 +15,5 @@ export enum DataTransformerID {
   filterByRefId = 'filterByRefId',
   noop = 'noop',
   ensureColumns = 'ensureColumns',
+  occurrences = 'occurrences',
 }
