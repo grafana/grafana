@@ -40,8 +40,8 @@ These options allow you to limit alerts shown to only those that match the query
 
 - **Alert name -** Enter an alert name query.
 - **Dashboard title -** Enter a dashboard title query.
-- **Folder -** Select a folder. Only alerts from dashboards in the folder selected will be displayed.
-- **Dashboard tags -** Select one or more tags. Only alerts from dashboards with one or more of the tags will be displayed.
+- **Folder -** Select a folder. Alerts only from dashboards in the folder selected will be displayed.
+- **Dashboard tags -** Select one or more tags. Alerts only from dashboards with one or more of the tags will be displayed.
 
 ### State filter
 
