@@ -214,7 +214,7 @@ func init() {
 		"Rekognition":           {},
 		"WAF":                   {"Region", "Rule", "RuleGroup", "WebACL"},
 		"AWS/Cassandra":         {"Keyspace", "Operation", "TableName"},
-		"AWS/WAFV2":             {"Region", "Rule", "WebACL"},
+		"AWS/WAFV2":             {"Region", "Rule", "WebACL", "RuleGroup"},
 	}
 
 	customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
