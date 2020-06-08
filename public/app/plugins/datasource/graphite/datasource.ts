@@ -16,7 +16,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
-import { getSearchFilterScopedVar } from '../../../features/templating/utils';
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;

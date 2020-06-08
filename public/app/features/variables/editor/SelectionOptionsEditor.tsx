@@ -2,7 +2,7 @@ import React, { FunctionComponent, useCallback } from 'react';
 import { LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { VariableWithMultiSupport } from '../../templating/types';
+import { VariableWithMultiSupport } from '../types';
 import { VariableEditorProps } from './types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 
