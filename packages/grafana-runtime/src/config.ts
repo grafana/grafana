@@ -1,14 +1,14 @@
 import merge from 'lodash/merge';
 import { getTheme } from '@grafana/ui';
 import {
+  BuildInfo,
   DataSourceInstanceSettings,
+  FeatureToggles,
+  GrafanaConfig,
   GrafanaTheme,
   GrafanaThemeType,
-  PanelPluginMeta,
-  GrafanaConfig,
   LicenseInfo,
-  BuildInfo,
-  FeatureToggles,
+  PanelPluginMeta,
 } from '@grafana/data';
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -52,7 +52,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     expressions: false,
     newEdit: false,
     meta: false,
-    newVariables: true,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

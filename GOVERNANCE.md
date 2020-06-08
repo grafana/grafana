@@ -69,6 +69,7 @@ The current team members are:
 * Arve Knudsen ([Grafana Labs](https://grafana.com/))
 * Brian Gann ([Grafana Labs](https://grafana.com/))
 * Carl Bergquist ([Grafana Labs](https://grafana.com/))
+* Chris Trott ([Grafana Labs](https://grafana.com/))
 * Daniel Lee ([Grafana Labs](https://grafana.com/))
 * David Kaltschmidt ([Grafana Labs](https://grafana.com/))
 * Diana Payton ([Grafana Labs](https://grafana.com/))
@@ -77,12 +78,14 @@ The current team members are:
 * Emil Tullstedt ([Grafana Labs](https://grafana.com/))
 * Hugo Häggmark ([Grafana Labs](https://grafana.com/))
 * Ivana Huckova ([Grafana Labs](https://grafana.com/))
+* Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
 * Jessica Müller ([Grafana Labs](https://grafana.com/))
 * Julien Pivotto ([Inuits](https://inuits.eu/))
 * Kay Delaney ([Grafana Labs](https://grafana.com/))
 * Kyle Brandt ([Grafana Labs](https://grafana.com/))
 * Leonard Gram ([Grafana Labs](https://grafana.com/))
 * Lukas Siatka ([Grafana Labs](https://grafana.com/))
+* Malcolm Holmes ([Grafana Labs](https://grafana.com/))
 * Marcus Andersson ([Grafana Labs](https://grafana.com/))
 * Marcus Efraimsson ([Grafana Labs](https://grafana.com/))
 * Marcus Olsson ([Grafana Labs](https://grafana.com/))
@@ -94,7 +97,7 @@ The current team members are:
 * Stephanie Closson ([Grafana Labs](https://grafana.com/))
 * Tobias Skarhed ([Grafana Labs](https://grafana.com/))
 * Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
-* Utkarsh Bhatnagar
+* Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
 
 ### Maintainers
 

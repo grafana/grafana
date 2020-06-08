@@ -17,12 +17,12 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
   const { label, onChangeFunc, onKeyDownFunc, value, type, min } = props;
 
   return (
-    <div className="gf-form-inline explore-input--ml">
+    <div className="gf-form-inline">
       <div className="gf-form">
-        <InlineFormLabel width={6}>{label}</InlineFormLabel>
+        <InlineFormLabel width={5}>{label}</InlineFormLabel>
         <input
           type={type}
-          className="gf-form-input width-6"
+          className="gf-form-input width-4"
           placeholder={'auto'}
           onChange={onChangeFunc}
           onKeyDown={onKeyDownFunc}

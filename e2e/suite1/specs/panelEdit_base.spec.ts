@@ -4,7 +4,7 @@ const PANEL_UNDER_TEST = 'Random walk series';
 
 e2e.scenario({
   describeName: 'Panel edit tests',
-  itName: 'Testes various Panel edit scenarios',
+  itName: 'Tests various Panel edit scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,

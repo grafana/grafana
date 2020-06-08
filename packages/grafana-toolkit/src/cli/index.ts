@@ -104,6 +104,7 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('close-milestone')
       .option('-m, --milestone <milestone>', 'Specify milestone')
+      .option('--dryRun', 'Only simulate actions')
       .description('Helps ends a milestone by removing the cherry-pick label and closing it')
       .action(async cmd => {
         if (!cmd.milestone) {
@@ -113,6 +114,7 @@ export const run = (includeInternalScripts = false) => {
 
         await execTask(closeMilestoneTask)({
           milestone: cmd.milestone,
+          dryRun: !!cmd.dryRun,
         });
       });
 

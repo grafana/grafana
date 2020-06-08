@@ -1,3 +1,5 @@
+// Package simplejson provides a wrapper for arbitrary JSON objects that adds methods to access properties.
+// Use of this package in place of types and the standard library's encoding/json package is strongly discouraged.
 package simplejson
 
 import (
