@@ -25,6 +25,14 @@ e2e.scenario({
       expect(rows.length).equals(1);
     });
 
+    e2e().server();
+    e2e()
+      .route({
+        method: 'POST',
+        url: '/api/tsdb/query',
+      })
+      .as('apiPostQuery');
+
     // Add query button should be visible and clicking on it should create a new row
     e2e.components.QueryTab.addQuery()
       .scrollIntoView()
@@ -41,6 +49,8 @@ e2e.scenario({
       .eq(0)
       .should('be.visible')
       .click();
+
+    e2e().wait('@apiPostQuery');
 
     // We expect row with refId B to exist and be visible
     e2e.components.QueryEditorRows.rows().within(rows => {
@@ -63,6 +73,8 @@ e2e.scenario({
       .eq(1)
       .select('CSV Metric Values');
 
+    e2e().wait('@apiPostQuery');
+
     // Change order or query rows
     // Check the order of the rows before
     e2e.components.QueryEditorRows.rows()
@@ -81,6 +93,8 @@ e2e.scenario({
     e2e.components.QueryEditorRow.actionButton('Move query up')
       .eq(1)
       .click();
+
+    e2e().wait('@apiPostQuery');
 
     // Check the order of the rows after change
     e2e.components.QueryEditorRows.rows()
@@ -108,6 +122,8 @@ e2e.scenario({
       .should('be.visible')
       .click();
 
+    e2e().wait('@apiPostQuery');
+
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
       expect(keys[length - 1].innerText).equals('A:');
@@ -118,6 +134,8 @@ e2e.scenario({
       .eq(1)
       .should('be.visible')
       .click();
+
+    e2e().wait('@apiPostQuery');
 
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
@@ -135,6 +153,8 @@ const expectInspectorResultAndClose = (expectCallBack: (keys: any[]) => void) =>
   e2e.components.PanelInspector.Query.refreshButton()
     .should('be.visible')
     .click();
+
+  e2e().wait('@apiPostQuery');
 
   e2e.components.PanelInspector.Query.jsonObjectKeys()
     .should('be.visible')

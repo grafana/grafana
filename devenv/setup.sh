@@ -59,7 +59,7 @@ usage() {
 	echo "Usage:"
 	echo "  bulk-dashboards                              - create and provisioning 400 dashboards"
 	echo "  bulk-alerting-dashboards                     - create and provisioning 400 dashboards with alerts"
-	echo "  no args                                      - provisiong core datasources and dev dashboards"
+	echo "  no args                                      - provisioning core datasources and dev dashboards"
 }
 
 main() {

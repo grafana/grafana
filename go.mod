@@ -30,7 +30,7 @@ require (
 	github.com/gorilla/websocket v1.4.1
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.60.0
+	github.com/grafana/grafana-plugin-sdk-go v0.66.0
 	github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 	github.com/hashicorp/go-plugin v1.2.2
 	github.com/hashicorp/go-version v1.1.0
@@ -56,7 +56,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
 	github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329

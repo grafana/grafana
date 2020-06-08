@@ -9,7 +9,7 @@ import { TemplatingState } from 'app/features/variables/state/reducers';
 import { initDashboardTemplating, processVariable } from './actions';
 import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
-import { VariableRefresh } from '../../templating/types';
+import { VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
 

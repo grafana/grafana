@@ -12,7 +12,7 @@ import {
   TextBoxVariableModel,
   VariableModel,
   VariableOption,
-} from '../templating/types';
+} from './types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';
