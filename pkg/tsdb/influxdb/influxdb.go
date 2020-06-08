@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -42,8 +43,34 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
+func AllFlux(queries *tsdb.TsdbQuery) (bool, error) {
+	var hasFlux bool
+	var allFlux bool
+	for i, q := range queries.Queries {
+		if q.QueryType == "Flux" {
+			hasFlux = true
+			if i == 0 && hasFlux {
+				allFlux = true
+				continue
+			}
+		}
+		if allFlux && q.QueryType != "Flux" {
+			return true, fmt.Errorf("when using flux, all queries must be a flux query")
+		}
+	}
+	return allFlux, nil
+}
+
 func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{}
+	allFlux, err := AllFlux(tsdbQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	if allFlux {
+		return flux.Query(ctx, dsInfo, tsdbQuery)
+	}
 
 	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
