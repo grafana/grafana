@@ -31,18 +31,24 @@ export class LogsControls extends PureComponent<Props> {
   };
 
   onChangeLabels = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
-    return this.props.onLabelsChange(target.checked);
+    if (event) {
+      const target = event.target as HTMLInputElement;
+      return this.props.onLabelsChange(target.checked);
+    }
   };
 
   onChangeTime = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
-    return this.props.onTimeChange(target.checked);
+    if (event) {
+      const target = event.target as HTMLInputElement;
+      return this.props.onTimeChange(target.checked);
+    }
   };
 
   onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
-    return this.props.onWrapLogMessageChange(target.checked);
+    if (event) {
+      const target = event.target as HTMLInputElement;
+      return this.props.onWrapLogMessageChange(target.checked);
+    }
   };
 
   render() {

@@ -378,7 +378,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     containerWidth,
   } = exploreItem;
 
-  const isUnified = datasourceInstance?.meta?.unified;
+  const isUnified = datasourceInstance?.meta?.unified ?? false;
   const hasLiveOption = datasourceInstance?.meta?.streaming && (mode === ExploreMode.Logs || isUnified) ? true : false;
 
   return {

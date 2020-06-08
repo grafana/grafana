@@ -471,7 +471,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     // Stats are per query, keeping track by refId
     const { refId } = series;
     if (refId && !queriesVisited[refId]) {
-      if (totalBytesKey && series.meta.stats) {
+      if (totalBytesKey && series.meta?.stats) {
         const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;

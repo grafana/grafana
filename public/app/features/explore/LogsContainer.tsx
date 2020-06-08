@@ -268,7 +268,9 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
                   getFieldLinks={this.getFieldLinks}
                 />
               ) : (
-                <Table data={tableResult} width={width} height={this.getTableHeight()} onCellClick={onClickCell} />
+                tableResult && (
+                  <Table data={tableResult} width={width} height={this.getTableHeight()} onCellClick={onClickCell} />
+                )
               )}
             </div>
           </Collapse>
