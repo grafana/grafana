@@ -21,7 +21,7 @@ export const JSONViewCell: FC<TableCellProps> = props => {
   return (
     <div className={cx(txt, tableStyles.tableCell)}>
       <Tooltip placement="auto" content={content} theme={'info'}>
-        <span>{displayValue}</span>
+        <div className={tableStyles.overflow}>{displayValue}</div>
       </Tooltip>
     </div>
   );

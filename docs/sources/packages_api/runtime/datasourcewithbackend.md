@@ -37,7 +37,6 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 |  [postResource(path, body)](#postresource-method) |  | Send a POST request to the datasource resource path |
 |  [query(request)](#query-method) |  | Ideally final -- any other implementation may not work as expected |
 |  [testDatasource()](#testdatasource-method) |  | Checks the plugin health |
-|  [toDataQueryResponse(rsp)](#todataqueryresponse-method) |  | This makes the arrow library loading async. |
 
 ### constructor(instanceSettings)
 
@@ -158,23 +157,4 @@ testDatasource(): Promise<any>;
 <b>Returns:</b>
 
 `Promise<any>`
-
-### toDataQueryResponse method
-
-This makes the arrow library loading async.
-
-<b>Signature</b>
-
-```typescript
-toDataQueryResponse(rsp: any): Promise<DataQueryResponse>;
-```
-<b>Parameters</b>
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  rsp | <code>any</code> |  |
-
-<b>Returns:</b>
-
-`Promise<DataQueryResponse>`
 

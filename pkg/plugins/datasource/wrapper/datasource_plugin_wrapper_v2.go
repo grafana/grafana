@@ -75,6 +75,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
 				FromEpochMS: query.TimeRange.GetFromAsMsEpoch(),
 			},
+			QueryType: q.QueryType,
 		})
 	}
 

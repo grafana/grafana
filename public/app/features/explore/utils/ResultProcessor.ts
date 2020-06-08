@@ -7,9 +7,10 @@ import {
   toDataFrame,
   getDisplayProcessor,
   ExploreMode,
+  PreferredVisualisationType,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import TableModel, { mergeTablesIntoModel, MutableColumn } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
@@ -29,13 +30,14 @@ export class ResultProcessor {
     }
 
     const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
+    const timeSeriesToShowInGraph = onlyTimeSeries.filter(frame => shouldShowInVisualisationType(frame, 'graph'));
 
-    if (onlyTimeSeries.length === 0) {
+    if (timeSeriesToShowInGraph.length === 0) {
       return null;
     }
 
     return getGraphSeriesModel(
-      onlyTimeSeries,
+      timeSeriesToShowInGraph,
       this.timeZone,
       {},
       { showBars: false, showLines: true, showPoints: false },
@@ -48,10 +50,20 @@ export class ResultProcessor {
       return null;
     }
 
-    // For now ignore time series
-    // We can change this later, just need to figure out how to
-    // Ignore time series only for prometheus
-    const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
+    const onlyTables = this.dataFrames
+      .filter((frame: DataFrame) => shouldShowInVisualisationType(frame, 'table'))
+      .sort((frameA: DataFrame, frameB: DataFrame) => {
+        const frameARefId = frameA.refId!;
+        const frameBRefId = frameB.refId!;
+
+        if (frameARefId > frameBRefId) {
+          return 1;
+        }
+        if (frameARefId < frameBRefId) {
+          return -1;
+        }
+        return 0;
+      });
 
     if (onlyTables.length === 0) {
       return null;
@@ -62,10 +74,11 @@ export class ResultProcessor {
       const fieldCount = fields.length;
       const rowCount = frame.length;
 
-      const columns = fields.map(field => ({
+      const columns: MutableColumn[] = fields.map(field => ({
         text: field.name,
         type: field.type,
         filterable: field.config.filterable,
+        custom: field.config.custom,
       }));
 
       const rows: any[][] = [];
@@ -104,7 +117,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
@@ -113,7 +126,7 @@ export class ResultProcessor {
   }
 }
 
-export function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
+function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   // TEMP: Temporary hack. Remove when logs/metrics unification is done
   if (datasource && datasource === 'cloudwatch') {
     return isTimeSeriesCloudWatch(frame);
@@ -128,8 +141,16 @@ export function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   return false;
 }
 
+function shouldShowInVisualisationType(frame: DataFrame, visualisation: PreferredVisualisationType) {
+  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== visualisation) {
+    return false;
+  }
+
+  return true;
+}
+
 // TEMP: Temporary hack. Remove when logs/metrics unification is done
-export function isTimeSeriesCloudWatch(frame: DataFrame): boolean {
+function isTimeSeriesCloudWatch(frame: DataFrame): boolean {
   return (
     frame.fields.some(field => field.type === FieldType.time) &&
     frame.fields.some(field => field.type === FieldType.number)

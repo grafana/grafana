@@ -103,7 +103,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       };
 
       ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
-      ctx.runner.getData().subscribe({
+      ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
         next: (data: PanelData) => {
           ctx.res = data;
           ctx.events?.push(data);
@@ -201,7 +201,7 @@ describe('PanelQueryRunner', () => {
       it('should apply when field override options are set', async () => {
         const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
 
-        ctx.runner.getData().subscribe({
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
@@ -230,8 +230,9 @@ describe('PanelQueryRunner', () => {
     ctx => {
       it('should apply when transformations are set', async () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
 
-        ctx.runner.getData().subscribe({
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
@@ -242,6 +243,50 @@ describe('PanelQueryRunner', () => {
     },
     {
       getFieldOverrideOptions: () => undefined,
+      // @ts-ignore
+      getTransformations: () => [{}],
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'getData',
+    ctx => {
+      it('should not apply transformations when transform option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+
+      it('should not apply field config when applyFieldConfig option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+        spy.mockClear();
+        ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: v => v,
+        theme: {} as GrafanaTheme,
+      }),
       // @ts-ignore
       getTransformations: () => [{}],
     }

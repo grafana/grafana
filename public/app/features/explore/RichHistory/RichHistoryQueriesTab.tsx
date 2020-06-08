@@ -40,7 +40,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 
   /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
   const cardWidth = '100% - 134px';
-  const sliderHeight = `${height - 200}px`;
+  const sliderHeight = `${height - 180}px`;
   return {
     container: css`
       display: flex;
@@ -99,7 +99,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       font-size: ${theme.typography.heading.h4};
       margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
     `,
-    feedback: css`
+    footer: css`
       height: 60px;
       margin-top: ${theme.spacing.lg};
       display: flex;
@@ -161,10 +161,7 @@ export function RichHistoryQueriesTab(props: Props) {
     <div className={styles.container}>
       <div className={styles.containerSlider}>
         <div className={styles.slider}>
-          <div className="label-slider">
-            Filter history <br />
-            between
-          </div>
+          <div className="label-slider">Filter history</div>
           <div className="label-slider">{mapNumbertoTimeInSlider(sliderRetentionFilter[0])}</div>
           <div className="slider">
             <Slider
@@ -225,10 +222,7 @@ export function RichHistoryQueriesTab(props: Props) {
             </div>
           );
         })}
-        <div className={styles.feedback}>
-          Query history is a beta feature. The history is local to your browser and is not shared with others.
-          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
-        </div>
+        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>
   );

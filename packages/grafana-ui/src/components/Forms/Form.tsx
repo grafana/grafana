@@ -38,6 +38,7 @@ export function Form<T>({
     <form
       className={css`
         max-width: ${maxWidth}px;
+        width: 100%;
       `}
       onSubmit={handleSubmit(onSubmit)}
     >

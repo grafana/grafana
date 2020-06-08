@@ -72,6 +72,7 @@ const theme: GrafanaThemeCommons = {
     md: '769px', // 1 more than regular ipad in portrait
     lg: '992px',
     xl: '1200px',
+    xxl: '1440px',
   },
   spacing: {
     insetSquishMd: '4px 8px',

@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
+import React, { useContext, useRef, useState, useLayoutEffect, useEffect } from 'react';
 import { LogRowModel } from '@grafana/data';
 import { css, cx } from 'emotion';
 
@@ -102,6 +102,11 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
 
+  const onClickLoadMore = (event: React.SyntheticEvent) => {
+    event.stopPropagation();
+    onLoadMoreContext();
+  };
+
   return (
     <div className={header}>
       <span
@@ -120,7 +125,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
               cursor: pointer;
             }
           `}
-          onClick={() => onLoadMoreContext()}
+          onClick={onClickLoadMore}
         >
           Load 10 more
         </span>
@@ -197,6 +202,19 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   onLoadMoreContext,
   hasMoreContextRows,
 }) => {
+  const handleEscKeyDown = (e: KeyboardEvent): void => {
+    if (e.keyCode === 27) {
+      onOutsideClick();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscKeyDown, false);
+    return () => {
+      document.removeEventListener('keydown', handleEscKeyDown, false);
+    };
+  }, []);
+
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
       <div>

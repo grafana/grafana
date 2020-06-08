@@ -8,15 +8,16 @@ import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
 
-interface Props extends Themeable {
+export interface Props extends Themeable {
   icon?: IconName;
+  /** Title for the modal or custom header element */
   title: string | JSX.Element;
   className?: string;
 
   isOpen?: boolean;
   onDismiss?: () => void;
 
-  // If not set will call onDismiss if that is set.
+  /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
 }
 

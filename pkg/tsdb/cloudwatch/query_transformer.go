@@ -25,6 +25,10 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 				id = fmt.Sprintf("%s_%v", id, strings.ReplaceAll(*stat, ".", "_"))
 			}
 
+			if _, ok := cloudwatchQueries[id]; ok {
+				return nil, fmt.Errorf("error in query %q - query ID %q is not unique", requestQuery.RefId, id)
+			}
+
 			query := &cloudWatchQuery{
 				Id:         id,
 				RefId:      requestQuery.RefId,
@@ -39,11 +43,6 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 				ReturnData: requestQuery.ReturnData,
 				MatchExact: requestQuery.MatchExact,
 			}
-
-			if _, ok := cloudwatchQueries[id]; ok {
-				return nil, fmt.Errorf("Error in query %s. Query id %s is not unique", query.RefId, query.Id)
-			}
-
 			cloudwatchQueries[id] = query
 		}
 	}
@@ -52,13 +51,12 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 }
 
 func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchResponses []*cloudwatchResponse) map[string]*tsdb.QueryResult {
-	results := make(map[string]*tsdb.QueryResult)
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
-
 	for _, res := range cloudwatchResponses {
 		responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
 	}
 
+	results := make(map[string]*tsdb.QueryResult)
 	for refID, responses := range responsesByRefID {
 		queryResult := tsdb.NewQueryResult()
 		queryResult.RefId = refID
@@ -94,7 +92,6 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		if requestExceededMaxLimit {
 			queryResult.ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
 		}
-
 		if partialData {
 			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range"
 		}

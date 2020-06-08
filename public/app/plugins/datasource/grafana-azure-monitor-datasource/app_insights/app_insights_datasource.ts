@@ -1,7 +1,6 @@
 import { TimeSeries, toDataFrame } from '@grafana/data';
 import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
@@ -20,8 +19,7 @@ export default class AppInsightsDatasource {
   applicationId: string;
   logAnalyticsColumns: { [key: string]: LogAnalyticsColumn[] } = {};
 
-  /** @ngInject */
-  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     this.id = instanceSettings.id;
     this.applicationId = instanceSettings.jsonData.appInsightsAppId || '';
 
@@ -66,7 +64,7 @@ export default class AppInsightsDatasource {
       raw: false,
       appInsights: {
         rawQuery: true,
-        rawQueryString: this.templateSrv.replace(item.rawQueryString, options.scopedVars),
+        rawQueryString: getTemplateSrv().replace(item.rawQueryString, options.scopedVars),
         timeColumn: item.timeColumn,
         valueColumn: item.valueColumn,
         segmentColumn: item.segmentColumn,
@@ -91,17 +89,19 @@ export default class AppInsightsDatasource {
       item.dimensionFilter = item.filter;
     }
 
+    const templateSrv = getTemplateSrv();
+
     return {
       type: 'timeSeriesQuery',
       raw: false,
       appInsights: {
         rawQuery: false,
-        timeGrain: this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars),
+        timeGrain: templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars),
         allowedTimeGrainsMs: item.allowedTimeGrainsMs,
-        metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
-        aggregation: this.templateSrv.replace(item.aggregation, options.scopedVars),
-        dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
-        dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
+        metricName: templateSrv.replace(item.metricName, options.scopedVars),
+        aggregation: templateSrv.replace(item.aggregation, options.scopedVars),
+        dimension: templateSrv.replace(item.dimension, options.scopedVars),
+        dimensionFilter: templateSrv.replace(item.dimensionFilter, options.scopedVars),
         alias: item.alias,
         format: target.format,
       },
@@ -198,7 +198,7 @@ export default class AppInsightsDatasource {
     const appInsightsGroupByQuery = query.match(/^AppInsightsGroupBys\(([^\)]+?)(,\s?([^,]+?))?\)/i);
     if (appInsightsGroupByQuery) {
       const metricName = appInsightsGroupByQuery[1];
-      return this.getGroupBys(this.templateSrv.replace(metricName));
+      return this.getGroupBys(getTemplateSrv().replace(metricName));
     }
 
     return undefined;
@@ -218,7 +218,7 @@ export default class AppInsightsDatasource {
 
         return {
           status: 'error',
-          message: 'Returned http status code ' + response.status,
+          message: 'Application Insights: Returned http status code ' + response.status,
         };
       })
       .catch((error: any) => {

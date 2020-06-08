@@ -9,6 +9,8 @@ type = "docs"
 
 ## DateTimeOptions interface
 
+The type describing date and time options. Used for all the helper functions available to parse or format date and time values.
+
 <b>Signature</b>
 
 ```typescript
@@ -23,9 +25,11 @@ import { DateTimeOptions } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [timeZone](#timezone-property) | <code>TimeZone</code> |  |
+|  [timeZone](#timezone-property) | <code>TimeZone</code> | Specify this if you want to override the timeZone used when parsing or formatting a date and time value. If no timeZone is set, the default timeZone for the current user is used. |
 
 ### timeZone property
+
+Specify this if you want to override the timeZone used when parsing or formatting a date and time value. If no timeZone is set, the default timeZone for the current user is used.
 
 <b>Signature</b>
 

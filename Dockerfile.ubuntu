@@ -1,17 +1,4 @@
-FROM golang:1.14.1 AS go-builder
-
-WORKDIR /src/grafana
-
-COPY go.mod go.sum ./
-
-RUN go mod verify
-
-COPY build.go package.json ./
-COPY pkg pkg/
-
-RUN go run build.go build
-
-FROM node:12.13 AS js-builder
+FROM node:12.16.3-slim AS js-builder
 
 WORKDIR /usr/src/app/
 
@@ -28,6 +15,19 @@ COPY emails emails
 
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
+
+FROM golang:1.14.2 AS go-builder
+
+WORKDIR /src/grafana
+
+COPY go.mod go.sum ./
+
+RUN go mod verify
+
+COPY build.go package.json ./
+COPY pkg pkg/
+
+RUN go run build.go build
 
 FROM ubuntu:20.04
 

@@ -21,6 +21,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     //@ts-ignore
     query: { starred: false, sort: null, tag: ['tag'] },
     onSortChange: noop,
+    editable: true,
   };
 
   Object.assign(props, propOverrides);

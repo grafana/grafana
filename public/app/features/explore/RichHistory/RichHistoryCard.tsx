@@ -195,16 +195,26 @@ export function RichHistoryCard(props: Props) {
 
   const onUpdateComment = () => {
     updateRichHistory(query.ts, 'comment', comment);
-    toggleActiveUpdateComment();
+    setActiveUpdateComment(false);
   };
 
   const onCancelUpdateComment = () => {
-    toggleActiveUpdateComment();
+    setActiveUpdateComment(false);
     setComment(query.comment);
   };
 
+  const onKeyDown = (keyEvent: React.KeyboardEvent) => {
+    if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
+      onUpdateComment();
+    }
+
+    if (keyEvent.key === 'Escape') {
+      onCancelUpdateComment();
+    }
+  };
+
   const updateComment = (
-    <div className={styles.updateCommentContainer}>
+    <div className={styles.updateCommentContainer} aria-label={comment ? 'Update comment form' : 'Add comment form'}>
       <TextArea
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
@@ -212,7 +222,9 @@ export function RichHistoryCard(props: Props) {
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Button onClick={onUpdateComment}>Save comment</Button>
+        <Button onClick={onUpdateComment} aria-label="Submit button">
+          Save comment
+        </Button>
         <Button variant="secondary" onClick={onCancelUpdateComment}>
           Cancel
         </Button>
@@ -240,7 +252,7 @@ export function RichHistoryCard(props: Props) {
   );
 
   return (
-    <div className={styles.queryCard}>
+    <div className={styles.queryCard} onKeyDown={onKeyDown}>
       <div className={styles.cardRow}>
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />

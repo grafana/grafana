@@ -35,7 +35,7 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 		return err
 	}
 
-	cmd := ComposePluginStartCommmand(p.Executable)
+	cmd := ComposePluginStartCommand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
 	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
 		OnStart: p.onPluginStart,
@@ -93,6 +93,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			IntervalMS:    q.IntervalMs,
 			RefId:         q.RefId,
 			MaxDataPoints: q.MaxDataPoints,
+			QueryType:     q.QueryType,
 			TimeRange: &pluginv2.TimeRange{
 				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
 				FromEpochMS: query.TimeRange.GetFromAsMsEpoch(),
@@ -160,6 +161,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 			RefId:         query.RefId,
 			IntervalMs:    query.IntervalMS,
 			MaxDataPoints: query.MaxDataPoints,
+			QueryType:     query.QueryType,
 			DataSource:    getDsInfo.Result,
 			Model:         sj,
 		}

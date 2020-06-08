@@ -36,9 +36,10 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
 
         if (result.totalCount === result.alreadyInFolderCount) {
           appEvents.emit(AppEvents.alertError, ['Error', `Dashboard already belongs to folder ${folderTitle}`]);
+        } else {
+          onMoveItems(selectedDashboards, folder);
         }
 
-        onMoveItems(selectedDashboards, folder);
         onDismiss();
       });
     }
