@@ -274,6 +274,85 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 
+  describe('When getting an error on response', () => {
+    const query = {
+      range: {
+        from: toUtc([2020, 1, 1, 10]),
+        to: toUtc([2020, 2, 1, 10]),
+      },
+      targets: [
+        {
+          alias: '$varAlias',
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+          metrics: [{ type: 'count', id: '1' }],
+          query: 'escape\\:test',
+        },
+      ],
+    };
+
+    createDatasource({
+      url: 'http://es.com',
+      database: '[asd-]YYYY.MM.DD',
+      jsonData: { interval: 'Daily', esVersion: 7 } as ElasticsearchOptions,
+    } as DataSourceInstanceSettings<ElasticsearchOptions>);
+
+    it('should process it properly', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({
+          data: {
+            took: 1,
+            responses: [
+              {
+                error: {
+                  reason: 'all shards failed',
+                },
+                status: 400,
+              },
+            ],
+          },
+        });
+      });
+
+      const errObject = {
+        data: '{\n    "reason": "all shards failed"\n}',
+        message: 'all shards failed',
+      };
+
+      try {
+        await ctx.ds.query(query);
+      } catch (err) {
+        expect(err).toEqual(errObject);
+      }
+    });
+
+    it('should properly throw an unknown error', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.resolve({
+          data: {
+            took: 1,
+            responses: [
+              {
+                error: {},
+                status: 400,
+              },
+            ],
+          },
+        });
+      });
+
+      const errObject = {
+        data: '{}',
+        message: 'Unknown elastic error response',
+      };
+
+      try {
+        await ctx.ds.query(query);
+      } catch (err) {
+        expect(err).toEqual(errObject);
+      }
+    });
+  });
+
   describe('When getting fields', () => {
     beforeEach(() => {
       createDatasource({
