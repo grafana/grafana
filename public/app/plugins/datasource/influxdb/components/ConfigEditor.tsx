@@ -24,6 +24,10 @@ export class ConfigEditor extends PureComponent<Props> {
     updateDatasourcePluginResetOption(this.props, 'password');
   };
 
+  onResetToken = () => {
+    updateDatasourcePluginResetOption(this.props, 'token');
+  };
+
   onToggleFlux = (event: React.SyntheticEvent<HTMLInputElement>) => {
     const { options, onOptionsChange } = this.props;
     onOptionsChange({
@@ -128,6 +132,19 @@ export class ConfigEditor extends PureComponent<Props> {
                 inputWidth={20}
                 onReset={this.onResetPassword}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
+              />
+            </div>
+          </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <SecretFormField
+                isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
+                value={secureJsonData.token || ''}
+                label="Token"
+                labelWidth={10}
+                inputWidth={20}
+                onReset={this.onResetPassword}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'token')}
               />
             </div>
           </div>
