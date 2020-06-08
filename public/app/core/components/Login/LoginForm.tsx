@@ -13,12 +13,6 @@ interface Props {
   loginHint: string;
 }
 
-const forgottenPasswordStyles = css`
-  display: inline-block;
-  margin-top: 16px;
-  float: right;
-`;
-
 const wrapperStyles = css`
   width: 100%;
   padding-bottom: 16px;

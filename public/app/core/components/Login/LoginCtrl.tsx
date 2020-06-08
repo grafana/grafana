@@ -35,6 +35,7 @@ interface Props {
     isOauthEnabled: boolean;
     loginHint: string;
     passwordHint: string;
+    resetCode?: string;
   }) => JSX.Element;
 }
 
@@ -63,12 +64,26 @@ export class LoginCtrl extends PureComponent<Props, State> {
       confirmNew: password,
       oldPassword: 'admin',
     };
+    if (!this.props.routeParams.resetCode) {
+      getBackendSrv()
+        .put('/api/user/password', pw)
+        .then(() => {
+          this.toGrafana();
+        })
+        .catch((err: any) => console.log(err));
+    }
+
+    const resetModel = {
+      code: this.props.routeParams.resetCode,
+      newPassword: password,
+      confirmPassword: password,
+    };
+
     getBackendSrv()
-      .put('/api/user/password', pw)
+      .post('/api/user/password/reset', resetModel)
       .then(() => {
         this.toGrafana();
-      })
-      .catch((err: any) => console.log(err));
+      });
   };
 
   login = (formModel: FormModel) => {
@@ -121,7 +136,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
   };
 
   render() {
-    const { children } = this.props;
+    const { children, routeParams } = this.props;
     const { isLoggingIn, isChangingPassword } = this.state;
     const { login, toGrafana, changePassword } = this;
     const { loginHint, passwordHint, disableLoginForm, ldapEnabled, authProxyEnabled, disableUserSignUp } = config;
@@ -141,6 +156,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
           changePassword,
           skipPasswordChange: toGrafana,
           isChangingPassword,
+          resetCode: routeParams.resetCode,
         })}
       </>
     );

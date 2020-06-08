@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { submitButton } from './LoginForm';
 interface Props {
   onSubmit: (pw: string) => void;
-  onSkip: (event?: SyntheticEvent) => void;
+  onSkip?: (event?: SyntheticEvent) => void;
 }
 
 interface PasswordDTO {
@@ -44,14 +44,17 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
             <Button type="submit" className={submitButton}>
               Submit
             </Button>
-            <Tooltip
-              content="If you skip you will be prompted to change password next time you login."
-              placement="bottom"
-            >
-              <LinkButton variant="link" onClick={onSkip} aria-label={selectors.pages.Login.skip}>
-                Skip
-              </LinkButton>
-            </Tooltip>
+
+            {onSkip && (
+              <Tooltip
+                content="If you skip you will be prompted to change password next time you login."
+                placement="bottom"
+              >
+                <LinkButton variant="link" onClick={onSkip} aria-label={selectors.pages.Login.skip}>
+                  Skip
+                </LinkButton>
+              </Tooltip>
+            )}
           </VerticalGroup>
         </>
       )}

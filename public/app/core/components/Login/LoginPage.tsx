@@ -39,9 +39,10 @@ export const LoginPage: FC = () => {
             changePassword,
             skipPasswordChange,
             isChangingPassword,
+            resetCode,
           }) => (
             <div className={loginStyles.loginOuterBox}>
-              {!(isChangingPassword || forgotPassword) && (
+              {!(isChangingPassword || forgotPassword || resetCode) && (
                 <div className={`${loginStyles.loginInnerBox} ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
                   {!disableLoginForm && (
                     <>
@@ -64,9 +65,9 @@ export const LoginPage: FC = () => {
                   {!disableUserSignUp && <UserSignup />}
                 </div>
               )}
-              {isChangingPassword && (
+              {(isChangingPassword || resetCode) && (
                 <div className={cx(loginStyles.loginInnerBox, loginStyles.enterAnimation)}>
-                  <ChangePassword onSubmit={changePassword} onSkip={skipPasswordChange as any} />
+                  <ChangePassword onSubmit={changePassword} onSkip={!resetCode && (skipPasswordChange as any)} />
                 </div>
               )}
 

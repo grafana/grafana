@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { LinkButton, Form, Field, Input, Button, Legend, Container } from '@grafana/ui';
+import { Form, Field, Input, Button, Legend, Container } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
 
 interface EmailDTO {
@@ -11,8 +11,7 @@ export const ForgottenPassword: FC = () => {
 
   const sendEmail = async (formModel: EmailDTO) => {
     const res = await getBackendSrv().post('/api/user/password/send-reset-email', formModel);
-    console.log(res);
-    if (!res.error) {
+    if (res) {
       setEmailSent(true);
     }
   };
@@ -20,12 +19,14 @@ export const ForgottenPassword: FC = () => {
   if (emailSent) {
     return (
       <div>
-        An email with a reset link has been sent to the email address. <br />
-        You should receive it shortly.
+        <p>
+          An email with a reset link has been sent to the email address. <br />
+          You should receive it shortly.
+        </p>
         <Container margin="md" />
-        <LinkButton variant="primary" href="/">
+        <Button variant="primary" onClick={() => window.location.reload()}>
           Back to login
-        </LinkButton>
+        </Button>
       </div>
     );
   }
