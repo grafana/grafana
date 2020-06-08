@@ -15,7 +15,7 @@ import {
   LinkModel,
   Field,
 } from '@grafana/data';
-import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, Button } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import store from 'app/core/store';
 
@@ -256,18 +256,18 @@ export class Logs extends PureComponent<Props, State> {
         {!loading && !hasData && !scanning && (
           <div className="logs-panel-nodata">
             No logs found.
-            <a className="link" onClick={this.onClickScan}>
+            <Button size="xs" variant="link" onClick={this.onClickScan}>
               Scan for older logs
-            </a>
+            </Button>
           </div>
         )}
 
         {scanning && (
           <div className="logs-panel-nodata">
             <span>{scanText}</span>
-            <a className="link" onClick={this.onClickStopScan}>
+            <Button size="xs" variant="link" onClick={this.onClickStopScan}>
               Stop scan
-            </a>
+            </Button>
           </div>
         )}
       </div>
