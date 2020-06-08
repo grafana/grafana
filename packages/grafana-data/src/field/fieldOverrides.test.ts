@@ -127,8 +127,8 @@ describe('applyFieldOverrides', () => {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "label": undefined,
-              "labels": "",
+              "formattedLabels": "",
+              "labels": undefined,
               "name": "A message",
             },
           },
@@ -146,8 +146,8 @@ describe('applyFieldOverrides', () => {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "label": undefined,
-              "labels": "",
+              "formattedLabels": "",
+              "labels": undefined,
               "name": "B info",
             },
           },

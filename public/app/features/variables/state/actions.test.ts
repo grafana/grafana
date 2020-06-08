@@ -1,7 +1,7 @@
 import { AnyAction } from 'redux';
 import { UrlQueryMap } from '@grafana/data';
 
-import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
+import { getRootReducer, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -10,8 +10,11 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import {
+  cancelVariables,
   changeVariableMultiValue,
+  cleanUpVariables,
   initDashboardTemplating,
+  initVariablesTransaction,
   processVariables,
   setOptionFromUrl,
   validateVariableSelectionState,
@@ -34,7 +37,22 @@ import {
   textboxBuilder,
 } from '../shared/testing/builders';
 import { changeVariableName } from '../editor/actions';
-import { changeVariableNameFailed, changeVariableNameSucceeded, setIdInEditor } from '../editor/reducer';
+import {
+  changeVariableNameFailed,
+  changeVariableNameSucceeded,
+  initialVariableEditorState,
+  setIdInEditor,
+} from '../editor/reducer';
+import { DashboardState, LocationState } from '../../../types';
+import {
+  TransactionStatus,
+  variablesClearTransaction,
+  variablesCompleteTransaction,
+  variablesInitTransaction,
+} from './transactionReducer';
+import { initialState } from '../pickers/OptionsPicker/reducer';
+import { cleanVariables } from './variablesReducer';
+import { expect } from '../../../../test/lib/common';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -524,6 +542,97 @@ describe('shared actions', () => {
               })
             )
           );
+      });
+    });
+  });
+
+  describe('initVariablesTransaction', () => {
+    type ReducersUsedInContext = {
+      templating: TemplatingState;
+      dashboard: DashboardState;
+      location: LocationState;
+    };
+    const constant = constantBuilder()
+      .withId('constant')
+      .withName('constant')
+      .build();
+    const templating: any = { list: [constant] };
+    const uid = 'uid';
+    const dashboard: any = { title: 'Some dash', uid, templating };
+
+    describe('when called and the previous dashboard has completed', () => {
+      it('then correct actions are dispatched', async () => {
+        const tester = await reduxTester<ReducersUsedInContext>()
+          .givenRootReducer(getRootReducer())
+          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
+
+        tester.thenDispatchedActionsShouldEqual(
+          variablesInitTransaction({ uid }),
+          addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })),
+          addInitLock(toVariablePayload(constant)),
+          resolveInitLock(toVariablePayload(constant)),
+          removeInitLock(toVariablePayload(constant)),
+          variablesCompleteTransaction({ uid })
+        );
+      });
+    });
+
+    describe('when called and the previous dashboard is still processing variables', () => {
+      it('then correct actions are dispatched', async () => {
+        const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
+
+        const tester = await reduxTester<ReducersUsedInContext>({
+          preloadedState: ({
+            templating: {
+              transaction: transactionState,
+              variables: {},
+              optionsPicker: { ...initialState },
+              editor: { ...initialVariableEditorState },
+            },
+          } as unknown) as ReducersUsedInContext,
+        })
+          .givenRootReducer(getRootReducer())
+          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
+
+        tester.thenDispatchedActionsShouldEqual(
+          cleanVariables(),
+          variablesClearTransaction(),
+          variablesInitTransaction({ uid }),
+          addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })),
+          addInitLock(toVariablePayload(constant)),
+          resolveInitLock(toVariablePayload(constant)),
+          removeInitLock(toVariablePayload(constant)),
+          variablesCompleteTransaction({ uid })
+        );
+      });
+    });
+  });
+
+  describe('cleanUpVariables', () => {
+    describe('when called', () => {
+      it('then correct actions are dispatched', async () => {
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(cleanUpVariables())
+          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+      });
+    });
+  });
+
+  describe('cancelVariables', () => {
+    const cancelAllInFlightRequestsMock = jest.fn();
+    const backendSrvMock: any = {
+      cancelAllInFlightRequests: cancelAllInFlightRequestsMock,
+    };
+
+    describe('when called', () => {
+      it('then cancelAllInFlightRequests should be called and correct actions are dispatched', async () => {
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(cancelVariables({ getBackendSrv: () => backendSrvMock }))
+          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+
+        expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
       });
     });
   });
