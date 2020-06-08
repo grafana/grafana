@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/types';
+import { TextBoxVariableModel, VariableHide, VariableOption } from '../types';
 import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
@@ -24,7 +24,7 @@ export const textBoxVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createTextBoxOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<TextBoxVariableModel>(state, action.payload.id!);
+      const instanceState = getInstanceState<TextBoxVariableModel>(state, action.payload.id);
       const option = { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false };
       instanceState.options = [option];
       instanceState.current = option;

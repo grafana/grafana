@@ -20,7 +20,7 @@ type Message struct {
 	Body          string
 	Info          string
 	ReplyTo       []string
-	EmbededFiles  []string
+	EmbeddedFiles []string
 	AttachedFiles []*AttachedFile
 }
 

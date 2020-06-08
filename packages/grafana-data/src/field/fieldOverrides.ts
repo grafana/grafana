@@ -112,8 +112,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         text: 'Field',
         value: {
           name: displayName, // Generally appropriate (may include the series name if useful)
-          labels: formatLabels(field.labels!),
-          label: field.labels,
+          formattedLabels: formatLabels(field.labels!),
+          labels: field.labels,
         },
       };
 
