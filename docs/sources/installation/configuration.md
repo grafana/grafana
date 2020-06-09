@@ -87,7 +87,7 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
-variable expander which will run the provider with the provided argument
+variable expander. The expander runs the provider with the provided argument
 to get the final value of the option.
 
 There are two providers, `env` and `file`.
