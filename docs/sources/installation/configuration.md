@@ -92,10 +92,22 @@ to get the final value of the option.
 
 There are two providers: `env` and `file`.
 
+### Env provider
+
 The `env` provider can be used to expand an environment variable. If you
 set an option to `$__env{PORT}` the `PORT` environment variable will be
 used in its place. For environment variables you can also use the
 short-hand syntax `${PORT}`.
+Grafana's log directory would be set to the `grafana` directory in the
+directory behind the `LOGDIR` environment variable in the following
+example.
+
+```
+[paths]
+logs = $__env{LOGDIR}/grafana
+```
+
+### File provider
 
 `file` reads a file from the filesystem. It trims whitespace from the
 beginning and the end of files.
