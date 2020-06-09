@@ -76,7 +76,7 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 				logger.Error("Got unexpected error when removing user from auth cache", "error", err)
 			}
 		}
-		id, err := logUserIn(auth, username, logger, true)
+		id, err = logUserIn(auth, username, logger, true)
 		if err != nil {
 			ctx.Handle(407, err.Error(), err.DetailsError)
 			return true
