@@ -2,6 +2,7 @@ import { MutableDataFrame } from '../../../dataframe';
 import { DataFrame, FieldType, Field } from '../../../types/dataFrame';
 import { ArrayVector } from '../../../vector';
 import { omit } from 'lodash';
+import { getFrameDisplayName } from '../../../field';
 
 interface DataFrameBuilderResult {
   dataFrame: MutableDataFrame;
@@ -9,6 +10,12 @@ interface DataFrameBuilderResult {
 }
 
 type ValueMapper = (frame: DataFrame, valueIndex: number, timeIndex: number) => Record<string, any>;
+
+const fieldNames = {
+  metric: 'Metric',
+  time: 'Time',
+  value: 'Value',
+};
 
 export class DataFrameBuilder {
   private isOnlyTimeSeries: boolean;
@@ -37,7 +44,7 @@ export class DataFrameBuilder {
 
       if (index === timeIndex) {
         if (!this.timeField) {
-          this.timeField = this.copyStructure(field, 'time');
+          this.timeField = this.copyStructure(field, fieldNames.time);
         }
         continue;
       }
@@ -61,16 +68,16 @@ export class DataFrameBuilder {
         const value = field.values.get(valueIndex);
 
         if (index === timeIndex) {
-          values['time'] = value;
+          values[fieldNames.time] = value;
 
           if (this.displayMetricField) {
-            values['metric'] = `${frame.name}-series`;
+            values[fieldNames.metric] = getFrameDisplayName(frame);
           }
           return values;
         }
 
         if (this.isOnlyTimeSeries) {
-          values['value'] = value;
+          values[fieldNames.value] = value;
           return values;
         }
 
@@ -88,7 +95,7 @@ export class DataFrameBuilder {
 
       if (this.displayMetricField) {
         dataFrame.addField({
-          name: 'metric',
+          name: fieldNames.metric,
           type: FieldType.string,
         });
       }
@@ -100,7 +107,7 @@ export class DataFrameBuilder {
       if (valueFields.length > 0) {
         dataFrame.addField({
           ...valueFields[0],
-          name: 'value',
+          name: fieldNames.value,
         });
       }
 
