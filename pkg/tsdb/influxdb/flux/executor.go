@@ -9,6 +9,8 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go"
 )
 
+// ExecuteQuery runs a flux query using the QueryModel to interpolate the query and the runner to execute it.
+// maxSeries somehow limits the response.
 func ExecuteQuery(ctx context.Context, query QueryModel, runner Runner, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 

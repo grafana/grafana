@@ -19,6 +19,8 @@ func init() {
 	glog = log.New("tsdb.influx_flux")
 }
 
+// Query builds flux queries, executes them, and returns the results.
+//
 func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	tRes := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
@@ -43,15 +45,19 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	return tRes, nil
 }
 
+// Runner is an influxdb2 Client with an attached org property and is used
+// for running flux queries.
 type Runner struct {
 	client influxdb2.Client
 	org    string
 }
 
-func (r *Runner) runQuery(ctx context.Context, q string) (*influxdb2.QueryTableResult, error) {
-	return r.client.QueryApi(r.org).Query(ctx, q)
+// runQuery executes fluxQuery against the Runner's organization and returns an flux typed result.
+func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*influxdb2.QueryTableResult, error) {
+	return r.client.QueryApi(r.org).Query(ctx, fluxQuery)
 }
 
+// RunnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
 func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 	org := dsInfo.JsonData.Get("organization").MustString("")
 	if org == "" {
@@ -74,6 +80,9 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 
 }
 
+// backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a
+// tsdb.QueryResult. This is a wrapper so less of existing code needs to be changed. This should
+// be able to be removed in the near future https://github.com/grafana/grafana/pull/25472.
 func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) *tsdb.QueryResult {
 	qr := &tsdb.QueryResult{RefId: refID}
 
