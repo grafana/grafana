@@ -90,8 +90,17 @@ func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 }
 
 // DataFrames interface for retrieving encoded and decoded data frames.
+//
+// See NewDecodedDataFrames and NewEncodedDataFrames for more information.
 type DataFrames interface {
+	// Encoded encodes Frames into a slice of []byte.
+	// If an error occurs [][]byte will be nil.
+	// The encoded result, if any, will be cached and returned next time Encoded is called.
 	Encoded() ([][]byte, error)
+
+	// Decoded decodes a slice of Arrow encoded frames to data.Frames ([]*data.Frame).
+	// If an error occurs Frames will be nil.
+	// The decoded result, if any, will be cached and returned next time Decoded is called.
 	Decoded() (data.Frames, error)
 }
 
@@ -101,6 +110,11 @@ type dataFrames struct {
 }
 
 // NewDecodedDataFrames create new DataFrames from decoded frames.
+//
+// This should be the primary function for creating DataFrames if your implementing a plugin.
+// In Grafana alerting scenario it needs to operate on decoded frames why this function is
+// preferrable. When encoded data frames is needed, e.g. returned from Grafana HTTP API, it will
+// happen automatically when MarshalJSON() is called.
 func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
 	return &dataFrames{
 		decoded: decodedFrames,
@@ -108,6 +122,11 @@ func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
 }
 
 // NewEncodedDataFrames create new DataFrames from encoded frames.
+//
+// This one is primarily used for creating DataFrames when receiving encoded data frames from an external
+// plugin or similar. This may allow the encoded data frames to be returned to Grafana UI without any additional
+// decoding/encoding required. In Grafana alerting scenario it needs to operate on decoded data frames why encoded
+// frames needs to be decoded before usage.
 func NewEncodedDataFrames(encodedFrames [][]byte) DataFrames {
 	return &dataFrames{
 		encoded: encodedFrames,
