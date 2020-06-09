@@ -83,7 +83,7 @@ func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) *
 	}
 
 	if dr.Frames != nil {
-		qr.Dataframes, qr.Error = dr.Frames.MarshalArrow()
+		qr.Dataframes = tsdb.NewDecodedDataFrames(dr.Frames)
 	}
 	return qr
 }
