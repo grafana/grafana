@@ -29,7 +29,6 @@ require (
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/gosimple/slug v1.4.2
-	github.com/grafana/google-sheets-datasource v1.0.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.66.0
 	github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
