@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -342,28 +341,25 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 
 // CheckDatasourceHealth sends a health check request to the plugin datasource
 // /api/datasource/:id/health
-func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
+func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) Response {
 	datasourceID := c.ParamsInt64("id")
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if err == models.ErrDataSourceAccessDenied {
-			c.JsonApiErr(403, "Access denied to datasource", err)
-			return
+			return Error(403, "Access denied to datasource", err)
 		}
-		c.JsonApiErr(500, "Unable to load datasource metadata", err)
-		return
+		return Error(500, "Unable to load datasource metadata", err)
 	}
 
 	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
 	if !ok {
-		c.JsonApiErr(500, "Unable to find datasource plugin", err)
-		return
+		return Error(500, "Unable to find datasource plugin", err)
 	}
 
 	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
 	if err != nil {
-		c.JsonApiErr(500, "Unable to get datasource model", err)
+		return Error(500, "Unable to get datasource model", err)
 	}
 	pCtx := backend.PluginContext{
 		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
@@ -374,25 +370,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
-		if err == backendplugin.ErrPluginNotRegistered {
-			c.JsonApiErr(404, "Plugin not found", err)
-			return
-		}
-
-		// Return status unknown instead?
-		if err == backendplugin.ErrDiagnosticsNotSupported {
-			c.JsonApiErr(404, "Health check not implemented", err)
-			return
-		}
-
-		// Return status unknown or error instead?
-		if err == backendplugin.ErrHealthCheckFailed {
-			c.JsonApiErr(500, "Plugin health check failed", err)
-			return
-		}
-
-		c.JsonApiErr(500, "Plugin healthcheck returned an unknown error", err)
-		return
+		return handlePluginRequestError(err)
 	}
 
 	payload := map[string]interface{}{
@@ -405,17 +383,15 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			c.JsonApiErr(500, "Failed to unmarshal detailed response from backend plugin", err)
-			return
+			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
-	if resp.Status != backendplugin.HealthStatusOk {
-		c.JSON(503, payload)
-		return
+	if resp.Status != backend.HealthStatusOk {
+		return JSON(503, payload)
 	}
 
-	c.JSON(200, payload)
+	return JSON(200, payload)
 }
