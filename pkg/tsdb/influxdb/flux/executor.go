@@ -8,11 +8,6 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go"
 )
 
-type instanceSettings struct {
-	maxSeries int
-	Runner    Runner
-}
-
 func ExecuteQuery(ctx context.Context, query QueryModel, runner Runner, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 
@@ -21,6 +16,8 @@ func ExecuteQuery(ctx context.Context, query QueryModel, runner Runner, maxSerie
 		dr.Error = err
 		return
 	}
+
+	glog.Debug("Flux", "interpolated query", flux)
 
 	tables, err := runner.runQuery(ctx, flux)
 	if err != nil {

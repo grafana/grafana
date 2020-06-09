@@ -2,7 +2,6 @@ package flux
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	influxdb2 "github.com/influxdata/influxdb-client-go"
@@ -44,8 +43,6 @@ type FrameBuilder struct {
 func isTag(schk string) bool {
 	return (schk != "result" && schk != "table" && schk[0] != '_')
 }
-
-var isField = regexp.MustCompile(`^_(time|value|measurement|field|start|stop)$`)
 
 func getConverter(t string) (*data.FieldConverter, error) {
 	switch t {
@@ -177,7 +174,7 @@ func (fb *FrameBuilder) Append(record *influxdb2.FluxRecord) error {
 		}
 	}
 
-	if fb.active.Fields[0].Len() > int(fb.maxPoints) {
+	if fb.active.Fields[0].Len() > fb.maxPoints {
 		return fmt.Errorf("returned too many points in a series: %d", fb.maxPoints)
 	}
 

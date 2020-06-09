@@ -60,6 +60,9 @@ func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 	if model.Options.Bucket == "" {
 		model.Options.Bucket = model.Options.DefaultBucket
 	}
+	if model.Options.Organization == "" {
+		model.Options.Organization = dsInfo.JsonData.Get("organization").MustString("")
+	}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
 		return nil, err
