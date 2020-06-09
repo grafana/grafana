@@ -45,15 +45,15 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	origHeaderName := setting.AuthProxyHeaderName
 	origEnabled := setting.AuthProxyEnabled
 	origHeaderProperty := setting.AuthProxyHeaderProperty
+	origUpsertHandler := bus.AddHandlerForType(&models.UpsertUserCommand{}, upsertHandler)
+	origSignedUserHandler := bus.AddHandlerForType(&models.GetSignedInUserQuery{}, getSignedUserHandler)
 	t.Cleanup(func() {
 		setting.AuthProxyHeaderName = origHeaderName
 		setting.AuthProxyEnabled = origEnabled
 		setting.AuthProxyHeaderProperty = origHeaderProperty
-		bus.RemoveHandler(upsertHandler)
-		bus.RemoveHandler(getSignedUserHandler)
+		bus.AddHandlerForType(&models.UpsertUserCommand{}, origUpsertHandler)
+		bus.AddHandlerForType(&models.GetSignedInUserQuery{}, origSignedUserHandler)
 	})
-	bus.AddHandler("test", upsertHandler)
-	bus.AddHandler("test", getSignedUserHandler)
 
 	setting.AuthProxyHeaderName = "X-Killa"
 	setting.AuthProxyEnabled = true

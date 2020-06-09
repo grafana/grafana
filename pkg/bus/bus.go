@@ -35,9 +35,9 @@ type Bus interface {
 	// callback returns an error.
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 
-	RemoveHandler(handler HandlerFunc)
 	AddHandler(handler HandlerFunc)
 	AddHandlerCtx(handler HandlerFunc)
+	AddHandlerForType(obj interface{}, handler HandlerFunc) HandlerFunc
 	AddEventListener(handler HandlerFunc)
 
 	// SetTransactionManager allows the user to replace the internal
@@ -153,16 +153,21 @@ func (b *InProcBus) Publish(msg Msg) error {
 	return nil
 }
 
-func (b *InProcBus) RemoveHandler(handler HandlerFunc) {
-	handlerType := reflect.TypeOf(handler)
-	queryTypeName := handlerType.In(0).Elem().Name()
-	delete(b.handlers, queryTypeName)
-}
-
 func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
 	b.handlers[queryTypeName] = handler
+}
+
+func (b *InProcBus) AddHandlerForType(obj interface{}, handler HandlerFunc) HandlerFunc {
+	typeName := reflect.TypeOf(obj).Elem().Name()
+	if typeName == "" {
+		panic("Couldn't get type name")
+	}
+	prev := b.handlers[typeName]
+	b.handlers[typeName] = handler
+
+	return prev
 }
 
 func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
@@ -181,16 +186,16 @@ func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	b.listeners[eventName] = append(b.listeners[eventName], handler)
 }
 
-// RemoveHandler removes the handler function provided from the bus.
-// Package level function.
-func RemoveHandler(handler HandlerFunc) {
-	globalBus.RemoveHandler(handler)
-}
-
 // AddHandler attaches a handler function to the global bus.
 // Package level function.
 func AddHandler(implName string, handler HandlerFunc) {
 	globalBus.AddHandler(handler)
+}
+
+// AddHandlerForType attaches a handler for a certain message type to the global bus, and returns the previous handler.
+// Package level function.
+func AddHandlerForType(obj interface{}, handler HandlerFunc) HandlerFunc {
+	return globalBus.AddHandlerForType(obj, handler)
 }
 
 // AddHandlerCtx attaches a handler function to the global bus context.
