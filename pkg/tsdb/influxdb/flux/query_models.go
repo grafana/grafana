@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -42,7 +43,7 @@ func GetQueryModel(query backend.DataQuery) (*QueryModel, error) {
 	return model, nil
 }
 
-func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange) (*QueryModel, error) {
+func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *models.DataSource) (*QueryModel, error) {
 	model := &QueryModel{}
 	queryBytes, err := query.Model.Encode()
 	if err != nil {
@@ -53,7 +54,12 @@ func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange) (*QueryMode
 	if err != nil {
 		return nil, fmt.Errorf("error reading query: %s", err.Error())
 	}
-
+	if model.Options.DefaultBucket == "" {
+		model.Options.DefaultBucket = dsInfo.JsonData.Get("defaultBucket").MustString("")
+	}
+	if model.Options.Bucket == "" {
+		model.Options.Bucket = model.Options.DefaultBucket
+	}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
 		return nil, err
