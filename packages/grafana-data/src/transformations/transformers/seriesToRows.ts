@@ -1,8 +1,8 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
-import { DataFrame } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { getTimeField, MutableDataFrame, sortDataFrame } from '../../dataframe';
-import { isNumber } from 'lodash';
+import { isNumber, omit } from 'lodash';
 
 export interface SeriesToRowsOptions {
   fields?: MatcherConfig; // Assume all fields
@@ -28,7 +28,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsOptions> =
       const frames = data.map((frame, index) => sortDataFrame(frame, timeFieldIndexByFrameIndex[index]));
       const valueIndexByFrameIndex = createValueFieldIndex(data);
 
-      const result = new MutableDataFrame();
+      const result = createMutableDataFrame(timeFieldIndexByFrameIndex, data);
       const numberOfRows = data.reduce((total, frame) => total + frame.length, 0);
 
       for (let index = 0; index < numberOfRows; index++) {
@@ -39,7 +39,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsOptions> =
           const winnerTime = winnerTimeField.values.get(valueIndexByFrameIndex[winner]);
           const frameTime = frameTimeField.values.get(valueIndexByFrameIndex[index]);
 
-          if (winnerTime <= frameTime) {
+          if (!isNumber(frameTime) || winnerTime <= frameTime) {
             return winner;
           }
           return index;
@@ -79,7 +79,9 @@ const createValueFieldIndex = (data: DataFrame[]): Record<number, number> => {
 };
 
 function createValuesFromFrame(timeFieldIndex: number, valueFieldIndex: number, frame: DataFrame): Record<string, any> {
-  const values: Record<string, any> = {};
+  const values: Record<string, any> = {
+    metric: `${frame.name}-series`,
+  };
   const isTimeAndValueFrame = frame.fields.length === 2;
 
   for (let index = 0; index < frame.fields.length; index++) {
@@ -88,7 +90,6 @@ function createValuesFromFrame(timeFieldIndex: number, valueFieldIndex: number, 
 
     if (index === timeFieldIndex) {
       values['time'] = value;
-      values['metric'] = `${frame.name}-series`;
       continue;
     }
 
@@ -105,4 +106,49 @@ function createValuesFromFrame(timeFieldIndex: number, valueFieldIndex: number, 
 
 const timeFieldNotFoundForAllFrames = (timeFieldIndex: Record<number, number>, data: DataFrame[]): boolean => {
   return Object.keys(timeFieldIndex).length !== data.length;
+};
+
+const createMutableDataFrame = (timeFieldByFrame: Record<number, number>, data: DataFrame[]): MutableDataFrame => {
+  const singleValueField = !data.find(frame => frame.fields.length > 2);
+  const dataFrame = new MutableDataFrame();
+  const timeFieldIndex = timeFieldByFrame[0];
+  const timeField = data[0].fields[timeFieldIndex];
+
+  dataFrame.addField({
+    ...omit(timeField, ['values', 'name']),
+    name: 'time',
+  });
+
+  dataFrame.addField({
+    name: 'metric',
+    type: FieldType.string,
+    config: {},
+  });
+
+  if (singleValueField) {
+    const valueField = data[0].fields.find((field, index) => index !== timeFieldIndex);
+
+    dataFrame.addField({
+      ...omit(valueField, ['values', 'name']),
+      name: 'value',
+    });
+
+    return dataFrame;
+  }
+
+  return data.reduce((mutableFrame: MutableDataFrame, frame, frameIndex) => {
+    const timeIndex = timeFieldByFrame[frameIndex];
+
+    return frame.fields.reduce((mutableFrame: MutableDataFrame, field, fieldIndex) => {
+      if (fieldIndex === timeIndex) {
+        return mutableFrame;
+      }
+
+      mutableFrame.addField({
+        ...omit(field, ['values']),
+      });
+
+      return mutableFrame;
+    }, mutableFrame);
+  }, dataFrame);
 };
