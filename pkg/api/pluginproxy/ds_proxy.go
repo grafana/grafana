@@ -187,8 +187,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", dsAuth)
 		}
 
-		if proxy.cfg.SendUserHeader && !proxy.ctx.SignedInUser.IsAnonymous {
-			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
+		if proxy.cfg.SendUserHeader {
+			if proxy.ctx.SignedInUser.IsAnonymous {
+				req.Header.Del("X-Grafana-User")
+			} else {
+				req.Header.Set("X-Grafana-User", proxy.ctx.SignedInUser.Login)
+			}
 		}
 
 		keepCookieNames := []string{}
