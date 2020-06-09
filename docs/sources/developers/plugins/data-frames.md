@@ -65,7 +65,7 @@ By adding field configurations to a data frame, Grafana can configure visualizat
 
 ## Transformations
 
-Along with the type information, field configs enables _data transformations_ within Grafana.
+Along with the type information, field configs enable _data transformations_ within Grafana.
 
 A data transformation is any function that accepts a data frame as input, and returns another data frame as output. By using data frames in your plugin, you get a range of transformations for free.
 
