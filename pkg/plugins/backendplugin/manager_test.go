@@ -65,14 +65,16 @@ func TestManager(t *testing.T) {
 					cCtx, cancel := context.WithCancel(pCtx)
 					var wg sync.WaitGroup
 					wg.Add(1)
+					var runErr error
 					go func() {
-						ctx.manager.Run(cCtx)
+						runErr = ctx.manager.Run(cCtx)
 						wg.Done()
 					}()
 					go func() {
 						cancel()
 					}()
 					wg.Wait()
+					require.Equal(t, context.Canceled, runErr)
 					require.True(t, ctx.plugin.started)
 					require.True(t, ctx.plugin.stopped)
 				})
@@ -138,10 +140,9 @@ func TestManager(t *testing.T) {
 
 					t.Run("Call resource should return expected response", func(t *testing.T) {
 						ctx.plugin.CallResourceHandlerFunc = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-							sender.Send(&backend.CallResourceResponse{
+							return sender.Send(&backend.CallResourceResponse{
 								Status: http.StatusOK,
 							})
-							return nil
 						})
 
 						req, err := http.NewRequest(http.MethodGet, "/test", bytes.NewReader([]byte{}))
@@ -172,14 +173,16 @@ func TestManager(t *testing.T) {
 					cCtx, cancel := context.WithCancel(pCtx)
 					var wg sync.WaitGroup
 					wg.Add(1)
+					var runErr error
 					go func() {
-						ctx.manager.Run(cCtx)
+						runErr = ctx.manager.Run(cCtx)
 						wg.Done()
 					}()
 					go func() {
 						cancel()
 					}()
 					wg.Wait()
+					require.Equal(t, context.Canceled, runErr)
 					require.True(t, ctx.plugin.stopped)
 				})
 

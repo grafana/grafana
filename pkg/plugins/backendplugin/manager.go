@@ -261,8 +261,9 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 		stream := newCallResourceResponseStream(childCtx)
 		var wg sync.WaitGroup
 		wg.Add(1)
+		var flushStreamErr error
 		go func() {
-			flushStream(p, stream, w)
+			flushStreamErr = flushStream(p, stream, w)
 			wg.Done()
 		}()
 
@@ -272,7 +273,7 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 			return innerErr
 		}
 		wg.Wait()
-		return nil
+		return flushStreamErr
 	})
 }
 
