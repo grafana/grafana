@@ -90,7 +90,7 @@ or `${<environment variable>}`, then they will be processed by Grafana's
 variable expander. The expander runs the provider with the provided argument
 to get the final value of the option.
 
-There are two providers, `env` and `file`.
+There are two providers: `env` and `file`.
 
 The `env` provider can be used to expand an environment variable. If you
 set an option to `$__env{PORT}` the `PORT` environment variable will be
