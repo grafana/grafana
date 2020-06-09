@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Span } from '../types/trace';
+import { Span } from '@grafana/data';
 
 /**
  * Searches the span.references to find 'CHILD_OF' reference type or returns null.

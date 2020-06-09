@@ -14,6 +14,7 @@
     "typescript": "3.7.5"
   },
   "dependencies": {
+    "@grafana/data": "7.1.0-pre.0",
     "@types/classnames": "^2.2.7",
     "@types/deep-freeze": "^0.1.1",
     "@types/hoist-non-react-statics": "^3.3.1",
