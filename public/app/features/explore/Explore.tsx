@@ -381,7 +381,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             <TableContainer
                               width={width}
                               exploreId={exploreId}
-                              onCellFilterAdded={this.onCellFilterAdded}
+                              onCellFilterAdded={
+                                this.props.datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined
+                              }
                             />
                           )}
                           {mode === ExploreMode.Logs && (
