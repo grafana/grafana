@@ -43,7 +43,7 @@ FJnPwM6Y2tTdq7AkpVTTAb3RTFadA8dRmLfajxgHxmDf5yUv9M2M6sa1eTSG
 
 ```
 
-When Grafana starts it discovers plugins to load. For each discovered plugin it verifies the authenticity of it, and then decides whether to load it or not based on the state of the plugin signature:
+When Grafana starts, it discovers plugins to load. For each discovered plugin it verifies the authenticity of it, and then decides whether to load it or not based on the state of the plugin signature:
 
 | Plugin signature | Description |
 | ---------------- | ----------- |

@@ -98,7 +98,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	for refID, pRes := range pbRes.Responses {
 		qr := &tsdb.QueryResult{
 			RefId:      refID,
-			Dataframes: pRes.Frames,
+			Dataframes: tsdb.NewEncodedDataFrames(pRes.Frames),
 		}
 		if len(pRes.JsonMeta) != 0 {
 			qr.Meta = simplejson.NewFromAny(pRes.JsonMeta)
