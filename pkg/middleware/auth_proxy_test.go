@@ -82,4 +82,8 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 
 	require.Equal(t, userID, ctx.SignedInUser.UserId)
 	require.True(t, ctx.IsSignedIn)
+	
+	i, err := store.Get(key)
+	require.NoError(t, err)
+	require.Equal(t, userID, i.(int64))
 }
