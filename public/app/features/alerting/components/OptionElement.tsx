@@ -16,7 +16,7 @@ export const OptionElement: FC<Props> = ({ control, option, register }) => {
           name={`${modelValue}`}
           ref={register({
             required: option.required ? 'Required' : false,
-            validate: v => option.validationRule && validateOption(v, option.validationRule),
+            validate: v => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
           placeholder={option.placeholder}
         />
@@ -31,7 +31,7 @@ export const OptionElement: FC<Props> = ({ control, option, register }) => {
           name={`${modelValue}`}
           ref={register({
             required: option.required ? 'Required' : false,
-            validate: v => option.validationRule && validateOption(v, option.validationRule),
+            validate: v => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
         />
       );
