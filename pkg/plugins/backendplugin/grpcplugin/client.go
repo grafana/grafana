@@ -1,12 +1,13 @@
-package backendplugin
+package grpcplugin
 
 import (
 	"os/exec"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	sdkgrpcplugin "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	goplugin "github.com/hashicorp/go-plugin"
 )
@@ -26,8 +27,8 @@ var handshake = goplugin.HandshakeConfig{
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   grpcplugin.MagicCookieKey,
-	MagicCookieValue: grpcplugin.MagicCookieValue,
+	MagicCookieKey:   sdkgrpcplugin.MagicCookieKey,
+	MagicCookieValue: sdkgrpcplugin.MagicCookieValue,
 }
 
 func newClientConfig(executablePath string, env []string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
@@ -44,10 +45,10 @@ func newClientConfig(executablePath string, env []string, logger log.Logger, ver
 }
 
 // LegacyStartFunc callback function called when a plugin with old plugin protocol is started.
-type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
+type LegacyStartFunc func(pluginID string, client *backendplugin.LegacyClient, logger log.Logger) error
 
 // StartFunc callback function called when a plugin with current plugin protocol version is started.
-type StartFunc func(pluginID string, client *Client, logger log.Logger) error
+type StartFunc func(pluginID string, client *backendplugin.Client, logger log.Logger) error
 
 // PluginStartFuncs functions called for plugin when started.
 type PluginStartFuncs struct {
@@ -72,18 +73,17 @@ func (pd PluginDescriptor) PluginID() string {
 // getV2PluginSet returns list of plugins supported on v2.
 func getV2PluginSet() goplugin.PluginSet {
 	return goplugin.PluginSet{
-		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
-		"resource":    &grpcplugin.ResourceGRPCPlugin{},
-		"data":        &grpcplugin.DataGRPCPlugin{},
-		"transform":   &grpcplugin.TransformGRPCPlugin{},
+		"diagnostics": &sdkgrpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":    &sdkgrpcplugin.ResourceGRPCPlugin{},
+		"data":        &sdkgrpcplugin.DataGRPCPlugin{},
+		"transform":   &sdkgrpcplugin.TransformGRPCPlugin{},
 		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 	}
 }
 
-// NewBackendPluginDescriptor creates a new backend plugin descriptor
-// used for registering a backend datasource plugin.
-func NewBackendPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
-	return PluginDescriptor{
+// NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
+func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
+	return New(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
 		managed:        true,
@@ -91,16 +91,15 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
+			sdkgrpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
-	}
+	})
 }
 
-// NewRendererPluginDescriptor creates a new renderer plugin descriptor
-// used for registering a backend renderer plugin.
-func NewRendererPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
-	return PluginDescriptor{
+// NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
+func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
+	return New(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
 		managed:        false,
@@ -108,38 +107,8 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
+			sdkgrpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
-	}
-}
-
-type DiagnosticsPlugin interface {
-	grpcplugin.DiagnosticsClient
-}
-
-type ResourcePlugin interface {
-	grpcplugin.ResourceClient
-}
-
-type DataPlugin interface {
-	grpcplugin.DataClient
-}
-
-type TransformPlugin interface {
-	grpcplugin.TransformClient
-}
-
-// LegacyClient client for communicating with a plugin using the old plugin protocol.
-type LegacyClient struct {
-	DatasourcePlugin datasourceV1.DatasourcePlugin
-	RendererPlugin   rendererV1.RendererPlugin
-}
-
-// Client client for communicating with a plugin using the current plugin protocol.
-type Client struct {
-	ResourcePlugin  ResourcePlugin
-	DataPlugin      DataPlugin
-	TransformPlugin TransformPlugin
-	RendererPlugin  pluginextensionv2.RendererPlugin
+	})
 }

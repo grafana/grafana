@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -37,10 +38,10 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 
 	cmd := ComposePluginStartCommand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
-	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
+	factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 		OnStart: p.onPluginStart,
 	})
-	if err := backendPluginManager.Register(descriptor); err != nil {
+	if err := backendPluginManager.Register(p.Id, factory); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
