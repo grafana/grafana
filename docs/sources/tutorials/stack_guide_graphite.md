@@ -17,7 +17,7 @@ database has yet to match Graphite's query flexibility and analytics potential.
 Graphite has a reputation for being tricky to install and scale. This guide aims to show
 that is not really the case, or, at least, that it is a lot better than you expect.
 
-> This guides does not only aim to be only be an install guide but to also teach you
+> This guide does not only aim to be only be an install guide but to also teach you
 > of the mechanics of metric collection, aggregation and querying. How Graphite
 > stores and aggregates data is very important to understand in order to not
 > get mislead by graphs.

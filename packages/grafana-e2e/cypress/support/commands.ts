@@ -11,7 +11,6 @@ Cypress.Commands.add('compareScreenshots', (config: CompareScreenshotsConfig | s
   });
 });
 
-// @todo remove
 Cypress.Commands.add('logToConsole', (message: string, optional?: any) => {
   cy.task('log', { message, optional });
 });
