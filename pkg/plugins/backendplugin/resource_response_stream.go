@@ -1,4 +1,4 @@
-package coreplugin
+package backendplugin
 
 import (
 	"context"

@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -136,7 +139,7 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 	p, registered := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 	if !registered {
-		return errors.New("Backend plugin not registered")
+		return ErrPluginNotRegistered
 	}
 
 	if p.IsManaged() {
@@ -150,15 +153,19 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 func (m *manager) stop(ctx context.Context) {
 	m.pluginsMu.RLock()
 	defer m.pluginsMu.RUnlock()
+	var wg sync.WaitGroup
 	for _, p := range m.plugins {
-		go func(p Plugin) {
+		wg.Add(1)
+		go func(p Plugin, ctx context.Context) {
+			defer wg.Done()
 			p.Logger().Debug("Stopping plugin")
 			if err := p.Stop(ctx); err != nil {
 				p.Logger().Error("Failed to stop plugin", "error", err)
 			}
 			p.Logger().Debug("Plugin stopped")
-		}(p)
+		}(p, ctx)
 	}
+	wg.Wait()
 }
 
 // CollectMetrics collects metrics from a registered backend plugin.
@@ -214,18 +221,15 @@ type keepCookiesJSONModel struct {
 	KeepCookies []string `json:"keepCookies"`
 }
 
-// CallResource calls a plugin resource.
-func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pCtx.PluginID]
 	m.pluginsMu.RUnlock()
 
 	if !registered {
-		reqCtx.JsonApiErr(404, "Plugin not registered", nil)
-		return
+		return ErrPluginNotRegistered
 	}
 
-	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
 	keepCookieModel := keepCookiesJSONModel{}
 	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
 		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
@@ -234,36 +238,58 @@ func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqCon
 		}
 	}
 
-	proxyutil.ClearCookieHeader(clonedReq, keepCookieModel.KeepCookies)
-	proxyutil.PrepareProxyRequest(clonedReq)
+	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
+	proxyutil.PrepareProxyRequest(req)
 
-	body, err := reqCtx.Req.Body().Bytes()
+	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		reqCtx.JsonApiErr(500, "Failed to read request body", err)
-		return
+		return errors.New("Failed to read request body")
 	}
 
-	req := &backend.CallResourceRequest{
+	crReq := &backend.CallResourceRequest{
 		PluginContext: pCtx,
-		Path:          path,
-		Method:        clonedReq.Method,
-		URL:           clonedReq.URL.String(),
-		Headers:       clonedReq.Header,
+		Path:          req.URL.Path,
+		Method:        req.Method,
+		URL:           req.URL.String(),
+		Headers:       req.Header,
 		Body:          body,
 	}
 
-	var stream CallResourceClientResponseStream
-	err = instrumentCallResourceRequest(p.PluginID(), func() (innerErr error) {
-		stream, innerErr = p.CallResource(clonedReq.Context(), req)
-		return
-	})
+	return instrumentCallResourceRequest(p.PluginID(), func() error {
+		childCtx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		stream := newCallResourceResponseStream(childCtx)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			flushStream(p, stream, w)
+			wg.Done()
+		}()
 
+		innerErr := p.CallResource(req.Context(), crReq, stream)
+		stream.Close()
+		if innerErr != nil {
+			return innerErr
+		}
+		wg.Wait()
+		return nil
+	})
+}
+
+// CallResource calls a plugin resource.
+func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
+	rawURL := path
+	if clonedReq.URL.RawQuery != "" {
+		rawURL += "?" + clonedReq.URL.RawQuery
+	}
+	urlPath, err := url.Parse(rawURL)
 	if err != nil {
 		handleCallResourceError(err, reqCtx)
 		return
 	}
-
-	err = flushStream(p, stream, reqCtx)
+	clonedReq.URL = urlPath
+	err = m.callResourceInternal(reqCtx.Resp, clonedReq, pCtx)
 	if err != nil {
 		handleCallResourceError(err, reqCtx)
 	}
@@ -283,7 +309,7 @@ func handleCallResourceError(err error, reqCtx *models.ReqContext) {
 	reqCtx.JsonApiErr(500, "Failed to call resource", err)
 }
 
-func flushStream(plugin Plugin, stream CallResourceClientResponseStream, reqCtx *models.ReqContext) error {
+func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
 
 	for {
@@ -300,11 +326,11 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, reqCtx 
 			}
 
 			plugin.Logger().Error("Failed to receive response from resource call", "error", err)
-			return nil
+			return stream.Close()
 		}
 
 		// Expected that headers and status are only part of first stream
-		if processedStreams == 0 {
+		if processedStreams == 0 && resp.Headers != nil {
 			// Make sure a content type always is returned in response
 			if _, exists := resp.Headers["Content-Type"]; !exists {
 				resp.Headers["Content-Type"] = []string{"application/json"}
@@ -318,18 +344,20 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, reqCtx 
 				}
 
 				for _, v := range values {
-					reqCtx.Resp.Header().Add(k, v)
+					w.Header().Add(k, v)
 				}
 			}
 
-			reqCtx.WriteHeader(resp.Status)
+			w.WriteHeader(resp.Status)
 		}
 
-		if _, err := reqCtx.Write(resp.Body); err != nil {
+		if _, err := w.Write(resp.Body); err != nil {
 			plugin.Logger().Error("Failed to write resource response", "error", err)
 		}
 
-		reqCtx.Resp.Flush()
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
 		processedStreams++
 	}
 }

@@ -58,8 +58,8 @@ func (c *clientV1) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (c *clientV1) CallResource(ctx context.Context, req *backend.CallResourceRequest) (backendplugin.CallResourceClientResponseStream, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
+func (c *clientV1) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return backendplugin.ErrMethodNotImplemented
 }
 
 // func (c *clientV1) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

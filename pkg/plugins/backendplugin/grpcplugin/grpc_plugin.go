@@ -14,7 +14,7 @@ import (
 type pluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
-	backendplugin.CallResourceClientHandler
+	backend.CallResourceHandler
 	// backend.QueryDataHandler
 }
 
@@ -124,16 +124,16 @@ func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 	return pluginClient.CheckHealth(ctx, req)
 }
 
-func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest) (backendplugin.CallResourceClientResponseStream, error) {
+func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, backendplugin.ErrPluginUnavailable
+		return backendplugin.ErrPluginUnavailable
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
 
-	return pluginClient.CallResource(ctx, req)
+	return pluginClient.CallResource(ctx, req, sender)
 }
 
 // func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

@@ -21,7 +21,7 @@ type Plugin interface {
 	Exited() bool
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
-	CallResourceClientHandler
+	backend.CallResourceHandler
 	// backend.QueryDataHandler
 }
 
@@ -32,22 +32,6 @@ type PluginFactoryFunc func(pluginID string, logger log.Logger, env []string) (P
 type CallResourceClientResponseStream interface {
 	Recv() (*backend.CallResourceResponse, error)
 	Close() error
-}
-
-// CallResourceClientHandler handles client resource calls.
-type CallResourceClientHandler interface {
-	CallResource(ctx context.Context, req *backend.CallResourceRequest) (CallResourceClientResponseStream, error)
-}
-
-// CallResourceClientHandlerFunc is an adapter to allow the use of
-// ordinary functions as backend.CallResourceClientHandler. If f is a function
-// with the appropriate signature, CallResourceClientHandlerFunc(f) is a
-// Handler that calls f.
-type CallResourceClientHandlerFunc func(ctx context.Context, req *backend.CallResourceRequest) (CallResourceClientResponseStream, error)
-
-// CallResource calls fn(ctx, req, sender).
-func (fn CallResourceClientHandlerFunc) CallResource(ctx context.Context, req *backend.CallResourceRequest) (CallResourceClientResponseStream, error) {
-	return fn(ctx, req)
 }
 
 type DiagnosticsPlugin interface {

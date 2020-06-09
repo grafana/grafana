@@ -2,7 +2,6 @@ package coreplugin_test
 
 import (
 	"context"
-	"io"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,7 +29,7 @@ func TestCorePlugin(t *testing.T) {
 		_, err = p.CheckHealth(context.Background(), nil)
 		require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 
-		_, err = p.CallResource(context.Background(), nil)
+		err = p.CallResource(context.Background(), nil, nil)
 		require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 
 		// _, err = p.QueryData(context.Background(), nil)
@@ -70,10 +69,8 @@ func TestCorePlugin(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, checkHealthCalled)
 
-		stream, err := p.CallResource(context.Background(), &backend.CallResourceRequest{})
+		err = p.CallResource(context.Background(), &backend.CallResourceRequest{}, nil)
 		require.NoError(t, err)
-		_, err = stream.Recv()
-		require.Equal(t, io.EOF, err)
 		require.True(t, callResourceCalled)
 
 		// _, err = p.QueryData(context.Background(), nil)

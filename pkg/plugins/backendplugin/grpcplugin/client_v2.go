@@ -2,7 +2,7 @@ package grpcplugin
 
 import (
 	"context"
-	"net/http"
+	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
@@ -134,26 +134,41 @@ func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 	return backend.FromProto().CheckHealthResponse(protoResp), nil
 }
 
-func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest) (backendplugin.CallResourceClientResponseStream, error) {
+func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if c.ResourcePlugin == nil {
-		return nil, backendplugin.ErrMethodNotImplemented
+		return backendplugin.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().CallResourceRequest(req)
 	protoStream, err := c.ResourcePlugin.CallResource(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return newSingleCallResourceResult(
-				&backend.CallResourceResponse{
-					Status: http.StatusNotImplemented,
-				},
-			), nil
+			return backendplugin.ErrMethodNotImplemented
 		}
 
-		return nil, errutil.Wrap("Failed to call resource", err)
+		return errutil.Wrap("Failed to call resource", err)
 	}
 
-	return newCallResourceResultStream(protoStream), nil
+	for {
+		protoResp, err := protoStream.Recv()
+		if err != nil {
+			if status.Code(err) == codes.Unimplemented {
+				return backendplugin.ErrMethodNotImplemented
+			}
+
+			if err == io.EOF {
+				return nil
+			}
+
+			return errutil.Wrap("Failed to receive call resource response", err)
+		}
+
+		if err := sender.Send(backend.FromProto().CallResourceResponse(protoResp)); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // func (c *clientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

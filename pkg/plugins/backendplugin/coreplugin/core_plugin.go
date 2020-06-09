@@ -72,20 +72,12 @@ func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest) (backendplugin.CallResourceClientResponseStream, error) {
+func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if cp.CallResourceHandler != nil {
-		stream := newCallResourceResponseStream(ctx)
-		go func() {
-			defer stream.Close()
-			err := cp.CallResourceHandler.CallResource(ctx, req, stream)
-			if err != nil {
-				cp.logger.Error("Failed to call resource", "error", err)
-			}
-		}()
-		return stream, nil
+		return cp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
-	return nil, backendplugin.ErrMethodNotImplemented
+	return backendplugin.ErrMethodNotImplemented
 }
 
 // func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
