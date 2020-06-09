@@ -14,7 +14,7 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
+import { Button, Field, Icon, Switch, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -25,8 +25,6 @@ import { css, cx } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-
-const { Switch } = LegacyForms;
 
 interface Props {
   dashboard: DashboardModel;
