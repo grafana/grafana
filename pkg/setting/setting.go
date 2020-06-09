@@ -229,6 +229,16 @@ type Cfg struct {
 	AppSubUrl        string
 	ServeFromSubPath bool
 
+	// build
+	BuildVersion string
+	BuildCommit  string
+	BuildBranch  string
+	BuildStamp   int64
+	IsEnterprise bool
+
+	// packaging
+	Packaging string
+
 	// Paths
 	ProvisioningPath   string
 	DataPath           string
@@ -628,6 +638,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// Temporary keep global, to make refactor in steps
 	Raw = cfg.Raw
+
+	cfg.BuildVersion = BuildVersion
+	cfg.BuildCommit = BuildCommit
+	cfg.BuildStamp = BuildStamp
+	cfg.BuildBranch = BuildBranch
+	cfg.IsEnterprise = IsEnterprise
+	cfg.Packaging = Packaging
 
 	ApplicationName = APP_NAME
 

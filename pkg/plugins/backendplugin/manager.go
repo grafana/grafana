@@ -93,7 +93,7 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 	}
 
 	hostEnv := []string{
-		fmt.Sprintf("GF_VERSION=%s", setting.BuildVersion),
+		fmt.Sprintf("GF_VERSION=%s", m.Cfg.BuildVersion),
 		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
 	}
 
