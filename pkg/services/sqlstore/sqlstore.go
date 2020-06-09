@@ -281,7 +281,7 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 	if !debugSql {
 		engine.SetLogger(&xorm_log.DiscardLogger{})
 	} else {
-		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		engine.SetLogger(NewXormContextLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm"))))
 		engine.ShowSQL(true)
 	}
 
