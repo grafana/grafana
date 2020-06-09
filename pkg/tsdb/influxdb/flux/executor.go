@@ -11,7 +11,7 @@ import (
 
 // ExecuteQuery runs a flux query using the QueryModel to interpolate the query and the runner to execute it.
 // maxSeries somehow limits the response.
-func ExecuteQuery(ctx context.Context, query QueryModel, runner Runner, maxSeries int) (dr backend.DataResponse) {
+func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 
 	flux, err := Interpolate(query)

@@ -20,7 +20,6 @@ func init() {
 }
 
 // Query builds flux queries, executes them, and returns the results.
-//
 func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	tRes := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
@@ -38,7 +37,7 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 			continue
 		}
 
-		res := ExecuteQuery(context.Background(), *qm, *runner, 10)
+		res := ExecuteQuery(context.Background(), *qm, runner, 10)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}
@@ -50,6 +49,11 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 type Runner struct {
 	client influxdb2.Client
 	org    string
+}
+
+// This is an interface to help testing
+type queryRunner interface {
+	runQuery(ctx context.Context, q string) (*influxdb2.QueryTableResult, error)
 }
 
 // runQuery executes fluxQuery against the Runner's organization and returns an flux typed result.
