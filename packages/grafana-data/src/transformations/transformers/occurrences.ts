@@ -88,8 +88,6 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
         length: values.length,
       });
 
-      console.log('data', data);
-      console.log('processed', processed);
       return processed;
     };
   },

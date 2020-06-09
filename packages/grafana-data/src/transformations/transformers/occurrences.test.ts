@@ -20,7 +20,7 @@ describe('Occurrences Transformer', () => {
     mockTransformationsRegistry([occurrencesTransformer]);
   });
 
-  it('should calculate the occurrences of each value of the specified field', () => {
+  it('should calculate the occurrences of each value of the specified field (string values)', () => {
     const cfg: DataTransformerConfig<OccurrencesTransformerOptions> = {
       id: DataTransformerID.occurrences,
       options: {
@@ -36,6 +36,34 @@ describe('Occurrences Transformer', () => {
         type: FieldType.string,
         values: new ArrayVector(['one', 'two', 'three']),
         config: { displayName: 'message' },
+      },
+      {
+        name: 'count',
+        type: FieldType.number,
+        values: new ArrayVector([1, 2, 3]),
+        config: { displayName: 'Number of Occurrences' },
+      },
+    ];
+
+    expect(result[0].fields).toEqual(expected);
+  });
+
+  it('should calculate the occurrences of each value of the specified field (number values)', () => {
+    const cfg: DataTransformerConfig<OccurrencesTransformerOptions> = {
+      id: DataTransformerID.occurrences,
+      options: {
+        byField: 'values',
+      },
+    };
+
+    const result = transformDataFrame([cfg], [testSeries]);
+
+    const expected: Field[] = [
+      {
+        name: 'values',
+        type: FieldType.string,
+        values: new ArrayVector([1, 2, 3]),
+        config: { displayName: 'values' },
       },
       {
         name: 'count',
