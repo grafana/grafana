@@ -1,19 +1,19 @@
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType, DataFrame } from '../../types';
-import { DataTransformerID } from './ids';
-import { toDataFrame } from '../../dataframe';
-import { transformDataFrame } from '../transformDataFrame';
-import { ArrayVector } from '../../vector';
-import { seriesToRowsTransformer, SeriesToRowsOptions } from './seriesToRows';
+import { mockTransformationsRegistry } from '../../../utils/tests/mockTransformationsRegistry';
+import { DataTransformerConfig, Field, FieldType } from '../../../types';
+import { DataTransformerID } from '../ids';
+import { toDataFrame } from '../../../dataframe';
+import { transformDataFrame } from '../../transformDataFrame';
+import { ArrayVector } from '../../../vector';
+import { mergeTransformer, MergeTransformerOptions } from './merge';
 
-describe('Series to Rows', () => {
+describe('Merge multipe to single', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([seriesToRowsTransformer]);
+    mockTransformationsRegistry([mergeTransformer]);
   });
 
-  it('combine two classic time series into one', () => {
-    const cfg: DataTransformerConfig<SeriesToRowsOptions> = {
-      id: DataTransformerID.seriesToRows,
+  it('combine two series into one', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
       options: {},
     };
 
@@ -43,9 +43,41 @@ describe('Series to Rows', () => {
     expect(result[0].fields).toMatchObject(expected);
   });
 
-  it('combine three classic time series into one', () => {
-    const cfg: DataTransformerConfig<SeriesToRowsOptions> = {
-      id: DataTransformerID.seriesToRows,
+  it('combine two series with multiple values into one', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
+      options: {},
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [100, 150, 200] },
+        { name: 'temp', type: FieldType.number, values: [1, 4, 5] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [100, 125, 126] },
+        { name: 'temp', type: FieldType.number, values: [-1, 2, 3] },
+      ],
+    });
+
+    const result = transformDataFrame([cfg], [seriesA, seriesB]);
+    const expected: Field[] = [
+      createField('time', FieldType.time, [100, 100, 125, 126, 150, 200]),
+      createField('metric', FieldType.string, ['A-series', 'B-series', 'B-series', 'B-series', 'A-series', 'A-series']),
+      createField('value', FieldType.number, [1, -1, 2, 3, 4, 5]),
+    ];
+
+    expect(result[0].fields).toMatchObject(expected);
+  });
+
+  it('combine three series into one', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
       options: {},
     };
 
@@ -83,13 +115,13 @@ describe('Series to Rows', () => {
     expect(result[0].fields).toMatchObject(expected);
   });
 
-  it('combine three time series with multiple values into one', () => {
-    const cfg: DataTransformerConfig<SeriesToRowsOptions> = {
-      id: DataTransformerID.seriesToRows,
+  it('combine one serie and two tables into one table', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
       options: {},
     };
 
-    const seriesA = toDataFrame({
+    const tableA = toDataFrame({
       name: 'A',
       fields: [
         { name: 'time', type: FieldType.time, values: [1000] },
@@ -106,7 +138,7 @@ describe('Series to Rows', () => {
       ],
     });
 
-    const seriesC = toDataFrame({
+    const tableB = toDataFrame({
       name: 'C',
       fields: [
         { name: 'time', type: FieldType.time, values: [500] },
@@ -115,7 +147,7 @@ describe('Series to Rows', () => {
       ],
     });
 
-    const result = transformDataFrame([cfg], [seriesA, seriesB, seriesC]);
+    const result = transformDataFrame([cfg], [tableA, seriesB, tableB]);
     const expected: Field[] = [
       createField('time', FieldType.time, [500, 1000, 1000]),
       createField('metric', FieldType.string, ['C-series', 'A-series', 'B-series']),
@@ -126,13 +158,13 @@ describe('Series to Rows', () => {
     expect(result[0].fields).toMatchObject(expected);
   });
 
-  it('combine three time series with multiple values and ISO dates into one', () => {
-    const cfg: DataTransformerConfig<SeriesToRowsOptions> = {
-      id: DataTransformerID.seriesToRows,
+  it('combine one serie and two tables with ISO dates into one table', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
       options: {},
     };
 
-    const seriesA = toDataFrame({
+    const tableA = toDataFrame({
       name: 'A',
       fields: [
         { name: 'time', type: FieldType.time, values: ['2019-10-01T11:10:23Z'] },
@@ -149,7 +181,7 @@ describe('Series to Rows', () => {
       ],
     });
 
-    const seriesC = toDataFrame({
+    const tableC = toDataFrame({
       name: 'C',
       fields: [
         { name: 'time', type: FieldType.time, values: ['2019-11-01T11:10:23Z'] },
@@ -158,7 +190,7 @@ describe('Series to Rows', () => {
       ],
     });
 
-    const result = transformDataFrame([cfg], [seriesA, seriesB, seriesC]);
+    const result = transformDataFrame([cfg], [tableA, seriesB, tableC]);
     const expected: Field[] = [
       createField('time', FieldType.time, ['2019-09-01T11:10:23Z', '2019-10-01T11:10:23Z', '2019-11-01T11:10:23Z']),
       createField('metric', FieldType.string, ['B-series', 'A-series', 'C-series']),
@@ -169,45 +201,13 @@ describe('Series to Rows', () => {
     expect(result[0].fields).toMatchObject(expected);
   });
 
-  it('combine two classic series with multiple values into one', () => {
-    const cfg: DataTransformerConfig<SeriesToRowsOptions> = {
-      id: DataTransformerID.seriesToRows,
+  it('combine three tables with multiple values into one', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
       options: {},
     };
 
-    const seriesA = toDataFrame({
-      name: 'A',
-      fields: [
-        { name: 'time', type: FieldType.time, values: [100, 150, 200] },
-        { name: 'temp', type: FieldType.number, values: [1, 4, 5] },
-      ],
-    });
-
-    const seriesB = toDataFrame({
-      name: 'B',
-      fields: [
-        { name: 'time', type: FieldType.time, values: [100, 125, 126] },
-        { name: 'temp', type: FieldType.number, values: [-1, 2, 3] },
-      ],
-    });
-
-    const result = transformDataFrame([cfg], [seriesA, seriesB]);
-    const expected: Field[] = [
-      createField('time', FieldType.time, [100, 100, 125, 126, 150, 200]),
-      createField('metric', FieldType.string, ['A-series', 'B-series', 'B-series', 'B-series', 'A-series', 'A-series']),
-      createField('value', FieldType.number, [1, -1, 2, 3, 4, 5]),
-    ];
-
-    expect(result[0].fields).toMatchObject(expected);
-  });
-
-  it('combine three series with multiple values into one', () => {
-    const cfg: DataTransformerConfig<SeriesToRowsOptions> = {
-      id: DataTransformerID.seriesToRows,
-      options: {},
-    };
-
-    const seriesA = toDataFrame({
+    const tableA = toDataFrame({
       name: 'A',
       fields: [
         { name: 'time', type: FieldType.time, values: [100, 150, 200] },
@@ -216,38 +216,30 @@ describe('Series to Rows', () => {
       ],
     });
 
-    const seriesB = toDataFrame({
+    const tableB = toDataFrame({
       name: 'B',
       fields: [
         { name: 'time', type: FieldType.time, values: [100, 125, 126] },
         { name: 'temp', type: FieldType.number, values: [-1, 2, 3] },
+        { name: 'enabled', type: FieldType.boolean, values: [true, false, true] },
       ],
     });
 
-    const seriesC = toDataFrame({
+    const tableC = toDataFrame({
       name: 'C',
       fields: [
         { name: 'time', type: FieldType.time, values: [100, 124, 149] },
         { name: 'humidity', type: FieldType.number, values: [22, 25, 30] },
+        { name: 'temp', type: FieldType.number, values: [1, 4, 5] },
       ],
     });
 
-    const result = transformDataFrame([cfg], [seriesA, seriesB, seriesC]);
+    const result = transformDataFrame([cfg], [tableA, tableB, tableC]);
     const expected: Field[] = [
       createField('time', FieldType.time, [100, 100, 100, 124, 125, 126, 149, 150, 200]),
-      createField('metric', FieldType.string, [
-        'A-series',
-        'B-series',
-        'C-series',
-        'C-series',
-        'B-series',
-        'B-series',
-        'C-series',
-        'A-series',
-        'A-series',
-      ]),
-      createField('temp', FieldType.number, [1, -1, null, null, 2, 3, null, 4, 5]),
+      createField('temp', FieldType.number, [1, -1, 1, 4, 2, 3, 5, 4, 5]),
       createField('humidity', FieldType.number, [10, null, 22, 25, null, null, 30, 14, 55]),
+      createField('enabled', FieldType.boolean, [null, true, null, null, false, true, null, null, null]),
     ];
 
     expect(result[0].fields).toMatchObject(expected);
@@ -256,14 +248,4 @@ describe('Series to Rows', () => {
 
 const createField = (name: string, type: FieldType, values: any[]): Field => {
   return { name, type, values: new ArrayVector(values), config: {}, labels: undefined };
-};
-
-const prettyPrint = (result: DataFrame[]): void => {
-  console.log(
-    'result',
-    result[0].fields.map(field => ({
-      name: field.name,
-      values: field.values.toArray().join(', '),
-    }))
-  );
 };

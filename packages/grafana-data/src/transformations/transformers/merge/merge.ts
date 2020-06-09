@@ -1,20 +1,18 @@
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
-import { DataFrame } from '../../types/dataFrame';
-import { DataFrameBuilder } from './merge/dataFrameBuilder';
-import { TimeFieldsByFrame } from './merge/timeFieldsByFrame';
-import { DataFramesStackedByTime } from './merge/dataFramesStacked';
+import { DataTransformerID } from '../ids';
+import { DataTransformerInfo } from '../../../types/transformations';
+import { DataFrame } from '../../../types/dataFrame';
+import { DataFrameBuilder } from './dataFrameBuilder';
+import { TimeFieldsByFrame } from './timeFieldsByFrame';
+import { DataFramesStackedByTime } from './dataFramesStacked';
 
-export interface SeriesToRowsOptions {
-  fields?: MatcherConfig; // Assume all fields
-}
+export interface MergeTransformerOptions {}
 
-export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsOptions> = {
-  id: DataTransformerID.seriesToRows,
-  name: 'Series as rows',
-  description: 'Groups series by time and returns series as rows',
+export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
+  id: DataTransformerID.merge,
+  name: 'Merge series/tables',
+  description: 'Merges multiple series/tables by time into a single serie/table',
   defaultOptions: {},
-  transformer: (options: SeriesToRowsOptions) => {
+  transformer: (options: MergeTransformerOptions) => {
     return (data: DataFrame[]) => {
       if (!Array.isArray(data) || data.length <= 1) {
         return data;

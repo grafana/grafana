@@ -11,19 +11,25 @@ interface DataFrameBuilderResult {
 type ValueMapper = (frame: DataFrame, valueIndex: number, timeIndex: number) => Record<string, any>;
 
 export class DataFrameBuilder {
-  private isTimeSeries: boolean;
+  private isOnlyTimeSeries: boolean;
+  private displayMetricField: boolean;
   private valueFields: Record<string, Field>;
   private timeField: Field | null;
 
   constructor() {
-    this.isTimeSeries = true;
+    this.isOnlyTimeSeries = true;
+    this.displayMetricField = false;
     this.valueFields = {};
     this.timeField = null;
   }
 
   addFields(frame: DataFrame, timeIndex: number): void {
     if (frame.fields.length > 2) {
-      this.isTimeSeries = false;
+      this.isOnlyTimeSeries = false;
+    }
+
+    if (frame.fields.length === 2) {
+      this.displayMetricField = true;
     }
 
     for (let index = 0; index < frame.fields.length; index++) {
@@ -56,11 +62,14 @@ export class DataFrameBuilder {
 
         if (index === timeIndex) {
           values['time'] = value;
-          values['metric'] = `${frame.name}-series`;
+
+          if (this.displayMetricField) {
+            values['metric'] = `${frame.name}-series`;
+          }
           return values;
         }
 
-        if (this.isTimeSeries) {
+        if (this.isOnlyTimeSeries) {
           values['value'] = value;
           return values;
         }
@@ -77,15 +86,17 @@ export class DataFrameBuilder {
     if (this.timeField) {
       dataFrame.addField(this.timeField);
 
-      dataFrame.addField({
-        name: 'metric',
-        type: FieldType.string,
-      });
+      if (this.displayMetricField) {
+        dataFrame.addField({
+          name: 'metric',
+          type: FieldType.string,
+        });
+      }
     }
 
     const valueFields = Object.values(this.valueFields);
 
-    if (this.isTimeSeries) {
+    if (this.isOnlyTimeSeries) {
       if (valueFields.length > 0) {
         dataFrame.addField({
           ...valueFields[0],
