@@ -1,38 +1,59 @@
 import React, { FC } from 'react';
 import { Cell } from 'react-table';
 import { Field } from '@grafana/data';
-import { getTextAlign } from './utils';
-import { TableFilterActionCallback } from './types';
-import { TableStyles } from './styles';
 
-interface Props {
+import { getTextAlign } from './utils';
+import { TableCellClickActionCallback, TableFilterActionCallback } from './types';
+import { TableStyles } from './styles';
+import { ClickableTableCell } from './ClickableTableCell';
+import { FilterableTableCell } from './FilterableTableCell';
+
+export interface Props {
   cell: Cell;
   field: Field;
   tableStyles: TableStyles;
-  onCellClick?: TableFilterActionCallback;
+  onCellClick?: TableCellClickActionCallback;
+  onFilterAdded?: TableFilterActionCallback;
 }
 
-export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) => {
+export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick, onFilterAdded }) => {
   const filterable = field.config.filterable;
   const cellProps = cell.getCellProps();
-
-  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
-
-  if (filterable && onCellClick) {
-    if (cellProps.style) {
-      cellProps.style.cursor = 'pointer';
-    }
-
-    onClick = () => onCellClick(cell.column.Header as string, cell.value);
-  }
 
   if (cellProps.style) {
     cellProps.style.textAlign = getTextAlign(field);
   }
 
+  if (filterable && onCellClick) {
+    return (
+      <ClickableTableCell
+        cell={cell}
+        field={field}
+        tableStyles={tableStyles}
+        onCellClick={onCellClick}
+        cellProps={cellProps}
+      />
+    );
+  }
+
+  if (filterable && onFilterAdded) {
+    return (
+      <FilterableTableCell
+        cell={cell}
+        field={field}
+        tableStyles={tableStyles}
+        onFilterAdded={onFilterAdded}
+        cellProps={cellProps}
+      />
+    );
+  }
+
   return (
-    <div {...cellProps} onClick={onClick} className={tableStyles.tableCellWrapper}>
-      {cell.render('Cell', { field, tableStyles })}
+    <div {...cellProps} className={tableStyles.tableCellWrapper}>
+      {renderCell(cell, field, tableStyles)}
     </div>
   );
 };
+
+export const renderCell = (cell: Cell, field: Field, tableStyles: TableStyles) =>
+  cell.render('Cell', { field, tableStyles });

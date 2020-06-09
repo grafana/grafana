@@ -25,7 +25,9 @@ export interface TableRow {
   [x: string]: any;
 }
 
-export type TableFilterActionCallback = (key: string, value: string) => void;
+export type FilterItem = { key: string; value: string; operator: string };
+export type TableCellClickActionCallback = (key: string, value: string) => void;
+export type TableFilterActionCallback = (item: FilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 
