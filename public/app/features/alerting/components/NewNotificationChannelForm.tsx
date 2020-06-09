@@ -53,7 +53,6 @@ export const NewNotificationChannelForm: FC<Props> = ({
             name="type"
             as={Select}
             options={selectableChannels}
-            defaultValue={selectedChannel}
             control={control}
             rules={{ required: true }}
           />

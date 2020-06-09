@@ -57,7 +57,7 @@ const actual = {
 
 const defaultValues: NotificationChannelDTO = {
   name: '',
-  type: { value: 'notifier-options-email' },
+  type: { value: 'notifier-options-email', label: 'Email' },
   sendReminder: false,
   disableResolveMessage: false,
   frequency: '15m',
@@ -82,6 +82,16 @@ class NewAlertNotificationPage extends PureComponent<Props> {
   render() {
     const { navModel, notificationChannels } = this.props;
 
+    /*
+     Need to transform these as we have options on notificationchannels,
+     this will render a dropdown within the select
+   */
+    const selectableChannels: Array<SelectableValue<string>> = notificationChannels.map(channel => ({
+      value: channel.value,
+      label: channel.label,
+      description: channel.description,
+    }));
+
     return (
       <Page navModel={navModel}>
         <Page.Contents>
@@ -90,16 +100,6 @@ class NewAlertNotificationPage extends PureComponent<Props> {
             {({ register, errors, control, getValues, watch }) => {
               const selectedChannel =
                 getValues().type && notificationChannels.find(c => c.value === getValues().type.value);
-
-              /*
-               Need to transform these as we have options on notificationchannels,
-                this will render a dropdown within the select
-               */
-              const selectableChannels: Array<SelectableValue<string>> = notificationChannels.map(channel => ({
-                value: channel.value,
-                label: channel.label,
-                description: channel.description,
-              }));
 
               return (
                 <NewNotificationChannelForm
