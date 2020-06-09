@@ -5,7 +5,7 @@ import (
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
 
-	"xorm.io/core"
+	"xorm.io/xorm/log"
 )
 
 type XormLogger struct {
@@ -79,23 +79,23 @@ func (s *XormLogger) Warnf(format string, v ...interface{}) {
 }
 
 // Level implement core.ILogger
-func (s *XormLogger) Level() core.LogLevel {
+func (s *XormLogger) Level() log.LogLevel {
 	switch s.level {
 	case glog.LvlError:
-		return core.LOG_ERR
+		return log.LOG_ERR
 	case glog.LvlWarn:
-		return core.LOG_WARNING
+		return log.LOG_WARNING
 	case glog.LvlInfo:
-		return core.LOG_INFO
+		return log.LOG_INFO
 	case glog.LvlDebug:
-		return core.LOG_DEBUG
+		return log.LOG_DEBUG
 	default:
-		return core.LOG_ERR
+		return log.LOG_ERR
 	}
 }
 
 // SetLevel implement core.ILogger
-func (s *XormLogger) SetLevel(l core.LogLevel) {
+func (s *XormLogger) SetLevel(l log.LogLevel) {
 }
 
 // ShowSQL implement core.ILogger

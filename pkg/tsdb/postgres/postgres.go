@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"xorm.io/core"
+	"xorm.io/xorm/core"
 )
 
 func init() {

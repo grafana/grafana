@@ -147,7 +147,7 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 
 func GetUserById(query *models.GetUserByIdQuery) error {
 	user := new(models.User)
-	has, err := x.Id(query.Id).Get(user)
+	has, err := x.ID(query.Id).Get(user)
 
 	if err != nil {
 		return err
@@ -296,7 +296,7 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 
 func GetUserProfile(query *models.GetUserProfileQuery) error {
 	var user models.User
-	has, err := x.Id(query.UserId).Get(&user)
+	has, err := x.ID(query.UserId).Get(&user)
 
 	if err != nil {
 		return err

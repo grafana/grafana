@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"xorm.io/core"
+	"xorm.io/xorm/core"
 )
 
 func init() {
