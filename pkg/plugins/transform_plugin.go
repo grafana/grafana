@@ -111,7 +111,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 	for refID, res := range pbRes.Responses {
 		tRes := &tsdb.QueryResult{
 			RefId:      refID,
-			Dataframes: res.Frames,
+			Dataframes: tsdb.NewEncodedDataFrames(res.Frames),
 		}
 		if len(res.JsonMeta) != 0 {
 			tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
@@ -190,7 +190,11 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 		}
 
 		if res.Dataframes != nil {
-			pRes.Frames = res.Dataframes
+			encoded, err := res.Dataframes.Encoded()
+			if err != nil {
+				return nil, err
+			}
+			pRes.Frames = encoded
 			responses[refID] = pRes
 			continue
 		}
