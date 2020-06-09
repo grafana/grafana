@@ -205,6 +205,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.60.0/go.mod h1:V3mq3GjPrIOc4K9jOm3mP
 github.com/grafana/grafana-plugin-sdk-go v0.63.0 h1:Hw0r9TOcu7VVrbPwznwYXkfdMzi1s7le9QVP9bK1MCo=
 github.com/grafana/grafana-plugin-sdk-go v0.63.0/go.mod h1:w855JyiC5PDP3naWUJP0h/vY8RlzlE4+4fodyoXph+4=
 github.com/grafana/influxdb-flux-datasource v5.4.1+incompatible h1:6DbCcayhN6tcGPAZrrlqsPasJXqfozDwHcdqevs5HMU=
+github.com/grafana/grafana-plugin-sdk-go v0.66.0 h1:Tx8pchA74QUtxtN8moavf0FJoAZbnbW3Fe8RVfSKUoY=
+github.com/grafana/grafana-plugin-sdk-go v0.66.0/go.mod h1:w855JyiC5PDP3naWUJP0h/vY8RlzlE4+4fodyoXph+4=
 github.com/grpc-ecosystem/go-grpc-middleware v1.2.0 h1:0IKlLyQ3Hs9nDaiK5cSHAGmcQEIC8l2Ts1u6x5Dfrqg=
 github.com/grpc-ecosystem/go-grpc-middleware v1.2.0/go.mod h1:mJzapYve32yjrKlk9GbyCZHuPgZsrbyIbyKhSzOpg6s=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 h1:Ovs26xHkKqVztRpIrF/92BcuyuQ/YW4NSIpoGtfXNho=

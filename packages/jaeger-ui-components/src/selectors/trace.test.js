@@ -284,7 +284,7 @@ it('getTraceName() should return the trace name based on the parentSpan', () => 
   expect(traceSelectors.getTraceName(generatedTrace)).toBe(`${serviceName}: ${operationName}`);
 });
 
-it('omitCollapsedSpans() should filter out collaped spans', () => {
+it('omitCollapsedSpans() should filter out collapsed spans', () => {
   const span = generatedTrace.spans[1];
   const size = traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(span.spanID).size - 1;
 

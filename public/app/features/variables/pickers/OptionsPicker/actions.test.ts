@@ -1,7 +1,7 @@
 import { reduxTester } from '../../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../../state/helpers';
 import { TemplatingState } from '../../state/reducers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../../templating/types';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../types';
 import {
   hideOptions,
   showOptions,
@@ -20,7 +20,7 @@ import {
 } from './actions';
 import { NavigationKey } from '../types';
 import { toVariablePayload } from '../../state/types';
-import { changeVariableProp, setCurrentVariableValue, addVariable } from '../../state/sharedReducer';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 import { updateLocation } from 'app/core/actions';
