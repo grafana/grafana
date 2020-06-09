@@ -4,10 +4,5 @@
     "typeRoots": ["node_modules/@types"]
   },
   "extends": "@grafana/tsconfig",
-  "include": [
-    "src/**/*.ts*",
-    "typings",
-    "../../public/app/types/jquery/*.ts",
-    "../../public/app/types/sanitize-url.d.ts"
-  ]
+  "include": ["src/**/*.ts*", "typings", "../../public/app/types/jquery/*.ts"]
 }
