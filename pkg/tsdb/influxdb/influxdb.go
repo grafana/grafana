@@ -47,14 +47,15 @@ func AllFlux(queries *tsdb.TsdbQuery) (bool, error) {
 	var hasFlux bool
 	var allFlux bool
 	for i, q := range queries.Queries {
-		if q.QueryType == "Flux" {
+		qType := q.Model.Get("queryType").MustString("")
+		if qType == "Flux" {
 			hasFlux = true
 			if i == 0 && hasFlux {
 				allFlux = true
 				continue
 			}
 		}
-		if allFlux && q.QueryType != "Flux" {
+		if allFlux && qType != "Flux" {
 			return true, fmt.Errorf("when using flux, all queries must be a flux query")
 		}
 	}
