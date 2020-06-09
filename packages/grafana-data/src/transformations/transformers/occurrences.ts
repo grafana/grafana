@@ -79,7 +79,7 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
         type: FieldType.number,
         values: new ArrayVector(counts),
         config: {
-          displayName: 'Number of Occurences',
+          displayName: 'Number of Occurrences',
         },
       });
 
