@@ -48,12 +48,12 @@ export const FilterableTableCell: FC<FilterableTableCellProps> = ({
       {showFilters && cell.value && (
         <div className={styles.filterWrapper}>
           <div className={styles.filterItem}>
-            <Tooltip content="Filter for value">
+            <Tooltip content="Filter for value" placement="top">
               <Icon name={'search-plus'} onClick={onFilterFor} />
             </Tooltip>
           </div>
           <div className={styles.filterItem}>
-            <Tooltip content="Filter out value">
+            <Tooltip content="Filter out value" placement="top">
               <Icon name={'search-minus'} onClick={onFilterOut} />
             </Tooltip>
           </div>
