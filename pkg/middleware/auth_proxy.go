@@ -95,7 +95,7 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 	ctx.SignedInUser = user
 	ctx.IsSignedIn = true
 
-	// Remember user data it in cache
+	// Remember user data in cache
 	if err := auth.Remember(id); err != nil {
 		logger.Error(
 			"Failed to store user in cache",
