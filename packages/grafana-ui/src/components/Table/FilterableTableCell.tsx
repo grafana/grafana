@@ -5,12 +5,12 @@ import { css, cx } from 'emotion';
 
 import { stylesFactory, useTheme } from '../../themes';
 import { TableStyles } from './styles';
-import { TableFilterActionCallback } from './types';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableFilterActionCallback } from './types';
 import { Icon, Tooltip } from '..';
 import { Props, renderCell } from './TableCell';
 
 interface FilterableTableCellProps extends Pick<Props, 'cell' | 'field' | 'tableStyles'> {
-  onFilterAdded: TableFilterActionCallback;
+  onCellFilterAdded: TableFilterActionCallback;
   cellProps: TableCellProps;
 }
 
@@ -18,19 +18,21 @@ export const FilterableTableCell: FC<FilterableTableCellProps> = ({
   cell,
   field,
   tableStyles,
-  onFilterAdded,
+  onCellFilterAdded,
   cellProps,
 }) => {
   const [showFilters, setShowFilter] = useState(false);
   const onMouseOver = useCallback((event: React.MouseEvent<HTMLDivElement>) => setShowFilter(true), [setShowFilter]);
   const onMouseLeave = useCallback((event: React.MouseEvent<HTMLDivElement>) => setShowFilter(false), [setShowFilter]);
   const onFilterFor = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => onFilterAdded({ key: field.name, operator: '=', value: cell.value }),
-    [cell, field, onFilterAdded]
+    (event: React.MouseEvent<HTMLDivElement>) =>
+      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value }),
+    [cell, field, onCellFilterAdded]
   );
   const onFilterOut = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => onFilterAdded({ key: field.name, operator: '!=', value: cell.value }),
-    [cell, field, onFilterAdded]
+    (event: React.MouseEvent<HTMLDivElement>) =>
+      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value }),
+    [cell, field, onCellFilterAdded]
   );
   const theme = useTheme();
   const styles = getFilterableTableCellStyles(theme, tableStyles);

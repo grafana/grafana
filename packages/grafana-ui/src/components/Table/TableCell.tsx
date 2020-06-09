@@ -3,20 +3,18 @@ import { Cell } from 'react-table';
 import { Field } from '@grafana/data';
 
 import { getTextAlign } from './utils';
-import { TableCellClickActionCallback, TableFilterActionCallback } from './types';
+import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
-import { ClickableTableCell } from './ClickableTableCell';
 import { FilterableTableCell } from './FilterableTableCell';
 
 export interface Props {
   cell: Cell;
   field: Field;
   tableStyles: TableStyles;
-  onCellClick?: TableCellClickActionCallback;
-  onFilterAdded?: TableFilterActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
-export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick, onFilterAdded }) => {
+export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdded }) => {
   const filterable = field.config.filterable;
   const cellProps = cell.getCellProps();
 
@@ -24,25 +22,13 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick, on
     cellProps.style.textAlign = getTextAlign(field);
   }
 
-  if (filterable && onCellClick) {
-    return (
-      <ClickableTableCell
-        cell={cell}
-        field={field}
-        tableStyles={tableStyles}
-        onCellClick={onCellClick}
-        cellProps={cellProps}
-      />
-    );
-  }
-
-  if (filterable && onFilterAdded) {
+  if (filterable && onCellFilterAdded) {
     return (
       <FilterableTableCell
         cell={cell}
         field={field}
         tableStyles={tableStyles}
-        onFilterAdded={onFilterAdded}
+        onCellFilterAdded={onCellFilterAdded}
         cellProps={cellProps}
       />
     );

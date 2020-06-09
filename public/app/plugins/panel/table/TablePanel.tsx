@@ -65,8 +65,8 @@ export class TablePanel extends Component<Props> {
     this.forceUpdate();
   };
 
-  onFilterAdded = (item: FilterItem) => {
-    const { key, value, operator } = item;
+  onCellFilterAdded = (filter: FilterItem) => {
+    const { key, value, operator } = filter;
     const panelModel = getDashboardSrv()
       .getCurrent()
       .getPanelById(this.props.id);
@@ -92,7 +92,7 @@ export class TablePanel extends Component<Props> {
         initialSortBy={options.sortBy}
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
-        onFilterAdded={this.onFilterAdded}
+        onCellFilterAdded={this.onCellFilterAdded}
       />
     );
   }

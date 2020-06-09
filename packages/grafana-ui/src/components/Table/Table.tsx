@@ -15,7 +15,6 @@ import { FixedSizeList } from 'react-window';
 import { getColumns, getTextAlign } from './utils';
 import { useTheme } from '../../themes';
 import {
-  TableCellClickActionCallback,
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
   TableSortByActionCallback,
@@ -37,10 +36,9 @@ export interface Props {
   noHeader?: boolean;
   resizable?: boolean;
   initialSortBy?: TableSortByFieldState[];
-  onCellClick?: TableCellClickActionCallback;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
-  onFilterAdded?: TableFilterActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}> {}
@@ -115,8 +113,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   const {
     data,
     height,
-    onCellClick,
-    onFilterAdded,
+    onCellFilterAdded,
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
@@ -173,8 +170,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               field={data.fields[index]}
               tableStyles={tableStyles}
               cell={cell}
-              onCellClick={onCellClick}
-              onFilterAdded={onFilterAdded}
+              onCellFilterAdded={onCellFilterAdded}
             />
           ))}
         </div>
