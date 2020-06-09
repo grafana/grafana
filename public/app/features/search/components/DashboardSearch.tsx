@@ -1,5 +1,6 @@
 import React, { FC, memo } from 'react';
 import { css } from 'emotion';
+import { connect, MapStateToProps } from 'react-redux';
 import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';
@@ -7,15 +8,25 @@ import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
+import { StoreState } from 'app/types';
+import { getRouteParams } from 'app/core/selectors/location';
+import { DashboardQuery } from '../types';
 
 export interface Props {
   onCloseSearch: () => void;
   folder?: string;
 }
 
-export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
+export interface ConnectProps {
+  params: Pick<DashboardQuery, 'query' | 'sort' | 'tag' | 'starred'>;
+}
+
+export const DashboardSearch: FC<Props & ConnectProps> = memo(({ onCloseSearch, folder, params }) => {
   const payload = folder ? { query: `folder:${folder} ` } : {};
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(payload);
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({
+    ...params,
+    ...payload,
+  });
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -53,6 +64,13 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
     </div>
   );
 });
+
+const mapStateToProps: MapStateToProps<Props, ConnectProps, StoreState> = state => {
+  const { query, tag, starred, sort } = getRouteParams(state.location);
+  return { query, tag, starred, sort };
+};
+
+export default connect(mapStateToProps)(DashboardSearch);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
