@@ -15,7 +15,7 @@ interface TableContainerProps {
   exploreId: ExploreId;
   loading: boolean;
   width: number;
-  onCellFilterAdded: (filter: FilterItem) => void;
+  onCellFilterAdded?: (filter: FilterItem) => void;
   showingTable: boolean;
   tableResult?: DataFrame;
   toggleTable: typeof toggleTable;
