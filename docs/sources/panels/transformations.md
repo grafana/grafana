@@ -73,6 +73,7 @@ Grafana comes with the following transformations:
     - [Join by field (outer join)](#join-by-field-outer-join)
     - [Add field from calculation](#add-field-from-calculation)
     - [Labels to fields](#labels-to-fields)
+    - [Number of Occurrences](#number-of-occurrences)
   - [Debug transformations](#debug-transformations)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
@@ -189,6 +190,23 @@ For this example, I manually defined labels in the Random Walk visualization of 
 After I apply the transformation, my labels appear in the table as fields.
 
 {{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+
+### Number of Occurrences
+
+This transformation counts the number of occurrences of each value of a specified field.
+
+Here's an example of original data.
+
+{{< docs-imagebox img="/img/docs/transformations/occurrences-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+By applying the transformation on the field `level`, we obtain the following result.
+
+{{< docs-imagebox img="/img/docs/transformations/occurrences-after-level-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+By applying the transformation on the field `hostname`, we obtain the following result.
+
+{{< docs-imagebox img="/img/docs/transformations/occurrences-after-hostname-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Debug transformations
 
