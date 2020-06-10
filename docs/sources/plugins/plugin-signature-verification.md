@@ -5,7 +5,7 @@ type = "docs"
 
 # Plugin signature verification
 
-Plugin signature verification (signing) is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned when by inspecting and verifying its digital signature.
+Plugin signature verification (signing) is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned when inspecting and verifying its digital signature.
 
 ## How it works
 
