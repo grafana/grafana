@@ -30,8 +30,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return url.trim();
     });
 
-    this.username = instanceSettings.username;
-    this.password = instanceSettings.password;
+    this.username = instanceSettings.username ?? '';
+    this.password = instanceSettings.password ?? '';
     this.name = instanceSettings.name;
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
@@ -236,12 +236,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          measurement: templateSrv.replace(query.measurement, scopedVars, 'regex'),
-          policy: templateSrv.replace(query.policy, scopedVars, 'regex'),
+          measurement: templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
+          policy: templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
         };
 
         if (query.rawQuery) {
-          expandedQuery.query = templateSrv.replace(query.query, scopedVars, 'regex');
+          expandedQuery.query = templateSrv.replace(query.query ?? '', scopedVars, 'regex');
         }
 
         if (query.tags) {
