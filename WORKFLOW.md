@@ -13,17 +13,17 @@ Team members and their access to repositories is maintained through [GitHub team
 ## Proposing changes
 
 Examples of proposed changes are overarching architecture, subsets, and specific code or graphical elements. Proposed changes SHOULD cover the big picture and intention, but individual parts SHOULD be split into the smallest possible changes. Changes SHOULD be based on and target the master branch. Depending on size of the proposed change, each change SHOULD be discussed, in increasing order of change size and complexity:
-* Directly in a Pull Request - this MAY be done, but SHOULD not be the common case
+* Directly in a RR (Pull Request) - this MAY be done, but SHOULD not be the common case
 * Issue
 * Developer mailing list
 * Design document, shared via Google Docs, accessible to at least all team members
 
 Significant changes MUST be discussed and agreed upon with the relevant subsystem maintainers.
 
-## Merging Pull Requests
+## Merging PRs (Pull Requests)
 
-Depending on the size and complexity of a Pull Request, different requirements MUST be applied. Any team member contributing substantially to a Pull Request MUST NOT count against review requirements.
-Commits MUST be merged into master using Pull Requests. They MUST NOT be merged into master directly.
+Depending on the size and complexity of a PR, different requirements MUST be applied. Any team member contributing substantially to a PR MUST NOT count against review requirements.
+Commits MUST be merged into master using PRs. They MUST NOT be merged into master directly.
 * Every merge MUST be approved by at least one team member
 * Non-trivial changes MUST be approved by at least
   * two team members, or
@@ -32,11 +32,11 @@ Commits MUST be merged into master using Pull Requests. They MUST NOT be merged 
   * two team members, AND
   * the relevant subsystem maintainer
 
-Pull Requests MUST be [reviewed](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/reviewing-changes-in-pull-requests) and [approved](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/approving-a-pull-request-with-required-reviews) via GitHub’s review system.
+PRs MUST be [reviewed](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/reviewing-changes-in-pull-requests) and [approved](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/approving-a-pull-request-with-required-reviews) via GitHub’s review system.
 * Reviewers MAY write comments if approving
-* Reviewers MUST write comments if rejecting a Pull Request or if requesting changes.
+* Reviewers MUST write comments if rejecting a PR or if requesting changes.
 
-Once a Pull Request is approved as per above, any team member MAY merge the Pull Request.
+Once a PR is approved as per above, any team member MAY merge the PR.
 
 # Release workflow
 
@@ -48,7 +48,7 @@ In particular, we found that the following principles match how we work
 * Master and release branches MUST always build without failure.
 * Branches SHOULD be merged often. Larger changes SHOULD be activated with feature flags until they are ready. Long-lived development branches SHOULD be avoided.
 * Changes MAY be enabled by default once they are in a complete state
-* Changes which span multiple Pull Requests MUST be described in an overarching issue or Google Doc.
+* Changes which span multiple PRs MUST be described in an overarching issue or Google Doc.
 
 ## Releases
 
@@ -61,7 +61,7 @@ Release branches MUST be split from the following branches.
 
 Security releases follow the same process but MUST be prepared in secret. Security releases MUST NOT include changes which are not related to the security fix. Normal release processes MUST accommodate the security release process. SECURITY.md MUST be followed.
 
-Pull requests intended for inclusion in the next PATCH release MUST be labeled with `cherry-pick-needed` so they can be picked up by automated release tooling.
+PRs intended for inclusion in the next PATCH release MUST be labeled with `cherry-pick-needed` so they can be picked up by automated release tooling.
 
 Releases follow the following cadence
 * MAJOR: Yearly
