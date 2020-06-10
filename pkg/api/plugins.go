@@ -271,7 +271,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) Response {
 
 	resp, err := hs.BackendPluginManager.CollectMetrics(c.Req.Context(), plugin.Id)
 	if err != nil {
-		return handlePluginRequestError(err)
+		return translatePluginRequestErrorToAPIError(err)
 	}
 
 	headers := make(http.Header)
@@ -300,7 +300,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
-		return handlePluginRequestError(err)
+		return translatePluginRequestErrorToAPIError(err)
 	}
 
 	payload := map[string]interface{}{
@@ -364,7 +364,7 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 	return query.Result, nil
 }
 
-func handlePluginRequestError(err error) Response {
+func translatePluginRequestErrorToAPIError(err error) Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
 		return Error(404, "Plugin not found", err)
 	}

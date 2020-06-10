@@ -370,7 +370,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) Response {
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
-		return handlePluginRequestError(err)
+		return translatePluginRequestErrorToAPIError(err)
 	}
 
 	payload := map[string]interface{}{
