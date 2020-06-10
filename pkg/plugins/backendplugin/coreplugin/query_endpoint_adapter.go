@@ -93,11 +93,18 @@ func (a *queryEndpointAdapter) Query(ctx context.Context, ds *models.DataSource,
 			RefId: refID,
 		}
 
+		for _, f := range r.Frames {
+			if f.RefID == "" {
+				f.RefID = refID
+			}
+		}
+
+		qr.Dataframes = tsdb.NewDecodedDataFrames(r.Frames)
+
 		if r.Error != nil {
 			qr.Error = r.Error
 		}
 
-		qr.Dataframes = tsdb.NewDecodedDataFrames(r.Frames)
 		tR.Results[refID] = qr
 	}
 
