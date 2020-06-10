@@ -1,9 +1,9 @@
 import { DataTransformerID } from '../ids';
 import { DataTransformerInfo } from '../../../types/transformations';
 import { DataFrame } from '../../../types/dataFrame';
-import { DataFrameBuilder } from './dataFrameBuilder';
-import { TimeFieldsByFrame } from './timeFieldsByFrame';
-import { DataFramesStackedByTime } from './dataFramesStacked';
+import { DataFrameBuilder } from './DataFrameBuilder';
+import { TimeFieldsByFrame } from './TimeFieldsByFrame';
+import { DataFramesStackedByTime } from './DataFramesStackedByTime';
 
 export interface MergeTransformerOptions {}
 

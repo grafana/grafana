@@ -106,7 +106,7 @@ Below you can see the same example but after applying the merge transformer.
 
 {{< docs-imagebox img="/img/docs/transformations/table-data-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-If any the queries returns time series data a `Metric` column containing the name of the query will be added. This value can be customized e.g. by defining `Label` on the source query.
+If any of the queries return time series data a `Metric` column containing the name of the query will be added. This value can be customized e.g. by defining `Label` on the source query.
 
 In the example below, we are visualizing multiple queries returing time series data before applying the transformation.
 

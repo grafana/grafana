@@ -1,7 +1,7 @@
 import { DataFrame } from '../../../types/dataFrame';
 import { timeComparer } from '../../../field/fieldComparers';
 import { sortDataFrame } from '../../../dataframe';
-import { TimeFieldsByFrame } from './timeFieldsByFrame';
+import { TimeFieldsByFrame } from './TimeFieldsByFrame';
 
 interface DataFrameStackValue {
   valueIndex: number;
