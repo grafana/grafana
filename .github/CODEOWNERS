@@ -53,7 +53,7 @@ lerna.json @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/loki @grafana/observability-squad
 /public/app/plugins/datasource/mssql @grafana/backend-platform
 /public/app/plugins/datasource/mysql @grafana/backend-platform
-/public/app/plugins/datasource/opentsdb @grafana/observability-squad
+/public/app/plugins/datasource/opentsdb @grafana/backend-platform
 /public/app/plugins/datasource/postgres @grafana/backend-platform
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
 /public/app/plugins/datasource/stackdriver @grafana/backend-platform
