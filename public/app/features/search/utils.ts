@@ -240,7 +240,7 @@ export const getSectionStorageKey = (title: string) => {
  * Remove undefined keys from url params object and format non-primitive values
  * @param params
  */
-export const handleRouteParams = (params: RouteParams) => {
+export const parseRouteParams = (params: RouteParams) => {
   const cleanedParams = Object.entries(params).reduce((obj, [key, val]) => {
     if (!val) {
       return obj;

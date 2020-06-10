@@ -5,7 +5,7 @@ import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/u
 import { GrafanaTheme } from '@grafana/data';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { updateLocation } from 'app/core/reducers/location';
-import { getRouteParams } from 'app/core/selectors/location';
+import { getLocationQuery } from 'app/core/selectors/location';
 import { StoreState } from 'app/types';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
@@ -13,7 +13,7 @@ import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
 import { RouteParams } from '../types';
-import { handleRouteParams } from '../utils';
+import { parseRouteParams } from '../utils';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -78,8 +78,8 @@ export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
 );
 
 const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
-  const { query, tag, starred, sort } = getRouteParams(state.location) as RouteParams;
-  return handleRouteParams({
+  const { query, starred, sort, tag } = getLocationQuery(state.location) as RouteParams;
+  return parseRouteParams({
     query,
     tag,
     starred,

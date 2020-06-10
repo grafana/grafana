@@ -13,7 +13,7 @@ import {
 import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters } from '../utils';
 
-export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocation?: (args: any) => {}) => {
+export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocation = (args: any) => {}) => {
   const updateLocationQuery = (query: any) => updateLocation({ query, partial: true });
   const initialState = { ...defaultQuery, ...queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
