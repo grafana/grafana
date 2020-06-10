@@ -55,12 +55,12 @@ func (r *RendererPlugin) Start(ctx context.Context) error {
 	return nil
 }
 
-func (r *RendererPlugin) onLegacyPluginStart(pluginID string, client *backendplugin.LegacyClient, logger log.Logger) error {
+func (r *RendererPlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
 	r.GrpcPluginV1 = client.RendererPlugin
 	return nil
 }
 
-func (r *RendererPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+func (r *RendererPlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
 	r.GrpcPluginV2 = client.RendererPlugin
 	return nil
 }

@@ -59,7 +59,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string, backend
 	return nil
 }
 
-func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *backendplugin.LegacyClient, logger log.Logger) error {
+func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
 	tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
 	})
@@ -67,7 +67,7 @@ func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *backendp
 	return nil
 }
 
-func (p *DataSourcePlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
 	if client.DataPlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil

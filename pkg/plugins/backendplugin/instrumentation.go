@@ -60,14 +60,17 @@ func instrumentCallResourceRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "callResource", fn)
 }
 
+// InstrumentQueryDataRequest instruments success rate and latency of query data request.
 func InstrumentQueryDataRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "queryData", fn)
 }
 
+// InstrumentTransformDataRequest instruments success rate and latency of transform data request.
 func InstrumentTransformDataRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "transformData", fn)
 }
 
+// InstrumentQueryDataHandler wraps a backend.QueryDataHandler with instrumentation of success rate and latency.
 func InstrumentQueryDataHandler(handler backend.QueryDataHandler) backend.QueryDataHandler {
 	if handler == nil {
 		return nil

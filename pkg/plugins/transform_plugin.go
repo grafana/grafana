@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 
+	sdkgrpcplugin "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -50,7 +51,7 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 	return nil
 }
 
-func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+func (p *TransformPlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
 	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
 	if client.DataPlugin != nil {
@@ -66,12 +67,12 @@ func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.C
 // Wrapper Code
 // ...
 
-func NewTransformWrapper(log log.Logger, plugin backendplugin.TransformPlugin) *TransformWrapper {
+func NewTransformWrapper(log log.Logger, plugin sdkgrpcplugin.TransformClient) *TransformWrapper {
 	return &TransformWrapper{plugin, log, &transformCallback{log}}
 }
 
 type TransformWrapper struct {
-	backendplugin.TransformPlugin
+	sdkgrpcplugin.TransformClient
 	logger   log.Logger
 	callback *transformCallback
 }
@@ -101,7 +102,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			},
 		})
 	}
-	pbRes, err := tw.TransformPlugin.TransformData(ctx, pbQuery, tw.callback)
+	pbRes, err := tw.TransformClient.TransformData(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
 	}

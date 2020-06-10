@@ -18,10 +18,10 @@ import (
 )
 
 type clientV2 struct {
-	backendplugin.DiagnosticsPlugin
-	backendplugin.ResourcePlugin
-	backendplugin.DataPlugin
-	backendplugin.TransformPlugin
+	grpcplugin.DiagnosticsClient
+	grpcplugin.ResourceClient
+	grpcplugin.DataClient
+	grpcplugin.TransformClient
 	pluginextensionv2.RendererPlugin
 }
 
@@ -53,26 +53,26 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 
 	c := clientV2{}
 	if rawDiagnostics != nil {
-		if plugin, ok := rawDiagnostics.(backendplugin.DiagnosticsPlugin); ok {
-			c.DiagnosticsPlugin = plugin
+		if plugin, ok := rawDiagnostics.(grpcplugin.DiagnosticsClient); ok {
+			c.DiagnosticsClient = plugin
 		}
 	}
 
 	if rawResource != nil {
-		if plugin, ok := rawResource.(backendplugin.ResourcePlugin); ok {
-			c.ResourcePlugin = plugin
+		if plugin, ok := rawResource.(grpcplugin.ResourceClient); ok {
+			c.ResourceClient = plugin
 		}
 	}
 
 	if rawData != nil {
-		if plugin, ok := rawData.(backendplugin.DataPlugin); ok {
-			c.DataPlugin = instrumentDataPlugin(plugin)
+		if plugin, ok := rawData.(grpcplugin.DataClient); ok {
+			c.DataClient = instrumentDataClient(plugin)
 		}
 	}
 
 	if rawTransform != nil {
-		if plugin, ok := rawTransform.(backendplugin.TransformPlugin); ok {
-			c.TransformPlugin = instrumentTransformPlugin(plugin)
+		if plugin, ok := rawTransform.(grpcplugin.TransformClient); ok {
+			c.TransformClient = instrumentTransformPlugin(plugin)
 		}
 	}
 
@@ -83,9 +83,9 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	if descriptor.startFns.OnStart != nil {
-		client := &backendplugin.Client{
-			DataPlugin:      c.DataPlugin,
-			TransformPlugin: c.TransformPlugin,
+		client := &Client{
+			DataPlugin:      c.DataClient,
+			TransformPlugin: c.TransformClient,
 			RendererPlugin:  c.RendererPlugin,
 		}
 		if err := descriptor.startFns.OnStart(descriptor.pluginID, client, logger); err != nil {
@@ -97,11 +97,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 }
 
 func (c *clientV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	if c.DiagnosticsPlugin == nil {
+	if c.DiagnosticsClient == nil {
 		return &backend.CollectMetricsResult{}, nil
 	}
 
-	protoResp, err := c.DiagnosticsPlugin.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
+	protoResp, err := c.DiagnosticsClient.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
 			return &backend.CollectMetricsResult{}, nil
@@ -114,12 +114,12 @@ func (c *clientV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsR
 }
 
 func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	if c.DiagnosticsPlugin == nil {
+	if c.DiagnosticsClient == nil {
 		return nil, backendplugin.ErrMethodNotImplemented
 	}
 
 	protoContext := backend.ToProto().PluginContext(req.PluginContext)
-	protoResp, err := c.DiagnosticsPlugin.CheckHealth(ctx, &pluginv2.CheckHealthRequest{PluginContext: protoContext})
+	protoResp, err := c.DiagnosticsClient.CheckHealth(ctx, &pluginv2.CheckHealthRequest{PluginContext: protoContext})
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
@@ -135,12 +135,12 @@ func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 }
 
 func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if c.ResourcePlugin == nil {
+	if c.ResourceClient == nil {
 		return backendplugin.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().CallResourceRequest(req)
-	protoStream, err := c.ResourcePlugin.CallResource(ctx, protoReq)
+	protoStream, err := c.ResourceClient.CallResource(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
 			return backendplugin.ErrMethodNotImplemented
@@ -169,18 +169,18 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 	}
 }
 
-type dataPluginQueryDataFunc func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error)
+type dataClientQueryDataFunc func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error)
 
-func (fn dataPluginQueryDataFunc) QueryData(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
+func (fn dataClientQueryDataFunc) QueryData(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
 	return fn(ctx, req, opts...)
 }
 
-func instrumentDataPlugin(plugin backendplugin.DataPlugin) backendplugin.DataPlugin {
+func instrumentDataClient(plugin grpcplugin.DataClient) grpcplugin.DataClient {
 	if plugin == nil {
 		return nil
 	}
 
-	return dataPluginQueryDataFunc(func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
+	return dataClientQueryDataFunc(func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
 		var resp *pluginv2.QueryDataResponse
 		err := backendplugin.InstrumentQueryDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
 			resp, innerErr = plugin.QueryData(ctx, req)
@@ -196,7 +196,7 @@ func (fn transformPluginTransformDataFunc) TransformData(ctx context.Context, re
 	return fn(ctx, req, callback)
 }
 
-func instrumentTransformPlugin(plugin backendplugin.TransformPlugin) backendplugin.TransformPlugin {
+func instrumentTransformPlugin(plugin grpcplugin.TransformClient) grpcplugin.TransformClient {
 	if plugin == nil {
 		return nil
 	}

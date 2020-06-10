@@ -5,6 +5,7 @@ import (
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	sdkgrpcplugin "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -45,10 +46,10 @@ func newClientConfig(executablePath string, env []string, logger log.Logger, ver
 }
 
 // LegacyStartFunc callback function called when a plugin with old plugin protocol is started.
-type LegacyStartFunc func(pluginID string, client *backendplugin.LegacyClient, logger log.Logger) error
+type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
 
 // StartFunc callback function called when a plugin with current plugin protocol version is started.
-type StartFunc func(pluginID string, client *backendplugin.Client, logger log.Logger) error
+type StartFunc func(pluginID string, client *Client, logger log.Logger) error
 
 // PluginStartFuncs functions called for plugin when started.
 type PluginStartFuncs struct {
@@ -111,4 +112,17 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 		},
 		startFns: startFns,
 	})
+}
+
+// LegacyClient client for communicating with a plugin using the v1 plugin protocol.
+type LegacyClient struct {
+	DatasourcePlugin datasourceV1.DatasourcePlugin
+	RendererPlugin   rendererV1.RendererPlugin
+}
+
+// Client client for communicating with a plugin using the current (v2) plugin protocol.
+type Client struct {
+	DataPlugin      grpcplugin.DataClient
+	TransformPlugin grpcplugin.TransformClient
+	RendererPlugin  pluginextensionv2.RendererPlugin
 }

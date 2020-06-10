@@ -389,7 +389,7 @@ func (t *testLicensingService) HasLicense() bool {
 	return t.hasLicense
 }
 
-func (*testLicensingService) Expiry() int64 {
+func (t *testLicensingService) Expiry() int64 {
 	return 0
 }
 
@@ -397,14 +397,14 @@ func (t *testLicensingService) Edition() string {
 	return t.edition
 }
 
-func (*testLicensingService) StateInfo() string {
+func (t *testLicensingService) StateInfo() string {
 	return ""
 }
 
-func (l *testLicensingService) LicenseURL(user *models.SignedInUser) string {
+func (t *testLicensingService) LicenseURL(user *models.SignedInUser) string {
 	return ""
 }
 
-func (*testLicensingService) HasValidLicense() bool {
+func (t *testLicensingService) HasValidLicense() bool {
 	return false
 }
