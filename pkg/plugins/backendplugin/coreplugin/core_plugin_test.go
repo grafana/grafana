@@ -31,15 +31,11 @@ func TestCorePlugin(t *testing.T) {
 
 		err = p.CallResource(context.Background(), nil, nil)
 		require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
-
-		// _, err = p.QueryData(context.Background(), nil)
-		// require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 	})
 
 	t.Run("New core plugin with handlers set in opts should return expected values", func(t *testing.T) {
 		checkHealthCalled := false
 		callResourceCalled := false
-		// queryDataCalled := false
 		factory := coreplugin.New(backend.ServeOpts{
 			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 				checkHealthCalled = true
@@ -49,10 +45,6 @@ func TestCorePlugin(t *testing.T) {
 				callResourceCalled = true
 				return nil
 			}),
-			// QueryDataHandler: backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-			// 	queryDataCalled = true
-			// 	return nil, nil
-			// }),
 		})
 		p, err := factory("plugin", log.New("test"), nil)
 		require.NoError(t, err)
@@ -72,9 +64,5 @@ func TestCorePlugin(t *testing.T) {
 		err = p.CallResource(context.Background(), &backend.CallResourceRequest{}, nil)
 		require.NoError(t, err)
 		require.True(t, callResourceCalled)
-
-		// _, err = p.QueryData(context.Background(), nil)
-		// require.NoError(t, err)
-		// require.True(t, queryDataCalled)
 	})
 }
