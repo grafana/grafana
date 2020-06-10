@@ -167,8 +167,6 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 			return err
 		}
 	}
-
-	return nil
 }
 
 // func (c *clientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
