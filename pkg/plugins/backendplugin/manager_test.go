@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -70,13 +71,46 @@ func TestManager(t *testing.T) {
 						runErr = ctx.manager.Run(cCtx)
 						wg.Done()
 					}()
-					go func() {
-						cancel()
-					}()
+					time.Sleep(time.Millisecond)
+					cancel()
 					wg.Wait()
 					require.Equal(t, context.Canceled, runErr)
-					require.True(t, ctx.plugin.started)
-					require.True(t, ctx.plugin.stopped)
+					require.Equal(t, 1, ctx.plugin.startCount)
+					require.Equal(t, 1, ctx.plugin.stopCount)
+				})
+
+				t.Run("When manager runs should restart plugin process when killed", func(t *testing.T) {
+					ctx.plugin.stopCount = 0
+					ctx.plugin.startCount = 0
+					pCtx := context.Background()
+					cCtx, cancel := context.WithCancel(pCtx)
+					var wgRun sync.WaitGroup
+					wgRun.Add(1)
+					var runErr error
+					go func() {
+						runErr = ctx.manager.Run(cCtx)
+						wgRun.Done()
+					}()
+
+					time.Sleep(time.Millisecond)
+
+					var wgKill sync.WaitGroup
+					wgKill.Add(1)
+					go func() {
+						ctx.plugin.kill()
+						for {
+							if !ctx.plugin.Exited() {
+								break
+							}
+						}
+						cancel()
+						wgKill.Done()
+					}()
+					wgKill.Wait()
+					wgRun.Wait()
+					require.Equal(t, context.Canceled, runErr)
+					require.Equal(t, 1, ctx.plugin.stopCount)
+					require.Equal(t, 2, ctx.plugin.startCount)
 				})
 
 				t.Run("Shouldn't be able to start managed plugin", func(t *testing.T) {
@@ -183,13 +217,31 @@ func TestManager(t *testing.T) {
 					}()
 					wg.Wait()
 					require.Equal(t, context.Canceled, runErr)
-					require.True(t, ctx.plugin.stopped)
+					require.Equal(t, 0, ctx.plugin.startCount)
+					require.Equal(t, 1, ctx.plugin.stopCount)
 				})
 
-				t.Run("Should be able to start unmanaged plugin", func(t *testing.T) {
-					err := ctx.manager.StartPlugin(context.Background(), testPluginID)
+				t.Run("Should be able to start unmanaged plugin and be restarted when process is killed", func(t *testing.T) {
+					pCtx := context.Background()
+					cCtx, cancel := context.WithCancel(pCtx)
+					defer cancel()
+					err := ctx.manager.StartPlugin(cCtx, testPluginID)
 					require.Nil(t, err)
-					require.True(t, ctx.plugin.started)
+					require.Equal(t, 1, ctx.plugin.startCount)
+
+					var wg sync.WaitGroup
+					wg.Add(1)
+					go func() {
+						ctx.plugin.kill()
+						for {
+							if !ctx.plugin.Exited() {
+								break
+							}
+						}
+						wg.Done()
+					}()
+					wg.Wait()
+					require.Equal(t, 2, ctx.plugin.startCount)
 				})
 			})
 		})
@@ -253,15 +305,16 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 }
 
 type testPlugin struct {
-	pluginID string
-	logger   log.Logger
-	started  bool
-	stopped  bool
-	managed  bool
-	exited   bool
+	pluginID   string
+	logger     log.Logger
+	startCount int
+	stopCount  int
+	managed    bool
+	exited     bool
 	backend.CollectMetricsHandlerFunc
 	backend.CheckHealthHandlerFunc
 	backend.CallResourceHandlerFunc
+	mutex sync.RWMutex
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -273,12 +326,17 @@ func (tp *testPlugin) Logger() log.Logger {
 }
 
 func (tp *testPlugin) Start(ctx context.Context) error {
-	tp.started = true
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
+	tp.exited = false
+	tp.startCount++
 	return nil
 }
 
 func (tp *testPlugin) Stop(ctx context.Context) error {
-	tp.stopped = true
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
+	tp.stopCount++
 	return nil
 }
 
@@ -287,7 +345,15 @@ func (tp *testPlugin) IsManaged() bool {
 }
 
 func (tp *testPlugin) Exited() bool {
+	tp.mutex.RLock()
+	defer tp.mutex.RUnlock()
 	return tp.exited
+}
+
+func (tp *testPlugin) kill() {
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
+	tp.exited = true
 }
 
 func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
