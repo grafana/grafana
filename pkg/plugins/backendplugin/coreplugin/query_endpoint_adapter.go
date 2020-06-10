@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
