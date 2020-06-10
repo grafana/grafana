@@ -60,17 +60,6 @@ func TestLoadingSettings(t *testing.T) {
 			So(AdminUser, ShouldEqual, "superduper")
 			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
 			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
-
-			Convey("Should be able to use variable expanders via environment variables", func() {
-				os.Setenv("GRAFANA_ADMIN", "emilwashere")
-				os.Setenv("GF_SECURITY_ADMIN_USER", "$__env{GRAFANA_ADMIN}")
-
-				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
-				So(err, ShouldBeNil)
-
-				So(AdminUser, ShouldEqual, "emilwashere")
-			})
 		})
 
 		Convey("Should replace password when defined in environment", func() {
