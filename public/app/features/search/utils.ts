@@ -237,7 +237,7 @@ export const getSectionStorageKey = (title: string) => {
 };
 
 /**
- * Remove undefined keys from url params object and force tag to be array
+ * Remove undefined keys from url params object and format non-primitive values
  * @param params
  */
 export const handleRouteParams = (params: RouteParams) => {
@@ -246,6 +246,8 @@ export const handleRouteParams = (params: RouteParams) => {
       return obj;
     } else if (key === 'tag' && !Array.isArray(val)) {
       return { ...obj, tag: [val] };
+    } else if (key === 'sort') {
+      return { ...obj, sort: { value: val } };
     }
     return { ...obj, [key]: val };
   }, {} as Partial<RouteParams>);
