@@ -14,7 +14,7 @@ For Grafana to be able to verify the digital signature of a plugin, the plugin m
 - **Signed message -** The signed message contains plugin metadata and plugin files with their respective checksums (SHA256).
 - **Digital signature -**  The digital signature is created by encrypting the signed message using a private key. Grafana has a public key built-in that can be used to verify that the digital signature have been encrypted using expected private key. 
  
-## Signed manifest example file
+### Signed manifest example file
 
 ```txt
 // MANIFEST.txt
