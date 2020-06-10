@@ -1,5 +1,6 @@
 import { parse, SearchParserResult } from 'search-query-parser';
 import { IconName } from '@grafana/ui';
+import { UrlQueryMap } from '@grafana/data';
 import {
   DashboardQuery,
   DashboardSection,
@@ -240,17 +241,17 @@ export const getSectionStorageKey = (title: string) => {
  * Remove undefined keys from url params object and format non-primitive values
  * @param params
  */
-export const parseRouteParams = (params: RouteParams) => {
+export const parseRouteParams = (params: UrlQueryMap) => {
   const cleanedParams = Object.entries(params).reduce((obj, [key, val]) => {
     if (!val) {
       return obj;
     } else if (key === 'tag' && !Array.isArray(val)) {
-      return { ...obj, tag: [val] };
+      return { ...obj, tag: [val] as string[] };
     } else if (key === 'sort') {
       return { ...obj, sort: { value: val } };
     }
     return { ...obj, [key]: val };
-  }, {} as Partial<RouteParams>);
+  }, {} as RouteParams);
 
   return { params: cleanedParams };
 };

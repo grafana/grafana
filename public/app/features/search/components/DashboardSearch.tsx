@@ -78,7 +78,7 @@ export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
 );
 
 const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
-  const { query, starred, sort, tag } = getLocationQuery(state.location) as RouteParams;
+  const { query, starred, sort, tag } = getLocationQuery(state.location);
   return parseRouteParams({
     query,
     tag,
