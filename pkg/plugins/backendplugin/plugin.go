@@ -22,7 +22,6 @@ type Plugin interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	// backend.QueryDataHandler
 }
 
 // PluginFactoryFunc factory for creating a Plugin.

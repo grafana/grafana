@@ -169,20 +169,6 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 	}
 }
 
-// func (c *clientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-// 	if c.DataPlugin == nil {
-// 		return nil, backendplugin.ErrMethodNotImplemented
-// 	}
-
-// 	protoReq := backend.ToProto().QueryDataRequest(req)
-// 	protoRes, err := c.DataPlugin.QueryData(ctx, protoReq)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return backend.FromProto().QueryDataResponse(protoRes)
-// }
-
 type dataPluginQueryDataFunc func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error)
 
 func (fn dataPluginQueryDataFunc) QueryData(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {

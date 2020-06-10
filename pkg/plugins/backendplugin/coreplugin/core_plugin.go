@@ -79,11 +79,3 @@ func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourc
 
 	return backendplugin.ErrMethodNotImplemented
 }
-
-// func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-// 	if cp.QueryDataHandler != nil {
-// 		return cp.QueryDataHandler.QueryData(ctx, req)
-// 	}
-
-// 	return nil, backendplugin.ErrMethodNotImplemented
-// }
