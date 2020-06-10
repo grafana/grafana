@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -13,9 +14,45 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+func TestGetHomeDashboard(t *testing.T) {
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}}
+	cfg := setting.NewCfg()
+	err := cfg.Load(&setting.CommandLineArgs{
+		HomePath: "../../",
+	})
+	require.NoError(t, err)
+	bus.AddHandler("test", func(query *models.GetPreferencesWithDefaultsQuery) error {
+		query.Result = &models.Preferences{
+			HomeDashboardId: 0,
+		}
+		return nil
+	})
+
+	f, err := ioutil.ReadFile("../../public/dashboards/home.json")
+	require.NoError(t, err)
+	dash := dtos.DashboardFullWithMeta{}
+	dash.Meta.IsHome = true
+	dash.Meta.CanEdit = req.SignedInUser.HasRole(models.ROLE_EDITOR)
+	dash.Meta.FolderTitle = "General"
+	bytes, err := simplejson.NewJson(f)
+	require.NoError(t, err)
+
+	dash.Dashboard = bytes
+
+	b, err := json.Marshal(dash)
+	require.NoError(t, err)
+
+	res := GetHomeDashboard(req)
+	nr, ok := res.(*NormalResponse)
+	assert.True(t, ok, "should return *NormalResponse")
+	assert.Equal(t, b, nr.body)
+}
 
 // This tests three main scenarios.
 // If a user has access to execute an action on a dashboard:
