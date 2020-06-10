@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { SpanReference } from '../types/trace';
+import { SpanReference } from '@grafana/data';
 import ExternalLinkContext from './externalLinkContext';
 
 type ReferenceLinkProps = {
