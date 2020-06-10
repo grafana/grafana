@@ -31,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 25;
+    this.dashboard.schemaVersion = 26;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -562,6 +562,18 @@ export class DashboardMigrator {
         }
         variable.tags = newTags;
       }
+    }
+
+    if (oldVersion < 26) {
+      panelUpgrades.push((panel: any) => {
+        const wasReactText = panel.type === 'text2';
+        if (!wasReactText) {
+          return;
+        }
+
+        panel.type = 'text';
+        delete panel.options.angular;
+      });
     }
 
     if (panelUpgrades.length === 0) {

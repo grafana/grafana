@@ -1,7 +1,8 @@
-import { PanelModel, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
 import { TextOptions } from './types';
+import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<TextOptions>(TextPanel)
   .setPanelOptions(builder => {
@@ -28,14 +29,9 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
           rows: 5,
         },
         defaultValue: `# Title
-        
+
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
          `,
       });
   })
-  .setPanelChangeHandler((panel: PanelModel<TextOptions>, prevPluginId: string, prevOptions: any) => {
-    if (prevPluginId === 'text') {
-      return prevOptions as TextOptions;
-    }
-    return panel.options;
-  });
+  .setMigrationHandler(textPanelMigrationHandler);

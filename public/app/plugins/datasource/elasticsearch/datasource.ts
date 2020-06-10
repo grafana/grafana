@@ -86,7 +86,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       };
     }
 
-    return getBackendSrv().datasourceRequest(options);
+    return getBackendSrv()
+      .datasourceRequest(options)
+      .catch((err: any) => {
+        if (err.data && err.data.error) {
+          throw {
+            message: 'Elasticsearch error: ' + err.data.error.reason,
+            error: err.data.error,
+          };
+        }
+        throw err;
+      });
   }
 
   /**
@@ -128,21 +138,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private post(url: string, data: any) {
-    return this.request('POST', url, data)
-      .then((results: any) => {
-        results.data.$$config = results.config;
-        return results.data;
-      })
-      .catch((err: any) => {
-        if (err.data && err.data.error) {
-          throw {
-            message: 'Elasticsearch error: ' + err.data.error.reason,
-            error: err.data.error,
-          };
-        }
-
-        throw err;
-      });
+    return this.request('POST', url, data).then((results: any) => {
+      results.data.$$config = results.config;
+      return results.data;
+    });
   }
 
   annotationQuery(options: any): Promise<any> {

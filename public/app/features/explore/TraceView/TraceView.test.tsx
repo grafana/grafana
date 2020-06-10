@@ -1,7 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { TraceView } from './TraceView';
-import { SpanData, TraceData, TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
+import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
+import { TraceData, SpanData } from '@grafana/data';
 
 function renderTraceView() {
   const wrapper = shallow(<TraceView trace={response} />);

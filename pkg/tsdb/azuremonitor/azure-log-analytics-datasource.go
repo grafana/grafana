@@ -179,10 +179,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		}
 	}
 	frames := data.Frames{frame}
-	queryResult.Dataframes, err = frames.MarshalArrow()
-	if err != nil {
-		return queryResultError(err)
-	}
+	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 	return queryResult
 }
 
