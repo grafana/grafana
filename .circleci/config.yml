@@ -61,6 +61,28 @@ commands:
             chmod +x grabpl
             mv grabpl /tmp
 
+  halt-if-not-matching-files:
+    description: "Requires files of last commit to match provided glob pattern. If no matches are found, the step will halt and be marked as successful."
+    parameters:
+      regex:
+        type: string
+      inverse:
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: "Halt if not matching changed files << parameters.regex >>, inverse: << parameters.inverse >>"
+          command: |
+            echo "Revision: << pipeline.git.revision >>"
+            echo "Base revision: << pipeline.git.base_revision >>"
+            git log --oneline --pretty="format:" --name-only origin/master.. | awk 'NF' | sort -u
+
+            if [ << parameters.inverse >> = true ]; then
+              git log --oneline --pretty="format:" --name-only origin/master.. | awk 'NF' | sort -u | egrep -q '<< parameters.regex >>' && circleci step halt
+            else
+              git log --oneline --pretty="format:" --name-only origin/master.. | awk 'NF' | sort -u | egrep -q '<< parameters.regex >>' || circleci step halt
+            fi
+
 jobs:
   build-backend:
     description: "Build a certain variant of Grafana back-end binaries"
@@ -79,6 +101,8 @@ jobs:
               circleci step halt
             fi
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go$
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -131,6 +155,8 @@ jobs:
               circleci step halt
             fi
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
       - restore_cache:
           keys:
             # Use own cache for front-end builds, since for some reason it can't be unpacked for parts of the
@@ -197,6 +223,8 @@ jobs:
               circleci step halt
             fi
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^plugins-bundled/
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -260,6 +288,8 @@ jobs:
     executor: base
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: \.sh$
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -292,6 +322,10 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -331,6 +365,10 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go)+
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
@@ -395,6 +433,10 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -461,6 +503,10 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -557,6 +603,8 @@ jobs:
     executor: grafana-publish
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -615,6 +663,10 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -684,6 +736,10 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go)+
       - restore_cache:
           keys:
             - v2-yarn-{{ checksum "yarn.lock" }}
@@ -734,6 +790,8 @@ jobs:
           MYSQL_PASSWORD: password
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go$
       - run:
           name: ci job started
           command: "./scripts/ci-job-started.sh"
@@ -763,6 +821,8 @@ jobs:
           POSTGRES_DB: grafanatest
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go$
       - run:
           name: ci job started
           command: "./scripts/ci-job-started.sh"
@@ -787,6 +847,8 @@ jobs:
       - image: cimg/python:3.8
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^docs/.*
       - run:
           name: Install codespell
           command: "pip install codespell"
@@ -807,6 +869,8 @@ jobs:
       GOGC: 20
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^.*\.go$
       - run:
           name: Install Go linters
           command: |
@@ -839,6 +903,8 @@ jobs:
     executor: node
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
@@ -873,6 +939,8 @@ jobs:
     executor: go
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^(go.mod|go.sum|.*\.go$
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
@@ -892,6 +960,8 @@ jobs:
     executor: base
     steps:
       - checkout
+      - halt-if-not-matching-files:
+          regex: ^docs/.*
       - setup_remote_docker
       - run:
           name: CI job started
@@ -1157,8 +1227,6 @@ workflows:
             - lint-go
       - build-release-publisher:
           filters: *filter-master-or-release
-      - codespell:
-          filters: *filter-all
       - lint-go:
           filters: *filter-all
       - shellcheck:
@@ -1196,7 +1264,6 @@ workflows:
             - build-oss-frontend
             - test-backend
             - test-frontend
-            - codespell
             - shellcheck
             - build-oss-plugins
       - package-enterprise:
@@ -1214,7 +1281,6 @@ workflows:
             - build-enterprise-frontend
             - test-backend
             - test-frontend
-            - codespell
             - shellcheck
             - build-enterprise-plugins
       - build-oss-windows-installer:
@@ -1310,11 +1376,12 @@ workflows:
           filters: *filter-all
           requires:
             - package-oss
+      - codespell:
+          filters: *filter-all
       - build-docs-website:
           filters: *filter-not-release-or-master
           requires:
-            - mysql-integration-test
-            - postgres-integration-test
+            - codespell
       - deploy-to-kubernetes:
           filters: *filter-only-master
           requires:
