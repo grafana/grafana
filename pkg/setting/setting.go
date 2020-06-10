@@ -1145,6 +1145,16 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 		return key
 	}
 
+	envValue, err := ExpandVar(envValue)
+	if err != nil {
+		s.Logger.Error("Error expanding environment variable option (falling back to configuration file)",
+			"section", s.section.Name(),
+			"key", k,
+			"err", err,
+		)
+		return key
+	}
+
 	key.SetValue(envValue)
 	if shouldRedactKey(envKey) {
 		envValue = REDACTED_PASSWORD
