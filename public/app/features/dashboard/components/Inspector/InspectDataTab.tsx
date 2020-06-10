@@ -56,7 +56,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   exportCsv = (dataFrame: DataFrame) => {
-    console.log(dataFrame);
     const { panel } = this.props;
     const { transformId } = this.state;
 
@@ -101,12 +100,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
-      transformId: item.value === DataTransformerID.seriesToColumns ? item.value : this.state.transformId,
+      transformId:
+        item.value === DataTransformerID.seriesToColumns ? DataTransformerID.seriesToColumns : DataTransformerID.noop,
       dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
+      selectedDataFrame: item.value,
     });
     this.props.onOptionsChange({
       ...this.props.options,
-      withTransforms: !(item.value === DataTransformerID.seriesToColumns) ?? this.props.options.withTransforms,
+      // withTransforms: !(item.value === DataTransformerID.seriesToColumns),
     });
   };
 

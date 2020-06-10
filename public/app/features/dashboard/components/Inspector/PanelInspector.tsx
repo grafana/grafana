@@ -191,6 +191,8 @@ export class PanelInspectorUnconnected extends PureComponent<Props, State> {
 
   renderDataTab() {
     const { last, isLoading, withFieldConfig, withTransforms } = this.state;
+    console.log(withTransforms);
+    console.log(last.series);
     return (
       <InspectDataTab
         dashboard={this.props.dashboard}
