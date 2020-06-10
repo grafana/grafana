@@ -107,7 +107,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
     this.props.onOptionsChange({
       ...this.props.options,
-      // withTransforms: !(item.value === DataTransformerID.seriesToColumns),
+      withTransforms: item.value === DataTransformerID.seriesToColumns ? false : this.props.options.withTransforms,
     });
   };
 
@@ -147,7 +147,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   }
 
-  renderDataOptions = () => {
+  renderDataOptions = (dataFrames: DataFrame[]) => {
     const { options, onOptionsChange, panel, data } = this.props;
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
     const styles = getPanelInspectorStyles();
@@ -157,7 +157,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       panelTransformations && panelTransformations.length > 0 && (transformId as any) !== 'join by time';
     const showFieldConfigsOption = !panel.plugin?.fieldConfigRegistry.isEmpty();
     const showDataOptions = showPanelTransformationsOption || showFieldConfigsOption;
-
+    console.log(dataFrames);
     const choices = data.map((frame, index) => {
       return {
         value: index,
@@ -240,7 +240,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         <div className={styles.actionsWrapper}>
           <div className={styles.leftActions}>
             <div className={styles.selects}></div>
-            {this.renderDataOptions()}
+            {this.renderDataOptions(dataFrames)}
           </div>
 
           <div className={styles.options}>
