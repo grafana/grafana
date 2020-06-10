@@ -30,7 +30,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/stackdriver"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdatasource"
-	_ "github.com/grafana/grafana/pkg/tsdb/testdatasourcev2"
 )
 
 var version = "5.0.0"
