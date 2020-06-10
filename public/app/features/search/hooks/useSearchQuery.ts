@@ -30,11 +30,12 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocat
 
   const onTagAdd = (tag: string) => {
     dispatch({ type: ADD_TAG, payload: tag });
+    updateLocationQuery({ tag: [...query.tag, tag] });
   };
 
   const onClearFilters = () => {
     dispatch({ type: CLEAR_FILTERS });
-    updateLocationQuery(null);
+    updateLocationQuery(defaultQuery);
   };
 
   const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {

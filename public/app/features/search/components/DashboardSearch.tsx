@@ -3,16 +3,17 @@ import { css } from 'emotion';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { updateLocation } from 'app/core/reducers/location';
+import { getRouteParams } from 'app/core/selectors/location';
+import { StoreState } from 'app/types';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
-import { StoreState } from 'app/types';
-import { getRouteParams } from 'app/core/selectors/location';
 import { RouteParams } from '../types';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { updateLocation } from '../../../core/reducers/location';
+import { handleRouteParams } from '../utils';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -26,15 +27,6 @@ export interface ConnectProps {
 export interface DispatchProps {
   updateLocation: typeof updateLocation;
 }
-
-const handleRouteParams = (params: RouteParams) => {
-  const cleanedParams = Object.entries(params).reduce(
-    (obj, [key, val]) => (val ? { ...obj, [key]: val } : obj),
-    {} as Partial<RouteParams>
-  );
-
-  return { params: cleanedParams };
-};
 
 export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
   ({ onCloseSearch, folder, params, updateLocation }) => {
@@ -86,13 +78,13 @@ export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
 );
 
 const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
-  const { query, tag, starred, sort } = getRouteParams(state.location);
+  const { query, tag, starred, sort } = getRouteParams(state.location) as RouteParams;
   return handleRouteParams({
     query,
     tag,
     starred,
     sort,
-  } as RouteParams);
+  });
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {

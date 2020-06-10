@@ -1,6 +1,13 @@
 import { parse, SearchParserResult } from 'search-query-parser';
 import { IconName } from '@grafana/ui';
-import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
+import {
+  DashboardQuery,
+  DashboardSection,
+  DashboardSectionItem,
+  RouteParams,
+  SearchAction,
+  UidsToDelete,
+} from './types';
 import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
@@ -227,4 +234,21 @@ export const getSectionStorageKey = (title: string) => {
     return '';
   }
   return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
+};
+
+/**
+ * Remove undefined keys from url params object and force tag to be array
+ * @param params
+ */
+export const handleRouteParams = (params: RouteParams) => {
+  const cleanedParams = Object.entries(params).reduce((obj, [key, val]) => {
+    if (!val) {
+      return obj;
+    } else if (key === 'tag' && !Array.isArray(val)) {
+      return { ...obj, tag: [val] };
+    }
+    return { ...obj, [key]: val };
+  }, {} as Partial<RouteParams>);
+
+  return { params: cleanedParams };
 };
