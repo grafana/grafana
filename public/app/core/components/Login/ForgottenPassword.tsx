@@ -1,13 +1,25 @@
 import React, { FC, useState } from 'react';
-import { Form, Field, Input, Button, Legend, Container } from '@grafana/ui';
+import { Form, Field, Input, Button, Legend, Container, useStyles, HorizontalGroup } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
+import { submitButton } from './LoginForm';
+import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 
 interface EmailDTO {
   userOrEmail: string;
 }
 
+const paragraphStyles = (theme: GrafanaTheme) => css`
+  color: ${theme.colors.formDescription};
+  font-size: ${theme.typography.size.sm};
+  font-weight: ${theme.typography.weight.regular};
+  margin-top: ${theme.spacing.sm};
+  display: block;
+`;
+
 export const ForgottenPassword: FC = () => {
   const [emailSent, setEmailSent] = useState(false);
+  const styles = useStyles(paragraphStyles);
 
   const sendEmail = async (formModel: EmailDTO) => {
     const res = await getBackendSrv().post('/api/user/password/send-reset-email', formModel);
@@ -19,10 +31,7 @@ export const ForgottenPassword: FC = () => {
   if (emailSent) {
     return (
       <div>
-        <p>
-          An email with a reset link has been sent to the email address. <br />
-          You should receive it shortly.
-        </p>
+        <p>An email with a reset link has been sent to the email address. You should receive it shortly.</p>
         <Container margin="md" />
         <Button variant="primary" onClick={() => window.location.reload()}>
           Back to login
@@ -43,7 +52,14 @@ export const ForgottenPassword: FC = () => {
           >
             <Input placeholder="Email or username" name="userOrEmail" ref={register({ required: true })} />
           </Field>
-          <Button>Send reset email</Button>
+          <HorizontalGroup>
+            <Button>Send reset email</Button>
+            <Button variant="link" onClick={() => window.location.reload()}>
+              Back to login
+            </Button>
+          </HorizontalGroup>
+
+          <p className={styles}>Did you forget your username or email? Contact your Grafana administrator.</p>
         </>
       )}
     </Form>

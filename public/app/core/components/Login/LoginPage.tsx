@@ -9,7 +9,7 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 import { Branding } from 'app/core/components/Branding/Branding';
-import { useStyles } from '@grafana/ui';
+import { useStyles, HorizontalGroup, Button } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { ForgottenPassword } from './ForgottenPassword';
 
@@ -53,9 +53,18 @@ export const LoginPage: FC = () => {
                         isLoggingIn={isLoggingIn}
                       >
                         {!(ldapEnabled || authProxyEnabled) && (
-                          <a className={forgottenPasswordStyles} onClick={() => setForgotPassword(true)}>
-                            Forgot your password?
-                          </a>
+                          <HorizontalGroup justify="flex-end">
+                            <Button
+                              className={css`
+                                padding: 0;
+                                margin-top: 4px;
+                              `}
+                              variant="link"
+                              onClick={() => setForgotPassword(true)}
+                            >
+                              Forgot your password?
+                            </Button>
+                          </HorizontalGroup>
                         )}
                       </LoginForm>
                     </>
@@ -86,18 +95,14 @@ export const LoginPage: FC = () => {
   );
 };
 
-const forgottenPasswordStyles = css`
-  display: inline-block;
-  margin-top: 16px;
-  float: right;
-`;
-
 const flyInAnimation = keyframes`
 from{
-  transform: translate(-400px, 0px);
+  opacity: 0;
+  transform: translate(-60px, 0px);
 }
 
 to{
+  opacity: 1;
   transform: translate(0px, 0px);
 }`;
 
