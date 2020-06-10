@@ -1,14 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  KeyValuePair,
-  Link,
-  Span,
-  SpanData,
   ThemeOptions,
   ThemeProvider,
   ThemeType,
-  Trace,
-  TraceData,
   TracePageHeader,
   TraceTimelineViewer,
   transformTraceData,
@@ -22,6 +16,7 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
+import { TraceData, SpanData, Trace, Span, KeyValuePair, Link } from '@grafana/data';
 
 type Props = {
   trace: TraceData & { spans: SpanData[] };

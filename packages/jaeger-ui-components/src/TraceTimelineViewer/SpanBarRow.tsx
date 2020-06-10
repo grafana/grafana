@@ -28,7 +28,7 @@ import SpanBar from './SpanBar';
 import Ticks from './Ticks';
 
 import { TNil } from '../types';
-import { Span } from '../types/trace';
+import { Span } from '@grafana/data';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
 const getStyles = createStyle((theme: Theme) => {
