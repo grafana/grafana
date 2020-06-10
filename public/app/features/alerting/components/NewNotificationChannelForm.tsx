@@ -58,10 +58,10 @@ export const NewNotificationChannelForm: FC<Props> = ({
           />
         </Field>
         <Field label="Default" description="Use this notification for all alerts">
-          <Switch name="default" ref={register} />
+          <Switch name="isDefault" ref={register} />
         </Field>
         <Field label="Include image" description="Captures an image and include it in the notification">
-          <Switch name="uploadImage" ref={register} />
+          <Switch name="settings.uploadImage" ref={register} />
         </Field>
         {getValues().uploadImage && !imageRendererAvailable && (
           <InfoBox title="No image renderer available/installed">
@@ -97,7 +97,8 @@ export const NewNotificationChannelForm: FC<Props> = ({
         <>
           <h3>{selectedChannel.heading}</h3>
           {selectedChannel.options.map((option: Option, index: number) => {
-            const settingsOption = `settings[${index}]`;
+            //const settingsOption = `settings[${index}]`;
+            const key = `${option.label}-${index}`;
             const selectedOptionValue = getValues()[option.show.field] && getValues()[option.show.field].value;
             if (option.show.field && selectedOptionValue !== option.show.is) {
               return null;
@@ -105,13 +106,15 @@ export const NewNotificationChannelForm: FC<Props> = ({
 
             return (
               <Field
-                key={settingsOption}
+                key={key}
                 label={option.label}
                 description={option.description}
-                invalid={errors.settings && !!errors.settings[index]}
-                error={errors.settings && errors.settings[index] && errors.settings[index].message}
+                invalid={errors.settings && !!errors.settings[option.modelValue]}
+                error={
+                  errors.settings && errors.settings[option.modelValue] && errors.settings[option.modelValue].message
+                }
               >
-                <OptionElement name={settingsOption} option={option} register={register} control={control} />
+                <OptionElement option={option} register={register} control={control} />
               </Field>
             );
           })}

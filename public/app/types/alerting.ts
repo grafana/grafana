@@ -80,8 +80,16 @@ export interface NotificationChannelDTO {
   sendReminder: boolean;
   disableResolveMessage: boolean;
   frequency: string;
-  settings: any[];
+  settings: ChannelTypeSettings;
   isDefault: boolean;
+}
+
+export interface ChannelTypeSettings {
+  [key: string]: any;
+  autoResolve: true;
+  httpMethod: string;
+  severity: string;
+  uploadImage: boolean;
 }
 
 export interface Option {

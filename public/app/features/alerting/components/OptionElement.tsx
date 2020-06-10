@@ -4,16 +4,16 @@ import { Option } from '../../../types';
 
 interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
   option: Option;
-  name: string;
 }
 
-export const OptionElement: FC<Props> = ({ control, option, name, register }) => {
+export const OptionElement: FC<Props> = ({ control, option, register }) => {
+  const modelValue = `settings.${option.modelValue}`;
   switch (option.element) {
     case 'input':
       return (
         <Input
           type={option.elementType}
-          name={`${name}`}
+          name={`${modelValue}`}
           ref={register({
             required: option.required ? 'Required' : false,
             validate: v => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
@@ -23,12 +23,12 @@ export const OptionElement: FC<Props> = ({ control, option, name, register }) =>
       );
 
     case 'select':
-      return <InputControl as={Select} options={option.selectOptions} control={control} name={`${name}`} />;
+      return <InputControl as={Select} options={option.selectOptions} control={control} name={`${modelValue}`} />;
 
     case 'textarea':
       return (
         <TextArea
-          name={`${name}`}
+          name={`${modelValue}`}
           ref={register({
             required: option.required ? 'Required' : false,
             validate: v => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
@@ -39,7 +39,7 @@ export const OptionElement: FC<Props> = ({ control, option, name, register }) =>
     case 'switch':
       return (
         <Switch
-          name={`${name}`}
+          name={`${modelValue}`}
           ref={register({
             required: option.required ? 'Required' : false,
           })}

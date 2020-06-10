@@ -41,18 +41,19 @@ const examplePost = {
 
 const actual = {
   disableResolveMessage: false,
+  frequency: '15m',
   isDefault: false,
-  name: 'test',
+  name: 'asdf',
   sendReminder: false,
   settings: {
     addresses: 'asdf',
+    autoResolve: true,
+    httpMethod: 'POST',
+    severity: 'critical',
     singleEmail: false,
+    uploadImage: true,
   },
-  type: {
-    label: 'Email',
-    value: 'notifier-options-email',
-  },
-  uploadImage: false,
+  type: 'email',
 };
 
 const defaultValues: NotificationChannelDTO = {
@@ -61,8 +62,13 @@ const defaultValues: NotificationChannelDTO = {
   sendReminder: false,
   disableResolveMessage: false,
   frequency: '15m',
-  settings: [],
-  uploadImage: config.rendererAvailable,
+  settings: {
+    uploadImage: config.rendererAvailable,
+    autoResolve: true,
+    httpMethod: 'POST',
+    severity: 'critical',
+  },
+
   isDefault: false,
 };
 
@@ -75,6 +81,7 @@ class NewAlertNotificationPage extends PureComponent<Props> {
 
   onSubmit = (data: NotificationChannelDTO) => {
     console.log({
+      ...defaultValues,
       ...data,
       type: data.type.label.toLowerCase(),
       settings: { ...Object.assign(defaultValues.settings, data.settings) },
@@ -86,7 +93,9 @@ class NewAlertNotificationPage extends PureComponent<Props> {
 
     /*
      Need to transform these as we have options on notificationChannels,
-     this will render a dropdown within the select
+     this will render a dropdown within the select.
+
+    TODO: Memoize?
    */
     const selectableChannels: Array<SelectableValue<string>> = notificationChannels.map(channel => ({
       value: channel.value,
