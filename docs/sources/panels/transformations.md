@@ -67,6 +67,7 @@ Grafana comes with the following transformations:
   - [Apply a transformation](#apply-a-transformation)
   - [Transformation types and options](#transformation-types-and-options)
     - [Reduce](#reduce)
+    - [Merge](#merge)
     - [Filter by name](#filter-by-name)
     - [Filter data by query](#filter-data-by-query)
     - [Organize fields](#organize-fields)
@@ -92,6 +93,28 @@ Here's an example of a table with time series data. Before I apply the transform
 After I apply the transformation, there is no time value and each column has been reduced to one row showing the results of the calculations that I chose.
 
 {{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Merge
+
+Use this transformation to _merge_ the result from multipe queries into one single result based on the time field. This is really helpful when using the table panel visualization. 
+
+In the example below, we are visualizing multiple queries returing table data before applying the transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/table-data-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Below you can see the same example but after applying the merge transformer.
+
+{{< docs-imagebox img="/img/docs/transformations/table-data-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+If any the queries returns time series data a `Metric` column containing the name of the query will be added. This value can be customized e.g. by defining `Label` on the source query.
+
+In the example below, we are visualizing multiple queries returing time series data before applying the transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Below you can see the same example but after applying the merge transformer.
+
+{{< docs-imagebox img="/img/docs/transformations/time-series-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Filter by name
 
