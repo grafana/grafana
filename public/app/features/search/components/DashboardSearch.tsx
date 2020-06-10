@@ -1,6 +1,6 @@
 import React, { FC, memo } from 'react';
 import { css } from 'emotion';
-import { connect, MapStateToProps } from 'react-redux';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';
@@ -10,7 +10,9 @@ import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
 import { StoreState } from 'app/types';
 import { getRouteParams } from 'app/core/selectors/location';
-import { DashboardQuery } from '../types';
+import { RouteParams } from '../types';
+import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { updateLocation } from '../../../core/reducers/location';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -18,59 +20,86 @@ export interface Props {
 }
 
 export interface ConnectProps {
-  params: Pick<DashboardQuery, 'query' | 'sort' | 'tag' | 'starred'>;
+  params: RouteParams;
 }
 
-export const DashboardSearch: FC<Props & ConnectProps> = memo(({ onCloseSearch, folder, params }) => {
-  const payload = folder ? { query: `folder:${folder} ` } : {};
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({
-    ...params,
-    ...payload,
-  });
-  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export interface DispatchProps {
+  updateLocation: typeof updateLocation;
+}
 
-  return (
-    <div tabIndex={0} className={styles.overlay}>
-      <div className={styles.container}>
-        <div className={styles.searchField}>
-          <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
-          <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
-          </div>
-        </div>
-        <div className={styles.search}>
-          <ActionRow
-            {...{
-              onLayoutChange,
-              onSortChange,
-              onTagFilterChange,
-              query,
-            }}
-          />
-          <CustomScrollbar>
-            <SearchResults
-              results={results}
-              loading={loading}
-              onTagSelected={onTagAdd}
-              editable={false}
-              onToggleSection={onToggleSection}
-              layout={query.layout}
-            />
-          </CustomScrollbar>
-        </div>
-      </div>
-    </div>
+const handleRouteParams = (params: RouteParams) => {
+  const cleanedParams = Object.entries(params).reduce(
+    (obj, [key, val]) => (val ? { ...obj, [key]: val } : obj),
+    {} as Partial<RouteParams>
   );
-});
 
-const mapStateToProps: MapStateToProps<Props, ConnectProps, StoreState> = state => {
-  const { query, tag, starred, sort } = getRouteParams(state.location);
-  return { query, tag, starred, sort };
+  return { params: cleanedParams };
 };
 
-export default connect(mapStateToProps)(DashboardSearch);
+export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
+  ({ onCloseSearch, folder, params, updateLocation }) => {
+    const payload = folder ? { query: `folder:${folder} ` } : {};
+    const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
+      {
+        ...params,
+        ...payload,
+      },
+      updateLocation
+    );
+    const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+    const theme = useTheme();
+    const styles = getStyles(theme);
+
+    return (
+      <div tabIndex={0} className={styles.overlay}>
+        <div className={styles.container}>
+          <div className={styles.searchField}>
+            <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+            <div className={styles.closeBtn}>
+              <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            </div>
+          </div>
+          <div className={styles.search}>
+            <ActionRow
+              {...{
+                onLayoutChange,
+                onSortChange,
+                onTagFilterChange,
+                query,
+              }}
+            />
+            <CustomScrollbar>
+              <SearchResults
+                results={results}
+                loading={loading}
+                onTagSelected={onTagAdd}
+                editable={false}
+                onToggleSection={onToggleSection}
+                layout={query.layout}
+              />
+            </CustomScrollbar>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
+  const { query, tag, starred, sort } = getRouteParams(state.location);
+  return handleRouteParams({
+    query,
+    tag,
+    starred,
+    sort,
+  } as RouteParams);
+};
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
+  updateLocation,
+};
+
+export default connectWithStore(DashboardSearch, mapStateToProps, mapDispatchToProps);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

@@ -13,16 +13,19 @@ import {
 import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters } from '../utils';
 
-export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
+export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocation?: (args: any) => {}) => {
+  const updateLocationQuery = (query: any) => updateLocation({ query, partial: true });
   const initialState = { ...defaultQuery, ...queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
   const onQueryChange = (query: string) => {
     dispatch({ type: QUERY_CHANGE, payload: query });
+    updateLocationQuery({ query });
   };
 
   const onTagFilterChange = (tags: string[]) => {
     dispatch({ type: SET_TAGS, payload: tags });
+    updateLocationQuery({ tag: tags });
   };
 
   const onTagAdd = (tag: string) => {
@@ -31,6 +34,7 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
 
   const onClearFilters = () => {
     dispatch({ type: CLEAR_FILTERS });
+    updateLocationQuery(null);
   };
 
   const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
@@ -39,6 +43,7 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>) => {
 
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
+    updateLocationQuery({ sort: sort.value });
   };
 
   const onLayoutChange = (layout: SearchLayout) => {
