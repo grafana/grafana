@@ -21,7 +21,7 @@ import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 import { TNil } from '../types';
-import { Span, Trace, Log, KeyValuePair, Link } from '../types/trace';
+import { Span, Trace, Log, KeyValuePair, Link } from '@grafana/data';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 import ExternalLinkContext from '../url/externalLinkContext';

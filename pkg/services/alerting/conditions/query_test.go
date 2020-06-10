@@ -55,7 +55,7 @@ func TestQueryCondition(t *testing.T) {
 
 			Convey("should fire when avg is above 100 on dataframe", func() {
 				ctx.frame = data.NewFrame("",
-					data.NewField("time", nil, []time.Time{time.Now()}),
+					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{120, 150}),
 				)
 				cr, err := ctx.exec()
@@ -75,7 +75,7 @@ func TestQueryCondition(t *testing.T) {
 
 			Convey("Should not fire when avg is below 100 on dataframe", func() {
 				ctx.frame = data.NewFrame("",
-					data.NewField("time", nil, []time.Time{time.Now()}),
+					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{12, 47}),
 				)
 				cr, err := ctx.exec()
@@ -198,12 +198,8 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 	}
 
 	if ctx.frame != nil {
-		bFrame, err := ctx.frame.MarshalArrow()
-		if err != nil {
-			return nil, err
-		}
 		qr = &tsdb.QueryResult{
-			Dataframes: [][]byte{bFrame},
+			Dataframes: tsdb.NewDecodedDataFrames(data.Frames{ctx.frame}),
 		}
 	}
 

@@ -15,7 +15,7 @@ import {
   sharedReducer,
   storeNewVariable,
 } from './sharedReducer';
-import { QueryVariableModel, VariableHide } from '../../templating/types';
+import { QueryVariableModel, VariableHide } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
@@ -68,6 +68,7 @@ describe('sharedReducer', () => {
             index: 0,
             label: 'Label-0',
             skipUrlSync: false,
+            global: false,
           },
           '2': {
             id: '2',
@@ -77,6 +78,7 @@ describe('sharedReducer', () => {
             index: 1,
             label: 'Label-2',
             skipUrlSync: false,
+            global: false,
           },
         });
     });
@@ -98,6 +100,7 @@ describe('sharedReducer', () => {
             index: 0,
             label: 'Label-0',
             skipUrlSync: false,
+            global: false,
           },
           '2': {
             id: '2',
@@ -107,6 +110,7 @@ describe('sharedReducer', () => {
             index: 2,
             label: 'Label-2',
             skipUrlSync: false,
+            global: false,
           },
         });
     });
@@ -128,6 +132,7 @@ describe('sharedReducer', () => {
             index: 0,
             label: 'Label-0',
             skipUrlSync: false,
+            global: false,
           },
           '1': {
             id: '1',
@@ -137,6 +142,7 @@ describe('sharedReducer', () => {
             index: 1,
             label: 'Label-1',
             skipUrlSync: false,
+            global: false,
           },
           '2': {
             id: '2',
@@ -146,6 +152,7 @@ describe('sharedReducer', () => {
             index: 2,
             label: 'Label-2',
             skipUrlSync: false,
+            global: false,
           },
           '11': {
             ...initialQueryVariableModelState,
@@ -174,6 +181,7 @@ describe('sharedReducer', () => {
             index: 1,
             label: 'Label-0',
             skipUrlSync: false,
+            global: false,
           },
           '1': {
             id: '1',
@@ -183,6 +191,7 @@ describe('sharedReducer', () => {
             index: 0,
             label: 'Label-1',
             skipUrlSync: false,
+            global: false,
           },
           '2': {
             id: '2',
@@ -192,6 +201,7 @@ describe('sharedReducer', () => {
             index: 2,
             label: 'Label-2',
             skipUrlSync: false,
+            global: false,
           },
         });
     });
@@ -213,6 +223,7 @@ describe('sharedReducer', () => {
             index: 0,
             label: 'Label-0',
             skipUrlSync: false,
+            global: false,
           },
           '1': {
             id: '1',
@@ -222,6 +233,7 @@ describe('sharedReducer', () => {
             index: 1,
             label: 'Label-1',
             skipUrlSync: false,
+            global: false,
           },
           '2': {
             id: '2',
@@ -231,6 +243,7 @@ describe('sharedReducer', () => {
             index: 2,
             label: 'Label-2',
             skipUrlSync: false,
+            global: false,
           },
           [NEW_VARIABLE_ID]: {
             id: NEW_VARIABLE_ID,
@@ -240,6 +253,7 @@ describe('sharedReducer', () => {
             index: 3,
             label: `Label-${NEW_VARIABLE_ID}`,
             skipUrlSync: false,
+            global: false,
           },
           [11]: {
             ...initialQueryVariableModelState,

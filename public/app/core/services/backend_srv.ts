@@ -53,6 +53,8 @@ enum CancellationType {
   dataSourceRequest,
 }
 
+const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
+
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
   appEvents: Emitter;
@@ -180,6 +182,10 @@ export class BackendSrv implements BackendService {
 
   resolveCancelerIfExists(requestId: string) {
     this.inFlightRequests.next(requestId);
+  }
+
+  cancelAllInFlightRequests() {
+    this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
@@ -528,12 +534,18 @@ export class BackendSrv implements BackendService {
         this.inFlightRequests.pipe(
           filter(requestId => {
             let cancelRequest = false;
+
             if (options && options.requestId && options.requestId === requestId) {
               // when a new requestId is started it will be published to inFlightRequests
               // if a previous long running request that hasn't finished yet has the same requestId
               // we need to cancel that request
               cancelRequest = true;
             }
+
+            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
+              cancelRequest = true;
+            }
+
             return cancelRequest;
           })
         )

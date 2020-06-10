@@ -21,7 +21,7 @@ import { css } from 'emotion';
 import AccordianKeyValues from './AccordianKeyValues';
 import { formatDuration } from '../utils';
 import { TNil } from '../../types';
-import { Log, KeyValuePair, Link } from '../../types/trace';
+import { Log, KeyValuePair, Link } from '@grafana/data';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 

@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { AdHocVariableModel } from '../../templating/types';
+import { AdHocVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
 import { AdHocPicker } from './picker/AdHocPicker';
@@ -24,7 +24,7 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {
       const filters = urlParser.toFilters(urlValue);
-      await dispatch(setFiltersFromUrl(variable.id!, filters));
+      await dispatch(setFiltersFromUrl(variable.id, filters));
     },
     updateOptions: noop,
     getSaveModel: variable => {

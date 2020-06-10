@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { DetailState, Log } from '@jaegertracing/jaeger-ui-components';
+import { DetailState } from '@jaegertracing/jaeger-ui-components';
+import { Log } from '@grafana/data';
 
 /**
  * Keeps state of the span detail. This means whether span details are open but also state of each detail subitem
