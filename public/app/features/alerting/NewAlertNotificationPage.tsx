@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Form } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
+import { NewNotificationChannelForm } from './components/NewNotificationChannelForm';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { createNotificationChannel, loadNotificationTypes } from './state/actions';
 import { NotificationChannel, NotificationChannelDTO, StoreState } from '../../types';
-import { NewNotificationChannelForm } from './components/NewNotificationChannelForm';
 
 interface OwnProps {}
 
@@ -41,14 +42,13 @@ const examplePost = {
 const actual = {
   disableResolveMessage: false,
   isDefault: false,
-  name: 'em',
+  name: 'test',
   sendReminder: false,
   settings: {
-    addresses: 'peter@grafna.com',
+    addresses: 'asdf',
     singleEmail: false,
   },
   type: {
-    description: 'Sends notifications using Grafana server configured SMTP settings',
     label: 'Email',
     value: 'notifier-options-email',
   },
@@ -61,29 +61,31 @@ const defaultValues: NotificationChannelDTO = {
   sendReminder: false,
   disableResolveMessage: false,
   frequency: '15m',
-  settings: {
-    httpMethod: 'POST',
-    autoResolve: true,
-    severity: 'critical',
-    uploadImage: true,
-  },
+  settings: [],
+  uploadImage: config.rendererAvailable,
   isDefault: false,
 };
+
+const defaultSettings = {};
 
 class NewAlertNotificationPage extends PureComponent<Props> {
   componentDidMount() {
     this.props.loadNotificationTypes();
   }
 
-  onSubmit = (data: any) => {
-    console.log(data);
+  onSubmit = (data: NotificationChannelDTO) => {
+    console.log({
+      ...data,
+      type: data.type.label.toLowerCase(),
+      settings: { ...Object.assign(defaultValues.settings, data.settings) },
+    });
   };
 
   render() {
     const { navModel, notificationChannels } = this.props;
 
     /*
-     Need to transform these as we have options on notificationchannels,
+     Need to transform these as we have options on notificationChannels,
      this will render a dropdown within the select
    */
     const selectableChannels: Array<SelectableValue<string>> = notificationChannels.map(channel => ({
@@ -111,6 +113,7 @@ class NewAlertNotificationPage extends PureComponent<Props> {
                   getValues={getValues}
                   control={control}
                   watch={watch}
+                  imageRendererAvailable={config.rendererAvailable}
                 />
               );
             }}

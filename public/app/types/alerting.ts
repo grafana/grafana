@@ -80,12 +80,7 @@ export interface NotificationChannelDTO {
   sendReminder: boolean;
   disableResolveMessage: boolean;
   frequency: string;
-  settings: Partial<{
-    httpMethod: string;
-    autoResolve: boolean;
-    severity: string;
-    uploadImage: boolean;
-  }>;
+  settings: any[];
   isDefault: boolean;
 }
 

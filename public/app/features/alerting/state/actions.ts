@@ -25,7 +25,7 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv()
       .post(`/api/alert-notifications`, data)
-      .then(result => {
+      .then(() => {
         appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
         dispatch(updateLocation('alerting/notifications'));
       })
