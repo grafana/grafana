@@ -27,11 +27,17 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
       .post(`/api/alert-notifications`, data)
       .then(() => {
         appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
-        dispatch(updateLocation('alerting/notifications'));
+        dispatch(updateLocation({ path: 'alerting/notifications' }));
       })
       .catch(error => {
         appEvents.emit(AppEvents.alertError, [error.data.error]);
       });
+  };
+}
+
+export function testNotificationChannel(data: any): ThunkResult<void> {
+  return async () => {
+    await getBackendSrv().post('/api/alert-notifications/test', data);
   };
 }
 
@@ -42,9 +48,10 @@ export function loadNotificationTypes(): ThunkResult<void> {
     const notificationTypes = alertNotifiers
       .map((option: NotifierDTO) => {
         return {
-          value: `notifier-options-${option.type}`,
+          value: option.type,
           label: option.name,
           ...option,
+          typeName: option.type,
         };
       })
       .sort((o1, o2) => {

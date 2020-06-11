@@ -94,7 +94,7 @@ export interface ChannelTypeSettings {
 
 export interface Option {
   element: 'input' | 'select' | 'switch' | 'textarea';
-  elementType: string;
+  inputType: string;
   label: string;
   description: string;
   placeholder: string;

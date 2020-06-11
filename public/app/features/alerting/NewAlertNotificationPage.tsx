@@ -6,7 +6,7 @@ import { Form } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { NewNotificationChannelForm } from './components/NewNotificationChannelForm';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { createNotificationChannel, loadNotificationTypes } from './state/actions';
+import { createNotificationChannel, loadNotificationTypes, testNotificationChannel } from './state/actions';
 import { NotificationChannel, NotificationChannelDTO, StoreState } from '../../types';
 
 interface OwnProps {}
@@ -19,46 +19,14 @@ interface ConnectedProps {
 interface DispatchProps {
   createNotificationChannel: typeof createNotificationChannel;
   loadNotificationTypes: typeof loadNotificationTypes;
+  testNotificationChannel: typeof testNotificationChannel;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-const examplePost = {
-  disableResolveMessage: false,
-  frequency: '15m',
-  isDefault: false,
-  name: 'Email2',
-  sendReminder: false,
-  settings: {
-    addresses: 'peter.holmberg@grafana.com',
-    autoResolve: true,
-    httpMethod: 'POST',
-    severity: 'critical',
-    uploadImage: false,
-  },
-  type: 'email',
-};
-
-const actual = {
-  disableResolveMessage: false,
-  frequency: '15m',
-  isDefault: false,
-  name: 'asdf',
-  sendReminder: false,
-  settings: {
-    addresses: 'asdf',
-    autoResolve: true,
-    httpMethod: 'POST',
-    severity: 'critical',
-    singleEmail: false,
-    uploadImage: true,
-  },
-  type: 'email',
-};
-
 const defaultValues: NotificationChannelDTO = {
   name: '',
-  type: { value: 'notifier-options-email', label: 'Email' },
+  type: { value: 'email', label: 'Email' },
   sendReminder: false,
   disableResolveMessage: false,
   frequency: '15m',
@@ -72,18 +40,25 @@ const defaultValues: NotificationChannelDTO = {
   isDefault: false,
 };
 
-const defaultSettings = {};
-
 class NewAlertNotificationPage extends PureComponent<Props> {
   componentDidMount() {
     this.props.loadNotificationTypes();
   }
 
   onSubmit = (data: NotificationChannelDTO) => {
-    console.log({
+    this.props.createNotificationChannel({
       ...defaultValues,
       ...data,
-      type: data.type.label.toLowerCase(),
+      type: data.type.value,
+      settings: { ...Object.assign(defaultValues.settings, data.settings) },
+    });
+  };
+
+  onTestChannel = (data: NotificationChannelDTO) => {
+    this.props.testNotificationChannel({
+      name: data.name,
+      type: data.type.value,
+      frequency: data.frequency ?? defaultValues.frequency,
       settings: { ...Object.assign(defaultValues.settings, data.settings) },
     });
   };
@@ -116,7 +91,7 @@ class NewAlertNotificationPage extends PureComponent<Props> {
                 <NewNotificationChannelForm
                   selectableChannels={selectableChannels}
                   selectedChannel={selectedChannel}
-                  onSubmit={this.onSubmit}
+                  onTestChannel={this.onTestChannel}
                   register={register}
                   errors={errors}
                   getValues={getValues}
@@ -143,6 +118,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   createNotificationChannel,
   loadNotificationTypes,
+  testNotificationChannel,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(NewAlertNotificationPage);

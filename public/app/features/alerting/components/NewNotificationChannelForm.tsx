@@ -5,7 +5,6 @@ import {
   Button,
   Field,
   FormAPI,
-  FormsOnSubmit,
   HorizontalGroup,
   InfoBox,
   Input,
@@ -23,7 +22,7 @@ interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectedChannel: NotificationChannel;
   imageRendererAvailable: boolean;
 
-  onSubmit: FormsOnSubmit<any>;
+  onTestChannel: (data: NotificationChannelDTO) => void;
 }
 
 export const NewNotificationChannelForm: FC<Props> = ({
@@ -35,11 +34,12 @@ export const NewNotificationChannelForm: FC<Props> = ({
   watch,
   getValues,
   imageRendererAvailable,
+  onTestChannel,
 }) => {
   const styles = getStyles(useTheme());
 
   useEffect(() => {
-    watch(['type', 'priority', 'sendReminder', 'uploadImage']);
+    watch(['type', 'settings.priority', 'sendReminder', 'uploadImage']);
   }, []);
 
   return (
@@ -97,9 +97,14 @@ export const NewNotificationChannelForm: FC<Props> = ({
         <>
           <h3>{selectedChannel.heading}</h3>
           {selectedChannel.options.map((option: Option, index: number) => {
-            //const settingsOption = `settings[${index}]`;
             const key = `${option.label}-${index}`;
-            const selectedOptionValue = getValues()[option.show.field] && getValues()[option.show.field].value;
+
+            // Some options can be dependent on other options, this determines what is selected in the dependency options
+            // I think this needs more thought.
+            const selectedOptionValue =
+              getValues()[`settings.${option.show.field}`] &&
+              (getValues()[`settings.${option.show.field}`] as SelectableValue<string>).value;
+
             if (option.show.field && selectedOptionValue !== option.show.is) {
               return null;
             }
@@ -122,7 +127,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
       )}
       <HorizontalGroup>
         <Button type="submit">Save</Button>
-        <Button type="button" variant="secondary">
+        <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
           Test
         </Button>
         <Button type="button" variant="secondary">

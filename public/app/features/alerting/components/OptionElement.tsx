@@ -12,7 +12,7 @@ export const OptionElement: FC<Props> = ({ control, option, register }) => {
     case 'input':
       return (
         <Input
-          type={option.elementType}
+          type={option.inputType}
           name={`${modelValue}`}
           ref={register({
             required: option.required ? 'Required' : false,
