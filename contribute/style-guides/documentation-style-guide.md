@@ -31,7 +31,7 @@ The following sections provide general guidelines on topics specific to Grafana 
 * Write in present tense.
   - Not: The panel will open.
   - Use: The panel opens. Grafana opens the panel.
-* Do not use an ampersand (&) as an abbreviation for "and." 
+* Do not use an ampersand (&) as an abbreviation for "and."
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
 * Avoid using internal slang and jargon in technical documentation.
 
@@ -156,7 +156,7 @@ One word, not two.
 
 #### open source, open-source
 
-Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._ 
+Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._
 
 Do not hyphenate when it is used as a noun. For example: _Open source is the best way to develop software._
 
@@ -168,3 +168,26 @@ Two words if used as a verb, one word if used as a noun.
 
 * Set up the workspace.
 * Initial setup might take five minutes.
+
+### Inclusive language
+
+This section provides guidelines on how to avoid using charged language in documentation.
+
+#### Allowing and blocking
+
+Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
+
+* When used as a noun, use "allowlist" or "blocklist".
+* When used as a verb, use "allow" or "block"
+
+Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
+
+#### Leader and follower
+
+Don't use "master" or "slave" to describe relationships between nodes or processes.
+
+**Exceptions:**
+
+* When referring to a configuration or settings used by technologies outside the Grafana project.
+
+  For example, use "master" when referring to the default Git branch.
