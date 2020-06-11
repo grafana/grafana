@@ -25,6 +25,7 @@ import { css, cx } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { CollapsedText } from './CollapsedText';
 
 interface Props {
   dashboard: DashboardModel;
@@ -147,6 +148,32 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   }
 
+  getActiveString = () => {
+    const { selectedDataFrame } = this.state;
+    const { options, data } = this.props;
+    let activeString = '';
+    if (selectedDataFrame === DataTransformerID.seriesToColumns) {
+      activeString = 'series joined by time';
+    } else {
+      activeString = getFrameDisplayName(data[selectedDataFrame as number]);
+    }
+    if (options.withTransforms || options.withFieldConfig) {
+      activeString += ' - applied ';
+      if (options.withTransforms) {
+        activeString += 'panel transformations ';
+      }
+
+      if (options.withTransforms && options.withFieldConfig) {
+        activeString += 'and  ';
+      }
+
+      if (options.withFieldConfig) {
+        activeString += 'field configuration';
+      }
+    }
+    return activeString;
+  };
+
   renderDataOptions = (dataFrames: DataFrame[]) => {
     const { options, onOptionsChange, panel, data } = this.props;
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
@@ -173,7 +200,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <div className={cx(styles.options, styles.dataDisplayOptions)}>
-        <QueryOperationRow title={'Data display options'} isOpen={false}>
+        <QueryOperationRow
+          title={'Data display options'}
+          headerElement={<CollapsedText>{this.getActiveString()}</CollapsedText>}
+          isOpen={false}
+        >
           {data.length > 1 && (
             <Field
               label="Show data frame"
