@@ -110,7 +110,7 @@ If you downloaded the Windows binary package you can just download a newer packa
 
 ## Update plugins
 
-After you have upgraded it is highly recommended that you update all your plugins as a new version of Grafana
+After you have upgraded, we strongly recommend that you update all your plugins as a new version of Grafana
 can make older plugins stop working properly.
 
 You can update all plugins using
