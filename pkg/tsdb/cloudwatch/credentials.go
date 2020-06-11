@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -24,7 +23,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,15 +35,13 @@ type clientCache interface {
 	logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error)
 }
 
-type sharedCache map[string]cache
-
 type cache struct {
 	credential *credentials.Credentials
 	expiration *time.Time
 }
 
-func (c sharedCache) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
+func (c *cache) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
+	cfg, err := c.getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +60,8 @@ func (c sharedCache) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.C
 	return client, nil
 }
 
-func (c sharedCache) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) {
-	cfg, err := getAwsConfig(dsInfo)
+func (c *cache) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) {
+	cfg, err := c.getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
 	}
@@ -76,8 +72,8 @@ func (c sharedCache) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) 
 	return ec2.New(sess, cfg), nil
 }
 
-func (c sharedCache) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
+func (c *cache) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
+	cfg, err := c.getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
 	}
@@ -88,8 +84,8 @@ func (c sharedCache) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingap
 	return resourcegroupstaggingapi.New(sess, cfg), nil
 }
 
-func (c sharedCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
+func (c *cache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	cfg, err := c.getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -109,21 +105,11 @@ func (c sharedCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.Clo
 
 }
 
-var awsCredentialCache = make(sharedCache)
-var credentialCacheLock sync.RWMutex
-
-func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
-	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
-	credentialCacheLock.RLock()
-	if _, ok := awsCredentialCache[cacheKey]; ok {
-		if awsCredentialCache[cacheKey].expiration != nil &&
-			(*awsCredentialCache[cacheKey].expiration).After(time.Now().UTC()) {
-			result := awsCredentialCache[cacheKey].credential
-			credentialCacheLock.RUnlock()
-			return result, nil
-		}
+func (c *cache) getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
+	if c.credential != nil &&
+		c.expiration.After(time.Now().UTC()) {
+		return c.credential, nil
 	}
-	credentialCacheLock.RUnlock()
 
 	accessKeyID := ""
 	secretAccessKey := ""
@@ -194,12 +180,8 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			remoteCredProvider(sess),
 		})
 
-	credentialCacheLock.Lock()
-	awsCredentialCache[cacheKey] = cache{
-		credential: creds,
-		expiration: expiration,
-	}
-	credentialCacheLock.Unlock()
+	c.credential = creds
+	c.expiration = expiration
 
 	return creds, nil
 }
@@ -237,36 +219,8 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
 }
 
-func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	return retrieveDsInfo(e.DataSource, region)
-}
-
-func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInfo {
-	defaultRegion := datasource.JsonData.Get("defaultRegion").MustString()
-	if region == "default" {
-		region = defaultRegion
-	}
-
-	authType := datasource.JsonData.Get("authType").MustString()
-	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
-	decrypted := datasource.DecryptedValues()
-	accessKey := decrypted["accessKey"]
-	secretKey := decrypted["secretKey"]
-
-	datasourceInfo := &DatasourceInfo{
-		Region:        region,
-		Profile:       datasource.Database,
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
-	}
-
-	return datasourceInfo
-}
-
-func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
-	creds, err := GetCredentials(dsInfo)
+func (c *cache) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
+	creds, err := c.getCredentials(dsInfo)
 	if err != nil {
 		return nil, err
 	}

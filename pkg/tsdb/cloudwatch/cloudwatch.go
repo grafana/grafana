@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -21,9 +22,18 @@ type CloudWatchExecutor struct {
 
 	// clients is our interface to access AWS service-specific API clients
 	clients clientCache
+
+	// We cache custom metrics and dimensions on a per data source, per version basis
+	// These are of type (profile -> region -> namespace)
+	customMetricsMetricsMap    map[string]map[string]map[string]*CustomMetricsCache
+	metricsCacheLock           sync.Mutex
+	customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
+	dimensionsCacheLock        sync.Mutex
 }
 
 type DatasourceInfo struct {
+	Id int64
+
 	Profile       string
 	Region        string
 	AuthType      string
@@ -34,27 +44,48 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
-const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+var (
+	// In order to properly cache sessions per data source we need to
+	// keep a state for each data source.
+	executors    = make(map[int64]*CloudWatchExecutor)
+	executorLock = sync.Mutex{}
+	aliasFormat  = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	plog         = log.New("tsdb.cloudwatch")
+)
+
+const (
+	cloudWatchDefaultRegion = "default"
+	cloudWatchTSFormat      = "2006-01-02 15:04:05.000"
+)
 
 // Constants also defined in datasource/cloudwatch/datasource.ts
 const logIdentifierInternal = "__log__grafana_internal__"
 const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
+// NewCloudWatchExecutor finds the appropriate CloudWatchExecutor for the given
+// data source, using a global cache protected by a mutex. If there is none
+// cached, a new one will be created.
 func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &CloudWatchExecutor{
-		clients: awsCredentialCache,
-	}, nil
+	executorLock.Lock()
+	defer executorLock.Unlock()
+
+	// If the version has been updated we want to break the cache
+	if cached := executors[datasource.Id]; cached != nil && cached.DataSource.Version >= datasource.Version {
+		return cached, nil
+	}
+
+	exec := &CloudWatchExecutor{
+		DataSource:                 datasource,
+		clients:                    &cache{},
+		customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+		customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
+	}
+	executors[datasource.Id] = exec
+	return exec, nil
 }
 
-var (
-	plog        log.Logger
-	aliasFormat *regexp.Regexp
-)
-
 func init() {
-	plog = log.New("tsdb.cloudwatch")
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
-	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -126,6 +157,33 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	}
 
 	return result, err
+}
+
+// getDsInfo gets the CloudWatchExecutor's region-specific DataSourceInfo from
+// the embedded models.DataSource. Given cloudWatchDefaultRegion it will fall
+// back to the region configured as default for the data source.
+func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
+	if region == cloudWatchDefaultRegion {
+		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
+	}
+
+	authType := e.DataSource.JsonData.Get("authType").MustString()
+	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	decrypted := e.DataSource.DecryptedValues()
+	accessKey := decrypted["accessKey"]
+	secretKey := decrypted["secretKey"]
+
+	datasourceInfo := &DatasourceInfo{
+		Id:            e.DataSource.Id,
+		Region:        region,
+		Profile:       e.DataSource.Database,
+		AuthType:      authType,
+		AssumeRoleArn: assumeRoleArn,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+
+	return datasourceInfo
 }
 
 func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {

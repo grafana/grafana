@@ -20,7 +20,9 @@ func TestCloudWatchMetrics(t *testing.T) {
 
 	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
-			DataSource: mockDatasource(),
+			DataSource:                 mockDatasource(),
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
 			clients: &mockClients{
 				cloudWatch: mockedCloudWatch{
 					Resp: cloudwatch.ListMetricsOutput{
@@ -46,7 +48,9 @@ func TestCloudWatchMetrics(t *testing.T) {
 
 	t.Run("When calling getDimensionsForCustomMetrics", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
-			DataSource: mockDatasource(),
+			DataSource:                 mockDatasource(),
+			customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
+			customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
 			clients: &mockClients{
 				cloudWatch: mockedCloudWatch{
 					Resp: cloudwatch.ListMetricsOutput{
