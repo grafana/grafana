@@ -3,9 +3,11 @@ package cloudwatch
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -47,75 +49,51 @@ func newSessionCache() *sessionCache {
 // Provider configuration in the given DataSourceInfo.
 func (s *sessionCache) newAwsSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 
-	accessKeyID := ""
-	secretAccessKey := ""
-	sessionToken := ""
-	if dsInfo.AuthType == "arn" {
-		params := &sts.AssumeRoleInput{
-			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
-			RoleSessionName: aws.String("GrafanaSession"),
-			DurationSeconds: aws.Int64(900),
-		}
-
-		stsSess, err := session.NewSession()
-		if err != nil {
-			return nil, err
-		}
-		stsCreds := credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
-				webIdentityProvider(stsSess),
-				remoteCredProvider(stsSess),
-			})
-		stsConfig := &aws.Config{
-			Region:      aws.String(dsInfo.Region),
-			Credentials: stsCreds,
-		}
-
-		sess, err := session.NewSession(stsConfig)
-		if err != nil {
-			return nil, err
-		}
-		svc := sts.New(sess, stsConfig)
-		resp, err := svc.AssumeRole(params)
-		if err != nil {
-			return nil, err
-		}
-		if resp.Credentials != nil {
-			accessKeyID = *resp.Credentials.AccessKeyId
-			secretAccessKey = *resp.Credentials.SecretAccessKey
-			sessionToken = *resp.Credentials.SessionToken
-		}
+	regionConfiguration := &aws.Config{
+		Region: aws.String(dsInfo.Region),
 	}
 
-	sess, err := session.NewSession()
-	if err != nil {
-		return nil, err
-	}
-	creds := credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.StaticProvider{Value: credentials.Value{
-				AccessKeyID:     accessKeyID,
-				SecretAccessKey: secretAccessKey,
-				SessionToken:    sessionToken,
-			}},
-			&credentials.EnvProvider{},
-			&credentials.StaticProvider{Value: credentials.Value{
-				AccessKeyID:     dsInfo.AccessKey,
-				SecretAccessKey: dsInfo.SecretKey,
-			}},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
-			webIdentityProvider(sess),
-			remoteCredProvider(sess),
+	var (
+		sess *session.Session
+		err  error
+	)
+
+	switch dsInfo.AuthType {
+	case "credentials":
+		sess, err = session.NewSession(regionConfiguration, &aws.Config{
+			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
 		})
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
+	case "keys":
+		provider := &credentials.StaticProvider{Value: credentials.Value{
+			AccessKeyID:     dsInfo.AccessKey,
+			SecretAccessKey: dsInfo.SecretKey,
+		}}
+		sess, err = session.NewSession(regionConfiguration, &aws.Config{
+			Credentials: credentials.NewCredentials(provider),
+		})
+	case "sdk":
+		sess, err = session.NewSession(regionConfiguration)
+	default:
+		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "credentials", "keys" or "sdk"`, dsInfo.AuthType)
 	}
 
-	return session.NewSession(cfg)
+	if err != nil {
+		return sess, err
+	}
+
+	if dsInfo.AssumeRoleArn != "" {
+		provider := &stscreds.AssumeRoleProvider{
+			Client:          sts.New(sess),
+			RoleARN:         dsInfo.AssumeRoleArn,
+			RoleSessionName: "GrafanaSession",
+			Duration:        15 * time.Minute,
+		}
+		return session.NewSession(regionConfiguration, &aws.Config{
+			Credentials: credentials.NewCredentials(provider),
+		})
+	}
+
+	return sess, nil
 }
 
 // session returns an appropriate session.Session for the configuration given in the

@@ -156,7 +156,7 @@ Since not all datasources have the same configuration settings we only have the 
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | logMessageField         | string  | Elasticsearch                                                    | Which field should be used as the log message                                               |
 | logLevelField           | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                      |
-| authType                | string  | Cloudwatch                                                       | Auth provider. keys/credentials/arn                                                         |
+| authType                | string  | Cloudwatch                                                       | Auth provider. sdk/credentials/keys                                                         |
 | assumeRoleArn           | string  | Cloudwatch                                                       | ARN of Assume Role                                                                          |
 | defaultRegion           | string  | Cloudwatch                                                       | AWS region                                                                                  |
 | customMetricsNamespaces | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                |
