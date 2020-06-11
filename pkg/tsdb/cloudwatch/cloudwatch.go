@@ -76,7 +76,7 @@ func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 
 	exec := &CloudWatchExecutor{
 		DataSource:                 datasource,
-		clients:                    &cache{},
+		clients:                    newSessionCache(),
 		customMetricsMetricsMap:    make(map[string]map[string]map[string]*CustomMetricsCache),
 		customMetricsDimensionsMap: make(map[string]map[string]map[string]*CustomMetricsCache),
 	}
