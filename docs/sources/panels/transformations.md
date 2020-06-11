@@ -96,7 +96,7 @@ After I apply the transformation, there is no time value and each column has bee
 
 ### Merge
 
-Use this transformation to _merge_ the result from multipe queries into one single result based on the time field. This is really helpful when using the table panel visualization. 
+Use this transformation to _merge_ the result from multiple queries into one single result based on the time field. This is really helpful when using the table panel visualization. 
 
 In the example below, we are visualizing multiple queries returning table data before applying the transformation.
 
@@ -108,7 +108,7 @@ Below you can see the same example after applying the merge transformation.
 
 If any of the queries return time series data a `Metric` column containing the name of the query will be added. This value can be customized by defining `Label` on the source query.
 
-In the example below, we are visualizing multiple queries returing time series data before applying the transformation.
+In the example below, we are visualizing multiple queries returning time series data before applying the transformation.
 
 {{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
