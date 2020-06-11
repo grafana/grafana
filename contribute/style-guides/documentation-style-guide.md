@@ -175,7 +175,7 @@ This section provides guidelines on how to avoid using charged language in docum
 
 **Exceptions:**
 
-* When referring to a configuration or settings used by technologies outside the Grafana project, prefer the original name to avoid confusion.
+* When referring to a configuration or settings used by third-party libraries och technologies outside the Grafana project, prefer the original name to avoid confusion.
 
   For example, use "master" when referring to the default Git branch.
 
@@ -192,4 +192,5 @@ Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
 
 Don't use "master" or "slave" to describe relationships between nodes or processes.
 
-
+* Use "leader", "main" or "primary", instead of "master".
+* Use "follower" or "secondary", instead of "slave".
