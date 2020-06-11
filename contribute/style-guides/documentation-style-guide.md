@@ -173,6 +173,12 @@ Two words if used as a verb, one word if used as a noun.
 
 This section provides guidelines on how to avoid using charged language in documentation.
 
+**Exceptions:**
+
+* When referring to a configuration or settings used by technologies outside the Grafana project, prefer the original name to avoid confusion.
+
+  For example, use "master" when referring to the default Git branch.
+
 #### Allowing and blocking
 
 Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
@@ -186,8 +192,4 @@ Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
 
 Don't use "master" or "slave" to describe relationships between nodes or processes.
 
-**Exceptions:**
 
-* When referring to a configuration or settings used by technologies outside the Grafana project.
-
-  For example, use "master" when referring to the default Git branch.
