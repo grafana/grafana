@@ -3,15 +3,17 @@ import InfluxDatasource from '../datasource';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
+//@ts-ignore
+const templateSrv = new TemplateSrvStub();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => templateSrv,
 }));
 
 describe('InfluxDataSource', () => {
   const ctx: any = {
-    //@ts-ignore
-    templateSrv: new TemplateSrvStub(),
     instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
   };
 
@@ -20,7 +22,7 @@ describe('InfluxDataSource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.templateSrv);
+    ctx.ds = new InfluxDatasource(ctx.instanceSettings);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -108,7 +110,7 @@ describe('InfluxDataSource', () => {
       });
 
       try {
-        await ctx.ds.query(queryOptions);
+        await ctx.ds.query(queryOptions).toPromise();
       } catch (err) {
         expect(err.message).toBe('InfluxDB Error: Query timeout');
       }
@@ -117,14 +119,12 @@ describe('InfluxDataSource', () => {
 
   describe('InfluxDataSource in POST query mode', () => {
     const ctx: any = {
-      //@ts-ignore
-      templateSrv: new TemplateSrvStub(),
       instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'POST' } },
     };
 
     beforeEach(() => {
       ctx.instanceSettings.url = '/api/datasources/proxy/1';
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.templateSrv);
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings);
     });
 
     describe('When issuing metricFindQuery', () => {
