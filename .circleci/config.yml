@@ -611,7 +611,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(packages/grafana-ui/|package.json|yarn.lock)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
