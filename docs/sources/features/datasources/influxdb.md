@@ -1,7 +1,7 @@
 +++
 title = "Using InfluxDB in Grafana"
 description = "Guide for using InfluxDB in Grafana"
-keywords = ["grafana", "influxdb", "guide"]
+keywords = ["grafana", "influxdb", "guide", "flux"]
 type = "docs"
 aliases = ["/docs/grafana/latest/datasources/influxdb"]
 [menu.docs]
@@ -29,9 +29,13 @@ Name | Description
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+*Enable flux* | Enables support for the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Requires that the Token field be set a valid [Influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/)
+*Organization* | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries (Only displayed and valid with "Enable Flux"). This is also used to for the `v.organization` query macro
+*Default Bucket* | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries (Only displayed and valid with "Enable Flux")
 *Database* | Name of your InfluxDB database
 *User* | Name of your database user
 *Password* | Database user's password
+*Token* | The authentication token used for Flux queries.
 *HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
@@ -116,6 +120,48 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
+
+## Flux support
+
+> Only available in Grafana v7.1+.
+
+If you have enabled Flux and set up a token for auth in the data source configuration, then you can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
+
+### Supported Macros
+
+Macro example | Description
+------------ | -------------
+*`v.timeRangeStart`* | Will be replaced by the start of the currently active time selection. For example, *2020-06-11T13:31:00Z*
+*`v.timeRangeEnd`* | Will be replaced by the end of the currently active time selection. For example, *2020-06-11T14:31:00Z*
+*`v.windowPeriod`* | Will be replaced with an interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection. For example, *5s*
+*`v.defaultBucket`* | Will be replaced with the data source configuration's "Default Bucket" setting
+*`v.organization`* | Will be replaced with the data source configuration's "Organization" setting
+
+For example, the following query will will be interpolated as the query that follows it (with interval and time period values changing according to active time selection):
+
+Grafana Flux query:
+
+```flux
+from(bucket: v.defaultBucket)
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "cpu" or r["_measurement"] == "swap")
+  |> filter(fn: (r) => r["_field"] == "usage_system" or r["_field"] == "free")
+  |> aggregateWindow(every: v.windowPeriod, fn: mean)
+  |> yield(name: "mean")
+```
+
+Interpolated Query send to Influx:
+
+```flux
+from(bucket: "grafana")
+  |> range(start: 2020-06-11T13:59:07Z, stop: 2020-06-11T14:59:07Z)
+  |> filter(fn: (r) => r["_measurement"] == "cpu" or r["_measurement"] == "swap")
+  |> filter(fn: (r) => r["_field"] == "usage_system" or r["_field"] == "free")
+  |> aggregateWindow(every: 2s, fn: mean)
+  |> yield(name: "mean")
+```
+
+The interpolated version of a query can be viewed using the Query Inspector.
 
 ## Querying Logs (BETA)
 
