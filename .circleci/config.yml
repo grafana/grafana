@@ -109,7 +109,7 @@ jobs:
             fi
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -163,7 +163,7 @@ jobs:
             fi
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - restore_cache:
           keys:
             # Use own cache for front-end builds, since for some reason it can't be unpacked for parts of the
@@ -330,9 +330,9 @@ jobs:
           at: /tmp/workspace
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)+
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -373,9 +373,9 @@ jobs:
           at: /tmp/workspace
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)+
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
@@ -441,9 +441,9 @@ jobs:
           at: /tmp/workspace
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)+
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -511,9 +511,9 @@ jobs:
           at: /tmp/workspace
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)+
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -611,7 +611,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(packages/grafana-ui/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|packages/grafana-ui/)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -671,9 +671,9 @@ jobs:
           at: /tmp/workspace
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)+
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -744,9 +744,9 @@ jobs:
           at: /tmp/workspace
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)+
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - restore_cache:
           keys:
             - v2-yarn-{{ checksum "yarn.lock" }}
@@ -798,7 +798,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: ci job started
           command: "./scripts/ci-job-started.sh"
@@ -829,7 +829,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: ci job started
           command: "./scripts/ci-job-started.sh"
@@ -855,7 +855,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^docs/.*
+          regex: ^docs/
       - run:
           name: Install codespell
           command: "pip install codespell"
@@ -877,7 +877,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^.*\.go$
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: Install Go linters
           command: |
@@ -911,7 +911,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(e2e/|emails/|packages/|public/|package.json|yarn.lock)+
+          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
@@ -947,7 +947,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go)
+          regex: ^(go\.mod|go\.sum|.*\.go)+
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
@@ -968,7 +968,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^docs/.*
+          regex: ^docs/
       - setup_remote_docker
       - run:
           name: CI job started
