@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -20,11 +18,9 @@ import (
 
 type CloudWatchExecutor struct {
 	*models.DataSource
-	ec2Svc  ec2iface.EC2API
-	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 
-	logsClientsByRegion map[string](*cloudwatchlogs.CloudWatchLogs)
-	mux                 sync.Mutex
+	// clients is our interface to access AWS service-specific API clients
+	clients clientCache
 }
 
 type DatasourceInfo struct {
@@ -44,40 +40,9 @@ const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 const logIdentifierInternal = "__log__grafana_internal__"
 const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
-func (e *CloudWatchExecutor) getLogsClient(region string) (*cloudwatchlogs.CloudWatchLogs, error) {
-	e.mux.Lock()
-	defer e.mux.Unlock()
-
-	if logsClient, ok := e.logsClientsByRegion[region]; ok {
-		return logsClient, nil
-	}
-
-	dsInfo := retrieveDsInfo(e.DataSource, region)
-	newLogsClient, err := retrieveLogsClient(dsInfo)
-
-	if err != nil {
-		return nil, err
-	}
-
-	e.logsClientsByRegion[region] = newLogsClient
-
-	return newLogsClient, nil
-}
-
 func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	dsInfo := retrieveDsInfo(datasource, "default")
-	defaultLogsClient, err := retrieveLogsClient(dsInfo)
-
-	if err != nil {
-		return nil, err
-	}
-
-	logsClientsByRegion := make(map[string](*cloudwatchlogs.CloudWatchLogs))
-	logsClientsByRegion[dsInfo.Region] = defaultLogsClient
-	logsClientsByRegion["default"] = defaultLogsClient
-
 	return &CloudWatchExecutor{
-		logsClientsByRegion: logsClientsByRegion,
+		clients: awsCredentialCache,
 	}, nil
 }
 
@@ -92,7 +57,7 @@ func init() {
 	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
-func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwatchlogs.CloudWatchLogs, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
@@ -174,7 +139,7 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 		queryParams.Set("region", region)
 	}
 
-	logsClient, err := e.getLogsClient(region)
+	logsClient, err := e.clients.logsClient(e.getDsInfo(region))
 	if err != nil {
 		return nil, err
 	}

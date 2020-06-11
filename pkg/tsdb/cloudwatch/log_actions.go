@@ -71,7 +71,7 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	region := parameters.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getLogsClient(region)
+	logsClient, err := e.clients.logsClient(e.getDsInfo(region))
 	if err != nil {
 		return nil, err
 	}
