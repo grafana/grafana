@@ -5,7 +5,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { FolderDTO } from 'app/types';
+import { FolderDTO, StoreState } from 'app/types';
 import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchLayout } from '../types';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -14,6 +14,12 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { getLocationQuery } from 'app/core/selectors/location';
+import { parseRouteParams } from '../utils';
+import { updateLocation } from 'app/core/reducers/location';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { ConnectProps, DispatchProps } from './DashboardSearch';
 
 export interface Props {
   folder?: FolderDTO;
@@ -21,7 +27,7 @@ export interface Props {
 
 const { isEditor } = contextSrv;
 
-export const ManageDashboards: FC<Props> = memo(({ folder }) => {
+export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo(({ folder, params, updateLocation }) => {
   const folderId = folder?.id;
   const folderUid = folder?.uid;
   const theme = useTheme();
@@ -34,6 +40,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     skipStarred: true,
     folderIds: folderId ? [folderId] : [],
     layout: defaultLayout,
+    ...params,
   };
   const {
     query,
@@ -44,7 +51,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     onTagAdd,
     onSortChange,
     onLayoutChange,
-  } = useSearchQuery(queryParams);
+  } = useSearchQuery(queryParams, updateLocation);
 
   const {
     results,
@@ -146,6 +153,22 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     </div>
   );
 });
+
+const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
+  const { query, starred, sort, tag } = getLocationQuery(state.location);
+  return parseRouteParams({
+    query,
+    tag,
+    starred,
+    sort,
+  });
+};
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
+  updateLocation,
+};
+
+export default connectWithStore(ManageDashboards, mapStateToProps, mapDispatchToProps);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
