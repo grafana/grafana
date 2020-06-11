@@ -31,6 +31,7 @@ type NotifierPlugin struct {
 	Options         []Option        `json:"options"`
 }
 
+// Option holds information about options specific for the NotifierPlugin.
 type Option struct {
 	Element        string         `json:"element"`
 	InputType      string         `json:"inputType"`
@@ -44,11 +45,13 @@ type Option struct {
 	ValidationRule string         `json:"validationRule"`
 }
 
+// SelectOption is a simple type for Options that have dropdown options.
 type SelectOption struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
 }
 
+// Show holds information about when options are dependant on other options.
 type Show struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`
