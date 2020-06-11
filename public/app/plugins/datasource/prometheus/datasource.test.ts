@@ -20,6 +20,7 @@ import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { VariableHide } from '../../../features/variables/types';
+import { describe } from '../../../../test/lib/common';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
@@ -1881,6 +1882,68 @@ describe('prepareTargets', () => {
           instant: false,
           requestId: panelId + target.refId,
         });
+      });
+    });
+  });
+});
+
+describe('modifyQuery', () => {
+  describe('when called with ADD_FILTER', () => {
+    describe('and query has no labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
+        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster"}');
+      });
+    });
+
+    describe('and query has labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
+        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod="pod-123"}');
+      });
+    });
+  });
+
+  describe('when called with ADD_FILTER_OUT', () => {
+    describe('and query has no labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
+        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster!="us-cluster"}');
+      });
+    });
+
+    describe('and query has labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
+        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod!="pod-123"}');
       });
     });
   });
