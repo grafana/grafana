@@ -21,10 +21,14 @@ if [ "$WARNINGS_COUNT" -gt $WARNINGS_COUNT_LIMIT ]; then
   exit 1
 fi
 
+echo -e "\n\n-----------------------------------------------------\n"
+
 if [ "$WARNINGS_COUNT" -lt $WARNINGS_COUNT_LIMIT ]; then
   echo -e "Wohoo! Fewer warnings compared to last build 🎉🎈🍾✨\n\nYou can lower the threshold from $WARNINGS_COUNT_LIMIT to $WARNINGS_COUNT in the:\nscripts/ci-reference-docs-metrics.sh"
+  echo -e "\n-----------------------------------------------------"
   exit 0
 fi
 
 echo -e "API Extractor total warnings: $WARNINGS_COUNT"
+echo -e "\n-----------------------------------------------------"
 
