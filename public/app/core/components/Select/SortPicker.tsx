@@ -21,9 +21,7 @@ const getSortOptions = () => {
 
 export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
   // Using sync Select and manual options fetching here since we need to find the selected option by value
-  const { loading, value: options } = useAsync<SelectableValue[]>(() => {
-    return getSortOptions();
-  }, []);
+  const { loading, value: options } = useAsync<SelectableValue[]>(getSortOptions, []);
 
   return (
     !loading && (
