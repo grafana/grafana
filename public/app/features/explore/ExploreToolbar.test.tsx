@@ -1,9 +1,9 @@
 import React from 'react';
-import {shallow, ShallowWrapper} from 'enzyme';
-import {UnConnectedExploreToolbar} from './ExploreToolbar';
-import {ExploreMode} from '@grafana/data';
-import {ExploreId} from '../../types';
-import {ToggleButtonGroup} from '@grafana/ui';
+import { shallow, ShallowWrapper } from 'enzyme';
+import { UnConnectedExploreToolbar } from './ExploreToolbar';
+import { ExploreMode } from '@grafana/data';
+import { ExploreId } from '../../types';
+import { ToggleButtonGroup } from '@grafana/ui';
 
 jest.mock('./state/selectors', () => {
   return {
