@@ -61,15 +61,21 @@ Transformations are available from the Transform tab in the bottom pane of the p
 
 Grafana comes with the following transformations:
 
-- [Reduce](#reduce) - Reduce all rows or data points to a single value using a function like max, min, mean, or last.
-- Filter by name - Filter a result set’s fields by name. This might be useful when you want to show only part of your result set.
-- Filter by query - Filter a result set by the refId of the query. This might be useful when your result set consists of multiple time series and you want to show only some of them.
-- Organize fields - Order, filter, and rename the fields in a result set. This transformation is useful when your result set contains for instance non human-readable field names or when - you want to display a table and alter the order of the columns. 
-- Join by field - Join multiple time series from a result set by field.
-- Add field from calculation - Create new fields that are the result of result set row calculation.
-- Labels to fields - Group a series by time and return labels as fields.
+- [Transformations](#transformations)
+  - [Transformation execution order](#transformation-execution-order)
+  - [Prerequisites](#prerequisites)
+  - [Apply a transformation](#apply-a-transformation)
+  - [Transformation types and options](#transformation-types-and-options)
+    - [Reduce](#reduce)
+    - [Filter by name](#filter-by-name)
+    - [Filter data by query](#filter-data-by-query)
+    - [Organize fields](#organize-fields)
+    - [Join by field (outer join)](#join-by-field-outer-join)
+    - [Add field from calculation](#add-field-from-calculation)
+    - [Labels to fields](#labels-to-fields)
+  - [Debug transformations](#debug-transformations)
 
-Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions for how to use them.
+Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ### Reduce
 
@@ -114,7 +120,7 @@ Here is the same query using a Stat visualization.
 
 ### Filter data by query
 
-Use this transformation in panels that have multiple queries if you want to hide one or more of the queries.
+Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
 Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 

@@ -17,7 +17,7 @@ database has yet to match Graphite's query flexibility and analytics potential.
 Graphite has a reputation for being tricky to install and scale. This guide aims to show
 that is not really the case, or, at least, that it is a lot better than you expect.
 
-> This guides does not only aim to be only be an install guide but to also teach you
+> This guide does not only aim to be only be an install guide but to also teach you
 > of the mechanics of metric collection, aggregation and querying. How Graphite
 > stores and aggregates data is very important to understand in order to not
 > get mislead by graphs.
@@ -73,7 +73,7 @@ Copy example carbon config:
 cp /opt/graphite/conf/carbon.conf.example /opt/graphite/conf/carbon.conf
 ```
 
-Edit the config file `/opt/graphite/conf/carbon.conf`, find line `ENABLE_UPD_LISTENER` and
+Edit the config file `/opt/graphite/conf/carbon.conf`, find line `ENABLE_UDP_LISTENER` and
 change this setting to `True`.
 
 ### Configure storage-schemas.conf

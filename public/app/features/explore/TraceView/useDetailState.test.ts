@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-hooks';
-import { Log } from '@jaegertracing/jaeger-ui-components';
+import { Log } from '@grafana/data';
 import { useDetailState } from './useDetailState';
 
 describe('useDetailState', () => {

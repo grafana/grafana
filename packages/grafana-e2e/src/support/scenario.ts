@@ -34,14 +34,9 @@ export const e2eScenario = ({
       });
 
       afterEach(() => {
-        getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
-          if (lastAddedDataSource) {
-            Flows.deleteDataSource(lastAddedDataSource);
-          }
-
-          if (lastAddedDashboardUid) {
-            Flows.deleteDashboard(lastAddedDashboardUid);
-          }
+        getScenarioContext().then(({ addedDashboards, addedDataSources }: any) => {
+          addedDashboards.forEach((dashboard: any) => Flows.deleteDashboard(dashboard));
+          addedDataSources.forEach((dataSource: any) => Flows.deleteDataSource(dataSource));
         });
       });
 

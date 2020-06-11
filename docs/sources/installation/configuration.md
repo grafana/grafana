@@ -56,7 +56,7 @@ All options in the configuration file can be overridden using environment variab
 GF_<SectionName>_<KeyName>
 ```
 
-Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
+Where the section name is the text within the brackets. Everything should be uppercase, `.` and `-` should be replaced by `_`. For example, if you have these configuration settings:
 
 ```bash
 # default section
@@ -67,6 +67,9 @@ admin_user = admin
 
 [auth.google]
 client_secret = 0ldS3cretKey
+
+[plugin.grafana-image-renderer]
+rendering_ignore_https_errors = true
 ```
 
 You can override them on Linux machines with:
@@ -75,6 +78,7 @@ You can override them on Linux machines with:
 export GF_DEFAULT_INSTANCE_NAME=my-instance
 export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 ```
 
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
@@ -453,11 +457,6 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
-### oauth_state_cookie_max_age
-
-How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
-Administrators can increase it if they experience OAuth login state mismatch errors.
-
 - [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
 - [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
@@ -466,6 +465,15 @@ Administrators can increase it if they experience OAuth login state mismatch err
 - [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
 - [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
 - [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
+
+### login_cookie_name
+
+The cookie name for storing the auth token, the default is `grafana_session`.
+
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase this if they experience OAuth login state mismatch errors.
 
 ## [dataproxy]
 
@@ -849,7 +857,7 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 
 ### allow_loading_unsigned_plugins
 
-Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature. 
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
 ## [feature_toggles]
 ### enable

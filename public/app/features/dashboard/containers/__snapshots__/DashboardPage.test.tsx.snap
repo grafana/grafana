@@ -78,7 +78,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 25,
+        "schemaVersion": 26,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -191,7 +191,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -285,7 +285,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -320,12 +320,36 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
   <div
     className="dashboard-loading__text"
   >
-    <Icon
-      className="fa-spin"
-      name="fa fa-spinner"
-    />
-     
-    Fetching
+    <Component
+      spacing="md"
+    >
+      <Component
+        align="center"
+        justify="center"
+        spacing="xs"
+      >
+        <Icon
+          className="fa-spin"
+          name="fa fa-spinner"
+        />
+         
+        Fetching
+      </Component>
+       
+      <Component
+        align="center"
+        justify="center"
+      >
+        <Button
+          icon="repeat"
+          onClick={[Function]}
+          size="md"
+          variant="secondary"
+        >
+          Cancel loading dashboard
+        </Button>
+      </Component>
+    </Component>
   </div>
 </div>
 `;
@@ -410,7 +434,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 25,
+        "schemaVersion": 26,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -523,7 +547,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -617,7 +641,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -717,7 +741,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 25,
+        "schemaVersion": 26,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],

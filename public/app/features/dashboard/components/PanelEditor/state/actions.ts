@@ -1,11 +1,9 @@
 import { DashboardModel, PanelModel } from '../../../state';
-import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import {
   closeCompleted,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
   PanelEditorUIState,
-  setEditorPanelData,
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
@@ -16,16 +14,10 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   return dispatch => {
     const panel = dashboard.initEditPanel(sourcePanel);
 
-    const queryRunner = panel.getQueryRunner();
-    const querySubscription = queryRunner.getData({ withTransforms: false }).subscribe({
-      next: (data: PanelData) => dispatch(setEditorPanelData(data)),
-    });
-
     dispatch(
       updateEditorInitState({
         panel,
         sourcePanel,
-        querySubscription,
       })
     );
   };
@@ -34,7 +26,7 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditor;
+    const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
 
     if (!shouldDiscardChanges) {
       const panel = getPanel();
@@ -64,10 +56,6 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
     if (dashboard) {
       dashboard.exitPanelEditor();
-    }
-
-    if (querySubscription) {
-      querySubscription.unsubscribe();
     }
 
     dispatch(cleanUpEditPanel());

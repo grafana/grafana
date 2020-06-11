@@ -347,17 +347,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
         break;
       }
       default:
         break;
     }
-
     return { ...query, expr: expression };
   }
 
