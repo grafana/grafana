@@ -231,7 +231,7 @@ jobs:
             fi
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(package\.json|yarn\.lock|go\.mod|go\.sum|e2e/|emails/|packages/|plugins-bundled/|public/.*\.go)+
+          regex: ^(package\.json|yarn\.lock|go\.mod|go\.sum|e2e/|emails/|packages/|plugins-bundled/|public/|.*\.go)+
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
