@@ -109,7 +109,7 @@ jobs:
             fi
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go$
+          regex: ^(go.mod|go.sum|.*\.go)
       - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
@@ -798,7 +798,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go$
+          regex: ^(go.mod|go.sum|.*\.go)
       - run:
           name: ci job started
           command: "./scripts/ci-job-started.sh"
@@ -829,7 +829,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go$
+          regex: ^(go.mod|go.sum|.*\.go)
       - run:
           name: ci job started
           command: "./scripts/ci-job-started.sh"
@@ -947,7 +947,7 @@ jobs:
     steps:
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(go.mod|go.sum|.*\.go$
+          regex: ^(go.mod|go.sum|.*\.go)
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
