@@ -19,7 +19,9 @@ Upgrading is generally safe (between many minor and one major version) and dashb
 
 ## Backup
 
-We recommend you backup a few things in case you have to rollback the upgrade. Installed plugins is a good idea to backup before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you where running before the upgrade. Configuration files does not need to be backed up, but in case you add new config options after upgrade and then rollback it could be good to have a backup of the configuration files. 
+We recommend that you backup a few things in case you have to rollback the upgrade. 
+- Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you where running before the upgrade. 
+- Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback. 
 
 ### Database backup
 
