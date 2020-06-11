@@ -1,31 +1,17 @@
 import React, { FC, memo } from 'react';
 import { css } from 'emotion';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { updateLocation } from 'app/core/reducers/location';
-import { getLocationQuery } from 'app/core/selectors/location';
-import { StoreState } from 'app/types';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
-import { RouteParams } from '../types';
-import { parseRouteParams } from '../utils';
+import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
 export interface Props {
   onCloseSearch: () => void;
   folder?: string;
-}
-
-export interface ConnectProps {
-  params: RouteParams;
-}
-
-export interface DispatchProps {
-  updateLocation: typeof updateLocation;
 }
 
 export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
@@ -77,21 +63,7 @@ export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
   }
 );
 
-const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
-  const { query, starred, sort, tag } = getLocationQuery(state.location);
-  return parseRouteParams({
-    query,
-    tag,
-    starred,
-    sort,
-  });
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
-  updateLocation,
-};
-
-export default connectWithStore(DashboardSearch, mapStateToProps, mapDispatchToProps);
+export default connectWithRouteParams(DashboardSearch);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

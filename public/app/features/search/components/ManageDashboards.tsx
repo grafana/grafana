@@ -5,7 +5,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { FolderDTO, StoreState } from 'app/types';
+import { FolderDTO } from 'app/types';
 import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchLayout } from '../types';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -14,12 +14,7 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { getLocationQuery } from 'app/core/selectors/location';
-import { parseRouteParams } from '../utils';
-import { updateLocation } from 'app/core/reducers/location';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { ConnectProps, DispatchProps } from './DashboardSearch';
+import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
 export interface Props {
   folder?: FolderDTO;
@@ -154,21 +149,7 @@ export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo((
   );
 });
 
-const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
-  const { query, starred, sort, tag } = getLocationQuery(state.location);
-  return parseRouteParams({
-    query,
-    tag,
-    starred,
-    sort,
-  });
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
-  updateLocation,
-};
-
-export default connectWithStore(ManageDashboards, mapStateToProps, mapDispatchToProps);
+export default connectWithRouteParams(ManageDashboards);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
