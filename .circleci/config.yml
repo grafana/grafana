@@ -81,6 +81,9 @@ commands:
             echo "Changed files:"
             git log --oneline --pretty="format:" --name-only origin/master.. | awk 'NF' | sort -u
 
+            echo "Exit if circleci configuration changed"
+            git log --oneline --pretty="format:" --name-only origin/master.. | awk 'NF' | sort -u | egrep -q '^\.circleci/config\.yml$' && exit 0
+
             if [ << parameters.inverse >> = true ]; then
               git log --oneline --pretty="format:" --name-only origin/master.. | awk 'NF' | sort -u | egrep -q '<< parameters.regex >>' && circleci step halt
             else
