@@ -49,13 +49,10 @@ func InterpolateURL(anURL *url.URL, route *plugins.AppPluginRoute, orgID int64, 
 	return result, err
 }
 
-// Set the X-Grafana-User header if needed
+// Set the X-Grafana-User header if needed (and remove if not)
 func applyUserHeader(sendUserHeader bool, req *http.Request, user *models.SignedInUser) {
-	if sendUserHeader {
-		if user.IsAnonymous {
-			req.Header.Del("X-Grafana-User")
-		} else {
-			req.Header.Set("X-Grafana-User", user.Login)
-		}
+	req.Header.Del("X-Grafana-User")
+	if sendUserHeader && !user.IsAnonymous {
+		req.Header.Set("X-Grafana-User", user.Login)
 	}
 }
