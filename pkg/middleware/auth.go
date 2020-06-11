@@ -51,7 +51,15 @@ func notAuthorized(c *models.ReqContext) {
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
-	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, newCookieOptions)
+	// remove forceLogin query param if exists
+	if parsed, err := url.ParseRequestURI(redirectTo); err == nil {
+		params := parsed.Query()
+		params.Del("forceLogin")
+		parsed.RawQuery = params.Encode()
+		WriteCookie(c.Resp, "redirect_to", url.QueryEscape(parsed.String()), 0, newCookieOptions)
+	} else {
+		// this should never happen
+	}
 
 	c.Redirect(setting.AppSubUrl + "/login")
 }
@@ -79,7 +87,9 @@ func RoleAuth(roles ...models.RoleType) macaron.Handler {
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *models.ReqContext) {
-		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
+		forceLogin := c.AllowAnonymous && c.QueryBool("forceLogin")
+		requireLogin := !c.AllowAnonymous || forceLogin
+		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
 			notAuthorized(c)
 			return
 		}
