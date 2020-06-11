@@ -96,4 +96,6 @@ export enum SearchLayout {
   Folders = 'folders',
 }
 
-export type RouteParams = Partial<Pick<DashboardQuery, 'query' | 'sort' | 'tag' | 'starred'>>;
+export type RouteParams = Partial<
+  Pick<DashboardQuery, 'query' | 'sort' | 'tag' | 'starred'> & { layout: SearchLayout }
+>;

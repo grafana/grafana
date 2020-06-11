@@ -27,6 +27,7 @@ export const defaultQueryParams: RouteParams = {
   starred: null,
   query: null,
   tag: null,
+  layout: null,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {

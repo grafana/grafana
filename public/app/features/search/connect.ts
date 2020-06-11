@@ -20,12 +20,13 @@ export interface DispatchProps {
 type Props = DashboardSearchProps | ManageDashboardsProps;
 
 const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = state => {
-  const { query, starred, sort, tag } = getLocationQuery(state.location);
+  const { query, starred, sort, tag, layout } = getLocationQuery(state.location);
   return parseRouteParams({
     query,
     tag,
     starred,
     sort,
+    layout,
   });
 };
 
