@@ -26,9 +26,17 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
 
     const { dashboardUid, dataSourceName, panelTitle, queriesForm, visualizationName } = fullConfig;
 
-    e2e.flows.openDashboard(dashboardUid);
+    e2e.pages.Dashboard.visit(dashboardUid);
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.addNewPanel().click();
+
+    e2e().server();
+
+    // @todo alias '/**/*.js*' as '@pluginModule' when possible: https://github.com/cypress-io/cypress/issues/1296
+
+    e2e()
+      .route('POST', '/api/ds/query')
+      .as('chartData');
 
     e2e()
       .get('.ds-picker')
@@ -57,11 +65,6 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .scrollIntoView()
       .click();
     closeOptionsGroup('type');
-
-    e2e().server();
-    e2e()
-      .route('POST', '/api/ds/query')
-      .as('chartData');
 
     queriesForm(fullConfig);
 
