@@ -744,9 +744,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - halt-if-not-matching-files:
-          regex: ^(package\.json|yarn\.lock|e2e/|emails/|packages/|public/)+
-      - halt-if-not-matching-files:
-          regex: ^(go\.mod|go\.sum|.*\.go)+
+          regex: ^(package\.json|yarn\.lock|go\.mod|go\.sum|e2e/|emails/|packages/|public/.*\.go)+
       - restore_cache:
           keys:
             - v2-yarn-{{ checksum "yarn.lock" }}
