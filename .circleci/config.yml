@@ -73,8 +73,12 @@ commands:
       - run:
           name: "Halt if not matching changed files << parameters.regex >>, inverse: << parameters.inverse >>"
           command: |
-            echo "Revision: << pipeline.git.revision >>"
-            echo "Base revision: << pipeline.git.base_revision >>"
+            if [[ $CIRCLE_BRANCH == "master" || -n $CIRCLE_TAG ]]; then
+              echo "Master branch or release tag. Skipping..."
+              exit 0
+            fi
+
+            echo "Changed files:"
             git log --oneline --pretty="format:" --name-only origin/master.. | awk 'NF' | sort -u
 
             if [ << parameters.inverse >> = true ]; then
