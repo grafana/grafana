@@ -108,7 +108,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
     this.props.onOptionsChange({
       ...this.props.options,
-      withTransforms: item.value === DataTransformerID.seriesToColumns ? false : this.props.options.withTransforms,
     });
   };
 
@@ -185,7 +184,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const showFieldConfigsOption = !panel.plugin?.fieldConfigRegistry.isEmpty();
     const showDataOptions = showPanelTransformationsOption || showFieldConfigsOption;
     console.log(dataFrames);
-    const choices = data.map((frame, index) => {
+
+    let dataSelect = dataFrames;
+    if (selectedDataFrame === DataTransformerID.seriesToColumns) {
+      dataSelect = data;
+    }
+
+    const choices = dataSelect.map((frame, index) => {
       return {
         value: index,
         label: `${getFrameDisplayName(frame)} (${index})`,
