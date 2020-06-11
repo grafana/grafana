@@ -1,5 +1,5 @@
 import { mockTransformationsRegistry } from '../../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType, DataFrame } from '../../../types';
+import { DataTransformerConfig, Field, FieldType } from '../../../types';
 import { DataTransformerID } from '../ids';
 import { toDataFrame } from '../../../dataframe';
 import { transformDataFrame } from '../../transformDataFrame';
