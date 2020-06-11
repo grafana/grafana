@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # abort if we get any error
-set -e
+set -eo pipefail
 
 # building grafana packages
 echo "building grafana packages..."
