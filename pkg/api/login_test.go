@@ -207,6 +207,48 @@ func TestLoginViewRedirect(t *testing.T) {
 			appURL:      "http://localhost:3000/",
 			status:      302,
 		},
+		{
+			desc:        "non grafana url without scheme",
+			url:         "example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "non grafana url without scheme",
+			url:         "www.example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "url path is a host with two leading slashs",
+			url:         "//example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "url path is a host with three leading slashs",
+			url:         "///example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "url path is ip with two leading slashs",
+			url:         "//0.0.0.0",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "url path is ip with three leading slashs",
+			url:         "///0.0.0.0",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
 	}
 
 	for _, c := range redirectCases {
@@ -232,7 +274,7 @@ func TestLoginViewRedirect(t *testing.T) {
 			if c.status == 302 {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
-				assert.Equal(t, location[0], c.redirectURL)
+				assert.Equal(t, c.redirectURL, location[0])
 
 				setCookie, ok := sc.resp.Header()["Set-Cookie"]
 				assert.True(t, ok, "Set-Cookie exists")
@@ -332,6 +374,48 @@ func TestLoginPostRedirect(t *testing.T) {
 			url:    "http://example.com",
 			appURL: "https://localhost:3000/",
 			err:    login.ErrAbsoluteRedirectTo,
+		},
+		{
+			desc:   "invalid url",
+			url:    ":foo",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrInvalidRedirectTo,
+		},
+		{
+			desc:   "non grafana url without scheme",
+			url:    "example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "non grafana url without scheme",
+			url:    "www.example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "url path is a host with two leading slashs",
+			url:    "//example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "url path is a host with three leading slashs",
+			url:    "///example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "url path is ip with two leading slashs",
+			url:    "//0.0.0.0",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "url path is ip with three leading slashs",
+			url:    "///0.0.0.0",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
 		},
 	}
 
