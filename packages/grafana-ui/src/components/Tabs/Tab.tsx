@@ -26,9 +26,7 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
         {...otherProps}
         className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
         onClick={() => {
-          if (!active) {
-            onChangeTab();
-          }
+          onChangeTab();
         }}
         aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
         ref={ref}
@@ -72,7 +70,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${colors.bodyBg};
       color: ${colors.link};
       overflow: hidden;
-      cursor: default;
 
       &::before {
         display: block;
