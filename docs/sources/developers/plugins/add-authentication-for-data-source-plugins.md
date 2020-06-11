@@ -92,7 +92,7 @@ Now you know how to define routes for your data source plugin. Next, let's look 
 
 The Grafana proxy supports a number of different authentication methods. For more information on how to configure each authentication method, refer to [plugin.json]({{< relref "metadata.md" >}}).
 
-For any sensitive data, make sure that you [Encrypt data source options]({{< relref "encrypt-data-source-options.md" >}}), and that you use `{{ .SecureJsonData.YOUR_OPTION_NAME }}` when using sensitive data source options in your routes.
+For any sensitive data, make sure that you encrypt data source options, and that you use `{{ .SecureJsonData.YOUR_OPTION_NAME }}` when using sensitive data source options in your routes.
 
 ### Add HTTP header
 
