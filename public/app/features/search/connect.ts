@@ -5,12 +5,12 @@ import { StoreState } from 'app/types';
 import { getLocationQuery } from 'app/core/selectors/location';
 import { updateLocation } from 'app/core/reducers/location';
 import { parseRouteParams } from './utils';
-import { RouteParams } from './types';
+import { DashboardQuery } from './types';
 import { Props as DashboardSearchProps } from './components/DashboardSearch';
 import { Props as ManageDashboardsProps } from './components/ManageDashboards';
 
 export interface ConnectProps {
-  params: RouteParams;
+  params: Partial<DashboardQuery>;
 }
 
 export interface DispatchProps {

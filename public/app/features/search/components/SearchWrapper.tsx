@@ -1,5 +1,6 @@
 import React, { FC, memo } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { UrlQueryMap } from '@grafana/data';
 import { getLocationQuery } from 'app/core/selectors/location';
 import { updateLocation } from 'app/core/reducers/location';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
@@ -30,7 +31,7 @@ export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }
           search: null,
           folder: null,
           ...defaultQueryParams,
-        },
+        } as UrlQueryMap,
         partial: true,
       });
     }

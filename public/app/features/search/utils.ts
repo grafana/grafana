@@ -1,14 +1,7 @@
 import { parse, SearchParserResult } from 'search-query-parser';
 import { IconName } from '@grafana/ui';
 import { UrlQueryMap } from '@grafana/data';
-import {
-  DashboardQuery,
-  DashboardSection,
-  DashboardSectionItem,
-  RouteParams,
-  SearchAction,
-  UidsToDelete,
-} from './types';
+import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
@@ -251,7 +244,7 @@ export const parseRouteParams = (params: UrlQueryMap) => {
       return { ...obj, sort: { value: val } };
     }
     return { ...obj, [key]: val };
-  }, {} as RouteParams);
+  }, {} as Partial<DashboardQuery>);
 
   return { params: cleanedParams };
 };

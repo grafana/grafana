@@ -46,7 +46,7 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocat
 
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
-    updateLocationQuery({ sort: sort.value, layout: SearchLayout.List });
+    updateLocationQuery({ sort: sort?.value, layout: SearchLayout.List });
   };
 
   const onLayoutChange = (layout: SearchLayout) => {

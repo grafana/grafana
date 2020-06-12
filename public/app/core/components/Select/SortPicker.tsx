@@ -23,16 +23,14 @@ export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
   // Using sync Select and manual options fetching here since we need to find the selected option by value
   const { loading, value: options } = useAsync<SelectableValue[]>(getSortOptions, []);
 
-  return (
-    !loading && (
-      <Select
-        width={25}
-        onChange={onChange}
-        value={options?.filter(opt => opt.value === value)}
-        options={options}
-        placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
-        prefix={<Icon name="sort-amount-down" />}
-      />
-    )
-  );
+  return !loading ? (
+    <Select
+      width={25}
+      onChange={onChange}
+      value={options?.filter(opt => opt.value === value)}
+      options={options}
+      placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
+      prefix={<Icon name="sort-amount-down" />}
+    />
+  ) : null;
 };
