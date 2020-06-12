@@ -28,6 +28,7 @@ export const SearchWrapper: FC<Props> = memo(({ search, folder, queryText, updat
         query: {
           search: null,
           folder: null,
+          query: null,
         },
         partial: true,
       });
