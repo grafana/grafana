@@ -19,8 +19,8 @@ export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
     const payload = folder ? { query: `folder:${folder} ` } : {};
     const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
       {
-        ...params,
         ...payload,
+        ...params,
       },
       updateLocation
     );
