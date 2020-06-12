@@ -4,16 +4,21 @@ import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { /*fieldReducers, reduceField,*/ ReducerID } from '../fieldReducer';
 
 export interface OccurrencesTransformerOptions {
   byField?: string;
+  reducers: ReducerID[];
+  calculationsByField: Array<[string | null, ReducerID[]]>;
 }
 
 export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerOptions> = {
   id: DataTransformerID.occurrences,
   name: 'Number of Occurrences',
   description: 'Calculates the number of occurrences of each value for a specified field',
-  defaultOptions: {},
+  defaultOptions: {
+    calculationsByField: [[null, [ReducerID.count]]],
+  },
 
   /**
    * Return a modified copy of the series.  If the transform is not or should not
@@ -22,6 +27,8 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
   transformer: (options: OccurrencesTransformerOptions) => {
     const keyFieldMatch = options.byField || '';
     let keyField: any = null;
+
+    console.log('options:', options);
 
     return (data: DataFrame[]) => {
       const processed: DataFrame[] = [];
