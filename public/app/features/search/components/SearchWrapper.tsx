@@ -19,7 +19,7 @@ interface DispatchProps {
 
 export type Props = OwnProps & DispatchProps;
 
-export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }) => {
+export const SearchWrapper: FC<Props> = memo(({ search, folder, queryText, updateLocation }) => {
   const isOpen = search === 'open';
 
   const closeSearch = () => {
@@ -34,12 +34,12 @@ export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }
     }
   };
 
-  return isOpen ? <DashboardSearch onCloseSearch={closeSearch} folder={folder} /> : null;
+  return isOpen ? <DashboardSearch onCloseSearch={closeSearch} folder={folder} queryText={queryText} /> : null;
 });
 
 const mapStateToProps: MapStateToProps<{}, OwnProps, StoreState> = (state: StoreState) => {
-  const { search, folder } = getLocationQuery(state.location);
-  return { search, folder };
+  const { search, folder, query } = getLocationQuery(state.location);
+  return { search, folder, queryText: query };
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {

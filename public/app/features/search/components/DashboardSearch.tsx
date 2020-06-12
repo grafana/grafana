@@ -11,10 +11,13 @@ import { ActionRow } from './ActionRow';
 export interface Props {
   onCloseSearch: () => void;
   folder?: string;
+  queryText?: string;
 }
 
-export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
-  const payload = folder ? { query: `folder:${folder} ` } : {};
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder, queryText = '' }) => {
+  const folderFilter = folder ? 'folder:' + folder + ' ' : '';
+  const initialQuery = folderFilter + queryText;
+  const payload = initialQuery ? { query: initialQuery } : {};
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(payload);
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();

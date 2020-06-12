@@ -15,9 +15,15 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-const setup = async (): Promise<any> => {
+interface TestProps {
+  folder?: string;
+  queryText?: string;
+}
+
+const setup = async (testProps?: TestProps): Promise<any> => {
   const props: any = {
     onCloseSearch: () => {},
+    ...testProps,
   };
   let wrapper;
   //@ts-ignore
@@ -39,6 +45,54 @@ describe('DashboardSearch', () => {
     expect(mockSearch).toHaveBeenCalledTimes(1);
     expect(mockSearch).toHaveBeenCalledWith({
       query: '',
+      tag: [],
+      skipRecent: false,
+      skipStarred: false,
+      starred: false,
+      folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
+    });
+  });
+
+  it('should call search api with passed in query when initialised with query param', async () => {
+    await setup({ queryText: 'test query' });
+
+    expect(mockSearch).toHaveBeenCalledTimes(1);
+    expect(mockSearch).toHaveBeenCalledWith({
+      query: 'test query',
+      tag: [],
+      skipRecent: false,
+      skipStarred: false,
+      starred: false,
+      folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
+    });
+  });
+
+  it('should call search api with passed in folder when initialised with folder param', async () => {
+    await setup({ folder: 'testFolder' });
+
+    expect(mockSearch).toHaveBeenCalledTimes(1);
+    expect(mockSearch).toHaveBeenCalledWith({
+      query: 'folder:testFolder',
+      tag: [],
+      skipRecent: false,
+      skipStarred: false,
+      starred: false,
+      folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
+    });
+  });
+
+  it('should call search api with passed in folder and query when initialised with folder and query params', async () => {
+    await setup({ queryText: 'test query', folder: 'testFolder' });
+
+    expect(mockSearch).toHaveBeenCalledTimes(1);
+    expect(mockSearch).toHaveBeenCalledWith({
+      query: 'folder:testFolder test query',
       tag: [],
       skipRecent: false,
       skipStarred: false,
