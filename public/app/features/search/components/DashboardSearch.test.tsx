@@ -76,7 +76,7 @@ describe('DashboardSearch', () => {
 
     expect(mockSearch).toHaveBeenCalledTimes(1);
     expect(mockSearch).toHaveBeenCalledWith({
-      query: 'folder:testFolder',
+      query: undefined,
       tag: [],
       skipRecent: false,
       skipStarred: false,
@@ -92,7 +92,7 @@ describe('DashboardSearch', () => {
 
     expect(mockSearch).toHaveBeenCalledTimes(1);
     expect(mockSearch).toHaveBeenCalledWith({
-      query: 'folder:testFolder test query',
+      query: 'test query',
       tag: [],
       skipRecent: false,
       skipStarred: false,
