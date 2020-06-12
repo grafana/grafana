@@ -51,6 +51,7 @@ func notAuthorized(c *models.ReqContext) {
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
+
 	// remove forceLogin query param if exists
 	if parsed, err := url.ParseRequestURI(redirectTo); err == nil {
 		params := parsed.Query()
@@ -58,9 +59,8 @@ func notAuthorized(c *models.ReqContext) {
 		parsed.RawQuery = params.Encode()
 		WriteCookie(c.Resp, "redirect_to", url.QueryEscape(parsed.String()), 0, newCookieOptions)
 	} else {
-		// this should never happen
+		c.Logger.Debug("Failed parsing request URI; redirect cookie will not be set", "redirectTo", redirectTo, "error", err)
 	}
-
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
