@@ -112,8 +112,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         text: 'Field',
         value: {
           name: displayName, // Generally appropriate (may include the series name if useful)
-          labels: formatLabels(field.labels!),
-          label: field.labels,
+          formattedLabels: formatLabels(field.labels!),
+          labels: field.labels,
         },
       };
 
@@ -228,7 +228,7 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
 export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
-  if (!item || !item.shouldApply(context.field!)) {
+  if (!item) {
     return;
   }
 

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
 import { getVariables } from '../../../variables/state/selectors';
-import { VariableHide, VariableModel } from '../../../templating/types';
+import { VariableHide, VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';

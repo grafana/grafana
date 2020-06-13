@@ -3,9 +3,9 @@ import { updateCustomVariableOptions } from './actions';
 import { createCustomVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
-import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/types';
+import { CustomVariableModel, VariableHide, VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
-import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import { createCustomOptionsFromQuery } from './reducer';
 

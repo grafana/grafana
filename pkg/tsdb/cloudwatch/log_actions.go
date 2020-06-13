@@ -41,25 +41,11 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 					return err
 				}
 
-				encodedFrames := make([][]byte, 0)
-				for _, frame := range groupedFrames {
-					dataframeEnc, err := frame.MarshalArrow()
-					if err != nil {
-						return err
-					}
-					encodedFrames = append(encodedFrames, dataframeEnc)
-				}
-
-				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: encodedFrames}
+				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(groupedFrames)}
 				return nil
 			}
 
-			dataframeEnc, err := dataframe.MarshalArrow()
-			if err != nil {
-				return err
-			}
-
-			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: [][]byte{dataframeEnc}}
+			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe})}
 			return nil
 		})
 	}
@@ -158,7 +144,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	timestampField := data.NewField("ts", nil, timestamps)
-	timestampField.SetConfig(&data.FieldConfig{Title: "Time"})
+	timestampField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	messageField := data.NewField("line", nil, messages)
 

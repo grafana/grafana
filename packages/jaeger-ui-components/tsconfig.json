@@ -1,4 +1,8 @@
 {
+  "compilerOptions": {
+    "baseUrl": "node_modules/@types",
+    "typeRoots": ["node_modules/@types"]
+  },
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "typings"]
+  "include": ["src/**/*.ts*", "typings", "../../public/app/types/jquery/*.ts"]
 }

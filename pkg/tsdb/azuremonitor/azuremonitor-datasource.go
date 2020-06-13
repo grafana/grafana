@@ -265,6 +265,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		return nil
 	}
 
+	frames := data.Frames{}
 	for _, series := range amr.Value[0].Timeseries {
 		metadataName := ""
 		metadataValue := ""
@@ -303,13 +304,10 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		encodedFrame, err := frame.MarshalArrow()
-		if err != nil {
-			queryRes.Error = fmt.Errorf("failed to encode dataframe response into arrow: %w", err)
-		}
-
-		queryRes.Dataframes = append(queryRes.Dataframes, encodedFrame)
+		frames = append(frames, frame)
 	}
+
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
 	return nil
 }

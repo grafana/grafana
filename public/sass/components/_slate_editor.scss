@@ -3,10 +3,8 @@
   font-family: $font-family-monospace;
   height: auto;
   word-break: break-word;
-  overflow: scroll;
-  &::placeholder {
-    overflow: scroll;
-  }
+  // Affects only placeholder in query field. Adds scrollbar only if content is cropped.
+  overflow: auto;
 }
 
 .slate-query-field__wrapper {
