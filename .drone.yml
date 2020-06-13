@@ -6,17 +6,70 @@ trigger:
     - pull_request
 steps:
   - name: install-grabpl
+    image: grafana/build-container:1.2.19
+    environment:
+      GRABPL_VERSION: "0.4.11"
     commands:
+      - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
+      - chmod +x grabpl
+      - mkdir -p bin
+      - mv grabpl bin
+  - name: lint-go
+    image: grafana/build-container:1.2.19
+    environment:
+      # we need CGO because of go-sqlite3
+      CGO_ENABLED: 1
+    commands:
+      - mkdir -p tmp
+      - cd tmp
+      - curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
+      - echo 241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179 \
+          golangci-lint-1.24.0-linux-amd64.tar.gz | sha256sum --check --strict --status
+      - tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
+      - mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+      - cd ..
+      - rm -rf tmp
+      - make scripts/go/bin/revive scripts/go/bin/gosec
+      - go vet ./pkg/...
       - |
-        VERSION=0.4.11
-        curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
-        chmod +x grabpl
-        mkdir -p bin
-        mv grabpl bin
+        golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
+          -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
+      - |
+        golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
+          -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
+      - ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
+      - |
+        ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
+          -exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
+          ./pkg/services/alerting/... \
+          ./pkg/services/provisioning/datasources/... \
+          ./pkg/services/provisioning/dashboards/... \
+          ./pkg/plugins/backendplugin/...
+      - |
+        ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
+          -conf=./scripts/go/configs/gosec.json ./pkg/...
   - name: build-oss-backend
+    image: grafana/build-container:1.2.19
+    depends_on:
+      - install-grabpl
+      - lint-go
+    commands:
+      - "echo Building '${DRONE_BUILD_NUMBER}'"
+      - ./bin/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+  - name: build-oss-frontend
+    image: grafana/build-container:1.2.19
     depends_on:
       - install-grabpl
     commands:
-      - |
-        ./bin/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss \
-          --build-id $DRONE_BUILD_NUMBER
+      - yarn install --frozen-lockfile --no-progress
+      - ./bin/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+  - name: build-oss-plugins
+    image: grafana/build-container:1.2.19
+    depends_on:
+      - install-grabpl
+      - lint-go
+    commands:
+      - ./bin/grabpl build-plugins --edition oss
+      # TODO: Execute the following for non-forked PRs, using "when" condition and "by repository"
+      # - export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+      # - ./bin/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
