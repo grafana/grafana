@@ -1,0 +1,22 @@
+kind: pipeline
+type: docker
+name: Test PR
+trigger:
+  event:
+    - pull_request
+steps:
+  - name: install-grabpl
+    commands:
+      - |
+        VERSION=0.4.11
+        curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
+        chmod +x grabpl
+        mkdir -p bin
+        mv grabpl bin
+  - name: build-oss-backend
+    depends_on:
+      - install-grabpl
+    commands:
+      - |
+        ./bin/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss \
+          --build-id $DRONE_BUILD_NUMBER
