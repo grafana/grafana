@@ -156,8 +156,9 @@ steps:
     depends_on:
       - install-deps
       - lint-go
+      - test-frontend
     commands:
-      - ./bin/grabpl build-plugins --edition oss
+      - ./bin/grabpl build-plugins --edition oss --no-install-deps
       # TODO: Execute the following for non-forked PRs, using "when" condition and "by repository"
       # - export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
       # - ./bin/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
