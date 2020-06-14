@@ -188,6 +188,8 @@ steps:
     detach: true
     depends_on:
       - package-oss
+    commands:
+      - ./e2e/start-server
   - name: end-to-end-tests
     image: grafana/build-container:1.2.20
     depends_on:
