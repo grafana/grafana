@@ -36,7 +36,7 @@
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "cd packages/grafana-ui && yarn storybook --ci",
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
-    "test": "./node_modules/.bin/grunt test",
+    "test": "grunt test",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "typecheck": "tsc --noEmit",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
