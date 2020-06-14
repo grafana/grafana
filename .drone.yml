@@ -175,6 +175,8 @@ steps:
       - shellcheck
     commands:
       - |
+        # TODO: Only do this for forked PRs
+        source scripts/build/gpg-test-vars.sh && \
         ./bin/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --sign \
           --build-id $DRONE_BUILD_NUMBER
   - name: build-oss-windows-installer
