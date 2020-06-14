@@ -3,6 +3,7 @@ type: docker
 name: Test PR
 trigger:
   event:
+    - push
     - pull_request
 steps:
   # Install various dependencies
