@@ -102,7 +102,7 @@ steps:
     commands:
       - ./bin/grabpl build-frontend --no-install-deps --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
   - name: test-frontend
-    image: grafana/build-container:1.2.20
+    image: node:12.18-slim
     depends_on:
       - install-deps
     commands:
@@ -112,6 +112,7 @@ steps:
       - yarn run prettier:check
       - yarn run packages:typecheck
       - yarn run typecheck
+      - ./node_modules/.bin/grunt --version
       - yarn run test
   - name: mysql-integration-tests
     environment:
