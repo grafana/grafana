@@ -109,10 +109,10 @@ steps:
       - node --version
       - yarn --version
       - yarn install --frozen-lockfile --no-progress
+      - ./node_modules/.bin/grunt --version
       - yarn run prettier:check
       - yarn run packages:typecheck
       - yarn run typecheck
-      - ./node_modules/.bin/grunt --version
       - yarn run test
   - name: mysql-integration-tests
     environment:
