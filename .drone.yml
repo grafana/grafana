@@ -158,3 +158,17 @@ steps:
       # TODO: Execute the following for non-forked PRs, using "when" condition and "by repository"
       # - export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
       # - ./bin/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
+  - name: package-oss
+    image: grafana/build-container:1.2.20
+    depends_on:
+      - build-oss-backend
+      - build-oss-frontend
+      - build-oss-plugins
+      - test-backend
+      - test-frontend
+      - codespell
+      - shellcheck
+    commands:
+      - |
+        ./bin/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --sign \
+          --build-id $DRONE_BUILD_NUMBER
