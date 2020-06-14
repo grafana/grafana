@@ -10,12 +10,16 @@ steps:
     image: grafana/build-container:1.2.20
     environment:
       GRABPL_VERSION: "0.4.12"
+      DOCKERIZE_VERSION: 0.6.1
     commands:
       - apt-get update
       - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
       - chmod +x grabpl
       - mkdir -p bin
       - mv grabpl bin
+      - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+      - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+      - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - name: lint-go
     image: grafana/build-container:1.2.20
     environment:
@@ -102,6 +106,8 @@ steps:
     depends_on:
       - install-deps
     commands:
+      - node --version
+      - yarn --version
       - yarn install --frozen-lockfile --no-progress
       - yarn run prettier:check
       - yarn run packages:typecheck
@@ -123,7 +129,7 @@ steps:
       - image: circleci/mysql:5.6-ram
     commands:
       - apt-get install -y default-mysql-client
-      - dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
+      - ./bin/dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
       - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
       - go test -tags=integration ./pkg/...
   - name: postgres-integration-tests
@@ -141,7 +147,7 @@ steps:
       - test-backend
     commands:
       - apt-get install -y postgresql-client
-      - dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
+      - ./bin/dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
       - "PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql"
       - go test -tags=integration ./pkg/...
   - name: build-oss-plugins
