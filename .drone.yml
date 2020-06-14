@@ -174,8 +174,9 @@ steps:
       - |
         # TODO: Only do this for forked PRs
         . scripts/build/gpg-test-vars.sh && \
-        ./bin/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --sign \
-          --build-id $DRONE_BUILD_NUMBER
+        # A forked PR build, don't sign as it requires an API secret
+        # TODO: Support non-forked PRs
+        ./bin/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
   - name: build-oss-windows-installer
     image: grafana/wix-toolset-ci:v3
     depends_on:
@@ -194,3 +195,24 @@ steps:
     commands:
       - ./e2e/wait-for-grafana
       - ./e2e/run-suite
+  - name: copy-oss-packages-for-docker
+    image: grafana/build-container:1.2.20
+    depends_on:
+      - end-to-end-tests
+      - package-oss
+    commands:
+      - cp dist/grafana*.linux-amd64-musl.tar.gz packaging/docker/grafana.linux-amd64-musl.tar.gz
+  # TODO: Make our own plugin for building Docker images and manifests
+  # We need the plugin both for determining the version and for building manifests
+  - name: build-oss-docker-images
+    image: plugins/docker
+    depends_on:
+      - copy-oss-packages-for-docker
+    settings:
+      dry_run: true
+      dockerfile: packaging/docker/Dockerfile
+      build_args:
+        - BASE_IMAGE=alpine:3.11
+        - GRAFANA_TGZ=grafana.linux-amd64-musl.tar.gz
+      repo: grafana/grafana-amd64-linux
+      auto_tag: true
