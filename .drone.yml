@@ -21,7 +21,6 @@ steps:
       - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
       - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
       - yarn install --frozen-lockfile --no-progress
-      - yarn global add es-check
   - name: lint-go
     image: grafana/build-container:1.2.20
     environment:
@@ -108,11 +107,9 @@ steps:
     depends_on:
       - install-deps
     commands:
-      - yarn install --frozen-lockfile --no-progress
       - yarn run prettier:check
       - yarn run packages:typecheck
-      # FIXME: Failing after upgrading the typescript package
-      # - yarn run typecheck
+      - yarn run typecheck
       - yarn run test
   - name: mysql-integration-tests
     environment:
