@@ -5,11 +5,15 @@ trigger:
   event:
     - pull_request
 steps:
-  - name: install-grabpl
+  # Install various dependencies
+  - name: install-deps
     image: grafana/build-container:1.2.19
     environment:
-      GRABPL_VERSION: "0.4.11"
+      GRABPL_VERSION: "0.4.12"
     commands:
+      - apt-get update
+      - yarn install --frozen-lockfile --no-progress
+      - yarn list rc-animate
       - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
       - chmod +x grabpl
       - mkdir -p bin
@@ -19,6 +23,8 @@ steps:
     environment:
       # we need CGO because of go-sqlite3
       CGO_ENABLED: 1
+    depends_on:
+      - install-deps
     commands:
       - mkdir -p tmp
       - cd tmp
@@ -48,25 +54,104 @@ steps:
       - |
         ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
           -conf=./scripts/go/configs/gosec.json ./pkg/...
+  - name: codespell
+    image: grafana/build-container:1.2.19
+    depends_on:
+      - install-deps
+    commands:
+      - apt-get install -y python-pip
+      - pip install codespell
+      # Important: all words have to be in lowercase, and separated by "\n".
+      - 'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt'
+      - codespell -I words_to_ignore.txt docs/
+  - name: shellcheck
+    image: grafana/build-container:1.2.19
+    depends_on:
+      - install-deps
+    environment:
+      VERSION: "0.7.1"
+      CHKSUM: beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+    commands:
+      - curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v$${VERSION}.linux.x86_64.tar.xz
+      - echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+      - tar xf shellcheck-v$${VERSION}.linux.x86_64.tar.xz
+      - mv shellcheck-v$${VERSION}/shellcheck /usr/local/bin/
+      - ./bin/grabpl shellcheck
   - name: build-oss-backend
     image: grafana/build-container:1.2.19
     depends_on:
-      - install-grabpl
+      - install-deps
       - lint-go
     commands:
       - "echo Building '${DRONE_BUILD_NUMBER}'"
       - ./bin/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+  - name: test-backend
+    image: grafana/build-container:1.2.19
+    depends_on:
+      - install-deps
+      - lint-go
+    commands:
+      - go test -tags=integration -covermode=atomic ./pkg/...
   - name: build-oss-frontend
     image: grafana/build-container:1.2.19
     depends_on:
-      - install-grabpl
+      - install-deps
     commands:
-      - yarn install --frozen-lockfile --no-progress
-      - ./bin/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+      - ./bin/grabpl build-frontend --no-install-deps --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+  - name: test-frontend
+    image: grafana/build-container:1.2.19
+    depends_on:
+      - install-deps
+    commands:
+      - yarn run prettier:check
+      - yarn run packages:typecheck
+      - yarn run typecheck
+      - yarn run test
+  - name: mysql-integration-tests
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana_tests
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+      GRAFANA_TEST_DB: mysql
+    image: grafana/build-container:1.2.19
+    depends_on:
+      - lint-go
+      - test-backend
+      - test-frontend
+    services:
+      - name: MySQL
+      # TODO: Figure out if we can use an official image rather than circleci's
+      - image: circleci/mysql:5.6-ram
+    commands:
+      - apt-get install -y default-mysql-client
+      - dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
+      - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
+      - go test -tags=integration ./pkg/...
+  - name: postgres-integration-tests
+    environment:
+      POSTGRES_USER: grafanatest
+      POSTGRES_PASSWORD: grafanatest
+      POSTGRES_DB: grafanatest
+      GRAFANA_TEST_DB: postgres
+    image: grafana/build-container:1.2.19
+    services:
+      - name: Postgres
+      # TODO: Figure out if we can use an official image rather than circleci's
+      - image: circleci/postgres:9.3-ram
+    depends_on:
+      - lint-go
+      - test-backend
+      - test-frontend
+    commands:
+      - apt-get install -y postgresql-client
+      - dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
+      - "PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql"
+      - go test -tags=integration ./pkg/...
   - name: build-oss-plugins
     image: grafana/build-container:1.2.19
     depends_on:
-      - install-grabpl
+      - install-deps
       - lint-go
     commands:
       - ./bin/grabpl build-plugins --edition oss
