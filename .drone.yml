@@ -198,6 +198,7 @@ steps:
     depends_on:
       - end-to-end-tests-server
     commands:
+      - apt-get install -yq netcat
       - ./e2e/wait-for-grafana
       - ./e2e/run-suite
   - name: copy-oss-packages-for-docker
