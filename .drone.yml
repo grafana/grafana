@@ -12,8 +12,6 @@ steps:
       GRABPL_VERSION: "0.4.12"
     commands:
       - apt-get update
-      - yarn install --frozen-lockfile --no-progress
-      - yarn list rc-animate
       - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
       - chmod +x grabpl
       - mkdir -p bin
@@ -97,11 +95,13 @@ steps:
     depends_on:
       - install-deps
     commands:
+      - yarn install --frozen-lockfile --no-progress
       - ./bin/grabpl build-frontend --no-install-deps --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
   - name: test-frontend
     image: grafana/build-container:1.2.19
     depends_on:
-      - install-deps
+      # Can't build and test in parallel, since it looks as if node_modules gets corrupted if we do
+      - build-frontend
     commands:
       - yarn run prettier:check
       - yarn run packages:typecheck
@@ -118,7 +118,7 @@ steps:
     depends_on:
       - lint-go
       - test-backend
-      - test-frontend
+      - build-frontend
     services:
       - name: MySQL
       # TODO: Figure out if we can use an official image rather than circleci's
@@ -142,7 +142,7 @@ steps:
     depends_on:
       - lint-go
       - test-backend
-      - test-frontend
+      - build-frontend
     commands:
       - apt-get install -y postgresql-client
       - dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
