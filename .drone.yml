@@ -20,6 +20,8 @@ steps:
       - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
       - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
       - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+      - yarn install --frozen-lockfile --no-progress
+      - yarn global add es-check
   - name: lint-go
     image: grafana/build-container:1.2.20
     environment:
@@ -106,10 +108,7 @@ steps:
     depends_on:
       - install-deps
     commands:
-      - node --version
-      - yarn --version
       - yarn install --frozen-lockfile --no-progress
-      - ./node_modules/.bin/grunt --version
       - yarn run prettier:check
       - yarn run packages:typecheck
       - yarn run typecheck
@@ -124,6 +123,7 @@ steps:
     image: grafana/build-container:1.2.20
     depends_on:
       - test-backend
+      - test-frontend
     services:
       - name: MySQL
       # TODO: Figure out if we can use an official image rather than circleci's
@@ -146,6 +146,7 @@ steps:
       - image: circleci/postgres:9.3-ram
     depends_on:
       - test-backend
+      - test-frontend
     commands:
       - apt-get install -y postgresql-client
       - ./bin/dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
