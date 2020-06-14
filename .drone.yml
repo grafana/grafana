@@ -93,7 +93,78 @@ steps:
   - name: build-oss-frontend
     image: grafana/build-container:1.2.20
     depends_on:
+      # Can't build and test in parallel, since it looks as if node_modules gets corrupted if we do
+      - test-frontend
+    commands:
+      - ./bin/grabpl build-frontend --no-install-deps --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+  - name: test-frontend
+    image: grafana/build-container:1.2.20
+    depends_on:
       - install-deps
     commands:
       - yarn install --frozen-lockfile --no-progress
-      - ./bin/grabpl build-frontend --no-install-deps --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+      - yarn run prettier:check
+      - yarn run packages:typecheck
+      - yarn run typecheck
+      - yarn run test
+  - name: mysql-integration-tests
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana_tests
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+      GRAFANA_TEST_DB: mysql
+    image: grafana/build-container:1.2.20
+    depends_on:
+      - test-backend
+    services:
+      - name: MySQL
+      # TODO: Figure out if we can use an official image rather than circleci's
+      - image: circleci/mysql:5.6-ram
+    commands:
+      - apt-get install -y default-mysql-client
+      - dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
+      - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
+      - go test -tags=integration ./pkg/...
+  - name: postgres-integration-tests
+    environment:
+      POSTGRES_USER: grafanatest
+      POSTGRES_PASSWORD: grafanatest
+      POSTGRES_DB: grafanatest
+      GRAFANA_TEST_DB: postgres
+    image: grafana/build-container:1.2.20
+    services:
+      - name: Postgres
+      # TODO: Figure out if we can use an official image rather than circleci's
+      - image: circleci/postgres:9.3-ram
+    depends_on:
+      - test-backend
+    commands:
+      - apt-get install -y postgresql-client
+      - dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
+      - "PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql"
+      - go test -tags=integration ./pkg/...
+  - name: build-oss-plugins
+    image: grafana/build-container:1.2.20
+    depends_on:
+      - install-deps
+      - lint-go
+    commands:
+      - ./bin/grabpl build-plugins --edition oss
+      # TODO: Execute the following for non-forked PRs, using "when" condition and "by repository"
+      # - export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+      # - ./bin/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
+  - name: package-oss
+    image: grafana/build-container:1.2.20
+    depends_on:
+      - build-oss-backend
+      - build-oss-frontend
+      - build-oss-plugins
+      - test-backend
+      - test-frontend
+      - codespell
+      - shellcheck
+    commands:
+      - |
+        ./bin/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --sign \
+          --build-id $DRONE_BUILD_NUMBER
