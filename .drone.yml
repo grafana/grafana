@@ -177,3 +177,21 @@ steps:
       - |
         ./bin/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --sign \
           --build-id $DRONE_BUILD_NUMBER
+  - name: build-oss-windows-installer
+    image: grafana/wix-toolset-ci:v3
+    depends_on:
+      - package-oss
+    commands:
+      - ./scripts/build/ci-msi-build/ci-msi-build-oss.sh
+  - name: end-to-end-tests-server
+    image: grafana/build-container:1.2.20
+    detach: true
+    depends_on:
+      - package-oss
+  - name: end-to-end-tests
+    image: grafana/build-container:1.2.20
+    depends_on:
+      - end-to-end-tests-server
+    commands:
+      - ./e2e/wait-for-grafana
+      - ./e2e/run-suite
