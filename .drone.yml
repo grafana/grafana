@@ -104,7 +104,7 @@ steps:
     commands:
       - ./bin/grabpl build-frontend --no-install-deps --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
   - name: test-frontend
-    image: node:12.18-slim
+    image: grafana/build-container:1.2.20
     depends_on:
       - install-deps
     commands:
