@@ -107,48 +107,48 @@ steps:
       - yarn run packages:typecheck
       - yarn run typecheck
       - yarn run test
-  - name: mysql-integration-tests
+    #- name: mysql-integration-tests
     # FIXME: Remove when working
-    failure: ignore
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: grafana_tests
-      MYSQL_USER: grafana
-      MYSQL_PASSWORD: password
-      GRAFANA_TEST_DB: mysql
-    image: grafana/build-container:1.2.20
-    depends_on:
-      - test-backend
-      - test-frontend
-    services:
-      - name: MySQL
+    #failure: ignore
+    #environment:
+      #MYSQL_ROOT_PASSWORD: rootpass
+      #MYSQL_DATABASE: grafana_tests
+      #MYSQL_USER: grafana
+      #MYSQL_PASSWORD: password
+      #GRAFANA_TEST_DB: mysql
+    #image: grafana/build-container:1.2.20
+    #depends_on:
+      #- test-backend
+      #- test-frontend
+    #services:
+      #- name: MySQL
       # TODO: Figure out if we can use an official image rather than circleci's
-      - image: circleci/mysql:5.6-ram
-    commands:
-      - apt-get install -y default-mysql-client
-      - ./bin/dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
-      - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
-      - go test -tags=integration ./pkg/...
-  - name: postgres-integration-tests
+      #- image: circleci/mysql:5.6-ram
+    #commands:
+    #- apt-get install -y default-mysql-client
+    #- ./bin/dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
+    #- cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
+    #- go test -tags=integration ./pkg/...
+  # - name: postgres-integration-tests
     # FIXME: Remove when working
-    environment:
-      POSTGRES_USER: grafanatest
-      POSTGRES_PASSWORD: grafanatest
-      POSTGRES_DB: grafanatest
-      GRAFANA_TEST_DB: postgres
-    image: grafana/build-container:1.2.20
-    services:
-      - name: Postgres
+    # environment:
+      # POSTGRES_USER: grafanatest
+      # POSTGRES_PASSWORD: grafanatest
+      # POSTGRES_DB: grafanatest
+      # GRAFANA_TEST_DB: postgres
+    # image: grafana/build-container:1.2.20
+    # services:
+      # - name: Postgres
       # TODO: Figure out if we can use an official image rather than circleci's
-      - image: circleci/postgres:9.3-ram
-    depends_on:
-      - test-backend
-      - test-frontend
-    commands:
-      - apt-get install -y postgresql-client
-      - ./bin/dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
-      - "PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql"
-      - go test -tags=integration ./pkg/...
+      # - image: circleci/postgres:9.3-ram
+    # depends_on:
+      # - test-backend
+      # - test-frontend
+    # commands:
+      # - apt-get install -y postgresql-client
+      # - ./bin/dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
+      # - "PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql"
+      # - go test -tags=integration ./pkg/...
   - name: build-oss-plugins
     image: grafana/build-container:1.2.20
     depends_on:
@@ -177,6 +177,9 @@ steps:
         # A forked PR build, don't sign as it requires an API secret
         # TODO: Support non-forked PRs
         ./bin/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+      # Make sure packages are readable for later steps with other Docker images, and hence potentially different
+      # users
+      - chmod a+r dist/*
   - name: build-oss-windows-installer
     image: grafana/wix-toolset-ci:v3
     depends_on:
