@@ -124,7 +124,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ur
     if (!key.startsWith('var-')) {
       continue;
     }
-    if (!query[key]) {
+    if (!query.hasOwnProperty(key)) {
       changes[key] = ''; // removed
       count++;
     }
