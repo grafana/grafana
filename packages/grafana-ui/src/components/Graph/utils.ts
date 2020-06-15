@@ -139,7 +139,7 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
   return localTimeFormat({ hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm');
 };
 
-const localTimeFormat = (options: DateTimeFormatOptions, fallback: string): string => {
+const localTimeFormat = (options: Intl.DateTimeFormatOptions, fallback: string): string => {
   if (!window.Intl) {
     return fallback;
   }
@@ -161,14 +161,3 @@ const localTimeFormat = (options: DateTimeFormatOptions, fallback: string): stri
 
   return parts.map(part => mapping[part.type] || part.value).join('');
 };
-
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat
-interface DateTimeFormatOptions {
-  year?: 'numeric' | '2-digit';
-  month?: 'numeric' | '2-digit' | 'narrow' | 'short' | 'long';
-  day?: 'numeric' | '2-digit';
-  hour?: 'numeric' | '2-digit';
-  minute?: 'numeric' | '2-digit';
-  second?: 'numeric' | '2-digit';
-  hour12?: boolean;
-}
