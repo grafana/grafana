@@ -2,7 +2,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { NavModel } from '@grafana/data';
 
 export const loadFolderPage = (uid: string, activeChildId: string) => {
-  const navModel: Partial<NavModel> = {
+  const navModel: Pick<NavModel, 'main'> = {
     main: {
       icon: 'folder-open',
       id: 'manage-folder',

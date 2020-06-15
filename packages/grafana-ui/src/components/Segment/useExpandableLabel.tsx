@@ -10,7 +10,7 @@ export const useExpandableLabel = (
 ): [React.ComponentType<LabelProps>, number, boolean, (expanded: boolean) => void] => {
   const ref = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<boolean>(initialExpanded);
-  const [width, setWidth] = useState<number>(0);
+  const [width, setWidth] = useState(0);
 
   const Label: React.FC<LabelProps> = ({ Component, onClick }) => (
     <div
