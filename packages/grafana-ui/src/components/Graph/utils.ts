@@ -119,19 +119,53 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return 'HH:mm:ss';
+      return localTimeFormat({ hour: '2-digit', minute: '2-digit', second: '2-digit' }, 'HH:mm:ss');
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return 'HH:mm';
+      return localTimeFormat({ hour: '2-digit', minute: '2-digit' }, 'HH:mm');
     }
     if (secPerTick <= 80000) {
-      return 'MM/DD HH:mm';
+      return localTimeFormat({ month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, 'MM/DD HH:mm');
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return 'MM/DD';
+      return localTimeFormat({ month: '2-digit', day: '2-digit' }, 'MM/DD');
     }
-    return 'YYYY-MM';
+    return localTimeFormat({ year: 'numeric', month: '2-digit' }, 'YYYY-MM');
   }
 
-  return 'HH:mm';
+  return localTimeFormat({ hour: '2-digit', minute: '2-digit' }, 'HH:mm');
 };
+
+const localTimeFormat = (options: DateTimeFormatOptions, fallback: string): string => {
+  if (!window.Intl) {
+    return fallback;
+  }
+
+  // https://momentjs.com/docs/#/displaying/format/
+  const parts = new Intl.DateTimeFormat('default', options).formatToParts(new Date());
+  const mapping: { [key: string]: string } = {
+    year: 'YYYY',
+    month: 'MM',
+    day: 'DD',
+    hour: 'HH',
+    minute: 'mm',
+    second: 'ss',
+    weekday: 'ddd',
+    era: 'N',
+    dayPeriod: 'A',
+    timeZoneName: 'Z',
+  };
+
+  return parts.map(part => mapping[part.type] || part.value).join('');
+};
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat
+interface DateTimeFormatOptions {
+  year?: 'numeric' | '2-digit';
+  month?: 'numeric' | '2-digit' | 'narrow' | 'short' | 'long';
+  day?: 'numeric' | '2-digit';
+  hour?: 'numeric' | '2-digit';
+  minute?: 'numeric' | '2-digit';
+  second?: 'numeric' | '2-digit';
+  hour12?: boolean;
+}
