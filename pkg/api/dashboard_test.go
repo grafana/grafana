@@ -35,13 +35,22 @@ func TestGetHomeDashboard(t *testing.T) {
 		return nil
 	})
 
-	t.Run("should return dashboards/home.json as defualt", func(t *testing.T) {
+	tcs := []struct {
+		defaultSetting        string
+		expectedDashboardPath string
+	}{
+		{defaultSetting: "", expectedDashboardPath: "../../public/dashboards/home.json"},
+		{defaultSetting: "../../public/dashboards/default.json", expectedDashboardPath: "../../public/dashboards/default.json"},
+	}
+
+	for _, tc := range tcs {
 		dash := dtos.DashboardFullWithMeta{}
 		dash.Meta.IsHome = true
 		dash.Meta.CanEdit = req.SignedInUser.HasRole(models.ROLE_EDITOR)
 		dash.Meta.FolderTitle = "General"
 
-		homeDashJSON, err := ioutil.ReadFile("../../public/dashboards/home.json")
+		homeDashJSON, err := ioutil.ReadFile(tc.expectedDashboardPath)
+		setting.DefaultHomeDashboardPath = tc.defaultSetting
 		require.NoError(t, err)
 		bytes, err := simplejson.NewJson(homeDashJSON)
 		require.NoError(t, err)
@@ -55,30 +64,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		nr, ok := res.(*NormalResponse)
 		assert.True(t, ok, "should return *NormalResponse")
 		assert.Equal(t, b, nr.body)
-	})
-
-	t.Run("should return X is settings.HomeDashboardPath is set", func(t *testing.T) {
-		dash := dtos.DashboardFullWithMeta{}
-		dash.Meta.IsHome = true
-		dash.Meta.CanEdit = req.SignedInUser.HasRole(models.ROLE_EDITOR)
-		dash.Meta.FolderTitle = "General"
-
-		homeDashJSON, err := ioutil.ReadFile("../../public/dashboards/default.json")
-		setting.DefaultHomeDashboardPath = "../../public/dashboards/default.json"
-		require.NoError(t, err)
-		bytes, err := simplejson.NewJson(homeDashJSON)
-		require.NoError(t, err)
-
-		dash.Dashboard = bytes
-
-		b, err := json.Marshal(dash)
-		require.NoError(t, err)
-
-		res := GetHomeDashboard(req)
-		nr, ok := res.(*NormalResponse)
-		assert.True(t, ok, "should return *NormalResponse")
-		assert.Equal(t, b, nr.body)
-	})
+	}
 }
 
 // This tests three main scenarios.
