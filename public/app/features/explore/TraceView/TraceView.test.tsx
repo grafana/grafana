@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
-import { TraceData, SpanData } from '@grafana/data';
+import { SpanData, TraceData } from '@grafana/data';
 
 function renderTraceView() {
   const wrapper = shallow(<TraceView trace={response} />);
@@ -98,7 +98,7 @@ describe('TraceView', () => {
     header.props().onSearchValueChange('HTTP POST - api_prom_push');
 
     const timeline = wrapper.find(TraceTimelineViewer);
-    expect(timeline.props().findMatchesIDs.has('1ed38015486087ca')).toBeTruthy();
+    expect(timeline.props().findMatchesIDs?.has('1ed38015486087ca')).toBeTruthy();
   });
 
   it('change viewRange', () => {
