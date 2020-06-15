@@ -10,7 +10,7 @@ export interface DataLinkClickEvent<T = any> {
 }
 
 /**
- * Link configuration.  The values may contain variables that need to be
+ * Link configuration. The values may contain variables that need to be
  * processed before running
  */
 export interface DataLink {
@@ -37,7 +37,7 @@ export interface DataLink {
 export type LinkTarget = '_blank' | '_self';
 
 /**
- * Processed Link Model.  The values are ready to use
+ * Processed Link Model. The values are ready to use
  */
 export interface LinkModel<T = any> {
   href: string;

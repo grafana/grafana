@@ -20,6 +20,10 @@ export function getFieldLinksForExplore(
   const data = getLinksFromLogsField(field, rowIndex);
   return data.map(d => {
     if (d.link.meta?.datasourceUid) {
+      // TODO: fix the ambiguity here
+      // This looks weird but in case meta.datasourceUid is set we save the query in url which will get
+      // interpolated into href
+      const parsedQuery = JSON.parse(d.linkModel.href);
       return {
         ...d.linkModel,
         title:
@@ -29,16 +33,13 @@ export function getFieldLinksForExplore(
         onClick: () => {
           splitOpenFn({
             datasourceUid: d.link.meta.datasourceUid,
-            // TODO: fix the ambiguity here
-            // This looks weird but in case meta.datasourceUid is set we save the query in url which will get
-            // interpolated into href
-            query: d.linkModel.href,
+            query: parsedQuery,
           });
         },
         // We need to create real href here as the linkModel.href actually contains query. As in this case this is
         // meant to be internal link (opens split view by default) the href will also points to explore but this
         // way you can open it in new tab.
-        href: generateInternalHref(d.link.meta.datasourceUid, d.linkModel.href, range),
+        href: generateInternalHref(d.link.meta.datasourceUid, parsedQuery, range),
       };
     }
 
@@ -70,14 +71,12 @@ export function getFieldLinksForExplore(
 /**
  * Generates href for internal derived field link.
  */
-function generateInternalHref(datasourceUid: string, query: string, range: TimeRange): string {
+function generateInternalHref(datasourceUid: string, query: any, range: TimeRange): string {
   return locationUtil.assureBaseUrl(
     `/explore?left=${serializeStateToUrlParam({
       range: range.raw,
       datasource: getDataSourceSrv().getDataSourceSettingsByUid(datasourceUid).name,
-      // Again hardcoded for Jaeger query structure
-      // TODO: fix
-      queries: [{ query }],
+      queries: [query],
       // This should get overwritten if datasource does not support that mode and we do not know what mode is
       // preferred anyway.
       mode: ExploreMode.Metrics,

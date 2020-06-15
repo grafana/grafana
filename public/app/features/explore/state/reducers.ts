@@ -11,7 +11,7 @@ import {
   PanelEvents,
   TimeZone,
   toLegacyResponseData,
-  ExploreMode,
+  ExploreMode, ValueLinkConfig,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -69,6 +69,7 @@ import {
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
+import {getFieldLinksForExplore} from "../utils/links";
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

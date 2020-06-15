@@ -69,6 +69,8 @@ export class ResultProcessor {
       return null;
     }
 
+    // We are going from dataframe to table model and back because of the merging which is done on tableModel at the
+    // moment.
     const tables = onlyTables.map(frame => {
       const { fields } = frame;
       const fieldCount = fields.length;
@@ -79,6 +81,7 @@ export class ResultProcessor {
         type: field.type,
         filterable: field.config.filterable,
         custom: field.config.custom,
+        links: field.config.links,
       }));
 
       const rows: any[][] = [];

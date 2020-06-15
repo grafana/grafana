@@ -355,7 +355,8 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
       acc.push({
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
         title: '',
-        url: derivedFieldConfig.url,
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
+        url: JSON.stringify({ query: derivedFieldConfig.url }),
         // Having field.datasourceUid means it is an internal link.
         meta: derivedFieldConfig.datasourceUid
           ? {

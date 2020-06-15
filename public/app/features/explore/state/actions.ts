@@ -696,7 +696,7 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
  * results.
  */
-export function splitOpen(options?: { datasourceUid: string; query: string }): ThunkResult<void> {
+export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: string; query: T }): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -706,17 +706,20 @@ export function splitOpen(options?: { datasourceUid: string; query: string }): T
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
 
-    // TODO: Instead of splitting and then setting query/datasource we may probably do it in one action call
-    rightState.queries = leftState.queries.slice();
-    rightState.urlState = urlState;
-    dispatch(splitOpenAction({ itemState: rightState }));
-
     if (options) {
-      // TODO: This is hardcoded for Jaeger right now. Need to be changed so that target datasource can define the
-      //  query shape.
+      rightState.queries = [];
+      rightState.graphResult = undefined;
+      rightState.logsResult = undefined;
+      rightState.tableResult = undefined;
+      rightState.queryKeys = [];
+      urlState.queries = [];
+      rightState.urlState = urlState;
+
+      dispatch(splitOpenAction({ itemState: rightState }));
+
       const queries = [
         {
-          query: options.query,
+          ...options.query,
           refId: 'A',
         } as DataQuery,
       ];
@@ -724,6 +727,10 @@ export function splitOpen(options?: { datasourceUid: string; query: string }): T
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
+    } else {
+      rightState.queries = leftState.queries.slice();
+      rightState.urlState = urlState;
+      dispatch(splitOpenAction({ itemState: rightState }));
     }
 
     dispatch(stateSave());

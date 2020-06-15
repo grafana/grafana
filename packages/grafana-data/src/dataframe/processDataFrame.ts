@@ -26,6 +26,7 @@ import { getFieldDisplayName } from '../field/fieldState';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
+    // TODO: should be Column but type does not exists there so not sure whats up here.
     const { text, type, ...disp } = c as any;
     return {
       name: text, // rename 'text' to the 'name' field
