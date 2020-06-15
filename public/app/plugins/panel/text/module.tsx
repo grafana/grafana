@@ -14,7 +14,6 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         settings: {
           options: [
             { value: 'markdown', label: 'Markdown' },
-            { value: 'text', label: 'Text' },
             { value: 'html', label: 'HTML' },
           ],
         },
