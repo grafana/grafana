@@ -42,7 +42,7 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 		return login.ErrForbiddenRedirectTo
 	}
 
-	// path should . have exactly one leading slash
+	// path should have exactly one leading slash
 	if !strings.HasPrefix(to.Path, "/") {
 		return login.ErrForbiddenRedirectTo
 	}

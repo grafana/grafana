@@ -52,7 +52,7 @@ func notAuthorized(c *models.ReqContext) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
-	// remove forceLogin query param if exists
+	// remove forceLogin query param if it exists
 	if parsed, err := url.ParseRequestURI(redirectTo); err == nil {
 		params := parsed.Query()
 		params.Del("forceLogin")
