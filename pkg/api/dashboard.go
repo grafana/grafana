@@ -314,7 +314,7 @@ func dashboardSaveErrorToApiResponse(err error) Response {
 	return Error(500, "Failed to save dashboard", err)
 }
 
-// GetHomeDashboard return the home dashboard
+// GetHomeDashboard returns the home dashboard.
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := hs.Bus.Dispatch(&prefsQuery); err != nil {
