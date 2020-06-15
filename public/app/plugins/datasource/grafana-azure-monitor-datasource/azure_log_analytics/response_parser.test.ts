@@ -26,7 +26,7 @@ describe('createSchemaFunctions', () => {
   });
 
   describe('when called and results have no functions', () => {
-    it('then is should return an empty object', () => {
+    it('then it should return an empty object', () => {
       const parser = new ResponseParser({});
 
       const results = parser.createSchemaFunctions();
