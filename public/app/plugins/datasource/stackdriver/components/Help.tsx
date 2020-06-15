@@ -4,7 +4,7 @@ import { Icon } from '@grafana/ui';
 
 export interface Props {
   rawQuery: string;
-  lastQueryError: string;
+  lastQueryError?: string;
   metricDescriptor?: MetricDescriptor;
 }
 

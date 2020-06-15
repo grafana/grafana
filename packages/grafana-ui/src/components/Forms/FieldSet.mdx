@@ -1,0 +1,42 @@
+import { Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { FieldSet } from './FieldSet';
+
+# FieldSet
+
+Component used to group form elements inside a form, equivalent to HTML's [fieldset](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/fieldset) tag.
+Accepts optional label, which, if provided, is used as a text for the set's legend.
+
+
+### Usage
+
+```jsx
+import { FieldSet } from '@grafana/ui';
+
+<Form onSubmit={() => console.log('Submit')}>
+  {() => (
+    <>
+      <FieldSet label="Details">
+        <Field label="Name">
+          <Input name="name" />
+        </Field>
+        <Field label="Email">
+          <Input name="email" />
+        </Field>
+      </FieldSet>
+
+      <FieldSet label="Preferences">
+        <Field label="Color">
+          <Input name="color" />
+        </Field>
+        <Field label="Font size">
+          <Input name="fontsize" />
+        </Field>
+      </FieldSet>
+      <Button variant="primary">Save</Button>
+    </>
+  )}
+</Form>
+```
+
+### Props
+<Props of={FieldSet} />

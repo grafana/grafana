@@ -29,7 +29,7 @@ import {
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
 import { TNil } from '../types';
-import { Log, Span, Trace, KeyValuePair, Link } from '../types/trace';
+import { Log, Span, Trace, KeyValuePair, Link } from '@grafana/data';
 import TTraceTimeline from '../types/TTraceTimeline';
 
 import { createStyle, Theme, withTheme } from '../Theme';

@@ -196,7 +196,7 @@ func TestHandleGetQueryResults(t *testing.T) {
 	expectedTimeField := data.NewField("@timestamp", nil, []*time.Time{
 		aws.Time(timeA), aws.Time(timeB),
 	})
-	expectedTimeField.SetConfig(&data.FieldConfig{Title: "Time"})
+	expectedTimeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	expectedFieldB := data.NewField("field_b", nil, []*string{
 		aws.String("b_1"), aws.String("b_2"),
