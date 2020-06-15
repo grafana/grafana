@@ -27,7 +27,7 @@ BUILD_SCRIPT_PATH="$(realpath "$(dirname "$0")/ci-reference-docs-build.sh")"
 
 if [ ! -d "$REPORT_PATH" ]; then
   # this script needs to be run after the packages have been built and the api-extractor has completed.
-  # shellcheck source=./ci-reference-docs-build.sh.sh
+  # shellcheck source=./ci-reference-docs-build.sh
   . "$BUILD_SCRIPT_PATH"
 fi
 
