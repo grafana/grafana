@@ -3,7 +3,6 @@
 # abort if we get any error
 set -eo pipefail
 
-
 report_reference_docs_metrics() {
   # $1 = branch that the script is running on.
   # $2 = number of warnings in current version of the code.
@@ -27,7 +26,7 @@ REPORT_PATH="$(realpath "$(dirname "$0")/../reports/docs/")"
 BUILD_SCRIPT_PATH="$(realpath "$(dirname "$0")/ci-reference-docs-build.sh")"
 
 if [ ! -d "$REPORT_PATH" ]; then
-  # this script needs to be run after the packages have been build and the api-extractor has completed.
+  # this script needs to be run after the packages have been built and the api-extractor has completed.
   # shellcheck source=./ci-reference-docs-build.sh.sh
   . "$BUILD_SCRIPT_PATH"
 fi
