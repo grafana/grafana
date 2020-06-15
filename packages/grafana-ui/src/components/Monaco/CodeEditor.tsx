@@ -23,6 +23,8 @@ interface CodeEditorProps extends Themeable {
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
 
+  onChange?: CodeEditorChangeHandler;
+
   /** Handler to be performed when Cmd/Ctrl+S is pressed */
   onSave?: CodeEditorChangeHandler;
 }
@@ -38,6 +40,13 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
     const { onBlur } = this.props;
     if (onBlur) {
       onBlur(this.getEditorValue());
+    }
+  };
+
+  onChange = () => {
+    const { onChange } = this.props;
+    if (onChange) {
+      onChange(this.getEditorValue());
     }
   };
 
@@ -83,6 +92,7 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
             automaticLayout: true,
           }}
           editorDidMount={this.editorDidMount}
+          onChange={this.onChange}
         />
       </div>
     );
