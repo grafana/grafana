@@ -119,21 +119,24 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return localTimeFormat({ hour: '2-digit', minute: '2-digit', second: '2-digit' }, 'HH:mm:ss');
+      return localTimeFormat({ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }, 'HH:mm:ss');
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return localTimeFormat({ hour: '2-digit', minute: '2-digit' }, 'HH:mm');
+      return localTimeFormat({ hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm');
     }
     if (secPerTick <= 80000) {
-      return localTimeFormat({ month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, 'MM/DD HH:mm');
+      return localTimeFormat(
+        { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
+        'MM/DD HH:mm'
+      );
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return localTimeFormat({ month: '2-digit', day: '2-digit' }, 'MM/DD');
+      return localTimeFormat({ month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD');
     }
-    return localTimeFormat({ year: 'numeric', month: '2-digit' }, 'YYYY-MM');
+    return localTimeFormat({ year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM');
   }
 
-  return localTimeFormat({ hour: '2-digit', minute: '2-digit' }, 'HH:mm');
+  return localTimeFormat({ hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm');
 };
 
 const localTimeFormat = (options: DateTimeFormatOptions, fallback: string): string => {
