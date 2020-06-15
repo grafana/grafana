@@ -30,7 +30,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 	prefs := prefsQuery.Result
 
-	// Read locale from accept-language
+	// Read locale from acccept-language
 	acceptLang := c.Req.Header.Get("Accept-Language")
 	locale := "en-US"
 
@@ -271,13 +271,13 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	configNodes := []*dtos.NavLink{}
 
 	if c.OrgRole == models.ROLE_ADMIN {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Data Sources",
-			Icon:        "database",
-			Description: "Add and configure data sources",
-			Id:          "datasources",
-			Url:         setting.AppSubUrl + "/datasources",
-		})
+		//configNodes = append(configNodes, &dtos.NavLink{
+		//	Text:        "Data Sources",
+		//	Icon:        "database",
+		//	Description: "Add and configure data sources",
+		//	Id:          "datasources",
+		//	Url:         setting.AppSubUrl + "/datasources",
+		//})
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Users",
 			Id:          "users",
@@ -298,20 +298,27 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	if c.OrgRole == models.ROLE_ADMIN {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Plugins",
-			Id:          "plugins",
-			Description: "View and configure plugins",
-			Icon:        "plug",
-			Url:         setting.AppSubUrl + "/plugins",
-		})
+		//configNodes = append(configNodes, &dtos.NavLink{
+		//	Text:        "Plugins",
+		//	Id:          "plugins",
+		//	Description: "View and configure plugins",
+		//	Icon:        "plug",
+		//	Url:         setting.AppSubUrl + "/plugins",
+		//})
 
+		//configNodes = append(configNodes, &dtos.NavLink{
+		//	Text:        "Preferences",
+		//	Id:          "org-settings",
+		//	Description: "Organization preferences",
+		//	Icon:        "sliders-v-alt",
+		//	Url:         setting.AppSubUrl + "/org",
+		//})
 		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Preferences",
-			Id:          "org-settings",
-			Description: "Organization preferences",
+			Text:        "Engine",
+			Id:          "sqlatlas",
+			Description: "Configure the data sources, storage server and querys",
 			Icon:        "sliders-v-alt",
-			Url:         setting.AppSubUrl + "/org",
+			Url:         setting.AppSubUrl + "/sqlatlas",
 		})
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API Keys",
@@ -337,7 +344,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	if c.IsGrafanaAdmin {
 		adminNavLinks := []*dtos.NavLink{
 			{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "user"},
-			{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "building"},
+			//{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "building"},
 			{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "sliders-v-alt"},
 			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "graph-bar"},
 		}

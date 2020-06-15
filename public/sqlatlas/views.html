@@ -1,0 +1,10 @@
+<page-header model="navModel"></page-header>
+<iframe id="sqlatlaspage" src="" frameborder="0" width="100%" height="100%"></iframe>
+<script>
+    var host = window.location.host;
+    host = host.replace("3000", "3001")
+    var sqlAtlasURL = "http://" + host
+    iframe = document.getElementById("sqlatlaspage")
+    iframe.src = sqlAtlasURL
+</script>
+<footer />

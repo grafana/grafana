@@ -501,6 +501,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
       reloadOnSearch: false,
     })
+    .when('/sqlatlas', {
+      templateUrl: 'public/sqlatlas/views.html',
+      controller: 'SQLAtlasCtrl',
+      controllerAs: 'ctrl',
+      reloadOnSearch: false,
+    })
     .otherwise({
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
