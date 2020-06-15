@@ -44,6 +44,17 @@ exports[`Render should disable basic auth password input 1`] = `
     <div
       className="gf-form-inline"
     >
+      <Switch
+        checked={false}
+        label="Enable flux"
+        labelClass="width-10"
+        onChange={[Function]}
+        tooltip="Suport flux query endpoint"
+      />
+    </div>
+    <div
+      className="gf-form-inline"
+    >
       <div
         className="gf-form"
       >
@@ -94,6 +105,22 @@ exports[`Render should disable basic auth password input 1`] = `
         <SecretFormField
           inputWidth={20}
           label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Token"
           labelWidth={10}
           onChange={[Function]}
           onReset={[Function]}
@@ -261,6 +288,17 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
     <div
       className="gf-form-inline"
     >
+      <Switch
+        checked={false}
+        label="Enable flux"
+        labelClass="width-10"
+        onChange={[Function]}
+        tooltip="Suport flux query endpoint"
+      />
+    </div>
+    <div
+      className="gf-form-inline"
+    >
       <div
         className="gf-form"
       >
@@ -311,6 +349,22 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
         <SecretFormField
           inputWidth={20}
           label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Token"
           labelWidth={10}
           onChange={[Function]}
           onReset={[Function]}
@@ -478,6 +532,17 @@ exports[`Render should hide white listed cookies input when browser access chose
     <div
       className="gf-form-inline"
     >
+      <Switch
+        checked={false}
+        label="Enable flux"
+        labelClass="width-10"
+        onChange={[Function]}
+        tooltip="Suport flux query endpoint"
+      />
+    </div>
+    <div
+      className="gf-form-inline"
+    >
       <div
         className="gf-form"
       >
@@ -528,6 +593,22 @@ exports[`Render should hide white listed cookies input when browser access chose
         <SecretFormField
           inputWidth={20}
           label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Token"
           labelWidth={10}
           onChange={[Function]}
           onReset={[Function]}
@@ -695,6 +776,17 @@ exports[`Render should render component 1`] = `
     <div
       className="gf-form-inline"
     >
+      <Switch
+        checked={false}
+        label="Enable flux"
+        labelClass="width-10"
+        onChange={[Function]}
+        tooltip="Suport flux query endpoint"
+      />
+    </div>
+    <div
+      className="gf-form-inline"
+    >
       <div
         className="gf-form"
       >
@@ -745,6 +837,22 @@ exports[`Render should render component 1`] = `
         <SecretFormField
           inputWidth={20}
           label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Token"
           labelWidth={10}
           onChange={[Function]}
           onReset={[Function]}

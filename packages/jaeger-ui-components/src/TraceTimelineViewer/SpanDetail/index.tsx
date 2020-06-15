@@ -25,7 +25,7 @@ import CopyIcon from '../../common/CopyIcon';
 import LabeledList from '../../common/LabeledList';
 
 import { TNil } from '../../types';
-import { KeyValuePair, Link, Log, Span } from '../../types/trace';
+import { KeyValuePair, Link, Log, Span } from '@grafana/data';
 import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';

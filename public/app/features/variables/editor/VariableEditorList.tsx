@@ -1,9 +1,9 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { Icon } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
-import { QueryVariableModel, VariableModel } from '../../templating/types';
+import { QueryVariableModel, VariableModel } from '../types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 
 export interface Props {
@@ -28,7 +28,7 @@ export class VariableEditorList extends PureComponent<Props> {
 
   onChangeVariableOrder = (event: MouseEvent, variable: VariableModel, moveType: MoveType) => {
     event.preventDefault();
-    this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index!, variable.index! + moveType);
+    this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index, variable.index + moveType);
   };
 
   onDuplicateVariable = (event: MouseEvent, identifier: VariableIdentifier) => {
@@ -111,9 +111,10 @@ export class VariableEditorList extends PureComponent<Props> {
 
                         <td style={{ width: '1%' }}>
                           {index > 0 && (
-                            <Icon
+                            <IconButton
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.up)}
                               name="arrow-up"
+                              title="Move variable up"
                               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(
                                 variable.name
                               )}
@@ -122,9 +123,10 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td style={{ width: '1%' }}>
                           {index < this.props.variables.length - 1 && (
-                            <Icon
+                            <IconButton
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.down)}
                               name="arrow-down"
+                              title="Move variable down"
                               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(
                                 variable.name
                               )}
@@ -132,26 +134,24 @@ export class VariableEditorList extends PureComponent<Props> {
                           )}
                         </td>
                         <td style={{ width: '1%' }}>
-                          <a
+                          <IconButton
                             onClick={event => this.onDuplicateVariable(event, toVariableIdentifier(variable))}
-                            className="btn btn-inverse btn-small"
+                            name="copy"
+                            title="Duplicate variable"
                             aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(
                               variable.name
                             )}
-                          >
-                            Duplicate
-                          </a>
+                          />
                         </td>
                         <td style={{ width: '1%' }}>
-                          <a
+                          <IconButton
                             onClick={event => this.onRemoveVariable(event, toVariableIdentifier(variable))}
-                            className="btn btn-danger btn-small"
+                            name="trash-alt"
+                            title="Remove variable"
                             aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(
                               variable.name
                             )}
-                          >
-                            <Icon name="times" style={{ marginBottom: 0 }} />
-                          </a>
+                          />
                         </td>
                       </tr>
                     );

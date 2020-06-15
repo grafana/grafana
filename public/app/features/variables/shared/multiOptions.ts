@@ -1,4 +1,4 @@
-import { VariableOption } from 'app/features/templating/types';
+import { VariableOption } from 'app/features/variables/types';
 
 export const alignCurrentWithMulti = (current: VariableOption, value: boolean): VariableOption => {
   if (!current) {

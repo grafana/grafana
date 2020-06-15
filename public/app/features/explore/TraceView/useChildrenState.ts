@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Span } from '@jaegertracing/jaeger-ui-components';
+import { Span } from '@grafana/data';
 
 /**
  * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.

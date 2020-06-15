@@ -154,7 +154,7 @@ func (val *StringMapValue) Value() map[string]string {
 	return val.value
 }
 
-// transformInterface tries to transform any interface type into proper value with env expansion. It travers maps and
+// transformInterface tries to transform any interface type into proper value with env expansion. It traverses maps and
 // slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
 // map or slice value instead of modifying them in place and also return value without interpolation but with converted
 // type as a second value.

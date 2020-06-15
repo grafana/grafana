@@ -5,8 +5,10 @@ import {
   DataSourceInstanceSettings,
   DataQuery,
   DataSourceJsonData,
+  ScopedVars,
+  DataFrame,
 } from '@grafana/data';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
 import { toDataQueryResponse } from './queryResponse';
@@ -14,7 +16,7 @@ import { toDataQueryResponse } from './queryResponse';
 const ExpressionDatasourceID = '__expr__';
 
 /**
- * Describes the current healt status of a data source plugin.
+ * Describes the current health status of a data source plugin.
  *
  * @public
  */
@@ -53,30 +55,43 @@ export class DataSourceWithBackend<
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints, range, requestId } = request;
+  query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
+    const { intervalMs, maxDataPoints, range, requestId } = request;
     const orgId = config.bootData.user.orgId;
+    let targets = request.targets;
+    if (this.filterQuery) {
+      targets = targets.filter(q => this.filterQuery!(q));
+    }
     const queries = targets.map(q => {
+      let datasourceId = this.id;
       if (q.datasource === ExpressionDatasourceID) {
         return {
           ...q,
-          datasourceId: this.id,
+          datasourceId,
           orgId,
         };
       }
-      const dsName = q.datasource && q.datasource !== 'default' ? q.datasource : config.defaultDatasource;
-      const ds = config.datasources[dsName];
-      if (!ds) {
-        throw new Error('Unknown Datasource: ' + q.datasource);
+      if (q.datasource) {
+        const dsName = q.datasource === 'default' ? config.defaultDatasource : q.datasource;
+        const ds = config.datasources[dsName];
+        if (!ds) {
+          throw new Error('Unknown Datasource: ' + q.datasource);
+        }
+        datasourceId = ds.id;
       }
       return {
-        ...this.applyTemplateVariables(q),
-        datasourceId: ds.id,
+        ...this.applyTemplateVariables(q, request.scopedVars),
+        datasourceId,
         intervalMs,
         maxDataPoints,
         orgId,
       };
     });
+
+    // Return early if no queries exist
+    if (!queries.length) {
+      return of({ data: [] });
+    }
 
     const body: any = {
       queries,
@@ -95,22 +110,47 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return toDataQueryResponse(rsp);
+        const dqs = toDataQueryResponse(rsp);
+        if (this.processResponse) {
+          return this.processResponse(dqs);
+        }
+        return dqs;
       })
       .catch(err => {
         err.isHandled = true; // Avoid extra popup warning
-        return toDataQueryResponse(err);
+        const dqs = toDataQueryResponse(err);
+        if (this.processResponse) {
+          return this.processResponse(dqs);
+        }
+        return dqs;
       });
 
     return from(req);
   }
 
   /**
+   * Optionally augment the response before returning the results to the
+   */
+  processResponse?(res: DataQueryResponse): Promise<DataQueryResponse>;
+
+  /**
+   * Optionally process the results for display
+   */
+  processDataFrameResult?(frame: DataFrame, idx: number): Promise<DataFrame>;
+
+  /**
+   * Override to skip executing a query
+   *
+   * @virtual
+   */
+  filterQuery?(query: TQuery): boolean;
+
+  /**
    * Override to apply template variables
    *
    * @virtual
    */
-  applyTemplateVariables(query: DataQuery) {
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
     return query;
   }
 
