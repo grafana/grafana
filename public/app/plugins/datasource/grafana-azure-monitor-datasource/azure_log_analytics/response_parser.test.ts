@@ -3,7 +3,7 @@ import { expect } from '../../../../../test/lib/common';
 
 describe('createSchemaFunctions', () => {
   describe('when called and results have functions', () => {
-    it('then is should return correct result', () => {
+    it('then it should return correct result', () => {
       const functions = [
         { name: 'some name', body: 'some body', displayName: 'some displayName', category: 'some category' },
       ];
