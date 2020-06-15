@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -62,8 +61,8 @@ func TestGetHomeDashboard(t *testing.T) {
 
 		res := GetHomeDashboard(req)
 		nr, ok := res.(*NormalResponse)
-		assert.True(t, ok, "should return *NormalResponse")
-		assert.Equal(t, b, nr.body)
+		require.True(t, ok, "should return *NormalResponse")
+		require.Equal(t, b, nr.body)
 	}
 }
 
