@@ -5,7 +5,11 @@ ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_SDK=MacOSX10.10.sdk \
     OSX_MIN=10.10 \
     CTNG=1.24.0 \
-    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63
+    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63 \
+    GOLANGCILINT_VERSION=1.24.0 \
+    GOLANGCILINT_CHKSUM=241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179
+
+WORKDIR /tmp
 
 # FIRST PART
 # build osx64 toolchain (stripped of man documentation)
@@ -72,6 +76,11 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
+RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
+RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
+RUN tar xf golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
+RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
+
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20200514
@@ -84,6 +93,7 @@ ENV GOVERSION=1.14.3 \
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
+COPY --from=toolchain /tmp/golangci-lint /usr/local/bin
 
 RUN apt-get update && \
     apt-get upgrade -yq && \

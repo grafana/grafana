@@ -8,6 +8,7 @@ import { login } from './login';
 import { openDashboard } from './openDashboard';
 import { saveDashboard } from './saveDashboard';
 import { openPanelMenuItem, PanelMenuItems } from './openPanelMenuItem';
+import { revertAllChanges } from './revertAllChanges';
 
 export const Flows = {
   addDashboard,
@@ -21,4 +22,5 @@ export const Flows = {
   saveDashboard,
   openPanelMenuItem,
   PanelMenuItems,
+  revertAllChanges,
 };
