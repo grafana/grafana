@@ -784,9 +784,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DefaultHomeDashboardPath = DefaultHomeDashboardPath
-	if err != nil {
-		return err
-	}
 
 	cfg.DashboardVersionsToKeep = DashboardVersionsToKeep
 	cfg.MinRefreshInterval = MinRefreshInterval
