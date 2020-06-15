@@ -332,7 +332,11 @@ func GetHomeDashboard(c *models.ReqContext) Response {
 		log.Warn("Failed to get slug from database, %s", err.Error())
 	}
 
-	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
+	filePath := setting.DefaultHomeDashboardPath
+	if filePath == "" {
+		filePath = path.Join(setting.StaticRootPath, "dashboards/home.json")
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)

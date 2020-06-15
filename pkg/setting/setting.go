@@ -117,8 +117,9 @@ var (
 	SnapshotPublicMode    bool
 
 	// Dashboard history
-	DashboardVersionsToKeep int
-	MinRefreshInterval      string
+	DashboardVersionsToKeep  int
+	MinRefreshInterval       string
+	DefaultHomeDashboardPath string
 
 	// User settings
 	AllowUserSignUp         bool
@@ -271,6 +272,11 @@ type Cfg struct {
 	PluginsAllowUnsigned             []string
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
+
+	// Dashboards
+	DashboardVersionsToKeep  int
+	MinRefreshInterval       string
+	DefaultHomeDashboardPath string
 
 	// Auth
 	LoginCookieName              string
@@ -775,6 +781,15 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
+	cfg.DefaultHomeDashboardPath = DefaultHomeDashboardPath
+	if err != nil {
+		return err
+	}
+
+	cfg.DashboardVersionsToKeep = DashboardVersionsToKeep
+	cfg.MinRefreshInterval = MinRefreshInterval
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)

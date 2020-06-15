@@ -26,6 +26,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	err := cfg.Load(&setting.CommandLineArgs{
 		HomePath: "../../",
 	})
+
 	require.NoError(t, err)
 	bus.AddHandler("test", func(query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
@@ -34,24 +35,50 @@ func TestGetHomeDashboard(t *testing.T) {
 		return nil
 	})
 
-	f, err := ioutil.ReadFile("../../public/dashboards/home.json")
-	require.NoError(t, err)
-	dash := dtos.DashboardFullWithMeta{}
-	dash.Meta.IsHome = true
-	dash.Meta.CanEdit = req.SignedInUser.HasRole(models.ROLE_EDITOR)
-	dash.Meta.FolderTitle = "General"
-	bytes, err := simplejson.NewJson(f)
-	require.NoError(t, err)
+	t.Run("should return dashboards/home.json as defualt", func(t *testing.T) {
+		dash := dtos.DashboardFullWithMeta{}
+		dash.Meta.IsHome = true
+		dash.Meta.CanEdit = req.SignedInUser.HasRole(models.ROLE_EDITOR)
+		dash.Meta.FolderTitle = "General"
 
-	dash.Dashboard = bytes
+		homeDashJSON, err := ioutil.ReadFile("../../public/dashboards/home.json")
+		require.NoError(t, err)
+		bytes, err := simplejson.NewJson(homeDashJSON)
+		require.NoError(t, err)
 
-	b, err := json.Marshal(dash)
-	require.NoError(t, err)
+		dash.Dashboard = bytes
 
-	res := GetHomeDashboard(req)
-	nr, ok := res.(*NormalResponse)
-	assert.True(t, ok, "should return *NormalResponse")
-	assert.Equal(t, b, nr.body)
+		b, err := json.Marshal(dash)
+		require.NoError(t, err)
+
+		res := GetHomeDashboard(req)
+		nr, ok := res.(*NormalResponse)
+		assert.True(t, ok, "should return *NormalResponse")
+		assert.Equal(t, b, nr.body)
+	})
+
+	t.Run("should return X is settings.HomeDashboardPath is set", func(t *testing.T) {
+		dash := dtos.DashboardFullWithMeta{}
+		dash.Meta.IsHome = true
+		dash.Meta.CanEdit = req.SignedInUser.HasRole(models.ROLE_EDITOR)
+		dash.Meta.FolderTitle = "General"
+
+		homeDashJSON, err := ioutil.ReadFile("../../public/dashboards/default.json")
+		setting.DefaultHomeDashboardPath = "../../public/dashboards/default.json"
+		require.NoError(t, err)
+		bytes, err := simplejson.NewJson(homeDashJSON)
+		require.NoError(t, err)
+
+		dash.Dashboard = bytes
+
+		b, err := json.Marshal(dash)
+		require.NoError(t, err)
+
+		res := GetHomeDashboard(req)
+		nr, ok := res.(*NormalResponse)
+		assert.True(t, ok, "should return *NormalResponse")
+		assert.Equal(t, b, nr.body)
+	})
 }
 
 // This tests three main scenarios.
