@@ -104,7 +104,7 @@ const darkTheme: GrafanaTheme = {
     queryOrange: basicColors.orange,
     online: basicColors.greenBase,
     warn: '#f79520',
-    critical: basicColors.redBase,
+    critical: '#ff7389',
   },
   colors: {
     ...backgrounds,
