@@ -9,59 +9,59 @@ import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
 import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
-export interface Props {
+export interface OwnProps {
   onCloseSearch: () => void;
   folder?: string;
 }
 
-export const DashboardSearch: FC<Props & ConnectProps & DispatchProps> = memo(
-  ({ onCloseSearch, folder, params, updateLocation }) => {
-    const payload = folder ? { query: `folder:${folder} ` } : {};
-    const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
-      {
-        ...payload,
-        ...params,
-      },
-      updateLocation
-    );
-    const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-    const theme = useTheme();
-    const styles = getStyles(theme);
+export type Props = OwnProps & ConnectProps & DispatchProps;
 
-    return (
-      <div tabIndex={0} className={styles.overlay}>
-        <div className={styles.container}>
-          <div className={styles.searchField}>
-            <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
-            <div className={styles.closeBtn}>
-              <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
-            </div>
-          </div>
-          <div className={styles.search}>
-            <ActionRow
-              {...{
-                onLayoutChange,
-                onSortChange,
-                onTagFilterChange,
-                query,
-              }}
-            />
-            <CustomScrollbar>
-              <SearchResults
-                results={results}
-                loading={loading}
-                onTagSelected={onTagAdd}
-                editable={false}
-                onToggleSection={onToggleSection}
-                layout={query.layout}
-              />
-            </CustomScrollbar>
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder, params, updateLocation }) => {
+  const payload = folder ? { query: `folder:${folder} ` } : {};
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
+    {
+      ...payload,
+      ...params,
+    },
+    updateLocation
+  );
+  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
+  return (
+    <div tabIndex={0} className={styles.overlay}>
+      <div className={styles.container}>
+        <div className={styles.searchField}>
+          <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+          <div className={styles.closeBtn}>
+            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
+        <div className={styles.search}>
+          <ActionRow
+            {...{
+              onLayoutChange,
+              onSortChange,
+              onTagFilterChange,
+              query,
+            }}
+          />
+          <CustomScrollbar>
+            <SearchResults
+              results={results}
+              loading={loading}
+              onTagSelected={onTagAdd}
+              editable={false}
+              onToggleSection={onToggleSection}
+              layout={query.layout}
+            />
+          </CustomScrollbar>
+        </div>
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
 
 export default connectWithRouteParams(DashboardSearch);
 
