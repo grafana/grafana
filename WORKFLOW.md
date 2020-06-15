@@ -12,7 +12,7 @@ Team members and their access to repositories is maintained through [GitHub team
 
 ## Proposing changes
 
-Examples of proposed changes are overarching architecture, subsets, and specific code or graphical elements. Proposed changes SHOULD cover the big picture and intention, but individual parts SHOULD be split into the smallest possible changes. Changes SHOULD be based on and target the master branch. Depending on size of the proposed change, each change SHOULD be discussed, in increasing order of change size and complexity:
+Examples of proposed changes are overarching architecture, component design, and specific code or graphical elements. Proposed changes SHOULD cover the big picture and intention, but individual parts SHOULD be split into the smallest possible changes. Changes SHOULD be based on and target the master branch. Depending on size of the proposed change, each change SHOULD be discussed, in increasing order of change size and complexity:
 * Directly in a RR (Pull Request) - this MAY be done, but SHOULD not be the common case
 * Issue
 * Developer mailing list
@@ -44,7 +44,7 @@ Once a PR is approved as per above, any team member MAY merge the PR.
 
 Grafana uses trunk-based development.
 
-In particular, we found that the following principles match how we work
+In particular, we found that the following principles match how we work:
 * Master and release branches MUST always build without failure.
 * Branches SHOULD be merged often. Larger changes SHOULD be activated with feature flags until they are ready. Long-lived development branches SHOULD be avoided.
 * Changes MAY be enabled by default once they are in a complete state
