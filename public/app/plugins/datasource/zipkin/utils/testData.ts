@@ -1,4 +1,4 @@
-import { SpanData, TraceData } from '@jaegertracing/jaeger-ui-components';
+import { SpanData, TraceData } from '@grafana/data';
 import { ZipkinSpan } from '../types';
 
 export const zipkinResponse: ZipkinSpan[] = [

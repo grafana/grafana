@@ -1,4 +1,4 @@
-package backendplugin
+package grpcplugin
 
 import (
 	"io"
