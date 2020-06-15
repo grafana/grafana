@@ -26,6 +26,7 @@ type NotifierPlugin struct {
 	Name            string          `json:"name"`
 	Heading         string          `json:"heading"`
 	Description     string          `json:"description"`
+	Info            string          `json:"info"`
 	OptionsTemplate string          `json:"optionsTemplate"`
 	Factory         NotifierFactory `json:"-"`
 	Options         []Option        `json:"options"`

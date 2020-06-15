@@ -46,11 +46,21 @@ class NewAlertNotificationPage extends PureComponent<Props> {
   }
 
   onSubmit = (data: NotificationChannelDTO) => {
+    /*
+      Some settings can be options in a select, in order to not save a SelectableValue<T>
+      we need to use check if it is a SelectableValue and use its value.
+    */
+    const settings = Object.fromEntries(
+      Object.entries(data.settings).map(([key, value]) => {
+        return [key, value.hasOwnProperty('value') ? value.value : value];
+      })
+    );
+
     this.props.createNotificationChannel({
       ...defaultValues,
       ...data,
       type: data.type.value,
-      settings: { ...Object.assign(defaultValues.settings, data.settings) },
+      settings: { ...Object.assign(defaultValues.settings, settings) },
     });
   };
 

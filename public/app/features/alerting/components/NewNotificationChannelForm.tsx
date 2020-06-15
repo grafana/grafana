@@ -96,6 +96,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
       {selectedChannel && (
         <>
           <h3>{selectedChannel.heading}</h3>
+          {selectedChannel.info !== '' && <InfoBox>{selectedChannel.info}</InfoBox>}
           {selectedChannel.options.map((option: Option, index: number) => {
             const key = `${option.label}-${index}`;
 

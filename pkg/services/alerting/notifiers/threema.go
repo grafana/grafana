@@ -21,7 +21,9 @@ func init() {
 		Name:        "Threema Gateway",
 		Description: "Sends notifications to Threema using the Threema Gateway",
 		Heading:     "Threema Gateway settings",
-		Factory:     NewThreemaNotifier,
+		Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
+			"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
+		Factory: NewThreemaNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Threema Gateway settings</h3>
       <p>

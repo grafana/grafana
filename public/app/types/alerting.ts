@@ -71,6 +71,7 @@ export interface NotificationChannel {
   type: NotifierType;
   heading: string;
   options: Option[];
+  info: string;
 }
 
 export interface NotificationChannelDTO {
@@ -82,6 +83,7 @@ export interface NotificationChannelDTO {
   frequency: string;
   settings: ChannelTypeSettings;
   isDefault: boolean;
+  info: string;
 }
 
 export interface ChannelTypeSettings {
