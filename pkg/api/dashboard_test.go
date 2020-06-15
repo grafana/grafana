@@ -26,6 +26,10 @@ func TestGetHomeDashboard(t *testing.T) {
 		HomePath: "../../",
 	})
 
+	hs := &HTTPServer{
+		Cfg: cfg,
+	}
+
 	require.NoError(t, err)
 	bus.AddHandler("test", func(query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
@@ -49,8 +53,8 @@ func TestGetHomeDashboard(t *testing.T) {
 		dash.Meta.FolderTitle = "General"
 
 		homeDashJSON, err := ioutil.ReadFile(tc.expectedDashboardPath)
-		setting.DefaultHomeDashboardPath = tc.defaultSetting
 		require.NoError(t, err)
+		hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
 		bytes, err := simplejson.NewJson(homeDashJSON)
 		require.NoError(t, err)
 
@@ -59,7 +63,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		b, err := json.Marshal(dash)
 		require.NoError(t, err)
 
-		res := GetHomeDashboard(req)
+		res := hs.GetHomeDashboard(req)
 		nr, ok := res.(*NormalResponse)
 		require.True(t, ok, "should return *NormalResponse")
 		require.Equal(t, b, nr.body)

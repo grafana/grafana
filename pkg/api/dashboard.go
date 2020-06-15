@@ -315,7 +315,8 @@ func dashboardSaveErrorToApiResponse(err error) Response {
 	return Error(500, "Failed to save dashboard", err)
 }
 
-func GetHomeDashboard(c *models.ReqContext) Response {
+// GetHomeDashboard return the home dashboard
+func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
@@ -332,7 +333,7 @@ func GetHomeDashboard(c *models.ReqContext) Response {
 		log.Warn("Failed to get slug from database, %s", err.Error())
 	}
 
-	filePath := setting.DefaultHomeDashboardPath
+	filePath := hs.Cfg.DefaultHomeDashboardPath
 	if filePath == "" {
 		filePath = path.Join(setting.StaticRootPath, "dashboards/home.json")
 	}

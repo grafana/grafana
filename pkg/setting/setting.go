@@ -117,9 +117,8 @@ var (
 	SnapshotPublicMode    bool
 
 	// Dashboard history
-	DashboardVersionsToKeep  int
-	MinRefreshInterval       string
-	DefaultHomeDashboardPath string
+	DashboardVersionsToKeep int
+	MinRefreshInterval      string
 
 	// User settings
 	AllowUserSignUp         bool
@@ -274,8 +273,6 @@ type Cfg struct {
 	EnterpriseLicensePath            string
 
 	// Dashboards
-	DashboardVersionsToKeep  int
-	MinRefreshInterval       string
 	DefaultHomeDashboardPath string
 
 	// Auth
@@ -782,11 +779,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
-	cfg.DefaultHomeDashboardPath = DefaultHomeDashboardPath
-
-	cfg.DashboardVersionsToKeep = DashboardVersionsToKeep
-	cfg.MinRefreshInterval = MinRefreshInterval
+	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
