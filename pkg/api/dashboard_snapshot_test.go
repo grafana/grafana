@@ -155,8 +155,8 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 				var writeErr error
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						rw.WriteHeader(500)
 						_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
+						rw.WriteHeader(500)
 					})
 
 					mockSnapshotResult.ExternalDeleteUrl = ts.URL

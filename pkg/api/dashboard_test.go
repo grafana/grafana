@@ -45,7 +45,6 @@ func TestGetHomeDashboard(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			dash := dtos.DashboardFullWithMeta{}
 			dash.Meta.IsHome = true
-			//dash.Meta.CanEdit = false
 			dash.Meta.FolderTitle = "General"
 
 			homeDashJSON, err := ioutil.ReadFile(tc.expectedDashboardPath)
