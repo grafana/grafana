@@ -60,8 +60,8 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt := nts[0]
 			So(nt.Name, ShouldEqual, "default-slack-notification")
 			So(nt.Type, ShouldEqual, "slack")
-			So(nt.OrgId, ShouldEqual, 2)
-			So(nt.Uid, ShouldEqual, "notifier1")
+			So(nt.OrgID, ShouldEqual, 2)
+			So(nt.UID, ShouldEqual, "notifier1")
 			So(nt.IsDefault, ShouldBeTrue)
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
@@ -72,45 +72,45 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt = nts[1]
 			So(nt.Name, ShouldEqual, "another-not-default-notification")
 			So(nt.Type, ShouldEqual, "email")
-			So(nt.OrgId, ShouldEqual, 3)
-			So(nt.Uid, ShouldEqual, "notifier2")
+			So(nt.OrgID, ShouldEqual, 3)
+			So(nt.UID, ShouldEqual, "notifier2")
 			So(nt.IsDefault, ShouldBeFalse)
 
 			nt = nts[2]
 			So(nt.Name, ShouldEqual, "check-unset-is_default-is-false")
 			So(nt.Type, ShouldEqual, "slack")
-			So(nt.OrgId, ShouldEqual, 3)
-			So(nt.Uid, ShouldEqual, "notifier3")
+			So(nt.OrgID, ShouldEqual, 3)
+			So(nt.UID, ShouldEqual, "notifier3")
 			So(nt.IsDefault, ShouldBeFalse)
 
 			nt = nts[3]
 			So(nt.Name, ShouldEqual, "Added notification with whitespaces in name")
 			So(nt.Type, ShouldEqual, "email")
-			So(nt.Uid, ShouldEqual, "notifier4")
-			So(nt.OrgId, ShouldEqual, 3)
+			So(nt.UID, ShouldEqual, "notifier4")
+			So(nt.OrgID, ShouldEqual, 3)
 
 			deleteNts := ntCfg.DeleteNotifications
 			So(len(deleteNts), ShouldEqual, 4)
 
 			deleteNt := deleteNts[0]
 			So(deleteNt.Name, ShouldEqual, "default-slack-notification")
-			So(deleteNt.Uid, ShouldEqual, "notifier1")
-			So(deleteNt.OrgId, ShouldEqual, 2)
+			So(deleteNt.UID, ShouldEqual, "notifier1")
+			So(deleteNt.OrgID, ShouldEqual, 2)
 
 			deleteNt = deleteNts[1]
 			So(deleteNt.Name, ShouldEqual, "deleted-notification-without-orgId")
-			So(deleteNt.OrgId, ShouldEqual, 1)
-			So(deleteNt.Uid, ShouldEqual, "notifier2")
+			So(deleteNt.OrgID, ShouldEqual, 1)
+			So(deleteNt.UID, ShouldEqual, "notifier2")
 
 			deleteNt = deleteNts[2]
 			So(deleteNt.Name, ShouldEqual, "deleted-notification-with-0-orgId")
-			So(deleteNt.OrgId, ShouldEqual, 1)
-			So(deleteNt.Uid, ShouldEqual, "notifier3")
+			So(deleteNt.OrgID, ShouldEqual, 1)
+			So(deleteNt.UID, ShouldEqual, "notifier3")
 
 			deleteNt = deleteNts[3]
 			So(deleteNt.Name, ShouldEqual, "Deleted notification with whitespaces in name")
-			So(deleteNt.OrgId, ShouldEqual, 1)
-			So(deleteNt.Uid, ShouldEqual, "notifier4")
+			So(deleteNt.OrgID, ShouldEqual, 1)
+			So(deleteNt.UID, ShouldEqual, "notifier4")
 		})
 
 		Convey("One configured notification", func() {
