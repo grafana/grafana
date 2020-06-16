@@ -45,4 +45,4 @@ Use the trace selector to pick particular trace from all traces logged in the ti
 
 ## Linking Trace ID from logs
 
-You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "../loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "../loki.md" >}}) documentation for details.
+You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) documentation for details.
