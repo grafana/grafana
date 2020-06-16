@@ -49,14 +49,14 @@ const NotificationsListPage: FC = () => {
     <Page navModel={navModel}>
       <Page.Contents>
         {state.error && <p>{state.error}</p>}
+        <div className="page-action-bar">
+          <div className="page-action-bar__spacer" />
+          <LinkButton icon="channel-add" href="alerting/notification/new">
+            New channel
+          </LinkButton>
+        </div>
         {!!notifications.length && (
           <>
-            <div className="page-action-bar">
-              <div className="page-action-bar__spacer" />
-              <LinkButton icon="channel-add" href="alerting/notification/new">
-                New channel
-              </LinkButton>
-            </div>
             <table className="filter-table filter-table--hover">
               <thead>
                 <tr>
