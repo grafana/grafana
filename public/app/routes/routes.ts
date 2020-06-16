@@ -425,8 +425,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
-      templateUrl: 'public/app/partials/reset_password.html',
-      controller: 'ResetPasswordCtrl',
+      // templateUrl: 'public/app/partials/reset_password.html',
+      // controller: 'ResetPasswordCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(
+              /* webpackChunkName: "SendResetMailPage" */ 'app/core/components/ForgottenPassword/SendResetMailPage'
+            )
+          ),
+      },
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/reset', {

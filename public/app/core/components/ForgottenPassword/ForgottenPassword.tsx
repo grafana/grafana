@@ -1,7 +1,6 @@
 import React, { FC, useState } from 'react';
-import { Form, Field, Input, Button, Legend, Container, useStyles, HorizontalGroup } from '@grafana/ui';
+import { Form, Field, Input, Button, Legend, Container, useStyles, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
-import { submitButton } from './LoginForm';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -33,9 +32,9 @@ export const ForgottenPassword: FC = () => {
       <div>
         <p>An email with a reset link has been sent to the email address. You should receive it shortly.</p>
         <Container margin="md" />
-        <Button variant="primary" onClick={() => window.location.reload()}>
+        <LinkButton variant="primary" href="/login">
           Back to login
-        </Button>
+        </LinkButton>
       </div>
     );
   }
@@ -54,9 +53,9 @@ export const ForgottenPassword: FC = () => {
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>
-            <Button variant="link" onClick={() => window.location.reload()}>
+            <LinkButton variant="link" href="/login">
               Back to login
-            </Button>
+            </LinkButton>
           </HorizontalGroup>
 
           <p className={styles}>Did you forget your username or email? Contact your Grafana administrator.</p>
