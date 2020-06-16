@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -31,14 +32,23 @@ func (e URLValidationError) Unwrap() error {
 // missing (i.e., "://"), in order to catch these as invalid when parsing.
 var reURL = regexp.MustCompile("^[^:]*://")
 
-// ValidateURL validates a data source URL.
+// ValidateURL validates a data source's URL.
 //
-// If successful, the valid URL object is returned, otherwise an error is returned.
-func ValidateURL(urlStr string) (*url.URL, error) {
+// The data source's type and URL must be provided. If successful, the valid URL object is returned, otherwise an
+// error is returned.
+func ValidateURL(typeName, urlStr string) (*url.URL, error) {
+	switch strings.ToLower(typeName) {
+	case "mssql":
+		return validateMSSQLURL(urlStr)
+	default:
+		logger.Debug("Applying default URL parsing for this data source type", "type", typeName, "url", urlStr)
+	}
+
 	// Make sure the URL starts with a protocol specifier, so parsing is unambiguous
 	if !reURL.MatchString(urlStr) {
 		logger.Debug(
-			"Data source URL doesn't specify protocol, so prepending it with http:// in order to make it unambiguous")
+			"Data source URL doesn't specify protocol, so prepending it with http:// in order to make it unambiguous",
+			"type", typeName, "url", urlStr)
 		urlStr = fmt.Sprintf("http://%s", urlStr)
 	}
 	u, err := url.Parse(urlStr)
@@ -47,4 +57,24 @@ func ValidateURL(urlStr string) (*url.URL, error) {
 	}
 
 	return u, nil
+}
+
+func validateMSSQLURL(u string) (*url.URL, error) {
+	logger.Debug("Validating MSSQL URL", "url", u)
+
+	// Recognize ODBC connection strings like host\instance:1234
+	reODBC := regexp.MustCompile(`^[^\\]+(:?\\[^:]+)?(:?:\d+)?$`)
+	var host string
+	switch {
+	case reODBC.MatchString(u):
+		logger.Debug("Recognized as ODBC URL format", "url", u)
+		host = u
+	default:
+		logger.Debug("Couldn't recognize as valid MSSQL URL", "url", u)
+		return nil, fmt.Errorf("unrecognized MSSQL URL format: %q", u)
+	}
+	return &url.URL{
+		Scheme: "sqlserver",
+		Host:   host,
+	}, nil
 }

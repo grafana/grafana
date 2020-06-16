@@ -583,9 +583,33 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	}
 	cfg := setting.Cfg{}
 	plugin := plugins.DataSourcePlugin{}
+
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 
 	require.NoError(t, err)
+}
+
+func TestNewDataSourceProxy_MSSQLODBCURL(t *testing.T) {
+	ctx := models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{},
+		},
+		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+	}
+	ds := models.DataSource{
+		Type: "mssql",
+		Url:  `localhost\instance:1433`,
+	}
+	cfg := setting.Cfg{}
+	plugin := plugins.DataSourcePlugin{}
+
+	p, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+	require.NoError(t, err)
+
+	require.Equal(t, &url.URL{
+		Scheme: "sqlserver",
+		Host:   ds.Url,
+	}, p.targetUrl)
 }
 
 type CloseNotifierResponseRecorder struct {
