@@ -3,13 +3,15 @@ package plugins
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -82,49 +84,130 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
+func getChksums(dpath, manifestPath string, log log.Logger) (map[string]string, error) {
+	manifestPath = filepath.Clean(manifestPath)
+
+	chksums := map[string]string{}
+	if err := filepath.Walk(dpath, func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if fi.IsDir() {
+			return nil
+		}
+
+		path = filepath.Clean(path)
+
+		// Handle symbolic links
+		if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
+			finalPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+
+			log.Debug("Handling symlink", "source", path, "target", finalPath)
+
+			info, err := os.Stat(finalPath)
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return nil
+			}
+
+			if _, err := filepath.Rel(dpath, finalPath); err != nil {
+				return fmt.Errorf("symbolic link %q targets a file outside of the plugin directory: %q", path, finalPath)
+			}
+
+			if finalPath == manifestPath {
+				return nil
+			}
+
+			fi = info
+		}
+
+		if path == manifestPath {
+			return nil
+		}
+
+		// Ignore images
+		for _, sfx := range []string{"png", "gif", "svg"} {
+			if strings.HasSuffix(fi.Name(), fmt.Sprintf(".%s", sfx)) {
+				return nil
+			}
+		}
+
+		h := sha256.New()
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		if _, err := io.Copy(h, f); err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(dpath, path)
+		if err != nil {
+			return err
+		}
+		chksums[relPath] = fmt.Sprintf("%x", h.Sum(nil))
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return chksums, nil
+}
+
 // getPluginSignatureState returns the signature state for a plugin.
-func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature {
+func getPluginSignatureState(log log.Logger, plugin *PluginBase) (PluginSignature, error) {
 	log.Debug("Getting signature state of plugin", "plugin", plugin.Id)
 	manifestPath := path.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
-		return PluginSignatureUnsigned
+		return PluginSignatureUnsigned, nil
 	}
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
-		return PluginSignatureInvalid
+		return PluginSignatureInvalid, nil
 	}
 
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.Id || manifest.Version != plugin.Info.Version {
-		return PluginSignatureModified
+		return PluginSignatureModified, nil
+	}
+
+	chksums, err := getChksums(plugin.PluginDir, manifestPath, log)
+	if err != nil {
+		return PluginSignatureInvalid, err
+	}
+	if len(chksums) != len(manifest.Files) {
+		log.Warn("Plugin's files differ from manifest", "plugin", plugin.Id)
+		return PluginSignatureModified, nil
 	}
 
 	// Verify the manifest contents
 	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
 	for p, hash := range manifest.Files {
-		// Open the file
 		fp := path.Join(plugin.PluginDir, p)
-		f, err := os.Open(fp)
-		if err != nil {
-			return PluginSignatureModified
-		}
-		defer f.Close()
 
-		h := sha256.New()
-		if _, err := io.Copy(h, f); err != nil {
-			log.Warn("Couldn't read plugin file", "plugin", plugin.Id, "filename", fp)
-			return PluginSignatureModified
+		gotHash, ok := chksums[p]
+		if !ok {
+			log.Warn("Plugin file from manifest is missing", "plugin", plugin.Id, "filename", fp)
 		}
-		sum := hex.EncodeToString(h.Sum(nil))
-		if sum != hash {
+		if gotHash != hash {
 			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.Id, "filename", fp)
-			return PluginSignatureModified
+			return PluginSignatureModified, nil
 		}
 	}
 
+	log.Debug("Plugin's signature is valid", "plugin", plugin.Id)
+
 	// Everything OK
-	return PluginSignatureValid
+	return PluginSignatureValid, nil
 }
