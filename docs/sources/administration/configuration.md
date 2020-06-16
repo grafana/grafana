@@ -305,7 +305,7 @@ Defaults to `private`.
 
 ### type
 
-Either `redis`, `memcached` or `database`. Defaults to `database`
+Either `redis`, `memcached`, or `database`. Defaults to `database`
 
 ### connstr
 
@@ -327,6 +327,47 @@ Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
 #### memcache
 
 Example connstr: `127.0.0.1:11211`
+
+<hr />
+
+## [dataproxy]
+
+### logging
+
+This enables data proxy logging, default is `false`.
+
+### timeout
+
+How long the data proxy should wait before timing out. Default is `30` (seconds)
+
+### send_user_header
+
+If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
+
+<hr />
+
+## [analytics]
+
+### reporting_enabled
+
+When enabled Grafana will send anonymous usage statistics to
+`stats.grafana.org`. No IP addresses are being tracked, only simple counters to
+track running instances, versions, dashboard and error counts. It is very helpful
+to us, so please leave this enabled. Counters are sent every 24 hours. Default
+value is `true`.
+
+### check_for_updates
+
+Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
+
+### google_analytics_ua_id
+
+If you want to track Grafana usage via Google analytics specify *your* Universal
+Analytics ID here. By default this feature is disabled.
+
+### google_tag_manager_id
+
+Google Tag Manager ID, only enabled if you enter an ID here.
 
 <hr />
 
@@ -484,41 +525,6 @@ The cookie name for storing the auth token, the default is `grafana_session`.
 
 How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
-
-## [dataproxy]
-
-### logging
-
-This enables data proxy logging, default is `false`.
-
-### timeout
-
-How long the data proxy should wait before timing out. Default is `30` (seconds)
-
-### send_user_header
-
-If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
-
-<hr />
-
-## [analytics]
-
-### reporting_enabled
-
-When enabled Grafana will send anonymous usage statistics to
-`stats.grafana.org`. No IP addresses are being tracked, only simple counters to
-track running instances, versions, dashboard and error counts. It is very helpful
-to us, so please leave this enabled. Counters are sent every 24 hours. Default
-value is `true`.
-
-### google_analytics_ua_id
-
-If you want to track Grafana usage via Google analytics specify *your* Universal
-Analytics ID here. By default this feature is disabled.
-
-### check_for_updates
-
-Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
 
 <hr />
 
