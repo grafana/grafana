@@ -67,9 +67,9 @@ Making it possible to have users in multiple groups and have detailed access con
 
 ## Upgrade and Breaking changes
 
-If you're using https in grafana we now force you to use tls 1.2 and the most secure ciphers.
+If you're using HTTPS in grafana we now force you to use TLS 1.2 and the most secure ciphers.
 We think its better to be secure by default rather then making it configurable.
-If you want to run https with lower versions of tls we suggest you put a reserve proxy in front of grafana.
+If you want to run HTTPS with lower versions of TLS we suggest you put a reserve proxy in front of grafana.
 
 If you have template variables name `$__interval` or `$__interval_ms` they will no longer work since these keywords
 are reserved as global built in variables. We might add more global built in variables in the future and if we do, we will prefix them with `$__`. So please avoid using that in your template variables.

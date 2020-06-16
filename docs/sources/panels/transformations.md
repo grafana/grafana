@@ -31,13 +31,13 @@ Before you apply transformations, all of the following must be true:
 
 - You have entered a query and returned data from a data source. For more information about queries, refer to [Queries]({{< relref "queries.md" >}}).
 - You have applied a visualization that supports queries, such as:
-  - Graph
-  - Stat
-  - Gauge
-  - Bar gauge
-  - Table
-  - Heatmap
-  - Logs
+  - [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
+  - [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
+  - [Graph]({{< relref "visualizations/graph-panel.md" >}})
+  - [Heatmap]({{< relref "visualizations/heatmap.md" >}})
+  - [Logs]({{< relref "visualizations/logs-panel.md" >}})
+  - [Stat]({{< relref "visualizations/stat-panel.md" >}})
+  - [Table]({{< relref "visualizations/table-panel.md" >}})
 
 ## Apply a transformation
 
@@ -61,15 +61,22 @@ Transformations are available from the Transform tab in the bottom pane of the p
 
 Grafana comes with the following transformations:
 
-- [Reduce](#reduce) - Reduce all rows or data points to a single value using a function like max, min, mean, or last.
-- Filter by name - Filter a result set’s fields by name. This might be useful when you want to show only part of your result set.
-- Filter by query - Filter a result set by the refId of the query. This might be useful when your result set consists of multiple time series and you want to show only some of them.
-- Organize fields - Order, filter, and rename the fields in a result set. This transformation is useful when your result set contains for instance non human-readable field names or when - you want to display a table and alter the order of the columns. 
-- Join by field - Join multiple time series from a result set by field.
-- Add field from calculation - Create new fields that are the result of result set row calculation.
-- Labels to fields - Group a series by time and return labels as fields.
+- [Transformations](#transformations)
+  - [Transformation execution order](#transformation-execution-order)
+  - [Prerequisites](#prerequisites)
+  - [Apply a transformation](#apply-a-transformation)
+  - [Transformation types and options](#transformation-types-and-options)
+    - [Reduce](#reduce)
+    - [Merge](#merge)
+    - [Filter by name](#filter-by-name)
+    - [Filter data by query](#filter-data-by-query)
+    - [Organize fields](#organize-fields)
+    - [Join by field (outer join)](#join-by-field-outer-join)
+    - [Add field from calculation](#add-field-from-calculation)
+    - [Labels to fields](#labels-to-fields)
+  - [Debug transformations](#debug-transformations)
 
-Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions for how to use them.
+Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ### Reduce
 
@@ -86,6 +93,28 @@ Here's an example of a table with time series data. Before I apply the transform
 After I apply the transformation, there is no time value and each column has been reduced to one row showing the results of the calculations that I chose.
 
 {{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Merge
+
+Use this transformation to combine the result from multiple queries into one single result based on the time field. This is helpful when using the table panel visualization. 
+
+In the example below, we are visualizing multiple queries returning table data before applying the transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/table-data-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Here is the same example after applying the merge transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/table-data-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+If any of the queries return time series data, then a `Metric` column containing the name of the query is added. You can be customized this value by defining `Label` on the source query.
+
+In the example below, we are visualizing multiple queries returning time series data before applying the transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Here is the same example after applying the merge transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/time-series-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Filter by name
 
@@ -114,7 +143,7 @@ Here is the same query using a Stat visualization.
 
 ### Filter data by query
 
-Use this transformation in panels that have multiple queries if you want to hide one or more of the queries.
+Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
 Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 

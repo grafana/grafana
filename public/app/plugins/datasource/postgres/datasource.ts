@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { PostgresQueryForInterpolation } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/utils';
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class PostgresDatasource {
   id: any;
@@ -61,6 +61,7 @@ export class PostgresDatasource {
           ...query,
           datasource: this.name,
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
+          rawQuery: true,
         };
         return expandedQuery;
       });

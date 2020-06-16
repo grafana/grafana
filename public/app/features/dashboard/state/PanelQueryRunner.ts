@@ -52,13 +52,9 @@ function getNextRequestId() {
 }
 
 export interface GetDataOptions {
-  withTransforms?: boolean;
-  withFieldConfig?: boolean;
+  withTransforms: boolean;
+  withFieldConfig: boolean;
 }
-const DEFAULT_GET_DATA_OPTIONS: GetDataOptions = {
-  withTransforms: true,
-  withFieldConfig: true,
-};
 
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
@@ -75,7 +71,7 @@ export class PanelQueryRunner {
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(options: GetDataOptions = DEFAULT_GET_DATA_OPTIONS): Observable<PanelData> {
+  getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
 
     return this.subject.pipe(

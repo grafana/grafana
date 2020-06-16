@@ -41,16 +41,18 @@ Ready to learn more? Check out our other tutorials:
 
 Improve an existing plugin with one of our guides:
 
+- [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins" >}})
 - [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
+- [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
 - [Add support for variables]({{< relref "add-support-for-variables.md" >}})
-- [Build a logs data source]({{< relref "build-a-logs-data-source.md" >}})
+- [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
+- [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
 
 ### Concepts
 
 Deepen your knowledge through a series of high-level overviews of plugin concepts:
 
 - [Data frames]({{< relref "data-frames.md" >}})
-- [Authentication for data source plugins]({{< relref "authentication.md" >}})
 
 ### UI library
 

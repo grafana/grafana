@@ -3,11 +3,16 @@ import {
   applyFieldOverrides,
   DataFrame,
   DataTransformerID,
+  dateTimeFormat,
+  getFrameDisplayName,
   SelectableValue,
   toCSV,
   transformDataFrame,
-  getFrameDisplayName,
-  dateTimeFormat,
+  getTimeField,
+  FieldType,
+  FormattedVector,
+  DisplayProcessor,
+  getDisplayProcessor,
 } from '@grafana/data';
 import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -52,6 +57,32 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportCsv = (dataFrame: DataFrame) => {
     const { panel } = this.props;
     const { transformId } = this.state;
+
+    // Replace the time field with a formatted time
+    const { timeIndex, timeField } = getTimeField(dataFrame);
+    if (timeField) {
+      // Use the configurd date or standandard time display
+      let processor: DisplayProcessor = timeField.display;
+      if (!processor) {
+        processor = getDisplayProcessor({
+          field: timeField,
+        });
+      }
+
+      const formattedDateField = {
+        ...timeField,
+        type: FieldType.string,
+        values: new FormattedVector(timeField.values, processor),
+      };
+
+      const fields = [...dataFrame.fields];
+      fields[timeIndex] = formattedDateField;
+      dataFrame = {
+        ...dataFrame,
+        fields,
+      };
+    }
+
     const dataFrameCsv = toCSV([dataFrame]);
 
     const blob = new Blob([dataFrameCsv], {
@@ -110,8 +141,53 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   }
 
+  renderDataOptions = () => {
+    const { options, onOptionsChange, panel } = this.props;
+    const { transformId } = this.state;
+    const styles = getPanelInspectorStyles();
+
+    const panelTransformations = panel.getTransformations();
+    const showPanelTransformationsOption =
+      panelTransformations && panelTransformations.length > 0 && (transformId as any) !== 'join by time';
+    const showFieldConfigsOption = !panel.plugin?.fieldConfigRegistry.isEmpty();
+    const showDataOptions = showPanelTransformationsOption || showFieldConfigsOption;
+
+    if (!showDataOptions) {
+      return null;
+    }
+
+    return (
+      <div className={cx(styles.options, styles.dataDisplayOptions)}>
+        <QueryOperationRow title={'Data display options'} isOpen={false}>
+          {showPanelTransformationsOption && (
+            <div className="gf-form-inline">
+              <Switch
+                tooltip="Data shown in the table will be transformed using transformations defined in the panel"
+                label="Apply panel transformations"
+                labelClass="width-12"
+                checked={!!options.withTransforms}
+                onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+              />
+            </div>
+          )}
+          {showFieldConfigsOption && (
+            <div className="gf-form-inline">
+              <Switch
+                tooltip="Data shown in the table will have panel field configuration applied, for example units or display name"
+                label="Apply field configuration"
+                labelClass="width-12"
+                checked={!!options.withFieldConfig}
+                onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
+              />
+            </div>
+          )}
+        </QueryOperationRow>
+      </div>
+    );
+  };
+
   render() {
-    const { isLoading, data, options, onOptionsChange } = this.props;
+    const { isLoading, data } = this.props;
     const { dataFrameIndex, transformId, transformationOptions } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -135,8 +211,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
         label: `${getFrameDisplayName(frame)} (${index})`,
       };
     });
-
-    const panelTransformations = this.props.panel.getTransformations();
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
@@ -165,35 +239,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
                     margin-bottom: 0;
                   `}
                 >
-                  <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
+                  <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} width={30} />
                 </Field>
               )}
             </div>
-
-            <div className={cx(styles.options, styles.dataDisplayOptions)}>
-              <QueryOperationRow title={'Data display options'} isOpen={false}>
-                {panelTransformations && panelTransformations.length > 0 && (transformId as any) !== 'join by time' && (
-                  <div className="gf-form-inline">
-                    <Switch
-                      tooltip="Data shown in the table will be transformed using transformations defined in the panel"
-                      label="Apply panel transformations"
-                      labelClass="width-12"
-                      checked={!!options.withTransforms}
-                      onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
-                    />
-                  </div>
-                )}
-                <div className="gf-form-inline">
-                  <Switch
-                    tooltip="Data shown in the table will have panel field configuration applied, for example units or display name"
-                    label="Apply field configuration"
-                    labelClass="width-12"
-                    checked={!!options.withFieldConfig}
-                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
-                  />
-                </div>
-              </QueryOperationRow>
-            </div>
+            {this.renderDataOptions()}
           </div>
 
           <div className={styles.options}>

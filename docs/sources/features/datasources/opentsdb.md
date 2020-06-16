@@ -45,7 +45,7 @@ can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
 ### Auto complete suggestions
 
 As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
-The autocomplete only works if the OpenTSDB suggest api is enabled.
+The autocomplete only works if the OpenTSDB suggest API is enabled.
 
 ## Templating queries
 

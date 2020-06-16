@@ -3,9 +3,8 @@ title = "Stat panel"
 description = "Stat panel documentation"
 keywords = ["grafana", "docs", "stat panel"]
 type = "docs"
-aliases =["/docs/grafana/latest/features/panels/stat/"]
-weight = 200
-draft = "true"
+aliases = ["/docs/grafana/latest/features/panels/stat/", "/docs/grafana/latest/features/panels/singlestat/", "/docs/grafana/latest/reference/singlestat/"]
+weight = 900
 +++
 
 # Stat panel
@@ -14,13 +13,15 @@ The Stat panel shows a one large stat value with an optional graph sparkline. Yo
 
 {{< docs-imagebox img="/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
+> **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0.
+
 ## Data and field options
+
 Stat visualizations allow you to apply:
-- Data transformations
-- Field settings
-- Field overrides
-- [Thresholds]({{< relref "../thresholds.md">}})
-- Value mappings
+
+- [Data transformations]({{< relref "../transformations.md" >}})
+- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+- [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Automatic layout adjustment
 

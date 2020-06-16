@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -22,7 +21,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 
 	for _, query := range queryContext.Queries {
 		query := query
-
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, queryContext, query)
 			if err != nil {
@@ -34,39 +32,23 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 			// the query response is in, there does not seem to be a way to tell
 			// by the response alone if/how the results should be grouped.
 			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-			// the "groupResults" parameter is sent along with the query to the backend so that we
+			// the "statsGroups" parameter is sent along with the query to the backend so that we
 			// can correctly group the CloudWatch logs response.
-			if query.Model.Get("groupResults").MustBool() && len(dataframe.Fields) > 0 {
-				groupingFields := findGroupingFields(dataframe.Fields)
-
-				groupedFrames, err := groupResults(dataframe, groupingFields)
+			statsGroups := query.Model.Get("statsGroups").MustStringArray()
+			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
+				groupedFrames, err := groupResults(dataframe, statsGroups)
 				if err != nil {
 					return err
 				}
 
-				encodedFrames := make([][]byte, 0)
-				for _, frame := range groupedFrames {
-					dataframeEnc, err := frame.MarshalArrow()
-					if err != nil {
-						return err
-					}
-					encodedFrames = append(encodedFrames, dataframeEnc)
-				}
-
-				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: encodedFrames}
+				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(groupedFrames)}
 				return nil
 			}
 
-			dataframeEnc, err := dataframe.MarshalArrow()
-			if err != nil {
-				return err
-			}
-
-			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: [][]byte{dataframeEnc}}
+			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe})}
 			return nil
 		})
 	}
-
 	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
@@ -76,29 +58,11 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 	response := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-
 	for result := range resultChan {
 		response.Results[result.RefId] = result
 	}
 
 	return response, nil
-}
-
-func findGroupingFields(fields []*data.Field) []string {
-	groupingFields := make([]string, 0)
-	for _, field := range fields {
-		if field.Type().Numeric() || field.Type() == data.FieldTypeNullableTime || field.Type() == data.FieldTypeTime {
-			continue
-		}
-
-		if _, err := strconv.ParseFloat(*field.At(0).(*string), 64); err == nil {
-			continue
-		}
-
-		groupingFields = append(groupingFields, field.Name)
-	}
-
-	return groupingFields
 }
 
 func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext *tsdb.TsdbQuery, query *tsdb.Query) (*data.Frame, error) {
@@ -180,7 +144,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	timestampField := data.NewField("ts", nil, timestamps)
-	timestampField.SetConfig(&data.FieldConfig{Title: "Time"})
+	timestampField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	messageField := data.NewField("line", nil, messages)
 
@@ -189,9 +153,9 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix").MustString("")
+
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
-
 	if len(logGroupNamePrefix) < 1 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
 			Limit: aws.Int64(parameters.Get("limit").MustInt64(50)),
@@ -202,7 +166,6 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
 		})
 	}
-
 	if err != nil || response == nil {
 		return nil, err
 	}
@@ -230,20 +193,26 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	}
 
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
+		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
 
 	// The fields @log and @logStream are always included in the results of a user's query
 	// so that a row's context can be retrieved later if necessary.
 	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
 	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
+	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
+
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
 		EndTime:       aws.Int64(endTime.Unix()),
-		Limit:         aws.Int64(parameters.Get("limit").MustInt64(1000)),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
-		QueryString:   aws.String("fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")),
+		QueryString:   aws.String(modifiedQueryString),
 	}
+
+	if resultsLimit, err := parameters.Get("limit").Int64(); err == nil {
+		startQueryInput.Limit = aws.Int64(resultsLimit)
+	}
+
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 
@@ -312,7 +281,6 @@ func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 	}
 
 	dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
-
 	if err != nil {
 		return nil, err
 	}

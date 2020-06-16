@@ -22,7 +22,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Group users into teams]({{< relref "#teams" >}}) and use them in the new permission system.
 - [Data source provisioning]({{< relref "#data-sources" >}}) makes it possible to setup data sources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
-- [Persistent dashboard url's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
+- [Persistent dashboard URL's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
 - [Graphite Tags and Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
 
 ### Video showing new features
@@ -129,7 +129,7 @@ Read more on [Graphite Tag Support](http://graphite.readthedocs.io/en/latest/tag
 
 <div class="clearfix"></div>
 
-## Dashboard model, persistent url's and API changes
+## Dashboard model, persistent URLs and API changes
 
 We are introducing a new unique identifier (`uid`) in the dashboard JSON model. It's automatically
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.

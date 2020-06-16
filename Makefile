@@ -4,7 +4,7 @@
 
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run run-frontend clean devenv devenv-down revive-alerting protobuf help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
@@ -42,6 +42,7 @@ build-cli: ## Build Grafana CLI application.
 build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
+	yarn run plugins:build-bundled
 
 build: build-go build-js ## Build backend and frontend.
 
@@ -80,14 +81,16 @@ revive: scripts/go/bin/revive
 		-config ./scripts/go/configs/revive.toml \
 		$(GO_FILES)
 
-revive-alerting: scripts/go/bin/revive
-	@echo "lint alerting via revive"
+revive-strict: scripts/go/bin/revive
+	@echo "lint via revive (strict)"
 	@scripts/go/bin/revive \
 		-formatter stylish \
 		-config ./scripts/go/configs/revive-strict.toml \
+		-exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
 		./pkg/services/alerting/... \
 		./pkg/services/provisioning/datasources/... \
-		./pkg/services/provisioning/dashboards/...
+		./pkg/services/provisioning/dashboards/... \
+		./pkg/plugins/backendplugin/...
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \
@@ -115,7 +118,7 @@ go-vet:
 	@echo "lint via go vet"
 	@$(GO) vet $(GO_FILES)
 
-lint-go: go-vet golangci-lint revive revive-alerting gosec ## Run all code checks for backend.
+lint-go: go-vet golangci-lint revive revive-strict gosec ## Run all code checks for backend.
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
