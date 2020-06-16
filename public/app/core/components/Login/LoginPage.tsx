@@ -13,6 +13,7 @@ import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 export const LoginPage: FC = () => {
+  document.title = Branding.AppTitle;
   const loginStyles = useStyles(getLoginStyles);
   return (
     <Branding.LoginBackground className={loginStyles.container}>
