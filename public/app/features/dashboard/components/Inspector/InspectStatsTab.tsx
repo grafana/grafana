@@ -23,10 +23,10 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, dashboar
     dataRows += frame.length;
   }
 
-  stats.push({ title: 'Total request time', value: requestTime, unit: 'ms' });
-  stats.push({ title: 'Data processing time', value: processingTime, unit: 'ms' });
-  stats.push({ title: 'Number of queries', value: data.request.targets.length });
-  stats.push({ title: 'Total number rows', value: dataRows });
+  stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
+  stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+  stats.push({ displayName: 'Number of queries', value: data.request.targets.length });
+  stats.push({ displayName: 'Total number rows', value: dataRows });
 
   let dataStats: QueryResultMetaStat[] = [];
 

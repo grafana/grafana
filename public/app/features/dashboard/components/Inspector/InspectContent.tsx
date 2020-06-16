@@ -97,7 +97,7 @@ export const InspectContent: React.FC<Props> = ({
           )}
           {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
           {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} dashboard={dashboard} />}
-          {activeTab === InspectTab.Query && <QueryInspector panel={panel} />}
+          {activeTab === InspectTab.Query && <QueryInspector panel={panel} data={data.series} />}
         </TabContent>
       </CustomScrollbar>
     </Drawer>

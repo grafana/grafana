@@ -1,6 +1,7 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, styleMixins } from '../../themes';
+import { getScrollbarWidth } from '../../utils';
 
 export interface TableStyles {
   cellHeight: number;
@@ -17,6 +18,7 @@ export interface TableStyles {
   row: string;
   theme: GrafanaTheme;
   resizeHandle: string;
+  overflow: string;
 }
 
 export const getTableStyles = stylesFactory(
@@ -30,6 +32,7 @@ export const getTableStyles = stylesFactory(
     const bodyFontSize = 14;
     const cellHeight = padding * 2 + bodyFontSize * lineHeight;
     const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
+    const scollbarWidth = getScrollbarWidth();
 
     return {
       theme,
@@ -52,7 +55,7 @@ export const getTableStyles = stylesFactory(
         position: relative;
       `,
       headerCell: css`
-        padding: ${padding}px 10px;
+        padding: ${padding}px;
         cursor: pointer;
         overflow: hidden;
         white-space: nowrap;
@@ -81,16 +84,24 @@ export const getTableStyles = stylesFactory(
 
         &:last-child {
           border-right: none;
+
+          > div {
+            padding-right: ${scollbarWidth + padding}px;
+          }
         }
       `,
       tableCellLink: css`
         text-decoration: underline;
       `,
       tableCell: css`
-        padding: ${padding}px 10px;
+        padding: ${padding}px;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+      `,
+      overflow: css`
+        overflow: hidden;
+        text-overflow: ellipsis;
       `,
       resizeHandle: css`
         label: resizeHandle;

@@ -30,7 +30,7 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
             onChangeTab();
           }
         }}
-        aria-label={selectors.components.Tab.title(label)}
+        aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
         ref={ref}
       >
         {icon && <Icon name={icon} />}

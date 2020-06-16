@@ -52,13 +52,9 @@ function getNextRequestId() {
 }
 
 export interface GetDataOptions {
-  transform?: boolean;
-  applyFieldConfig?: boolean;
+  withTransforms: boolean;
+  withFieldConfig: boolean;
 }
-const DEFAULT_GET_DATA_OPTIONS: GetDataOptions = {
-  transform: true,
-  applyFieldConfig: true,
-};
 
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
@@ -75,20 +71,15 @@ export class PanelQueryRunner {
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(options?: GetDataOptions): Observable<PanelData> {
-    const { transform, applyFieldConfig } = options
-      ? {
-          ...DEFAULT_GET_DATA_OPTIONS,
-          ...options,
-        }
-      : DEFAULT_GET_DATA_OPTIONS;
+  getData(options: GetDataOptions): Observable<PanelData> {
+    const { withFieldConfig, withTransforms } = options;
 
     return this.subject.pipe(
       map((data: PanelData) => {
         let processedData = data;
 
         // Apply transformation
-        if (transform) {
+        if (withTransforms) {
           const transformations = this.dataConfigSource.getTransformations();
 
           if (transformations && transformations.length > 0) {
@@ -99,7 +90,7 @@ export class PanelQueryRunner {
           }
         }
 
-        if (applyFieldConfig) {
+        if (withFieldConfig) {
           // Apply field defaults & overrides
           const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
           if (fieldConfig) {

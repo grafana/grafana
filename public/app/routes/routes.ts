@@ -302,10 +302,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/profile', {
-      templateUrl: 'public/app/features/profile/partials/profile.html',
-      controller: 'ProfileCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
       reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserProfileEdit" */ 'app/features/profile/UserProfileEdit')),
+      },
     })
     .when('/profile/password', {
       template: '<react-container />',
@@ -313,14 +315,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
+            import(/* webpackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
           ),
       },
     })
     .when('/profile/select-org', {
-      templateUrl: 'public/app/features/org/partials/select_org.html',
-      controller: 'SelectOrgCtrl',
+      template: '<react-container/>',
       reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')),
+      },
     })
     // ADMIN
     .when('/admin', {

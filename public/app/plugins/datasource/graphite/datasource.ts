@@ -16,7 +16,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
-import { getSearchFilterScopedVar } from '../../../features/templating/utils';
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -174,7 +174,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         unit = 'ms';
       }
 
-      stats.push({ title: key, value: meta.stats[key], unit });
+      stats.push({ displayName: key, value: meta.stats[key], unit });
     }
 
     return stats;
@@ -225,8 +225,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           const target = result.data[i];
 
           for (let y = 0; y < target.length; y++) {
-            const time = target.fields[1].values.get(y);
-            const value = target.fields[0].values.get(y);
+            const time = target.fields[0].values.get(y);
+            const value = target.fields[1].values.get(y);
 
             if (!value) {
               continue;

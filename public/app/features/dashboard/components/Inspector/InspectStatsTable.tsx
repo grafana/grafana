@@ -20,8 +20,8 @@ export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ dashboard,
         <tbody>
           {stats.map((stat, index) => {
             return (
-              <tr key={`${stat.title}-${index}`}>
-                <td>{stat.title}</td>
+              <tr key={`${stat.displayName}-${index}`}>
+                <td>{stat.displayName}</td>
                 <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
               </tr>
             );

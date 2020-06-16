@@ -23,9 +23,9 @@ Just add it as a data source and you are ready to query your log data in [Explor
 ## Adding the data source
 
 1. Open Grafana and make sure you are logged in.
-2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
-3. Click the `Add data source` button at the top.
-4. Select `Loki` from the list of data sources.
+1. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
+1. Click the `Add data source` button at the top.
+1. Select `Loki` from the list of data sources.
 
 > Note: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -59,7 +59,7 @@ The new field with the link shown in log details:
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/logs/" >}}) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
+Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
 
 ### Log Queries
 
@@ -129,8 +129,10 @@ The following filter types are currently supported:
 
 Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
-Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly.
-
+Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly. The following example for Apache2 can be used for proxying between the browser and the Grafana server:
+```
+ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
+```
 
 > Note: This feature is only available in Grafana v6.3+
 

@@ -31,7 +31,7 @@ import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
-import { getFrameDisplayTitle, getFieldTitle } from './fieldState';
+import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 
 interface OverrideProps {
@@ -100,27 +100,27 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
   return options.data.map((frame, index) => {
     const scopedVars: ScopedVars = {
-      __series: { text: 'Series', value: { name: getFrameDisplayTitle(frame, index) } }, // might be missing
+      __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
 
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const fieldScopedVars = { ...scopedVars };
-      const title = getFieldTitle(field, frame, options.data);
+      const displayName = getFieldDisplayName(field, frame, options.data);
 
       fieldScopedVars['__field'] = {
         text: 'Field',
         value: {
-          name: title, // Generally appropriate (may include the series name if useful)
-          labels: formatLabels(field.labels!),
-          label: field.labels,
+          name: displayName, // Generally appropriate (may include the series name if useful)
+          formattedLabels: formatLabels(field.labels!),
+          labels: field.labels,
         },
       };
 
       field.state = {
         ...field.state,
-        title: title,
         scopedVars: fieldScopedVars,
+        displayName,
       };
 
       const config: FieldConfig = { ...field.config };
@@ -138,7 +138,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Find any matching rules and then override
       for (const rule of override) {
-        if (rule.match(field)) {
+        if (rule.match(field, frame, options.data!)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
@@ -194,7 +194,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         type,
         state: {
           ...field.state,
-          title: null,
+          displayName: null,
         },
       };
 
@@ -228,7 +228,7 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
 export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
-  if (!item || !item.shouldApply(context.field!)) {
+  if (!item) {
     return;
   }
 
@@ -343,7 +343,7 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
-const getLinksSupplier = (
+export const getLinksSupplier = (
   frame: DataFrame,
   field: Field,
   fieldScopedVars: ScopedVars,
@@ -366,7 +366,7 @@ const getLinksSupplier = (
 
     const info: LinkModel<Field> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
-      title: replaceVariables(link.title || ''),
+      title: link.title || '',
       target: link.targetBlank ? '_blank' : '_self',
       origin: field,
     };
@@ -402,7 +402,7 @@ const getLinksSupplier = (
       }
     }
 
-    info.href = replaceVariables(info.href, {
+    const variables = {
       ...fieldScopedVars,
       __value: {
         text: 'Value',
@@ -417,8 +417,10 @@ const getLinksSupplier = (
         text: variablesQuery,
         value: variablesQuery,
       },
-    });
+    };
 
+    info.href = replaceVariables(info.href, variables);
+    info.title = replaceVariables(info.title, variables);
     info.href = locationUtil.processUrl(info.href);
 
     return info;

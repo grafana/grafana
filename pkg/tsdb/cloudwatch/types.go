@@ -46,5 +46,5 @@ type queryError struct {
 }
 
 func (e *queryError) Error() string {
-	return fmt.Sprintf("Error parsing query %s, %s", e.RefID, e.err)
+	return fmt.Sprintf("error parsing query %q, %s", e.RefID, e.err)
 }

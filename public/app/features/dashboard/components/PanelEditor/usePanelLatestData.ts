@@ -10,7 +10,7 @@ import { GetDataOptions } from '../../state/PanelQueryRunner';
 export const usePanelLatestData = (
   panel: PanelModel,
   plugin: PanelPlugin,
-  options?: GetDataOptions
+  options: GetDataOptions
 ): [PanelData | undefined, boolean, DataQueryError | undefined] => {
   const querySubscription = useRef<Unsubscribable>(null);
   const [latestData, setLatestData] = useState<PanelData>();

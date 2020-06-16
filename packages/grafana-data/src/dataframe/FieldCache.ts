@@ -57,9 +57,9 @@ export class FieldCache {
     return types && types.length > 0;
   }
 
-  getFirstFieldOfType(type: FieldType): FieldWithIndex | undefined {
+  getFirstFieldOfType(type: FieldType, includeHidden = false): FieldWithIndex | undefined {
     const fields = this.fieldByType[type];
-    const firstField = fields.find(field => !(field.config.custom && field.config.custom['Hidden']));
+    const firstField = fields.find(field => includeHidden || !field.config.custom?.hidden);
     return firstField;
   }
 

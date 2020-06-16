@@ -25,8 +25,8 @@ export type Props = OwnProps & ConnectedProps;
 
 const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultTab, plugin }) => {
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
-    transform: false,
-    applyFieldConfig: false,
+    withTransforms: false,
+    withFieldConfig: false,
   });
   const [lastResult, isLoading, error] = usePanelLatestData(panel, plugin, dataOptions);
   const metaDs = useDatasourceMetadata(lastResult);

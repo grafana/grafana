@@ -97,12 +97,13 @@ A library containing the different design components of the Grafana ecosystem.
 |  [stylesFactory(stylesCreator)](./stylesfactory/) | Creates memoized version of styles creator |
 |  [SuggestionsPlugin({ onTypeahead, cleanText, onWillApplySuggestion, portalOrigin, })](./suggestionsplugin/) |  |
 |  [useTheme()](./usetheme/) |  |
-|  [ValuePicker({ label, icon, options, onChange, variant, size, isFullWidth, })](./valuepicker/) |  |
+|  [ValuePicker({ label, icon, options, onChange, variant, size, isFullWidth, menuPlacement, })](./valuepicker/) |  |
 
 ## Interfaces
 
 |  Interface | Description |
 |  --- | --- |
+|  [BadgeProps](./badgeprops/) |  |
 |  [BigValueSparkline](./bigvaluesparkline/) |  |
 |  [CascaderOption](./cascaderoption/) |  |
 |  [CompletionItem](./completionitem/) |  |
@@ -142,6 +143,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [Alert](./alert/) |  |
 |  [ALERTING\_COLOR](./alerting_color/) |  |
 |  [AlphaNotice](./alphanotice/) |  |
+|  [Badge](./badge/) |  |
 |  [Button](./button/) |  |
 |  [ButtonCascader](./buttoncascader/) |  |
 |  [CallToActionCard](./calltoactioncard/) |  |
@@ -165,10 +167,11 @@ A library containing the different design components of the Grafana ecosystem.
 |  [Drawer](./drawer/) |  |
 |  [EmptySearchResult](./emptysearchresult/) |  |
 |  [ErrorWithStack](./errorwithstack/) |  |
+|  [FeatureInfoBox](./featureinfobox/) |  |
 |  [Field](./field/) |  |
 |  [FieldConfigItemHeaderTitle](./fieldconfigitemheadertitle/) |  |
 |  [fieldMatchersUI](./fieldmatchersui/) |  |
-|  [Forms](./forms/) |  |
+|  [FilterPill](./filterpill/) |  |
 |  [FullWidthButtonContainer](./fullwidthbuttoncontainer/) |  |
 |  [getAvailableIcons](./getavailableicons/) |  |
 |  [getButtonStyles](./getbuttonstyles/) |  |
@@ -176,12 +179,11 @@ A library containing the different design components of the Grafana ecosystem.
 |  [getLogRowStyles](./getlogrowstyles/) |  |
 |  [getStandardFieldConfigs](./getstandardfieldconfigs/) | Returns collection of common field config properties definitions |
 |  [getStandardOptionEditors](./getstandardoptioneditors/) | Returns collection of standard option editors definitions |
-|  [getStandardTransformers](./getstandardtransformers/) |  |
 |  [getTheme](./gettheme/) |  |
 |  [GraphContextMenu](./graphcontextmenu/) |  |
 |  [GraphLegend](./graphlegend/) |  |
+|  [graphTickFormatter](./graphtickformatter/) |  |
 |  [graphTimeFormat](./graphtimeformat/) |  |
-|  [graphTimeFormatter](./graphtimeformatter/) |  |
 |  [GraphWithLegend](./graphwithlegend/) |  |
 |  [hasValidationEvent](./hasvalidationevent/) |  |
 |  [HorizontalGroup](./horizontalgroup/) |  |
@@ -244,6 +246,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [TimeRangePicker](./timerangepicker/) |  |
 |  [ToggleButton](./togglebutton/) |  |
 |  [Tooltip](./tooltip/) |  |
+|  [useStyles](./usestyles/) | Hook for using memoized styles with access to the theme. |
 |  [validate](./validate/) |  |
 |  [VerticalGroup](./verticalgroup/) |  |
 |  [withTheme](./withtheme/) |  |
@@ -253,6 +256,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  Type Alias | Description |
 |  --- | --- |
 |  [AlertVariant](./alertvariant/) |  |
+|  [BadgeColor](./badgecolor/) |  |
 |  [ButtonProps](./buttonprops/) |  |
 |  [ButtonVariant](./buttonvariant/) |  |
 |  [FormAPI](./formapi/) |  |
