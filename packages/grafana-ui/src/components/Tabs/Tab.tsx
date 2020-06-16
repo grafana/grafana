@@ -23,22 +23,31 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
     const theme = useTheme();
     const tabsStyles = getTabStyles(theme);
+    const content = () => (
+      <>
+        {icon && <Icon name={icon} />}
+        {label}
+        {typeof counter === 'number' && <Counter value={counter} />}
+      </>
+    );
 
     return (
       <li
         {...otherProps}
-        className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
-        onClick={() => {
+        className={cx(!href && tabsStyles.padding, tabsStyles.tabItem, active && tabsStyles.activeStyle)}
+        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
           onChangeTab();
         }}
         aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
         ref={ref}
       >
-        <a href={href ?? ''}>
-          {icon && <Icon name={icon} />}
-          {label}
-          {typeof counter === 'number' && <Counter value={counter} />}
-        </a>
+        {href ? (
+          <a href={href} className={tabsStyles.padding}>
+            {content()}
+          </a>
+        ) : (
+          <>{content()}</>
+        )}
       </li>
     );
   }
@@ -50,7 +59,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabItem: css`
       list-style: none;
-      padding: 11px 15px 9px;
       margin-right: ${theme.spacing.md};
       position: relative;
       display: block;
@@ -64,10 +72,17 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         margin-right: ${theme.spacing.sm};
       }
 
+      a {
+        display: block;
+        height: 100%;
+      }
       &:hover,
       &:focus {
         color: ${colors.linkHover};
       }
+    `,
+    padding: css`
+      padding: 11px 15px 9px;
     `,
     activeStyle: css`
       label: activeTabStyle;
