@@ -65,7 +65,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
-    if (!hasLinks) {
+    if (!hasLinks || !getLinks) {
       return this.renderComponent(valueProps, {});
     }
 
