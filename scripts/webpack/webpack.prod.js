@@ -89,7 +89,14 @@ module.exports = merge(common, {
     new ForkTsCheckerWebpackPlugin({
       eslint: {
         enabled: true,
-        files: ['public/app/**/*.{ts,tsx}', 'e2e/suite1/**/*.{ts,tsx}', 'public/test/**/*.{ts,tsx}'],
+        files: [
+          'public/app/**/*.{ts,tsx}',
+          'packages/grafana-ui/src/**/*.{ts,tsx}',
+          'packages/grafana-data/src/**/*.{ts,tsx}',
+          'packages/grafana-runtime/src/**/*.{ts,tsx}',
+          'packages/grafana-e2e-selectors/src/**/*.{ts,tsx}',
+          'packages/jaeger-ui-components/src/**/*.{ts,tsx}',
+        ],
       },
       typescript: {
         mode: 'write-references',
