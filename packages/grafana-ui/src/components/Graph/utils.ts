@@ -119,33 +119,30 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return localTimeFormat({ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }, 'HH:mm:ss');
+      return timeScale.seconds;
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return localTimeFormat({ hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm');
+      return timeScale.minutes;
     }
     if (secPerTick <= 80000) {
-      return localTimeFormat(
-        { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
-        'MM/DD HH:mm'
-      );
+      return `${timeScale.days} ${timeScale.minutes}`;
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return localTimeFormat({ month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD');
+      return timeScale.days;
     }
-    return localTimeFormat({ year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM');
+    return timeScale.months;
   }
 
-  return localTimeFormat({ hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm');
+  return timeScale.minutes;
 };
 
-const localTimeFormat = (options: Intl.DateTimeFormatOptions, fallback: string): string => {
+export const localTimeFormat = (locale: string, options: Intl.DateTimeFormatOptions, fallback: string): string => {
   if (!window.Intl) {
     return fallback;
   }
 
   // https://momentjs.com/docs/#/displaying/format/
-  const parts = new Intl.DateTimeFormat('default', options).formatToParts(new Date());
+  const parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
   const mapping: { [key: string]: string } = {
     year: 'YYYY',
     month: 'MM',
@@ -160,4 +157,15 @@ const localTimeFormat = (options: Intl.DateTimeFormatOptions, fallback: string):
   };
 
   return parts.map(part => mapping[part.type] || part.value).join('');
+};
+
+export const timeScale = {
+  seconds: localTimeFormat(
+    'default',
+    { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
+    'HH:mm:ss'
+  ),
+  minutes: localTimeFormat('default', { hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm'),
+  days: localTimeFormat('default', { month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD'),
+  months: localTimeFormat('default', { year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM'),
 };

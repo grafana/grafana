@@ -8,7 +8,13 @@ import {
   GrafanaThemeType,
   Field,
 } from '@grafana/data';
-import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData } from './utils';
+import {
+  getMultiSeriesGraphHoverInfo,
+  findHoverIndexFromData,
+  graphTimeFormat,
+  localTimeFormat,
+  timeScale,
+} from './utils';
 
 const mockResult = (
   value: string,
@@ -194,6 +200,40 @@ describe('Graph utils', () => {
       expect(findHoverIndexFromData(timeField!, 299)).toBe(1);
       // hovering over 3rd datapoint
       expect(findHoverIndexFromData(timeField!, 300)).toBe(2);
+    });
+  });
+
+  describe('graphTimeFormat', () => {
+    it('graphTimeFormat', () => {
+      expect(graphTimeFormat(5, 1, 45 * 5 * 1000)).toBe('HH:mm:ss');
+      expect(graphTimeFormat(5, 1, 7200 * 5 * 1000)).toBe('HH:mm');
+      expect(graphTimeFormat(5, 1, 80000 * 5 * 1000)).toBe('MM/DD HH:mm');
+      expect(graphTimeFormat(5, 1, 2419200 * 5 * 1000)).toBe('MM/DD');
+      expect(graphTimeFormat(5, 1, 12419200 * 5 * 1000)).toBe('MM/YYYY');
+    });
+
+    it('timescale', () => {
+      expect(timeScale.seconds).toBe('HH:mm:ss');
+      expect(timeScale.minutes).toBe('HH:mm');
+      expect(timeScale.days).toBe('MM/DD');
+      expect(timeScale.months).toBe('MM/YYYY');
+    });
+
+    it('localTimeFormat', () => {
+      const format = localTimeFormat(
+        'default',
+        {
+          year: '2-digit',
+          month: '2-digit',
+          day: '2-digit',
+
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        },
+        ''
+      );
+      expect(format).toBe('MM/DD/YYYY, HH:mm:ss A');
     });
   });
 });
