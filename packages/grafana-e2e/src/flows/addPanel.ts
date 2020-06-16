@@ -45,11 +45,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .scrollIntoView()
       .click();
 
-    isOptionsOpen().then((isOpen: any) => {
-      if (!isOpen) {
-        toggleOptions();
-      }
-    });
+    openOptions();
 
     openOptionsGroup('settings');
     getOptionsGroup('settings')
@@ -75,11 +71,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
     //e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content').contains('No data');
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
 
-    isOptionsOpen().then((isOpen: any) => {
-      if (isOpen) {
-        toggleOptions();
-      }
-    });
+    closeOptions();
 
     e2e()
       .get('button[title="Apply changes and go back to dashboard"]')
@@ -87,6 +79,14 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
 
     // @todo remove `wrap` when possible
     return e2e().wrap({ config: fullConfig });
+  });
+
+// @todo this actually returns type `Cypress.Chainable`
+const closeOptions = (): any =>
+  isOptionsOpen().then((isOpen: any) => {
+    if (isOpen) {
+      e2e.components.PanelEditor.OptionsPane.close().click();
+    }
   });
 
 // @todo this actually returns type `Cypress.Chainable`
@@ -119,14 +119,20 @@ const isOptionsOpen = (): any =>
   });
 
 // @todo this actually returns type `Cypress.Chainable`
+const openOptions = (): any =>
+  isOptionsOpen().then((isOpen: any) => {
+    if (!isOpen) {
+      e2e.components.PanelEditor.OptionsPane.open().click();
+    }
+  });
+
+// @todo this actually returns type `Cypress.Chainable`
 const openOptionsGroup = (name: string): any =>
   isOptionsGroupOpen(name).then((isOpen: any) => {
     if (!isOpen) {
       toggleOptionsGroup(name);
     }
   });
-
-const toggleOptions = () => e2e.components.PanelEditor.OptionsPane.close().click();
 
 const toggleOptionsGroup = (name: string) =>
   getOptionsGroup(name)
