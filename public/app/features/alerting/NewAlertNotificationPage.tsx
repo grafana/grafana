@@ -36,7 +36,6 @@ const defaultValues: NotificationChannelDTO = {
     httpMethod: 'POST',
     severity: 'critical',
   },
-
   isDefault: false,
 };
 
