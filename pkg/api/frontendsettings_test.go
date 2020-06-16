@@ -24,16 +24,15 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HTTPServer, func()) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HTTPServer) {
 	t.Helper()
 	sqlstore.InitTestDB(t)
-	resetFn := []func(){}
 
 	{
 		oldVersion := setting.BuildVersion
 		oldCommit := setting.BuildCommit
 		oldEnv := setting.Env
-		resetFn = append(resetFn, func() {
+		t.Cleanup(func() {
 			setting.BuildVersion = oldVersion
 			setting.BuildCommit = oldCommit
 			setting.Env = oldEnv
@@ -42,7 +41,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 
 	bus.ClearBusHandlers()
 	bus.AddHandler("sql", sqlstore.GetPluginSettings)
-	resetFn = append(resetFn, bus.ClearBusHandlers)
+	t.Cleanup(bus.ClearBusHandlers)
 
 	r := &rendering.RenderingService{Cfg: cfg}
 
@@ -62,11 +61,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	}))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
-	return m, hs, func() {
-		for _, fn := range resetFn {
-			fn()
-		}
-	}
+	return m, hs
 }
 
 func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
@@ -80,8 +75,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	m, hs, reset := setupTestEnvironment(t, cfg)
-	defer reset()
+	m, hs := setupTestEnvironment(t, cfg)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
