@@ -35,13 +35,13 @@ executors:
       - image: cimg/base:stable
   node:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:12.18
   go:
     docker:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.19
+      - image: grafana/build-container:1.2.20
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
