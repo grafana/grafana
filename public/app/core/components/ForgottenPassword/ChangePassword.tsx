@@ -1,7 +1,7 @@
 import React, { FC, SyntheticEvent } from 'react';
 import { Tooltip, Form, Field, Input, VerticalGroup, Button, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { submitButton } from './LoginForm';
+import { submitButton } from '../Login/LoginForm';
 interface Props {
   onSubmit: (pw: string) => void;
   onSkip?: (event?: SyntheticEvent) => void;

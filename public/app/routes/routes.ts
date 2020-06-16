@@ -425,8 +425,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
-      // templateUrl: 'public/app/partials/reset_password.html',
-      // controller: 'ResetPasswordCtrl',
       template: '<react-container />',
       resolve: {
         component: () =>
@@ -439,8 +437,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/reset', {
-      templateUrl: 'public/app/partials/reset_password.html',
-      controller: 'ResetPasswordCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(
+              /* webpackChunkName: "ChangePasswordPage" */ 'app/core/components/ForgottenPassword/ChangePasswordPage'
+            )
+          ),
+      },
       pageClass: 'sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {

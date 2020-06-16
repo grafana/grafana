@@ -64,7 +64,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       confirmNew: password,
       oldPassword: 'admin',
     };
-    if (!this.props.routeParams.resetCode) {
+    if (!this.props.routeParams.code) {
       getBackendSrv()
         .put('/api/user/password', pw)
         .then(() => {
@@ -74,7 +74,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     }
 
     const resetModel = {
-      code: this.props.routeParams.resetCode,
+      code: this.props.routeParams.code,
       newPassword: password,
       confirmPassword: password,
     };
@@ -136,7 +136,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
   };
 
   render() {
-    const { children, routeParams } = this.props;
+    const { children } = this.props;
     const { isLoggingIn, isChangingPassword } = this.state;
     const { login, toGrafana, changePassword } = this;
     const { loginHint, passwordHint, disableLoginForm, ldapEnabled, authProxyEnabled, disableUserSignUp } = config;
@@ -156,7 +156,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
           changePassword,
           skipPasswordChange: toGrafana,
           isChangingPassword,
-          resetCode: routeParams.resetCode,
         })}
       </>
     );

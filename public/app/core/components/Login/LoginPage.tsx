@@ -7,7 +7,7 @@ import { UserSignup } from './UserSignup';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
-import { ChangePassword } from './ChangePassword';
+import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
 import { LoginLayout, InnerBox } from './LoginLayout';
 
