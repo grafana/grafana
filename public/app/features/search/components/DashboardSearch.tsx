@@ -11,18 +11,13 @@ import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect'
 
 export interface OwnProps {
   onCloseSearch: () => void;
-  folder?: string;
 }
 
 export type Props = OwnProps & ConnectProps & DispatchProps;
 
-export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder, params, updateLocation }) => {
-  const payload = folder ? { query: `folder:${folder} ` } : {};
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateLocation }) => {
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
-    {
-      ...payload,
-      ...params,
-    },
+    params,
     updateLocation
   );
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
