@@ -657,6 +657,57 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 
 Syslog tag. By default, the process's `argv[0]` is used.
 
+## [quota]
+
+Set quotas to `-1` to make unlimited.
+
+### enabled
+
+Enable usage quotas. Default is `false`.
+
+### org_user
+
+Limit the number of users allowed per organization. Default is 10.
+
+### org_dashboard
+
+Limit the number of dashboards allowed per organization. Default is 100.
+
+### org_data_source
+
+Limit the number of data sources allowed per organization. Default is 10.
+
+### org_api_key
+
+Limit the number of API keys that can be entered per organization. Default is 10.
+
+### user_org
+
+Limit the number of organizations a user can create. Default is 10.
+
+# Global limit of users.
+global_user = -1
+
+# global limit of orgs.
+global_org = -1
+
+# global limit of dashboards
+global_dashboard = -1
+
+# global limit of api_keys
+global_api_key = -1
+
+# global limit on number of logged in users.
+global_session = -1
+
+## [explore]
+
+For more information about this feature, refer to [Explore]({{< relref "../features/explore/index.md" >}}).
+
+### enabled
+
+Enable or disable the Explore section. Default is `enabled.
+
 ## [metrics]
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
