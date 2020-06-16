@@ -28,7 +28,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
     withTransforms: false,
     withFieldConfig: false,
   });
-  const [lastResult, isLoading, error] = usePanelLatestData(panel, plugin, dataOptions);
+  const [lastResult, isLoading, error] = usePanelLatestData(panel, dataOptions);
   const metaDs = useDatasourceMetadata(lastResult);
   const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
 
