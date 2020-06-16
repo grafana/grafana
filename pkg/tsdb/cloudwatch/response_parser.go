@@ -66,7 +66,6 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	for k := range metricDataResults {
 		metricDataResultLabels = append(metricDataResultLabels, k)
 	}
-	sort.Strings(metricDataResultLabels)
 
 	partialData := false
 	result := tsdb.TimeSeriesSlice{}
