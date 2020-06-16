@@ -100,6 +100,7 @@ describe('linkSrv', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
+            type: 'external',
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.keepTime}`,
           },
@@ -113,6 +114,7 @@ describe('linkSrv', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
+            type: 'external',
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.includeVars}`,
           },
@@ -126,6 +128,7 @@ describe('linkSrv', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
+            type: 'external',
             title: 'Any title',
             url: `/d/1?var-test=$\{${DataLinkBuiltInVars.seriesName}}`,
           },
@@ -145,6 +148,7 @@ describe('linkSrv', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
+            type: 'external',
             title: 'Any title',
             url: `/d/1?time=$\{${DataLinkBuiltInVars.valueTime}}`,
           },
@@ -162,6 +166,7 @@ describe('linkSrv', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
+            type: 'external',
             title: 'White space',
             url: 'www.google.com?query=some query',
           },
@@ -180,6 +185,7 @@ describe('linkSrv', () => {
         linkSrv.getDataLinkUIModel(
           {
             title: 'New line',
+            type: 'external',
             url: 'www.google.com?query=some\nquery',
           },
           {
@@ -209,6 +215,7 @@ describe('linkSrv', () => {
 
         const link = linkSrv.getDataLinkUIModel(
           {
+            type: 'external',
             title: 'Any title',
             url,
           },
@@ -250,6 +257,7 @@ describe('linkSrv', () => {
 
         const link = linkSrv.getDataLinkUIModel(
           {
+            type: 'external',
             title: 'Any title',
             url,
           },

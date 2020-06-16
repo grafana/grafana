@@ -293,6 +293,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       for (const field of dataFrame.fields) {
         field.config.links = [
           {
+            type: 'external',
             url: encodedUrl,
             title: 'View in CloudWatch console',
             targetBlank: true,
@@ -487,6 +488,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
                     for (const field of dataFrame.fields) {
                       field.config.links = [
                         {
+                          type: 'external',
                           url: link,
                           title: 'View in CloudWatch console',
                           targetBlank: true,

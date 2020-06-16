@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useContext } from 'react';
-import { DataLink, VariableSuggestion, GrafanaTheme } from '@grafana/data';
+import { VariableSuggestion, GrafanaTheme, DataLinkExternal } from '@grafana/data';
 import { Switch } from '../Switch/Switch';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
@@ -10,9 +10,9 @@ import { Input } from '../Input/Input';
 interface DataLinkEditorProps {
   index: number;
   isLast: boolean;
-  value: DataLink;
+  value: DataLinkExternal;
   suggestions: VariableSuggestion[];
-  onChange: (index: number, link: DataLink, callback?: () => void) => void;
+  onChange: (index: number, link: DataLinkExternal, callback?: () => void) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({

@@ -6,7 +6,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
+import { DataLinkBuiltInVars, DataLinkExternal, urlUtil } from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -437,7 +437,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 20) {
-      const updateLinks = (link: DataLink) => {
+      const updateLinks = (link: DataLinkExternal) => {
         return {
           ...link,
           url: updateVariablesSyntax(link.url),
@@ -464,7 +464,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 21) {
-      const updateLinks = (link: DataLink) => {
+      const updateLinks = (link: DataLinkExternal) => {
         return {
           ...link,
           url: link.url.replace(/__series.labels/g, '__field.labels'),
@@ -772,7 +772,7 @@ class RowArea {
   }
 }
 
-function upgradePanelLink(link: any): DataLink {
+function upgradePanelLink(link: any): DataLinkExternal {
   let url = link.url;
 
   if (!url && link.dashboard) {
@@ -801,6 +801,7 @@ function upgradePanelLink(link: any): DataLink {
   }
 
   return {
+    type: 'external',
     url: url,
     title: link.title,
     targetBlank: link.targetBlank,

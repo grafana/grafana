@@ -593,6 +593,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           field.config.links = [
             ...(field.config.links || []),
             {
+              type: 'external',
               url: dataLink.url,
               title: '',
             },

@@ -7,7 +7,7 @@ import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
   DataConfigSource,
-  DataLink,
+  DataLinkExternal,
   DataQuery,
   DataQueryResponseData,
   DataTransformerConfig,
@@ -131,7 +131,7 @@ export class PanelModel implements DataConfigSource {
   maxDataPoints?: number;
   interval?: string;
   description?: string;
-  links?: DataLink[];
+  links?: DataLinkExternal[];
   transparent: boolean;
 
   // non persisted

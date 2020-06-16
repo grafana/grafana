@@ -100,7 +100,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
               type: FieldType.string,
               values: new ArrayVector([value]),
               config: {
-                links: [{ title: '', url: field.url }],
+                links: [{ type: 'external', title: '', url: field.url }],
               },
             },
             0

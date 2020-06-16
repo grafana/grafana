@@ -14,6 +14,7 @@ import {
   DataLink,
   Field,
   QueryResultMetaStat,
+  DataLinkInternal,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -351,19 +352,25 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
-    if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
+    if (derivedFieldConfig.url) {
       acc.push({
+        type: 'external',
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
         title: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
-        url: JSON.stringify({ query: derivedFieldConfig.url }),
-        // Having field.datasourceUid means it is an internal link.
-        meta: derivedFieldConfig.datasourceUid
-          ? {
-              datasourceUid: derivedFieldConfig.datasourceUid,
-            }
-          : undefined,
+        url: derivedFieldConfig.url,
       });
+    }
+    // Having field.datasourceUid means it is an internal link.
+    if (derivedFieldConfig.datasourceUid) {
+      acc.push({
+        type: 'internal',
+        // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+        title: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
+        query: { query: derivedFieldConfig.url },
+        datasourceUid: derivedFieldConfig.datasourceUid,
+      } as DataLinkInternal);
     }
     return acc;
   }, [] as DataLink[]);

@@ -1,6 +1,7 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   DataLink,
+  DataLinkExternal,
   DisplayValue,
   Field,
   FieldDisplay,
@@ -15,6 +16,7 @@ import {
 } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
 import { config } from 'app/core/config';
+import { getTemplateSrv } from '@grafana/runtime';
 
 interface SeriesVars {
   name?: string;
@@ -50,7 +52,6 @@ interface DataLinkScopedVars extends ScopedVars {
 /**
  * Link suppliers creates link models based on a link origin
  */
-
 export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> | undefined => {
   const links = value.field.links;
   if (!links || links.length === 0) {
@@ -124,9 +125,11 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         console.log('VALUE', value);
       }
 
-      return links.map(link => {
-        return getLinkSrv().getDataLinkUIModel(link, scopedVars, value);
-      });
+      return links
+        .filter(l => l.type === 'external')
+        .map((link: DataLinkExternal) => {
+          return getLinkSrv().getDataLinkUIModel(link, scopedVars, value);
+        });
     },
   };
 };
@@ -161,10 +164,44 @@ export const getLinksFromLogsField = (
 
   return field.config.links
     ? field.config.links.map(link => {
-        return {
-          link,
-          linkModel: getLinkSrv().getDataLinkUIModel(link, scopedVars, field),
-        };
+        if (link.type === 'external') {
+          return {
+            link,
+            linkModel: getLinkSrv().getDataLinkUIModel(link, scopedVars, field),
+          };
+        } else {
+          let stringifiedQuery = '';
+          try {
+            stringifiedQuery = JSON.stringify(link.query);
+          } catch (err) {
+            // should not happen and not much to do about this, possibly something non stringifiable in the query
+            console.error(err);
+          }
+
+          // Replace any variables inside the query. This may not be the safest as it can also replace keys etc so may not
+          // actually work with every datasource query right now.
+          stringifiedQuery = getTemplateSrv().replace(stringifiedQuery, scopedVars);
+
+          let replacedQuery = {};
+          try {
+            replacedQuery = JSON.parse(stringifiedQuery);
+          } catch (err) {
+            // again should not happen and not much to do about this, probably some issue with how we replaced the variables.
+            console.error(stringifiedQuery, err);
+          }
+
+          return {
+            link: {
+              ...link,
+              query: replacedQuery,
+            },
+            linkModel: {
+              title: getTemplateSrv().replace(link.title || '', scopedVars),
+              target: '_self',
+              origin: field,
+            } as LinkModel<Field>,
+          };
+        }
       })
     : [];
 };

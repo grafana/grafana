@@ -2,6 +2,7 @@ import { getFieldLinksForExplore } from './links';
 import {
   ArrayVector,
   DataLink,
+  DataLinkExternal,
   DataSourceInstanceSettings,
   dateTime,
   Field,
@@ -16,6 +17,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 describe('getFieldLinksForExplore', () => {
   it('returns correct link model for external link', () => {
     const { field, range } = setup({
+      type: 'external',
       title: 'external',
       url: 'http://regionalhost',
     });
@@ -27,6 +29,7 @@ describe('getFieldLinksForExplore', () => {
 
   it('returns generates title for external link', () => {
     const { field, range } = setup({
+      type: 'external',
       title: '',
       url: 'http://regionalhost',
     });
@@ -38,11 +41,10 @@ describe('getFieldLinksForExplore', () => {
 
   it('returns correct link model for internal link', () => {
     const { field, range } = setup({
+      type: 'internal',
       title: '',
-      url: 'query_1',
-      meta: {
-        datasourceUid: 'uid_1',
-      },
+      query: 'query_1',
+      datasourceUid: 'uid_1',
     });
     const splitfn = jest.fn();
     const links = getFieldLinksForExplore(field, 0, splitfn, range);
@@ -58,7 +60,7 @@ describe('getFieldLinksForExplore', () => {
 
 function setup(link: DataLink) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, scopedVars: ScopedVars, origin: any): LinkModel<any> {
+    getDataLinkUIModel(link: DataLinkExternal, scopedVars: ScopedVars, origin: any): LinkModel<any> {
       return {
         href: link.url,
         title: link.title,
@@ -66,10 +68,10 @@ function setup(link: DataLink) {
         origin: origin,
       };
     },
-    getAnchorInfo(link: DataLink) {
+    getAnchorInfo(link: any) {
       return { ...link };
     },
-    getLinkUrl(link: DataLink) {
+    getLinkUrl(link: any) {
       return link.url;
     },
   });

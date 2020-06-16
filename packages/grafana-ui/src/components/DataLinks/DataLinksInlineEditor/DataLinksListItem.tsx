@@ -1,15 +1,15 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLinkExternal, GrafanaTheme, VariableSuggestion } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 import { IconButton } from '../../IconButton/IconButton';
 
 interface DataLinksListItemProps {
   index: number;
-  link: DataLink;
+  link: DataLinkExternal;
   data: DataFrame[];
-  onChange: (index: number, link: DataLink) => void;
+  onChange: (index: number, link: DataLinkExternal) => void;
   onEdit: () => void;
   onRemove: () => void;
   suggestions: VariableSuggestion[];

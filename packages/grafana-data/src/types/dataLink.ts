@@ -1,4 +1,5 @@
 import { ScopedVars } from './ScopedVars';
+import { DataQuery } from './datasource';
 
 /**
  * Callback info for DataLink click events
@@ -13,7 +14,10 @@ export interface DataLinkClickEvent<T = any> {
  * Link configuration. The values may contain variables that need to be
  * processed before running
  */
-export interface DataLink {
+export type DataLink = DataLinkExternal | DataLinkInternal;
+
+export interface DataLinkExternal {
+  type: 'external';
   title: string;
   targetBlank?: boolean;
 
@@ -27,11 +31,13 @@ export interface DataLink {
   // 1: If exists, handle click directly
   // Not saved in JSON/DTO
   onClick?: (event: DataLinkClickEvent) => void;
+}
 
-  // At the moment this is used for derived fields for metadata about internal linking.
-  meta?: {
-    datasourceUid?: string;
-  };
+export interface DataLinkInternal<T extends DataQuery = any> {
+  type: 'internal';
+  title: string;
+  query: T;
+  datasourceUid: string;
 }
 
 export type LinkTarget = '_blank' | '_self';

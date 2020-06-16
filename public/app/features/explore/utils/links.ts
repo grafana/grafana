@@ -1,5 +1,5 @@
 import { splitOpen } from '../state/actions';
-import { ExploreMode, Field, LinkModel, locationUtil, TimeRange } from '@grafana/data';
+import { DataLinkInternal, ExploreMode, Field, LinkModel, locationUtil, TimeRange } from '@grafana/data';
 import { getLinksFromLogsField } from '../../panel/panellinks/linkSuppliers';
 import { serializeStateToUrlParam } from '../../../core/utils/explore';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -19,27 +19,23 @@ export function getFieldLinksForExplore(
 ): Array<LinkModel<Field>> {
   const data = getLinksFromLogsField(field, rowIndex);
   return data.map(d => {
-    if (d.link.meta?.datasourceUid) {
-      // TODO: fix the ambiguity here
-      // This looks weird but in case meta.datasourceUid is set we save the query in url which will get
-      // interpolated into href
-      const parsedQuery = JSON.parse(d.linkModel.href);
+    if (d.link.type === 'internal') {
       return {
         ...d.linkModel,
         title:
           d.linkModel.title ||
-          getDataSourceSrv().getDataSourceSettingsByUid(d.link.meta.datasourceUid)?.name ||
+          getDataSourceSrv().getDataSourceSettingsByUid(d.link.datasourceUid)?.name ||
           'Unknown datasource',
         onClick: () => {
           splitOpenFn({
-            datasourceUid: d.link.meta.datasourceUid,
-            query: parsedQuery,
+            datasourceUid: (d.link as DataLinkInternal).datasourceUid,
+            query: (d.link as DataLinkInternal).query,
           });
         },
         // We need to create real href here as the linkModel.href actually contains query. As in this case this is
         // meant to be internal link (opens split view by default) the href will also points to explore but this
         // way you can open it in new tab.
-        href: generateInternalHref(d.link.meta.datasourceUid, parsedQuery, range),
+        href: generateInternalHref(d.link.datasourceUid, d.link.query, range),
       };
     }
 
