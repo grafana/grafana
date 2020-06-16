@@ -51,6 +51,9 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
         .scrollIntoView();
     });
 
+    // @todo instead wait for '@pluginModule'
+    e2e().wait(2000);
+
     openOptions();
 
     openOptionsGroup('settings');
