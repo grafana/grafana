@@ -84,6 +84,8 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
+<hr />
+
 ## app_mode
 
 Options are `production` and `development`. Default is `production`. _Do not_ change this option unless you are working on Grafana development.
@@ -92,6 +94,8 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
+
+<hr />
 
 ## [paths]
 
@@ -127,6 +131,8 @@ Directory where Grafana automatically scans and looks for plugins. Manually or a
 ### provisioning
 
 Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
+
+<hr />
 
 ## [server]
 
@@ -212,6 +218,8 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
 
+<hr />
+
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other
@@ -291,6 +299,8 @@ will be stored.
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to `private`.
 
+<hr />
+
 ## [remote_cache]
 
 ### type
@@ -299,13 +309,13 @@ Either `redis`, `memcached` or `database`. Defaults to `database`
 
 ### connstr
 
-The remote cache connection string. The format depends on the `type` of the remote cache.
+The remote cache connection string. The format depends on the `type` of the remote cache. Options are `database`, `redis`, and `memcache`.
 
-#### Database
+#### database
 
 Leave empty when using `database` since it will use the primary database.
 
-#### Redis
+#### redis
 
 Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
 
@@ -314,7 +324,7 @@ Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
 - `db` (optional) is the number indentifer of the redis database you want to use.
 - `ssl` (optional) is if SSL should be used to connect to redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
 
-#### Memcache
+#### memcache
 
 Example connstr: `127.0.0.1:11211`
 
