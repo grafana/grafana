@@ -1,5 +1,5 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200514 AS toolchain
+FROM debian:stretch-20200607 AS toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_SDK=MacOSX10.10.sdk \
@@ -83,12 +83,13 @@ RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200514
+FROM debian:stretch-20200607
 
-ENV GOVERSION=1.14.3 \
+ENV GOVERSION=1.14.4 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.17.0
+    NODEVERSION=12.18.0-1nodesource1 \
+    YARNVERSION=1.22.4-1
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -117,17 +118,15 @@ RUN apt-get update && \
         rubygems        \
         unzip &&        \
     gem install -N fpm && \
-    ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil                  && \
-    curl -fL https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-x64.tar.xz \
-      | tar -xJ --strip-components=1 -C /usr/local                      && \
-    curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -   && \
-    echo "deb [arch=amd64] https://dl.yarnpkg.com/debian/ stable main"     \
-      | tee /etc/apt/sources.list.d/yarn.list                           && \
-    apt-get update && apt-get install -yq --no-install-recommends yarn      && \
+    ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
+    curl -fsL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
+    curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && apt-get install -yq yarn=${YARNVERSION} && \
     curl -fL https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz \
       | tar -xz -C /usr/local && \
     git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
-
 
 # We build our own musl cross-compilers via the musl-cross-make project, on the same OS as this image's base image,
 # to ensure compatibility. We also make sure to target musl 1.1.x, since musl 1.2.x introduces 64-bit time types

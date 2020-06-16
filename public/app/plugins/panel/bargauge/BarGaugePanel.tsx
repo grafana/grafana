@@ -45,7 +45,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { value } = valueProps;
     const { hasLinks, getLinks } = value;
 
-    if (!hasLinks) {
+    if (!hasLinks || !getLinks) {
       return this.renderComponent(valueProps, {});
     }
 
