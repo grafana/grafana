@@ -172,6 +172,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"datasources":                datasources,
 		"minRefreshInterval":         setting.MinRefreshInterval,
 		"panels":                     panels,
+		"appUrl":                     setting.AppUrl,
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
