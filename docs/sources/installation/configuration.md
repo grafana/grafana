@@ -527,7 +527,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### default_home_dashboard_path
 
-Path to the default home dashboard. If this value is empty, Grafana will default to use StaticRootPath + "dashboards/home.json"
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
 
 
 ## [dashboards.json]
