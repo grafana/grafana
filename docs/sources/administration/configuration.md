@@ -84,17 +84,20 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
+## app_mode
+
+Options are `production` and `development`. Default is `production`. _Do not_ change this option unless you are working on Grafana development.
+
 ## instance_name
 
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
-environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
-system calls to get the machine name.
+environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
 ## [paths]
 
 ### data
 
-Path to where Grafana stores the sqlite3 database (if used), file based sessions (if used), and other data. This path is usually specified via command line in the init.d script or the systemd service file.
+Path to where Grafana stores the sqlite3 database (if used), file-based sessions (if used), and other data. This path is usually specified via command line in the init.d script or the systemd service file.
 
 **macOS:** The default SQLite database is located at `/usr/local/var/lib/grafana`
 
@@ -105,7 +108,7 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 ### logs
 
-Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
+Path to where Grafana stores logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
 
 Override log path using the command line argument `cfg:default.paths.log`:
 
@@ -117,15 +120,21 @@ Override log path using the command line argument `cfg:default.paths.log`:
 
 ### plugins
 
-Directory where Grafana will automatically scan and look for plugins. Manually or automatically install any plugins here.
+Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any plugins here.
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 ### provisioning
 
-Folder that contains [provisioning]({{< relref "../administration/provisioning" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
+Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
 ## [server]
+
+### protocol
+
+`http`,`https`,`h2` or `socket`
+
+> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for SSL termination.
 
 ### http_addr
 
@@ -147,15 +156,6 @@ $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 300
 
 Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
-### protocol
-
-`http`,`https`,`h2` or `socket`
-
-> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for SSL termination.
-
-### socket
-Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
-
 ### domain
 
 This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
@@ -175,13 +175,17 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
-> Available in 6.3 and above
+> Available in Grafana 6.3+.
 
 Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
 By enabling this setting and using a subpath in `root_url` above, e.g.
-`root_url = http://localhost:3000/grafana`, Grafana will be accessible on
+`root_url = http://localhost:3000/grafana`, Grafana is accessible on
 `http://localhost:3000/grafana`.
+
+### router_logging
+
+Set to `true` for Grafana to log all HTTP requests (not just errors). These are logged as Info level events to the Grafana log.
 
 ### static_root_path
 
@@ -204,12 +208,9 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
-### router_logging
+### socket
 
-Set to `true` for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
-to grafana log.
-
-<hr />
+Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
 
 ## [database]
 
@@ -217,19 +218,9 @@ Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use `sqlite3` which is an
 embedded database (included in the main Grafana binary).
 
-### url
-
-Use either URL or the other fields below to configure the database
-Example: `mysql://user:secret@host:port/database`
-
 ### type
 
 Either `mysql`, `postgres` or `sqlite3`, it's your choice.
-
-### path
-
-Only applicable for `sqlite3` database. The file path where the database
-will be stored.
 
 ### host
 
@@ -249,6 +240,25 @@ The database user (not applicable for `sqlite3`).
 ### password
 
 The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. For example `"""#password;"""`
+
+### url
+
+Use either URL or the other fields below to configure the database
+Example: `mysql://user:secret@host:port/database`
+
+### max_idle_conn
+The maximum number of connections in the idle connection pool.
+
+### max_open_conn
+The maximum number of open connections to the database.
+
+### conn_max_lifetime
+
+Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
+
+### log_queries
+
+Set to `true` to log the sql calls and execution times.
 
 ### ssl_mode
 
@@ -271,26 +281,15 @@ The path to the client cert. Only if server requires client authentication.
 
 The common name field of the certificate used by the `mysql` or `postgres` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
-### max_idle_conn
-The maximum number of connections in the idle connection pool.
+### path
 
-### max_open_conn
-The maximum number of open connections to the database.
-
-### conn_max_lifetime
-
-Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
-
-### log_queries
-
-Set to `true` to log the sql calls and execution times.
+Only applicable for `sqlite3` database. The file path where the database
+will be stored.
 
 ### cache_mode
 
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to `private`.
-
-<hr />
 
 ## [remote_cache]
 
@@ -528,7 +527,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [dashboards.json]
 
-> This have been replaced with dashboards [provisioning]({{< relref "../administration/provisioning" >}}) in 5.0+
+> This have been replaced with dashboards [provisioning]({{< relref "provisioning.md" >}}) in Grafana 5.0+.
 
 ### enabled
 `true` or `false`. Is disabled by default.
@@ -685,20 +684,25 @@ Limit the number of API keys that can be entered per organization. Default is 10
 
 Limit the number of organizations a user can create. Default is 10.
 
-# Global limit of users.
-global_user = -1
+### global_user
 
-# global limit of orgs.
-global_org = -1
+Sets a global limit of users. Default is -1 (unlimited).
 
-# global limit of dashboards
-global_dashboard = -1
+### global_org
 
-# global limit of api_keys
-global_api_key = -1
+Sets a global limit on the number of organizations that can be created. Default is -1 (unlimited).
 
-# global limit on number of logged in users.
-global_session = -1
+### global_dashboard
+
+Sets a global limit on the number of dashboards that can be created. Default is -1 (unlimited).
+
+### global_api_key
+
+Sets global limit of API keys that can be entered. Default is -1 (unlimited).
+
+### global_session
+
+Sets a global limit on number of users that can be logged in at one time. Default is -1 (unlimited).
 
 ## [explore]
 
@@ -706,11 +710,11 @@ For more information about this feature, refer to [Explore]({{< relref "../featu
 
 ### enabled
 
-Enable or disable the Explore section. Default is `enabled.
+Enable or disable the Explore section. Default is `enabled`.
 
 ## [metrics]
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "metrics.md" >}}).
 
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
