@@ -15,6 +15,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   minRefreshInterval = '';
+  appUrl = '';
   appSubUrl = '';
   windowTitlePrefix = '';
   buildInfo: BuildInfo = {} as BuildInfo;
@@ -66,6 +67,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
+      appUrl: '',
       appSubUrl: '',
       buildInfo: {
         version: 'v1.0',
