@@ -14,19 +14,19 @@ var logger = log.New("datasource")
 
 // URLValidationError represents an error from validating a data source URL.
 type URLValidationError struct {
-	error
+	Err error
 
-	url string
+	URL string
 }
 
 // Error returns the error message.
 func (e URLValidationError) Error() string {
-	return fmt.Sprintf("Validation of data source URL %q failed: %s", e.url, e.error.Error())
+	return fmt.Sprintf("Validation of data source URL %q failed: %s", e.URL, e.Err.Error())
 }
 
 // Unwrap returns the wrapped error.
 func (e URLValidationError) Unwrap() error {
-	return e.error
+	return e.Err
 }
 
 // reURL is a regexp to detect if a URL specifies the protocol. We match also strings where the actual protocol is
@@ -56,7 +56,7 @@ func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 		u, err = url.Parse(urlStr)
 	}
 	if err != nil {
-		return nil, URLValidationError{error: err, url: urlStr}
+		return nil, URLValidationError{Err: err, URL: urlStr}
 	}
 
 	return u, nil
