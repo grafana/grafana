@@ -246,7 +246,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     );
   }
 
-  getDataWarning(): DataWarning {
+  getDataWarning(): DataWarning | undefined {
     const datapointsCount = this.seriesList.reduce((prev, series) => {
       return prev + series.datapoints.length;
     }, 0);
@@ -302,8 +302,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
       return dataWarning;
     }
-
-    return null;
+    return undefined;
   }
 
   onRender() {
