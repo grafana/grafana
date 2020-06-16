@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) *macaron.Macaron {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HTTPServer) {
 	t.Helper()
 	sqlstore.InitTestDB(t)
 
@@ -46,7 +46,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) *macaron.Macaron {
 	}))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
-	return m
+	return m, hs
 }
 
 func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
@@ -60,7 +60,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	m := setupTestEnvironment(t, cfg)
+	m, hs := setupTestEnvironment(t, cfg)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
@@ -95,7 +95,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		setting.AnonymousHideVersion = test.hideVersion
+		hs.Cfg.AnonymousHideVersion = test.hideVersion
 		expected := test.expected
 
 		recorder := httptest.NewRecorder()

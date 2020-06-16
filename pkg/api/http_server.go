@@ -352,7 +352,7 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 
 	data := simplejson.New()
 	data.Set("database", "ok")
-	if !setting.AnonymousHideVersion {
+	if !hs.Cfg.AnonymousHideVersion {
 		data.Set("version", setting.BuildVersion)
 		data.Set("commit", setting.BuildCommit)
 	}

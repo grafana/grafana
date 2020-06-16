@@ -145,10 +145,9 @@ var (
 	LoginCookieName      string
 	LoginMaxLifetimeDays int
 
-	AnonymousEnabled     bool
-	AnonymousOrgName     string
-	AnonymousOrgRole     string
-	AnonymousHideVersion bool
+	AnonymousEnabled bool
+	AnonymousOrgName string
+	AnonymousOrgRole string
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -297,6 +296,8 @@ type Cfg struct {
 
 	// Use to enable new features which may still be in alpha/beta stage.
 	FeatureToggles map[string]bool
+
+	AnonymousHideVersion bool
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -874,7 +875,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
-	AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
+	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")
