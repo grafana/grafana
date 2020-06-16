@@ -146,7 +146,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here]({{< relref "configuration/#disable-sanitize-html" >}}) about this new setting.
+Read more [here]({{< relref "../administration/configuration/#disable-sanitize-html" >}}) about this new setting.
 
 ### Authentication and security
 
@@ -191,7 +191,7 @@ configuration.
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "configuration/#allow-embedding" >}}) about
+that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "../administration/configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used
@@ -237,7 +237,7 @@ The Generic OAuth setting `send_client_credentials_via_post`, used for supportin
 
 Chrome 80 treats cookies as `SameSite=Lax` by default if no `SameSite` attribute is specified, see https://www.chromestatus.com/feature/5088147346030592.
 
-Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "configuration/#cookie-samesite" >}}) for more information.
+Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "../administration/configuration/#cookie-samesite" >}}) for more information.
 
 **Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
 
