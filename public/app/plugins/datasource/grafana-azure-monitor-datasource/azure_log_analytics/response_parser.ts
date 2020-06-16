@@ -1,15 +1,14 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/data';
+import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
 import {
-  AzureLogsVariable,
   AzureLogsTableData,
+  AzureLogsVariable,
+  KustoColumn,
   KustoDatabase,
   KustoFunction,
-  KustoTable,
   KustoSchema,
-  KustoColumn,
+  KustoTable,
 } from '../types';
-import { TimeSeries, AnnotationEvent } from '@grafana/data';
 
 export default class ResponseParser {
   columns: string[];
@@ -190,6 +189,9 @@ export default class ResponseParser {
 
   createSchemaFunctions(): { [key: string]: KustoFunction } {
     const functions: { [key: string]: KustoFunction } = {};
+    if (!this.results.functions) {
+      return functions;
+    }
 
     for (const func of this.results.functions) {
       functions[func.name] = {
