@@ -15,7 +15,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-Check out the [configuration]({{< relref "../installation/configuration" >}}) page for more information on what you can configure in `grafana.ini`
+Check out the [configuration]({{< relref "../administration/configuration" >}}) page for more information on what you can configure in `grafana.ini`
 
 ### Config File Locations
 
@@ -65,7 +65,7 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 
 > This feature is available from v5.0
 
-It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
+It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/administration/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
 
 ### Running Multiple Grafana Instances
 
@@ -177,7 +177,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
-Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../installation/configuration/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../administration/configuration/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 | Name              | Type   | Datasource | Description                             |
 | ----------------- | ------ | ---------- | --------------------------------------- |
@@ -210,7 +210,7 @@ datasources:
 
 ## Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../administration/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -274,7 +274,7 @@ By default Grafana will delete dashboards in the database if the file is removed
 
 ## Alert Notification Channels
 
-Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/installation/configuration/#provisioning) directory.
+Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
 Each config file can contain the following top-level fields:
 
