@@ -167,11 +167,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 	}
 
+	hideVersion := setting.AnonymousHideVersion && !c.IsSignedIn
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
 	buildstamp := setting.BuildStamp
 
-	if setting.AnonymousHideVersion && !c.IsSignedIn {
+	if hideVersion {
 		version = ""
 		commit = ""
 		buildstamp = 0
@@ -206,6 +207,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
+			"hideVersion":   hideVersion,
 			"version":       version,
 			"commit":        commit,
 			"buildstamp":    buildstamp,
