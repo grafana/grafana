@@ -35,7 +35,6 @@ interface Props {
     isOauthEnabled: boolean;
     loginHint: string;
     passwordHint: string;
-    resetCode?: string;
   }) => JSX.Element;
 }
 
