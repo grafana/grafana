@@ -93,8 +93,7 @@ class NewAlertNotificationPage extends PureComponent<Props> {
           <h2>New Notification Channel</h2>
           <Form onSubmit={this.onSubmit} validateOn="onChange" defaultValues={defaultValues}>
             {({ register, errors, control, getValues, watch }) => {
-              const selectedChannel =
-                getValues().type && notificationChannels.find(c => c.value === getValues().type.value);
+              const selectedChannel = notificationChannels.find(c => c.value === getValues().type.value);
 
               return (
                 <NewNotificationChannelForm

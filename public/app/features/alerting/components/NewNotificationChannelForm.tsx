@@ -19,7 +19,7 @@ import { NotificationChannel, NotificationChannelDTO, Option } from '../../../ty
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
-  selectedChannel: NotificationChannel;
+  selectedChannel?: NotificationChannel;
   imageRendererAvailable: boolean;
 
   onTestChannel: (data: NotificationChannelDTO) => void;
