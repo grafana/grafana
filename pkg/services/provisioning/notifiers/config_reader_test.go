@@ -13,16 +13,16 @@ import (
 )
 
 var (
-	correct_properties              = "./testdata/test-configs/correct-properties"
-	incorrect_settings              = "./testdata/test-configs/incorrect-settings"
-	no_required_fields              = "./testdata/test-configs/no-required-fields"
-	correct_properties_with_orgName = "./testdata/test-configs/correct-properties-with-orgName"
-	brokenYaml                      = "./testdata/test-configs/broken-yaml"
-	doubleNotificationsConfig       = "./testdata/test-configs/double-default"
-	emptyFolder                     = "./testdata/test-configs/empty_folder"
-	emptyFile                       = "./testdata/test-configs/empty"
-	twoNotificationsConfig          = "./testdata/test-configs/two-notifications"
-	unknownNotifier                 = "./testdata/test-configs/unknown-notifier"
+	correctProperties            = "./testdata/test-configs/correct-properties"
+	incorrectSettings            = "./testdata/test-configs/incorrect-settings"
+	noRequiredFields             = "./testdata/test-configs/no-required-fields"
+	correctPropertiesWithOrgName = "./testdata/test-configs/correct-properties-with-orgName"
+	brokenYaml                   = "./testdata/test-configs/broken-yaml"
+	doubleNotificationsConfig    = "./testdata/test-configs/double-default"
+	emptyFolder                  = "./testdata/test-configs/empty_folder"
+	emptyFile                    = "./testdata/test-configs/empty"
+	twoNotificationsConfig       = "./testdata/test-configs/two-notifications"
+	unknownNotifier              = "./testdata/test-configs/unknown-notifier"
 )
 
 func TestNotificationAsConfig(t *testing.T) {
@@ -46,7 +46,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		Convey("Can read correct properties", func() {
 			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig(correct_properties)
+			cfg, err := cfgProvider.readConfig(correctProperties)
 			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
@@ -243,7 +243,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			dc := newNotificationProvisioner(logger)
-			err = dc.applyChanges(correct_properties_with_orgName)
+			err = dc.applyChanges(correctPropertiesWithOrgName)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
 			}
@@ -262,7 +262,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Config doesn't contain required field", func() {
 			dc := newNotificationProvisioner(logger)
-			err := dc.applyChanges(no_required_fields)
+			err := dc.applyChanges(noRequiredFields)
 			So(err, ShouldNotBeNil)
 
 			errString := err.Error()
@@ -310,7 +310,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Read incorrect properties", func() {
 			cfgProvider := &configReader{log: log.New("test logger")}
-			_, err := cfgProvider.readConfig(incorrect_settings)
+			_, err := cfgProvider.readConfig(incorrectSettings)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "Alert validation error: Could not find url property in settings")
 		})
