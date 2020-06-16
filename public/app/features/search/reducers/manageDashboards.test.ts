@@ -87,7 +87,7 @@ describe('Manage dashboards reducer', () => {
 
   it('should not display dashboards in a non-expanded folder', () => {
     const general = results.find(res => res.id === 0);
-    const toMove = { dashboards: general.items, folder: { id: 4074 } };
+    const toMove = { dashboards: general?.items, folder: { id: 4074 } };
     const newState = reducer({ ...state, results }, { type: MOVE_ITEMS, payload: toMove });
     expect(newState.results.find((res: DashboardSection) => res.id === 4074).items).toHaveLength(0);
     expect(newState.results.find((res: DashboardSection) => res.id === 0).items).toHaveLength(0);
