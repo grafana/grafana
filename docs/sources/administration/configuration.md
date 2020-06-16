@@ -377,20 +377,16 @@ Google Tag Manager ID, only enabled if you enter an ID here.
 
 > Only available in Grafana v6.5+.
 
-Disable creation of admin user on first start of grafana.
+Disable creation of admin user on first start of Grafana. Default is `false`.
 
 ### admin_user
 
-The name of the default Grafana admin user (who has full permissions).
-Defaults to `admin`.
+The name of the default Grafana Admin user, who has full permissions.
+Default is `admin`.
 
 ### admin_password
 
-The password of the default Grafana admin. Set once on first-run.  Defaults to `admin`.
-
-### login_remember_days
-
-The number of days the keep me logged in / remember me cookie lasts.
+The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
 
 ### secret_key
 
@@ -406,13 +402,13 @@ Default is `false`.
 
 Define a whitelist of allowed IP addresses or domains, with ports, to be used in data source URLs with the Grafana data source proxy. Format: `ip_or_domain:port` separated by spaces. PostgreSQL, MySQL, and MSSQL data sources do not use the proxy and are therefore unaffected by this setting.
 
-### cookie_secure
-
-Set to `true` if you host Grafana behind HTTPS. Default is `false`.
-
 ### disable_brute_force_login_protection
 
 Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
+
+### cookie_secure
+
+Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 ### cookie_samesite
 
@@ -434,7 +430,7 @@ Sets how long a browser should cache HSTS in seconds. Only applied if strict_tra
 
 ### strict_transport_security_preload
 
-Set to `true` if to enable HSTS `preloading` option. Only applied if strict_transport_security is enabled. The default value is `false`.
+Set to `true` to enable HSTS `preloading` option. Only applied if strict_transport_security is enabled. The default value is `false`.
 
 ### strict_transport_security_subdomains
 
@@ -450,81 +446,27 @@ Set to `false` to disable the X-XSS-Protection header, which tells browsers to s
 
 <hr />
 
-## [users]
+## [snapshots]
 
-### allow_sign_up
+### external_enabled
 
-Set to `false` to prohibit users from being able to sign up / create
-user accounts. Defaults to `false`.  The admin user can still create
-users from the [Grafana Admin Pages](/reference/admin)
+Set to `false` to disable external snapshot publish endpoint (default `true`).
 
-### allow_org_create
+### external_snapshot_url
 
-Set to `false` to prohibit users from creating new organizations.
-Defaults to `false`.
+Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io).
 
-### auto_assign_org
+### external_snapshot_name
 
-Set to `true` to automatically add new users to the main organization
-(id 1). When set to `false`, new users will automatically cause a new
-organization to be created for that new user.
+Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`.
 
-### auto_assign_org_id
+### public_mode
 
-Set this value to automatically add new users to the provided org.
-This requires `auto_assign_org` to be set to `true`. Please make sure
-that this organization already exists.
+Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
 
-### auto_assign_org_role
+### snapshot_remove_expired
 
-The role new users will be assigned for the main organization (if the
-above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`. e.g. :
-
-`auto_assign_org_role = Viewer`
-
-### viewers_can_edit
-
-Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
-Defaults to `false`.
-
-### editors_can_admin
-
-Editors can administrate dashboards, folders and teams they create.
-Defaults to `false`.
-
-### login_hint
-
-Text used as placeholder text on login page for login/username input.
-
-### password_hint
-
-Text used as placeholder text on login page for password input.
-
-<hr>
-
-## [auth]
-
-Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
-below.
-
-- [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
-- [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
-- [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
-- [Gitlab OAuth]({{< relref "../auth/gitlab.md" >}}) (auth.gitlab)
-- [Generic OAuth]({{< relref "../auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
-- [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
-- [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
-- [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
-
-### login_cookie_name
-
-The cookie name for storing the auth token, the default is `grafana_session`.
-
-### oauth_state_cookie_max_age
-
-How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
-Administrators can increase this if they experience OAuth login state mismatch errors.
+Enable this to automatically remove expired snapshots. Default is `true`.
 
 <hr />
 
@@ -538,18 +480,145 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 > Only available in Grafana v6.7+.
 
-This will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is 5 seconds.
+This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
-## [dashboards.json]
+<hr />
 
-> This have been replaced with dashboards [provisioning]({{< relref "provisioning.md" >}}) in Grafana 5.0+.
+## [users]
 
-### enabled
-`true` or `false`. Is disabled by default.
+### allow_sign_up
 
-### path
-The full path to a directory containing your json dashboards.
+Set to `false` to prohibit users from being able to sign up / create
+user accounts. Default is `false`.  The admin user can still create
+users from the [Grafana Admin Pages](/reference/admin).
+
+### allow_org_create
+
+Set to `false` to prohibit users from creating new organizations.
+Default is `false`.
+
+### auto_assign_org
+
+Set to `true` to automatically add new users to the main organization
+(id 1). When set to `false`, new users automatically cause a new
+organization to be created for that new user. Default is `true`.
+
+### auto_assign_org_id
+
+Set this value to automatically add new users to the provided org.
+This requires `auto_assign_org` to be set to `true`. Please make sure
+that this organization already exists. Default is 1.
+
+### auto_assign_org_role
+
+The role new users will be assigned for the main organization (if the
+above setting is set to true).  Defaults to `Viewer`, other valid
+options are `Admin` and `Editor`. e.g.:
+
+`auto_assign_org_role = Viewer`
+
+### verify_email_enabled
+
+Require email validation before sign up completes. Default is `false`.
+
+### login_hint
+
+Text used as placeholder text on login page for login/username input.
+
+### password_hint
+
+Text used as placeholder text on login page for password input.
+
+### default_theme
+
+Set the default UI theme: `dark` or `light`. Default is `dark`.
+
+### External user management
+
+external_manage_link_url =
+external_manage_link_name =
+external_manage_info =
+
+### viewers_can_edit
+
+Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
+Default is `false`.
+
+### editors_can_admin
+
+Editors can administrate dashboards, folders and teams they create.
+Default is `false`.
+
+<hr>
+
+## [auth]
+
+Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages below.
+
+- [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
+- [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
+- [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
+- [Gitlab OAuth]({{< relref "../auth/gitlab.md" >}}) (auth.gitlab)
+- [Generic OAuth]({{< relref "../auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
+- [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
+- [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
+
+### login_cookie_name
+
+The cookie name for storing the auth token. Default is `grafana_session`.
+
+# The lifetime (days) an authenticated user can be inactive before being required to login at next visit. Default is 7 days.
+login_maximum_inactive_lifetime_days = 7
+
+# The maximum lifetime (days) an authenticated user can be logged in since login time before being required to login. Default is 30 days.
+login_maximum_lifetime_days = 30
+
+# How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
+token_rotation_interval_minutes = 10
+
+# Set to true to disable (hide) the login form, useful if you use OAuth
+disable_login_form = false
+
+# Set to true to disable the signout link in the side menu. useful if you use auth.proxy
+disable_signout_menu = false
+
+# URL to redirect the user to after sign out
+signout_redirect_url =
+
+# Set to true to attempt login with OAuth automatically, skipping the login screen.
+# This setting is ignored if multiple OAuth providers are configured.
+oauth_auto_login = false
+
+# OAuth state max age cookie duration. Defaults to 60 seconds.
+oauth_state_cookie_max_age = 60
+
+# limit of api_key seconds to live before expiration
+api_key_max_seconds_to_live = -1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase this if they experience OAuth login state mismatch errors.
+
+<hr />
 
 ## [smtp]
 Email server settings.
@@ -757,19 +826,7 @@ Format `<Hostname or ip>`:port
 ### prefix
 Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
-## [snapshots]
 
-### external_enabled
-Set to `false` to disable external snapshot publish endpoint (default `true`)
-
-### external_snapshot_url
-Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
-
-### external_snapshot_name
-Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
-
-### snapshot_remove_expired
-Enabled to automatically remove expired snapshots
 
 ## [external_image_storage]
 These options control how images should be made public so they can be shared on services like slack.
