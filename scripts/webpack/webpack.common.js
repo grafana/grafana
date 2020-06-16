@@ -108,6 +108,11 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
+        loader: 'file-loader',
+        options: { name: 'static/img/[name].[hash:8].[ext]' },
+      },
     ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3

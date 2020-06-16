@@ -1,6 +1,6 @@
 {
   "type": "panel",
-  "name": "Home Links",
+  "name": "Home links",
   "id": "homelinks",
 
   "hideFromList": true,

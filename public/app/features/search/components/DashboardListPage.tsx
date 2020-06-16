@@ -8,7 +8,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParams, getUrl } from 'app/core/selectors/location';
 import Page from 'app/core/components/Page/Page';
 import { loadFolderPage } from '../loaders';
-import { ManageDashboards } from './ManageDashboards';
+import ManageDashboards from './ManageDashboards';
 
 interface Props {
   navModel: NavModel;
@@ -28,14 +28,14 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
         getLocationSrv().update({ path });
       }
 
-      return { id: folder.id, pageNavModel: { ...navModel, ...model } };
+      return { folder, pageNavModel: { ...navModel, ...model } };
     });
   }, [uid]);
 
   return (
     <Page navModel={value?.pageNavModel}>
       <Page.Contents isLoading={loading}>
-        <ManageDashboards folderUid={uid} folderId={value?.id} />
+        <ManageDashboards folder={value?.folder} />
       </Page.Contents>
     </Page>
   );

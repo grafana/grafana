@@ -29,7 +29,7 @@ import {
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
 import { TNil } from '../types';
-import { Log, Span, Trace, KeyValuePair, Link } from '../types/trace';
+import { Log, Span, Trace, KeyValuePair, Link } from '@grafana/data';
 import TTraceTimeline from '../types/TTraceTimeline';
 
 import { createStyle, Theme, withTheme } from '../Theme';
@@ -202,12 +202,12 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (trace !== nextTrace || childrenHiddenIDs !== nextHiddenIDs || detailStates !== nextDetailStates) {
       this.rowStates = nextTrace ? generateRowStates(nextTrace.spans, nextHiddenIDs, nextDetailStates) : [];
     }
-    if (currentViewRangeTime !== nextViewRangeTime) {
+    if (currentViewRangeTime !== nextViewRangeTime || (trace !== nextTrace && nextTrace)) {
       this.clipping = getClipping(nextViewRangeTime);
       const [zoomStart, zoomEnd] = nextViewRangeTime;
       this.getViewedBounds = createViewedBoundsFunc({
-        min: trace.startTime,
-        max: trace.endTime,
+        min: nextTrace.startTime,
+        max: nextTrace.endTime,
         viewStart: zoomStart,
         viewEnd: zoomEnd,
       });

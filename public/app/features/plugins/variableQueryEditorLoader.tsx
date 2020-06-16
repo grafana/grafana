@@ -2,7 +2,7 @@ import coreModule from 'app/core/core_module';
 import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import DefaultVariableQueryEditor from '../templating/DefaultVariableQueryEditor';
+import DefaultVariableQueryEditor from '../variables/editor/DefaultVariableQueryEditor';
 import { DataSourcePluginMeta } from '@grafana/data';
 import { TemplateSrv } from '../templating/template_srv';
 

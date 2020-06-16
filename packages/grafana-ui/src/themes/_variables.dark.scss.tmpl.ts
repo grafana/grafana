@@ -159,7 +159,7 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: $dark-6; // for striping
+$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)}; // for striping
 $table-border: $dark-6; // table and cell border
 
 $table-bg-odd: $dark-3;
@@ -389,7 +389,7 @@ $logs-color-unkown: $gray-2;
 // toggle-group
 $button-toggle-group-btn-active-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $black;
-$button-toggle-group-btn-seperator-border: 1px solid $dark-2;
+$button-toggle-group-btn-separator-border: 1px solid $dark-2;
 
 $vertical-resize-handle-bg: $dark-10;
 $vertical-resize-handle-dots: $gray-1;

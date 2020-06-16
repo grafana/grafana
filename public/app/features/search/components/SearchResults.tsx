@@ -4,7 +4,7 @@ import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
-import { DashboardSection, OnToggleChecked, SearchLayout, DashboardSearchHit } from '../types';
+import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
@@ -15,7 +15,7 @@ export interface Props {
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
-  results: DashboardSearchHit[];
+  results: DashboardSection[];
   layout?: string;
 }
 
@@ -47,8 +47,8 @@ export const SearchResults: FC<Props> = ({
       </div>
     );
   };
-
   const renderDashboards = () => {
+    const items = results[0]?.items;
     return (
       <div className={styles.listModeWrapper}>
         <AutoSizer disableWidth>
@@ -59,11 +59,11 @@ export const SearchResults: FC<Props> = ({
               innerElementType="ul"
               itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
               height={height}
-              itemCount={results.length}
+              itemCount={items.length}
               width="100%"
             >
               {({ index, style }) => {
-                const item = results[index];
+                const item = items[index];
                 // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                 // And without this wrapper there is no room for that margin
                 return (

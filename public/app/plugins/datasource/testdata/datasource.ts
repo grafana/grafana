@@ -1,26 +1,25 @@
 import {
+  ArrayDataFrame,
+  arrowTableToDataFrame,
+  base64StringToArrowTable,
+  DataFrame,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  LoadingState,
   MetricFindValue,
   TableData,
   TimeSeries,
-  LoadingState,
-  ArrayDataFrame,
-  base64StringToArrowTable,
-  arrowTableToDataFrame,
-  DataFrame,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';
 import { runStream } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
-import { getSearchFilterScopedVar } from 'app/features/templating/utils';
-import { processQueryError } from 'app/features/dashboard/state/runRequest';
+import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 type TestData = TimeSeries | TableData;
 
@@ -164,7 +163,7 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
       data = [arrowTableToDataFrame(table)];
     } catch (e) {
       console.warn('Error reading saved arrow', e);
-      const error = processQueryError(e);
+      const error = toDataQueryError(e);
       error.refId = target.refId;
       return of({ state: LoadingState.Error, error, data });
     }

@@ -16,7 +16,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
       />
 
-      <PromSettings value={options} onChange={onOptionsChange} />
+      <PromSettings options={options} onOptionsChange={onOptionsChange} />
     </>
   );
 };

@@ -108,7 +108,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
             <div className="gf-form">
               <label className="gf-form-label">States</label>
 
-              <div className="gf-form-select-wrapper width-13">
+              <div className="width-13">
                 <Select
                   options={this.stateFilters}
                   onChange={this.onStateFilterChanged}

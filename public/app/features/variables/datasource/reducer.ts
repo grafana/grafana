@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/types';
+import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../types';
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,

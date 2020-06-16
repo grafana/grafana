@@ -149,7 +149,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
         numeric = f;
       }
 
-      if (!title && f.config.title && f.config.title !== f.name) {
+      if (!title && f.config.displayName && f.config.displayName !== f.name) {
         title = f;
       }
     }
@@ -181,7 +181,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
 
   if (title) {
     suggestions.push({
-      value: `__data.fields[${title.config.title}]`,
+      value: `__data.fields[${title.config.displayName}]`,
       label: `Select by title`,
       documentation: `Use the title to pick the field`,
       origin: VariableOrigin.Fields,
@@ -233,6 +233,8 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
 
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
+  getAnchorInfo: (link: any) => any;
+  getLinkUrl: (link: any) => string;
 }
 
 export class LinkSrv implements LinkService {

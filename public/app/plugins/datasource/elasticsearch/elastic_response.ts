@@ -368,7 +368,7 @@ export class ElasticResponse {
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elastic error response';
+      result.message = err.reason || 'Unknown elastic error response';
     }
 
     if (response.$$config) {
@@ -452,7 +452,11 @@ export class ElasticResponse {
         this.nameSeries(tmpSeriesList, target);
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
-          const series = toDataFrame(tmpSeriesList[y]);
+          let series = toDataFrame(tmpSeriesList[y]);
+
+          // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
+          series = addPreferredVisualisationType(series, 'graph');
+
           dataFrame.push(series);
         }
       }
@@ -567,4 +571,15 @@ const createEmptyDataFrame = (
   }
 
   return series;
+};
+
+const addPreferredVisualisationType = (series: any, type: string) => {
+  let s = series;
+  s.meta
+    ? (s.meta.preferredVisualisationType = type)
+    : (s.meta = {
+        preferredVisualisationType: type,
+      });
+
+  return s;
 };

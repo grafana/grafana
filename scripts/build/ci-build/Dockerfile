@@ -1,10 +1,15 @@
-FROM ubuntu:20.04 as toolchain
+# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
+FROM debian:stretch-20200607 AS toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_SDK=MacOSX10.10.sdk \
     OSX_MIN=10.10 \
     CTNG=1.24.0 \
-    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63
+    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63 \
+    GOLANGCILINT_VERSION=1.24.0 \
+    GOLANGCILINT_CHKSUM=241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179
+
+WORKDIR /tmp
 
 # FIRST PART
 # build osx64 toolchain (stripped of man documentation)
@@ -71,22 +76,30 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-# base image to crossbuild grafana
-FROM ubuntu:20.04
+RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
+RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
+RUN tar xf golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
+RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
-ENV GOVERSION=1.14.1 \
+# Base image to crossbuild grafana.
+# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
+FROM debian:stretch-20200607
+
+ENV GOVERSION=1.14.4 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.13.0
+    NODEVERSION=12.18.0-1nodesource1 \
+    YARNVERSION=1.22.4-1
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
+COPY --from=toolchain /tmp/golangci-lint /usr/local/bin
 
 RUN apt-get update && \
     apt-get upgrade -yq && \
     apt-get install -yq  \
-        clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
+        build-essential clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
         ca-certificates \
         curl            \
@@ -99,19 +112,26 @@ RUN apt-get update && \
         xz-utils        \
         expect          \
         gnupg2          \
+        procps          \
+        ruby            \
+        ruby-dev        \
+        rubygems        \
         unzip &&        \
-    ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil                  && \
-    curl -fL https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-x64.tar.xz \
-      | tar -xJ --strip-components=1 -C /usr/local                      && \
-    curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -   && \
-    echo "deb [arch=amd64] https://dl.yarnpkg.com/debian/ stable main"     \
-      | tee /etc/apt/sources.list.d/yarn.list                           && \
-    apt-get update && apt-get install -yq --no-install-recommends yarn      && \
+    gem install -N fpm && \
+    ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
+    curl -fsL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
+    curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && apt-get install -yq yarn=${YARNVERSION} && \
     curl -fL https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz \
       | tar -xz -C /usr/local && \
     git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
 
-ARG CHKSUM_ARMV7_MUSL=a4aa497ca7aab6451d2f9dd82a649d92c4e280aa8cab9eabf5c2139472839b34549f3fbfc73d6d2435519f204ff9a419a470105530be346fcfcfe7d0322549f8
+# We build our own musl cross-compilers via the musl-cross-make project, on the same OS as this image's base image,
+# to ensure compatibility. We also make sure to target musl 1.1.x, since musl 1.2.x introduces 64-bit time types
+# that breaks compatibility on some 32-bit architectures (https://github.com/grafana/grafana/issues/23500).
+ARG CHKSUM_ARMV7_MUSL=5db487fb0a4aa61667de45a9cfbf7940360bd7256583b8a1e7810b4d9dd0e02a8aac737ca634b57bf269195e776ef503832ed22a6689a1c8fcdcc956f846bef7
 ARG CHKSUM_ARMV8_MUSL=50f4899cc2f637dbc39470bbe307074ccf7f40da2ab730218d13a9f75d578266311db6a0785919dcdcb5e7ce4517b13ee8d4a56d76e6fca7c6d4c2510d71aa8b
 ARG CHKSUM_AMD64_MUSL=493a79e9e29a1eab3fdff6435bac6509253d2e54ac30ad9098ce5da638bbb8ad18a7ebf3520bcaf2f9588befeff23402d8bbf54fa3809bfe18c984a4ecabcb12
 
@@ -129,10 +149,5 @@ RUN cd /tmp && \
     ([ "$(sha512sum x86_64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_AMD64_MUSL" ] || (echo "Mismatching checksums amd64"; exit 1)) && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
-
-RUN apt-get install -yq gcc libc-dev make && \
-    gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
-    curl -fsSL https://get.rvm.io | bash -s stable && \
-    /bin/bash -l -c "rvm requirements && rvm install 2.2 && gem install -N fpm"
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh

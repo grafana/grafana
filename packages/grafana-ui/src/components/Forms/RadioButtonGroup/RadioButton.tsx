@@ -44,8 +44,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   return {
     radio: css`
       position: absolute;
-      top: 0;
-      left: -100vw;
       opacity: 0;
       z-index: -1000;
 

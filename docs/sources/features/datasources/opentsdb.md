@@ -45,7 +45,7 @@ can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
 ### Auto complete suggestions
 
 As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
-The autocomplete only works if the OpenTSDB suggest api is enabled.
+The autocomplete only works if the OpenTSDB suggest API is enabled.
 
 ## Templating queries
 
@@ -53,7 +53,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable

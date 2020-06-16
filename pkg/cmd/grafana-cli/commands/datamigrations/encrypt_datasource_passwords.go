@@ -25,9 +25,9 @@ var (
 	}
 )
 
-// EncryptDatasourcePaswords migrates un-encrypted secrets on datasources
+// EncryptDatasourcePasswords migrates unencrypted secrets on datasources
 // to the secureJson Column.
-func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
+func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
 	return sqlStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		passwordsUpdated, err := migrateColumn(session, "password")
 		if err != nil {
@@ -49,7 +49,7 @@ func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore)
 		}
 
 		if passwordsUpdated == 0 && basicAuthUpdated == 0 {
-			logger.Infof("%s All datasources secrets are allready encrypted\n", color.GreenString("✔"))
+			logger.Infof("%s All datasources secrets are already encrypted\n", color.GreenString("✔"))
 		}
 
 		logger.Info("\n")

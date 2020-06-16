@@ -4,9 +4,9 @@ import { mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariable } from 'app/features/templating/all';
-import { MetricsQueryEditor, Props, normalizeQuery } from './MetricsQueryEditor';
+import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
+import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
 
 const setup = () => {
   const instanceSettings = {
@@ -14,23 +14,26 @@ const setup = () => {
   } as DataSourceInstanceSettings;
 
   const templateSrv = new TemplateSrv();
-  templateSrv.init([
-    new CustomVariable(
-      {
-        name: 'var3',
-        options: [
-          { selected: true, value: 'var3-foo' },
-          { selected: false, value: 'var3-bar' },
-          { selected: true, value: 'var3-baz' },
-        ],
-        current: {
-          value: ['var3-foo', 'var3-baz'],
-        },
-        multi: true,
-      },
-      {} as any
-    ),
-  ]);
+  const variable: CustomVariableModel = {
+    id: 'var3',
+    index: 0,
+    name: 'var3',
+    options: [
+      { selected: true, value: 'var3-foo', text: 'var3-foo' },
+      { selected: false, value: 'var3-bar', text: 'var3-bar' },
+      { selected: true, value: 'var3-baz', text: 'var3-baz' },
+    ],
+    current: { selected: true, value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz' },
+    multi: true,
+    includeAll: false,
+    query: '',
+    hide: VariableHide.dontHide,
+    type: 'custom',
+    label: null,
+    skipUrlSync: false,
+    global: false,
+  };
+  templateSrv.init([variable]);
 
   const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
   datasource.metricFindQuery = async () => [{ value: 'test', label: 'test' }];
@@ -67,6 +70,37 @@ describe('QueryEditor', () => {
       const props = setup();
       const tree = renderer.create(<MetricsQueryEditor {...props} />).toJSON();
       expect(tree).toMatchSnapshot();
+    });
+  });
+
+  it('normalizes query on mount', async () => {
+    const { act } = renderer;
+    const props = setup();
+    // This does not actually even conform to the prop type but this happens on initialisation somehow
+    props.query = {
+      queryMode: 'Metrics',
+      apiMode: 'Metrics',
+      refId: '',
+      expression: '',
+      matchExact: true,
+    } as any;
+    await act(async () => {
+      renderer.create(<MetricsQueryEditor {...props} />);
+    });
+    expect((props.onChange as jest.Mock).mock.calls[0][0]).toEqual({
+      namespace: '',
+      metricName: '',
+      expression: '',
+      dimensions: {},
+      region: 'default',
+      id: '',
+      alias: '',
+      statistics: ['Average'],
+      period: '',
+      queryMode: 'Metrics',
+      apiMode: 'Metrics',
+      refId: '',
+      matchExact: true,
     });
   });
 
