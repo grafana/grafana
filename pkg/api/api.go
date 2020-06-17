@@ -111,7 +111,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
-
+		apiRoute.Group("/sqlatlas", func(sqlAtlas routing.RouteRegister) {
+			sqlAtlas.Get("/", Wrap(GetSQLAtlasKey))
+		})
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
 			userRoute.Get("/", Wrap(GetSignedInUser))
