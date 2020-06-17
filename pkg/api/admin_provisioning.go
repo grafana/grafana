@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -19,6 +20,14 @@ func (server *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContex
 		return Error(500, "", err)
 	}
 	return Success("Datasources config reloaded")
+}
+
+func (server *HTTPServer) AdminProvisioningReloadApps(c *models.ReqContext) Response {
+	err := server.ProvisioningService.ProvisionApps()
+	if err != nil {
+		return Error(500, "", err)
+	}
+	return Success("Apps config reloaded")
 }
 
 func (server *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext) Response {
