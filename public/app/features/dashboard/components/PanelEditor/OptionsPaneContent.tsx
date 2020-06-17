@@ -50,7 +50,8 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          /* hasSeries makes sure current data is there */
+          data={data!.series}
         />
       );
     },
@@ -70,7 +71,8 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={data.series}
+          /* hasSeries makes sure current data is there */
+          data={data!.series}
         />
       );
     },
