@@ -33,8 +33,8 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
     withTransforms: false,
     withFieldConfig: false,
   });
-  const [lastResult, isLoading, error] = usePanelLatestData(panel, dataOptions);
-  const metaDs = useDatasourceMetadata(lastResult);
+  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
+  const metaDs = useDatasourceMetadata(data);
   const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
   const onClose = useCallback(() => {
     updateLocation({
@@ -54,7 +54,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
       plugin={plugin}
       defaultTab={defaultTab}
       tabs={tabs}
-      data={lastResult}
+      data={data}
       isDataLoading={isLoading}
       dataOptions={dataOptions}
       onDataOptionsChange={setDataOptions}

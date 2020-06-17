@@ -4,13 +4,17 @@ import { PanelModel } from '../../state';
 import { Unsubscribable } from 'rxjs';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 
+interface UsePanelLatestData {
+  data?: PanelData;
+  error?: DataQueryError;
+  isLoading: boolean;
+  hasSeries: boolean;
+}
+
 /**
  * Subscribes and returns latest panel data from PanelQueryRunner
  */
-export const usePanelLatestData = (
-  panel: PanelModel,
-  options: GetDataOptions
-): [PanelData | undefined, boolean, DataQueryError | undefined] => {
+export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): UsePanelLatestData => {
   const querySubscription = useRef<Unsubscribable>(null);
   const [latestData, setLatestData] = useState<PanelData>();
 
@@ -29,11 +33,18 @@ export const usePanelLatestData = (
     };
   }, [panel, options]);
 
-  return [
-    latestData,
-    // Loading state
-    latestData ? latestData.state === LoadingState.Loading : true,
-    // Error
-    latestData && latestData.error,
-  ];
+  return {
+    data: latestData,
+    error: latestData && latestData.error,
+    isLoading: latestData ? latestData.state === LoadingState.Loading : true,
+    hasSeries: latestData ? !!latestData.series : false,
+  };
+
+  // [
+  //   latestData,
+  //   // Loading state
+  //   latestData ? latestData.state === LoadingState.Loading : true,
+  //   // Error
+  //   latestData && latestData.error,
+  // ];
 };

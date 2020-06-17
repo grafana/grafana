@@ -35,13 +35,13 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
-  const [currentData] = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+  const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig || !(currentData && currentData.series)) {
+      if (!fieldConfig || !hasSeries) {
         return null;
       }
 
@@ -50,18 +50,18 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          data={data.series}
         />
       );
     },
-    [currentData, plugin, panel, onFieldConfigsChange]
+    [data, plugin, panel, onFieldConfigsChange]
   );
 
   const renderFieldOverrideOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldConfig || !(currentData && currentData.series)) {
+      if (!fieldConfig || !hasSeries) {
         return null;
       }
 
@@ -70,11 +70,11 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          data={data.series}
         />
       );
     },
-    [currentData, plugin, panel, onFieldConfigsChange]
+    [data, plugin, panel, onFieldConfigsChange]
   );
 
   // When the panel has no query only show the main tab
@@ -104,7 +104,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
                   panel={panel}
                   plugin={plugin}
                   dashboard={dashboard}
-                  data={currentData}
+                  data={data}
                   onPanelConfigChange={onPanelConfigChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
                 />
