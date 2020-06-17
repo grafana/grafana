@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/provisioning/apps"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
@@ -17,6 +18,7 @@ import (
 
 type ProvisioningService interface {
 	ProvisionDatasources() error
+	ProvisionApps() error
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
@@ -30,6 +32,7 @@ func init() {
 		},
 		notifiers.Provision,
 		datasources.Provision,
+		apps.Provision,
 	))
 }
 
@@ -37,12 +40,14 @@ func NewProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
+	provisionApps func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
+		provisionApps:           provisionApps,
 	}
 }
 
@@ -54,11 +59,17 @@ type provisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
+	provisionApps           func(string) error
 	mutex                   sync.Mutex
 }
 
 func (ps *provisioningServiceImpl) Init() error {
 	err := ps.ProvisionDatasources()
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionApps()
 	if err != nil {
 		return err
 	}
@@ -105,6 +116,12 @@ func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 	datasourcePath := path.Join(ps.Cfg.ProvisioningPath, "datasources")
 	err := ps.provisionDatasources(datasourcePath)
 	return errutil.Wrap("Datasource provisioning error", err)
+}
+
+func (ps *provisioningServiceImpl) ProvisionApps() error {
+	appPath := path.Join(ps.Cfg.ProvisioningPath, "apps")
+	err := ps.provisionApps(appPath)
+	return errutil.Wrap("App provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionNotifications() error {
