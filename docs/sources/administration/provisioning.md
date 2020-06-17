@@ -293,7 +293,6 @@ apiVersion: 1
     
 providers:
 - name: dashboards
-  folder: ''
   type: file
   updateIntervalSeconds: 30
   options:
@@ -302,7 +301,7 @@ providers:
 ```
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note.** `folder` and `folderUid` options should be equal to "" to make `foldersFromFileStructure` works.
+> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFileStructure` works.
 
 ## Alert Notification Channels
 

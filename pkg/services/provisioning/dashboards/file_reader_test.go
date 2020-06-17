@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -170,7 +171,7 @@ func TestDashboardFileReader(t *testing.T) {
 				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				So(len(fakeService.inserted), ShouldEqual, 4)
+				So(len(fakeService.inserted), ShouldEqual, 6)
 
 				foldersCount := 0
 				for _, d := range fakeService.inserted {
@@ -178,19 +179,18 @@ func TestDashboardFileReader(t *testing.T) {
 						foldersCount++
 					}
 				}
-				So(foldersCount, ShouldEqual, 2)
+				So(foldersCount, ShouldEqual, 3)
 
-				var isGrafanaOne, isGrafanaTwo bool
 				for _, d := range fakeService.inserted {
 					switch d.Dashboard.Title {
-					case "Grafana1":
-						isGrafanaOne = true
-					case "Grafana2":
-						isGrafanaTwo = true
+					case "folderOne", "folderTwo", "General":
+						So(d.Dashboard.IsFolder, ShouldBeTrue)
+					case "Grafana1", "Grafana2", "RootDashboard":
+						So(d.Dashboard.IsFolder, ShouldBeFalse)
+					default:
+						So(fmt.Errorf("unknown dashboard title %s", d.Dashboard.Title), ShouldBeNil)
 					}
 				}
-				So(isGrafanaOne, ShouldBeTrue)
-				So(isGrafanaTwo, ShouldBeTrue)
 			})
 
 			Convey("Invalid configuration should return error", func() {

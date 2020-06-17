@@ -104,7 +104,7 @@ func (fr *FileReader) startWalkingDisk() error {
 	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
 
 	if fr.FoldersFromFilesStructure {
-		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, &sanityChecker)
+		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, &sanityChecker)
 	} else {
 		err = fr.storeDashboardsInFolder(filesFoundOnDisk, provisionedDashboardRefs, &sanityChecker)
 	}
@@ -138,9 +138,14 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
 // in grafana as they are in on the filesystem
-func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, sanityChecker *provisioningSanityChecker) error {
+func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, sanityChecker *provisioningSanityChecker) error {
 	for path, fileInfo := range filesFoundOnDisk {
-		folderName := filepath.Base(filepath.Dir(path))
+		folderName := "General"
+
+		dashboardsFolder := filepath.Dir(path)
+		if dashboardsFolder != resolvedPath {
+			folderName = filepath.Base(dashboardsFolder)
+		}
 
 		folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && err != ErrFolderNameMissing {
