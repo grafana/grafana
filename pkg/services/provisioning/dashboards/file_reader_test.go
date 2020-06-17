@@ -181,14 +181,20 @@ func TestDashboardFileReader(t *testing.T) {
 				}
 				So(foldersCount, ShouldEqual, 3)
 
+				foldersAndDashboards := make(map[string]struct{}, 6)
 				for _, d := range fakeService.inserted {
-					switch d.Dashboard.Title {
+					title := d.Dashboard.Title
+					if _, ok := foldersAndDashboards[title]; ok {
+						So(fmt.Errorf("dashboard title %q already exists", title), ShouldBeNil)
+					}
+
+					switch title {
 					case "folderOne", "folderTwo", "General":
 						So(d.Dashboard.IsFolder, ShouldBeTrue)
 					case "Grafana1", "Grafana2", "RootDashboard":
 						So(d.Dashboard.IsFolder, ShouldBeFalse)
 					default:
-						So(fmt.Errorf("unknown dashboard title %s", d.Dashboard.Title), ShouldBeNil)
+						So(fmt.Errorf("unknown dashboard title %q", title), ShouldBeNil)
 					}
 				}
 			})
