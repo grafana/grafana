@@ -35,6 +35,11 @@ interface TimeZoneOptionProps {
   data: SelectableZone;
 }
 
+export const Group: React.FC<any> = () => {
+  console.log('Group');
+  return <div>Group</div>;
+};
+
 export const TimeZoneOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<TimeZoneOptionProps>>(
   (props, ref) => {
     const theme = useTheme();
@@ -79,7 +84,7 @@ export const TimeZonePicker: React.FC<Props> = ({ onChange, value, width }) => {
       filterOption={filterBySearchIndex}
       options={groupedTimeZones}
       onChange={() => {}}
-      components={{ Option: TimeZoneOption }}
+      components={{ Option: TimeZoneOption, Group: Group }}
     />
   );
 };
@@ -173,62 +178,3 @@ const formatUtcOffset = (timestamp: number, zone: string): string => {
   }
   return `UTC${offset}`;
 };
-
-// export const TimeZonePicker: FC<Props> = ({ onChange, value, width, withInternalTimeZones = false }) => {
-//   const groupOptions = useTimeZoneGroups(withInternalTimeZones);
-//   const selectedOption = useOptionFromGroups(groupOptions, value);
-
-//   return (
-//     <Cascader
-//       options={groupOptions}
-//       initialValue={selectedOption?.value}
-//       onSelect={(newValue: string) => onChange(newValue)}
-//       width={width}
-//       placeholder="Select timezone"
-//     />
-//   );
-// };
-
-// const internalTimeZones = [
-//   { value: '', label: 'Default' },
-//   { value: 'browser', label: 'Local browser time' },
-//   { value: 'utc', label: 'UTC' },
-// ];
-
-// const useOptionFromGroups = (groupOptions: CascaderOption[], value: string): CascaderOption | undefined => {
-//   return useMemo(() => {
-//     return groupOptions.find(group => {
-//       if (!Array.isArray(group.items)) {
-//         return group.value === value;
-//       }
-//       return group.items.find(item => item.value === value);
-//     });
-//   }, [groupOptions, value]);
-// };
-
-// const useTimeZoneGroups = (withInternalTimeZones = false): CascaderOption[] => {
-//   return useMemo(() => {
-//     const timeZoneGroups: CascaderOption[] = [];
-
-//     if (withInternalTimeZones) {
-//       timeZoneGroups.push.apply(timeZoneGroups, internalTimeZones);
-//     }
-
-//     return getTimeZoneGroups().reduce((groups, group) => {
-//       const options = group.options.map(timeZone => {
-//         return {
-//           label: timeZone,
-//           value: timeZone,
-//         };
-//       });
-
-//       groups.push({
-//         label: group.label,
-//         value: group.label,
-//         items: options,
-//       });
-
-//       return groups;
-//     }, timeZoneGroups);
-//   }, [withInternalTimeZones]);
-// };
