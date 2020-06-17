@@ -87,6 +87,9 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
 
     e2e().wait('@chartData');
 
+    // Wait for RxJS
+    e2e().wait(500);
+
     // @todo remove `wrap` when possible
     return e2e().wrap({ config: fullConfig });
   });
