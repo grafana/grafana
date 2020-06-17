@@ -11,6 +11,7 @@ import { ChangePassword } from './ChangePassword';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { Footer } from '../Footer/Footer';
 
 export const LoginPage: FC = () => {
   document.title = Branding.AppTitle;
@@ -65,9 +66,9 @@ export const LoginPage: FC = () => {
             </div>
           )}
         </LoginCtrl>
-
-        <div className="clearfix" />
       </div>
+
+      <Footer />
     </Branding.LoginBackground>
   );
 };

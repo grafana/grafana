@@ -55,7 +55,6 @@ export const withAllowCustomValue = () => {
       {(value, updateValue) => {
         return (
           <Select
-            // value={value}
             placeholder="Choose..."
             options={options}
             width={20}
@@ -73,7 +72,7 @@ export const withAllowCustomValue = () => {
 
 export const asyncSelect = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [value, setValue] = useState();
+  const [value, setValue] = useState<SelectableValue<any>>();
   const loadAsyncOptions = useCallback(
     inputValue => {
       return new Promise<Array<SelectableValue<string>>>(resolve => {
