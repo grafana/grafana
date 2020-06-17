@@ -60,7 +60,7 @@ export class ConfigEditor extends PureComponent<Props> {
               labelClass="width-10"
               checked={options.jsonData.enableFlux || false}
               onChange={this.onToggleFlux}
-              tooltip="Suport flux query endpoint"
+              tooltip="Support flux query endpoint"
             />
           </div>
 
