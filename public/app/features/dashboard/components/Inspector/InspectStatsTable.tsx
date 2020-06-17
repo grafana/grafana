@@ -34,7 +34,7 @@ export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ dashboard,
             return (
               <tr key={`${stat.displayName}-${index}`}>
                 <td>{stat.displayName}</td>
-                <td style={{ textAlign: 'right' }}>{formatStat(stat, dashboard.getTimezone())}</td>
+                <td className={styles.cell}>{formatStat(stat, dashboard.getTimezone())}</td>
               </tr>
             );
           })}
@@ -60,6 +60,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       padding-bottom: ${theme.spacing.md};
+    `,
+    cell: css`
+      text-align: right;
     `,
   };
 });
