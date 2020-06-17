@@ -20,7 +20,7 @@ const labelClass = css`
 `;
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
-  const { query, data, datasource, onRunQuery, onChange, exploreId, exploreMode, allowCustomValue } = props;
+  const { query, data, datasource, onRunQuery, onChange, exploreId, exploreMode, allowCustomValue = false } = props;
 
   let absolute: AbsoluteTimeRange;
   if (data?.request?.range?.from) {

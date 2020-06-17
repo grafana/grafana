@@ -133,7 +133,9 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     // No need to fetch matching log groups if the search term isn't valid
     // This is also useful for preventing searches when a user is typing out a log group with template vars
-    if (!/^[\.\-_/#A-Za-z0-9]+$/.test(searchTerm)) {
+    // See https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_LogGroup.html for the source of the pattern below
+    const logGroupNamePattern = /^[\.\-_/#A-Za-z0-9]+$/;
+    if (!logGroupNamePattern.test(searchTerm)) {
       return Promise.resolve();
     }
 
