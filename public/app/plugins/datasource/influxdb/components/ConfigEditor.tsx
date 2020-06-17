@@ -68,6 +68,19 @@ export class ConfigEditor extends PureComponent<Props> {
             <>
               <div className="gf-form-inline">
                 <div className="gf-form">
+                  <SecretFormField
+                    isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
+                    value={secureJsonData.token || ''}
+                    label="Token"
+                    labelWidth={10}
+                    inputWidth={20}
+                    onReset={this.onResetPassword}
+                    onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'token')}
+                  />
+                </div>
+              </div>
+              <div className="gf-form-inline">
+                <div className="gf-form">
                   <InlineFormLabel className="width-10">Organization</InlineFormLabel>
                   <div className="width-10">
                     <Input
@@ -132,19 +145,6 @@ export class ConfigEditor extends PureComponent<Props> {
                 inputWidth={20}
                 onReset={this.onResetPassword}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
-              />
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <SecretFormField
-                isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
-                value={secureJsonData.token || ''}
-                label="Token"
-                labelWidth={10}
-                inputWidth={20}
-                onReset={this.onResetPassword}
-                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'token')}
               />
             </div>
           </div>
