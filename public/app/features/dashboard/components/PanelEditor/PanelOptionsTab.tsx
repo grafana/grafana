@@ -49,24 +49,31 @@ export const PanelOptionsTab: FC<Props> = ({
   // Fist common panel settings Title, description
   elements.push(
     <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
-      <Field label="Panel title">
-        <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
-      </Field>
-      <Field label="Description" description="Panel description supports markdown and links.">
-        <TextArea
-          defaultValue={panel.description}
-          onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
-        />
-      </Field>
-      <Field label="Transparent" description="Display panel without a background.">
-        <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
-      </Field>
+      {() => (
+        <>
+          <Field label="Panel title">
+            <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
+          </Field>
+          <Field label="Description" description="Panel description supports markdown and links.">
+            <TextArea
+              defaultValue={panel.description}
+              onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
+            />
+          </Field>
+          <Field label="Transparent" description="Display panel without a background.">
+            <Switch
+              value={panel.transparent}
+              onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
+            />
+          </Field>
+        </>
+      )}
     </OptionsGroup>
   );
 
   elements.push(
     <OptionsGroup title="Visualization" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
-      <VisualizationTab panel={panel} ref={visTabInputRef} />
+      {({ toggleExpand }) => <VisualizationTab panel={panel} ref={visTabInputRef} onToggleOptionGroup={toggleExpand} />}
     </OptionsGroup>
   );
 
@@ -74,7 +81,7 @@ export const PanelOptionsTab: FC<Props> = ({
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
       <OptionsGroup title="Options" id="legacy react editor" key="legacy react editor">
-        <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
+        {() => <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />}
       </OptionsGroup>
     );
   }
@@ -105,43 +112,49 @@ export const PanelOptionsTab: FC<Props> = ({
       key="panel links"
       defaultToClosed
     >
-      <DataLinksInlineEditor
-        links={panel.links}
-        onChange={links => onPanelConfigChange('links', links)}
-        suggestions={linkVariablesSuggestions}
-        data={[]}
-      />
+      {() => (
+        <DataLinksInlineEditor
+          links={panel.links}
+          onChange={links => onPanelConfigChange('links', links)}
+          suggestions={linkVariablesSuggestions}
+          data={[]}
+        />
+      )}
     </OptionsGroup>
   );
 
   elements.push(
     <OptionsGroup title="Repeat options" id="panel repeats" key="panel repeats" defaultToClosed>
-      <Field
-        label="Repeat by variable"
-        description="Repeat this panel for each value in the selected variable.
+      {() => (
+        <>
+          <Field
+            label="Repeat by variable"
+            description="Repeat this panel for each value in the selected variable.
           This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
           reload the dashboard."
-      >
-        <RepeatRowSelect repeat={panel.repeat} onChange={onRepeatRowSelectChange} />
-      </Field>
-      {panel.repeat && (
-        <Field label="Repeat direction">
-          <RadioButtonGroup
-            options={directionOptions}
-            value={panel.repeatDirection || 'h'}
-            onChange={value => onPanelConfigChange('repeatDirection', value)}
-          />
-        </Field>
-      )}
+          >
+            <RepeatRowSelect repeat={panel.repeat} onChange={onRepeatRowSelectChange} />
+          </Field>
+          {panel.repeat && (
+            <Field label="Repeat direction">
+              <RadioButtonGroup
+                options={directionOptions}
+                value={panel.repeatDirection || 'h'}
+                onChange={value => onPanelConfigChange('repeatDirection', value)}
+              />
+            </Field>
+          )}
 
-      {panel.repeat && panel.repeatDirection === 'h' && (
-        <Field label="Max per row">
-          <Select
-            options={maxPerRowOptions}
-            value={panel.maxPerRow}
-            onChange={value => onPanelConfigChange('maxPerRow', value.value)}
-          />
-        </Field>
+          {panel.repeat && panel.repeatDirection === 'h' && (
+            <Field label="Max per row">
+              <Select
+                options={maxPerRowOptions}
+                value={panel.maxPerRow}
+                onChange={value => onPanelConfigChange('maxPerRow', value.value)}
+              />
+            </Field>
+          )}
+        </>
       )}
     </OptionsGroup>
   );

@@ -54,14 +54,16 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
         nested
         defaultToClosed={property.value !== undefined}
       >
-        <item.override
-          value={property.value}
-          onChange={value => {
-            onChange(value);
-          }}
-          item={item}
-          context={context}
-        />
+        {() => (
+          <item.override
+            value={property.value}
+            onChange={value => {
+              onChange(value);
+            }}
+            item={item}
+            context={context}
+          />
+        )}
       </OptionsGroup>
     );
   } else {
