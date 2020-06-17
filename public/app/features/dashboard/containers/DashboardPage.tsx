@@ -3,7 +3,7 @@ import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
+
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -282,19 +282,15 @@ export class DashboardPage extends PureComponent<Props, State> {
       return null;
     }
 
-    const gridWrapperClasses = classNames({
-      'dashboard-container': true,
-      'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
-    });
-
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
 
     return (
-      <div>
+      <div className="dashboard-container">
         <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} $injector={$injector} onAddPanel={this.onAddPanel} />
-        <div className="scroll-canvas scroll-canvas--dashboard">
+
+        <div className="dashboard-scroll">
           <CustomScrollbar
             autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
@@ -302,10 +298,10 @@ export class DashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {initError && this.renderInitFailedState()}
-
-            <div className={gridWrapperClasses}>
+            <div className="dashboard-content">
+              {initError && this.renderInitFailedState()}
               {!editPanel && <SubMenu dashboard={dashboard} />}
+
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}
