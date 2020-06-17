@@ -20,7 +20,7 @@ import cx from 'classnames';
 import CopyIcon from '../../common/CopyIcon';
 
 import { TNil } from '../../types';
-import { KeyValuePair, Link } from '../../types/trace';
+import { KeyValuePair, Link } from '@grafana/data';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';

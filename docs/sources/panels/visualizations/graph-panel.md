@@ -37,7 +37,7 @@ Use these settings to refine your visualization.
 Use these settings to change the appearance of the tooltip that appears when you hover your cursor over the graph visualization.
 
 - **Mode**
-  - **All series -** The hover tooltips shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+  - **All series -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
   - **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
 - **Sort order -** Sorts the order of series in the hover tooltip if you have selected *All series* mode.
   - **None -** The order of the series in the tooltip is determined by the sort order in your query. For example, they could be alphabetically sorted by series name.
@@ -57,7 +57,7 @@ Use these settings to change the appearance of the tooltip that appears when you
 
 ## Series overrides
 
-Series overrides allows a series in a graph panel to be rendered differently from the others. You can customize display options on a per-series bases or by using regex rules. For example, one series can have a thicker line width to make it stand out or be moved to the right Y-axis.
+Series overrides allow a series in a graph panel to be rendered differently from the others. You can customize display options on a per-series bases or by using regex rules. For example, one series can have a thicker line width to make it stand out or be moved to the right Y-axis.
 
 You can add multiple series overrides.
 

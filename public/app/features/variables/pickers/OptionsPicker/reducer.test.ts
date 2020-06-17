@@ -15,7 +15,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { QueryVariableModel, VariableTag, VariableOption } from '../../../templating/types';
+import { QueryVariableModel, VariableTag, VariableOption } from '../../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -244,7 +244,7 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: payload.options,
-          id: payload.id!,
+          id: payload.id,
           multi: payload.multi,
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
           queryValue: '',
@@ -274,7 +274,7 @@ describe('optionsPickerReducer', () => {
           ...initialState,
           options: payload.options,
           queryValue,
-          id: payload.id!,
+          id: payload.id,
           multi: payload.multi,
           selectedValues: [selected],
         });

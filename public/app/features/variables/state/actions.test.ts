@@ -559,13 +559,12 @@ describe('shared actions', () => {
     const templating: any = { list: [constant] };
     const uid = 'uid';
     const dashboard: any = { title: 'Some dash', uid, templating };
-    const variableSrv: any = {};
 
     describe('when called and the previous dashboard has completed', () => {
       it('then correct actions are dispatched', async () => {
         const tester = await reduxTester<ReducersUsedInContext>()
           .givenRootReducer(getRootReducer())
-          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard, variableSrv));
+          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
         tester.thenDispatchedActionsShouldEqual(
           variablesInitTransaction({ uid }),
@@ -593,7 +592,7 @@ describe('shared actions', () => {
           } as unknown) as ReducersUsedInContext,
         })
           .givenRootReducer(getRootReducer())
-          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard, variableSrv));
+          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
         tester.thenDispatchedActionsShouldEqual(
           cleanVariables(),

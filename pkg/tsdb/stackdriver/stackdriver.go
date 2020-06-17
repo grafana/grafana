@@ -322,7 +322,18 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, stackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
-	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.ProjectName+"/timeSeries"))
+	projectName := query.ProjectName
+	if projectName == "" {
+		defaultProject, err := e.getDefaultProject(ctx)
+		if err != nil {
+			queryResult.Error = err
+			return queryResult, stackdriverResponse{}, nil
+		}
+		projectName = defaultProject
+		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
+	}
+
+	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, stackdriverResponse{}, nil

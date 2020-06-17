@@ -19,7 +19,7 @@ import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
 import ViewingLayer from './ViewingLayer';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../..';
-import { Span, Trace } from '../..';
+import { Span, Trace } from '@grafana/data';
 import { ubPb2, ubPx2, ubRelative } from '../../uberUtilityStyles';
 
 const DEFAULT_HEIGHT = 60;

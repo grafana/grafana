@@ -8,7 +8,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParams, getUrl } from 'app/core/selectors/location';
 import Page from 'app/core/components/Page/Page';
 import { loadFolderPage } from '../loaders';
-import { ManageDashboards } from './ManageDashboards';
+import ManageDashboards from './ManageDashboards';
 
 interface Props {
   navModel: NavModel;

@@ -1,5 +1,5 @@
 import React, { ChangeEvent, PureComponent } from 'react';
-import { TextBoxVariableModel } from '../../templating/types';
+import { TextBoxVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
