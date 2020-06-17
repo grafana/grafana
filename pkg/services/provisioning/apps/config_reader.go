@@ -76,7 +76,7 @@ func (cr *configReaderImpl) parseAppConfig(path string, file os.FileInfo) (*apps
 		return nil, err
 	}
 
-	return cfg.mapToAppFromConfig(), nil
+	return cfg.mapToAppsFromConfig(), nil
 }
 
 func validateRequiredField(apps []*appsAsConfig) error {
@@ -107,7 +107,7 @@ func validateApps(apps []*appsAsConfig) error {
 
 		for _, app := range apps[i].Apps {
 			if !plugins.IsAppInstalled(app.PluginID) {
-				return fmt.Errorf("plugin not installed: %q", app.PluginID)
+				return fmt.Errorf("plugin not installed: %s", app.PluginID)
 			}
 		}
 	}

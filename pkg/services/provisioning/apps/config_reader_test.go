@@ -53,7 +53,7 @@ func TestConfigReader(t *testing.T) {
 
 		err := os.Setenv("ENABLE_PLUGIN_VAR", "test-plugin")
 		require.NoError(t, err)
-		t.Cleanup(t, func() {
+		t.Cleanup(func() {
 			_ = os.Unsetenv("ENABLE_PLUGIN_VAR")
 		})
 
