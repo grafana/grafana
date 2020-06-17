@@ -224,7 +224,7 @@ func init() {
 				InputType:    "text",
 				Placeholder:  "minimum 30 seconds",
 				PropertyName: "retry",
-				Show: alerting.Show{
+				ShowWhen: alerting.ShowWhen{
 					Field: "priority",
 					Is:    "2",
 				},
@@ -235,7 +235,7 @@ func init() {
 				InputType:    "text",
 				Placeholder:  "maximum 86400 seconds",
 				PropertyName: "expire",
-				Show: alerting.Show{
+				ShowWhen: alerting.ShowWhen{
 					Field: "priority",
 					Is:    "2",
 				},

@@ -102,7 +102,7 @@ export interface Option {
   placeholder: string;
   propertyName: string;
   selectOptions: Array<SelectableValue<string>>;
-  show: { field: string; is: string };
+  showWhen: { field: string; is: string };
   required: boolean;
   validationRule: string;
 }

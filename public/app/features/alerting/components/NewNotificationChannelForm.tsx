@@ -103,10 +103,10 @@ export const NewNotificationChannelForm: FC<Props> = ({
             // Some options can be dependent on other options, this determines what is selected in the dependency options
             // I think this needs more thought.
             const selectedOptionValue =
-              getValues()[`settings.${option.show.field}`] &&
-              (getValues()[`settings.${option.show.field}`] as SelectableValue<string>).value;
+              getValues()[`settings.${option.showWhen.field}`] &&
+              (getValues()[`settings.${option.showWhen.field}`] as SelectableValue<string>).value;
 
-            if (option.show.field && selectedOptionValue !== option.show.is) {
+            if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
               return null;
             }
 

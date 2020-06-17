@@ -41,7 +41,7 @@ type Option struct {
 	Placeholder    string         `json:"placeholder"`
 	PropertyName   string         `json:"propertyName"`
 	SelectOptions  []SelectOption `json:"selectOptions"`
-	Show           Show           `json:"show"`
+	ShowWhen       ShowWhen       `json:"showWhen"`
 	Required       bool           `json:"required"`
 	ValidationRule string         `json:"validationRule"`
 }
@@ -53,7 +53,7 @@ type SelectOption struct {
 }
 
 // Show holds information about when options are dependant on other options.
-type Show struct {
+type ShowWhen struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`
 }
