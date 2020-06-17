@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { cx } from 'emotion';
+import { cx, css } from 'emotion';
 import { toLower } from 'lodash';
 import {
   SelectableValue,
@@ -8,8 +8,9 @@ import {
   dateTimeFormat,
   getTimeZoneGroups,
   TimeZoneGroup,
+  GrafanaTheme,
 } from '@grafana/data';
-import { useTheme } from '../../themes';
+import { useTheme, stylesFactory } from '../../themes';
 import { getSelectStyles } from '../Select/getSelectStyles';
 import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
@@ -35,45 +36,97 @@ interface TimeZoneOptionProps {
   data: SelectableZone;
 }
 
-export const Group: React.FC<any> = () => {
-  console.log('Group');
-  return <div>Group</div>;
+const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    header: css`
+      padding: 7px 10px;
+      width: 100%;
+      border-top: 1px solid ${theme.colors.border1};
+      text-transform: capitalize;
+    `,
+    label: css`
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textWeak};
+      font-weight: ${theme.typography.weight.semibold};
+    `,
+  };
+});
+
+export const Group: React.FC<any> = props => {
+  const theme = useTheme();
+  const { children, label } = props;
+  const styles = getSelectOptionGroupStyles(theme);
+
+  if (!label) {
+    return <div>{children}</div>;
+  }
+
+  return (
+    <div>
+      <div className={styles.header}>
+        <span className={styles.label}>{label}</span>
+      </div>
+      {children}
+    </div>
+  );
 };
 
-export const TimeZoneOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<TimeZoneOptionProps>>(
-  (props, ref) => {
-    const theme = useTheme();
-    const styles = getSelectStyles(theme);
-    const { children, innerProps, data, isSelected, isFocused } = props;
-    const containerStyle = cx(styles.option, isFocused && styles.optionFocused);
+export const Option = React.forwardRef<HTMLDivElement, React.PropsWithChildren<TimeZoneOptionProps>>((props, ref) => {
+  const theme = useTheme();
+  const styles = getSelectStyles(theme);
+  const { children, innerProps, data, isSelected, isFocused } = props;
+  const containerStyle = cx(styles.option, isFocused && styles.optionFocused);
 
-    return (
-      <div ref={ref} className={containerStyle} {...innerProps} aria-label="Select option">
-        <div className={styles.optionBody}>
-          <div>
-            <div>
-              <span>{children}</span>
-            </div>
-            <div>
-              {isSelected && (
-                <span>
-                  <Icon name="check" />
-                </span>
-              )}
-            </div>
+  return (
+    <div ref={ref} className={containerStyle} {...innerProps} aria-label="Select option">
+      <div className={styles.optionBody}>
+        <div
+          className={css`
+            display: flex;
+            flex-direction: row;
+          `}
+        >
+          <div
+            className={css`
+              flex-grow: 1;
+            `}
+          >
+            <span>{children}</span>
           </div>
           <div>
-            <div>{data.description && <div className={styles.optionDescription}>{data.description}</div>}</div>
-            <div>
-              <span>{data.localTime}</span>
-              <span>{data.utcOffset}</span>
-            </div>
+            {isSelected && (
+              <span>
+                <Icon name="check" />
+              </span>
+            )}
+          </div>
+        </div>
+        <div
+          className={css`
+            display: flex;
+            flex-direction: row;
+          `}
+        >
+          <div
+            className={css`
+              flex-grow: 1;
+            `}
+          >
+            {data.description && <div className={styles.optionDescription}>{data.description}</div>}
+          </div>
+          <div
+            className={css`
+              justify-content: flex-end;
+            `}
+          >
+            <span>{data.localTime}</span>
+            <span>{data.utcOffset}</span>
           </div>
         </div>
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
 
 export const TimeZonePicker: React.FC<Props> = ({ onChange, value, width }) => {
   const groupedTimeZones = useTimeZones();
@@ -81,10 +134,11 @@ export const TimeZonePicker: React.FC<Props> = ({ onChange, value, width }) => {
 
   return (
     <Select
+      width={width}
       filterOption={filterBySearchIndex}
       options={groupedTimeZones}
       onChange={() => {}}
-      components={{ Option: TimeZoneOption, Group: Group }}
+      components={{ Option, Group }}
     />
   );
 };
