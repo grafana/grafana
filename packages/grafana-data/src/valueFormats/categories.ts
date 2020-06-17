@@ -2,6 +2,7 @@ import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory 
 import {
   dateTimeAsIso,
   dateTimeAsUS,
+  dateTimeAsLocal,
   dateTimeFromNow,
   toClockMilliseconds,
   toClockSeconds,
@@ -169,6 +170,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'YYYY-MM-DD HH:mm:ss', id: 'dateTimeAsIso', fn: dateTimeAsIso },
       { name: 'MM/DD/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+      { name: 'Browser Local', id: 'dateTimeAsLocal', fn: dateTimeAsLocal },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },

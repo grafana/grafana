@@ -5,6 +5,7 @@ import {
   getDisplayProcessor,
   TimeZone,
   dateTimeFormat,
+  localTimeFormat,
 } from '@grafana/data';
 
 /**
@@ -125,7 +126,7 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
       return timeScale.minutes;
     }
     if (secPerTick <= 80000) {
-      return `${timeScale.days} ${timeScale.minutes}`;
+      return timeScale.daysMinutes;
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
       return timeScale.days;
@@ -136,29 +137,6 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
   return timeScale.minutes;
 };
 
-export const localTimeFormat = (locale: string, options: Intl.DateTimeFormatOptions, fallback: string): string => {
-  if (!window.Intl) {
-    return fallback;
-  }
-
-  // https://momentjs.com/docs/#/displaying/format/
-  const parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
-  const mapping: { [key: string]: string } = {
-    year: 'YYYY',
-    month: 'MM',
-    day: 'DD',
-    hour: 'HH',
-    minute: 'mm',
-    second: 'ss',
-    weekday: 'ddd',
-    era: 'N',
-    dayPeriod: 'A',
-    timeZoneName: 'Z',
-  };
-
-  return parts.map(part => mapping[part.type] || part.value).join('');
-};
-
 export const timeScale = {
   seconds: localTimeFormat(
     'default',
@@ -166,6 +144,11 @@ export const timeScale = {
     'HH:mm:ss'
   ),
   minutes: localTimeFormat('default', { hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm'),
+  daysMinutes: localTimeFormat(
+    'default',
+    { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
+    'HH:mm'
+  ),
   days: localTimeFormat('default', { month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD'),
   months: localTimeFormat('default', { year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM'),
 };

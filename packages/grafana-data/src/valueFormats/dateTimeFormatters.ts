@@ -3,7 +3,7 @@ import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrap
 import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types';
-import { dateTimeFormat, dateTimeFormatTimeAgo } from '../datetime';
+import { dateTimeFormat, dateTimeFormatTimeAgo, localTimeFormat } from '../datetime';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -340,6 +340,14 @@ export function toDateTimeValueFormatter(pattern: string, todayPattern?: string)
 
 export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
 export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
+export const dateTimeAsLocal = toDateTimeValueFormatter(
+  localTimeFormat(
+    'default',
+    { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' },
+    'YYYY-MM-DD HH:mm:ss'
+  ),
+  localTimeFormat('default', { hour: 'numeric', minute: '2-digit', second: '2-digit' }, 'h:mm:ss')
+);
 
 export function dateTimeFromNow(
   value: number,
