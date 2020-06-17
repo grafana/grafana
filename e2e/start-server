@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xeo pipefail
+set -eo pipefail
 
 . e2e/variables
 
@@ -14,10 +14,7 @@ echo -e "Copying grafana backend files to temp dir..."
 if [ -f $PACKAGE_FILE ]; then
   echo "Found package tar file, extracting..."
   tar zxf $PACKAGE_FILE -C $RUNDIR
-  file $RUNDIR/grafana-*/bin/grafana-server
-  ls -l $RUNDIR/grafana-*/bin/grafana-server
   mv $RUNDIR/grafana-*/* $RUNDIR
-  chmod +x $RUNDIR/bin/grafana-server
 else
   echo "Copying local dev files"
 
