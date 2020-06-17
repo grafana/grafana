@@ -105,7 +105,7 @@
     "rollup-plugin-visualizer": "3.3.1",
     "storybook-dark-mode": "0.6.1",
     "ts-loader": "6.2.1",
-    "typescript": "3.7.5"
+    "typescript": "3.9.3"
   },
   "types": "src/index.ts"
 }

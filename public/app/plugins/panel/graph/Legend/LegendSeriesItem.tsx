@@ -124,7 +124,7 @@ interface LegendSeriesLabelProps {
   label: string;
   color: string;
   yaxis?: number;
-  onLabelClick?: (event: any) => void;
+  onLabelClick: (event: any) => void;
 }
 
 class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSeriesIconProps> {
@@ -179,12 +179,18 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
     onToggleAxis: () => {},
   };
 
+  onColorChange = (color: string) => {
+    const { onColorChange } = this.props;
+    if (onColorChange) {
+      onColorChange(color);
+    }
+  };
   render() {
     return (
       <SeriesColorPicker
         yaxis={this.props.yaxis}
         color={this.props.color}
-        onChange={this.props.onColorChange}
+        onChange={this.onColorChange}
         onToggleAxis={this.props.onToggleAxis}
         enableNamedColors
       >
