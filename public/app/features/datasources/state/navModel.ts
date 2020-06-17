@@ -54,7 +54,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       url: `datasources/edit/${dataSource.id}/permissions`,
     });
 
-    if (config.featureToggles.dataSourceInsights) {
+    if (config.featureToggles.datasourceInsights) {
       navModel.children.push({
         active: false,
         icon: 'info-circle',
