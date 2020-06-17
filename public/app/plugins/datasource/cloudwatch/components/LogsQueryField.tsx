@@ -207,28 +207,22 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     }
   };
 
-  setSelectedLogGroups = (v: Array<SelectableValue<string>>) => {
+  setSelectedLogGroups = (selectedLogGroups: Array<SelectableValue<string>>) => {
     this.setState({
-      selectedLogGroups: v,
+      selectedLogGroups,
     });
 
     const { onChange, query } = this.props;
-
-    if (onChange) {
-      const nextQuery = {
-        ...query,
-        logGroupNames: v.map(logGroupName => logGroupName.value!) ?? [],
-      };
-
-      onChange(nextQuery);
-    }
+    onChange?.({
+      ...(query as CloudWatchLogsQuery),
+      logGroupNames: selectedLogGroups.map(logGroupName => logGroupName.value!) ?? [],
+    });
   };
 
   setCustomLogGroups = (v: string) => {
     const customLogGroup: SelectableValue<string> = { value: v, label: v };
-    this.setState({
-      selectedLogGroups: [...this.state.selectedLogGroups, customLogGroup],
-    });
+    const selectedLogGroups = [...this.state.selectedLogGroups, customLogGroup];
+    this.setSelectedLogGroups(selectedLogGroups);
   };
 
   setSelectedRegion = async (v: SelectableValue<string>) => {
