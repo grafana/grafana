@@ -49,7 +49,7 @@ exports[`Render should disable basic auth password input 1`] = `
         label="Enable flux"
         labelClass="width-10"
         onChange={[Function]}
-        tooltip="Suport flux query endpoint"
+        tooltip="Support flux query endpoint"
       />
     </div>
     <div
@@ -277,7 +277,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
         label="Enable flux"
         labelClass="width-10"
         onChange={[Function]}
-        tooltip="Suport flux query endpoint"
+        tooltip="Support flux query endpoint"
       />
     </div>
     <div
@@ -505,7 +505,7 @@ exports[`Render should hide white listed cookies input when browser access chose
         label="Enable flux"
         labelClass="width-10"
         onChange={[Function]}
-        tooltip="Suport flux query endpoint"
+        tooltip="Support flux query endpoint"
       />
     </div>
     <div
@@ -733,7 +733,7 @@ exports[`Render should render component 1`] = `
         label="Enable flux"
         labelClass="width-10"
         onChange={[Function]}
-        tooltip="Suport flux query endpoint"
+        tooltip="Support flux query endpoint"
       />
     </div>
     <div
