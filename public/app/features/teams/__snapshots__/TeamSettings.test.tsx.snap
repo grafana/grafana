@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<Component>
+  <Component
+    label="Team Settings"
+  >
+    <Form
+      defaultValues={
+        Object {
+          "avatarUrl": "some/url/",
+          "email": "test@test.com",
+          "id": 1,
+          "memberCount": 1,
+          "name": "test",
+          "permission": 0,
+        }
+      }
+      onSubmit={[Function]}
+    >
+      <Component />
+    </Form>
+  </Component>
+  <SharedPreferences
+    resourceUri="teams/1"
+  />
+</Component>
+`;

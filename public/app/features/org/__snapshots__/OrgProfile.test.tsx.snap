@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<Form
+  defaultValues={
+    Object {
+      "orgName": "Main org",
+    }
+  }
+  onSubmit={[Function]}
+>
+  <Component />
+</Form>
+`;
