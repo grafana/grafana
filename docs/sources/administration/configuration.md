@@ -555,69 +555,121 @@ Default is `false`.
 
 ## [auth]
 
-Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages below.
-
-- [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
-- [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
-- [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
-- [Gitlab OAuth]({{< relref "../auth/gitlab.md" >}}) (auth.gitlab)
-- [Generic OAuth]({{< relref "../auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
-- [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
-- [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
-- [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
+Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview]({{< relref "../auth/overview.md" >}}) and other authentication documentation for detailed instructions on how to set up and configure authentication.
 
 ### login_cookie_name
 
 The cookie name for storing the auth token. Default is `grafana_session`.
 
-# The lifetime (days) an authenticated user can be inactive before being required to login at next visit. Default is 7 days.
-login_maximum_inactive_lifetime_days = 7
+### login_maximum_inactive_lifetime_days
 
-# The maximum lifetime (days) an authenticated user can be logged in since login time before being required to login. Default is 30 days.
-login_maximum_lifetime_days = 30
+The lifetime (days) an authenticated user can be inactive before being required to log in at next visit. Default is 7 days.
 
-# How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
-token_rotation_interval_minutes = 10
+### login_maximum_lifetime_days
 
-# Set to true to disable (hide) the login form, useful if you use OAuth
-disable_login_form = false
+The maximum lifetime (days) an authenticated user can be logged in before being required to login. Default is 30 days.
 
-# Set to true to disable the signout link in the side menu. useful if you use auth.proxy
-disable_signout_menu = false
+### token_rotation_interval_minutes
 
-# URL to redirect the user to after sign out
-signout_redirect_url =
+How often auth tokens are rotated for authenticated users when the user is active. The default is each 10 minutes.
 
-# Set to true to attempt login with OAuth automatically, skipping the login screen.
-# This setting is ignored if multiple OAuth providers are configured.
-oauth_auto_login = false
+### disable_login_form
 
-# OAuth state max age cookie duration. Defaults to 60 seconds.
-oauth_state_cookie_max_age = 60
+Set to true to disable (hide) the login form, useful if you use OAuth. Default is false.
 
-# limit of api_key seconds to live before expiration
-api_key_max_seconds_to_live = -1
+### disable_signout_menu
 
+Set to `true` to disable the signout link in the side menu. This is useful if you use auth.proxy. Default is `false`.
 
+### signout_redirect_url
 
+URL to redirect the user to after they sign out.
 
+### oauth_auto_login
 
-
-
-
-
-
-
-
-
-
-
-
+Set to `true` to attempt login with OAuth automatically, skipping the login screen.
+This setting is ignored if multiple OAuth providers are configured. Default is `false`.
 
 ### oauth_state_cookie_max_age
 
 How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
+
+### api_key_max_seconds_to_live
+
+Limit of API key seconds to live before expiration. Default is -1 (unlimited).
+
+<hr />
+
+## [auth.anonymous]
+
+Refer to [Anonymous authentication]({{< relref "../auth/#anonymous-authentication" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.github]
+
+Refer to [GitHub OAuth2 authentication]({{< relref "../auth/github.md" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.gitlab]
+
+Refer to [Gitlab OAuth2 authentication]({{< relref "../auth/gitlab.md" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.google]
+
+Refer to [Google OAuth2 authentication]({{< relref "../auth/google.md" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.grafananet]
+
+Legacy key names, still in the config file so they work in env variables.
+
+<hr />
+
+## [auth.grafana_com]
+
+Legacy key names, still in the config file so they work in env variables.
+
+<hr />
+
+## [auth.azuread]
+
+Refer to [Azure AD OAuth2 authentication]({{< relref "../auth/azuread.md" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.okta]
+
+Refer to [Okta OAuth2 authentication]({{< relref "../auth/okta.md" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.generic_oauth]
+
+Refer to [Generic OAuth authentication]({{< relref "../auth/generic-oauth.md" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.basic]
+
+Refer to [Basic authentication]({{< relref "../auth/overview.md#basic-authentication" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.proxy]
+
+Refer to [Auth proxy authentication]({{< relref "../auth/auth-proxy.md" >}}) for detailed instructions.
+
+<hr />
+
+## [auth.ldap]
+
+Refer to [LDAO authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
 
 <hr />
 
