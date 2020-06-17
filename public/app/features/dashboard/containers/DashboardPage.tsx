@@ -187,11 +187,15 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   setScrollTop = (e: MouseEvent<HTMLElement>): void => {
     const target = e.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop, updateScrollTop: null });
+    this.setState({ scrollTop: target.scrollTop, updateScrollTop: undefined });
   };
 
   onAddPanel = () => {
     const { dashboard } = this.props;
+
+    if (!dashboard) {
+      return;
+    }
 
     // Return if the "Add panel" exists already
     if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
@@ -233,6 +237,10 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   renderInitFailedState() {
     const { initError } = this.props;
+
+    if (!initError) {
+      return null;
+    }
 
     return (
       <div className="dashboard-loading">
