@@ -121,7 +121,7 @@ func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 func (ps *provisioningServiceImpl) ProvisionApps() error {
 	appPath := path.Join(ps.Cfg.ProvisioningPath, "apps")
 	err := ps.provisionApps(appPath)
-	return errutil.Wrap("App provisioning error", err)
+	return errutil.Wrap("app provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionNotifications() error {

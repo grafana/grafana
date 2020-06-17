@@ -41,16 +41,16 @@ func (ap *AppProvisioner) apply(cfg *appsAsConfig) error {
 
 		query := &models.GetPluginSettingByIdQuery{OrgId: app.OrgID, PluginId: app.PluginID}
 		err := bus.Dispatch(query)
-		if err != nil && err != models.ErrPluginSettingNotFound {
-			return err
-		}
-
-		if err != models.ErrPluginSettingNotFound {
+		if err != nil {
+			if err != models.ErrPluginSettingNotFound {
+				return err
+			}
+		} else {
 			app.PluginVersion = query.Result.PluginVersion
 			app.Pinned = query.Result.Pinned
 		}
 
-		ap.log.Info("updating app from configuration ", "type", app.PluginID, "enabled", app.Enabled)
+		ap.log.Info("Updating app from configuration ", "type", app.PluginID, "enabled", app.Enabled)
 		cmd := &models.UpdatePluginSettingCmd{
 			OrgId:          app.OrgID,
 			PluginId:       app.PluginID,

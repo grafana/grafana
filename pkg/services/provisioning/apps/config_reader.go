@@ -49,7 +49,7 @@ func (cr *configReaderImpl) readConfig(path string) ([]*appsAsConfig, error) {
 	}
 
 	cr.log.Debug("Validating apps")
-	if err = validateRequiredField(apps); err != nil {
+	if err := validateRequiredField(apps); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func validateRequiredField(apps []*appsAsConfig) error {
 			if app.PluginID == "" {
 				errStrings = append(
 					errStrings,
-					fmt.Sprintf("App item %d in configuration doesn't contain required field type", index+1),
+					fmt.Sprintf("app item %d in configuration doesn't contain required field type", index+1),
 				)
 			}
 		}
@@ -107,7 +107,7 @@ func validateApps(apps []*appsAsConfig) error {
 
 		for _, app := range apps[i].Apps {
 			if !plugins.IsAppInstalled(app.PluginID) {
-				return fmt.Errorf("plugin not installed: %s", app.PluginID)
+				return fmt.Errorf("plugin not installed: %q", app.PluginID)
 			}
 		}
 	}

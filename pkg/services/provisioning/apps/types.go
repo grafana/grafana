@@ -2,7 +2,7 @@ package apps
 
 import "github.com/grafana/grafana/pkg/services/provisioning/values"
 
-// appsAsConfig is normalized data object for apps config data. Any config version should be mappable
+// appsAsConfig is a normalized data object for apps config data. Any config version should be mappable.
 // to this type.
 type appsAsConfig struct {
 	Apps []*appFromConfig
@@ -28,14 +28,14 @@ type appFromConfigV0 struct {
 	SecureJSONData values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 }
 
-// appsAsConfigV0 is mapping for zero version configs. This is mapped to its normalised version.
+// appsAsConfigV0 is a mapping for zero version configs. This is mapped to its normalised version.
 type appsAsConfigV0 struct {
 	Apps []*appFromConfigV0 `json:"apps" yaml:"apps"`
 }
 
-// mapToNotificationFromConfig maps config syntax to normalized notificationsAsConfig object. Every version
+// mapToAppsFromConfig maps config syntax to a normalized notificationsAsConfig object. Every version
 // of the config syntax should have this function.
-func (cfg *appsAsConfigV0) mapToAppFromConfig() *appsAsConfig {
+func (cfg *appsAsConfigV0) mapToAppsFromConfig() *appsAsConfig {
 	r := &appsAsConfig{}
 	if cfg == nil {
 		return r

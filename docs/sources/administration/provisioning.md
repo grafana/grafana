@@ -212,7 +212,7 @@ datasources:
 
 > This feature is available from v7.1
 
-It's possible to manage (enable/disable) apps in Grafana by adding one or more yaml config files in the [`provisioning/apps`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana will update each app to match the configuration file.
+It's possible to manage (enable/disable) apps in Grafana by adding one or more YAML config files in the [`provisioning/apps`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana will update each app to match the configuration file.
 
 ### Example app configuration file
 
@@ -222,7 +222,7 @@ apiVersion: 1
 apps:
   # <string> the type of app, plugin identifier. Required
   - type: raintank-worldping-app
-    # <int> Org id. Default to 1, unless org_name is specified
+    # <int> Org ID. Default to 1, unless org_name is specified
     org_id: 1
     # <string> Org name. Overrides org_id unless org_id not specified
     org_name: Main Org.
@@ -230,11 +230,11 @@ apps:
     disabled: false
     # <map> fields that will be converted to json and stored in jsonData. Custom per app.
     jsonData:
-      # kay/value pairs of string to object
+      # key/value pairs of string to object
       key: value
     # <map> fields that will be converted to json, encrypted and stored in secureJsonData. Custom per app.
     secureJsonData:
-      # kay/value pairs of string to string
+      # key/value pairs of string to string
       key: value
 ```
 

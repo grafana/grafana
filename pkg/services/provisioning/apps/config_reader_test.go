@@ -21,30 +21,28 @@ func TestConfigReader(t *testing.T) {
 	t.Run("Broken yaml should return error", func(t *testing.T) {
 		reader := newConfigReader(log.New("test logger"))
 		_, err := reader.readConfig(brokenYaml)
-		require.NotNil(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("Skip invalid directory", func(t *testing.T) {
 		cfgProvider := newConfigReader(log.New("test logger"))
 		cfg, err := cfgProvider.readConfig(emptyFolder)
-		if err != nil {
-			t.Fatalf("readConfig return an error %v", err)
-		}
+		require.NoError(t, err)
 		require.Len(t, cfg, 0)
 	})
 
 	t.Run("Unknown app should return error", func(t *testing.T) {
 		cfgProvider := newConfigReader(log.New("test logger"))
 		_, err := cfgProvider.readConfig(unknownApp)
-		require.NotNil(t, err)
+		require.Error(t, err)
 		require.Equal(t, "plugin not installed: nonexisting", err.Error())
 	})
 
 	t.Run("Read incorrect properties", func(t *testing.T) {
 		cfgProvider := newConfigReader(log.New("test logger"))
 		_, err := cfgProvider.readConfig(incorrectSettings)
-		require.NotNil(t, err)
-		require.Equal(t, "App item 1 in configuration doesn't contain required field type", err.Error())
+		require.Error(t, err)
+		require.Equal(t, "app item 1 in configuration doesn't contain required field type", err.Error())
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
@@ -53,10 +51,11 @@ func TestConfigReader(t *testing.T) {
 			"test-plugin-2": {},
 		}
 
-		_ = os.Setenv("ENABLE_PLUGIN_VAR", "test-plugin")
-		defer func() {
+		err := os.Setenv("ENABLE_PLUGIN_VAR", "test-plugin")
+		require.NoError(t, err)
+		t.Cleanup(t, func() {
 			_ = os.Unsetenv("ENABLE_PLUGIN_VAR")
-		}()
+		})
 
 		cfgProvider := newConfigReader(log.New("test logger"))
 		cfg, err := cfgProvider.readConfig(correctProperties)
