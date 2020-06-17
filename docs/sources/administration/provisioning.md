@@ -65,7 +65,7 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 
 > This feature is available from v5.0
 
-It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
+It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
 
 ### Running Multiple Grafana Instances
 
@@ -206,6 +206,36 @@ datasources:
     secureJsonData:
       httpHeaderValue1: 'HeaderValue'
       httpHeaderValue2: 'Bearer XXXXXXXXX'
+```
+
+## Apps
+
+> This feature is available from v7.1
+
+It's possible to manage (enable/disable) apps in Grafana by adding one or more yaml config files in the [`provisioning/apps`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana will update each app to match the configuration file.
+
+### Example app configuration file
+
+```yaml
+apiVersion: 1
+
+apps:
+  # <string> the type of app, plugin identifier. Required
+  - type: raintank-worldping-app
+    # <int> Org id. Default to 1, unless org_name is specified
+    org_id: 1
+    # <string> Org name. Overrides org_id unless org_id not specified
+    org_name: Main Org.
+    # <bool> disable the app. Default to false.
+    disabled: false
+    # <map> fields that will be converted to json and stored in jsonData. Custom per app.
+    jsonData:
+      # kay/value pairs of string to object
+      key: value
+    # <map> fields that will be converted to json, encrypted and stored in secureJsonData. Custom per app.
+    secureJsonData:
+      # kay/value pairs of string to string
+      key: value
 ```
 
 ## Dashboards
