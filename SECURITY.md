@@ -6,7 +6,7 @@ Please encrypt your message to us; please use our PGP key. The key fingerprint i
 
 F988 7BEA 027A 049F AE8E  5CAA D125 8932 BE24 C5CA
 
-The key is available from [pgp.mit.edu](https://pgp.mit.edu/pks/lookup?op=get&search=0xF9887BEA027A049FAE8E5CAAD1258932BE24C5CA) by searching for [grafana](https://pgp.mit.edu/pks/lookup?search=grafana&op=index).
+The key is available from [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=0xF9887BEA027A049FAE8E5CAAD1258932BE24C5CA&fingerprint=on&op=index).
 
 Grafana Labs will send you a response indicating the next steps in handling your report. After the initial reply to your report, the security team will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
 
