@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, MapStateToProps, useDispatch } from 'react-redux';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
@@ -22,13 +22,10 @@ export interface ConnectedProps {
   plugin?: PanelPlugin | null;
 }
 
-interface DispatchProps {
-  updateLocation: typeof updateLocation;
-}
+export type Props = OwnProps & ConnectedProps;
 
-export type Props = OwnProps & ConnectedProps & DispatchProps;
-
-const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultTab, plugin, updateLocation }) => {
+const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultTab, plugin }) => {
+  const dispatch = useDispatch();
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: false,
@@ -37,10 +34,12 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
   const metaDs = useDatasourceMetadata(data);
   const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
   const onClose = useCallback(() => {
-    updateLocation({
-      query: { inspect: null, inspectTab: null },
-      partial: true,
-    });
+    dispatch(
+      updateLocation({
+        query: { inspect: null, inspectTab: null },
+        partial: true,
+      })
+    );
   }, [updateLocation]);
 
   if (!plugin) {
@@ -74,6 +73,5 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
     plugin: panelState.plugin,
   };
 };
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation };
 
-export const PanelInspector = connect(mapStateToProps, mapDispatchToProps)(PanelInspectorUnconnected);
+export const PanelInspector = connect(mapStateToProps)(PanelInspectorUnconnected);

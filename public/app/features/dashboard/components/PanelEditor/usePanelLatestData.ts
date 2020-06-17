@@ -39,12 +39,4 @@ export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): 
     isLoading: latestData ? latestData.state === LoadingState.Loading : true,
     hasSeries: latestData ? !!latestData.series : false,
   };
-
-  // [
-  //   latestData,
-  //   // Loading state
-  //   latestData ? latestData.state === LoadingState.Loading : true,
-  //   // Error
-  //   latestData && latestData.error,
-  // ];
 };
