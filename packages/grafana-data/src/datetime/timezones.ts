@@ -1,5 +1,5 @@
 import moment from 'moment-timezone';
-import { memoize, isNumber } from 'lodash';
+import { memoize, isNumber, times } from 'lodash';
 import { TimeZone } from '../types';
 import { getTimeZone } from './common';
 
@@ -19,6 +19,7 @@ export interface TimeZoneCountry {
   name: string;
 }
 export interface TimeZoneInfo {
+  name: string;
   zone: string;
   countries: TimeZoneCountry[];
   abbreviation: string;
@@ -31,6 +32,12 @@ export interface TimeZoneGroup {
 }
 
 export const getTimeZoneInfo = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
+  const internal = mapInternal(zone, timestamp);
+
+  if (internal) {
+    return internal;
+  }
+
   const momentZone = moment.tz.zone(zone);
 
   if (!momentZone) {
@@ -38,6 +45,7 @@ export const getTimeZoneInfo = (zone: string, timestamp: number): TimeZoneInfo |
   }
 
   return {
+    name: zone,
     zone: zone,
     countries: countriesByTimeZone()[zone] ?? [],
     abbreviation: abbrevationWithoutOffset(momentZone.abbr(timestamp)),
@@ -68,7 +76,7 @@ export const getTimeZoneGroups = memoize((includeInternal = false): TimeZoneGrou
   const timeZones = getTimeZones(includeInternal);
 
   const groups = timeZones.reduce((groups: Record<string, TimeZone[]>, zone: TimeZone) => {
-    const delimiter = zone.lastIndexOf('/');
+    const delimiter = zone.indexOf('/');
 
     if (delimiter === -1) {
       const group = '';
@@ -90,6 +98,47 @@ export const getTimeZoneGroups = memoize((includeInternal = false): TimeZoneGrou
     zones: groups[name],
   }));
 });
+
+const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
+  switch (zone) {
+    case 'utc':
+      return {
+        name: 'Coordinated Universal Time',
+        zone,
+        countries: [],
+        abbreviation: 'UTC, GMT',
+        offsetInMins: 0,
+      };
+
+    case 'default':
+      return {
+        name: 'Default',
+        zone,
+        countries: [],
+        abbreviation: '',
+        offsetInMins: 0,
+      };
+
+    case 'browser':
+      const tz = moment.tz.guess(true);
+      const momentZone = moment.tz.zone(tz);
+
+      if (!momentZone) {
+        return undefined;
+      }
+
+      return {
+        name: 'Browser Time',
+        zone,
+        countries: countriesByTimeZone()[tz] ?? [],
+        abbreviation: momentZone.abbr(timestamp),
+        offsetInMins: momentZone.utcOffset(timestamp),
+      };
+
+    default:
+      return undefined;
+  }
+};
 
 const abbrevationWithoutOffset = (abbrevation: string): string => {
   if (/^(\+|\-).+/.test(abbrevation)) {

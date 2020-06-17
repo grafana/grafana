@@ -14,6 +14,7 @@ import { useTheme, stylesFactory } from '../../themes';
 import { getSelectStyles } from '../Select/getSelectStyles';
 import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
+import { utc } from 'moment';
 
 export interface Props {
   value: string;
@@ -71,11 +72,28 @@ export const Group: React.FC<any> = props => {
   );
 };
 
+const utcOffset = 'utcOffset';
+
 export const Option = React.forwardRef<HTMLDivElement, React.PropsWithChildren<TimeZoneOptionProps>>((props, ref) => {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
   const { children, innerProps, data, isSelected, isFocused } = props;
-  const containerStyle = cx(styles.option, isFocused && styles.optionFocused);
+  const containerStyle = cx(
+    styles.option,
+    isFocused && styles.optionFocused,
+    css`
+      padding: 6px 8px 4px;
+      &:hover span.utcOffset {
+        background: ${theme.palette.gray05};
+      }
+    `,
+    isFocused &&
+      css`
+        span.utcOffset {
+          background: ${theme.palette.gray05};
+        }
+      `
+  );
 
   return (
     <div ref={ref} className={containerStyle} {...innerProps} aria-label="Select option">
@@ -91,7 +109,13 @@ export const Option = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
               flex-grow: 1;
             `}
           >
-            <span>{children}</span>
+            <span
+              className={css`
+                font-weight: ${theme.typography.weight.regular};
+              `}
+            >
+              {children}
+            </span>
           </div>
           <div>
             {isSelected && (
@@ -117,10 +141,34 @@ export const Option = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
           <div
             className={css`
               justify-content: flex-end;
+              align-items: center;
             `}
           >
-            <span>{data.localTime}</span>
-            <span>{data.utcOffset}</span>
+            <span
+              className={cx(
+                styles.optionDescription,
+                css`
+                  color: ${theme.colors.text};
+                `
+              )}
+            >
+              {data.localTime}
+            </span>
+            <span
+              className={cx(
+                styles.optionDescription,
+                css`
+                  color: ${theme.colors.text};
+                  background: ${theme.colors.bg2};
+                  padding: 2px 5px;
+                  border-radius: 2px;
+                  margin-left: 4px;
+                `,
+                utcOffset
+              )}
+            >
+              {data.utcOffset}
+            </span>
           </div>
         </div>
       </div>
@@ -162,8 +210,8 @@ const useTimeZones = (): SelectableZoneGroup[] => {
       const utcOffset = formatUtcOffset(now, info.zone);
 
       options.push({
-        label: zone,
-        value: zone,
+        label: info.name,
+        value: info.zone,
         description: useDescription(info),
         searchIndex: useSearchIndex(info, localTime, utcOffset),
         utcOffset: utcOffset,
