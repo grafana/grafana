@@ -90,10 +90,7 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) *tsdb.QueryResult {
 	qr := &tsdb.QueryResult{RefId: refID}
 
-	if dr.Error != nil {
-		qr.Error = dr.Error
-		return qr
-	}
+	qr.Error = dr.Error
 
 	if dr.Frames != nil {
 		qr.Dataframes = tsdb.NewDecodedDataFrames(dr.Frames)
