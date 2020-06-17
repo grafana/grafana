@@ -30,7 +30,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 	prefs := prefsQuery.Result
 
-	// Read locale from acccept-language
+	// Read locale from accept-language
 	acceptLang := c.Req.Header.Get("Accept-Language")
 	locale := "en-US"
 
@@ -360,9 +360,14 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		})
 	}
 
+	helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
+	if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
+		helpVersion = setting.ApplicationName
+	}
+
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:         "Help",
-		SubTitle:     fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit),
+		SubTitle:     helpVersion,
 		Id:           "help",
 		Url:          "#",
 		Icon:         "question-circle",

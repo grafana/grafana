@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Button, Form, Field, Input, Icon, Legend } from '@grafana/ui';
+import { Button, Tooltip, Icon, Form, Input, Field, FieldSet } from '@grafana/ui';
 import { User } from 'app/types';
 import config from 'app/core/config';
 import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
@@ -10,60 +10,57 @@ export interface Props {
   updateProfile: (payload: ProfileUpdateFields) => void;
 }
 
-interface UserDTO {
-  name: string;
-  email: string;
-  login: string;
-}
+const { disableLoginForm } = config;
 
 export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfile }) => {
-  const { disableLoginForm } = config;
+  const onSubmitProfileUpdate = (data: ProfileUpdateFields) => {
+    updateProfile(data);
+  };
 
   return (
-    <>
-      <Legend>Edit Profile</Legend>
-      <Form
-        defaultValues={user}
-        onSubmit={(user: UserDTO) => {
-          updateProfile({ ...user });
-        }}
-      >
-        {({ register, errors }) => (
-          <>
-            <Field label="Name" invalid={!!errors.name}>
-              <Input ref={register} type="text" name="name" />
+    <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
+      {({ register, errors }) => {
+        return (
+          <FieldSet label="Edit Profile">
+            <Field label="Name" invalid={!!errors.name} error="Name is required">
+              <Input name="name" ref={register({ required: true })} placeholder="Name" defaultValue={user.name} />
             </Field>
-
-            <Field
-              label="Email"
-              invalid={!!errors.email}
-              disabled={disableLoginForm}
-              description={disableLoginForm && 'Login Details Locked - managed in another system.'}
-            >
+            <Field label="Email" invalid={!!errors.email} error="Email is required" disabled={disableLoginForm}>
               <Input
-                prefix={disableLoginForm && <Icon name="lock" />}
-                placeholder="user@email.com"
-                ref={register}
-                type="email"
                 name="email"
+                ref={register({ required: true })}
+                placeholder="Email"
+                defaultValue={user.email}
+                suffix={<InputSuffix />}
               />
             </Field>
-
-            <Field
-              label="Username"
-              disabled={disableLoginForm}
-              description={disableLoginForm && 'Login Details Locked - managed in another system.'}
-            >
-              <Input prefix={disableLoginForm && <Icon name="lock" />} ref={register} type="text" name="login" />
+            <Field label="Username" disabled={disableLoginForm}>
+              <Input
+                name="login"
+                ref={register}
+                defaultValue={user.login}
+                placeholder="Username"
+                suffix={<InputSuffix />}
+              />
             </Field>
-            <Button type="submit" disabled={isSavingUser}>
-              Save
-            </Button>
-          </>
-        )}
-      </Form>
-    </>
+            <div className="gf-form-button-row">
+              <Button variant="primary" disabled={isSavingUser}>
+                Save
+              </Button>
+            </div>
+          </FieldSet>
+        );
+      }}
+    </Form>
   );
 };
 
 export default UserProfileEditForm;
+
+const InputSuffix: FC = () => {
+  return disableLoginForm ? (
+    <Tooltip content="Login Details Locked - managed in another system.">
+      <Icon name="lock" />
+    </Tooltip>
+  ) : null;
+};

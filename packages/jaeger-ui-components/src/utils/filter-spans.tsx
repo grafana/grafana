@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { KeyValuePair, Span } from '../types/trace';
+import { KeyValuePair, Span } from '@grafana/data';
 import { TNil } from '../types';
 
 export default function filterSpans(textFilter: string, spans: Span[] | TNil) {

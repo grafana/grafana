@@ -1,15 +1,15 @@
 import '../datasource';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataSourceInstanceSettings, dateMath, getFrameDisplayName, DataFrame, DataQueryResponse } from '@grafana/data';
+import { DataFrame, DataQueryResponse, DataSourceInstanceSettings, dateMath, getFrameDisplayName } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariable } from 'app/features/templating/all';
-import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchLogsQueryStatus, LogAction } from '../types';
+import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, CloudWatchQuery, LogAction } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
 import { of } from 'rxjs';
+import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
 
 jest.mock('rxjs/operators', () => {
   const operators = jest.requireActual('rxjs/operators');
@@ -313,18 +313,22 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should generate the correct query with interval variable', async () => {
-      templateSrv.init([
-        new CustomVariable(
-          {
-            name: 'period',
-            current: {
-              value: '10m',
-            },
-            multi: false,
-          },
-          {} as any
-        ),
-      ]);
+      const period: CustomVariableModel = {
+        id: 'period',
+        name: 'period',
+        index: 0,
+        current: { value: '10m', text: '10m', selected: true },
+        options: [{ value: '10m', text: '10m', selected: true }],
+        multi: false,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      templateSrv.init([period]);
 
       const query = {
         range: defaultTimeRange,
@@ -667,58 +671,75 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
-      const variables = [
-        new CustomVariable(
-          {
-            name: 'var1',
-            current: {
-              value: 'var1-foo',
-            },
-            multi: false,
-          },
-          {} as any
-        ),
-        new CustomVariable(
-          {
-            name: 'var2',
-            current: {
-              value: 'var2-foo',
-            },
-            multi: false,
-          },
-          {} as any
-        ),
-        new CustomVariable(
-          {
-            name: 'var3',
-            options: [
-              { selected: true, value: 'var3-foo' },
-              { selected: false, value: 'var3-bar' },
-              { selected: true, value: 'var3-baz' },
-            ],
-            current: {
-              value: ['var3-foo', 'var3-baz'],
-            },
-            multi: true,
-          },
-          {} as any
-        ),
-        new CustomVariable(
-          {
-            name: 'var4',
-            options: [
-              { selected: true, value: 'var4-foo' },
-              { selected: false, value: 'var4-bar' },
-              { selected: true, value: 'var4-baz' },
-            ],
-            current: {
-              value: ['var4-foo', 'var4-baz'],
-            },
-            multi: true,
-          },
-          {} as any
-        ),
-      ];
+      const var1: CustomVariableModel = {
+        id: 'var1',
+        name: 'var1',
+        index: 0,
+        current: { value: 'var1-foo', text: 'var1-foo', selected: true },
+        options: [{ value: 'var1-foo', text: 'var1-foo', selected: true }],
+        multi: false,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const var2: CustomVariableModel = {
+        id: 'var2',
+        name: 'var2',
+        index: 1,
+        current: { value: 'var2-foo', text: 'var2-foo', selected: true },
+        options: [{ value: 'var2-foo', text: 'var2-foo', selected: true }],
+        multi: false,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const var3: CustomVariableModel = {
+        id: 'var3',
+        name: 'var3',
+        index: 2,
+        current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
+        options: [
+          { selected: true, value: 'var3-foo', text: 'var3-foo' },
+          { selected: false, value: 'var3-bar', text: 'var3-bar' },
+          { selected: true, value: 'var3-baz', text: 'var3-baz' },
+        ],
+        multi: true,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const var4: CustomVariableModel = {
+        id: 'var4',
+        name: 'var4',
+        index: 3,
+        options: [
+          { selected: true, value: 'var4-foo', text: 'var4-foo' },
+          { selected: false, value: 'var4-bar', text: 'var4-bar' },
+          { selected: true, value: 'var4-baz', text: 'var4-baz' },
+        ],
+        current: { value: ['var4-foo', 'var4-baz'], text: 'var4-foo + var4-baz', selected: true },
+        multi: true,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const variables = [var1, var2, var3, var4];
       const state = convertToStoreState(variables);
       const _templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
       _templateSrv.init(variables);

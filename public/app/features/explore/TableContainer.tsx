@@ -2,19 +2,20 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { DataFrame } from '@grafana/data';
-import { Table, Collapse } from '@grafana/ui';
+import { Collapse, Table } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { toggleTable } from './state/actions';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { MetaInfoText } from './MetaInfoText';
+import { FilterItem } from '@grafana/ui/src/components/Table/types';
 
 interface TableContainerProps {
   exploreId: ExploreId;
   loading: boolean;
   width: number;
-  onClickCell: (key: string, value: string) => void;
+  onCellFilterAdded?: (filter: FilterItem) => void;
   showingTable: boolean;
   tableResult?: DataFrame;
   toggleTable: typeof toggleTable;
@@ -37,7 +38,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   }
 
   render() {
-    const { loading, onClickCell, showingTable, tableResult, width } = this.props;
+    const { loading, onCellFilterAdded, showingTable, tableResult, width } = this.props;
 
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
@@ -46,7 +47,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
         {hasTableResult ? (
-          <Table data={tableResult!} width={tableWidth} height={height} onCellClick={onClickCell} />
+          <Table data={tableResult!} width={tableWidth} height={height} onCellFilterAdded={onCellFilterAdded} />
         ) : (
           <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
         )}

@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/types';
+import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { VariableBuilder } from './variableBuilder';
 
 export class AdHocVariableBuilder extends VariableBuilder<AdHocVariableModel> {
