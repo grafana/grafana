@@ -12,12 +12,12 @@ export interface DataLinkClickEvent<T = any> {
 
 /**
  * Link configuration. The values may contain variables that need to be
- * processed before running
+ * processed before showing the link to user.
+ *
+ * TODO: <T extends DataQuery> is not strictly true for internal links as we do not need refId for example but all
+ *  data source defined queries extend this so this is more for documentation.
  */
-export type DataLink = DataLinkExternal | DataLinkInternal;
-
-export interface DataLinkExternal {
-  type: 'external';
+export interface DataLink<T extends DataQuery = any> {
   title: string;
   targetBlank?: boolean;
 
@@ -31,13 +31,14 @@ export interface DataLinkExternal {
   // 1: If exists, handle click directly
   // Not saved in JSON/DTO
   onClick?: (event: DataLinkClickEvent) => void;
-}
 
-export interface DataLinkInternal<T extends DataQuery = any> {
-  type: 'internal';
-  title: string;
-  query: T;
-  datasourceUid: string;
+  // If dataLink represents internal link this has to be filled. Internal link is defined as a query in a particular
+  // datas ource that we want to show to the user. Usually this results in a link to explore but can also lead to
+  // more custom onClick behaviour if needed.
+  internal?: {
+    query: T;
+    datasourceUid: string;
+  };
 }
 
 export type LinkTarget = '_blank' | '_self';

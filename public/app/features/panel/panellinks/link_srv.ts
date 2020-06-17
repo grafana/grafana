@@ -18,7 +18,7 @@ import {
   VariableSuggestionsScope,
   urlUtil,
   textUtil,
-  DataLinkExternal,
+  DataLink,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -232,7 +232,7 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
 };
 
 export interface LinkService {
-  getDataLinkUIModel: <T>(link: DataLinkExternal, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
+  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
   getAnchorInfo: (link: any) => any;
   getLinkUrl: (link: any) => string;
 }
@@ -269,7 +269,7 @@ export class LinkSrv implements LinkService {
   /**
    * Returns LinkModel which is basically a DataLink with all values interpolated through the templateSrv.
    */
-  getDataLinkUIModel = <T>(link: DataLinkExternal, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
+  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
     const timeRangeUrl = urlUtil.toUrlParams(this.timeSrv.timeRangeForUrl());
 
@@ -328,7 +328,7 @@ export class LinkSrv implements LinkService {
    *
    * @deprecated Drilldown links should be generated using getDataLinkUIModel method
    */
-  getPanelLinkAnchorInfo(link: DataLinkExternal, scopedVars: ScopedVars) {
+  getPanelLinkAnchorInfo(link: DataLink, scopedVars: ScopedVars) {
     deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
     return this.getDataLinkUIModel(link, scopedVars, {});
   }

@@ -1,5 +1,5 @@
 import { splitOpen } from '../state/actions';
-import { DataLinkInternal, ExploreMode, Field, LinkModel, locationUtil, TimeRange } from '@grafana/data';
+import { DataQuery, ExploreMode, Field, LinkModel, locationUtil, TimeRange } from '@grafana/data';
 import { getLinksFromLogsField } from '../../panel/panellinks/linkSuppliers';
 import { serializeStateToUrlParam } from '../../../core/utils/explore';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -19,23 +19,23 @@ export function getFieldLinksForExplore(
 ): Array<LinkModel<Field>> {
   const data = getLinksFromLogsField(field, rowIndex);
   return data.map(d => {
-    if (d.link.type === 'internal') {
+    if (d.link.internal) {
       return {
         ...d.linkModel,
         title:
           d.linkModel.title ||
-          getDataSourceSrv().getDataSourceSettingsByUid(d.link.datasourceUid)?.name ||
+          getDataSourceSrv().getDataSourceSettingsByUid(d.link.internal.datasourceUid)?.name ||
           'Unknown datasource',
         onClick: () => {
           splitOpenFn({
-            datasourceUid: (d.link as DataLinkInternal).datasourceUid,
-            query: (d.link as DataLinkInternal).query,
+            datasourceUid: d.link.internal.datasourceUid,
+            query: d.link.internal.query,
           });
         },
         // We need to create real href here as the linkModel.href actually contains query. As in this case this is
         // meant to be internal link (opens split view by default) the href will also points to explore but this
         // way you can open it in new tab.
-        href: generateInternalHref(d.link.datasourceUid, d.link.query, range),
+        href: generateInternalHref(d.link.internal.datasourceUid, d.link.internal.query, range),
       };
     }
 
@@ -67,7 +67,7 @@ export function getFieldLinksForExplore(
 /**
  * Generates href for internal derived field link.
  */
-function generateInternalHref(datasourceUid: string, query: any, range: TimeRange): string {
+function generateInternalHref<T extends DataQuery = any>(datasourceUid: string, query: T, range: TimeRange): string {
   return locationUtil.assureBaseUrl(
     `/explore?left=${serializeStateToUrlParam({
       range: range.raw,

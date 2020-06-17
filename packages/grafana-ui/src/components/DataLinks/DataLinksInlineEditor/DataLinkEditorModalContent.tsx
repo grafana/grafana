@@ -1,15 +1,15 @@
-import { DataFrame, DataLinkExternal, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
 import React, { FC, useState } from 'react';
 import { DataLinkEditor } from '../DataLinkEditor';
 import { HorizontalGroup } from '../../Layout/Layout';
 import { Button } from '../../Button';
 
 interface DataLinkEditorModalContentProps {
-  link: DataLinkExternal;
+  link: DataLink;
   index: number;
   data: DataFrame[];
   suggestions: VariableSuggestion[];
-  onSave: (index: number, ink: DataLinkExternal) => void;
+  onSave: (index: number, ink: DataLink) => void;
   onCancel: (index: number) => void;
 }
 

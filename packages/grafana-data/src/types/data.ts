@@ -1,7 +1,7 @@
 import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
-import {DataLink} from "./dataLink";
+import { DataLink } from './dataLink';
 
 export type KeyValue<T = any> = { [s: string]: T };
 

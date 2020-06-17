@@ -1,4 +1,4 @@
-import { DataFrame, DataLinkExternal, GrafanaTheme, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
 import React, { useState } from 'react';
 import { css } from 'emotion';
 import { Button } from '../../Button/Button';
@@ -9,8 +9,8 @@ import { DataLinksListItem } from './DataLinksListItem';
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
 
 interface DataLinksInlineEditorProps {
-  links?: DataLinkExternal[];
-  onChange: (links: DataLinkExternal[]) => void;
+  links?: DataLink[];
+  onChange: (links: DataLink[]) => void;
   suggestions: VariableSuggestion[];
   data: DataFrame[];
 }
@@ -21,10 +21,10 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
   const [isNew, setIsNew] = useState(false);
 
   const styles = getDataLinksInlineEditorStyles(theme);
-  const linksSafe: DataLinkExternal[] = links ?? [];
+  const linksSafe: DataLink[] = links ?? [];
   const isEditing = editIndex !== null;
 
-  const onDataLinkChange = (index: number, link: DataLinkExternal) => {
+  const onDataLinkChange = (index: number, link: DataLink) => {
     if (isNew) {
       if (link.title.trim() === '' && link.url.trim() === '') {
         setIsNew(false);
@@ -91,7 +91,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
         >
           <DataLinkEditorModalContent
             index={editIndex}
-            link={isNew ? { type: 'external', title: '', url: '' } : linksSafe[editIndex]}
+            link={isNew ? { title: '', url: '' } : linksSafe[editIndex]}
             data={data}
             onSave={onDataLinkChange}
             onCancel={onDataLinkCancel}

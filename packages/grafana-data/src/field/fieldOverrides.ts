@@ -16,7 +16,7 @@ import {
   ValueLinkConfig,
   GrafanaTheme,
   TimeZone,
-  DataLinkExternal,
+  DataLink,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -360,8 +360,7 @@ export const getLinksSupplier = (
   const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
   const { timeField } = getTimeField(frame);
 
-  const externalLinks = field.config.links.filter(l => l.type === 'external') as DataLinkExternal[];
-  return externalLinks.map((link: DataLinkExternal) => {
+  return field.config.links.map((link: DataLink) => {
     let href = link.url;
     let dataFrameVars = {};
     let valueVars = {};

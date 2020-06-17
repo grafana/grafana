@@ -1,7 +1,6 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   DataLink,
-  DataLinkExternal,
   DisplayValue,
   Field,
   FieldDisplay,
@@ -125,11 +124,9 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         console.log('VALUE', value);
       }
 
-      return links
-        .filter(l => l.type === 'external')
-        .map((link: DataLinkExternal) => {
-          return getLinkSrv().getDataLinkUIModel(link, scopedVars, value);
-        });
+      return links.map((link: DataLink) => {
+        return getLinkSrv().getDataLinkUIModel(link, scopedVars, value);
+      });
     },
   };
 };
@@ -164,7 +161,8 @@ export const getLinksFromLogsField = (
 
   return field.config.links
     ? field.config.links.map(link => {
-        if (link.type === 'external') {
+        console.log({ link });
+        if (!link.internal) {
           return {
             link,
             linkModel: getLinkSrv().getDataLinkUIModel(link, scopedVars, field),
@@ -172,7 +170,7 @@ export const getLinksFromLogsField = (
         } else {
           let stringifiedQuery = '';
           try {
-            stringifiedQuery = JSON.stringify(link.query);
+            stringifiedQuery = JSON.stringify(link.internal.query);
           } catch (err) {
             // should not happen and not much to do about this, possibly something non stringifiable in the query
             console.error(err);
@@ -180,7 +178,9 @@ export const getLinksFromLogsField = (
 
           // Replace any variables inside the query. This may not be the safest as it can also replace keys etc so may not
           // actually work with every datasource query right now.
+          console.log({ stringifiedQuery });
           stringifiedQuery = getTemplateSrv().replace(stringifiedQuery, scopedVars);
+          console.log({ stringifiedQuery });
 
           let replacedQuery = {};
           try {
@@ -193,7 +193,10 @@ export const getLinksFromLogsField = (
           return {
             link: {
               ...link,
-              query: replacedQuery,
+              internal: {
+                ...link.internal,
+                query: replacedQuery,
+              },
             },
             linkModel: {
               title: getTemplateSrv().replace(link.title || '', scopedVars),

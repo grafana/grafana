@@ -14,7 +14,6 @@ import {
   DataLink,
   Field,
   QueryResultMetaStat,
-  DataLinkInternal,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -354,7 +353,6 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     if (derivedFieldConfig.url) {
       acc.push({
-        type: 'external',
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
         title: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
@@ -364,13 +362,15 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
       acc.push({
-        type: 'internal',
-        // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+        // Will be filled out later
         title: '',
+        url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
-        query: { query: derivedFieldConfig.url },
-        datasourceUid: derivedFieldConfig.datasourceUid,
-      } as DataLinkInternal);
+        internal: {
+          query: { query: derivedFieldConfig.url },
+          datasourceUid: derivedFieldConfig.datasourceUid,
+        },
+      });
     }
     return acc;
   }, [] as DataLink[]);
