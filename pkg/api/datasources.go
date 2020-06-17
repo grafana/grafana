@@ -9,12 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var datasourcesLogger = log.New("datasources")
 
 func GetDataSources(c *models.ReqContext) Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId}
@@ -128,9 +131,11 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 	return Success("Data source deleted")
 }
 
-func validateURL(u string) Response {
+func validateURL(tp string, u string) Response {
 	if u != "" {
-		if _, err := datasource.ValidateURL(u); err != nil {
+		if _, err := datasource.ValidateURL(tp, u); err != nil {
+			datasourcesLogger.Error("Received invalid data source URL as part of data source command",
+				"url", u)
 			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
 		}
 	}
@@ -139,8 +144,9 @@ func validateURL(u string) Response {
 }
 
 func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
+	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
-	if resp := validateURL(cmd.Url); resp != nil {
+	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
 	}
 
@@ -162,9 +168,10 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 }
 
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
+	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
-	if resp := validateURL(cmd.Url); resp != nil {
+	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
 	}
 
