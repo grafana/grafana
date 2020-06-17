@@ -24,7 +24,7 @@
         "y": 4
       },
       "headings": true,
-      "id": 3,
+      "id": 2,
       "limit": 30,
       "links": [],
       "options": {},
@@ -38,19 +38,27 @@
     },
     {
       "datasource": null,
+      "folderId": 0,
       "gridPos": {
         "h": 15,
         "w": 12,
         "x": 12,
         "y": 4
       },
-      "id": 4,
+      "headings": true,
+      "id": 3,
+      "limit": 30,
       "links": [],
-      "options": {
-        "feedUrl": "https://grafana.com/blog/news.xml"
-      },
-      "title": "Latest from the blog",
-      "type": "news"
+      "options": {},
+      "query": "",
+      "recent": true,
+      "search": false,
+      "starred": true,
+      "tags": [],
+      "title": "SQL Atlas",
+      "content": "<div class=\"text-center\" style=\"padding-top: 15px\">\nPepe el cojo \n</div>",
+      "type": "text",
+      "mode": "html"
     }
   ],
   "schemaVersion": 22,

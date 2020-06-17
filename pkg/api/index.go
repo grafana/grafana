@@ -87,7 +87,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
-		AppTitle:                "Grafana",
+		AppTitle:                "SQL Atlas",
 	}
 
 	if setting.DisableGravatar {
@@ -313,13 +313,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		//	Icon:        "sliders-v-alt",
 		//	Url:         setting.AppSubUrl + "/org",
 		//})
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Engine",
-			Id:          "sqlatlas",
-			Description: "Configure the data sources, storage server and querys",
-			Icon:        "sliders-v-alt",
-			Url:         setting.AppSubUrl + "/sqlatlas",
-		})
+
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API Keys",
 			Id:          "apikeys",
@@ -355,28 +349,34 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			})
 		}
 
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Engine",
+			Id:          "sqlatlas",
+			Description: "Configure the data sources, storage server and querys",
+			Icon:        "sliders-v-alt",
+			Url:         setting.AppSubUrl + "/sqlatlas",
+		})
+
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:         "Server Admin",
-			SubTitle:     "Manage all users & orgs",
+			Text:         "Engine",
+			SubTitle:     "Configure the data sources, storage server and querys",
 			HideFromTabs: true,
-			Id:           "admin",
-			Icon:         "shield",
-			Url:          setting.AppSubUrl + "/admin/users",
-			SortWeight:   dtos.WeightAdmin,
-			Children:     adminNavLinks,
+			Id:           "sqlatlas",
+			Icon:         "sliders-v-alt",
+			Url:          setting.AppSubUrl + "/sqlatlas",
 		})
 	}
 
-	data.NavTree = append(data.NavTree, &dtos.NavLink{
-		Text:         "Help",
-		SubTitle:     fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit),
-		Id:           "help",
-		Url:          "#",
-		Icon:         "question-circle",
-		HideFromMenu: true,
-		SortWeight:   dtos.WeightHelp,
-		Children:     []*dtos.NavLink{},
-	})
+	//data.NavTree = append(data.NavTree, &dtos.NavLink{
+	//	Text:         "Help",
+	//	SubTitle:     fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit),
+	//	Id:           "help",
+	//	Url:          "#",
+	//	Icon:         "question-circle",
+	//	HideFromMenu: true,
+	//	SortWeight:   dtos.WeightHelp,
+	//	Children:     []*dtos.NavLink{},
+	//})
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
