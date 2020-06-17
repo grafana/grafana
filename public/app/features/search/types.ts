@@ -95,3 +95,11 @@ export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
 }
+
+export interface RouteParams {
+  query?: string | null;
+  sort?: string | null;
+  starred?: boolean | null;
+  tag?: string[] | null;
+  layout?: SearchLayout | null;
+}

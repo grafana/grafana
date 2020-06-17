@@ -23,15 +23,16 @@ import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
+import { fieldIndexComparer } from '../field/fieldComparers';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
-    const { text, ...disp } = c;
+    const { text, type, ...disp } = c as any;
     return {
       name: text, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
       values: new ArrayVector(),
-      type: FieldType.other,
+      type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
 
@@ -46,9 +47,11 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   }
 
   for (const f of fields) {
-    const t = guessFieldTypeForField(f);
-    if (t) {
-      f.type = t;
+    if (f.type === FieldType.other) {
+      const t = guessFieldTypeForField(f);
+      if (t) {
+        f.type = t;
+      }
     }
   }
 
@@ -389,31 +392,10 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
   for (let i = 0; i < data.length; i++) {
     index.push(i);
   }
-  const values = field.values;
 
-  // Numeric Comparison
-  let compare = (a: number, b: number) => {
-    const vA = values.get(a);
-    const vB = values.get(b);
-    return vA - vB; // works for numbers!
-  };
+  const fieldComparer = fieldIndexComparer(field, reverse);
+  index.sort(fieldComparer);
 
-  // String Comparison
-  if (field.type === FieldType.string) {
-    compare = (a: number, b: number) => {
-      const vA: string = values.get(a);
-      const vB: string = values.get(b);
-      return vA.localeCompare(vB);
-    };
-  }
-
-  // Run the sort function
-  index.sort(compare);
-  if (reverse) {
-    index.reverse();
-  }
-
-  // Return a copy that maps sorted values
   return {
     ...data,
     fields: data.fields.map(f => {

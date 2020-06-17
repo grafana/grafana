@@ -35,7 +35,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
-  const [currentData, hasSeries] = usePanelLatestData(panel);
+  const [currentData, hasSeries] = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
@@ -50,7 +50,8 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          /* hasSeries makes sure current data is there */
+          data={currentData!.series}
         />
       );
     },
@@ -70,7 +71,8 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          /* hasSeries makes sure current data is there */
+          data={currentData!.series}
         />
       );
     },

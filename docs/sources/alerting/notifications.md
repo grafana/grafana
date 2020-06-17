@@ -118,10 +118,16 @@ To set up PagerDuty, all you have to do is to provide an integration key.
 Setting | Description
 ---------- | -----------
 Integration Key | Integration key for PagerDuty.
-Severity | Level for dynamic notifications, default is `critical`
+Severity | Level for dynamic notifications, default is `critical` (1)
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
+Message in details | Removes the Alert message from the PD summary field and puts it into custom details instead (2)
 
-**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
+>**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
+
+>Using Message In Details will change the structure of the `custom_details` field in the PagerDuty Event.
+This might break custom event rules in your PagerDuty rules if you rely on the fields in `payload.custom_details`.
+Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
+This behavior will become the default in a future version of Grafana.
 
 ### Webhook
 
@@ -207,10 +213,7 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
 
-Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
-Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
-
-Be aware that some notifiers require public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
+You must configure an [external image storage provider]({{< relref "../installation/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 
 Notification services which need public image access are marked as 'external only'.
 

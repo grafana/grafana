@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1554902936982,
+  "iteration": 1591027621672,
   "links": [
     {
       "asDropdown": true,
@@ -34,13 +34,21 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "gdev-elasticsearch-v6-filebeat",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 5,
         "w": 24,
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 4,
       "legend": {
         "avg": false,
@@ -54,6 +62,9 @@
       "lines": false,
       "linewidth": 1,
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 2,
       "points": false,
@@ -142,22 +153,13 @@
       }
     },
     {
-      "columns": [
-        {
-          "text": "@timestamp",
-          "value": "@timestamp"
-        },
-        {
-          "text": "fields.level",
-          "value": "fields.level"
-        },
-        {
-          "text": "message",
-          "value": "message"
-        }
-      ],
       "datasource": "gdev-elasticsearch-v6-filebeat",
-      "fontSize": "100%",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 22,
         "w": 24,
@@ -166,58 +168,35 @@
       },
       "id": 2,
       "links": [],
-      "pageSize": null,
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
+      "options": {
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
       },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "@timestamp",
-          "type": "date"
-        },
-        {
-          "alias": "Level",
-          "colorMode": null,
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "fields.level",
-          "thresholds": [""],
-          "type": "string",
-          "unit": "short",
-          "valueMaps": []
-        },
-        {
-          "alias": "Message",
-          "colorMode": null,
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          "decimals": 2,
-          "pattern": "message",
-          "preserveFormat": false,
-          "sanitize": false,
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        }
-      ],
       "targets": [
         {
-          "bucketAggs": [],
+          "bucketAggs": [
+            {
+              "$$hashKey": "object:394",
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
           "metrics": [
             {
+              "$$hashKey": "object:359",
               "field": "select field",
               "id": "1",
               "meta": {},
-              "settings": {
-                "size": 500
-              },
-              "type": "raw_document"
+              "settings": {},
+              "type": "logs"
             }
           ],
           "query": "fields.app:grafana",
@@ -228,11 +207,10 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "transform": "json",
-      "type": "table"
+      "type": "logs"
     }
   ],
-  "schemaVersion": 18,
+  "schemaVersion": 25,
   "style": "dark",
   "tags": ["gdev", "elasticsearch", "datasource-test"],
   "templating": {
@@ -249,7 +227,7 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -259,5 +237,5 @@
   "timezone": "",
   "title": "Datasource tests - Elasticsearch v6 Filebeat",
   "uid": "06tPt4gZz",
-  "version": 8
+  "version": 1
 }

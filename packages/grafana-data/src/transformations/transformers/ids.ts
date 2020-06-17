@@ -8,6 +8,7 @@ export enum DataTransformerID {
   rename = 'rename',
   calculateField = 'calculateField',
   seriesToColumns = 'seriesToColumns',
+  merge = 'merge',
   labelsToFields = 'labelsToFields',
   filterFields = 'filterFields',
   filterFieldsByName = 'filterFieldsByName',

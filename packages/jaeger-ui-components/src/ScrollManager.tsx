@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { TNil } from './types';
-import { Span, SpanReference, Trace } from './types/trace';
+import { Span, SpanReference, Trace } from '@grafana/data';
 
 /**
  * `Accessors` is necessary because `ScrollManager` needs to be created by
