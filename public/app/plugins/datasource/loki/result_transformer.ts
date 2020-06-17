@@ -351,14 +351,6 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
-    if (derivedFieldConfig.url) {
-      acc.push({
-        // We do not know what title to give here so we count on presentation layer to create a title from metadata.
-        title: '',
-        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
-        url: derivedFieldConfig.url,
-      });
-    }
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
       acc.push({
@@ -370,6 +362,13 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
           query: { query: derivedFieldConfig.url },
           datasourceUid: derivedFieldConfig.datasourceUid,
         },
+      });
+    } else {
+      acc.push({
+        // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+        title: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
+        url: derivedFieldConfig.url,
       });
     }
     return acc;
