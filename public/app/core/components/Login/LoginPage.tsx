@@ -11,6 +11,11 @@ import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
 import { LoginLayout, InnerBox } from './LoginLayout';
 
+const forgottenPasswordStyles = css`
+  padding: 0;
+  margin-top: 4px;
+`;
+
 export const LoginPage: FC = () => {
   return (
     <LoginLayout>
@@ -42,10 +47,7 @@ export const LoginPage: FC = () => {
                       {!(ldapEnabled || authProxyEnabled) && (
                         <HorizontalGroup justify="flex-end">
                           <LinkButton
-                            className={css`
-                              padding: 0;
-                              margin-top: 4px;
-                            `}
+                            className={forgottenPasswordStyles}
                             variant="link"
                             href="/user/password/send-reset-email"
                           >
