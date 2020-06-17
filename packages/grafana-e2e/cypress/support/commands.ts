@@ -1,3 +1,5 @@
+import 'cypress-file-upload';
+
 interface CompareScreenshotsConfig {
   name: string;
   threshold?: number;
