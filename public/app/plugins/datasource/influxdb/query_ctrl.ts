@@ -248,14 +248,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
-    console.log('Toggle influx edit mode:', this.target);
     try {
       this.target.query = this.queryModel.render(false);
     } catch (err) {
       console.log('query render error');
     }
     const { queryType } = this.target;
-    if (queryType === InfluxQueryType.Flux || queryType === queryType.InfluxQL) {
+    if (queryType === InfluxQueryType.Flux || queryType === InfluxQueryType.InfluxQL) {
       this.target.queryType = InfluxQueryType.Classic;
       this.target.rawQuery = false;
     } else if (this.datasource.enableFlux) {
