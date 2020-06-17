@@ -37,7 +37,6 @@ type Bus interface {
 
 	AddHandler(handler HandlerFunc)
 	AddHandlerCtx(handler HandlerFunc)
-	AddHandlerForType(obj interface{}, handler HandlerFunc) HandlerFunc
 	AddEventListener(handler HandlerFunc)
 
 	// SetTransactionManager allows the user to replace the internal
@@ -159,17 +158,6 @@ func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	b.handlers[queryTypeName] = handler
 }
 
-func (b *InProcBus) AddHandlerForType(obj interface{}, handler HandlerFunc) HandlerFunc {
-	typeName := reflect.TypeOf(obj).Elem().Name()
-	if typeName == "" {
-		panic("Couldn't get type name")
-	}
-	prev := b.handlers[typeName]
-	b.handlers[typeName] = handler
-
-	return prev
-}
-
 func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(1).Elem().Name()
@@ -190,12 +178,6 @@ func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 // Package level function.
 func AddHandler(implName string, handler HandlerFunc) {
 	globalBus.AddHandler(handler)
-}
-
-// AddHandlerForType attaches a handler for a certain message type to the global bus, and returns the previous handler.
-// Package level function.
-func AddHandlerForType(obj interface{}, handler HandlerFunc) HandlerFunc {
-	return globalBus.AddHandlerForType(obj, handler)
 }
 
 // AddHandlerCtx attaches a handler function to the global bus context.
