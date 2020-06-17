@@ -1,7 +1,16 @@
 import React from 'react';
-import { FieldType, formattedValueToString, getDisplayProcessor, QueryResultMetaStat, TimeZone } from '@grafana/data';
+import {
+  FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
+  GrafanaTheme,
+  QueryResultMetaStat,
+  TimeZone,
+} from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { config } from 'app/core/config';
+import { stylesFactory, useTheme } from '@grafana/ui';
+import { css } from 'emotion';
 
 interface InspectStatsTableProps {
   dashboard: DashboardModel;
@@ -9,12 +18,15 @@ interface InspectStatsTableProps {
   stats: QueryResultMetaStat[];
 }
 export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ dashboard, name, stats }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
   if (!stats || !stats.length) {
     return null;
   }
 
   return (
-    <div style={{ paddingBottom: '16px' }}>
+    <div className={styles.wrapper}>
       <div className="section-heading">{name}</div>
       <table className="filter-table width-30">
         <tbody>
@@ -43,3 +55,11 @@ function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
   });
   return formattedValueToString(display(stat.value));
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      padding-bottom: ${theme.spacing.md};
+    `,
+  };
+});

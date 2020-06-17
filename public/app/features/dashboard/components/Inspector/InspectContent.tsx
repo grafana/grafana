@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { getLocationSrv } from '@grafana/runtime';
 import { getPanelInspectorStyles } from './styles';
 import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
 import { InspectSubtitle } from './InspectSubtitle';
@@ -24,10 +23,12 @@ interface Props {
   data?: PanelData;
   isDataLoading: boolean;
   dataOptions: GetDataOptions;
-  onDataOptionsChange: (options: GetDataOptions) => void;
   // If the datasource supports custom metadata
   metadataDatasource?: DataSourceApi;
+  onDataOptionsChange: (options: GetDataOptions) => void;
+  onClose: () => void;
 }
+
 export const InspectContent: React.FC<Props> = ({
   panel,
   plugin,
@@ -36,22 +37,16 @@ export const InspectContent: React.FC<Props> = ({
   data,
   isDataLoading,
   dataOptions,
-  onDataOptionsChange,
   metadataDatasource,
   defaultTab,
+  onDataOptionsChange,
+  onClose,
 }) => {
   const [currentTab, setCurrentTab] = useState(defaultTab ?? InspectTab.Data);
 
   if (!plugin) {
     return null;
   }
-
-  const onClose = () => {
-    getLocationSrv().update({
-      query: { inspect: null, inspectTab: null },
-      partial: true,
-    });
-  };
 
   const styles = getPanelInspectorStyles();
   const error = data?.error;
