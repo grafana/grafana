@@ -223,10 +223,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push(createNoValuesFieldDisplay(options));
-  } else if (values.length === 1 && !fieldConfig.defaults.displayName) {
-    // Don't show title for single item
-    values[0].display.title = undefined;
   }
+
+  // TODO: move this logic to panels / visualizations
+  // else if (values.length === 1 && !fieldConfig.defaults.displayName) {
+  //   // Don't show title for single item
+  //   values[0].display.title = undefined;
+  // }
 
   return values;
 };

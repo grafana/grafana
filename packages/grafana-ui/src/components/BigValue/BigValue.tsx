@@ -32,6 +32,17 @@ export enum BigValueJustifyMode {
   Center = 'center',
 }
 
+/**
+ * Options for how the value & title are to be displayed
+ */
+export enum BigValueNameAndValueOption {
+  Auto = 'auto',
+  Value = 'value',
+  ValueAndName = 'value_and_value',
+  Name = 'name',
+  None = 'none',
+}
+
 export interface Props extends Themeable {
   height: number;
   width: number;
@@ -43,6 +54,7 @@ export interface Props extends Themeable {
   graphMode: BigValueGraphMode;
   justifyMode?: BigValueJustifyMode;
   alignmentFactors?: DisplayValueAlignmentFactors;
+  nameAndValue?: BigValueNameAndValueOption;
 }
 
 export class BigValue extends PureComponent<Props> {
@@ -51,19 +63,20 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { value, onClick, className } = this.props;
+    const { onClick, className } = this.props;
 
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
     const valueStyles = layout.getValueStyles();
     const titleStyles = layout.getTitleStyles();
+    const displayValue = layout.displayValue;
 
     return (
       <div className={className} style={panelStyles} onClick={onClick}>
         <div style={valueAndTitleContainerStyles}>
-          {value.title && <div style={titleStyles}>{value.title}</div>}
-          <FormattedValueDisplay value={value} style={valueStyles} />
+          {displayValue.title && <div style={titleStyles}>{displayValue.title}</div>}
+          <FormattedValueDisplay value={displayValue} style={valueStyles} />
         </div>
         {layout.renderChart()}
       </div>

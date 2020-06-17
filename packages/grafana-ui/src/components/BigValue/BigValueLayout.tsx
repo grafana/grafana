@@ -4,11 +4,11 @@ import tinycolor from 'tinycolor2';
 import { Chart, Geom } from 'bizcharts';
 
 // Utils
-import { getColorFromHexRgbOrName, formattedValueToString } from '@grafana/data';
+import { getColorFromHexRgbOrName, formattedValueToString, DisplayValue } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
-import { BigValueColorMode, Props, BigValueJustifyMode } from './BigValue';
+import { BigValueColorMode, Props, BigValueJustifyMode, BigValueNameAndValueOption } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -25,16 +25,17 @@ export abstract class BigValueLayout {
   valueToAlignTo: string;
   maxTextWidth: number;
   maxTextHeight: number;
+  displayValue: BigValueDisplayValue;
 
   constructor(private props: Props) {
-    const { width, height, value, alignmentFactors, theme } = props;
+    const { width, height, value, theme } = props;
 
     this.valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
-    this.justifyCenter = shouldJustifyCenter(props);
     this.panelPadding = height > 100 ? 12 : 8;
-    this.titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
-    this.valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
-
+    this.displayValue = getDisplayValue(props);
+    this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.displayValue.title);
+    this.valueToAlignTo = this.displayValue.valueToAlignTo;
+    this.titleToAlignTo = this.displayValue.titleToAlignTo;
     this.titleFontSize = 14;
     this.valueFontSize = 14;
     this.chartHeight = 0;
@@ -447,10 +448,48 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 }
 
-export function shouldJustifyCenter(props: Props) {
-  const { value, justifyMode } = props;
+export function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
   if (justifyMode === BigValueJustifyMode.Center) {
     return true;
   }
-  return (value.title ?? '').length === 0;
+
+  return (title ?? '').length === 0;
+}
+
+export interface BigValueDisplayValue extends DisplayValue {
+  valueToAlignTo: string;
+  titleToAlignTo?: string;
+}
+
+function getDisplayValue(props: Props): BigValueDisplayValue {
+  const { nameAndValue, value, alignmentFactors } = props;
+
+  const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
+  const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
+
+  switch (nameAndValue) {
+    case BigValueNameAndValueOption.Name:
+      return {
+        ...value,
+        title: undefined,
+        prefix: undefined,
+        suffix: undefined,
+        text: value.title || '',
+        titleToAlignTo: undefined,
+        valueToAlignTo: titleToAlignTo ?? '',
+      };
+    case BigValueNameAndValueOption.Value:
+      return {
+        ...value,
+        title: undefined,
+        titleToAlignTo: undefined,
+        valueToAlignTo,
+      };
+    default:
+      return {
+        ...value,
+        titleToAlignTo,
+        valueToAlignTo,
+      };
+  }
 }

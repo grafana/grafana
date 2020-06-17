@@ -1,4 +1,4 @@
-import { sharedSingleStatMigrationHandler } from '@grafana/ui';
+import { sharedSingleStatMigrationHandler, BigValueNameAndValueOption } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
 import { StatPanelOptions, addStandardDataReduceOptions } from './types';
 import { StatPanel } from './StatPanel';
@@ -8,6 +8,21 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
+
+    builder.addSelect({
+      path: 'nameAndValue',
+      name: 'Name and value',
+      description: 'Control if name and value is displayed or just name',
+      settings: {
+        options: [
+          { value: BigValueNameAndValueOption.Auto, label: 'Auto' },
+          { value: BigValueNameAndValueOption.Value, label: 'Value' },
+          { value: BigValueNameAndValueOption.ValueAndName, label: 'Value and name' },
+          { value: BigValueNameAndValueOption.Name, label: 'Name' },
+        ],
+      },
+      defaultValue: 'auto',
+    });
 
     builder
       .addRadio({

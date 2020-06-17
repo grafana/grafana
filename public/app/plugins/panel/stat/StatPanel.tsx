@@ -52,6 +52,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         colorMode={options.colorMode}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
+        nameAndValue={options.nameAndValue}
         alignmentFactors={alignmentFactors}
         width={width}
         height={height}

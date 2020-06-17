@@ -1,5 +1,5 @@
 import { text, select, number, color } from '@storybook/addon-knobs';
-import { BigValue, BigValueColorMode, BigValueGraphMode } from './BigValue';
+import { BigValue, BigValueColorMode, BigValueGraphMode, BigValueNameAndValueOption } from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -8,10 +8,15 @@ const getKnobs = () => {
     value: text('value', '$5022'),
     title: text('title', 'Total Earnings'),
     colorMode: select('Color mode', [BigValueColorMode.Value, BigValueColorMode.Background], BigValueColorMode.Value),
-    graphMode: select('Graph mode', [BigValueGraphMode.Area, BigValueGraphMode.Line], BigValueGraphMode.Area),
+    graphMode: select('Graph mode', [BigValueGraphMode.Area, BigValueGraphMode.None], BigValueGraphMode.Area),
     width: number('Width', 400, { range: true, max: 800, min: 200 }),
     height: number('Height', 300, { range: true, max: 800, min: 200 }),
     color: color('Value color', 'red'),
+    nameAndValue: select(
+      'Name and value',
+      [BigValueNameAndValueOption.Auto, BigValueNameAndValueOption.Name],
+      BigValueNameAndValueOption.Auto
+    ),
   };
 };
 
@@ -22,13 +27,14 @@ export default {
 };
 
 export const basic = () => {
-  const { value, title, colorMode, graphMode, height, width, color } = getKnobs();
+  const { value, title, colorMode, graphMode, height, width, color, nameAndValue } = getKnobs();
 
   return renderComponentWithTheme(BigValue, {
     width: width,
     height: height,
     colorMode: colorMode,
     graphMode: graphMode,
+    nameAndValue,
     value: {
       text: value,
       numeric: 5022,
