@@ -84,6 +84,9 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
+// getChksums gets a map of filenames to checksums for all files in a plugin directory.
+//
+// This should be used to validate a plugin manifest.
 func getChksums(dpath, manifestPath string, log log.Logger) (map[string]string, error) {
 	manifestPath = filepath.Clean(manifestPath)
 

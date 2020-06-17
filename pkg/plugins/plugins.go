@@ -140,7 +140,6 @@ func (pm *PluginManager) Init() error {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
 		} else {
-			var err error
 			p.Signature, err = getPluginSignatureState(pm.log, p)
 			if err != nil {
 				return err
