@@ -36,6 +36,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d/:uid/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -45,6 +46,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d/:uid', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       reloadOnSearch: false,
       routeInfo: DashboardRouteInfo.Normal,
@@ -54,6 +56,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboard/:type/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -63,6 +66,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboard/new', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
@@ -72,6 +76,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d-solo/:uid/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -84,6 +89,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d-solo/:uid', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -96,6 +102,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -221,6 +228,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/explore', {
       template: '<react-container />',
       reloadOnSearch: false,
+      //@ts-ignore
       pageClass: 'page-explore',
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
@@ -406,13 +414,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     // LOGIN / SIGNUP
     .when('/login', {
       template: '<react-container/>',
+      //@ts-ignore
+      pageClass: 'login-page sidemenu-hidden',
       resolve: {
         component: () => LoginPage,
       },
-      pageClass: 'login-page sidemenu-hidden',
     })
     .when('/invite/:code', {
       template: '<react-container/>',
+      //@ts-ignore
       pageClass: 'sidemenu-hidden',
       resolve: {
         component: () =>
@@ -421,10 +431,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/signup', {
       template: '<react-container/>',
+      //@ts-ignore
+      pageClass: 'sidemenu-hidden',
       resolve: {
         component: () => SignupPage,
       },
-      pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
       template: '<react-container />',
@@ -436,6 +447,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
             )
           ),
       },
+      // @ts-ignore
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/reset', {
@@ -448,6 +460,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
             )
           ),
       },
+      //@ts-ignore
       pageClass: 'sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
