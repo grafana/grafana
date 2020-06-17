@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/search"
 	"net"
 	"net/http"
 	"os"
 	"path"
 	"sync"
+
+	"github.com/grafana/grafana/pkg/services/search"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -351,8 +352,10 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 
 	data := simplejson.New()
 	data.Set("database", "ok")
-	data.Set("version", setting.BuildVersion)
-	data.Set("commit", setting.BuildCommit)
+	if !hs.Cfg.AnonymousHideVersion {
+		data.Set("version", setting.BuildVersion)
+		data.Set("commit", setting.BuildCommit)
+	}
 
 	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")

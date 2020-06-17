@@ -35,7 +35,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
-    if (!hasLinks) {
+    if (!hasLinks || !getLinks) {
       return this.renderComponent(valueProps, {});
     }
 

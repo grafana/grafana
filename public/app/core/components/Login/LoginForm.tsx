@@ -49,7 +49,7 @@ export const LoginForm: FC<Props> = ({ displayForgotPassword, onSubmit, isLoggin
                 name="password"
                 type="password"
                 placeholder={passwordHint}
-                ref={register({ required: 'Password is requireed' })}
+                ref={register({ required: 'Password is required' })}
                 aria-label={selectors.pages.Login.password}
               />
             </Field>

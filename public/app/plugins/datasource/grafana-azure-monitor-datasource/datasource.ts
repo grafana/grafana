@@ -10,7 +10,6 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
 } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { Observable } from 'rxjs';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
@@ -18,12 +17,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
 
-  /** @ngInject */
-  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.templateSrv);
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings, this.templateSrv);
+    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponseData> {
@@ -44,10 +42,13 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     if (azureLogAnalyticsOptions.targets.length > 0) {
-      const alaPromise = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsOptions);
-      if (alaPromise) {
-        promises.push(alaPromise);
+      const obs = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsOptions);
+      if (!promises.length) {
+        return obs; // return the observable directly
       }
+      // NOTE: this only includes the data!
+      // When all three query types are ready to be observale, they should all use observable
+      promises.push(obs.toPromise().then(r => r.data));
     }
 
     if (azureMonitorOptions.targets.length > 0) {

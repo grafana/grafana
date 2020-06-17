@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import templateSrv from '../../templating/template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../../templating/types';
+import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 import { VariableEditorState } from '../editor/reducer';

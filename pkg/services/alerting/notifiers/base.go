@@ -18,7 +18,7 @@ type NotifierBase struct {
 	Name                  string
 	Type                  string
 	UID                   string
-	IsDeault              bool
+	IsDefault             bool
 	UploadImage           bool
 	SendReminder          bool
 	DisableResolveMessage bool
@@ -38,7 +38,7 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	return NotifierBase{
 		UID:                   model.Uid,
 		Name:                  model.Name,
-		IsDeault:              model.IsDefault,
+		IsDefault:             model.IsDefault,
 		Type:                  model.Type,
 		UploadImage:           uploadImage,
 		SendReminder:          model.SendReminder,
@@ -127,7 +127,7 @@ func (n *NotifierBase) GetNotifierUID() string {
 // GetIsDefault returns true if the notifiers should
 // be used for all alerts.
 func (n *NotifierBase) GetIsDefault() bool {
-	return n.IsDeault
+	return n.IsDefault
 }
 
 // GetSendReminder returns true if reminders should be sent.

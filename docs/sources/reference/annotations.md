@@ -62,7 +62,7 @@ settings view. To create a new annotation query hit the `New` button.
 
 Specify a name for the annotation query. This name is given to the toggle (checkbox) that will allow
 you to enable/disable showing annotation events from this query. For example you might have two
-annotation queries named `Deploys` and `Outages`. The toggles will allow you to decide what annotations
+annotation queries named `Deploys` and `Outages`. The toggle will allow you to decide what annotations
 to show.
 
 ### Annotation query details

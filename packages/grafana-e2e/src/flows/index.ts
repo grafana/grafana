@@ -7,8 +7,8 @@ import { deleteDataSource } from './deleteDataSource';
 import { login } from './login';
 import { openDashboard } from './openDashboard';
 import { saveDashboard } from './saveDashboard';
-import { saveNewDashboard } from './saveNewDashboard';
 import { openPanelMenuItem, PanelMenuItems } from './openPanelMenuItem';
+import { revertAllChanges } from './revertAllChanges';
 
 export const Flows = {
   addDashboard,
@@ -20,7 +20,7 @@ export const Flows = {
   login,
   openDashboard,
   saveDashboard,
-  saveNewDashboard,
   openPanelMenuItem,
   PanelMenuItems,
+  revertAllChanges,
 };
