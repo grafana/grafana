@@ -100,7 +100,7 @@ export interface Option {
   label: string;
   description: string;
   placeholder: string;
-  modelValue: string;
+  propertyName: string;
   selectOptions: Array<SelectableValue<string>>;
   show: { field: string; is: string };
   required: boolean;

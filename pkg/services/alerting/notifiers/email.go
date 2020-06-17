@@ -42,17 +42,17 @@ func init() {
     `,
 		Options: []alerting.Option{
 			{
-				Label:       "Single email",
-				Description: "Send a single email to all recipients",
-				Element:     "switch",
-				ModelValue:  "singleEmail",
+				Label:        "Single email",
+				Description:  "Send a single email to all recipients",
+				Element:      "switch",
+				PropertyName: "singleEmail",
 			},
 			{
-				Label:       "Addresses",
-				Description: "You can enter multiple email addresses using a \";\" separator",
-				Element:     "textarea",
-				ModelValue:  "addresses",
-				Required:    true,
+				Label:        "Addresses",
+				Description:  "You can enter multiple email addresses using a \";\" separator",
+				Element:      "textarea",
+				PropertyName: "addresses",
+				Required:     true,
 			},
 		},
 	})

@@ -115,9 +115,11 @@ export const NewNotificationChannelForm: FC<Props> = ({
                 key={key}
                 label={option.label}
                 description={option.description}
-                invalid={errors.settings && !!errors.settings[option.modelValue]}
+                invalid={errors.settings && !!errors.settings[option.propertyName]}
                 error={
-                  errors.settings && errors.settings[option.modelValue] && errors.settings[option.modelValue].message
+                  errors.settings &&
+                  errors.settings[option.propertyName] &&
+                  errors.settings[option.propertyName].message
                 }
               >
                 <OptionElement option={option} register={register} control={control} />

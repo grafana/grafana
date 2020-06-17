@@ -28,12 +28,12 @@ func init() {
 `,
 		Options: []alerting.Option{
 			{
-				Label:       "Token",
-				Element:     "input",
-				InputType:   "text",
-				Placeholder: "LINE notify token key",
-				ModelValue:  "token",
-				Required:    true,
+				Label:        "Token",
+				Element:      "input",
+				InputType:    "text",
+				Placeholder:  "LINE notify token key",
+				PropertyName: "token",
+				Required:     true,
 			}},
 	})
 }

@@ -25,11 +25,11 @@ func init() {
     `,
 		Options: []alerting.Option{
 			{
-				Label:       "URL",
-				Element:     "input",
-				InputType:   "text",
-				Placeholder: "Teams incoming webhook url",
-				ModelValue:  "url",
+				Label:        "URL",
+				Element:      "input",
+				InputType:    "text",
+				Placeholder:  "Teams incoming webhook url",
+				PropertyName: "url",
 			},
 		},
 	})

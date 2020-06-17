@@ -57,12 +57,12 @@ func init() {
     `,
 		Options: []alerting.Option{
 			{
-				Label:       "Integration Key",
-				Element:     "input",
-				InputType:   "text",
-				Placeholder: "Pagerduty Integration Key",
-				ModelValue:  "integrationKey",
-				Required:    true,
+				Label:        "Integration Key",
+				Element:      "input",
+				InputType:    "text",
+				Placeholder:  "Pagerduty Integration Key",
+				PropertyName: "integrationKey",
+				Required:     true,
 			},
 			{
 				Label:   "Severity",
@@ -85,13 +85,13 @@ func init() {
 						Label: "Info",
 					},
 				},
-				ModelValue: "severity",
+				PropertyName: "severity",
 			},
 			{
-				Label:       "Auto resolve incidents",
-				Element:     "switch",
-				Description: "Resolve incidents in pagerduty once the alert goes back to ok.",
-				ModelValue:  "autoResolve",
+				Label:        "Auto resolve incidents",
+				Element:      "switch",
+				Description:  "Resolve incidents in pagerduty once the alert goes back to ok.",
+				PropertyName: "autoResolve",
 			},
 		},
 	})

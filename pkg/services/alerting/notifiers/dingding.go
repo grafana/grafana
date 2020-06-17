@@ -34,17 +34,17 @@ func init() {
 		OptionsTemplate: dingdingOptionsTemplate,
 		Options: []alerting.Option{
 			{
-				Label:       "Url",
-				Element:     "input",
-				InputType:   "text",
-				Placeholder: "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx",
-				ModelValue:  "url",
-				Required:    true,
+				Label:        "Url",
+				Element:      "input",
+				InputType:    "text",
+				Placeholder:  "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx",
+				PropertyName: "url",
+				Required:     true,
 			},
 			{
-				Label:      "Message Type",
-				Element:    "select",
-				ModelValue: "msgType",
+				Label:        "Message Type",
+				Element:      "select",
+				PropertyName: "msgType",
 				SelectOptions: []alerting.SelectOption{
 					{
 						Value: "link",

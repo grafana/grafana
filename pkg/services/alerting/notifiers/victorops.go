@@ -50,18 +50,18 @@ func init() {
     `,
 		Options: []alerting.Option{
 			{
-				Label:       "Url",
-				Element:     "input",
-				InputType:   "text",
-				Placeholder: "VictorOps url",
-				ModelValue:  "url",
-				Required:    true,
+				Label:        "Url",
+				Element:      "input",
+				InputType:    "text",
+				Placeholder:  "VictorOps url",
+				PropertyName: "url",
+				Required:     true,
 			},
 			{
-				Label:       "Auto resolve incidents",
-				Description: "Resolve incidents in VictorOps once the alert goes back to ok.",
-				Element:     "switch",
-				ModelValue:  "autoResolve",
+				Label:        "Auto resolve incidents",
+				Description:  "Resolve incidents in VictorOps once the alert goes back to ok.",
+				Element:      "switch",
+				PropertyName: "autoResolve",
 			},
 		},
 	})

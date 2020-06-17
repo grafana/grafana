@@ -28,12 +28,12 @@ func init() {
     `,
 		Options: []alerting.Option{
 			{
-				Label:       "Url",
-				Element:     "input",
-				InputType:   "text",
-				Placeholder: "Google Hangouts Chat incoming webhook url",
-				ModelValue:  "url",
-				Required:    true,
+				Label:        "Url",
+				Element:      "input",
+				InputType:    "text",
+				Placeholder:  "Google Hangouts Chat incoming webhook url",
+				PropertyName: "url",
+				Required:     true,
 			},
 		},
 	})

@@ -39,7 +39,7 @@ type Option struct {
 	Label          string         `json:"label"`
 	Description    string         `json:"description"`
 	Placeholder    string         `json:"placeholder"`
-	ModelValue     string         `json:"modelValue"`
+	PropertyName   string         `json:"propertyName"`
 	SelectOptions  []SelectOption `json:"selectOptions"`
 	Show           Show           `json:"show"`
 	Required       bool           `json:"required"`
