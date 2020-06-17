@@ -1,4 +1,4 @@
-package apps
+package plugins
 
 import (
 	"errors"
@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAppProvisioner(t *testing.T) {
+func TestPluginProvisioner(t *testing.T) {
 	t.Run("Should return error when config reader returns error", func(t *testing.T) {
 		expectedErr := errors.New("test")
 		reader := &testConfigReader{err: expectedErr}
-		ap := AppProvisioner{log: log.New("test"), cfgProvider: reader}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
 		err := ap.applyChanges("")
 		require.Equal(t, expectedErr, err)
 	})
@@ -46,7 +46,7 @@ func TestAppProvisioner(t *testing.T) {
 			return nil
 		})
 
-		cfg := []*appsAsConfig{
+		cfg := []*pluginsAsConfig{
 			{
 				Apps: []*appFromConfig{
 					{PluginID: "test-plugin", OrgID: 2, Enabled: true},
@@ -57,7 +57,7 @@ func TestAppProvisioner(t *testing.T) {
 			},
 		}
 		reader := &testConfigReader{result: cfg}
-		ap := AppProvisioner{log: log.New("test"), cfgProvider: reader}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
 		err := ap.applyChanges("")
 		require.NoError(t, err)
 		require.Len(t, sentCommands, 4)
@@ -86,10 +86,10 @@ func TestAppProvisioner(t *testing.T) {
 }
 
 type testConfigReader struct {
-	result []*appsAsConfig
+	result []*pluginsAsConfig
 	err    error
 }
 
-func (tcr *testConfigReader) readConfig(path string) ([]*appsAsConfig, error) {
+func (tcr *testConfigReader) readConfig(path string) ([]*pluginsAsConfig, error) {
 	return tcr.result, tcr.err
 }

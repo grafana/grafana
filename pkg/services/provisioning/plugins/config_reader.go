@@ -1,4 +1,4 @@
-package apps
+package plugins
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 )
 
 type configReader interface {
-	readConfig(path string) ([]*appsAsConfig, error)
+	readConfig(path string) ([]*pluginsAsConfig, error)
 }
 
 type configReaderImpl struct {
@@ -24,20 +24,20 @@ func newConfigReader(logger log.Logger) configReader {
 	return &configReaderImpl{log: logger}
 }
 
-func (cr *configReaderImpl) readConfig(path string) ([]*appsAsConfig, error) {
-	var apps []*appsAsConfig
-	cr.log.Debug("Looking for app provisioning files", "path", path)
+func (cr *configReaderImpl) readConfig(path string) ([]*pluginsAsConfig, error) {
+	var apps []*pluginsAsConfig
+	cr.log.Debug("Looking for plugin provisioning files", "path", path)
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		cr.log.Error("Failed to read app provisioning files from directory", "path", path, "error", err)
+		cr.log.Error("Failed to read plugin provisioning files from directory", "path", path, "error", err)
 		return apps, nil
 	}
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-			cr.log.Debug("Parsing app provisioning file", "path", path, "file.Name", file.Name())
-			app, err := cr.parseAppConfig(path, file)
+			cr.log.Debug("Parsing plugin provisioning file", "path", path, "file.Name", file.Name())
+			app, err := cr.parsePluginConfig(path, file)
 			if err != nil {
 				return nil, err
 			}
@@ -48,14 +48,14 @@ func (cr *configReaderImpl) readConfig(path string) ([]*appsAsConfig, error) {
 		}
 	}
 
-	cr.log.Debug("Validating apps")
+	cr.log.Debug("Validating plugins")
 	if err := validateRequiredField(apps); err != nil {
 		return nil, err
 	}
 
 	checkOrgIDAndOrgName(apps)
 
-	err = validateApps(apps)
+	err = validatePluginsConfig(apps)
 	if err != nil {
 		return nil, err
 	}
@@ -63,23 +63,27 @@ func (cr *configReaderImpl) readConfig(path string) ([]*appsAsConfig, error) {
 	return apps, nil
 }
 
-func (cr *configReaderImpl) parseAppConfig(path string, file os.FileInfo) (*appsAsConfig, error) {
-	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
+func (cr *configReaderImpl) parsePluginConfig(path string, file os.FileInfo) (*pluginsAsConfig, error) {
+	filename, err := filepath.Abs(filepath.Join(path, file.Name()))
+	if err != nil {
+		return nil, err
+	}
+
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	var cfg *appsAsConfigV0
+	var cfg *pluginsAsConfigV0
 	err = yaml.Unmarshal(yamlFile, &cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return cfg.mapToAppsFromConfig(), nil
+	return cfg.mapToPluginsFromConfig(), nil
 }
 
-func validateRequiredField(apps []*appsAsConfig) error {
+func validateRequiredField(apps []*pluginsAsConfig) error {
 	for i := range apps {
 		var errStrings []string
 		for index, app := range apps[i].Apps {
@@ -99,7 +103,7 @@ func validateRequiredField(apps []*appsAsConfig) error {
 	return nil
 }
 
-func validateApps(apps []*appsAsConfig) error {
+func validatePluginsConfig(apps []*pluginsAsConfig) error {
 	for i := range apps {
 		if apps[i].Apps == nil {
 			continue
@@ -107,7 +111,7 @@ func validateApps(apps []*appsAsConfig) error {
 
 		for _, app := range apps[i].Apps {
 			if !plugins.IsAppInstalled(app.PluginID) {
-				return fmt.Errorf("plugin not installed: %s", app.PluginID)
+				return fmt.Errorf("app plugin not installed: %s", app.PluginID)
 			}
 		}
 	}
@@ -115,7 +119,7 @@ func validateApps(apps []*appsAsConfig) error {
 	return nil
 }
 
-func checkOrgIDAndOrgName(apps []*appsAsConfig) {
+func checkOrgIDAndOrgName(apps []*pluginsAsConfig) {
 	for i := range apps {
 		for _, app := range apps[i].Apps {
 			if app.OrgID < 1 {

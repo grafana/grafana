@@ -6,19 +6,18 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/provisioning/apps"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
+	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type ProvisioningService interface {
 	ProvisionDatasources() error
-	ProvisionApps() error
+	ProvisionPlugins() error
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
@@ -32,7 +31,7 @@ func init() {
 		},
 		notifiers.Provision,
 		datasources.Provision,
-		apps.Provision,
+		plugins.Provision,
 	))
 }
 
@@ -40,14 +39,14 @@ func NewProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
-	provisionApps func(string) error,
+	provisionPlugins func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
-		provisionApps:           provisionApps,
+		provisionPlugins:        provisionPlugins,
 	}
 }
 
@@ -59,7 +58,7 @@ type provisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
-	provisionApps           func(string) error
+	provisionPlugins        func(string) error
 	mutex                   sync.Mutex
 }
 
@@ -69,7 +68,7 @@ func (ps *provisioningServiceImpl) Init() error {
 		return err
 	}
 
-	err = ps.ProvisionApps()
+	err = ps.ProvisionPlugins()
 	if err != nil {
 		return err
 	}
@@ -118,9 +117,9 @@ func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 	return errutil.Wrap("Datasource provisioning error", err)
 }
 
-func (ps *provisioningServiceImpl) ProvisionApps() error {
-	appPath := path.Join(ps.Cfg.ProvisioningPath, "apps")
-	err := ps.provisionApps(appPath)
+func (ps *provisioningServiceImpl) ProvisionPlugins() error {
+	appPath := path.Join(ps.Cfg.ProvisioningPath, "plugins")
+	err := ps.provisionPlugins(appPath)
 	return errutil.Wrap("app provisioning error", err)
 }
 

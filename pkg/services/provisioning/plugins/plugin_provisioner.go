@@ -1,4 +1,4 @@
-package apps
+package plugins
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
@@ -9,25 +9,25 @@ import (
 // Provision scans a directory for provisioning config files
 // and provisions the app in those files.
 func Provision(configDirectory string) error {
-	ap := newAppProvisioner(log.New("provisioning.apps"))
+	ap := newAppProvisioner(log.New("provisioning.plugins"))
 	return ap.applyChanges(configDirectory)
 }
 
-// AppProvisioner is responsible for provisioning apps based on
+// PluginProvisioner is responsible for provisioning apps based on
 // configuration read by the `configReader`
-type AppProvisioner struct {
+type PluginProvisioner struct {
 	log         log.Logger
 	cfgProvider configReader
 }
 
-func newAppProvisioner(log log.Logger) AppProvisioner {
-	return AppProvisioner{
+func newAppProvisioner(log log.Logger) PluginProvisioner {
+	return PluginProvisioner{
 		log:         log,
 		cfgProvider: newConfigReader(log),
 	}
 }
 
-func (ap *AppProvisioner) apply(cfg *appsAsConfig) error {
+func (ap *PluginProvisioner) apply(cfg *pluginsAsConfig) error {
 	for _, app := range cfg.Apps {
 		if app.OrgID == 0 && app.OrgName != "" {
 			getOrgQuery := &models.GetOrgByNameQuery{Name: app.OrgName}
@@ -68,7 +68,7 @@ func (ap *AppProvisioner) apply(cfg *appsAsConfig) error {
 	return nil
 }
 
-func (ap *AppProvisioner) applyChanges(configPath string) error {
+func (ap *PluginProvisioner) applyChanges(configPath string) error {
 	configs, err := ap.cfgProvider.readConfig(configPath)
 	if err != nil {
 		return err

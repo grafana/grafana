@@ -22,12 +22,12 @@ func (server *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContex
 	return Success("Datasources config reloaded")
 }
 
-func (server *HTTPServer) AdminProvisioningReloadApps(c *models.ReqContext) Response {
-	err := server.ProvisioningService.ProvisionApps()
+func (server *HTTPServer) AdminProvisioningReloadPlugins(c *models.ReqContext) Response {
+	err := server.ProvisioningService.ProvisionPlugins()
 	if err != nil {
-		return Error(500, "", err)
+		return Error(500, "Failed to reload plugins config", err)
 	}
-	return Success("Apps config reloaded")
+	return Success("Plugins config reloaded")
 }
 
 func (server *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext) Response {
