@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 	"golang.org/x/oauth2/google"
@@ -321,14 +322,25 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, stackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
-	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.ProjectName+"/timeSeries"))
+	projectName := query.ProjectName
+	if projectName == "" {
+		defaultProject, err := e.getDefaultProject(ctx)
+		if err != nil {
+			queryResult.Error = err
+			return queryResult, stackdriverResponse{}, nil
+		}
+		projectName = defaultProject
+		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
+	}
+
+	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, stackdriverResponse{}, nil
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
-	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
+	queryResult.Meta.Set(sqleng.MetaKeyExecutedQueryString, req.URL.RawQuery)
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
 	if ok {

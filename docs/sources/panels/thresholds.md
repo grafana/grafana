@@ -1,3 +1,4 @@
++++
 title = "Thresholds"
 type = "docs"
 [menu.docs]
@@ -12,14 +13,15 @@ Thresholds set the color of either the value text or the background depending on
 
 You can define thresholds one of two ways:
 * **Absolute** thresholds are defined based on a number. For example, 80 on a scale of 1 to 150.
-* **Percentage** thresholds are defined relative to minimum and maximums. For example, 80 percent.
+* **Percentage** thresholds are defined relative to minimum or maximum. For example, 80 percent.
 
 You can apply thresholds to the following visualizations:
-* Stat
-* Gauge
-* Bar gauge
-* Table
-* Graph
+
+- [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
+- [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
+- [Graph]({{< relref "visualizations/graph-panel.md" >}})
+- [Stat]({{< relref "visualizations/stat-panel.md" >}})
+- [Table]({{< relref "visualizations/table-panel.md" >}})
 
 ## Default thresholds
 

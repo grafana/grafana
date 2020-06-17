@@ -35,18 +35,30 @@ export function getTextAlign(field?: Field): TextAlignProperty {
 }
 
 export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
-  const columns: Column[] = [];
+  const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
-  for (let fieldIndex = 0; fieldIndex < data.fields.length; fieldIndex++) {
-    const field = data.fields[fieldIndex];
+  for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+
+    if (fieldTableOptions.hidden) {
+      continue;
+    }
 
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
       fieldCountWithoutWidth -= 1;
     }
 
+    const selectSortType = (type: FieldType): string => {
+      switch (type) {
+        case FieldType.number:
+        case FieldType.time:
+          return 'basic';
+        default:
+          return 'alphanumeric';
+      }
+    };
     const Cell = getCellComponent(fieldTableOptions.displayMode, field);
     columns.push({
       Cell,
@@ -55,6 +67,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       accessor: (row: any, i: number) => {
         return field.values.get(i);
       },
+      sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: 50,
     });

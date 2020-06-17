@@ -77,11 +77,7 @@
   ng-include="'public/app/features/annotations/partials/editor.html'">
 </div>
 
-<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'templating' && ctrl.useAngularTemplating"
-  ng-include="'public/app/features/templating/partials/editor.html'">
-</div>
-
-<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'templating' && !ctrl.useAngularTemplating">
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'templating'">
   <variable-editor-container />
 </div>
 

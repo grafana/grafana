@@ -97,7 +97,15 @@ export function SuggestionsPlugin({
 
           break;
 
-        case 'Enter':
+        case 'Enter': {
+          if (!(keyEvent.shiftKey || keyEvent.ctrlKey) && hasSuggestions) {
+            keyEvent.preventDefault();
+            return typeaheadRef.insertSuggestion();
+          }
+
+          break;
+        }
+
         case 'Tab': {
           if (hasSuggestions) {
             keyEvent.preventDefault();
@@ -108,7 +116,10 @@ export function SuggestionsPlugin({
         }
 
         default: {
-          handleTypeaheadDebounced(editor, setState, onTypeahead, cleanText);
+          // Don't react on meta keys
+          if (keyEvent.key.length === 1) {
+            handleTypeaheadDebounced(editor, setState, onTypeahead, cleanText);
+          }
           break;
         }
       }

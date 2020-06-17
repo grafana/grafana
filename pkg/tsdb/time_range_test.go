@@ -190,5 +190,64 @@ func TestTimeRange(t *testing.T) {
 			_, err = tr.ParseTo()
 			So(err, ShouldNotBeNil)
 		})
+
+		now, err = time.Parse(time.RFC3339Nano, "2020-07-26T15:12:56.000Z")
+		So(err, ShouldBeNil)
+
+		Convey("Can parse now-1M/M, now-1M/M with America/Chicago timezone", func() {
+			tr := TimeRange{
+				From: "now-1M/M",
+				To:   "now-1M/M",
+				now:  now,
+			}
+			location, err := time.LoadLocation("America/Chicago")
+			So(err, ShouldBeNil)
+
+			Convey("from now-1M/M ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-06-01T00:00:00.000-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseFromWithLocation(location)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+
+			Convey("to now-1M/M ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-06-30T23:59:59.999-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseToWithLocation(location)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+		})
+
+		Convey("Can parse now-3h, now+2h with America/Chicago timezone", func() {
+			tr := TimeRange{
+				From: "now-3h",
+				To:   "now+2h",
+				now:  now,
+			}
+			location, err := time.LoadLocation("America/Chicago")
+			So(err, ShouldBeNil)
+
+			Convey("now-3h ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-26T07:12:56.000-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseFromWithLocation(location)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+
+			Convey("now+2h ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-26T12:12:56.000-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseToWithLocation(location)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+		})
 	})
 }

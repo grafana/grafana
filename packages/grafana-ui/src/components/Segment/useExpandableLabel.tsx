@@ -1,10 +1,18 @@
 import React, { useState, useRef, ReactElement } from 'react';
 
-export const useExpandableLabel = (initialExpanded: boolean) => {
+interface LabelProps {
+  Component: ReactElement;
+  onClick?: () => void;
+}
+
+export const useExpandableLabel = (
+  initialExpanded: boolean
+): [React.ComponentType<LabelProps>, number, boolean, (expanded: boolean) => void] => {
   const ref = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(initialExpanded);
-  const [width, setWidth] = useState();
-  const Label = ({ Component, onClick }: { Component: ReactElement; onClick: () => void }) => (
+  const [expanded, setExpanded] = useState<boolean>(initialExpanded);
+  const [width, setWidth] = useState(0);
+
+  const Label: React.FC<LabelProps> = ({ Component, onClick }) => (
     <div
       className="gf-form"
       ref={ref}

@@ -39,6 +39,7 @@ export interface VariableQueryData {
   projects: Array<{ value: string; name: string }>;
   sloServices: Array<{ value: string; name: string }>;
   projectName: string;
+  loading: boolean;
 }
 
 export enum QueryType {

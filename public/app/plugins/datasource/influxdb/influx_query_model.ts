@@ -3,7 +3,7 @@ import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
 import { InfluxQuery, InfluxQueryTag } from './types';
 import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
