@@ -26,7 +26,7 @@ type IntValue struct {
 	Raw   string
 }
 
-// UnmarshalYAML converts yaml into an *IntValue
+// UnmarshalYAML converts YAML into an *IntValue
 func (val *IntValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
