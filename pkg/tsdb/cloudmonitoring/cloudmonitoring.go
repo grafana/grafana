@@ -1,4 +1,4 @@
-package stackdriver
+package cloudmonitoring
 
 import (
 	"context"
@@ -48,34 +48,34 @@ const (
 	sloQueryType      string = "slo"
 )
 
-// StackdriverExecutor executes queries for the Stackdriver datasource
-type StackdriverExecutor struct {
+// CloudMonitoringExecutor executes queries for the CloudMonitoring datasource
+type CloudMonitoringExecutor struct {
 	httpClient *http.Client
 	dsInfo     *models.DataSource
 }
 
-// NewStackdriverExecutor initializes a http client
-func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+// NewCloudMonitoringExecutor initializes a http client
+func NewCloudMonitoringExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return &StackdriverExecutor{
+	return &CloudMonitoringExecutor{
 		httpClient: httpClient,
 		dsInfo:     dsInfo,
 	}, nil
 }
 
 func init() {
-	slog = log.New("tsdb.stackdriver")
-	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
+	slog = log.New("tsdb.cloudMonitoring")
+	tsdb.RegisterTsdbQueryEndpoint("cloud-monitoring", NewCloudMonitoringExecutor)
 }
 
-// Query takes in the frontend queries, parses them into the Stackdriver query format
-// executes the queries against the Stackdriver API and parses the response into
+// Query takes in the frontend queries, parses them into the CloudMonitoring query format
+// executes the queries against the CloudMonitoring API and parses the response into
 // the time series or table format
-func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *CloudMonitoringExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	var result *tsdb.Response
 	var err error
 	queryType := tsdbQuery.Queries[0].Model.Get("type").MustString("")
@@ -94,7 +94,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	return result, err
 }
 
-func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *CloudMonitoringExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
@@ -112,7 +112,7 @@ func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuer
 	return result, nil
 }
 
-func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
@@ -137,8 +137,8 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 	return result, nil
 }
 
-func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*stackdriverQuery, error) {
-	stackdriverQueries := []*stackdriverQuery{}
+func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cloudMonitoringQuery, error) {
+	cloudMonitoringQueries := []*cloudMonitoringQuery{}
 
 	startTime, err := tsdbQuery.TimeRange.ParseFrom()
 	if err != nil {
@@ -157,14 +157,14 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*stackd
 		q := grafanaQuery{}
 		model, _ := query.Model.MarshalJSON()
 		if err := json.Unmarshal(model, &q); err != nil {
-			return nil, fmt.Errorf("could not unmarshal StackdriverQuery json: %w", err)
+			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
 		var target string
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
-		sq := &stackdriverQuery{
+		sq := &cloudMonitoringQuery{
 			RefID:    query.RefId,
 			GroupBys: []string{},
 		}
@@ -194,13 +194,13 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*stackd
 		sq.Params = params
 
 		if setting.Env == setting.DEV {
-			slog.Debug("Stackdriver request", "params", params)
+			slog.Debug("CloudMonitoring request", "params", params)
 		}
 
-		stackdriverQueries = append(stackdriverQueries, sq)
+		cloudMonitoringQueries = append(cloudMonitoringQueries, sq)
 	}
 
-	return stackdriverQueries, nil
+	return cloudMonitoringQueries, nil
 }
 
 func migrateLegacyQueryModel(query *tsdb.Query) {
@@ -306,7 +306,7 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 		alignmentPeriod = "+" + strconv.Itoa(alignmentPeriodValue) + "s"
 	}
 
-	if alignmentPeriod == "stackdriver-auto" {
+	if alignmentPeriod == "cloud-monitoring-auto" || alignmentPeriod == "stackdriver-auto" { // legacy
 		alignmentPeriodValue := int(math.Max(float64(durationSeconds), 60.0))
 		if alignmentPeriodValue < 60*60*23 {
 			alignmentPeriod = "+60s"
@@ -320,23 +320,23 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 	return alignmentPeriod
 }
 
-func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, stackdriverResponse, error) {
+func (e *CloudMonitoringExecutor) executeQuery(ctx context.Context, query *cloudMonitoringQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, cloudMonitoringResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
 	projectName := query.ProjectName
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
 			queryResult.Error = err
-			return queryResult, stackdriverResponse{}, nil
+			return queryResult, cloudMonitoringResponse{}, nil
 		}
 		projectName = defaultProject
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries"))
+	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("cloudMonitoring%s", "v3/projects/"+projectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, stackdriverResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, nil
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
@@ -350,7 +350,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriv
 		}
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring query")
 	span.SetTag("target", query.Target)
 	span.SetTag("from", tsdbQuery.TimeRange.From)
 	span.SetTag("until", tsdbQuery.TimeRange.To)
@@ -364,47 +364,47 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriv
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
 		queryResult.Error = err
-		return queryResult, stackdriverResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, nil
 	}
 
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, stackdriverResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, nil
 	}
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, stackdriverResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, nil
 	}
 
 	return queryResult, data, nil
 }
 
-func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (stackdriverResponse, error) {
+func (e *CloudMonitoringExecutor) unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
-		return stackdriverResponse{}, err
+		return cloudMonitoringResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
-		return stackdriverResponse{}, fmt.Errorf(string(body))
+		return cloudMonitoringResponse{}, fmt.Errorf(string(body))
 	}
 
-	var data stackdriverResponse
+	var data cloudMonitoringResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		slog.Error("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
-		return stackdriverResponse{}, err
+		slog.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
+		return cloudMonitoringResponse{}, err
 	}
 
 	return data, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data stackdriverResponse, query *stackdriverQuery) error {
+func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, query *cloudMonitoringQuery) error {
 	labels := make(map[string]map[string]bool)
 
 	for _, series := range data.TimeSeries {
@@ -570,7 +570,7 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *stackdriverQuery) string {
+func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *cloudMonitoringQuery) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
@@ -639,7 +639,7 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	return nil
 }
 
-func calcBucketBound(bucketOptions stackdriverBucketOptions, n int) string {
+func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	bucketBound := "0"
 	if n == 0 {
 		return bucketBound
@@ -655,7 +655,7 @@ func calcBucketBound(bucketOptions stackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query *stackdriverQuery, proxyPass string) (*http.Request, error) {
+func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query *cloudMonitoringQuery, proxyPass string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
@@ -674,23 +674,23 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Stackdriver")
+		return nil, errors.New("Unable to find datasource plugin CloudMonitoring")
 	}
 
-	var stackdriverRoute *plugins.AppPluginRoute
+	var cloudMonitoringRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == "stackdriver" {
-			stackdriverRoute = route
+		if route.Path == "cloudmonitoring" {
+			cloudMonitoringRoute = route
 			break
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo)
 
 	return req, nil
 }
 
-func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, error) {
+func (e *CloudMonitoringExecutor) getDefaultProject(ctx context.Context) (string, error) {
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")

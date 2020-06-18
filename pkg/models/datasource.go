@@ -9,22 +9,22 @@ import (
 )
 
 const (
-	DS_GRAPHITE      = "graphite"
-	DS_INFLUXDB      = "influxdb"
-	DS_INFLUXDB_08   = "influxdb_08"
-	DS_ES            = "elasticsearch"
-	DS_OPENTSDB      = "opentsdb"
-	DS_CLOUDWATCH    = "cloudwatch"
-	DS_KAIROSDB      = "kairosdb"
-	DS_PROMETHEUS    = "prometheus"
-	DS_POSTGRES      = "postgres"
-	DS_MYSQL         = "mysql"
-	DS_MSSQL         = "mssql"
-	DS_ACCESS_DIRECT = "direct"
-	DS_ACCESS_PROXY  = "proxy"
-	DS_STACKDRIVER   = "stackdriver"
-	DS_AZURE_MONITOR = "grafana-azure-monitor-datasource"
-	DS_LOKI          = "loki"
+	DS_GRAPHITE         = "graphite"
+	DS_INFLUXDB         = "influxdb"
+	DS_INFLUXDB_08      = "influxdb_08"
+	DS_ES               = "elasticsearch"
+	DS_OPENTSDB         = "opentsdb"
+	DS_CLOUDWATCH       = "cloudwatch"
+	DS_KAIROSDB         = "kairosdb"
+	DS_PROMETHEUS       = "prometheus"
+	DS_POSTGRES         = "postgres"
+	DS_MYSQL            = "mysql"
+	DS_MSSQL            = "mssql"
+	DS_ACCESS_DIRECT    = "direct"
+	DS_ACCESS_PROXY     = "proxy"
+	DS_CLOUD_MONITORING = "cloud-moniroting"
+	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
+	DS_LOKI             = "loki"
 )
 
 var (
@@ -97,7 +97,7 @@ var knownDatasourcePlugins = map[string]bool{
 	DS_POSTGRES:                              true,
 	DS_MYSQL:                                 true,
 	DS_MSSQL:                                 true,
-	DS_STACKDRIVER:                           true,
+	DS_CLOUD_MONITORING:                      true,
 	DS_AZURE_MONITOR:                         true,
 	DS_LOKI:                                  true,
 	"opennms":                                true,

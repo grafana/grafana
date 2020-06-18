@@ -1,4 +1,4 @@
-package stackdriver
+package cloudmonitoring
 
 import (
 	"net/url"
@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	stackdriverQuery struct {
+	cloudMonitoringQuery struct {
 		Target      string
 		Params      url.Values
 		RefID       string
@@ -48,7 +48,7 @@ type (
 		SloQuery     sloQuery
 	}
 
-	stackdriverBucketOptions struct {
+	cloudMonitoringBucketOptions struct {
 		LinearBuckets *struct {
 			NumFiniteBuckets int64 `json:"numFiniteBuckets"`
 			Width            int64 `json:"width"`
@@ -64,7 +64,7 @@ type (
 		} `json:"explicitBuckets"`
 	}
 
-	stackdriverResponse struct {
+	cloudMonitoringResponse struct {
 		TimeSeries []struct {
 			Metric struct {
 				Labels map[string]string `json:"labels"`
@@ -95,8 +95,8 @@ type (
 							Min int `json:"min"`
 							Max int `json:"max"`
 						} `json:"range"`
-						BucketOptions stackdriverBucketOptions `json:"bucketOptions"`
-						BucketCounts  []string                 `json:"bucketCounts"`
+						BucketOptions cloudMonitoringBucketOptions `json:"bucketOptions"`
+						BucketCounts  []string                     `json:"bucketCounts"`
 						Examplars     []struct {
 							Value     float64 `json:"value"`
 							Timestamp string  `json:"timestamp"`

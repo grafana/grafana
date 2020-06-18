@@ -1,4 +1,4 @@
-package stackdriver
+package cloudmonitoring
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *StackdriverExecutor) executeAnnotationQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
@@ -34,7 +34,7 @@ func (e *StackdriverExecutor) executeAnnotationQuery(ctx context.Context, tsdbQu
 	return result, err
 }
 
-func (e *StackdriverExecutor) parseToAnnotations(queryRes *tsdb.QueryResult, data stackdriverResponse, query *stackdriverQuery, title string, text string, tags string) error {
+func (e *CloudMonitoringExecutor) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, query *cloudMonitoringQuery, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)
 
 	for _, series := range data.TimeSeries {
