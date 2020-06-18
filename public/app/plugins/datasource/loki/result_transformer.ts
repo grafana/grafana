@@ -363,7 +363,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
           datasourceUid: derivedFieldConfig.datasourceUid,
         },
       });
-    } else {
+    } else if (derivedFieldConfig.url) {
       acc.push({
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
         title: '',
