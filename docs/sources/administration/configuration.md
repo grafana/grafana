@@ -674,67 +674,101 @@ Refer to [LDAO authentication]({{< relref "../auth/ldap.md" >}}) for detailed in
 <hr />
 
 ## [smtp]
+
 Email server settings.
 
 ### enabled
-defaults to `false`
+
+Enable this to allow Grafana to send email. Default is `false`.
+
+If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example:  """#password;"""
 
 ### host
-defaults to `localhost:25`
+
+Default is `localhost:25`.
 
 ### user
-In case of SMTP auth, defaults to `empty`
+
+In case of SMTP auth, default is `empty`.
 
 ### password
-In case of SMTP auth, defaults to `empty`
+
+In case of SMTP auth, default is `empty`.
 
 ### cert_file
-File path to a cert file, defaults to `empty`
+
+File path to a cert file, default is `empty`.
 
 ### key_file
-File path to a key file, defaults to `empty`
+
+File path to a key file, default is `empty`.
 
 ### skip_verify
-Verify SSL for SMTP server? defaults to `false`
+
+Verify SSL for SMTP server, default is `false`.
 
 ### from_address
-Address used when sending out emails, defaults to `admin@grafana.localhost`
+
+Address used when sending out emails, default is `admin@grafana.localhost`.
 
 ### from_name
-Name to be used when sending out emails, defaults to `Grafana`
+
+Name to be used when sending out emails, default is `Grafana`.
 
 ### ehlo_identity
-Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
+
+Name to be used as client identity for EHLO in SMTP dialog, default is `<instance_name>`.
 
 ### startTLS_policy
-Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is "OpportunisticStartTLS"
+
+Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `empty`.
+
+<hr>
+
+## [emails]
+
+### welcome_email_on_sign_up
+
+Default is `false`.
+
+### templates_pattern 
+
+Default is `emails/*.html`.
+
+<hr>
 
 ## [log]
 
+Grafana logging options.
+
 ### mode
-Either "console", "file", "syslog". Default is "console" and "file".
-Use spaces to separate multiple modes, e.g. `console file`
+
+Options are "console", "file", and "syslog". Default is "console" and "file". Use spaces to separate multiple modes, e.g. `console file`.
 
 ### level
 
-Either "debug", "info", "warn", "error", "critical", default is `info`.
+Options are "debug", "info", "warn", "error", and "critical". Default is `info`.
 
 ### filters
 
-optional settings to set different levels for specific loggers.
-For example `filters = sqlstore:debug`.
+Optional settings to set different levels for specific loggers.
+For example: `filters = sqlstore:debug`
+
+<hr>
 
 ## [log.console]
 
-Only applicable when "console" used in `[log]` mode.
+Only applicable when "console" is used in `[log]` mode.
 
 ### level
 
-Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+Options are "debug", "info", "warn", "error", and "critical". Default is inherited from `[log]` level.
 
 ### format
 
 Log line format, valid options are text, console and json. Default is `console`.
+
+<hr>
 
 ## [log.file]
 
@@ -742,29 +776,28 @@ Only applicable when "file" used in `[log]` mode.
 
 ### level
 
-Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+Options are "debug", "info", "warn", "error", and "critical". Default is inherited from `[log]` level.
 
 ### format
 
-Log line format, valid options are text, console and json. Default is `console`.
+Log line format, valid options are text, console and json. Default is `text`.
 
 ### log_rotate
 
-Enable automated log rotation, valid options are false or true. Default is `true`.
-When enabled use the `max_lines`, `max_size_shift`, `daily_rotate` and `max_days` below
-to configure the behavior of the log rotation.
+Enable automated log rotation, valid options are `false` or `true`. Default is `true`.
+When enabled use the `max_lines`, `max_size_shift`, `daily_rotate` and `max_days` to configure the behavior of the log rotation.
 
 ### max_lines
 
-Maximum lines per file before rotating it. Default is 1000000.
+Maximum lines per file before rotating it. Default is `1000000`.
 
 ### max_size_shift
 
-Maximum size of file before rotating it. Default is `28` which means `1 << 28`, `256MB`.
+Maximum size of file before rotating it. Default is `28`, which means `1 << 28`, `256MB`.
 
 ### daily_rotate
 
-Enable daily rotation of files, valid options are false or true. Default is `true`.
+Enable daily rotation of files, valid options are `false` or `true`. Default is `true`.
 
 ### max_days
 
@@ -776,15 +809,15 @@ Only applicable when "syslog" used in `[log]` mode.
 
 ### level
 
-Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+Options are "debug", "info", "warn", "error", and "critical". Default is inherited from `[log]` level.
 
 ### format
 
-Log line format, valid options are text, console and json. Default is `console`.
+Log line format, valid options are text, console, and json. Default is `text`.
 
 ### network and address
 
-Syslog network type and address. This can be UDP, TCP, or unix. If left blank, the default unix endpoints will be used.
+Syslog network type and address. This can be UDP, TCP, or UNIX. If left blank, then the default UNIX endpoints are used.
 
 ### facility
 
@@ -793,6 +826,8 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 ### tag
 
 Syslog tag. By default, the process's `argv[0]` is used.
+
+<hr>
 
 ## [quota]
 
@@ -841,6 +876,55 @@ Sets global limit of API keys that can be entered. Default is -1 (unlimited).
 ### global_session
 
 Sets a global limit on number of users that can be logged in at one time. Default is -1 (unlimited).
+
+<hr>
+
+## [alerting]
+
+### enabled
+Defaults to `true`. Set to `false` to disable alerting engine and hide Alerting in the Grafana UI.
+
+### execute_alerts
+
+Makes it possible to turn off alert rule execution, but Alerting is still visible in the Grafana UI.
+
+### error_or_timeout
+> Available in 5.3 and above
+
+Default setting for new alert rules. Defaults to categorize error and timeouts as alerting. (alerting, keep_state)
+
+### nodata_or_nullvalues
+> Available in 5.3  and above
+
+Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
+
+### concurrent_render_limit
+
+> Available in 5.3  and above
+
+Alert notifications can include images, but rendering many images at the same time can overload the server.
+This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
+value is `5`.
+
+### evaluation_timeout_seconds
+
+Default setting for alert calculation timeout. Default value is `30`
+
+### notification_timeout_seconds
+
+Default setting for alert notification timeout. Default value is `30`
+
+### max_attempts
+
+Default setting for max attempts to sending alert notifications. Default value is `3`
+
+### min_interval_seconds
+
+Default setting for minimum interval between rule evaluations. Default value is `1`
+
+> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
+
+<hr>
 
 ## [explore]
 
@@ -961,51 +1045,7 @@ Storage account key
 ### container_name
 Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
 
-## [alerting]
 
-### enabled
-Defaults to `true`. Set to `false` to disable alerting engine and hide Alerting from UI.
-
-### execute_alerts
-
-Makes it possible to turn off alert rule execution.
-
-### error_or_timeout
-> Available in 5.3 and above
-
-Default setting for new alert rules. Defaults to categorize error and timeouts as alerting. (alerting, keep_state)
-
-### nodata_or_nullvalues
-> Available in 5.3  and above
-
-Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
-
-### concurrent_render_limit
-
-> Available in 5.3  and above
-
-Alert notifications can include images, but rendering many images at the same time can overload the server.
-This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
-value is `5`.
-
-
-### evaluation_timeout_seconds
-
-Default setting for alert calculation timeout. Default value is `30`
-
-### notification_timeout_seconds
-
-Default setting for alert notification timeout. Default value is `30`
-
-### max_attempts
-
-Default setting for max attempts to sending alert notifications. Default value is `3`
-
-### min_interval_seconds
-
-Default setting for minimum interval between rule evaluations. Default value is `1`
-
-> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
 
 ## [rendering]
 
