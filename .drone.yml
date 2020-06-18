@@ -184,27 +184,18 @@ steps:
     commands:
       - ./e2e/start-server
   - name: end-to-end-tests
-    image: circleci/node:12.18-browsers
-    user: root
+    image: grafana/ci-e2e:12.18-1
     depends_on:
       - end-to-end-tests-server
     environment:
       HOST: end-to-end-tests-server
-      DISPLAY: ""
+      TERM: xterm
     commands:
-      # TODO: Install in image
-      # - apt-get install -yq netcat
-      # Install Cypress deps
-      # TODO: Move to image
-      # - curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
-      # - echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list
-      # - apt-get update
-      # - apt-get install -yq libgtk2.0-0 libgtk-3-0 libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb google-chrome-stable
       # TODO: Cache ~/.cache after `yarn install`, since Cypress depends on it, and the next line is a work-around
       - yarn install --frozen-lockfile --no-progress
       - ./node_modules/.bin/cypress install
       - ./e2e/wait-for-grafana
-      - ./e2e/run-suite
+      - ./e2e/run-suite debug
   - name: copy-oss-packages-for-docker
     image: grafana/build-container:1.2.21
     depends_on:
