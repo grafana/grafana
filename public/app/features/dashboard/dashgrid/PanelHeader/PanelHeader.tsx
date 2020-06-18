@@ -170,10 +170,7 @@ export class PanelHeader extends Component<Props, State> {
                   size="sm"
                 />
               )}
-              <span className="panel-title-text">
-                {title}
-                <Icon name="angle-down" className="panel-menu-toggle" />
-              </span>
+              <span className="panel-title-text">{title}</span>
               {this.state.panelMenuOpen && (
                 <ClickOutsideWrapper onClick={this.closeMenu}>
                   <PanelHeaderMenu items={menuItems} />
