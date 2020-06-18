@@ -9,7 +9,7 @@ steps:
   - name: install-deps
     image: grafana/build-container:1.2.21
     environment:
-      GRABPL_VERSION: "0.4.12"
+      GRABPL_VERSION: "0.4.13"
       DOCKERIZE_VERSION: 0.6.1
     commands:
       - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
@@ -197,24 +197,9 @@ steps:
   - name: copy-oss-packages-for-docker
     image: grafana/build-container:1.2.21
     depends_on:
-      - end-to-end-tests
       - package-oss
     commands:
-      - cp dist/grafana*.linux-amd64-musl.tar.gz packaging/docker/grafana.linux-amd64-musl.tar.gz
-  # TODO: Make our own plugin for building Docker images and manifests
-  # We need the plugin both for determining the version and for building manifests
-  - name: build-oss-docker-images
-    image: plugins/docker
-    depends_on:
-      - copy-oss-packages-for-docker
-    settings:
-      dry_run: true
-      dockerfile: packaging/docker/Dockerfile
-      build_args:
-        - BASE_IMAGE=alpine:3.11
-        - GRAFANA_TGZ=grafana.linux-amd64-musl.tar.gz
-      repo: grafana/grafana-amd64-linux
-      auto_tag: true
+      - cp dist/*.tar.gz packaging/docker/
   - name: publish-storybook
     image: grafana/build-container:1.2.21
     depends_on:
@@ -234,3 +219,9 @@ steps:
       - mkdir -p /hugo/content/docs/grafana
       - cp -r docs/sources /hugo/content/docs/grafana/latest
       - cd /hugo && make prod
+  - name: build-oss-docker-images
+    image: grafana/drone-grafana-docker
+    depends_on:
+      - copy-oss-packages-for-docker
+    settings:
+      dry_run: true
