@@ -1,17 +1,17 @@
-import { DynamicVariable, VariableHide } from '../types';
+import { MetaVariable, VariableHide } from '../types';
 import { VariableAdapter } from '../adapters';
 import { NEW_VARIABLE_ID } from '../state/types';
 import { Deferred } from '../../../core/utils/deferred';
 
-export const createDynamicVariableAdapter = (): VariableAdapter<DynamicVariable<any>> => {
+export const createMetaVariableAdapter = (): VariableAdapter<MetaVariable<any>> => {
   return {
-    id: 'dynamic',
+    id: 'meta',
     description: '',
-    name: 'Dynamic',
+    name: 'meta',
     initialState: {
       id: NEW_VARIABLE_ID,
       global: false,
-      type: 'dynamic',
+      type: 'meta',
       name: '',
       label: (null as unknown) as string,
       hide: VariableHide.hideVariable,
