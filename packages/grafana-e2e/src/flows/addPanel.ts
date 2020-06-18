@@ -38,12 +38,21 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .route('POST', '/api/ds/query')
       .as('chartData');
 
-    e2e()
-      .get('.ds-picker')
-      .click()
-      .contains('[id^="react-select-"][id*="-option-"]', dataSourceName)
-      .scrollIntoView()
-      .click();
+    e2e.components.DataSourcePicker.container().within(() => {
+      e2e()
+        .get('[class$="-input-suffix"]')
+        .click();
+      e2e.components.Select.option()
+        .filter(`:contains("${dataSourceName}")`)
+        .scrollIntoView()
+        .click();
+      e2e()
+        .root()
+        .scrollIntoView();
+    });
+
+    // @todo instead wait for '@pluginModule'
+    e2e().wait(2000);
 
     openOptions();
 
@@ -56,8 +65,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
     closeOptionsGroup('settings');
 
     openOptionsGroup('type');
-    e2e()
-      .get(`[aria-label="Plugin visualization item ${visualizationName}"]`)
+    e2e.components.PluginVisualization.item(visualizationName)
       .scrollIntoView()
       .click();
     closeOptionsGroup('type');
@@ -76,6 +84,11 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
     e2e()
       .get('button[title="Apply changes and go back to dashboard"]')
       .click();
+
+    e2e().wait('@chartData');
+
+    // Wait for RxJS
+    e2e().wait(500);
 
     // @todo remove `wrap` when possible
     return e2e().wrap({ config: fullConfig });
