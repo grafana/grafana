@@ -66,7 +66,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       }
     }
 
-    // Proces flux queries (data frame request)
+    // Process flux queries (data frame request)
     if (hasFlux) {
       if (!this.enableFlux) {
         throw 'Flux not enabled for this datasource';
