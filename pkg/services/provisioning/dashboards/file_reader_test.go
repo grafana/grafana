@@ -171,7 +171,7 @@ func TestDashboardFileReader(t *testing.T) {
 				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				So(len(fakeService.inserted), ShouldEqual, 6)
+				So(len(fakeService.inserted), ShouldEqual, 5)
 
 				foldersCount := 0
 				for _, d := range fakeService.inserted {
@@ -179,9 +179,9 @@ func TestDashboardFileReader(t *testing.T) {
 						foldersCount++
 					}
 				}
-				So(foldersCount, ShouldEqual, 3)
+				So(foldersCount, ShouldEqual, 2)
 
-				foldersAndDashboards := make(map[string]struct{}, 6)
+				foldersAndDashboards := make(map[string]struct{}, 5)
 				for _, d := range fakeService.inserted {
 					title := d.Dashboard.Title
 					if _, ok := foldersAndDashboards[title]; ok {
@@ -189,13 +189,15 @@ func TestDashboardFileReader(t *testing.T) {
 					}
 
 					switch title {
-					case "folderOne", "folderTwo", "General":
+					case "folderOne", "folderTwo":
 						So(d.Dashboard.IsFolder, ShouldBeTrue)
 					case "Grafana1", "Grafana2", "RootDashboard":
 						So(d.Dashboard.IsFolder, ShouldBeFalse)
 					default:
 						So(fmt.Errorf("unknown dashboard title %q", title), ShouldBeNil)
 					}
+
+					foldersAndDashboards[title] = struct{}{}
 				}
 			})
 

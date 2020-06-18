@@ -140,7 +140,7 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 // in grafana as they are in on the filesystem
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, sanityChecker *provisioningSanityChecker) error {
 	for path, fileInfo := range filesFoundOnDisk {
-		folderName := "General"
+		folderName := ""
 
 		dashboardsFolder := filepath.Dir(path)
 		if dashboardsFolder != resolvedPath {
