@@ -1,6 +1,6 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
-import { QueryEditor as StackdriverQueryEditor } from 'app/plugins/datasource/stackdriver/components/QueryEditor';
-import { AnnotationQueryEditor as StackdriverAnnotationQueryEditor } from 'app/plugins/datasource/stackdriver/components/AnnotationQueryEditor';
+import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
+import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
 import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor';
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
@@ -118,7 +118,7 @@ export function registerAngularDirectives() {
     'placeholder',
     ['variables', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('stackdriverQueryEditor', StackdriverQueryEditor, [
+  react2AngularDirective('cloudMonitoringQueryEditor', CloudMonitoringQueryEditor, [
     'target',
     'onQueryChange',
     'onExecuteQuery',
@@ -126,7 +126,7 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('stackdriverAnnotationQueryEditor', StackdriverAnnotationQueryEditor, [
+  react2AngularDirective('cloudMonitoringAnnotationQueryEditor', CloudMonitoringAnnotationQueryEditor, [
     'target',
     'onQueryChange',
     ['datasource', { watchDepth: 'reference' }],

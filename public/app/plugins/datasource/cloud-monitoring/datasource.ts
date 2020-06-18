@@ -11,31 +11,38 @@ import {
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter, VariableQueryData, QueryType } from './types';
-import { stackdriverUnitMappings } from './constants';
+import {
+  CloudMonitoringQuery,
+  MetricDescriptor,
+  CloudMonitoringOptions,
+  Filter,
+  VariableQueryData,
+  QueryType,
+} from './types';
+import { cloudMonitoringUnitMappings } from './constants';
 import API from './api';
-import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
+import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
 
-export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
+export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonitoringQuery, CloudMonitoringOptions> {
   api: API;
   authenticationType: string;
 
   /** @ngInject */
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
+    private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
     public templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
-    this.api = new API(`${instanceSettings.url!}/stackdriver/v3/projects/`);
+    this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
   }
 
   get variables() {
     return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
-  async query(options: DataQueryRequest<StackdriverQuery>): Promise<DataQueryResponse> {
+  async query(options: DataQueryRequest<CloudMonitoringQuery>): Promise<DataQueryResponse> {
     const result: DataQueryResponse[] = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {
@@ -107,11 +114,11 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
 
   async metricFindQuery(query: VariableQueryData) {
     await this.ensureGCEDefaultProject();
-    const stackdriverMetricFindQuery = new StackdriverMetricFindQuery(this);
-    return stackdriverMetricFindQuery.execute(query);
+    const cloudMonitoringMetricFindQuery = new CloudMonitoringMetricFindQuery(this);
+    return cloudMonitoringMetricFindQuery.execute(query);
   }
 
-  async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
+  async getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>) {
     await this.ensureGCEDefaultProject();
     const queries = options.targets
       .map(this.migrateQuery)
@@ -147,20 +154,20 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         },
       ],
       range: this.timeSrv.timeRange(),
-    } as DataQueryRequest<StackdriverQuery>);
+    } as DataQueryRequest<CloudMonitoringQuery>);
     const result = response.results[refId];
     return result && result.meta ? result.meta.labels : {};
   }
 
   async testDatasource() {
     let status, message;
-    const defaultErrorMessage = 'Cannot connect to Stackdriver API';
+    const defaultErrorMessage = 'Cannot connect to Cloud Monitoring API';
     try {
       await this.ensureGCEDefaultProject();
       const response = await this.api.test(this.getDefaultProject());
       if (response.status === 200) {
         status = 'success';
-        message = 'Successfully queried the Stackdriver API.';
+        message = 'Successfully queried the Cloud Monitoring API.';
       } else {
         status = 'error';
         message = response.statusText ? response.statusText : defaultErrorMessage;
@@ -170,7 +177,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       if (_.isString(error)) {
         message = error;
       } else {
-        message = 'Stackdriver: ';
+        message = 'Cloud Monitoring: ';
         message += error.statusText ? error.statusText : defaultErrorMessage;
         if (error.data && error.data.error && error.data.error.code) {
           message += ': ' + error.data.error.code + '. ' + error.data.error.message;
@@ -272,7 +279,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     });
   }
 
-  migrateQuery(query: StackdriverQuery): StackdriverQuery {
+  migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {
     if (!query.hasOwnProperty('metricQuery')) {
       const { hide, refId, datasource, key, queryType, maxLines, metric, ...rest } = query as any;
       return {
@@ -297,7 +304,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     }, {});
   }
 
-  shouldRunQuery(query: StackdriverQuery): boolean {
+  shouldRunQuery(query: CloudMonitoringQuery): boolean {
     if (query.hide) {
       return false;
     }
@@ -313,8 +320,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   prepareTimeSeriesQuery(
-    { metricQuery, refId, queryType, sloQuery }: StackdriverQuery,
-    { scopedVars, intervalMs }: DataQueryRequest<StackdriverQuery>
+    { metricQuery, refId, queryType, sloQuery }: CloudMonitoringQuery,
+    { scopedVars, intervalMs }: DataQueryRequest<CloudMonitoringQuery>
   ) {
     return {
       datasourceId: this.id,
@@ -373,9 +380,9 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   resolvePanelUnitFromTargets(targets: any) {
     let unit;
     if (targets.length > 0 && targets.every((t: any) => t.unit === targets[0].unit)) {
-      if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit!)) {
+      if (cloudMonitoringUnitMappings.hasOwnProperty(targets[0].unit!)) {
         // @ts-ignore
-        unit = stackdriverUnitMappings[targets[0].unit];
+        unit = cloudMonitoringUnitMappings[targets[0].unit];
       }
     }
     return unit;

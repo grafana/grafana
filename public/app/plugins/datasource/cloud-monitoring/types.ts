@@ -78,14 +78,14 @@ export interface SLOQuery {
   goal?: number;
 }
 
-export interface StackdriverQuery extends DataQuery {
+export interface CloudMonitoringQuery extends DataQuery {
   datasourceId?: number; // Should not be necessary anymore
   queryType: QueryType;
   metricQuery: MetricQuery;
   sloQuery?: SLOQuery;
 }
 
-export interface StackdriverOptions extends DataSourceJsonData {
+export interface CloudMonitoringOptions extends DataSourceJsonData {
   defaultProject?: string;
   gceDefaultProject?: string;
   authenticationType?: string;

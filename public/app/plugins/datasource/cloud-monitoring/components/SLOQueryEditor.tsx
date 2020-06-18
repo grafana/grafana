@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '../constants';
 import { Project, AlignmentPeriods, AliasBy, QueryInlineField } from '.';
 import { SLOQuery } from '../types';
-import StackdriverDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
   usedAlignmentPeriod: string;
@@ -12,12 +12,12 @@ export interface Props {
   onChange: (query: SLOQuery) => void;
   onRunQuery: () => void;
   query: SLOQuery;
-  datasource: StackdriverDatasource;
+  datasource: CloudMonitoringDatasource;
 }
 
 export const defaultQuery: SLOQuery = {
   projectName: '',
-  alignmentPeriod: 'stackdriver-auto',
+  alignmentPeriod: 'cloud-monitoring-auto',
   aliasBy: '',
   selectorName: 'select_slo_health',
   serviceId: '',

@@ -1,6 +1,6 @@
 import isString from 'lodash/isString';
 import { alignmentPeriods, ValueTypes, MetricKind, selectors } from './constants';
-import StackdriverDatasource from './datasource';
+import CloudMonitoringDatasource from './datasource';
 import { MetricFindQueryTypes, VariableQueryData } from './types';
 import { SelectableValue } from '@grafana/data';
 import {
@@ -11,8 +11,8 @@ import {
   getLabelKeys,
 } from './functions';
 
-export default class StackdriverMetricFindQuery {
-  constructor(private datasource: StackdriverDatasource) {}
+export default class CloudMonitoringMetricFindQuery {
+  constructor(private datasource: CloudMonitoringDatasource) {}
 
   async execute(query: VariableQueryData) {
     try {
@@ -49,7 +49,7 @@ export default class StackdriverMetricFindQuery {
           return [];
       }
     } catch (error) {
-      console.error(`Could not run StackdriverMetricFindQuery ${query}`, error);
+      console.error(`Could not run CloudMonitoringMetricFindQuery ${query}`, error);
       return [];
     }
   }

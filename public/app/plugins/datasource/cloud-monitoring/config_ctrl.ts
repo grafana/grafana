@@ -8,8 +8,8 @@ export interface JWT {
   project_id: string;
 }
 
-export class StackdriverConfigCtrl {
-  static templateUrl = 'public/app/plugins/datasource/stackdriver/partials/config.html';
+export class CloudMonitoringConfigCtrl {
+  static templateUrl = 'public/app/plugins/datasource/cloud-monitoring/partials/config.html';
   datasourceSrv: DatasourceSrv;
   current: any;
   meta: any;

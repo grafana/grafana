@@ -5,7 +5,7 @@ const { Input } = LegacyForms;
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
 
-import StackdriverDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 import { Metrics, LabelFilter, AnnotationsHelp, Project } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
@@ -13,7 +13,7 @@ import { AnnotationTarget, MetricDescriptor } from '../types';
 export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
   target: AnnotationTarget;
-  datasource: StackdriverDatasource;
+  datasource: CloudMonitoringDatasource;
   templateSrv: TemplateSrv;
 }
 

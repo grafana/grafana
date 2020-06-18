@@ -1,8 +1,8 @@
-import StackdriverDataSource from '../datasource';
+import CloudMonitoringDataSource from '../datasource';
 import { metricDescriptors } from './testData';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
-import { StackdriverOptions } from '../types';
+import { CloudMonitoringOptions } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CustomVariableModel } from '../../../../features/variables/types';
@@ -18,12 +18,12 @@ interface Result {
   message?: any;
 }
 
-describe('StackdriverDataSource', () => {
+describe('CloudMonitoringDataSource', () => {
   const instanceSettings = ({
     jsonData: {
       defaultProject: 'testproject',
     },
-  } as unknown) as DataSourceInstanceSettings<StackdriverOptions>;
+  } as unknown) as DataSourceInstanceSettings<CloudMonitoringOptions>;
   const templateSrv = new TemplateSrv();
   const timeSrv = {} as TimeSrv;
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
@@ -34,12 +34,12 @@ describe('StackdriverDataSource', () => {
   });
 
   describe('when performing testDataSource', () => {
-    describe('and call to stackdriver api succeeds', () => {
+    describe('and call to cloud monitoring api succeeds', () => {
       let ds;
       let result: Result;
       beforeEach(async () => {
         datasourceRequestMock.mockImplementation(() => Promise.resolve({ status: 200 }));
-        ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
+        ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
 
@@ -54,7 +54,7 @@ describe('StackdriverDataSource', () => {
       beforeEach(async () => {
         datasourceRequestMock.mockImplementation(() => Promise.resolve({ status: 200, data: metricDescriptors }));
 
-        ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
+        ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
 
@@ -63,7 +63,7 @@ describe('StackdriverDataSource', () => {
       });
     });
 
-    describe('and call to stackdriver api fails with 400 error', () => {
+    describe('and call to cloud monitoring api fails with 400 error', () => {
       let ds;
       let result: Result;
       beforeEach(async () => {
@@ -76,13 +76,13 @@ describe('StackdriverDataSource', () => {
           })
         );
 
-        ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
+        ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
 
       it('should return error status and a detailed error message', () => {
         expect(result.status).toEqual('error');
-        expect(result.message).toBe('Stackdriver: Bad Request: 400. Field interval.endTime had an invalid value');
+        expect(result.message).toBe('Cloud Monitoring: Bad Request: 400. Field interval.endTime had an invalid value');
       });
     });
   });
@@ -105,7 +105,7 @@ describe('StackdriverDataSource', () => {
     };
 
     describe('and no time series data is returned', () => {
-      let ds: StackdriverDataSource;
+      let ds: CloudMonitoringDataSource;
       const response: any = {
         results: {
           A: {
@@ -121,7 +121,7 @@ describe('StackdriverDataSource', () => {
 
       beforeEach(() => {
         datasourceRequestMock.mockImplementation(() => Promise.resolve({ status: 200, data: response }));
-        ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
+        ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
       });
 
       it('should return a list of datapoints', () => {
@@ -133,7 +133,7 @@ describe('StackdriverDataSource', () => {
   });
 
   describe('when performing getMetricTypes', () => {
-    describe('and call to stackdriver api succeeds', () => {});
+    describe('and call to cloud monitoring api succeeds', () => {});
     let ds;
     let result: any;
     beforeEach(async () => {
@@ -154,7 +154,7 @@ describe('StackdriverDataSource', () => {
         })
       );
 
-      ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
+      ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
       // @ts-ignore
       result = await ds.getMetricTypes('proj');
     });
@@ -176,7 +176,7 @@ describe('StackdriverDataSource', () => {
     describe('and is single value variable', () => {
       beforeEach(() => {
         const filterTemplateSrv = initTemplateSrv('filtervalue1');
-        const ds = new StackdriverDataSource(instanceSettings, filterTemplateSrv, timeSrv);
+        const ds = new CloudMonitoringDataSource(instanceSettings, filterTemplateSrv, timeSrv);
         interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
       });
 
@@ -189,7 +189,7 @@ describe('StackdriverDataSource', () => {
     describe('and is single value variable for the label part', () => {
       beforeEach(() => {
         const filterTemplateSrv = initTemplateSrv('resource.label.zone');
-        const ds = new StackdriverDataSource(instanceSettings, filterTemplateSrv, timeSrv);
+        const ds = new CloudMonitoringDataSource(instanceSettings, filterTemplateSrv, timeSrv);
         interpolated = ds.interpolateFilters(['${test}', '=~', 'europe-north-1a'], {});
       });
 
@@ -202,7 +202,7 @@ describe('StackdriverDataSource', () => {
     describe('and is multi value variable', () => {
       beforeEach(() => {
         const filterTemplateSrv = initTemplateSrv(['filtervalue1', 'filtervalue2'], true);
-        const ds = new StackdriverDataSource(instanceSettings, filterTemplateSrv, timeSrv);
+        const ds = new CloudMonitoringDataSource(instanceSettings, filterTemplateSrv, timeSrv);
         interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
       });
 
@@ -218,7 +218,7 @@ describe('StackdriverDataSource', () => {
     describe('and is single value variable', () => {
       beforeEach(() => {
         const groupByTemplateSrv = initTemplateSrv('groupby1');
-        const ds = new StackdriverDataSource(instanceSettings, groupByTemplateSrv, timeSrv);
+        const ds = new CloudMonitoringDataSource(instanceSettings, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -231,7 +231,7 @@ describe('StackdriverDataSource', () => {
     describe('and is multi value variable', () => {
       beforeEach(() => {
         const groupByTemplateSrv = initTemplateSrv(['groupby1', 'groupby2'], true);
-        const ds = new StackdriverDataSource(instanceSettings, groupByTemplateSrv, timeSrv);
+        const ds = new CloudMonitoringDataSource(instanceSettings, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -244,12 +244,12 @@ describe('StackdriverDataSource', () => {
   });
 
   describe('unit parsing', () => {
-    let ds: StackdriverDataSource, res: any;
+    let ds: CloudMonitoringDataSource, res: any;
     beforeEach(() => {
-      ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
+      ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
     });
     describe('when theres only one target', () => {
-      describe('and the stackdriver unit doesnt have a corresponding grafana unit', () => {
+      describe('and the cloud monitoring unit doesnt have a corresponding grafana unit', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }]);
         });
@@ -257,7 +257,7 @@ describe('StackdriverDataSource', () => {
           expect(res).toBeUndefined();
         });
       });
-      describe('and the stackdriver unit has a corresponding grafana unit', () => {
+      describe('and the cloud monitoring unit has a corresponding grafana unit', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }]);
         });

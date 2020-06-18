@@ -231,7 +231,7 @@ export const aggOptions = [
 
 export const alignmentPeriods = [
   { text: 'grafana auto', value: 'grafana-auto' },
-  { text: 'stackdriver auto', value: 'stackdriver-auto' },
+  { text: 'cloud monitoring auto', value: 'cloud-monitoring-auto' },
   { text: '1m', value: '+60s' },
   { text: '2m', value: '+120s' },
   { text: '5m', value: '+300s' },
@@ -245,7 +245,7 @@ export const alignmentPeriods = [
   { text: '1w', value: '+604800s' },
 ];
 
-export const stackdriverUnitMappings = {
+export const cloudMonitoringUnitMappings = {
   bit: 'bits',
   By: 'bytes',
   s: 's',

@@ -25,7 +25,7 @@ describe('api', () => {
     let api: Api;
     let res: Array<SelectableValue<string>>;
     beforeEach(async () => {
-      api = new Api('/stackdriver/');
+      api = new Api('/cloudmonitoring/');
       api.cache['some-resource'] = response;
       res = await api.get('some-resource');
     });
@@ -41,7 +41,7 @@ describe('api', () => {
     let api: Api;
     let res: Array<SelectableValue<string>>;
     beforeEach(async () => {
-      api = new Api('/stackdriver/');
+      api = new Api('/cloudmonitoring/');
       res = await api.get('some-resource');
     });
 
@@ -56,7 +56,7 @@ describe('api', () => {
     let api: Api;
     let res: Array<SelectableValue<string>>;
     beforeEach(async () => {
-      api = new Api('/stackdriver/');
+      api = new Api('/cloudmonitoring/');
       api.cache['some-resource'] = response;
       res = await api.get('some-resource', { useCache: false });
     });

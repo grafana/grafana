@@ -1,10 +1,10 @@
 import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync } from '@grafana/ui';
-import StackdriverDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
-  datasource: StackdriverDatasource;
+  datasource: CloudMonitoringDatasource;
   onChange: (projectName: string) => void;
   templateVariableOptions: Array<SelectableValue<string>>;
   projectName: string;
