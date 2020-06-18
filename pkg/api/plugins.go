@@ -143,6 +143,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 func GetPluginSettingByID(c *models.ReqContext) Response {
 	pluginID := c.Params(":pluginId")
 
+	if pluginID == "stackdriver" { // legacy
+		pluginID = "cloud-monitoring"
+	}
+
 	def, exists := plugins.Plugins[pluginID]
 	if !exists {
 		return Error(404, "Plugin not found, no installed plugin with that id", nil)

@@ -43,6 +43,10 @@ func GetDataSources(c *models.ReqContext) Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
+		if ds.Type == "stackdriver" {
+			ds.Type = "cloud-monitoring"
+		}
+
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 		} else {

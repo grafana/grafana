@@ -20,6 +20,10 @@ func init() {
 }
 
 func getTsdbQueryEndpointFor(dsInfo *models.DataSource) (TsdbQueryEndpoint, error) {
+	if dsInfo.Type == "stackdriver" { // legacy
+		dsInfo.Type = "cloud-monitoring"
+	}
+
 	if fn, exists := registry[dsInfo.Type]; exists {
 		executor, err := fn(dsInfo)
 		if err != nil {
