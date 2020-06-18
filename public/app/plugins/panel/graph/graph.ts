@@ -602,6 +602,7 @@ class GraphElement {
       },
       crosshair: {
         mode: 'x',
+        color: '#000',
       },
     };
     return options;
