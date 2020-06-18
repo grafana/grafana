@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
+import { textUtil } from '@grafana/data';
 
 /** @ngInject */
 export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: any) {
@@ -79,7 +80,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
 
   $scope.getSeriesNames = () => {
     return _.map($scope.ctrl.seriesList, series => {
-      return series.alias;
+      return textUtil.escapeHtml(series.alias);
     });
   };
 

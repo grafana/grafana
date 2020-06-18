@@ -7,17 +7,17 @@ import { AppNotificationTimeout } from 'app/types';
 import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
 import {
+  DataFrame,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   dateMath,
+  LoadingState,
+  LogRowModel,
   ScopedVars,
   TimeRange,
-  DataFrame,
-  DataQueryResponse,
-  LoadingState,
   toDataFrame,
-  LogRowModel,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -25,25 +25,25 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
 import {
-  CloudWatchQuery,
   CloudWatchJsonData,
-  CloudWatchMetricsQuery,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
   DescribeLogGroupsRequest,
-  TSDBResponse,
-  MetricRequest,
+  GetLogEventsRequest,
   GetLogGroupFieldsRequest,
   GetLogGroupFieldsResponse,
   LogAction,
-  GetLogEventsRequest,
   MetricQuery,
+  MetricRequest,
+  TSDBResponse,
 } from './types';
-import { from, empty, Observable } from 'rxjs';
-import { delay, expand, map, mergeMap, tap, finalize, catchError } from 'rxjs/operators';
+import { empty, from, Observable } from 'rxjs';
+import { catchError, delay, expand, finalize, map, mergeMap, tap } from 'rxjs/operators';
 import { CloudWatchLanguageProvider } from './language_provider';
 
-import { VariableWithMultiSupport } from 'app/features/templating/types';
+import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { AwsUrl, encodeUrl } from './aws_url';
 

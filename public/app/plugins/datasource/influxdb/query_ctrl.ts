@@ -5,6 +5,7 @@ import InfluxQueryModel from './influx_query_model';
 import queryPart from './query_part';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { InfluxQueryType } from './types';
 
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -13,6 +14,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   queryBuilder: any;
   groupBySegment: any;
   resultFormats: any[];
+  queryTypes: any[];
   orderByTime: any[];
   policySegment: any;
   tagSegments: any[];
@@ -36,6 +38,16 @@ export class InfluxQueryCtrl extends QueryCtrl {
       { text: 'Time series', value: 'time_series' },
       { text: 'Table', value: 'table' },
     ];
+
+    // Show a dropdown for flux
+    if (this.datasource.enableFlux) {
+      this.queryTypes = [
+        { text: 'Classic', value: InfluxQueryType.Classic },
+        { text: 'InfluxQL', value: InfluxQueryType.InfluxQL },
+        { text: 'Flux', value: InfluxQueryType.Flux },
+      ];
+    }
+
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
 
     if (!this.target.measurement) {
@@ -241,7 +253,15 @@ export class InfluxQueryCtrl extends QueryCtrl {
     } catch (err) {
       console.log('query render error');
     }
-    this.target.rawQuery = !this.target.rawQuery;
+    const { queryType } = this.target;
+    if (queryType === InfluxQueryType.Flux || queryType === InfluxQueryType.InfluxQL) {
+      this.target.queryType = InfluxQueryType.Classic;
+      this.target.rawQuery = false;
+    } else if (this.datasource.enableFlux) {
+      this.target.queryType = InfluxQueryType.Flux;
+    } else {
+      this.target.queryType = InfluxQueryType.InfluxQL;
+    }
   }
 
   getMeasurements(measurementFilter: any) {

@@ -71,7 +71,13 @@ export class LegendItem extends PureComponent<LegendItemProps, LegendItemState> 
       if (this.props[valueName]) {
         const valueFormatted = series.formatValue(series.stats[valueName]);
         legendValueItems.push(
-          <LegendValue key={valueName} valueName={valueName} value={valueFormatted} asTable={asTable} />
+          <LegendValue
+            key={valueName}
+            valueName={valueName}
+            value={valueFormatted}
+            asTable={asTable}
+            onValueClick={this.onLabelClick}
+          />
         );
       }
     }
@@ -118,7 +124,7 @@ interface LegendSeriesLabelProps {
   label: string;
   color: string;
   yaxis?: number;
-  onLabelClick?: (event: any) => void;
+  onLabelClick: (event: any) => void;
 }
 
 class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSeriesIconProps> {
@@ -173,12 +179,18 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
     onToggleAxis: () => {},
   };
 
+  onColorChange = (color: string) => {
+    const { onColorChange } = this.props;
+    if (onColorChange) {
+      onColorChange(color);
+    }
+  };
   render() {
     return (
       <SeriesColorPicker
         yaxis={this.props.yaxis}
         color={this.props.color}
-        onChange={this.props.onColorChange}
+        onChange={this.onColorChange}
         onToggleAxis={this.props.onToggleAxis}
         enableNamedColors
       >
@@ -196,13 +208,20 @@ interface LegendValueProps {
   value: string;
   valueName: string;
   asTable?: boolean;
+  onValueClick?: (event: any) => void;
 }
 
-function LegendValue(props: LegendValueProps) {
-  const value = props.value;
-  const valueName = props.valueName;
-  if (props.asTable) {
-    return <td className={`graph-legend-value ${valueName}`}>{value}</td>;
+function LegendValue({ value, valueName, asTable, onValueClick }: LegendValueProps) {
+  if (asTable) {
+    return (
+      <td className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
+        {value}
+      </td>
+    );
   }
-  return <div className={`graph-legend-value ${valueName}`}>{value}</div>;
+  return (
+    <div className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
+      {value}
+    </div>
+  );
 }

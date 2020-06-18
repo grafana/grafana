@@ -1,7 +1,7 @@
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import { variableAdapters } from '../adapters';
 import { sharedReducer } from './sharedReducer';
-import { VariableModel } from '../../templating/types';
+import { VariableModel } from '../types';
 import { VariablePayload } from './types';
 
 export interface VariablesState extends Record<string, VariableModel> {}
@@ -21,7 +21,7 @@ export const variablesReducer = (
     }
 
     const variables = globalVariables.reduce((allVariables, state) => {
-      allVariables[state.id!] = state;
+      allVariables[state.id] = state;
       return allVariables;
     }, {} as Record<string, VariableModel>);
 

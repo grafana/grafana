@@ -21,7 +21,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
-import { Log, Span, KeyValuePair, Link } from '../types/trace';
+import { Log, Span, KeyValuePair, Link } from '@grafana/data';
 
 const getStyles = createStyle((theme: Theme) => {
   return {

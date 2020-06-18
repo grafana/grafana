@@ -5,7 +5,6 @@ import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
-import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp, updateLocation } from 'app/core/actions';
@@ -70,7 +69,7 @@ async function fetchDashboard(
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
         // if above all is cancelled it will return an array
-        if (!dashDTO.meta) {
+        if (Array.isArray(dashDTO)) {
           return null;
         }
 
@@ -175,7 +174,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // init services
     const timeSrv: TimeSrv = args.$injector.get('timeSrv');
     const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
-    const variableSrv: VariableSrv = args.$injector.get('variableSrv');
     const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
     const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
@@ -189,7 +187,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // template values service needs to initialize completely before the rest of the dashboard can load
-    await dispatch(initVariablesTransaction(args.urlUid, dashboard, variableSrv));
+    await dispatch(initVariablesTransaction(args.urlUid, dashboard));
 
     if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one

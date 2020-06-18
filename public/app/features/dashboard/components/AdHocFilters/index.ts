@@ -1,1 +1,0 @@
-export { AdHocFiltersCtrl } from './AdHocFiltersCtrl';

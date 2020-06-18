@@ -110,7 +110,7 @@ By default, each dashboard is displayed for the amount of time entered in the In
       - The navbar, row and panel controls appear at the top of the screen.
       - Enabled automatically after one minute of user inactivity.
       - You can enable it manually using the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL. 
-      - You can disable it with any mouse mouse movement or keyboard action. 
+      - You can disable it with any mouse movement or keyboard action. 
    - **TV mode (with auto fit panels):** 
       - The side menu is hidden/removed. 
       - The navbar, row and panel controls appear at the top of the screen.

@@ -5,7 +5,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { GrafanaDatasource } from '../datasource';
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 

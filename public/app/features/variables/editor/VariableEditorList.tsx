@@ -3,7 +3,7 @@ import { IconButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
-import { QueryVariableModel, VariableModel } from '../../templating/types';
+import { QueryVariableModel, VariableModel } from '../types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 
 export interface Props {
@@ -28,7 +28,7 @@ export class VariableEditorList extends PureComponent<Props> {
 
   onChangeVariableOrder = (event: MouseEvent, variable: VariableModel, moveType: MoveType) => {
     event.preventDefault();
-    this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index!, variable.index! + moveType);
+    this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index, variable.index + moveType);
   };
 
   onDuplicateVariable = (event: MouseEvent, identifier: VariableIdentifier) => {

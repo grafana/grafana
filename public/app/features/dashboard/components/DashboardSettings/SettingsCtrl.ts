@@ -25,7 +25,6 @@ export class SettingsCtrl {
   sections: any[];
   hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;
-  useAngularTemplating: boolean;
 
   /** @ngInject */
   constructor(
@@ -60,7 +59,6 @@ export class SettingsCtrl {
     appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
 
     this.selectors = selectors.pages.Dashboard.Settings.General;
-    this.useAngularTemplating = !getConfig().featureToggles.newVariables;
   }
 
   buildSectionList() {
