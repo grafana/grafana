@@ -91,6 +91,7 @@ module.exports = (env = {}) =>
               enabled: true,
               files: [
                 'public/app/**/*.{ts,tsx}',
+                // this can't be written like this packages/**/src/**/*.ts because it throws an error
                 'packages/grafana-ui/src/**/*.{ts,tsx}',
                 'packages/grafana-data/src/**/*.{ts,tsx}',
                 'packages/grafana-runtime/src/**/*.{ts,tsx}',
