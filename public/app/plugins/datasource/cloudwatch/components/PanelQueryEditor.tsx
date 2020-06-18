@@ -30,7 +30,11 @@ export class PanelQueryEditor extends PureComponent<Props> {
             }
           />
         </QueryInlineField>
-        {apiMode === ExploreMode.Logs ? <LogsQueryEditor {...this.props} /> : <MetricsQueryEditor {...this.props} />}
+        {apiMode === ExploreMode.Logs ? (
+          <LogsQueryEditor {...this.props} allowCustomValue />
+        ) : (
+          <MetricsQueryEditor {...this.props} />
+        )}
       </>
     );
   }
