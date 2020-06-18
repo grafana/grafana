@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// IntValue represents a string value in a yaml
+// IntValue represents a string value in a YAML
 // config that can be overridden by environment variables
 type IntValue struct {
 	value int
@@ -46,14 +46,14 @@ func (val *IntValue) Value() int {
 	return val.value
 }
 
-// Int64Value represents a string value in a yaml
+// Int64Value represents a string value in a YAML
 // config that can be overridden by environment variables
 type Int64Value struct {
 	value int64
 	Raw   string
 }
 
-// UnmarshalYAML converts yaml into an *Int64Value
+// UnmarshalYAML converts YAML into an *Int64Value
 func (val *Int64Value) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
@@ -73,14 +73,14 @@ func (val *Int64Value) Value() int64 {
 	return val.value
 }
 
-// StringValue represents a string value in a yaml
+// StringValue represents a string value in a YAML
 // config that can be overridden by environment variables
 type StringValue struct {
 	value string
 	Raw   string
 }
 
-// UnmarshalYAML converts yaml into an *StringValue
+// UnmarshalYAML converts YAML into an *StringValue
 func (val *StringValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
@@ -96,14 +96,14 @@ func (val *StringValue) Value() string {
 	return val.value
 }
 
-// BoolValue represents a string value in a yaml
+// BoolValue represents a string value in a YAML
 // config that can be overridden by environment variables
 type BoolValue struct {
 	value bool
 	Raw   string
 }
 
-// UnmarshalYAML converts yaml into an *BoolValue
+// UnmarshalYAML converts YAML into an *BoolValue
 func (val *BoolValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
@@ -119,14 +119,14 @@ func (val *BoolValue) Value() bool {
 	return val.value
 }
 
-// JSONValue represents a string value in a yaml
+// JSONValue represents a string value in a YAML
 // config that can be overridden by environment variables
 type JSONValue struct {
 	value map[string]interface{}
 	Raw   map[string]interface{}
 }
 
-// UnmarshalYAML converts yaml into an *JSONValue
+// UnmarshalYAML converts YAML into an *JSONValue
 func (val *JSONValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	unmarshaled := make(map[string]interface{})
 	err := unmarshal(unmarshaled)
@@ -144,19 +144,19 @@ func (val *JSONValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return err
 }
 
-// Value returns the wrapped json value as map[string]interface{}
+// Value returns the wrapped JSON value as map[string]interface{}
 func (val *JSONValue) Value() map[string]interface{} {
 	return val.value
 }
 
-// StringMapValue represents a string value in a yaml
+// StringMapValue represents a string value in a YAML
 // config that can be overridden by environment variables
 type StringMapValue struct {
 	value map[string]string
 	Raw   map[string]string
 }
 
-// UnmarshalYAML converts yaml into an *StringMapValue
+// UnmarshalYAML converts YAML into an *StringMapValue
 func (val *StringMapValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	unmarshaled := make(map[string]string)
 	err := unmarshal(unmarshaled)
