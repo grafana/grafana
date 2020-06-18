@@ -182,7 +182,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
     return (
       <a
-        className={cx(styles.button, className, linkButtonStyles)}
+        className={cx(styles.button, linkButtonStyles, className)}
         {...otherProps}
         ref={ref}
         tabIndex={disabled ? -1 : 0}
