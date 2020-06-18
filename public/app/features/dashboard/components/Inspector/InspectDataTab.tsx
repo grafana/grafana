@@ -14,7 +14,7 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table } from '@grafana/ui';
+import { Button, Field, Icon, Switch, Select, Table, HorizontalGroup, VerticalGroup, Container } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -183,7 +183,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
       panelTransformations && panelTransformations.length > 0 && (transformId as any) !== 'join by time';
     const showFieldConfigsOption = !panel.plugin?.fieldConfigRegistry.isEmpty();
     const showDataOptions = showPanelTransformationsOption || showFieldConfigsOption;
-    console.log(dataFrames);
 
     let dataSelect = dataFrames;
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
@@ -204,51 +203,53 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     return (
-      <div className={cx(styles.options, styles.dataDisplayOptions)}>
-        <QueryOperationRow
-          title={'Data display options'}
-          headerElement={<CollapsedText>{this.getActiveString()}</CollapsedText>}
-          isOpen={false}
-        >
-          {data.length > 1 && (
-            <Field
-              label="Show data frame"
-              className={css`
-                margin-bottom: 0;
-              `}
-            >
-              <Select
-                options={selectableOptions}
-                value={selectedDataFrame}
-                onChange={this.onDataFrameChange}
-                width={30}
-              />
-            </Field>
-          )}
-          {showPanelTransformationsOption && (
-            <Field
-              label="Apply panel transformations"
-              description="Data shown in the table will be transformed using transformations defined in the panel"
-            >
-              <Switch
-                checked={!!options.withTransforms}
-                onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
-              />
-            </Field>
-          )}
-          {showFieldConfigsOption && (
-            <Field
-              label="Apply field configuration"
-              description="Data shown in the table will have panel field configuration applied, for example units or display name"
-            >
-              <Switch
-                checked={!!options.withFieldConfig}
-                onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
-              />
-            </Field>
-          )}
-        </QueryOperationRow>
-      </div>
+      <QueryOperationRow
+        title={'Data display options'}
+        headerElement={<CollapsedText>{this.getActiveString()}</CollapsedText>}
+        isOpen={false}
+      >
+        <div className={styles.options}>
+          <VerticalGroup spacing="lg">
+            {data.length > 1 && (
+              <Field
+                label="Show data frame"
+                className={css`
+                  margin-bottom: 0;
+                `}
+              >
+                <Select
+                  options={selectableOptions}
+                  value={selectedDataFrame}
+                  onChange={this.onDataFrameChange}
+                  width={30}
+                />
+              </Field>
+            )}
+            {showPanelTransformationsOption && (
+              <Field
+                label="Apply panel transformations"
+                description="Data shown in the table will be transformed using transformations defined in the panel"
+              >
+                <Switch
+                  checked={!!options.withTransforms}
+                  onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+                />
+              </Field>
+            )}
+            {showFieldConfigsOption && (
+              <Field
+                label="Apply field configuration"
+                description="Data shown in the table will have panel field configuration applied, for example units or display name"
+              >
+                <Switch
+                  checked={!!options.withFieldConfig}
+                  onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
+                />
+              </Field>
+            )}
+          </VerticalGroup>
+        </div>
+      </QueryOperationRow>
     );
   };
 
@@ -274,16 +275,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
         <div className={styles.actionsWrapper}>
-          <div className={styles.leftActions}>
-            <div className={styles.selects}></div>
-            {this.renderDataOptions(dataFrames)}
-          </div>
-
-          <div className={styles.options}>
-            <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
-              Download CSV
-            </Button>
-          </div>
+          <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
+          <Button
+            variant="primary"
+            onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
+            className={css`
+              margin-bottom: 10px;
+            `}
+          >
+            Download CSV
+          </Button>
         </div>
 
         <div style={{ flexGrow: 1 }}>

@@ -66,7 +66,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       }
     `,
     options: css`
-      margin-top: 19px;
+      padding-top: 10px;
     `,
     dataDisplayOptions: css`
       flex-grow: 1;
