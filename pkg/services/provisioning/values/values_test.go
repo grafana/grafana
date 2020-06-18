@@ -1,8 +1,13 @@
 package values
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/yaml.v2"
@@ -239,6 +244,30 @@ func TestValues(t *testing.T) {
 			os.Unsetenv("BOOL")
 		})
 	})
+}
+
+func TestValues_readFile(t *testing.T) {
+	type Data struct {
+		Val StringValue `yaml:"val"`
+	}
+
+	f, err := ioutil.TempFile(os.TempDir(), "file expansion *")
+	require.NoError(t, err)
+	file := f.Name()
+
+	defer func() {
+		require.NoError(t, os.Remove(file))
+	}()
+
+	const expected = "hello, world"
+	_, err = f.WriteString(expected)
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	data := &Data{}
+	err = yaml.Unmarshal([]byte(fmt.Sprintf("val: $__file{%s}", file)), data)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, data.Val.Value())
 }
 
 func unmarshalingTest(document string, out interface{}) {

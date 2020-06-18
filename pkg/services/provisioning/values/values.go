@@ -11,10 +11,13 @@
 package values
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -143,7 +146,10 @@ func (val *StringMapValue) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	interpolated := make(map[string]string)
 	raw := make(map[string]string)
 	for key, val := range unmarshaled {
-		interpolated[key], raw[key] = interpolateValue(val)
+		interpolated[key], raw[key], err = interpolateValue(val)
+		if err != nil {
+			return err
+		}
 	}
 	val.Raw = raw
 	val.value = interpolated
@@ -171,7 +177,9 @@ func transformInterface(i interface{}) (interface{}, interface{}) {
 	case reflect.Map:
 		return transformMap(i.(map[interface{}]interface{}))
 	case reflect.String:
-		return interpolateValue(i.(string))
+		// TODO: Handle error
+		val, raw, _ := interpolateValue(i.(string))
+		return val, raw
 	default:
 		// Was int, float or some other value that we do not need to do any transform on.
 		return i, i
@@ -201,16 +209,21 @@ func transformMap(i map[interface{}]interface{}) (interface{}, interface{}) {
 	return transformed, raw
 }
 
-// interpolateValue returns final value after interpolation. At the moment only env var interpolation is done
-// here but in the future something like interpolation from file could be also done here.
+// interpolateValue returns final value after interpolation. In addition to environment variable interpolation
+// expanders available for the settings file are expanded here.
 // For a literal '$', '$$' can be used to avoid interpolation.
-func interpolateValue(val string) (string, string) {
+func interpolateValue(val string) (string, string, error) {
 	parts := strings.Split(val, "$$")
 	interpolated := make([]string, len(parts))
 	for i, v := range parts {
+		expanded, err := setting.ExpandVar(v)
+		if err != nil {
+			return val, val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
+		}
+		v = expanded
 		interpolated[i] = os.ExpandEnv(v)
 	}
-	return strings.Join(interpolated, "$"), val
+	return strings.Join(interpolated, "$"), val, nil
 }
 
 type interpolated struct {
@@ -228,6 +241,9 @@ func getInterpolated(unmarshal func(interface{}) error) (*interpolated, error) {
 	}
 	// We get new raw value here which can have a bit different type, as yaml types nested maps as
 	// map[interface{}]interface and we want it to be map[string]interface{}
-	value, raw := interpolateValue(veryRaw)
+	value, raw, err := interpolateValue(veryRaw)
+	if err != nil {
+		return &interpolated{}, err
+	}
 	return &interpolated{raw: raw, value: value}, nil
 }
