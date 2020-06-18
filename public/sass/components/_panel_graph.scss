@@ -226,8 +226,9 @@
 .graph-tooltip {
   white-space: nowrap;
   font-size: $font-size-sm;
-  background-color: $graph-tooltip-bg;
+  background-color: #ffffff;
   color: $text-color;
+  border: 1px solid #e5e8ed;
 
   .graph-tooltip-time {
     text-align: center;
