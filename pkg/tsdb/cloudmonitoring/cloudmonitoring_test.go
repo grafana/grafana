@@ -1,4 +1,4 @@
-package stackdriver
+package cloudmonitoring
 
 import (
 	"encoding/json"
@@ -15,11 +15,11 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestStackdriver(t *testing.T) {
-	Convey("Stackdriver", t, func() {
-		executor := &StackdriverExecutor{}
+func TestCloudMonitoring(t *testing.T) {
+	Convey("Cloud Monitoring", t, func() {
+		executor := &CloudMonitoringExecutor{}
 
-		Convey("Parse migrated queries from frontend and build Stackdriver API queries", func() {
+		Convey("Parse migrated queries from frontend and build Cloud Monitoring API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
@@ -92,7 +92,61 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
-			Convey("and alignmentPeriod is set to stackdriver-auto", func() {
+			Convey("and alignmentPeriod is set to cloud-monitoring-auto", func() { // legacy
+				Convey("and range is two hours", func() {
+					tsdbQuery.TimeRange.From = "1538033322461"
+					tsdbQuery.TimeRange.To = "1538040522461"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "cloud-monitoring-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+				})
+
+				Convey("and range is 22 hours", func() {
+					tsdbQuery.TimeRange.From = "1538034524922"
+					tsdbQuery.TimeRange.To = "1538113724922"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "cloud-monitoring-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+				})
+
+				Convey("and range is 23 hours", func() {
+					tsdbQuery.TimeRange.From = "1538034567985"
+					tsdbQuery.TimeRange.To = "1538117367985"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "cloud-monitoring-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+300s`)
+				})
+
+				Convey("and range is 7 days", func() {
+					tsdbQuery.TimeRange.From = "1538036324073"
+					tsdbQuery.TimeRange.To = "1538641124073"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "cloud-monitoring-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
+				})
+			})
+
+			Convey("and alignmentPeriod is set to stackdriver-auto", func() { // legacy
 				Convey("and range is two hours", func() {
 					tsdbQuery.TimeRange.From = "1538033322461"
 					tsdbQuery.TimeRange.To = "1538040522461"
@@ -208,7 +262,7 @@ func TestStackdriver(t *testing.T) {
 
 		})
 
-		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
+		Convey("Parse queries from frontend and build Cloud Monitoring API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
@@ -301,14 +355,14 @@ func TestStackdriver(t *testing.T) {
 			})
 		})
 
-		Convey("Parse stackdriver response in the time series format", func() {
+		Convey("Parse cloud monitoring response in the time series format", func() {
 			Convey("when data from query aggregated to one time series", func() {
 				data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
 				So(err, ShouldBeNil)
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &stackdriverQuery{}
+				query := &cloudMonitoringQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -334,7 +388,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &stackdriverQuery{}
+				query := &cloudMonitoringQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -376,7 +430,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &stackdriverQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+				query := &cloudMonitoringQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -397,7 +451,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
 
-					query := &stackdriverQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					query := &cloudMonitoringQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 
@@ -411,7 +465,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and the alias pattern is for metric name", func() {
 
-					query := &stackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					query := &cloudMonitoringQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 
@@ -430,7 +484,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -477,7 +531,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -517,7 +571,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				labels := res.Meta.Get("labels").Interface().(map[string][]string)
 				So(err, ShouldBeNil)
@@ -556,7 +610,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and systemlabel contains key with array of string", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &stackdriverQuery{AliasBy: "{{metadata.system_labels.test}}"}
+					query := &cloudMonitoringQuery{AliasBy: "{{metadata.system_labels.test}}"}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 					So(len(res.Series), ShouldEqual, 3)
@@ -568,7 +622,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and systemlabel contains key with array of string2", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &stackdriverQuery{AliasBy: "{{metadata.system_labels.test2}}"}
+					query := &cloudMonitoringQuery{AliasBy: "{{metadata.system_labels.test2}}"}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 					So(len(res.Series), ShouldEqual, 3)
@@ -584,7 +638,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and alias by is expanded", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &stackdriverQuery{
+					query := &cloudMonitoringQuery{
 						ProjectName: "test-proj",
 						Selector:    "select_slo_compliance",
 						Service:     "test-service",
@@ -604,7 +658,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and alias by is expanded", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &stackdriverQuery{
+					query := &cloudMonitoringQuery{
 						ProjectName: "test-proj",
 						Selector:    "select_slo_compliance",
 						Service:     "test-service",
@@ -710,8 +764,8 @@ func TestStackdriver(t *testing.T) {
 	})
 }
 
-func loadTestFile(path string) (stackdriverResponse, error) {
-	var data stackdriverResponse
+func loadTestFile(path string) (cloudMonitoringResponse, error) {
+	var data cloudMonitoringResponse
 
 	jsonBody, err := ioutil.ReadFile(path)
 	if err != nil {

@@ -1,4 +1,4 @@
-package stackdriver
+package cloudmonitoring
 
 import (
 	"testing"
@@ -9,16 +9,16 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestStackdriverAnnotationQuery(t *testing.T) {
-	Convey("Stackdriver Annotation Query Executor", t, func() {
-		executor := &StackdriverExecutor{}
-		Convey("When parsing the stackdriver api response", func() {
+func TestCloudMonitoringAnnotationQuery(t *testing.T) {
+	Convey("CloudMonitoring Annotation Query Executor", t, func() {
+		executor := &CloudMonitoringExecutor{}
+		Convey("When parsing the cloud monitoring api response", func() {
 			data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 			So(err, ShouldBeNil)
 			So(len(data.TimeSeries), ShouldEqual, 3)
 
 			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
-			query := &stackdriverQuery{}
+			query := &cloudMonitoringQuery{}
 			err = executor.parseToAnnotations(res, data, query, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
 			So(err, ShouldBeNil)
 
