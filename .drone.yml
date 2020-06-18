@@ -195,7 +195,7 @@ steps:
       - yarn install --frozen-lockfile --no-progress
       - ./node_modules/.bin/cypress install
       - ./e2e/wait-for-grafana
-      - ./e2e/run-suite debug
+      - ./e2e/run-suite
   - name: copy-oss-packages-for-docker
     image: grafana/build-container:1.2.21
     depends_on:
