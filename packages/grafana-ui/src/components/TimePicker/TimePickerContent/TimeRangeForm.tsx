@@ -14,6 +14,7 @@ import { TimePickerCalendar } from './TimePickerCalendar';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { Button } from '../../Button';
+import { TimeZonePicker } from '../../TimeZonePicker/TimeZonePicker';
 
 interface Props {
   isFullscreen: boolean;

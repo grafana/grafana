@@ -9,15 +9,15 @@ import {
   getTimeZoneGroups,
   TimeZoneGroup,
   GrafanaTheme,
+  TimeZone,
 } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../themes';
 import { getSelectStyles } from '../Select/getSelectStyles';
 import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
-import { utc } from 'moment';
 
 export interface Props {
-  value: string;
+  value: TimeZone;
   width?: number;
   onChange: (newValue: string) => void;
 }
@@ -163,6 +163,7 @@ export const Option = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
                   padding: 2px 5px;
                   border-radius: 2px;
                   margin-left: 4px;
+                  text-overflow: ellipsis;
                 `,
                 utcOffset
               )}

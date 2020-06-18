@@ -1,5 +1,5 @@
 import moment from 'moment-timezone';
-import { memoize, isNumber, times } from 'lodash';
+import { memoize } from 'lodash';
 import { TimeZone } from '../types';
 import { getTimeZone } from './common';
 
@@ -38,19 +38,7 @@ export const getTimeZoneInfo = (zone: string, timestamp: number): TimeZoneInfo |
     return internal;
   }
 
-  const momentZone = moment.tz.zone(zone);
-
-  if (!momentZone) {
-    return undefined;
-  }
-
-  return {
-    name: zone,
-    zone: zone,
-    countries: countriesByTimeZone()[zone] ?? [],
-    abbreviation: abbrevationWithoutOffset(momentZone.abbr(timestamp)),
-    offsetInMins: momentZone.utcOffset(timestamp),
-  };
+  return mapToInfo(zone, timestamp);
 };
 
 export const getTimeZones = memoize((includeInternal = false): TimeZone[] => {
@@ -101,7 +89,7 @@ export const getTimeZoneGroups = memoize((includeInternal = false): TimeZoneGrou
 
 const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
   switch (zone) {
-    case 'utc':
+    case 'utc': {
       return {
         name: 'Coordinated Universal Time',
         zone,
@@ -109,31 +97,36 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         abbreviation: 'UTC, GMT',
         offsetInMins: 0,
       };
+    }
 
-    case 'default':
+    case 'default': {
+      const tz = getTimeZone();
+      const isInternal = tz === 'browser' || tz === 'utc';
+      const info = (isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp)) ?? {};
+
       return {
-        name: 'Default',
-        zone,
-        countries: [],
+        countries: countriesByTimeZone()[tz] ?? [],
         abbreviation: '',
         offsetInMins: 0,
+        ...info,
+        name: 'Default',
+        zone,
       };
+    }
 
-    case 'browser':
+    case 'browser': {
       const tz = moment.tz.guess(true);
-      const momentZone = moment.tz.zone(tz);
-
-      if (!momentZone) {
-        return undefined;
-      }
+      const info = mapToInfo(tz, timestamp) ?? {};
 
       return {
+        countries: countriesByTimeZone()[tz] ?? [],
+        abbreviation: 'Your local time',
+        offsetInMins: new Date().getTimezoneOffset(),
+        ...info,
         name: 'Browser Time',
         zone,
-        countries: countriesByTimeZone()[tz] ?? [],
-        abbreviation: momentZone.abbr(timestamp),
-        offsetInMins: momentZone.utcOffset(timestamp),
       };
+    }
 
     default:
       return undefined;
@@ -145,6 +138,22 @@ const abbrevationWithoutOffset = (abbrevation: string): string => {
     return '';
   }
   return abbrevation;
+};
+
+const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefined => {
+  const momentTz = moment.tz.zone(timeZone);
+
+  if (!momentTz) {
+    return undefined;
+  }
+
+  return {
+    name: timeZone,
+    zone: timeZone,
+    countries: countriesByTimeZone()[timeZone] ?? [],
+    abbreviation: abbrevationWithoutOffset(momentTz.abbr(timestamp)),
+    offsetInMins: momentTz.utcOffset(timestamp),
+  };
 };
 
 const countriesByTimeZone = memoize(
