@@ -32,6 +32,14 @@ export const getVariables = (state: StoreState = getState(), includeNewVariable 
   return getFilteredVariables(variable => (includeNewVariable ? true : variable.id !== NEW_VARIABLE_ID), state);
 };
 
+export const getSubMenuVariables = (state: StoreState): VariableModel[] => {
+  return getFilteredVariables(variable => variable.id !== NEW_VARIABLE_ID && variable.type !== 'dynamic', state);
+};
+
+export const getEditorVariables = (state: StoreState): VariableModel[] => {
+  return getFilteredVariables(variable => variable.type !== 'dynamic', state);
+};
+
 export type GetVariables = typeof getVariables;
 
 export const getNewVariabelIndex = (state: StoreState = getState()): number => {

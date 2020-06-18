@@ -91,6 +91,34 @@ export interface VariableWithOptions extends VariableModel {
   query: string;
 }
 
+export interface DashboardProps {
+  name: string;
+  uid: string;
+  toString: () => string;
+}
+
+export interface DashboardVariableModel extends DynamicVariable<DashboardProps> {}
+
+export interface OrgProps {
+  name: string;
+  id: number;
+  toString: () => string;
+}
+
+export interface OrgVariableModel extends DynamicVariable<OrgProps> {}
+
+export interface UserProps {
+  login: string;
+  id: number;
+  toString: () => string;
+}
+
+export interface UserVariableModel extends DynamicVariable<UserProps> {}
+
+export interface DynamicVariable<TProps extends { toString: () => string }> extends VariableModel {
+  current: { value: TProps };
+}
+
 export interface VariableModel extends BaseVariableModel {
   id: string;
   global: boolean;
