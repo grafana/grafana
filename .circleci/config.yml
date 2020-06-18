@@ -833,6 +833,7 @@ jobs:
               ./pkg/services/provisioning/datasources/... \
               ./pkg/services/provisioning/dashboards/... \
               ./pkg/services/provisioning/notifers/... \
+              ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
 
             ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
