@@ -22,20 +22,20 @@ var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
 
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
-	Type            string          `json:"type"`
-	Name            string          `json:"name"`
-	Heading         string          `json:"heading"`
-	Description     string          `json:"description"`
-	Info            string          `json:"info"`
-	OptionsTemplate string          `json:"optionsTemplate"`
-	Factory         NotifierFactory `json:"-"`
-	Options         []Option        `json:"options"`
+	Type            string           `json:"type"`
+	Name            string           `json:"name"`
+	Heading         string           `json:"heading"`
+	Description     string           `json:"description"`
+	Info            string           `json:"info"`
+	OptionsTemplate string           `json:"optionsTemplate"`
+	Factory         NotifierFactory  `json:"-"`
+	Options         []NotifierOption `json:"options"`
 }
 
 // Option holds information about options specific for the NotifierPlugin.
-type Option struct {
-	Element        string         `json:"element"`
-	InputType      string         `json:"inputType"`
+type NotifierOption struct {
+	Element        ElementType    `json:"element"`
+	InputType      InputType      `json:"inputType"`
 	Label          string         `json:"label"`
 	Description    string         `json:"description"`
 	Placeholder    string         `json:"placeholder"`
@@ -46,13 +46,37 @@ type Option struct {
 	ValidationRule string         `json:"validationRule"`
 }
 
-// SelectOption is a simple type for Options that have dropdown options.
+// InputType is the type of input that can be rendered in the frontend.
+type InputType string
+
+const (
+	// InputTypeText will render a text field in the frontend
+	InputTypeText = "text"
+	// InputTypePassword will render a text field in the frontend
+	InputTypePassword = "password"
+)
+
+// ElementType is the type of element that can be rendered in the frontend.
+type ElementType string
+
+const (
+	// ElementTypeInput will render an input
+	ElementTypeInput = "input"
+	// ElementTypeSelect will render a select
+	ElementTypeSelect = "select"
+	// ElementTypeSwitch will render a switch
+	ElementTypeSwitch = "switch"
+	// ElementTypeTextArea will render a textarea
+	ElementTypeTextArea = "textarea"
+)
+
+// SelectOption is a simple type for Options that have dropdown options. Should be used when Element is ElementTypeSelect.
 type SelectOption struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
 }
 
-// Show holds information about when options are dependant on other options.
+// ShowWhen holds information about when options are dependant on other options.
 type ShowWhen struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`

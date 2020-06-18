@@ -67,11 +67,11 @@ func init() {
         </info-popover>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:          "Gateway ID",
-				Element:        "input",
-				InputType:      "text",
+				Element:        alerting.ElementTypeInput,
+				InputType:      alerting.InputTypeText,
 				Placeholder:    "*3MAGWID",
 				Description:    "Your 8 character Threema Gateway ID (starting with a *).",
 				PropertyName:   "gateway_id",
@@ -80,8 +80,8 @@ func init() {
 			},
 			{
 				Label:          "Recipient ID",
-				Element:        "input",
-				InputType:      "text",
+				Element:        alerting.ElementTypeInput,
+				InputType:      alerting.InputTypeText,
 				Placeholder:    "YOUR3MID",
 				Description:    "The 8 character Threema ID that should receive the alerts.",
 				PropertyName:   "recipient_id",
@@ -90,8 +90,8 @@ func init() {
 			},
 			{
 				Label:        "API Secret",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Description:  "Your Threema Gateway API secret.",
 				PropertyName: "api_secret",
 				Required:     true,

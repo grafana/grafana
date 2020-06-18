@@ -39,11 +39,11 @@ func init() {
 		</div>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Description:  "As specified in Alertmanager documentation, do not specify a load balancer here. Enter all your Alertmanager URLs comma-separated.",
 				Placeholder:  "http://localhost:9093",
 				PropertyName: "url",
@@ -51,14 +51,14 @@ func init() {
 			},
 			{
 				Label:        "Basic Auth User",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				PropertyName: "basicAuthUser",
 			},
 			{
 				Label:        "Basic Auth Password",
-				Element:      "input",
-				InputType:    "password",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypePassword,
 				PropertyName: "basicAuthPassword",
 			},
 		},

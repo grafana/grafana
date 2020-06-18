@@ -26,11 +26,11 @@ func init() {
       </div>
     </div>
 `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Token",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "LINE notify token key",
 				PropertyName: "token",
 				Required:     true,

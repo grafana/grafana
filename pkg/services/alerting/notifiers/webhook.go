@@ -37,17 +37,17 @@ func init() {
         <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				PropertyName: "url",
 				Required:     true,
 			},
 			{
 				Label:   "Http Method",
-				Element: "select",
+				Element: alerting.ElementTypeSelect,
 				SelectOptions: []alerting.SelectOption{
 					{
 						Value: "POST",
@@ -62,14 +62,14 @@ func init() {
 			},
 			{
 				Label:        "Username",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				PropertyName: "username",
 			},
 			{
 				Label:        "Password",
-				Element:      "input",
-				InputType:    "password",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypePassword,
 				PropertyName: "password",
 			},
 		},

@@ -55,18 +55,18 @@ func init() {
         </gf-form-switch>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Integration Key",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "Pagerduty Integration Key",
 				PropertyName: "integrationKey",
 				Required:     true,
 			},
 			{
 				Label:   "Severity",
-				Element: "select",
+				Element: alerting.ElementTypeSelect,
 				SelectOptions: []alerting.SelectOption{
 					{
 						Value: "critical",
@@ -89,7 +89,7 @@ func init() {
 			},
 			{
 				Label:        "Auto resolve incidents",
-				Element:      "switch",
+				Element:      alerting.ElementTypeSwitch,
 				Description:  "Resolve incidents in pagerduty once the alert goes back to ok.",
 				PropertyName: "autoResolve",
 			},

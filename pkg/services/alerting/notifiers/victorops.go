@@ -48,11 +48,11 @@ func init() {
         </gf-form-switch>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "VictorOps url",
 				PropertyName: "url",
 				Required:     true,
@@ -60,7 +60,7 @@ func init() {
 			{
 				Label:        "Auto resolve incidents",
 				Description:  "Resolve incidents in VictorOps once the alert goes back to ok.",
-				Element:      "switch",
+				Element:      alerting.ElementTypeSwitch,
 				PropertyName: "autoResolve",
 			},
 		},

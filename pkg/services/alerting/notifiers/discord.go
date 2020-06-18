@@ -41,18 +41,18 @@ func init() {
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Message Content",
 				Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				PropertyName: "content",
 			},
 			{
 				Label:        "Webhook URL",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "Discord webhook URL",
 				PropertyName: "url",
 				Required:     true,

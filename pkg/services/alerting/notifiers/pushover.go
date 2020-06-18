@@ -167,33 +167,33 @@ func init() {
         ]" ng-init="ctrl.model.settings.okSound=ctrl.model.settings.okSound||'default'"></select>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "API Token",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "Application token",
 				PropertyName: "apiToken",
 				Required:     true,
 			},
 			{
 				Label:        "User key(s)",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "comma-separated list",
 				PropertyName: "userKey",
 				Required:     true,
 			},
 			{
 				Label:        "Device(s) (optional)",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "comma-separated list; leave empty to send to all devices",
 				PropertyName: "device",
 			},
 			{
 				Label:   "Priority",
-				Element: "select",
+				Element: alerting.ElementTypeSelect,
 				SelectOptions: []alerting.SelectOption{
 					{
 						Value: "2",
@@ -220,8 +220,8 @@ func init() {
 			},
 			{
 				Label:        "Retry",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "minimum 30 seconds",
 				PropertyName: "retry",
 				ShowWhen: alerting.ShowWhen{
@@ -231,8 +231,8 @@ func init() {
 			},
 			{
 				Label:        "Expire",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "maximum 86400 seconds",
 				PropertyName: "expire",
 				ShowWhen: alerting.ShowWhen{
@@ -242,13 +242,13 @@ func init() {
 			},
 			{
 				Label:         "Alerting sound",
-				Element:       "select",
+				Element:       alerting.ElementTypeSelect,
 				SelectOptions: soundOptions,
 				PropertyName:  "sound",
 			},
 			{
 				Label:         "OK sound",
-				Element:       "select",
+				Element:       alerting.ElementTypeSelect,
 				SelectOptions: soundOptions,
 				PropertyName:  "okSound",
 			},

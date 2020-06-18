@@ -41,39 +41,39 @@ func init() {
         <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "http://sensu-api.local:4567/results",
 				PropertyName: "url",
 				Required:     true,
 			},
 			{
 				Label:        "Source",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Description:  "If empty rule id will be used",
 				PropertyName: "source",
 			},
 			{
 				Label:        "Handler",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "default",
 				PropertyName: "handler",
 			},
 			{
 				Label:        "Username",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				PropertyName: "username",
 			},
 			{
 				Label:        "Password",
-				Element:      "input",
-				InputType:    "password",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypePassword,
 				PropertyName: "passsword ",
 			},
 		},

@@ -30,19 +30,19 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.kafkaTopic" placeholder="topic1"></input>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Kafka REST Proxy",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "http://localhost:8082",
 				PropertyName: "kafkaRestProxy",
 				Required:     true,
 			},
 			{
 				Label:        "Topic",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "topic1",
 				PropertyName: "kafkaTopic",
 				Required:     true,

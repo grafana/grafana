@@ -39,27 +39,27 @@ func init() {
         </input>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Hip Chat Url",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "HipChat URL (ex https://grafana.hipchat.com)",
 				PropertyName: "url",
 				Required:     true,
 			},
 			{
 				Label:        "API Key",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "HipChat API Key",
 				PropertyName: "apiKey",
 				Required:     true,
 			},
 			{
 				Label:        "Room ID",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				PropertyName: "roomid",
 			},
 		},

@@ -32,18 +32,18 @@ func init() {
 		Heading:         "DingDing settings",
 		Factory:         newDingDingNotifier,
 		OptionsTemplate: dingdingOptionsTemplate,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx",
 				PropertyName: "url",
 				Required:     true,
 			},
 			{
 				Label:        "Message Type",
-				Element:      "select",
+				Element:      alerting.ElementTypeSelect,
 				PropertyName: "msgType",
 				SelectOptions: []alerting.SelectOption{
 					{

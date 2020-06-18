@@ -40,17 +40,17 @@ func init() {
 				<span>You can enter multiple email addresses using a ";" separator</span>
 			</div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Single email",
 				Description:  "Send a single email to all recipients",
-				Element:      "switch",
+				Element:      alerting.ElementTypeSwitch,
 				PropertyName: "singleEmail",
 			},
 			{
 				Label:        "Addresses",
 				Description:  "You can enter multiple email addresses using a \";\" separator",
-				Element:      "textarea",
+				Element:      alerting.ElementTypeTextArea,
 				PropertyName: "addresses",
 				Required:     true,
 			},

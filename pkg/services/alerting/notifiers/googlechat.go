@@ -26,11 +26,11 @@ func init() {
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Google Hangouts Chat incoming webhook url"></input>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "Google Hangouts Chat incoming webhook url",
 				PropertyName: "url",
 				Required:     true,

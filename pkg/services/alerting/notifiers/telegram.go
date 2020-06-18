@@ -49,19 +49,19 @@ func init() {
         </info-popover>
       </div>
     `,
-		Options: []alerting.Option{
+		Options: []alerting.NotifierOption{
 			{
 				Label:        "BOT API Token",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Placeholder:  "Telegram BOT API Token",
 				PropertyName: "bottoken",
 				Required:     true,
 			},
 			{
 				Label:        "Chat ID",
-				Element:      "input",
-				InputType:    "text",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
 				Description:  "Integer Telegram Chat Identifier",
 				PropertyName: "chatid",
 				Required:     true,
