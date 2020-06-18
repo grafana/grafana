@@ -1,7 +1,10 @@
+import { ComponentType } from 'react';
 import { MetaVariable, VariableHide } from '../types';
 import { VariableAdapter } from '../adapters';
 import { NEW_VARIABLE_ID } from '../state/types';
 import { Deferred } from '../../../core/utils/deferred';
+import { VariablePickerProps } from '../pickers/types';
+import { VariableEditorProps } from '../editor/types';
 
 export const createMetaVariableAdapter = (): VariableAdapter<MetaVariable<any>> => {
   return {
@@ -21,8 +24,8 @@ export const createMetaVariableAdapter = (): VariableAdapter<MetaVariable<any>> 
       initLock: (null as unknown) as Deferred,
     },
     reducer: (state: any, action: any) => state,
-    picker: null,
-    editor: null,
+    picker: (null as unknown) as ComponentType<VariablePickerProps>,
+    editor: (null as unknown) as ComponentType<VariableEditorProps>,
     dependsOn: () => {
       return false;
     },
