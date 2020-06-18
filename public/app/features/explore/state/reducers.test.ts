@@ -34,8 +34,8 @@ import {
   addQueryRowAction,
   removeQueryRowAction,
 } from './actionTypes';
-import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
+import {serializeStateToUrlParam} from "@grafana/data/src/utils/url";
 
 const QUERY_KEY_REGEX = /Q-([0-9]+)-([0-9.]+)-([0-9]+)/;
 

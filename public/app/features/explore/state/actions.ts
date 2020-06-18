@@ -34,7 +34,6 @@ import {
   hasNonEmptyQuery,
   lastUsedDatasourceKeyForOrgId,
   parseUrlState,
-  serializeStateToUrlParam,
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
@@ -94,6 +93,7 @@ import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
+import {serializeStateToUrlParam} from "@grafana/data/src/utils/url";
 
 /**
  * Updates UI state and save it to the URL

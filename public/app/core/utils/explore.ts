@@ -1,14 +1,16 @@
 // Libraries
 import _ from 'lodash';
-import { Unsubscribable } from 'rxjs';
+import {Unsubscribable} from 'rxjs';
 // Services & Utils
 import {
-  DataQuery,
   CoreApp,
+  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataSourceApi,
   dateMath,
+  DefaultTimeZone,
+  ExploreMode,
   HistoryItem,
   IntervalValues,
   LogRowModel,
@@ -19,20 +21,18 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
-  ExploreMode,
   urlUtil,
-  DefaultTimeZone,
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
-import { getNextRefIdChar } from './query';
+import {getNextRefIdChar} from './query';
 // Types
-import { RefreshPicker } from '@grafana/ui';
-import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
-import { config } from '../config';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DataSourceSrv } from '@grafana/runtime';
-import { PanelModel } from 'app/features/dashboard/state';
+import {RefreshPicker} from '@grafana/ui';
+import {ExploreUrlState, QueryOptions, QueryTransaction} from 'app/types/explore';
+import {config} from '../config';
+import {TimeSrv} from 'app/features/dashboard/services/TimeSrv';
+import {DataSourceSrv} from '@grafana/runtime';
+import {PanelModel} from 'app/features/dashboard/state';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -258,27 +258,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
   return { datasource, queries, range, ui, mode, originPanelId };
-}
-
-export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
-  if (compact) {
-    return JSON.stringify([
-      urlState.range.from,
-      urlState.range.to,
-      urlState.datasource,
-      ...urlState.queries,
-      { mode: urlState.mode },
-      {
-        ui: [
-          !!urlState.ui.showingGraph,
-          !!urlState.ui.showingLogs,
-          !!urlState.ui.showingTable,
-          urlState.ui.dedupStrategy,
-        ],
-      },
-    ]);
-  }
-  return JSON.stringify(urlState);
 }
 
 export function generateKey(index = 0): string {

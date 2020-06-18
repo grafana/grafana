@@ -1,53 +1,7 @@
 import { splitOpen } from '../state/actions';
-import { DataLink, DataQuery, ExploreMode, Field, LinkModel, locationUtil, ScopedVars, TimeRange } from '@grafana/data';
-import { serializeStateToUrlParam } from '../../../core/utils/explore';
-import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { Field, LinkModel, TimeRange } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-
-/**
- * Generates href for internal derived field link.
- */
-function generateInternalHref<T extends DataQuery = any>(datasourceUid: string, query: T, range: TimeRange): string {
-  return locationUtil.assureBaseUrl(
-    `/explore?left=${serializeStateToUrlParam({
-      range: range.raw,
-      datasource: getDataSourceSrv().getDataSourceSettingsByUid(datasourceUid).name,
-      queries: [query],
-      // This should get overwritten if datasource does not support that mode and we do not know what mode is
-      // preferred anyway.
-      mode: ExploreMode.Metrics,
-      ui: {
-        showingGraph: true,
-        showingTable: true,
-        showingLogs: true,
-      },
-    })}`
-  );
-}
-
-function interpolateQuery<T extends DataQuery = any>(link: DataLink, scopedVars: ScopedVars): T {
-  let stringifiedQuery = '';
-  try {
-    stringifiedQuery = JSON.stringify(link.internal.query);
-  } catch (err) {
-    // should not happen and not much to do about this, possibly something non stringifiable in the query
-    console.error(err);
-  }
-
-  // Replace any variables inside the query. This may not be the safest as it can also replace keys etc so may not
-  // actually work with every datasource query right now.
-  stringifiedQuery = getTemplateSrv().replace(stringifiedQuery, scopedVars);
-
-  let replacedQuery = {} as T;
-  try {
-    replacedQuery = JSON.parse(stringifiedQuery);
-  } catch (err) {
-    // again should not happen and not much to do about this, probably some issue with how we replaced the variables.
-    console.error(stringifiedQuery, err);
-  }
-
-  return replacedQuery;
-}
+import { mapInternalLinkToExplore } from '@grafana/data/src/utils/dataLinks';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -79,38 +33,11 @@ export const getFieldLinksForExplore = (
           }
           return linkModel;
         } else {
-          return mapInternalLink(link, scopedVars, range, splitOpenFn, field);
+          return mapInternalLinkToExplore(link, scopedVars, range, field, splitOpenFn);
         }
       })
     : [];
 };
-
-function mapInternalLink(
-  link: DataLink,
-  scopedVars: ScopedVars,
-  range: TimeRange,
-  splitOpenFn: typeof splitOpen,
-  field: Field
-): LinkModel<Field> {
-  const interpolatedQuery = interpolateQuery(link, scopedVars);
-  return {
-    title: link.title
-      ? getTemplateSrv().replace(link.title || '', scopedVars)
-      : getDataSourceSrv().getDataSourceSettingsByUid(link.internal.datasourceUid)?.name || 'Unknown datasource',
-
-    // In this case this is meant to be internal link (opens split view by default) the href will also points
-    // to explore but this way you can open it in new tab.
-    href: generateInternalHref(link.internal.datasourceUid, link.internal.query, range),
-    onClick: () => {
-      splitOpenFn({
-        datasourceUid: link.internal.datasourceUid,
-        query: interpolatedQuery,
-      });
-    },
-    target: '_self',
-    origin: field,
-  };
-}
 
 function getTitleFromHref(href: string): string {
   // The URL constructor needs the url to have protocol

@@ -5,11 +5,12 @@ import _ from 'lodash';
 import { DataQuery, DataSourceApi, ExploreMode, dateTimeFormat, AppEvents, urlUtil } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
-import { serializeStateToUrlParam, SortOrder } from './explore';
+import { SortOrder } from './explore';
 import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
+import {serializeStateToUrlParam} from "@grafana/data/src/utils/url";
 
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
