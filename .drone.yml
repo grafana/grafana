@@ -189,10 +189,8 @@ steps:
       - end-to-end-tests-server
     environment:
       HOST: end-to-end-tests-server
-      TERM: xterm
     commands:
       # TODO: Cache ~/.cache after `yarn install`, since Cypress depends on it, and the next line is a work-around
-      - yarn install --frozen-lockfile --no-progress
       - ./node_modules/.bin/cypress install
       - ./e2e/wait-for-grafana
       - ./e2e/run-suite
