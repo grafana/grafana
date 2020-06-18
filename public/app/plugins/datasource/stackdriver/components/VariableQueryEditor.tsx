@@ -147,7 +147,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   }
 
   onLabelKeyChange(labelKey: string) {
-    this.setState({ labelKey });
+    this.setState({ labelKey }, () => this.onPropsChange());
   }
 
   componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
