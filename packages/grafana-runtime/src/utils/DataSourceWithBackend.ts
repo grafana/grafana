@@ -6,6 +6,7 @@ import {
   DataQuery,
   DataSourceJsonData,
   ScopedVars,
+  DataFrame,
 } from '@grafana/data';
 import { Observable, from, of } from 'rxjs';
 import { config } from '..';
@@ -109,15 +110,33 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return toDataQueryResponse(rsp);
+        const dqs = toDataQueryResponse(rsp);
+        if (this.processResponse) {
+          return this.processResponse(dqs);
+        }
+        return dqs;
       })
       .catch(err => {
         err.isHandled = true; // Avoid extra popup warning
-        return toDataQueryResponse(err);
+        const dqs = toDataQueryResponse(err);
+        if (this.processResponse) {
+          return this.processResponse(dqs);
+        }
+        return dqs;
       });
 
     return from(req);
   }
+
+  /**
+   * Optionally augment the response before returning the results to the
+   */
+  processResponse?(res: DataQueryResponse): Promise<DataQueryResponse>;
+
+  /**
+   * Optionally process the results for display
+   */
+  processDataFrameResult?(frame: DataFrame, idx: number): Promise<DataFrame>;
 
   /**
    * Override to skip executing a query

@@ -1,19 +1,20 @@
 import Datasource from '../datasource';
-import { DataFrame, toUtc, getFrameDisplayName } from '@grafana/data';
+import { DataFrame, getFrameDisplayName, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
+const templateSrv = new TemplateSrv();
+
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => templateSrv,
 }));
 
 describe('AppInsightsDatasource', () => {
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
-  const ctx: any = {
-    templateSrv: new TemplateSrv(),
-  };
+  const ctx: any = {};
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -22,7 +23,7 @@ describe('AppInsightsDatasource', () => {
       url: 'http://appinsightsapi',
     };
 
-    ctx.ds = new Datasource(ctx.instanceSettings, ctx.templateSrv);
+    ctx.ds = new Datasource(ctx.instanceSettings);
   });
 
   describe('When performing testDatasource', () => {

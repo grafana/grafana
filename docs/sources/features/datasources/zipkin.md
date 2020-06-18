@@ -24,7 +24,7 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 | _Default_       | Default data source means that it will be pre-selected for new panels.                                                                         |
 | _URL_           | The URL of the Zipkin instance, e.g., `http://localhost:9411`                                                                                   |
 | _Access_        | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
-| _Basic Auth_    | Enable basic authentication to the Prometheus data source.                                                                            |
+| _Basic Auth_    | Enable basic authentication to the Zipkin data source.                                                                            |
 | _User_          | User name for basic authentication.                                                                                                   |
 | _Password_      | Password for basic authentication.                                                                                                    |
 

@@ -69,7 +69,7 @@ async function fetchDashboard(
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
         // if above all is cancelled it will return an array
-        if (!dashDTO.meta) {
+        if (Array.isArray(dashDTO)) {
           return null;
         }
 

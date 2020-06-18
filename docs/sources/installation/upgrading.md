@@ -17,18 +17,13 @@ In order to make this a reality, Grafana upgrades are backward compatible and th
 
 Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
-## Update plugins
+## Backup
 
-After you have upgraded it is highly recommended that you update all your plugins as a new version of Grafana
-can make older plugins stop working properly.
+We recommend that you backup a few things in case you have to rollback the upgrade. 
+- Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you where running before the upgrade. 
+- Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback. 
 
-You can update all plugins using
-
-```bash
-grafana-cli plugins update-all
-```
-
-## Database backup
+### Database backup
 
 Before upgrading it can be a good idea to backup your Grafana database. This will ensure that you can always rollback to your previous version. During startup, Grafana will automatically migrate the database schema (if there are changes or new tables). Sometimes this can cause issues if you later want to downgrade.
 
@@ -57,7 +52,6 @@ backup:
 restore:
 > psql grafana < grafana_backup
 ```
-
 ### Ubuntu or Debian
 
 You can upgrade Grafana by following the same procedure as when you installed it.
@@ -115,6 +109,17 @@ docker run -d --name=my-grafana-container --restart=always -v /var/lib/grafana:/
 ### Windows
 
 If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your config changes. We recommend that you save your config changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your config changes.
+
+## Update plugins
+
+After you have upgraded, we strongly recommend that you update all your plugins as a new version of Grafana
+can make older plugins stop working properly.
+
+You can update all plugins using
+
+```bash
+grafana-cli plugins update-all
+```
 
 ## Upgrading from 1.x
 
