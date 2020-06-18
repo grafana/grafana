@@ -54,6 +54,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     newEdit: false,
     meta: false,
     datasourceInsights: false,
+    reportGrid: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
