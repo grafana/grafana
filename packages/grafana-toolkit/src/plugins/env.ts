@@ -22,12 +22,12 @@ const getJobFromProcessArgv = () => {
 export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
 export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
-  if (process.env.CIRCLE_SHA1) {
+  if (process.env.DRONE_COMMIT_SHA) {
     const info: PluginBuildInfo = {
       time: Date.now(),
-      repo: process.env.CIRCLE_REPOSITORY_URL,
-      branch: process.env.CIRCLE_BRANCH,
-      hash: process.env.CIRCLE_SHA1,
+      repo: process.env.DRONE_REPO_LINK,
+      branch: process.env.DRONE_BRANCH,
+      hash: process.env.DRONE_COMMIT_SHA,
     };
     const pr = getPullRequestNumber();
     const build = getBuildNumber();
@@ -49,17 +49,15 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
 };
 
 export const getBuildNumber = (): number | undefined => {
-  if (process.env.CIRCLE_BUILD_NUM) {
-    return parseInt(process.env.CIRCLE_BUILD_NUM, 10);
+  if (process.env.DRONE_BUILD_NUMBER) {
+    return parseInt(process.env.DRONE_BUILD_NUMBER, 10);
   }
   return undefined;
 };
 
 export const getPullRequestNumber = (): number | undefined => {
-  if (process.env.CIRCLE_PULL_REQUEST) {
-    const url = process.env.CIRCLE_PULL_REQUEST;
-    const idx = url.lastIndexOf('/') + 1;
-    return parseInt(url.substring(idx), 10);
+  if (process.env.DRONE_PULL_REQUEST) {
+    return parseInt(process.env.DRONE_PULL_REQUEST, 10);
   }
   return undefined;
 };

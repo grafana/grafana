@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eo pipefail
 
 . e2e/variables
 
@@ -26,6 +27,6 @@ fi
 
 cd packages/grafana-e2e
 
-yarn $CMD --env BASE_URL=$URL,CIRCLE_SHA1=$CIRCLE_SHA1,SLOWMO=$SLOWMO \
+yarn $CMD --env BASE_URL=$URL,DRONE_COMMIT_SHA=$DRONE_COMMIT_SHA,SLOWMO=$SLOWMO \
   --config integrationFolder=../../e2e/$SUITE/specs,screenshotsFolder=../../e2e/$SUITE/screenshots,videosFolder=../../e2e/$SUITE/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false \
   $PARAMS
