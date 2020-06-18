@@ -881,48 +881,46 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 ## [alerting]
 
+For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+
 ### enabled
-Defaults to `true`. Set to `false` to disable alerting engine and hide Alerting in the Grafana UI.
+
+Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. Default is `true`.
 
 ### execute_alerts
 
-Makes it possible to turn off alert rule execution, but Alerting is still visible in the Grafana UI.
+Turns off alert rule execution, but Alerting is still visible in the Grafana UI.
 
 ### error_or_timeout
-> Available in 5.3 and above
 
 Default setting for new alert rules. Defaults to categorize error and timeouts as alerting. (alerting, keep_state)
 
 ### nodata_or_nullvalues
-> Available in 5.3  and above
 
-Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
+Defines how Grafana handles nodata or null values in alerting. Options are `alerting`, `no_data`, `keep_state`, and `ok`. Default is `no_data`.
 
 ### concurrent_render_limit
 
-> Available in 5.3  and above
-
 Alert notifications can include images, but rendering many images at the same time can overload the server.
-This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
-value is `5`.
+This limit protects the server from render overloading and ensures notifications are sent out quickly. Default value is `5`.
 
 ### evaluation_timeout_seconds
 
-Default setting for alert calculation timeout. Default value is `30`
+Sets the alert calculation timeout. Default value is `30`.
 
 ### notification_timeout_seconds
 
-Default setting for alert notification timeout. Default value is `30`
+Sets the alert notification timeout. Default value is `30`.
 
 ### max_attempts
 
-Default setting for max attempts to sending alert notifications. Default value is `3`
+Sets a maximum limit on attempts to sending alert notifications. Default value is `3`.
 
 ### min_interval_seconds
 
-Default setting for minimum interval between rule evaluations. Default value is `1`
+Sets the minimum interval between rule evaluations. Default value is `1`.
 
-> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
+> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
@@ -939,152 +937,52 @@ Enable or disable the Explore section. Default is `enabled`.
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "metrics.md" >}}).
 
 ### enabled
-Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
-### basic_auth_username
-If set configures the username to use for basic authentication on the metrics endpoint.
-
-### basic_auth_password
-If set configures the password to use for basic authentication on the metrics endpoint.
-
-### disable_total_stats
-If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. The default is `false`.
+Enable metrics reporting. defaults true. Available via HTTP API `<URL>/metrics`.
 
 ### interval_seconds
 
-Flush/Write interval when sending metrics to external TSDB. Defaults to 10s.
+Flush/write interval when sending metrics to external TSDB. Defaults to `10`.
+
+### disable_total_stats
+
+If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. Default is `false`.
+
+### basic_auth_username and basic_auth_password
+
+If both are set, then basic authentication is required to access the metrics endpoint.
+
+<hr>
 
 ## [metrics.graphite]
-Include this section if you want to send internal Grafana metrics to Graphite.
+
+Use these options if you want to send internal Grafana metrics to Graphite.
 
 ### address
-Format `<Hostname or ip>`:port
+
+Enable by setting the address. Format is `<Hostname or ip>`:port.
 
 ### prefix
+
 Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
+<hr>
 
-
-## [external_image_storage]
-These options control how images should be made public so they can be shared on services like slack.
-
-### provider
-You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafana will ignore the upload action.
-
-## [external_image_storage.s3]
-
-### endpoint
-Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to
-keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
-
-## path_style_access
-Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
-of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
-
-Note: This option is specific to the Amazon S3 service.
-
-### bucket
-Bucket name for S3. e.g. grafana.snapshot.
-
-### region
-Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
-
-### path
-Optional extra path inside bucket, useful to apply expiration policies.
-
-### bucket_url
-(for backward compatibility, only works when no bucket or region are configured)
-Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
-- http://grafana.s3.amazonaws.com/
-- https://grafana.s3-ap-southeast-2.amazonaws.com/
-
-### access_key
-Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
-
-Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
-
-### secret_key
-Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
-
-## [external_image_storage.webdav]
+## [grafana_net]
 
 ### url
-URL to where Grafana will send PUT request with images
 
-### public_url
-Optional parameter. URL to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
+Default is https://grafana.com.
 
-### username
-basic auth username
+<hr>
 
-### password
-basic auth password
+## [grafana_com]
 
-## [external_image_storage.gcs]
+### url
 
-### key_file
-Path to JSON key file associated with a Google service account to authenticate and authorize.
-Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
+Default is https://grafana.com.
 
-Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
-
-### bucket
-Bucket Name on Google Cloud Storage.
-
-### path
-Optional extra path inside bucket
-
-## [external_image_storage.azure_blob]
-
-### account_name
-Storage account name
-
-### account_key
-Storage account key
-
-### container_name
-Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
-
-
-
-## [rendering]
-
-Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
-
-### server_url
-
-URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, will enable Grafana to render panels and dashboards to PNG-images using HTTP requests to an external service.
-
-### callback_url
-
-If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
-
-### concurrent_render_request_limit
-
-Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
-which this setting can help protect against by only allowing a certain amount of concurrent requests.
-
-## [panels]
-
-### disable_sanitize_html
-
-If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default
-is false. This settings was introduced in Grafana v6.0.
-
-## [plugins]
-
-### enable_alpha
-
-Set to true if you want to test alpha plugins that are not yet ready for general usage.
-
-### allow_loading_unsigned_plugins
-
-Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
-
-## [feature_toggles]
-### enable
-
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+<hr>
 
 ## [tracing.jaeger]
 
@@ -1145,39 +1043,255 @@ Default value is `false`.
 
 Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
 
-<hr />
+<hr>
 
-# Removed options
-Please note that these options have been removed.
+## [external_image_storage]
 
-## [session]
-**Removed starting from Grafana v6.2. Please use [remote_cache](#remote-cache) option instead.**
+These options control how images should be made public so they can be shared on services like Slack or email message.
 
 ### provider
 
-Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
+Options are s3, webdav, gcs, azure_blob, local). If left empty, then Grafana ignores the upload action.
 
-### provider_config
+<hr>
 
-This option should be configured differently depending on what type of
-session provider you have configured.
+## [external_image_storage.s3]
 
-- **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
-- **memcache:** ex:  `127.0.0.1:11211`
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For Unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
+### endpoint
 
-Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
+Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to
+keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
 
-### cookie_name
+### path_style_access
 
-The name of the Grafana session cookie.
+Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
+of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
 
-### cookie_secure
+> Note: This option is specific to the Amazon S3 service.
 
-Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
+### bucket_url
 
-### session_life_time
+(for backward compatibility, only works when no bucket or region are configured)
+Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
+- http://grafana.s3.amazonaws.com/
+- https://grafana.s3-ap-southeast-2.amazonaws.com/
 
-How long sessions lasts in seconds. Defaults to `86400` (24 hours).
+### bucket
+
+Bucket name for S3. e.g. grafana.snapshot.
+
+### region
+
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
+
+### path
+
+Optional extra path inside bucket, useful to apply expiration policies.
+
+### access_key
+
+Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
+
+Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
+
+### secret_key
+
+Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
+
+<hr>
+
+## [external_image_storage.webdav]
+
+### url
+
+URL where Grafana sends PUT request with images.
+
+### username
+
+Basic auth username.
+
+### password
+
+Basic auth password.
+
+### public_url
+
+Optional URL to send to users in notifications. If the string contains the sequence ${file}, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+
+<hr>
+
+## [external_image_storage.gcs]
+
+### key_file
+
+Path to JSON key file associated with a Google service account to authenticate and authorize.
+Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
+
+Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
+
+### bucket
+
+Bucket Name on Google Cloud Storage.
+
+### path
+
+Optional extra path inside bucket.
+
+## [external_image_storage.azure_blob]
+
+### account_name
+
+Storage account name.
+
+### account_key
+
+Storage account key
+
+### container_name
+
+Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
+
+<hr>
+
+## [external_image_storage.local]
+
+This option does not require any configuration.
+
+<hr>
+
+## [rendering]
+
+Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+### server_url
+
+URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, will enable Grafana to render panels and dashboards to PNG-images using HTTP requests to an external service.
+
+### callback_url
+
+If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
+
+### concurrent_render_request_limit
+
+Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
+which this setting can help protect against by only allowing a certain amount of concurrent requests. Default is `30`.
+
+## [panels]
+
+### enable_alpha
+
+Set to `true` if you want to test alpha panels that are not yet ready for general usage. Default is `false`.
+
+### disable_sanitize_html
+
+If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default is false. This settings was introduced in Grafana v6.0.
+
+## [plugins]
+
+### enable_alpha
+
+Set to `true` if you want to test alpha plugins that are not yet ready for general usage. Default is `false`.
+
+### allow_loading_unsigned_plugins
+
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
+
+<hr>
+
+## [plugin.grafana-image-renderer]
+
+For more information, refer to [Image rendering]({{< relref "image_rendering.md" >}}).
+
+### rendering_timezone
+
+Instruct headless browser instance to use a default timezone when not provided by Grafana, e.g. when rendering panel image of alert. See [ICUs metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt) for a list of supported timezone IDs. Fallbacks to TZ environment variable if not set.
+
+### rendering_language
+
+Instruct headless browser instance to use a default language when not provided by Grafana, e.g. when rendering panel image of alert.
+Refer to the HTTP header Accept-Language to understand how to format this value, e.g. 'fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5'.
+
+### rendering_viewport_device_scale_factor
+
+Instruct headless browser instance to use a default device scale factor when not provided by Grafana, e.g. when rendering panel image of alert.
+Default is `1`. Using a higher value will produce more detailed images (higher DPI), but requires more disk space to store an image.
+
+### rendering_ignore_https_errors
+
+Instruct headless browser instance whether to ignore HTTPS errors during navigation. Per default HTTPS errors are not ignored. Due to the security risk, we do not recommend that you ignore HTTPS errors.
+
+### rendering_verbose_logging
+
+Instruct headless browser instance whether to capture and log verbose information when rendering an image. Default is `false` and will only capture and log error messages. 
+
+When enabled, debug messages are captured and logged as well.
+
+For the verbose information to be included in the Grafana server log you have to adjust the rendering log level to debug, configure [log].filter = rendering:debug.
+
+### rendering_dumpio
+
+Instruct headless browser instance whether to output its debug and error messages into running process of remote rendering service. Default is `false`.
+
+It can be useful to set this to `true` when troubleshooting.
+
+### rendering_args
+
+Additional arguments to pass to the headless browser instance. Default is --no-sandbox. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
+
+### rendering_chrome_bin
+
+You can configure the plugin to use a different browser binary instead of the pre-packaged version of Chromium.
+
+Please note that this is _not_ recommended. You might encounter problems if the installed version of Chrome/Chromium is not compatible with the plugin.
+
+### rendering_mode
+
+Instruct how headless browser instances are created. Default is `default` and will create a new browser instance on each request.
+
+Mode `clustered` will make sure that only a maximum of browsers/incognito pages can execute concurrently.
+
+Mode `reusable` will have one browser instance and will create a new incognito page on each request.
+
+### rendering_clustering_mode
+
+When rendering_mode = clustered you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
+
+Mode `context` will cluster using incognito pages.
+
+### rendering_clustering_max_concurrency
+
+When rendering_mode = clustered you can define maximum number of browser instances/incognito pages that can execute concurrently..
+
+### rendering_viewport_max_width
+
+Limit the maximum viewport width that can be requested.
+
+### rendering_viewport_max_height
+
+Limit the maximum viewport height that can be requested.
+
+### rendering_viewport_max_device_scale_factor
+
+Limit the maximum viewport device scale factor that can be requested.
+
+### grpc_host
+
+Change the listening host of the gRPC server. Default host is `127.0.0.1`.
+
+### grpc_port
+
+Change the listening port of the gRPC server. Default port is `0` and will automatically assign a port not in use.
+
+<hr>
+
+## [enterprise]
+
+For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}).
+
+<hr>
+
+## [feature_toggles]
+
+### enable
+
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
