@@ -26,7 +26,7 @@ export interface TimeZoneInfo {
   offsetInMins: number;
 }
 
-export interface TimeZoneGroup {
+export interface GroupedTimeZones {
   name: string;
   zones: TimeZone[];
 }
@@ -60,7 +60,7 @@ export const getTimeZones = memoize((includeInternal = false): TimeZone[] => {
   }, initial);
 });
 
-export const getTimeZoneGroups = memoize((includeInternal = false): TimeZoneGroup[] => {
+export const getTimeZoneGroups = memoize((includeInternal = false): GroupedTimeZones[] => {
   const timeZones = getTimeZones(includeInternal);
 
   const groups = timeZones.reduce((groups: Record<string, TimeZone[]>, zone: TimeZone) => {

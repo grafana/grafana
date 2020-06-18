@@ -1,20 +1,17 @@
 import React, { useMemo, useCallback } from 'react';
-import { cx, css } from 'emotion';
 import { toLower } from 'lodash';
 import {
   SelectableValue,
   getTimeZoneInfo,
   TimeZoneInfo,
-  dateTimeFormat,
   getTimeZoneGroups,
-  TimeZoneGroup,
-  GrafanaTheme,
+  GroupedTimeZones,
   TimeZone,
 } from '@grafana/data';
-import { useTheme, stylesFactory } from '../../themes';
-import { getSelectStyles } from '../Select/getSelectStyles';
-import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
+import { TimeZoneOption, SelectableZone } from './TimeZoneOption';
+import { TimeZoneGroup } from './TimeZoneGroup';
+import { formatUtcOffset } from './TimeZoneOffset';
 
 export interface Props {
   value: TimeZone;
@@ -22,180 +19,30 @@ export interface Props {
   onChange: (newValue: string) => void;
 }
 
-interface SelectableZoneGroup extends SelectableValue<string> {
-  options: SelectableZone[];
-}
-interface SelectableZone extends SelectableValue<string> {
-  searchIndex: string;
-  utcOffset: string;
-  localTime: string;
-}
-interface TimeZoneOptionProps {
-  isFocused: boolean;
-  isSelected: boolean;
-  innerProps: any;
-  data: SelectableZone;
-}
-
-const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    header: css`
-      padding: 7px 10px;
-      width: 100%;
-      border-top: 1px solid ${theme.colors.border1};
-      text-transform: capitalize;
-    `,
-    label: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
-      font-weight: ${theme.typography.weight.semibold};
-    `,
-  };
-});
-
-export const Group: React.FC<any> = props => {
-  const theme = useTheme();
-  const { children, label } = props;
-  const styles = getSelectOptionGroupStyles(theme);
-
-  if (!label) {
-    return <div>{children}</div>;
-  }
-
-  return (
-    <div>
-      <div className={styles.header}>
-        <span className={styles.label}>{label}</span>
-      </div>
-      {children}
-    </div>
-  );
-};
-
-const utcOffset = 'utcOffset';
-
-export const Option = React.forwardRef<HTMLDivElement, React.PropsWithChildren<TimeZoneOptionProps>>((props, ref) => {
-  const theme = useTheme();
-  const styles = getSelectStyles(theme);
-  const { children, innerProps, data, isSelected, isFocused } = props;
-  const containerStyle = cx(
-    styles.option,
-    isFocused && styles.optionFocused,
-    css`
-      padding: 6px 8px 4px;
-      &:hover span.utcOffset {
-        background: ${theme.palette.gray05};
-      }
-    `,
-    isFocused &&
-      css`
-        span.utcOffset {
-          background: ${theme.palette.gray05};
-        }
-      `
-  );
-
-  return (
-    <div ref={ref} className={containerStyle} {...innerProps} aria-label="Select option">
-      <div className={styles.optionBody}>
-        <div
-          className={css`
-            display: flex;
-            flex-direction: row;
-          `}
-        >
-          <div
-            className={css`
-              flex-grow: 1;
-            `}
-          >
-            <span
-              className={css`
-                font-weight: ${theme.typography.weight.regular};
-              `}
-            >
-              {children}
-            </span>
-          </div>
-          <div>
-            {isSelected && (
-              <span>
-                <Icon name="check" />
-              </span>
-            )}
-          </div>
-        </div>
-        <div
-          className={css`
-            display: flex;
-            flex-direction: row;
-          `}
-        >
-          <div
-            className={css`
-              flex-grow: 1;
-            `}
-          >
-            {data.description && <div className={styles.optionDescription}>{data.description}</div>}
-          </div>
-          <div
-            className={css`
-              justify-content: flex-end;
-              align-items: center;
-            `}
-          >
-            <span
-              className={cx(
-                styles.optionDescription,
-                css`
-                  color: ${theme.colors.text};
-                `
-              )}
-            >
-              {data.localTime}
-            </span>
-            <span
-              className={cx(
-                styles.optionDescription,
-                css`
-                  color: ${theme.colors.text};
-                  background: ${theme.colors.bg2};
-                  padding: 2px 5px;
-                  border-radius: 2px;
-                  margin-left: 4px;
-                  text-overflow: ellipsis;
-                `,
-                utcOffset
-              )}
-            >
-              {data.utcOffset}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
 export const TimeZonePicker: React.FC<Props> = ({ onChange, value, width }) => {
   const groupedTimeZones = useTimeZones();
   const filterBySearchIndex = useFilterBySearchIndex();
 
   return (
     <Select
+      isOpen={true}
       width={width}
       filterOption={filterBySearchIndex}
       options={groupedTimeZones}
       onChange={() => {}}
-      components={{ Option, Group }}
+      components={{ Option: TimeZoneOption, Group: TimeZoneGroup }}
     />
   );
 };
 
+interface SelectableZoneGroup extends SelectableValue<string> {
+  options: SelectableZone[];
+}
+
 const useTimeZones = (): SelectableZoneGroup[] => {
   const now = Date.now();
 
-  return getTimeZoneGroups(true).map((group: TimeZoneGroup) => {
+  return getTimeZoneGroups(true).map((group: GroupedTimeZones) => {
     const options = group.zones.reduce((options: SelectableZone[], zone) => {
       const info = getTimeZoneInfo(zone, now);
 
@@ -203,20 +50,10 @@ const useTimeZones = (): SelectableZoneGroup[] => {
         return options;
       }
 
-      const localTime = dateTimeFormat(now, {
-        timeZone: info.zone,
-        format: 'HH:mm',
-      });
-
-      const utcOffset = formatUtcOffset(now, info.zone);
-
       options.push({
         label: info.name,
         value: info.zone,
-        description: useDescription(info),
-        searchIndex: useSearchIndex(info, localTime, utcOffset),
-        utcOffset: utcOffset,
-        localTime: localTime,
+        searchIndex: useSearchIndex(info, now),
       });
 
       return options;
@@ -229,23 +66,6 @@ const useTimeZones = (): SelectableZoneGroup[] => {
   });
 };
 
-const useDescription = (info: TimeZoneInfo): string => {
-  return useMemo(() => {
-    const parts: string[] = [];
-
-    if (info.countries.length > 0) {
-      const country = info.countries[0];
-      parts.push(country.name);
-    }
-
-    if (info.abbreviation) {
-      parts.push(info.abbreviation);
-    }
-
-    return parts.join(', ');
-  }, [info.zone]);
-};
-
 const useFilterBySearchIndex = () => {
   return useCallback((option: SelectableValue, searchQuery: string) => {
     if (!searchQuery || !option.data || !option.data.searchIndex) {
@@ -255,8 +75,9 @@ const useFilterBySearchIndex = () => {
   }, []);
 };
 
-const useSearchIndex = (info: TimeZoneInfo, localTime: string, utcOffset: string): string => {
-  const baseIndex = useMemo(() => {
+const useSearchIndex = (info: TimeZoneInfo, timestamp: number): string => {
+  return useMemo(() => {
+    const utcOffset = formatUtcOffset(timestamp, info.zone);
     const parts: string[] = [toLower(info.zone), toLower(info.abbreviation), utcOffset];
 
     for (const country of info.countries) {
@@ -266,18 +87,4 @@ const useSearchIndex = (info: TimeZoneInfo, localTime: string, utcOffset: string
 
     return parts.join('|');
   }, [info.zone, info.abbreviation, info.offsetInMins]);
-
-  return `${baseIndex}|${localTime}`;
-};
-
-const formatUtcOffset = (timestamp: number, zone: string): string => {
-  const offset = dateTimeFormat(timestamp, {
-    timeZone: zone,
-    format: 'Z',
-  });
-
-  if (offset === '+00:00') {
-    return 'UTC';
-  }
-  return `UTC${offset}`;
 };

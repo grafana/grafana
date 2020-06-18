@@ -10,19 +10,18 @@ import { mapRangeToTimeOption } from './mapper';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
+import { TimePickerFooter } from './TimePickerFooter';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = getThemeColors(theme);
 
   return {
     container: css`
-      display: flex;
       background: ${colors.background};
       box-shadow: 0px 0px 20px ${colors.shadow};
       position: absolute;
       z-index: ${theme.zIndex.modal};
       width: 546px;
-      height: 381px;
       top: 116%;
       margin-left: -322px;
 
@@ -35,6 +34,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         width: 264px;
         margin-left: -100px;
       }
+    `,
+    body: css`
+      display: flex;
+      height: 381px;
     `,
     leftSide: css`
       display: flex;
@@ -148,27 +151,30 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
 
   return (
     <div className={styles.container}>
-      <div className={styles.leftSide}>
-        <FullScreenForm {...props} visible={isFullscreen} historyOptions={historyOptions} />
+      <div className={styles.body}>
+        <div className={styles.leftSide}>
+          <FullScreenForm {...props} visible={isFullscreen} historyOptions={historyOptions} />
+        </div>
+        <CustomScrollbar className={styles.rightSide}>
+          <NarrowScreenForm {...props} visible={!isFullscreen} historyOptions={historyOptions} />
+          <TimeRangeList
+            title="Relative time ranges"
+            options={quickOptions}
+            onSelect={props.onChange}
+            value={props.value}
+            timeZone={props.timeZone}
+          />
+          <div className={styles.spacing} />
+          <TimeRangeList
+            title="Other quick ranges"
+            options={otherOptions}
+            onSelect={props.onChange}
+            value={props.value}
+            timeZone={props.timeZone}
+          />
+        </CustomScrollbar>
       </div>
-      <CustomScrollbar className={styles.rightSide}>
-        <NarrowScreenForm {...props} visible={!isFullscreen} historyOptions={historyOptions} />
-        <TimeRangeList
-          title="Relative time ranges"
-          options={quickOptions}
-          onSelect={props.onChange}
-          value={props.value}
-          timeZone={props.timeZone}
-        />
-        <div className={styles.spacing} />
-        <TimeRangeList
-          title="Other quick ranges"
-          options={otherOptions}
-          onSelect={props.onChange}
-          value={props.value}
-          timeZone={props.timeZone}
-        />
-      </CustomScrollbar>
+      <TimePickerFooter timestamp={Date.now()} timeZone={props.timeZone} />
     </div>
   );
 };
