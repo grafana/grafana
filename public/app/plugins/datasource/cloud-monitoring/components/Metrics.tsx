@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
-import StackdriverDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 import { Segment } from '@grafana/ui';
 import { MetricDescriptor } from '../types';
 
@@ -11,7 +11,7 @@ export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
   templateSrv: TemplateSrv;
   templateVariableOptions: Array<SelectableValue<string>>;
-  datasource: StackdriverDatasource;
+  datasource: CloudMonitoringDatasource;
   projectName: string;
   metricType: string;
   children?: (renderProps: any) => JSX.Element;

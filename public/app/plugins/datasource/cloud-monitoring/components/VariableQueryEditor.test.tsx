@@ -1,7 +1,7 @@
 import React from 'react';
 // @ts-ignore
 import renderer from 'react-test-renderer';
-import { StackdriverVariableQueryEditor } from './VariableQueryEditor';
+import { CloudMonitoringVariableQueryEditor } from './VariableQueryEditor';
 import { VariableQueryProps } from 'app/types/plugins';
 import { MetricFindQueryTypes } from '../types';
 import { VariableModel } from 'app/features/variables/types';
@@ -41,7 +41,7 @@ const props: VariableQueryProps = {
 
 describe('VariableQueryEditor', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
+    const tree = renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
@@ -49,10 +49,10 @@ describe('VariableQueryEditor', () => {
     // these test need to be updated to reflect the changes from old variables system to new
     it('should trigger a query using the first query type in the array', done => {
       props.onChange = (query, definition) => {
-        expect(definition).toBe('Stackdriver - Projects');
+        expect(definition).toBe('Cloud Monitoring - Projects');
         done();
       };
-      renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
+      renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
     });
   });
 
@@ -61,10 +61,10 @@ describe('VariableQueryEditor', () => {
     it('should trigger new query using the saved query type', done => {
       props.query = { selectedQueryType: MetricFindQueryTypes.LabelKeys };
       props.onChange = (query, definition) => {
-        expect(definition).toBe('Stackdriver - Label Keys');
+        expect(definition).toBe('Cloud Monitoring - Label Keys');
         done();
       };
-      renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
+      renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
     });
   });
 });

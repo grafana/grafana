@@ -1,8 +1,8 @@
 <div class="gf-form-group">
   <div class="grafana-info-box">
-    <h4>Stackdriver Authentication</h4>
+    <h4>Cloud Monitoring Authentication</h4>
     <p>
-      There are two ways to authenticate the Stackdriver plugin - either by uploading a Service Account key file, or by
+      There are two ways to authenticate the Cloud Monitoring plugin - either by uploading a Service Account key file, or by
       automatically retrieving credentials from the Google metadata server. The latter option is only available when
       running Grafana on a GCE virtual machine.
     </p>
@@ -29,12 +29,12 @@
       If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to
       automatically retrieve the default project id and authentication token from the metadata server. In order for this
       to work, you need to make sure that you have a service account that is setup as the default account for the
-      virtual machine and that the service account has been given read access to the Stackdriver Monitoring API.
+      virtual machine and that the service account has been given read access to the Cloud Monitoring Monitoring API.
     </p>
 
     <p>
       Detailed instructions on how to create a Service Account can be found
-      <a class="external-link" target="_blank" href="http://docs.grafana.org/datasources/stackdriver/"
+      <a class="external-link" target="_blank" href="http://docs.grafana.org/datasources/cloudmonitoring/"
         >in the documentation.</a
       >
     </p>

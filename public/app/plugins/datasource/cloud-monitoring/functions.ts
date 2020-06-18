@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from './constants';
 import { SelectableValue } from '@grafana/data';
-import StackdriverDatasource from './datasource';
+import CloudMonitoringDatasource from './datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricDescriptor, Filter, MetricQuery } from './types';
 
@@ -51,7 +51,7 @@ export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind:
 };
 
 export const getLabelKeys = async (
-  datasource: StackdriverDatasource,
+  datasource: CloudMonitoringDatasource,
   selectedMetricType: string,
   projectName: string
 ) => {
@@ -107,7 +107,7 @@ export const stringArrayToFilters = (filterArray: string[]) =>
 
 export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);
 
-export const formatStackdriverError = (error: any) => {
+export const formatCloudMonitoringError = (error: any) => {
   let message = error.statusText ?? '';
   if (error.data && error.data.error) {
     try {

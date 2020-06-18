@@ -333,7 +333,7 @@ func (e *CloudMonitoringExecutor) executeQuery(ctx context.Context, query *cloud
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("cloudMonitoring%s", "v3/projects/"+projectName+"/timeSeries"))
+	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("cloudmonitoring%s", "v3/projects/"+projectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, nil

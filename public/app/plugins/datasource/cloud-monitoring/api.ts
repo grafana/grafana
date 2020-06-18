@@ -3,7 +3,7 @@ import { CoreEvents } from 'app/types';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
-import { formatStackdriverError } from './functions';
+import { formatCloudMonitoringError } from './functions';
 import { MetricDescriptor } from './types';
 
 interface Options {
@@ -50,7 +50,7 @@ export default class Api {
 
       return res;
     } catch (error) {
-      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: formatStackdriverError(error) } } });
+      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: formatCloudMonitoringError(error) } } });
       return [];
     }
   }

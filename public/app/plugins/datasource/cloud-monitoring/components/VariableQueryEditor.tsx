@@ -4,7 +4,7 @@ import { SimpleSelect } from './';
 import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
 import { MetricFindQueryTypes, VariableQueryData } from '../types';
 
-export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
+export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   queryTypes: Array<{ value: string; name: string }> = [
     { value: MetricFindQueryTypes.Projects, name: 'Projects' },
     { value: MetricFindQueryTypes.Services, name: 'Services' },
@@ -88,7 +88,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   onPropsChange = () => {
     const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
     const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
-    this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+    this.props.onChange(queryModel, `Cloud Monitoring - ${query.name}`);
   };
 
   async onQueryTypeChange(queryType: string) {
