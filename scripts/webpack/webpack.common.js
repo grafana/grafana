@@ -66,7 +66,7 @@ module.exports = {
       // available options are documented at
       // https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript', 'typescript'],
+      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql'],
       features: ['!gotoSymbol', '!gotoError', '!referenceSearch', '!codelens'],
     }),
   ],
