@@ -405,8 +405,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addGauge() {
       const data: ShowData = ctrl.data;
-      const width = elem.width();
-      const height = elem.height();
+      const width = elem.width() || 10;
+      const height = elem.height() || 10;
+
       // Allow to use a bit more space for wide gauges
       const dimension = Math.min(width, height * 1.3);
 
@@ -501,7 +502,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addSparkline() {
       const data: ShowData = ctrl.data;
-      const width = elem.width();
+      const width = elem.width() || 10;
       if (width < 30) {
         // element has not gotten it's width yet
         // delay sparkline render
