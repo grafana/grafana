@@ -11,6 +11,7 @@ import (
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go"
+	"github.com/influxdata/influxdb-client-go/api"
 )
 
 //--------------------------------------------------------------
@@ -22,7 +23,7 @@ type MockRunner struct {
 	testDataPath string
 }
 
-func (r *MockRunner) runQuery(ctx context.Context, q string) (*influxdb2.QueryTableResult, error) {
+func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableResult, error) {
 	bytes, err := ioutil.ReadFile("./testdata/" + r.testDataPath)
 	if err != nil {
 		return nil, err
