@@ -63,9 +63,11 @@ module.exports = {
   },
   plugins: [
     new MonacoWebpackPlugin({
-      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      languages: ['javascript', 'json', 'sql'],
-      features: ['!gotoSymbol', '!codelens'],
+      // available options are documented at
+      // https://github.com/Microsoft/monaco-editor-webpack-plugin#options
+      filename: 'monaco-[name].worker.js',
+      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript', 'typescript'],
+      features: ['!gotoSymbol', '!gotoError', '!referenceSearch', '!codelens'],
     }),
   ],
   module: {
