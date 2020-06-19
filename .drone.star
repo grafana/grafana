@@ -1,6 +1,6 @@
 def main(ctx):
     return [
-        pr_pipeline(ctx),
+        pr_pipeline(),
     ]
 
 build_image = 'grafana/build-container:1.2.21'
@@ -13,13 +13,25 @@ exclude_forks = {
     },
 }
 
+pr_kind = 'pr'
+
 restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
 
-def pr_pipeline(ctx):
+def pr_pipeline():
+    return pipeline(kind=pr_kind, name='Test PR')
+
+def pipeline(kind, name):
+    """Generate a certain kind of pipeline."""
+    if kind not in [
+        pr_kind,
+    ]:
+        # There should be a 'fail' function in Starlark, but won't build
+        return {}
+
     return {
         'kind': 'pipeline',
         'type': 'docker',
-        'name': 'Test PR',
+        'name': name,
         'trigger': {
             'event': ['pull_request',],
         },
@@ -310,6 +322,8 @@ def pr_pipeline(ctx):
                 },
                 'commands': [
                     restore_yarn_cache,
+                    # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
+                    # even though the Yarn cache directory is beneath /usr/local/share somewhere
                     './node_modules/.bin/cypress install',
                     './e2e/wait-for-grafana',
                     './e2e/run-suite',
