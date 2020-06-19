@@ -364,6 +364,18 @@ def pr_pipeline(ctx):
                 },
             },
             {
+                'name': 'build-oss-ubuntu-docker-images',
+                'image': 'grafana/drone-grafana-docker',
+                'depends_on': [
+                    'copy-oss-packages-for-docker',
+                ],
+                'settings': {
+                    'dry_run': True,
+                    'edition': 'oss',
+                    'ubuntu': True,
+                },
+            },
+            {
                 'name': 'copy-enterprise-packages-for-docker',
                 'image': build_image,
                 'depends_on': [
@@ -381,9 +393,22 @@ def pr_pipeline(ctx):
                     'copy-enterprise-packages-for-docker',
                 ],
                 'settings': {
+                    'dry_run': True,
                     'directory': 'grafana-enterprise',
                     'edition': 'enterprise',
+                },
+            },
+            {
+                'name': 'build-enterprise-ubuntu-docker-images',
+                'image': 'grafana/drone-grafana-docker',
+                'depends_on': [
+                    'copy-enterprise-packages-for-docker',
+                ],
+                'settings': {
                     'dry_run': True,
+                    'directory': 'grafana-enterprise',
+                    'edition': 'enterprise',
+                    'ubuntu': True,
                 },
             },
         ],
