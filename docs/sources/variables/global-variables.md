@@ -52,6 +52,12 @@ This variable is only available in the Singlestat panel and can be used in the p
 This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
 
+## $__user
+> Only available in Grafana v7.1+
+
+`${__user.id}` is the ID of the current user.
+`${__user.login}` is the login handle of the current user.
+
 ## $__range
 
 > Only available in Grafana v5.3+

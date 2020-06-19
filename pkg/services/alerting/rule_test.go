@@ -125,7 +125,8 @@ func TestAlertRuleModel(t *testing.T) {
 					"frequency": "60s",
 					"conditions": [{"type": "test", "prop": 123 }],
 					"notifications": [
-						{"id": 999}
+						{"id": 999},
+						{"uid": "notifier2"}
 					]
 				}
 				`
@@ -142,10 +143,11 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			_, err := NewRuleFromDBAlert(alert)
-			Convey("raises an error", func() {
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Alert validation error: Unable to translate notification id to uid, Alert notification [ Id: 999, OrgId: 1 ] not found AlertId: 1 PanelId: 1 DashboardId: 1")
+			alertRule, err := NewRuleFromDBAlert(alert)
+			Convey("swallows the error", func() {
+				So(err, ShouldBeNil)
+				So(alertRule.Notifications, ShouldNotContain, "999")
+				So(alertRule.Notifications, ShouldContain, "notifier2")
 			})
 		})
 

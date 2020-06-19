@@ -243,9 +243,9 @@ Variable of the type _Query_ allows you to query Stackdriver for various types o
 | _Metric Types_                   | Returns a list of metric type names that are available for the specified service.                 |
 | _Labels Keys_                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.           |
 | _Labels Values_                  | Returns a list of values for the label in the specified metric.                                   |
-| _Resource Types_                 | Returns a list of resource types for the the specified metric.                                    |
-| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the the specified metric.              |
-| _Aligners_                       | Returns a list of aligners (per series aligners) for the the specified metric.                    |
+| _Resource Types_                 | Returns a list of resource types for the specified metric.                                    |
+| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the specified metric.              |
+| _Aligners_                       | Returns a list of aligners (per series aligners) for the specified metric.                    |
 | _Alignment periods_              | Returns a list of all alignment periods that are available in Stackdriver query editor in Grafana |
 | _Selectors_                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries            |
 | _SLO Services_                   | Returns a list of Service Monitoring services that can be used in SLO queries                     |

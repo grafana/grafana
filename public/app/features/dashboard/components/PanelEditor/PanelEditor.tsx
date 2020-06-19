@@ -25,7 +25,7 @@ import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-import { VariableModel } from 'app/features/templating/types';
+import { VariableModel } from 'app/features/variables/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
@@ -263,7 +263,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 icon="cog"
                 onClick={this.onOpenDashboardSettings}
                 variant="secondary"
-                title="Open dashboad settings"
+                title="Open dashboard settings"
               />
               <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
                 Discard

@@ -149,9 +149,9 @@ Examples:
 Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
-### Azure Monitor metrics whitelist
+### List of supported Azure Monitor metrics
 
-Not all metrics returned by the Azure Monitor API have values. The Grafana data source has a whitelist to only return metric names if it is possible they might have values. This whitelist is updated regularly as new services and metrics are added to the Azure cloud. You can find the current whitelist [here](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
+Not all metrics returned by the Azure Monitor API have values. To make it easier for you when building a query, the Grafana data source has a list of supported Azure Monitor metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. You can find the current list [here](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
 
 ### Azure Monitor alerting
 

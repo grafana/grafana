@@ -14,6 +14,7 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
+import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
 export interface Props {
   folder?: FolderDTO;
@@ -21,7 +22,7 @@ export interface Props {
 
 const { isEditor } = contextSrv;
 
-export const ManageDashboards: FC<Props> = memo(({ folder }) => {
+export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo(({ folder, params, updateLocation }) => {
   const folderId = folder?.id;
   const folderUid = folder?.uid;
   const theme = useTheme();
@@ -34,6 +35,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     skipStarred: true,
     folderIds: folderId ? [folderId] : [],
     layout: defaultLayout,
+    ...params,
   };
   const {
     query,
@@ -44,7 +46,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     onTagAdd,
     onSortChange,
     onLayoutChange,
-  } = useSearchQuery(queryParams);
+  } = useSearchQuery(queryParams, updateLocation);
 
   const {
     results,
@@ -146,6 +148,8 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     </div>
   );
 });
+
+export default connectWithRouteParams(ManageDashboards);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

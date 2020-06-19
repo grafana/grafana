@@ -1,7 +1,7 @@
 import { identity } from 'lodash';
 import { keyBy } from 'lodash';
 import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
-import { KeyValuePair, Log, Process, SpanData, TraceData } from '@jaegertracing/jaeger-ui-components';
+import { KeyValuePair, Log, Process, SpanData, TraceData } from '@grafana/data';
 
 /**
  * Transforms response to format similar to Jaegers as we use Jaeger ui on the frontend.

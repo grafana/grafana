@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func ComposePluginStartCommmand(executable string) string {
+func ComposePluginStartCommand(executable string) string {
 	os := strings.ToLower(runtime.GOOS)
 	arch := runtime.GOARCH
 	extension := ""

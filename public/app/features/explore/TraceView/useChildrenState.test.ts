@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useChildrenState } from './useChildrenState';
-import { Span } from '@jaegertracing/jaeger-ui-components';
+import { Span } from '@grafana/data';
 
 describe('useChildrenState', () => {
   describe('childrenToggle', () => {

@@ -55,7 +55,7 @@ A *row* is a logical divider within a dashboard. It is used to group panels toge
 
 Rows are always 12 “units” wide. These units are automatically scaled dependent on the horizontal resolution of your browser. You can control the relative width of panels within a row by setting their specific width.
 
-We use a unit abstraction so that Grafana looks great on all screens sizes.
+We use a unit abstraction so that Grafana looks great on all screen sizes.
 
  > Note: With MaxDataPoint functionality, Grafana can show you the perfect number of data points, regardless of resolution or time range.
 
