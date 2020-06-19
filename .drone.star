@@ -474,26 +474,26 @@ def pipeline(kind, name):
                     './scripts/integration-tests.sh',
                 ],
             },
-            # {
-                # 'name': 'mysql-integration-test',
-                # 'image': build_image,
-                # 'depends_on': [
-                    # 'test-backend',
-                    # 'test-frontend',
-                # ],
-                # 'environment': {
-                    # 'GRAFANA_TEST_DB': 'mysql',
-                    # 'MYSQL_HOST': 'mysql',
-                # },
-                # 'commands': [
-                    # 'apt-get update',
-                    # 'apt-get install -yq default-mysql-client',
-                    # './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
-                    # 'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-                    # 'rm -rf $(go env GOCACHE)',
-                    # 'cp -r go-cache $(go env GOCACHE)',
-                    # './scripts/integration-tests.sh',
-                # ],
-            # },
+            {
+                'name': 'mysql-integration-test',
+                'image': build_image,
+                'depends_on': [
+                    'test-backend',
+                    'test-frontend',
+                ],
+                'environment': {
+                    'GRAFANA_TEST_DB': 'mysql',
+                    'MYSQL_HOST': 'mysql',
+                },
+                'commands': [
+                    'apt-get update',
+                    'apt-get install -yq default-mysql-client',
+                    './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
+                    'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
+                    'rm -rf $(go env GOCACHE)',
+                    'cp -r go-cache $(go env GOCACHE)',
+                    './scripts/integration-tests.sh',
+                ],
+            },
         ],
     }
