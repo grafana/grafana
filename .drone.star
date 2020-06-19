@@ -316,16 +316,6 @@ def pr_pipeline(ctx):
                 ],
             },
             {
-                'name': 'copy-oss-packages-for-docker',
-                'image': build_image,
-                'depends_on': [
-                    'package-oss',
-                ],
-                'commands': [
-                    'cp dist/*.tar.gz packaging/docker/',
-                ],
-            },
-            {
                 'name': 'publish-storybook',
                 'image': build_image,
                 'depends_on': [
@@ -353,13 +343,47 @@ def pr_pipeline(ctx):
                 ],
             },
             {
+                'name': 'copy-oss-packages-for-docker',
+                'image': build_image,
+                'depends_on': [
+                    'package-oss',
+                ],
+                'commands': [
+                    'cp dist/*.tar.gz packaging/docker/',
+                ],
+            },
+            {
                 'name': 'build-oss-docker-images',
                 'image': 'grafana/drone-grafana-docker',
                 'depends_on': [
                     'copy-oss-packages-for-docker',
                 ],
                 'settings': {
-                  'dry_run': True,
+                    'dry_run': True,
+                    'edition': 'oss',
+                },
+            },
+            {
+                'name': 'copy-enterprise-packages-for-docker',
+                'image': build_image,
+                'depends_on': [
+                    'package-enterprise',
+                ],
+                'commands': [
+                    'cd grafana-enterprise',
+                    'cp dist/*.tar.gz packaging/docker/',
+                ],
+            },
+            {
+                'name': 'build-enterprise-docker-images',
+                'image': 'grafana/drone-grafana-docker',
+                'depends_on': [
+                    'copy-enterprise-packages-for-docker',
+                ],
+                'settings': {
+                    'directory': 'grafana-enterprise',
+                    'edition': 'enterprise',
+                    'dry_run': True,
                 },
             },
         ],
