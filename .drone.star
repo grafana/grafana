@@ -4,6 +4,14 @@ def main(ctx):
     ]
 
 build_image = 'grafana/build-container:1.2.21'
+exclude_forks = {
+    'repo': {
+        'include': [
+            'grafana/grafana',
+            'aknuds1/grafana',
+        ],
+    },
+}
 
 def pr_pipeline(ctx):
     return {
@@ -45,18 +53,18 @@ def pr_pipeline(ctx):
                 'commands': [
                     'make scripts/go/bin/revive scripts/go/bin/gosec',
                     'go vet ./pkg/...',
-                    'golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode ' +
+                    'golangci-lint run -v --config scripts/go/configs/ci/.golangci.yml -E deadcode ' +
                         '-E gofmt -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...',
-                    'golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused ' +
+                    'golangci-lint run -v --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused ' +
                         '-E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...',
                     './scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...',
-                    './scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml' +
-                        '-exclude ./pkg/plugins/backendplugin/pluginextensionv2/...' +
-                        './pkg/services/alerting/...' +
-                        './pkg/services/provisioning/datasources/...' +
-                        './pkg/services/provisioning/dashboards/...' +
+                    './scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml ' +
+                        '-exclude ./pkg/plugins/backendplugin/pluginextensionv2/... ' +
+                        './pkg/services/alerting/... ' +
+                        './pkg/services/provisioning/datasources/... ' +
+                        './pkg/services/provisioning/dashboards/... ' +
                         './pkg/plugins/backendplugin/...',
-                    './scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501' +
+                    './scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 ' +
                         '-conf=./scripts/go/configs/gosec.json ./pkg/...',
                 ],
             },
@@ -100,10 +108,50 @@ def pr_pipeline(ctx):
                     'install-deps',
                     'lint-go',
                 ],
+                'environment': {
+                    'GITHUB_TOKEN': {
+                        'from_secret': 'github_token',
+                    },
+                },
                 'commands': [
-                    './bin/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id' +
+                    './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition oss --build-id ' +
                         '$DRONE_BUILD_NUMBER',
-                    'ls -l bin/*/grafana-server',
+                ],
+            },
+            {
+                'name': 'create-enterprise-repo',
+                'image': build_image,
+                'when': exclude_forks,
+                'depends_on': [
+                    'install-deps',
+                ],
+                'commands': [
+                    'git clone . grafana-enterprise',
+                    'cd grafana-enterprise',
+                    'mkdir -p bin',
+                    'cp ../bin/grabpl ./bin/',
+                    'yarn install --frozen-lockfile --no-progress',
+                ],
+            },
+            {
+                'name': 'build-enterprise-backend',
+                'image': build_image,
+                'when': exclude_forks,
+                'depends_on': [
+                    'create-enterprise-repo',
+                    'lint-go',
+                ],
+                'environment': {
+                    'GITHUB_TOKEN': {
+                        'from_secret': 'github_token',
+                    },
+                },
+                'commands': [
+                    'echo Token: $${GITHUB_TOKEN}',
+                    'cd grafana-enterprise',
+                    'pwd',
+                    './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition enterprise ' +
+                        '--build-id $DRONE_BUILD_NUMBER',
                 ],
             },
             {
@@ -123,8 +171,13 @@ def pr_pipeline(ctx):
                 'depends_on': [
                     'install-deps',
                 ],
+                'environment': {
+                    'GITHUB_TOKEN': {
+                        'from_secret': 'github_token',
+                    },
+                },
                 'commands': [
-                    './bin/grabpl build-frontend --no-install-deps --github-token "${GITHUB_GRAFANABOT_TOKEN}" ' +
+                    './bin/grabpl build-frontend --no-install-deps --github-token "$${GITHUB_TOKEN}" ' +
                         '--edition oss --build-id $DRONE_BUILD_NUMBER',
                 ],
             },
@@ -168,12 +221,17 @@ def pr_pipeline(ctx):
                     'codespell',
                     'shellcheck',
                 ],
+                'environment': {
+                    'GITHUB_TOKEN': {
+                        'from_secret': 'github_token',
+                    },
+                },
                 'commands': [
                     'ls -l bin/*/grafana-server',
                     # This is for a forked PR, don't sign as it requires an API secret
                     # TODO: Support also non-forked PRs
                     '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --github-token ' +
-                        '"${GITHUB_GRAFANABOT_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER',
+                        '"$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER',
                     'tar tzvf dist/*.linux-amd64.tar.gz',
                 ],
             },
