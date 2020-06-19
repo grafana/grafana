@@ -26,6 +26,7 @@ func GetDataSources(c *models.ReqContext) Response {
 	}
 
 	result := make(dtos.DataSourceList, 0)
+
 	for _, ds := range query.Result {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
@@ -41,10 +42,6 @@ func GetDataSources(c *models.ReqContext) Response {
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
 			ReadOnly:  ds.ReadOnly,
-		}
-
-		if ds.Type == "stackdriver" {
-			ds.Type = "cloud-monitoring"
 		}
 
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
@@ -320,6 +317,10 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 }
 
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
+	if ds.Type == "stackdriver" { // legacy
+		ds.Type = "cloud-monitoring"
+	}
+
 	dto := dtos.DataSource{
 		Id:                ds.Id,
 		OrgId:             ds.OrgId,

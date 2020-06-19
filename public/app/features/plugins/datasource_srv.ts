@@ -65,11 +65,6 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(expressionDatasource);
     }
 
-    if (name === 'Stackdriver') {
-      // legacy
-      name = 'Cloud Monitoring';
-    }
-
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return Promise.reject({ message: `Datasource named ${name} was not found` });

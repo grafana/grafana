@@ -31,6 +31,11 @@ export const AlignmentPeriods: FC<Props> = ({
     label: ap.text,
   }));
 
+  if (alignmentPeriod === 'stackdriver-auto') {
+    // legacy
+    alignmentPeriod = 'cloud-monitoring-auto';
+  }
+
   return (
     <>
       <div className="gf-form-inline">

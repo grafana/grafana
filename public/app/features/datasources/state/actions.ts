@@ -62,7 +62,13 @@ export const initDataSourceSettings = (
       }
 
       const dataSource = dependencies.getDataSource(getState().dataSources, pageId);
-      const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dataSource.type);
+
+      let dsType = dataSource.type;
+      if (dsType === 'stackdriver') {
+        // legacy
+        dsType = 'cloud-monitoring';
+      }
+      const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dsType);
       const importedPlugin = await dependencies.importDataSourcePlugin(dataSourceMeta);
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));

@@ -83,6 +83,10 @@ func (pm *PluginManager) Init() error {
 	if err := pm.scan(plugDir, false); err != nil {
 		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
 	}
+	plugin, ok := DataSources["cloud-monitoring"] // legacy
+	if ok {
+		DataSources["stackdriver"] = plugin
+	}
 
 	plugDir = pm.Cfg.BundledPluginsPath
 	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)

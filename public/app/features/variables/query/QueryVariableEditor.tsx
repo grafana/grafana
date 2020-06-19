@@ -63,13 +63,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
       return '';
     }
 
-    // legacy
-    let dsVar = this.props.variable.datasource;
-    if (this.props.variable.datasource === 'Stackdriver') {
-      dsVar = 'Cloud Monitoring';
-    }
-
-    const foundItem = this.props.editor.extended?.dataSources.find(ds => ds.value === dsVar);
+    const foundItem = this.props.editor.extended?.dataSources.find(ds => ds.value === this.props.variable.datasource);
     const value = foundItem ? foundItem.value : this.props.editor.extended?.dataSources[0].value;
     return value ?? '';
   };
