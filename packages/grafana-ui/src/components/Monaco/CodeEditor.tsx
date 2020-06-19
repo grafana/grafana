@@ -9,16 +9,18 @@ export type CodeEditorChangeHandler = (value: string) => void;
 interface CodeEditorProps extends Themeable {
   value: string;
   language: string;
-  readOnly?: boolean;
   width?: number | string;
   height?: number | string;
 
-  // /**
-  //  * Callback after the editor has mounted that gives you raw access to monaco
-  //  *
-  //  * @experimental
-  //  */
-  // onEditorDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
+  readOnly?: boolean;
+  showMiniMap?: boolean;
+
+  /**
+   * Callback after the editor has mounted that gives you raw access to monaco
+   *
+   * @experimental
+   */
+  onEditorDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
 
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
@@ -42,7 +44,7 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
   };
 
   editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-    const { onSave } = this.props;
+    const { onSave, onEditorDidMount } = this.props;
 
     this.getEditorValue = () => editor.getValue();
 
@@ -52,13 +54,14 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
       });
     }
 
-    // if (onEditorDidMount) {
-    //   onEditorDidMount(editor);
-    // }
+    if (onEditorDidMount) {
+      onEditorDidMount(editor);
+    }
   };
 
   render() {
-    const { value, theme, language, width, height } = this.props;
+    const { theme, language, width, height, showMiniMap, readOnly } = this.props;
+    const value = this.props.value ?? '';
     const longText = value.length > 100;
 
     return (
@@ -71,12 +74,12 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
           value={value}
           options={{
             wordWrap: 'off',
-            codeLens: false, // too small to bother (and not compiled)
+            codeLens: false, // not included in the bundle
             minimap: {
-              enabled: longText,
+              enabled: longText && showMiniMap,
               renderCharacters: false,
             },
-            readOnly: this.props.readOnly,
+            readOnly,
             lineNumbersMinChars: 4,
             lineDecorationsWidth: 0,
             overviewRulerBorder: false,
