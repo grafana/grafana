@@ -147,11 +147,26 @@ def pr_pipeline(ctx):
                     },
                 },
                 'commands': [
-                    'echo Token: $${GITHUB_TOKEN}',
                     'cd grafana-enterprise',
-                    'pwd',
                     './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition enterprise ' +
                         '--build-id $DRONE_BUILD_NUMBER',
+                ],
+            },
+            {
+                'name': 'build-enterprise-frontend',
+                'image': build_image,
+                'depends_on': [
+                    'create-enterprise-repo',
+                ],
+                'environment': {
+                    'GITHUB_TOKEN': {
+                        'from_secret': 'github_token',
+                    },
+                },
+                'commands': [
+                    'cd grafana-enterprise',
+                    './bin/grabpl build-frontend --no-install-deps --github-token "$${GITHUB_TOKEN}" ' +
+                        '--edition enterprise --build-id $DRONE_BUILD_NUMBER',
                 ],
             },
             {
@@ -204,9 +219,19 @@ def pr_pipeline(ctx):
                 ],
                 'commands': [
                     './bin/grabpl build-plugins --edition oss --no-install-deps',
-                    # TODO: Execute the following for non-forked PRs, using "when" condition and "by repository"
-                    # 'export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY',
-                    # './bin/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin',
+                ],
+            },
+            {
+                'name': 'build-enterprise-plugins',
+                'image': build_image,
+                'depends_on': [
+                    'create-enterprise-repo',
+                    'lint-go',
+                    'test-frontend',
+                ],
+                'commands': [
+                    'cd grafana-enterprise',
+                    './bin/grabpl build-plugins --edition enterprise --no-install-deps',
                 ],
             },
             {
@@ -227,12 +252,31 @@ def pr_pipeline(ctx):
                     },
                 },
                 'commands': [
-                    'ls -l bin/*/grafana-server',
-                    # This is for a forked PR, don't sign as it requires an API secret
-                    # TODO: Support also non-forked PRs
                     '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --github-token ' +
                         '"$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER',
-                    'tar tzvf dist/*.linux-amd64.tar.gz',
+                ],
+            },
+            {
+                'name': 'package-enterprise',
+                'image': build_image,
+                'depends_on': [
+                    'build-enterprise-backend',
+                    'build-enterprise-frontend',
+                    'build-enterprise-plugins',
+                    'test-backend',
+                    'test-frontend',
+                    'codespell',
+                    'shellcheck',
+                ],
+                'environment': {
+                    'GITHUB_TOKEN': {
+                        'from_secret': 'github_token',
+                    },
+                },
+                'commands': [
+                    'cd grafana-enterprise',
+                    '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --github-token ' +
+                        '"$${GITHUB_TOKEN}" --edition enterprise --build-id $DRONE_BUILD_NUMBER',
                 ],
             },
             {
