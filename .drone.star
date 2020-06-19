@@ -13,6 +13,8 @@ exclude_forks = {
     },
 }
 
+restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
+
 def pr_pipeline(ctx):
     return {
         'kind': 'pipeline',
@@ -38,6 +40,8 @@ def pr_pipeline(ctx):
                     'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
                     'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
                     'yarn install --frozen-lockfile --no-progress',
+                    # Keep the Yarn cache for subsequent steps
+                    'cp -r $(yarn cache dir) yarn-cache',
                 ],
             },
             {
@@ -164,6 +168,7 @@ def pr_pipeline(ctx):
                     },
                 },
                 'commands': [
+                    restore_yarn_cache,
                     'cd grafana-enterprise',
                     './bin/grabpl build-frontend --no-install-deps --github-token "$${GITHUB_TOKEN}" ' +
                         '--edition enterprise --build-id $DRONE_BUILD_NUMBER',
@@ -192,6 +197,7 @@ def pr_pipeline(ctx):
                     },
                 },
                 'commands': [
+                    restore_yarn_cache,
                     './bin/grabpl build-frontend --no-install-deps --github-token "$${GITHUB_TOKEN}" ' +
                         '--edition oss --build-id $DRONE_BUILD_NUMBER',
                 ],
@@ -203,6 +209,7 @@ def pr_pipeline(ctx):
                     'install-deps',
                 ],
                 'commands': [
+                    restore_yarn_cache,
                     'yarn run prettier:check',
                     'yarn run packages:typecheck',
                     'yarn run typecheck',
@@ -218,6 +225,7 @@ def pr_pipeline(ctx):
                     'test-frontend',
                 ],
                 'commands': [
+                    restore_yarn_cache,
                     './bin/grabpl build-plugins --edition oss --no-install-deps',
                 ],
             },
@@ -230,6 +238,7 @@ def pr_pipeline(ctx):
                     'test-frontend',
                 ],
                 'commands': [
+                    restore_yarn_cache,
                     'cd grafana-enterprise',
                     './bin/grabpl build-plugins --edition enterprise --no-install-deps',
                 ],
@@ -300,7 +309,7 @@ def pr_pipeline(ctx):
                     'HOST': 'end-to-end-tests-server',
                 },
                 'commands': [
-                    # TODO: Cache ~/.cache after `yarn install`, since Cypress depends on it, and the next line is a work-around
+                    restore_yarn_cache,
                     './node_modules/.bin/cypress install',
                     './e2e/wait-for-grafana',
                     './e2e/run-suite',
@@ -324,7 +333,8 @@ def pr_pipeline(ctx):
                     'package-oss',
                 ],
                 'commands': [
-                    'yarn', 'storybook:build',
+                    restore_yarn_cache,
+                    'yarn storybook:build',
                     # TODO: Enable the following for non-forked PRs
                     # - echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
                     # - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
