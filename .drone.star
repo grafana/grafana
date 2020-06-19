@@ -215,7 +215,12 @@ def pipeline(kind, name):
                     'lint-go',
                 ],
                 'commands': [
-                    'go test -tags=integration -covermode=atomic ./pkg/...',
+                    # First execute non-integration tests in parallel, since it should be safe
+                    'go test -covermode=atomic ./pkg/...',
+                    # Then execute integration tests in serial
+                    './scripts/integration-tests.sh',
+                    # Keep the test cache
+                    'cp -r $(go env GOCACHE) go-cache',
                 ],
             },
             {
@@ -456,6 +461,7 @@ def pipeline(kind, name):
                 'environment': {
                     'PGPASSWORD': 'grafanatest',
                     'GRAFANA_TEST_DB': 'postgres',
+                    'POSTGRES_HOST': 'postgres',
                 },
                 'commands': [
                     'apt-get update',
@@ -463,26 +469,31 @@ def pipeline(kind, name):
                     './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
                     'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
                         'devenv/docker/blocks/postgres_tests/setup.sql',
-                    'go test -tags=integration ./pkg/...',
+                    'rm -rf $(go env GOCACHE)',
+                    'cp -r go-cache $(go env GOCACHE)',
+                    './scripts/integration-tests.sh',
                 ],
             },
-            {
-                'name': 'mysql-integration-test',
-                'image': build_image,
-                'depends_on': [
-                    'test-backend',
-                    'test-frontend',
-                ],
-                'environment': {
-                    'GRAFANA_TEST_DB': 'mysql',
-                },
-                'commands': [
-                    'apt-get update',
-                    'apt-get install -yq default-mysql-client',
-                    './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
-                    'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-                    'go test -tags=integration ./pkg/...',
-                ],
-            },
+            # {
+                # 'name': 'mysql-integration-test',
+                # 'image': build_image,
+                # 'depends_on': [
+                    # 'test-backend',
+                    # 'test-frontend',
+                # ],
+                # 'environment': {
+                    # 'GRAFANA_TEST_DB': 'mysql',
+                    # 'MYSQL_HOST': 'mysql',
+                # },
+                # 'commands': [
+                    # 'apt-get update',
+                    # 'apt-get install -yq default-mysql-client',
+                    # './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
+                    # 'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
+                    # 'rm -rf $(go env GOCACHE)',
+                    # 'cp -r go-cache $(go env GOCACHE)',
+                    # './scripts/integration-tests.sh',
+                # ],
+            # },
         ],
     }

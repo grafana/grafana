@@ -974,9 +974,11 @@ func TestPostgres(t *testing.T) {
 }
 
 func InitPostgresTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, strings.Replace(sqlutil.TestDB_Postgres.ConnStr, "dbname=grafanatest", "dbname=grafanadstest", 1))
+	testDB := sqlutil.PostgresTestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "dbname=grafanatest",
+		"dbname=grafanadstest", 1))
 	if err != nil {
-		t.Fatalf("Failed to init postgres db %v", err)
+		t.Fatalf("Failed to init postgres DB %v", err)
 	}
 
 	x.DatabaseTZ = time.UTC
