@@ -335,6 +335,7 @@ func (ss *SqlStore) readConfig() {
 type ITestDB interface {
 	Helper()
 	Fatalf(format string, args ...interface{})
+	Logf(format string, args ...interface{})
 }
 
 // InitTestDB initialize test DB.
@@ -378,6 +379,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 	}
 
 	// need to get engine to clean db before we init
+	t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 	engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 	if err != nil {
 		t.Fatalf("Failed to init test database: %v", err)
