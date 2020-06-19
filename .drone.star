@@ -35,6 +35,17 @@ def pipeline(kind, name):
         'trigger': {
             'event': ['pull_request',],
         },
+        'services': [
+            {
+                'name': 'postgres',
+                'image': 'postgres:12.3-alpine',
+                'environment': {
+                  'POSTGRES_USER': 'grafanatest',
+                  'POSTGRES_PASSWORD': 'grafanatest',
+                  'POSTGRES_DB': 'grafanatest',
+                },
+            },
+        ],
         'steps': [
             {
                 'name': 'install-deps',
@@ -424,6 +435,25 @@ def pipeline(kind, name):
                     'edition': 'enterprise',
                     'ubuntu': True,
                 },
+            },
+            {
+                'name': 'postgres-integration-test',
+                'image': build_image,
+                'depends_on': [
+                    'test-backend',
+                    'test-frontend',
+                ],
+                'environment': {
+                    'PGPASSWORD': 'grafanatest',
+                },
+                'commands': [
+                    'apt-get update',
+                    'apt-get install -yq postgresql-client',
+                    './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
+                    'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
+                        'devenv/docker/blocks/postgres_tests/setup.sql',
+                    './scripts/circle-test-postgres.sh',
+                ],
             },
         ],
     }
