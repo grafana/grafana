@@ -1,0 +1,7 @@
+#datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,string,double
+#group,false,false,true,true,false,true,false
+#default,_result,,,,,,
+,result,table,_start,_stop,_time,host,_value
+,,0,2020-06-05T12:03:27.444072266Z,2020-06-05T12:08:27.444072266Z,2020-06-05T12:06:00Z,hostname.ru,8.291381590647958
+,,0,2020-06-05T12:03:27.444072266Z,2020-06-05T12:08:27.444072266Z,2020-06-05T12:07:00Z,hostname.ru,0.5341565263056448
+,,0,2020-06-05T12:03:27.444072266Z,2020-06-05T12:08:27.444072266Z,2020-06-05T12:08:00Z,hostname.ru,0.6676119389260387
