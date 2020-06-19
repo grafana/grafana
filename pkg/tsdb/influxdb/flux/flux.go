@@ -63,7 +63,7 @@ func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*influxdb2.Que
 
 // RunnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
 func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
-	org := dsInfo.JsonData.Get("organization").MustString("")
+	org := dsInfo.BasicAuthUser
 	if org == "" {
 		return nil, fmt.Errorf("missing organization in datasource configuration")
 	}
@@ -72,8 +72,8 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 	if url == "" {
 		return nil, fmt.Errorf("missing url from datasource configuration")
 	}
-	token, found := dsInfo.SecureJsonData.DecryptedValue("token")
-	if !found {
+	token := dsInfo.BasicAuthPassword
+	if token == "" {
 		return nil, fmt.Errorf("token is missing from datasource configuration and is needed to use Flux")
 	}
 

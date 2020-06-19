@@ -10,41 +10,165 @@ import {
 } from '@grafana/data';
 import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Input, SecretFormField } = LegacyForms;
-import { InfluxOptions, InfluxSecureJsonData } from '../types';
+import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
 const httpModes = [
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
 ] as SelectableValue[];
 
+const versions = [
+  { label: '1.x', value: InfluxVersion.V1x },
+  { label: '2.x', value: InfluxVersion.V2x, description: 'Supports both Flux and IFQL queries' },
+] as Array<SelectableValue<InfluxVersion>>;
+
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 export class ConfigEditor extends PureComponent<Props> {
+  // 1x
   onResetPassword = () => {
     updateDatasourcePluginResetOption(this.props, 'password');
   };
 
-  onResetToken = () => {
-    updateDatasourcePluginResetOption(this.props, 'token');
+  // 2x
+  onResetBasicAuthPassword = () => {
+    updateDatasourcePluginResetOption(this.props, 'basicAuthPassword');
   };
 
-  onToggleFlux = (event: React.SyntheticEvent<HTMLInputElement>) => {
+  onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
-    onOptionsChange({
+
+    const copy = {
       ...options,
       jsonData: {
         ...options.jsonData,
-        enableFlux: !options.jsonData.enableFlux,
+        version: selected.value,
       },
+    };
+    if (selected.value === InfluxVersion.V2x) {
+      copy.access = 'proxy';
+      copy.basicAuth = true;
+
+      // Move user and database to basicAuthUser & Password
+      if (!copy.basicAuthUser) {
+        copy.basicAuthUser = copy.user;
+      }
+      if (!copy.jsonData.defaultBucket) {
+        copy.jsonData.defaultBucket = copy.database;
+      }
+
+      // Remove old 1x configs
+      delete copy.user;
+      delete copy.database;
+    }
+    onOptionsChange(copy);
+  };
+
+  onUpdateInflux2xURL = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const { options, onOptionsChange } = this.props;
+    onOptionsChange({
+      ...options,
+      url: e.currentTarget.value,
+      access: 'proxy',
+      basicAuth: true,
     });
   };
 
-  render() {
+  renderInflux2x() {
+    const { options } = this.props;
+    const { secureJsonFields } = options;
+    const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
+
+    return (
+      <div>
+        <h3 className="page-heading">InfluxDB Details</h3>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              className="width-10"
+              tooltip="This URL needs to be accessible from the grafana backend/server."
+            >
+              URL
+            </InlineFormLabel>
+            <div className="width-20">
+              <Input
+                className="width-20"
+                value={options.url || ''}
+                placeholder="http://localhost:8086"
+                onChange={this.onUpdateInflux2xURL}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel className="width-10">Organization</InlineFormLabel>
+            <div className="width-10">
+              <Input
+                className="width-20"
+                value={options.user || ''}
+                onChange={onUpdateDatasourceOption(this.props, 'basicAuthUser')}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <SecretFormField
+              isConfigured={(secureJsonFields && secureJsonFields.basicAuthPassword) as boolean}
+              value={secureJsonData.basicAuthPassword || ''}
+              label="Token"
+              labelWidth={10}
+              inputWidth={20}
+              onReset={this.onResetBasicAuthPassword}
+              onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'basicAuthPassword')}
+            />
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel className="width-10">Default Bucket</InlineFormLabel>
+            <div className="width-10">
+              <Input
+                className="width-20"
+                placeholder="default bucket"
+                value={options.jsonData.defaultBucket || ''}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'defaultBucket')}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              className="width-10"
+              tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example 1m if your data is written every minute."
+            >
+              Min time interval
+            </InlineFormLabel>
+            <div className="width-10">
+              <Input
+                className="width-10"
+                placeholder="10s"
+                value={options.jsonData.timeInterval || ''}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'timeInterval')}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderInflux1x() {
     const { options, onOptionsChange } = this.props;
     const { secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
+
     return (
-      <>
+      <div>
         <DataSourceHttpSettings
           showAccessOptions={true}
           dataSourceConfig={options}
@@ -54,50 +178,6 @@ export class ConfigEditor extends PureComponent<Props> {
 
         <h3 className="page-heading">InfluxDB Details</h3>
         <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <LegacyForms.Switch
-              label="Enable flux"
-              labelClass="width-10"
-              checked={options.jsonData.enableFlux || false}
-              onChange={this.onToggleFlux}
-              tooltip="Suport flux query endpoint"
-            />
-          </div>
-
-          {options.jsonData.enableFlux && (
-            <>
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-10">Organization</InlineFormLabel>
-                  <div className="width-10">
-                    <Input
-                      className="width-10"
-                      placeholder="enter organization"
-                      value={options.jsonData.organization || ''}
-                      onChange={onUpdateDatasourceJsonDataOption(this.props, 'organization')}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-10">Default Bucket</InlineFormLabel>
-                  <div className="width-10">
-                    <Input
-                      className="width-10"
-                      placeholder="default bucket"
-                      value={options.jsonData.defaultBucket || ''}
-                      onChange={onUpdateDatasourceJsonDataOption(this.props, 'defaultBucket')}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <br />
-              <br />
-            </>
-          )}
-
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel className="width-10">Database</InlineFormLabel>
@@ -137,19 +217,6 @@ export class ConfigEditor extends PureComponent<Props> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <SecretFormField
-                isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
-                value={secureJsonData.token || ''}
-                label="Token"
-                labelWidth={10}
-                inputWidth={20}
-                onReset={this.onResetPassword}
-                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'token')}
-              />
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
               <InlineFormLabel
                 className="width-10"
                 tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
@@ -168,6 +235,7 @@ export class ConfigEditor extends PureComponent<Props> {
             </div>
           </div>
         </div>
+
         <div className="gf-form-group">
           <div className="grafana-info-box">
             <h5>Database Access</h5>
@@ -202,6 +270,31 @@ export class ConfigEditor extends PureComponent<Props> {
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  render() {
+    const { options } = this.props;
+
+    return (
+      <>
+        <div className="gf-form-group">
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel className="width-10">Version</InlineFormLabel>
+              <Select
+                className="width-20"
+                value={options.jsonData.version === InfluxVersion.V2x ? versions[1] : versions[0]}
+                options={versions}
+                defaultValue={versions[0]}
+                onChange={this.onVersionChanged}
+              />
+            </div>
+          </div>
+        </div>
+
+        {options.jsonData.version === InfluxVersion.V2x ? this.renderInflux2x() : this.renderInflux1x()}
       </>
     );
   }
