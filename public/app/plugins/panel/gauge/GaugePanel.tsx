@@ -44,6 +44,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         </DataLinksContextMenu>
       );
     }
+
     return this.renderComponent(valueProps, {});
   };
 

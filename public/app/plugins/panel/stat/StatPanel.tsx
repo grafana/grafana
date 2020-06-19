@@ -74,6 +74,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         </DataLinksContextMenu>
       );
     }
+
     return this.renderComponent(valueProps, {});
   };
 

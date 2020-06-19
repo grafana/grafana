@@ -54,6 +54,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         </DataLinksContextMenu>
       );
     }
+
     return this.renderComponent(valueProps, {});
   };
 
