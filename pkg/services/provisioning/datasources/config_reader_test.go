@@ -150,8 +150,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("skip invalid directory", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig("./invalid-directory")
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig("./invalid-directory")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -161,8 +161,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		Convey("can read all properties from version 1", func() {
 			_ = os.Setenv("TEST_VAR", "name")
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(allProperties)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(allProperties)
 			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
@@ -190,8 +190,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 0", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(versionZero)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(versionZero)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}

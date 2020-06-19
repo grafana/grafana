@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { VariableModel, VariableOption, VariableWithOptions } from '../../templating/types';
+import { VariableModel, VariableOption, VariableWithOptions } from '../types';
 import { selectors } from '@grafana/e2e-selectors';
 
 export interface VariableValuesPreviewProps {

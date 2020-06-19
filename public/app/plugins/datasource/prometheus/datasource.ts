@@ -693,6 +693,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         expression = addLabelToQuery(expression, action.key, action.value);
         break;
       }
+      case 'ADD_FILTER_OUT': {
+        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        break;
+      }
       case 'ADD_HISTOGRAM_QUANTILE': {
         expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
         break;

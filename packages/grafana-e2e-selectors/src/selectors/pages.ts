@@ -6,6 +6,9 @@ export const Pages = {
     submit: 'Login button',
     skip: 'Skip change password button',
   },
+  Home: {
+    url: '/',
+  },
   DataSource: {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',

@@ -27,7 +27,7 @@ import (
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
-// use to verify that the generated data are vizualized as expected, see
+// use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
@@ -261,7 +261,7 @@ func TestPostgres(t *testing.T) {
 					So(err, ShouldBeNil)
 					queryResult := resp.Results["A"]
 					So(queryResult.Error, ShouldBeNil)
-					So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT floor(extract(epoch from time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+					So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT floor(extract(epoch from time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
 				})
 			})
 
@@ -708,7 +708,7 @@ func TestPostgres(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+				So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
 
 			})
 		})

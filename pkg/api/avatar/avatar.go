@@ -15,14 +15,14 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/macaron.v1"
 
 	gocache "github.com/patrickmn/go-cache"
 )
@@ -73,9 +73,15 @@ type CacheServer struct {
 	cache    *gocache.Cache
 }
 
-func (this *CacheServer) Handler(ctx *macaron.Context) {
-	urlPath := ctx.Req.URL.Path
-	hash := urlPath[strings.LastIndex(urlPath, "/")+1:]
+var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
+
+func (this *CacheServer) Handler(ctx *models.ReqContext) {
+	hash := ctx.Params("hash")
+
+	if len(hash) != 32 || !validMD5.MatchString(hash) {
+		ctx.JsonApiErr(404, "Avatar not found", nil)
+		return
+	}
 
 	var avatar *Avatar
 	obj, exists := this.cache.Get(hash)

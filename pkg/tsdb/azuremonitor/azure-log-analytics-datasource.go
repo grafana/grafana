@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,10 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -58,11 +56,7 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query, originalQueries, timeRange)
-		if err != nil {
-			queryRes.Error = err
-		}
-		result.Results[query.RefID] = queryRes
+		result.Results[query.RefID] = e.executeQuery(ctx, query, originalQueries, timeRange)
 	}
 
 	return result, nil
@@ -115,13 +109,17 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, error) {
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) *tsdb.QueryResult {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+
+	queryResultError := func(err error) *tsdb.QueryResult {
+		queryResult.Error = err
+		return queryResult
+	}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -140,38 +138,49 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
-	data, err := e.unmarshalResponse(res)
+	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		return queryResultError(err)
 	}
 
-	azlog.Debug("AzureLogsAnalytics", "Response", queryResult)
-
-	if query.ResultFormat == "table" {
-		queryResult.Tables, queryResult.Meta, err = e.parseToTables(data, query.Model, query.Params)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		queryResult.Series, queryResult.Meta, err = e.parseToTimeSeries(data, query.Model, query.Params)
-		if err != nil {
-			return nil, err
-		}
+	t, err := logResponse.GetPrimaryResultTable()
+	if err != nil {
+		return queryResultError(err)
 	}
 
-	return queryResult, nil
+	frame, err := LogTableToFrame(t)
+	if err != nil {
+		return queryResultError(err)
+	}
+
+	setAdditionalFrameMeta(frame,
+		query.Params.Get("query"),
+		query.Model.Get("subscriptionId").MustString(),
+		query.Model.Get("azureLogAnalytics").Get("workspace").MustString())
+
+	if query.ResultFormat == "time_series" {
+		tsSchema := frame.TimeSeriesSchema()
+		if tsSchema.Type == data.TimeSeriesTypeLong {
+			wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
+			if err == nil {
+				frame = wideFrame
+			} else {
+				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
+			}
+		}
+	}
+	frames := data.Frames{frame}
+	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
+	return queryResult
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
@@ -225,6 +234,17 @@ func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourceP
 	return logAnalyticsRoute, pluginRouteName, nil
 }
 
+// GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
+// error if there is no table by that name.
+func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalyticsTable, error) {
+	for _, t := range ar.Tables {
+		if t.Name == "PrimaryResult" {
+			return &t, nil
+		}
+	}
+	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the the response")
+}
+
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
@@ -239,7 +259,9 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}
 
 	var data AzureLogAnalyticsResponse
-	err = json.Unmarshal(body, &data)
+	d := json.NewDecoder(bytes.NewReader(body))
+	d.UseNumber()
+	err = d.Decode(&data)
 	if err != nil {
 		azlog.Debug("Failed to unmarshal Azure Log Analytics response", "error", err, "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, err
@@ -248,153 +270,29 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTables(data AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) ([]*tsdb.Table, *simplejson.Json, error) {
-	meta, err := createMetadata(model, params)
-	if err != nil {
-		return nil, simplejson.NewFromAny(meta), err
+func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) {
+	frame.Meta.ExecutedQueryString = query
+	frame.Meta.Custom["subscription"] = subscriptionID
+	frame.Meta.Custom["workspace"] = workspace
+	encodedQuery, err := encodeQuery(query)
+	if err == nil {
+		frame.Meta.Custom["encodedQuery"] = encodedQuery
+		return
 	}
-
-	tables := make([]*tsdb.Table, 0)
-	for _, t := range data.Tables {
-		if t.Name == "PrimaryResult" {
-			table := tsdb.Table{
-				Columns: make([]tsdb.TableColumn, 0),
-				Rows:    make([]tsdb.RowValues, 0),
-			}
-
-			meta.Columns = make([]column, 0)
-			for _, v := range t.Columns {
-				meta.Columns = append(meta.Columns, column{Name: v.Name, Type: v.Type})
-				table.Columns = append(table.Columns, tsdb.TableColumn{Text: v.Name})
-			}
-
-			for _, r := range t.Rows {
-				values := make([]interface{}, len(table.Columns))
-				for i := 0; i < len(table.Columns); i++ {
-					values[i] = r[i]
-				}
-				table.Rows = append(table.Rows, values)
-			}
-			tables = append(tables, &table)
-			return tables, simplejson.NewFromAny(meta), nil
-		}
-	}
-
-	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
+	azlog.Error("failed to encode the query into the encodedQuery property")
 }
 
-func (e *AzureLogAnalyticsDatasource) parseToTimeSeries(data AzureLogAnalyticsResponse, model *simplejson.Json, params url.Values) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
-	meta, err := createMetadata(model, params)
-	if err != nil {
-		return nil, simplejson.NewFromAny(meta), err
-	}
-
-	for _, t := range data.Tables {
-		if t.Name == "PrimaryResult" {
-			timeIndex, metricIndex, valueIndex := -1, -1, -1
-			meta.Columns = make([]column, 0)
-			for i, v := range t.Columns {
-				meta.Columns = append(meta.Columns, column{Name: v.Name, Type: v.Type})
-
-				if timeIndex == -1 && v.Type == "datetime" {
-					timeIndex = i
-				}
-
-				if metricIndex == -1 && v.Type == "string" {
-					metricIndex = i
-				}
-
-				if valueIndex == -1 && (v.Type == "int" || v.Type == "long" || v.Type == "real" || v.Type == "double") {
-					valueIndex = i
-				}
-			}
-
-			if timeIndex == -1 {
-				azlog.Info("No time column specified. Returning existing columns, no data")
-				return nil, simplejson.NewFromAny(meta), nil
-			}
-
-			if valueIndex == -1 {
-				azlog.Info("No value column specified. Returning existing columns, no data")
-				return nil, simplejson.NewFromAny(meta), nil
-			}
-
-			slice := tsdb.TimeSeriesSlice{}
-			buckets := map[string]*tsdb.TimeSeriesPoints{}
-
-			getSeriesBucket := func(metricName string) *tsdb.TimeSeriesPoints {
-				if points, ok := buckets[metricName]; ok {
-					return points
-				}
-
-				series := tsdb.NewTimeSeries(metricName, []tsdb.TimePoint{})
-				slice = append(slice, series)
-				buckets[metricName] = &series.Points
-
-				return &series.Points
-			}
-
-			for _, r := range t.Rows {
-				timeStr, ok := r[timeIndex].(string)
-				if !ok {
-					return nil, simplejson.NewFromAny(meta), errors.New("invalid time value")
-				}
-				timeValue, err := time.Parse(time.RFC3339Nano, timeStr)
-				if err != nil {
-					return nil, simplejson.NewFromAny(meta), err
-				}
-
-				var value float64
-				if value, err = getFloat(r[valueIndex]); err != nil {
-					return nil, simplejson.NewFromAny(meta), err
-				}
-
-				var metricName string
-				if metricIndex == -1 {
-					metricName = t.Columns[valueIndex].Name
-				} else {
-					metricName, ok = r[metricIndex].(string)
-					if !ok {
-						return nil, simplejson.NewFromAny(meta), err
-					}
-				}
-
-				points := getSeriesBucket(metricName)
-				*points = append(*points, tsdb.NewTimePoint(null.FloatFrom(value), float64(timeValue.Unix()*1000)))
-			}
-
-			return slice, simplejson.NewFromAny(meta), nil
-		}
-	}
-
-	return nil, nil, errors.New("no data as no PrimaryResult table was returned in the response")
-}
-
-func createMetadata(model *simplejson.Json, params url.Values) (metadata, error) {
-	meta := metadata{
-		Query:        params.Get("query"),
-		Subscription: model.Get("subscriptionId").MustString(),
-		Workspace:    model.Get("azureLogAnalytics").Get("workspace").MustString(),
-	}
-
-	encQuery, err := encodeQuery(meta.Query)
-	if err != nil {
-		return meta, err
-	}
-	meta.EncodedQuery = encQuery
-	return meta, nil
-}
-
-func encodeQuery(rawQuery string) (string, error) {
+// encodeQuery encodes the query in gzip so the frontend can build links.
+func encodeQuery(rawQuery string) ([]byte, error) {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write([]byte(rawQuery)); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if err := gz.Close(); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
+	return b.Bytes(), nil
 }

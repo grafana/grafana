@@ -65,7 +65,7 @@ By adding field configurations to a data frame, Grafana can configure visualizat
 
 ## Transformations
 
-Along with the type information, field configs enables _data transformations_ within Grafana.
+Along with the type information, field configs enable _data transformations_ within Grafana.
 
 A data transformation is any function that accepts a data frame as input, and returns another data frame as output. By using data frames in your plugin, you get a range of transformations for free.
 
@@ -73,7 +73,7 @@ A data transformation is any function that accepts a data frame as input, and re
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series](https://grafana.com/docs/grafana/latest/guides/timeseries/).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../getting-started/timeseries.md" >}}).
 
 ### Wide format
 

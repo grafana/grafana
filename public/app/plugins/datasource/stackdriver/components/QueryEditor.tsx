@@ -107,7 +107,10 @@ export class QueryEditor extends PureComponent<Props, State> {
             query={sloQuery}
           ></SLOQueryEditor>
         )}
-        <Help rawQuery={decodeURIComponent(meta?.rawQuery ?? '')} lastQueryError={this.state.lastQueryError} />
+        <Help
+          rawQuery={decodeURIComponent(meta?.executedQueryString ?? '')}
+          lastQueryError={this.state.lastQueryError}
+        />
       </>
     );
   }
