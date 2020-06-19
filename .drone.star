@@ -61,7 +61,7 @@ def pipeline(kind, name):
                 'name': 'install-deps',
                 'image': build_image,
                 'environment': {
-                    'GRABPL_VERSION': '0.4.13',
+                    'GRABPL_VERSION': '0.4.14',
                     'DOCKERIZE_VERSION': '0.6.1',
                 },
                 'commands': [
@@ -218,7 +218,7 @@ def pipeline(kind, name):
                     # First execute non-integration tests in parallel, since it should be safe
                     'go test -covermode=atomic ./pkg/...',
                     # Then execute integration tests in serial
-                    './scripts/integration-tests.sh',
+                    './bin/grabpl integration-tests',
                     # Keep the test cache
                     'cp -r $(go env GOCACHE) go-cache',
                 ],
@@ -471,7 +471,9 @@ def pipeline(kind, name):
                         'devenv/docker/blocks/postgres_tests/setup.sql',
                     'rm -rf $(go env GOCACHE)',
                     'cp -r go-cache $(go env GOCACHE)',
-                    './scripts/integration-tests.sh',
+                    # Make sure that we don't use cached results for another database
+                    'go clean -testcache',
+                    './bin/grabpl integration-tests --database postgres',
                 ],
             },
             {
@@ -492,7 +494,9 @@ def pipeline(kind, name):
                     'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
                     'rm -rf $(go env GOCACHE)',
                     'cp -r go-cache $(go env GOCACHE)',
-                    './scripts/integration-tests.sh',
+                    # Make sure that we don't use cached results for another database
+                    'go clean -testcache',
+                    './bin/grabpl integration-tests --database mysql',
                 ],
             },
         ],
