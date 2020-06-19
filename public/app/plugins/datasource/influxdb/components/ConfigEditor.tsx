@@ -106,7 +106,7 @@ export class ConfigEditor extends PureComponent<Props> {
             <div className="width-10">
               <Input
                 className="width-20"
-                value={options.user || ''}
+                value={options.basicAuthUser || ''}
                 onChange={onUpdateDatasourceOption(this.props, 'basicAuthUser')}
               />
             </div>

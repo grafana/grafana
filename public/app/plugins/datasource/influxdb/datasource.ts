@@ -5,7 +5,7 @@ import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { InfluxQuery, InfluxOptions, InfluxQueryType } from './types';
+import { InfluxQuery, InfluxOptions, InfluxQueryType, InfluxVersion } from './types';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 
@@ -21,7 +21,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   interval: any;
   responseParser: any;
   httpMode: string;
-  enableFlux: boolean;
+  is2x: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>) {
     super(instanceSettings);
@@ -40,19 +40,17 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
-    this.enableFlux = !!settingsData.enableFlux;
+    this.is2x = settingsData.version === InfluxVersion.V2x;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     let hasFlux = false;
-    let allFlux = true;
 
     // Update the queryType fields and manage migrations
     for (const target of request.targets) {
       if (target.queryType === InfluxQueryType.Flux) {
         hasFlux = true;
       } else {
-        allFlux = false;
         if (target.queryType === InfluxQueryType.Classic) {
           delete target.rawQuery;
         } else if (target.rawQuery) {
@@ -66,16 +64,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       }
     }
 
+    if (this.is2x) {
+      return super.query(request);
+    }
+
     // Process flux queries (data frame request)
     if (hasFlux) {
-      if (!this.enableFlux) {
-        throw 'Flux not enabled for this datasource';
-      }
-      if (!allFlux) {
-        throw 'All queries must be flux';
-      }
-      // Calls /api/tsdb/query
-      return super.query(request);
+      throw 'Flux not enabled for this datasource';
     }
 
     // Fallback to classic query support
