@@ -2,9 +2,8 @@ import React from 'react';
 import { JaegerDatasource, JaegerQuery } from './datasource';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
-import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
+import { AppEvents, ExploreQueryFieldProps, Span, TraceData } from '@grafana/data';
 import { appEvents } from '../../../core/core';
-import { Span, TraceData } from '@jaegertracing/jaeger-ui-components';
 
 const ALL_OPERATIONS_KEY = '__ALL__';
 const NO_TRACES_KEY = '__NO_TRACES__';

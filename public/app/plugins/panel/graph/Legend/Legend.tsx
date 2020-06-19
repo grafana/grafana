@@ -19,7 +19,7 @@ interface LegendEventHandlers {
 
 interface LegendComponentEventHandlers {
   onToggleSeries?: (series: TimeSeries, event: any) => void;
-  onToggleSort?: (sortBy: Sort, sortDesc: any) => void;
+  onToggleSort?: (sortBy: Sort | undefined, sortDesc: any) => void;
   onToggleAxis?: (series: TimeSeries) => void;
   onColorChange?: (series: TimeSeries, color: string) => void;
 }
@@ -90,9 +90,10 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
 
   sortLegend() {
     let seriesList: TimeSeries[] = [...this.props.seriesList] || [];
-    if (this.props.sort && this.props[this.props.sort] && this.props.alignAsTable) {
+    const sortBy = this.props.sort;
+    if (sortBy && this.props[sortBy] && this.props.alignAsTable) {
       seriesList = _.sortBy(seriesList, series => {
-        let sort = series.stats[this.props.sort];
+        let sort = series.stats[sortBy];
         if (sort === null) {
           sort = -Infinity;
         }
@@ -106,6 +107,10 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
   }
 
   onToggleSeries = (series: TimeSeries, event: any) => {
+    if (!this.props.onToggleSeries) {
+      return;
+    }
+
     let hiddenSeries = { ...this.state.hiddenSeries };
     if (event.ctrlKey || event.metaKey || event.shiftKey) {
       if (hiddenSeries[series.alias]) {
@@ -228,6 +233,10 @@ class LegendSeriesList extends PureComponent<LegendComponentProps> {
 
 class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
   onToggleSort = (stat: Sort) => {
+    if (!this.props.onToggleSort) {
+      return;
+    }
+
     let sortDesc = this.props.sortDesc;
     let sortBy = this.props.sort;
     if (stat !== sortBy) {
@@ -249,6 +258,11 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
     const seriesList = this.props.seriesList;
     const { values, min, max, avg, current, total, sort, sortDesc, hiddenSeries } = this.props;
     const seriesValuesProps: any = { values, min, max, avg, current, total };
+
+    if (!seriesList) {
+      return null;
+    }
+
     return (
       <table>
         <colgroup>
@@ -298,9 +312,8 @@ interface LegendTableHeaderProps {
 
 class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & LegendSortProps> {
   onClick = () => {
-    const { onClick } = this.props;
-    if (onClick) {
-      onClick(this.props.statName);
+    if (this.props.onClick) {
+      this.props.onClick(this.props.statName);
     }
   };
 

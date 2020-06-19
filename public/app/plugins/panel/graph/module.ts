@@ -302,7 +302,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
       return dataWarning;
     }
-
     return undefined;
   }
 
