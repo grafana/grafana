@@ -19,7 +19,7 @@ const httpModes = [
 
 const versions = [
   { label: '1.x', value: InfluxVersion.V1x },
-  { label: '2.x', value: InfluxVersion.V2x, description: 'Supports both Flux and IFQL queries' },
+  { label: '2.x (beta)', value: InfluxVersion.V2x, description: 'Supports both Flux and IFQL queries' },
 ] as Array<SelectableValue<InfluxVersion>>;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
