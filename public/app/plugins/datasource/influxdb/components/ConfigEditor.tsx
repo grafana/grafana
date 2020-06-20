@@ -81,7 +81,20 @@ export class ConfigEditor extends PureComponent<Props> {
 
     return (
       <div>
-        <h3 className="page-heading">InfluxDB Details</h3>
+        <div className="gf-form-group">
+          <div className="grafana-info-box">
+            <h5>Support for flux in InfluxDB 2.0 is currently in beta</h5>
+            <p>
+              Please report any issues in github: <br />
+              <a href="https://github.com/grafana/grafana/issues/new/choose">
+                https://github.com/grafana/grafana/issues
+              </a>
+            </p>
+          </div>
+        </div>
+        <br />
+
+        <h3 className="page-heading">Connection</h3>
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel
@@ -279,6 +292,7 @@ export class ConfigEditor extends PureComponent<Props> {
 
     return (
       <>
+        <h3 className="page-heading">InfluxDB</h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
