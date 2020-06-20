@@ -182,7 +182,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/MediaConnect":      {},
 	"AWS/MediaConvert":      {"Job", "Operation", "Queue"},
 	"AWS/MediaPackage":      {"Channel", "No Dimension", "OriginEndpoint", "StatusCodeRange"},
-	"AWS/MediaStore":        {"Container name", "Object group name", "Request type"},
+	"AWS/MediaStore":        {"ContainerName", "ObjectGroupName", "RequestType"},
 	"AWS/MediaTailor":       {"Configuration Name"},
 	"AWS/NATGateway":        {"NatGatewayId"},
 	"AWS/Neptune":           {"DBClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
