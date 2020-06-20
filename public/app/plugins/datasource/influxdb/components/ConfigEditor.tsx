@@ -107,7 +107,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <Input
                 className="width-20"
                 value={options.url || ''}
-                placeholder="http://localhost:8086"
+                placeholder="http://localhost:9999/api/v2"
                 onChange={this.onUpdateInflux2xURL}
               />
             </div>

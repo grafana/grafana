@@ -72,8 +72,8 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 	if url == "" {
 		return nil, fmt.Errorf("missing url from datasource configuration")
 	}
-	token := dsInfo.BasicAuthPassword
-	if token == "" {
+	token, ok := dsInfo.SecureJsonData.DecryptedValue("basicAuthPassword")
+	if !ok {
 		return nil, fmt.Errorf("token is missing from datasource configuration and is needed to use Flux")
 	}
 
@@ -81,7 +81,6 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 		client: influxdb2.NewClient(url, token),
 		org:    org,
 	}, nil
-
 }
 
 // backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a

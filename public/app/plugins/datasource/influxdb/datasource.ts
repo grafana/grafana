@@ -43,24 +43,29 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.is2x = settingsData.version === InfluxVersion.V2x;
   }
 
+  verifyQueryType(target: InfluxQuery): InfluxQueryType {
+    if (target.queryType !== InfluxQueryType.Flux) {
+      if (target.queryType === InfluxQueryType.Classic) {
+        delete target.rawQuery;
+      } else if (target.rawQuery) {
+        target.queryType = InfluxQueryType.InfluxQL;
+      } else if (target.queryType === InfluxQueryType.InfluxQL) {
+        target.rawQuery = true; // so the old version works
+      } else {
+        target.queryType = InfluxQueryType.Classic; // Explicitly set it to classic
+        delete target.rawQuery;
+      }
+    }
+    return target.queryType;
+  }
+
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     let hasFlux = false;
 
     // Update the queryType fields and manage migrations
     for (const target of request.targets) {
-      if (target.queryType === InfluxQueryType.Flux) {
+      if (this.verifyQueryType(target)) {
         hasFlux = true;
-      } else {
-        if (target.queryType === InfluxQueryType.Classic) {
-          delete target.rawQuery;
-        } else if (target.rawQuery) {
-          target.queryType = InfluxQueryType.InfluxQL;
-        } else if (target.queryType === InfluxQueryType.InfluxQL) {
-          target.rawQuery = true; // so the old version works
-        } else {
-          target.queryType = InfluxQueryType.Classic; // Explicitly set it to classic
-          delete target.rawQuery;
-        }
       }
     }
 
@@ -306,8 +311,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ).join('&');
   }
 
-  // TODO: remove this so that everything gets sent to /healthcheck!
   testDatasource() {
+    if (this.is2x) {
+      console.log('TODO, this should call super.testDatasource()');
+    }
+
     const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 

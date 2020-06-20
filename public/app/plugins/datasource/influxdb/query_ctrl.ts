@@ -6,10 +6,12 @@ import queryPart from './query_part';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { InfluxQueryType } from './types';
+import InfluxDatasource from './datasource';
 
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
+  datasource: InfluxDatasource;
   queryModel: InfluxQueryModel;
   queryBuilder: any;
   groupBySegment: any;
@@ -40,7 +42,8 @@ export class InfluxQueryCtrl extends QueryCtrl {
     ];
 
     // Show a dropdown for flux
-    if (this.datasource.enableFlux) {
+    if (this.datasource.is2x) {
+      this.datasource.verifyQueryType(this.target);
       this.queryTypes = [
         { text: 'Classic', value: InfluxQueryType.Classic },
         { text: 'InfluxQL', value: InfluxQueryType.InfluxQL },
@@ -194,6 +197,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
+    return Promise.resolve();
   }
 
   handleGroupByPartEvent(part: any, index: any, evt: { name: any }) {
@@ -218,6 +222,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
+    return Promise.resolve();
   }
 
   fixTagSegments() {
@@ -257,7 +262,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     if (queryType === InfluxQueryType.Flux || queryType === InfluxQueryType.InfluxQL) {
       this.target.queryType = InfluxQueryType.Classic;
       this.target.rawQuery = false;
-    } else if (this.datasource.enableFlux) {
+    } else if (this.datasource.is2x) {
       this.target.queryType = InfluxQueryType.Flux;
     } else {
       this.target.queryType = InfluxQueryType.InfluxQL;
