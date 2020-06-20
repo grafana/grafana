@@ -6,7 +6,6 @@ import {
   DataQuery,
   DataSourceJsonData,
   ScopedVars,
-  DataFrame,
 } from '@grafana/data';
 import { Observable, from, of } from 'rxjs';
 import { config } from '..';
