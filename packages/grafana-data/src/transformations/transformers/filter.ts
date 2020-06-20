@@ -5,8 +5,19 @@ import { DataTransformerInfo, MatcherConfig } from '../../types/transformations'
 import { getFieldMatcher, getFrameMatchers } from '../matchers';
 
 export interface FilterOptions {
+  hide?: boolean;
   include?: MatcherConfig;
   exclude?: MatcherConfig;
+}
+
+export function applyHiddenField(field: Field, hidden?: boolean) {
+  return {
+    ...field,
+    config: {
+      ...field.config,
+      hidden,
+    },
+  };
 }
 
 export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
@@ -24,6 +35,7 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
       return noopTransformer.transformer({});
     }
 
+    const { hide } = options;
     const include = options.include ? getFieldMatcher(options.include) : null;
     const exclude = options.exclude ? getFieldMatcher(options.exclude) : null;
 
@@ -33,17 +45,26 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
         // Find the matching field indexes
         const fields: Field[] = [];
         for (let i = 0; i < series.fields.length; i++) {
-          const field = series.fields[i];
+          let field: Field | null = series.fields[i];
 
           if (exclude) {
             if (exclude(field, series, data)) {
-              continue;
-            }
-            if (!include) {
-              fields.push(field);
+              if (hide) {
+                field = applyHiddenField(field, true);
+              } else {
+                field = null;
+              }
             }
           }
-          if (include && include(field, series, data)) {
+          if (field && include && !include(field, series, data)) {
+            if (hide) {
+              field = applyHiddenField(field, true);
+            } else {
+              field = null;
+            }
+          }
+
+          if (field) {
             fields.push(field);
           }
         }
