@@ -162,6 +162,7 @@ func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) Respo
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
+		Data:     cmd.Data,
 	}
 
 	if err := repo.Update(&item); err != nil {
@@ -194,6 +195,7 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) Respons
 		EpochEnd: items[0].TimeEnd,
 		Text:     items[0].Text,
 		Tags:     items[0].Tags,
+		Data:     items[0].Data,
 	}
 
 	if cmd.Tags != nil {
@@ -211,6 +213,8 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) Respons
 	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
 		existing.EpochEnd = cmd.TimeEnd
 	}
+
+	existing.Data = cmd.Data
 
 	if err := repo.Update(&existing); err != nil {
 		return Error(500, "Failed to update annotation", err)
