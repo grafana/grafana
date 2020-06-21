@@ -31,8 +31,8 @@ export class ConfigEditor extends PureComponent<Props> {
   };
 
   // 2x
-  onResetBasicAuthPassword = () => {
-    updateDatasourcePluginResetOption(this.props, 'basicAuthPassword');
+  onResetToken = () => {
+    updateDatasourcePluginResetOption(this.props, 'token');
   };
 
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
@@ -126,7 +126,7 @@ export class ConfigEditor extends PureComponent<Props> {
               label="Token"
               labelWidth={10}
               inputWidth={20}
-              onReset={this.onResetBasicAuthPassword}
+              onReset={this.onResetToken}
               onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'token')}
             />
           </div>
