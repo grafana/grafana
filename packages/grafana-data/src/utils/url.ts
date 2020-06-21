@@ -139,7 +139,6 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.to,
       urlState.datasource,
       ...urlState.queries,
-      { mode: urlState.mode },
       {
         ui: [
           !!urlState.ui.showingGraph,

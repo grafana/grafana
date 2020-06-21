@@ -5,7 +5,6 @@ import {
   FieldType,
   TimeZone,
   getDisplayProcessor,
-  ExploreMode,
   PreferredVisualisationType,
   standardTransformers,
 } from '@grafana/data';
@@ -24,10 +23,6 @@ export class ResultProcessor {
   ) {}
 
   getGraphResult(): GraphSeriesXY[] | null {
-    if (this.state.mode !== ExploreMode.Metrics) {
-      return null;
-    }
-
     const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
     const timeSeriesToShowInGraph = onlyTimeSeries.filter(frame => shouldShowInVisualisationType(frame, 'graph'));
 
@@ -45,10 +40,6 @@ export class ResultProcessor {
   }
 
   getTableResult(): DataFrame | null {
-    if (this.state.mode !== ExploreMode.Metrics) {
-      return null;
-    }
-
     const onlyTables = this.dataFrames
       .filter((frame: DataFrame) => shouldShowInVisualisationType(frame, 'table'))
       .sort((frameA: DataFrame, frameB: DataFrame) => {
@@ -57,10 +48,10 @@ export class ResultProcessor {
 
         if (frameARefId > frameBRefId) {
           return 1;
-        }
-        if (frameARefId < frameBRefId) {
+        } else if (frameARefId < frameBRefId) {
           return -1;
         }
+
         return 0;
       });
 
@@ -92,10 +83,6 @@ export class ResultProcessor {
   }
 
   getLogsResult(): LogsModel | null {
-    if (this.state.mode !== ExploreMode.Logs) {
-      return null;
-    }
-
     const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);

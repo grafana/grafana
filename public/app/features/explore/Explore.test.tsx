@@ -2,7 +2,6 @@ import React from 'react';
 import {
   DataSourceApi,
   LoadingState,
-  ExploreMode,
   toUtc,
   DataQueryError,
   DataQueryRequest,
@@ -64,7 +63,6 @@ const dummyProps: ExploreProps = {
       to: 'now',
     },
   },
-  mode: ExploreMode.Metrics,
   initialUI: {
     showingTable: false,
     showingGraph: false,
@@ -119,6 +117,9 @@ const dummyProps: ExploreProps = {
   originPanelId: 1,
   addQueryRow: jest.fn(),
   theme: getTheme(),
+  showMetrics: true,
+  showLogs: true,
+  showTable: true,
 };
 
 const setupErrors = (hasRefId?: boolean) => {
@@ -145,7 +146,7 @@ describe('Explore', () => {
   });
 
   it('does not show add row button if mode is tracing', () => {
-    const wrapper = shallow(<Explore {...{ ...dummyProps, mode: ExploreMode.Tracing }} />);
+    const wrapper = shallow(<Explore {...{ ...dummyProps }} />);
     expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(true);
   });
 
@@ -154,7 +155,6 @@ describe('Explore', () => {
       <Explore
         {...{
           ...dummyProps,
-          mode: ExploreMode.Tracing,
           queryResponse: {
             ...dummyProps.queryResponse,
             state: LoadingState.Done,

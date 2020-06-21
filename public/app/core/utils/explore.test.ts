@@ -18,7 +18,6 @@ import store from 'app/core/store';
 import {
   DataQueryError,
   dateTime,
-  ExploreMode,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -33,7 +32,6 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
   queries: [],
   range: DEFAULT_RANGE,
-  mode: ExploreMode.Metrics,
   ui: {
     showingGraph: true,
     showingTable: true,

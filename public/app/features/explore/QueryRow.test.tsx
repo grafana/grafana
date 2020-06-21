@@ -23,7 +23,6 @@ const setup = (propOverrides?: object) => {
     removeQueryRowAction: jest.fn() as any,
     runQueries: jest.fn(),
     queryResponse: {} as PanelData,
-    mode: ExploreMode.Metrics,
     latency: 1,
   };
 
