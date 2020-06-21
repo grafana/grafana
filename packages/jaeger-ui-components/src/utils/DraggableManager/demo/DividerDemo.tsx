@@ -22,7 +22,7 @@ import './DividerDemo.css';
 
 type DividerDemoProps = {
   position: number;
-  updateState: (udpate: { dividerPosition: number }) => void;
+  updateState: (update: { dividerPosition: number }) => void;
 };
 
 export default class DividerDemo extends React.PureComponent<DividerDemoProps> {

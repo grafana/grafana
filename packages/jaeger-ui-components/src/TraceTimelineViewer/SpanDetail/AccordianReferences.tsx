@@ -18,7 +18,7 @@ import cx from 'classnames';
 
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { SpanReference } from '../../types/trace';
+import { SpanReference } from '@grafana/data';
 import ReferenceLink from '../../url/ReferenceLink';
 
 import { createStyle } from '../../Theme';

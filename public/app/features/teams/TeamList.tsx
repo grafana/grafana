@@ -133,7 +133,11 @@ export class TeamList extends PureComponent<Props, any> {
   }
 
   renderList() {
-    const { teamsCount } = this.props;
+    const { teamsCount, hasFetched } = this.props;
+
+    if (!hasFetched) {
+      return null;
+    }
 
     if (teamsCount > 0) {
       return this.renderTeamList();
@@ -147,7 +151,7 @@ export class TeamList extends PureComponent<Props, any> {
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>{hasFetched && this.renderList()}</Page.Contents>
+        <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
       </Page>
     );
   }

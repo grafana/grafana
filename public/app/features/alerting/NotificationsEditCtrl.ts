@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { IScope } from 'angular';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
 import config from 'app/core/config';
+import { CoreEvents } from 'app/types';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -118,6 +119,20 @@ export class AlertNotificationEditCtrl {
   }
 
   deleteNotification() {
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Delete',
+      text: 'Do you want to delete this notification channel?',
+      text2: `Deleting this notification channel will not delete from alerts any references to it`,
+      icon: 'trash-alt',
+      confirmText: 'Delete',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.deleteNotificationConfirmed();
+      },
+    });
+  }
+
+  deleteNotificationConfirmed() {
     promiseToDigest(this.$scope)(
       getBackendSrv()
         .delete(`/api/alert-notifications/${this.model.id}`)

@@ -16,7 +16,7 @@ import _find from 'lodash/find';
 import _get from 'lodash/get';
 
 import { TNil } from '../types';
-import { Span } from '../types/trace';
+import { Span } from '@grafana/data';
 
 function getFirstAncestor(span: Span): Span | TNil {
   return _get(

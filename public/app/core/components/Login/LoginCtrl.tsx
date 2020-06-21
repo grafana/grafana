@@ -101,15 +101,8 @@ export class LoginCtrl extends PureComponent<Props, State> {
   };
 
   toGrafana = () => {
-    const params = this.props.routeParams;
     // Use window.location.href to force page reload
-    if (params.redirect && params.redirect[0] === '/') {
-      if (config.appSubUrl !== '' && !params.redirect.startsWith(config.appSubUrl)) {
-        window.location.href = config.appSubUrl + params.redirect;
-      } else {
-        window.location.href = params.redirect;
-      }
-    } else if (this.result.redirectUrl) {
+    if (this.result.redirectUrl) {
       if (config.appSubUrl !== '' && !this.result.redirectUrl.startsWith(config.appSubUrl)) {
         window.location.href = config.appSubUrl + this.result.redirectUrl;
       } else {

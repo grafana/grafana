@@ -42,3 +42,19 @@ lerna.json @grafana/grafana-frontend-platform
 
 /public/app/features/explore/ @grafana/observability-squad
 /packages/jaeger-ui-components/ @grafana/observability-squad
+
+# Core datasources
+/public/app/plugins/datasource/cloudwatch @grafana/backend-platform @grafana/observability-squad
+/public/app/plugins/datasource/elasticsearch @grafana/observability-squad
+/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/backend-platform
+/public/app/plugins/datasource/graphite @grafana/observability-squad
+/public/app/plugins/datasource/influxdb @grafana/observability-squad
+/public/app/plugins/datasource/jaeger @grafana/observability-squad
+/public/app/plugins/datasource/loki @grafana/observability-squad
+/public/app/plugins/datasource/mssql @grafana/backend-platform
+/public/app/plugins/datasource/mysql @grafana/backend-platform
+/public/app/plugins/datasource/opentsdb @grafana/backend-platform
+/public/app/plugins/datasource/postgres @grafana/backend-platform
+/public/app/plugins/datasource/prometheus @grafana/observability-squad
+/public/app/plugins/datasource/stackdriver @grafana/backend-platform
+/public/app/plugins/datasource/zipkin @grafana/observability-squad
