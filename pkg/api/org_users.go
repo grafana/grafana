@@ -65,8 +65,8 @@ func GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
 	}
 
 	limit := c.QueryInt("limit")
-	if limit > 50 {
-		limit = 50
+	if limit == 0 || limit > 100 {
+		limit = 100
 	}
 
 	orgUsers, err := getOrgUsersHelper(c.OrgId, c.Query("query"), limit)

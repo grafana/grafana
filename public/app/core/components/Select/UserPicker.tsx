@@ -44,7 +44,7 @@ export class UserPicker extends Component<Props, State> {
     }
 
     return getBackendSrv()
-      .get(`/api/org/users/lookup?query=${query}&limit=50`)
+      .get(`/api/org/users/lookup?query=${query}`)
       .then((result: any) => {
         return result.map((user: any) => ({
           id: user.userId,
