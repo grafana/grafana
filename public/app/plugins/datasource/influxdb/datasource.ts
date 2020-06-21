@@ -64,7 +64,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     // Update the queryType fields and manage migrations
     for (const target of request.targets) {
-      if (this.verifyQueryType(target)) {
+      if (this.verifyQueryType(target) === InfluxQueryType.Flux) {
         hasFlux = true;
       }
     }
