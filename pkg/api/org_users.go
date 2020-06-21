@@ -64,7 +64,12 @@ func GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
 		return Error(403, "Permission denied", nil)
 	}
 
-	orgUsers, err := getOrgUsersHelper(c.OrgId, c.Query("query"), c.QueryInt("limit"))
+	limit := c.QueryInt("limit")
+	if limit > 50 {
+		limit = 50
+	}
+
+	orgUsers, err := getOrgUsersHelper(c.OrgId, c.Query("query"), limit)
 	if err != nil {
 		return Error(500, "Failed to get users for current organization", err)
 	}
