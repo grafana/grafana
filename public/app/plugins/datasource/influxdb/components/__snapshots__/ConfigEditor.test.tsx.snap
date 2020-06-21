@@ -56,7 +56,7 @@ exports[`Render should disable basic auth password input 1`] = `
                 "value": "1x",
               },
               Object {
-                "description": "Supports both Flux and IFQL queries",
+                "description": "Supports both Flux and InfluxQL queries",
                 "label": "2.x (beta)",
                 "value": "2x",
               },
@@ -346,7 +346,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
                 "value": "1x",
               },
               Object {
-                "description": "Supports both Flux and IFQL queries",
+                "description": "Supports both Flux and InfluxQL queries",
                 "label": "2.x (beta)",
                 "value": "2x",
               },
@@ -636,7 +636,7 @@ exports[`Render should hide white listed cookies input when browser access chose
                 "value": "1x",
               },
               Object {
-                "description": "Supports both Flux and IFQL queries",
+                "description": "Supports both Flux and InfluxQL queries",
                 "label": "2.x (beta)",
                 "value": "2x",
               },
@@ -926,7 +926,7 @@ exports[`Render should render component 1`] = `
                 "value": "1x",
               },
               Object {
-                "description": "Supports both Flux and IFQL queries",
+                "description": "Supports both Flux and InfluxQL queries",
                 "label": "2.x (beta)",
                 "value": "2x",
               },

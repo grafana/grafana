@@ -12,13 +12,14 @@ export interface InfluxOptions extends DataSourceJsonData {
   httpMode: string;
 
   // Influx 2.0
-  // organization is the 'user' for basic auth, token is the password
+  organization?: string;
   defaultBucket?: string;
   maxSeries?: number;
 }
 
 export interface InfluxSecureJsonData {
-  basicAuthPassword?: string; // In 2x, this is the token
+  // Influx 2.0
+  token?: string;
 
   // In 1x a different password can be sent than then HTTP auth
   password?: string;
@@ -38,8 +39,8 @@ export interface InfluxQueryTag {
 }
 
 export enum InfluxQueryType {
-  Classic = 'Classic', // IFQL query builder
-  InfluxQL = 'InfluxQL', // raw ifql
+  Classic = 'Classic', // InfluxQL query builder
+  InfluxQL = 'InfluxQL', // raw InfluxQL
   Flux = 'Flux',
 }
 

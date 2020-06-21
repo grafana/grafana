@@ -19,7 +19,7 @@ const httpModes = [
 
 const versions = [
   { label: '1.x', value: InfluxVersion.V1x },
-  { label: '2.x (beta)', value: InfluxVersion.V2x, description: 'Supports both Flux and IFQL queries' },
+  { label: '2.x (beta)', value: InfluxVersion.V2x, description: 'Supports both Flux and InfluxQL queries' },
 ] as Array<SelectableValue<InfluxVersion>>;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
@@ -48,14 +48,7 @@ export class ConfigEditor extends PureComponent<Props> {
     if (selected.value === InfluxVersion.V2x) {
       copy.access = 'proxy';
       copy.basicAuth = true;
-
-      // Move user and database to basicAuthUser & Password
-      if (!copy.basicAuthUser) {
-        copy.basicAuthUser = copy.user;
-      }
-      if (!copy.jsonData.defaultBucket) {
-        copy.jsonData.defaultBucket = copy.database;
-      }
+      copy.jsonData.httpMode = 'POST';
 
       // Remove old 1x configs
       delete copy.user;
@@ -119,8 +112,8 @@ export class ConfigEditor extends PureComponent<Props> {
             <div className="width-10">
               <Input
                 className="width-20"
-                value={options.basicAuthUser || ''}
-                onChange={onUpdateDatasourceOption(this.props, 'basicAuthUser')}
+                value={options.jsonData.organization || ''}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'organization')}
               />
             </div>
           </div>
@@ -128,13 +121,13 @@ export class ConfigEditor extends PureComponent<Props> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <SecretFormField
-              isConfigured={(secureJsonFields && secureJsonFields.basicAuthPassword) as boolean}
-              value={secureJsonData.basicAuthPassword || ''}
+              isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
+              value={secureJsonData.token || ''}
               label="Token"
               labelWidth={10}
               inputWidth={20}
               onReset={this.onResetBasicAuthPassword}
-              onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'basicAuthPassword')}
+              onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'token')}
             />
           </div>
         </div>

@@ -5,7 +5,7 @@ import InfluxQueryModel from './influx_query_model';
 import queryPart from './query_part';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { InfluxQueryType } from './types';
+import { InfluxQueryType, InfluxQuery } from './types';
 import InfluxDatasource from './datasource';
 
 export class InfluxQueryCtrl extends QueryCtrl {
@@ -16,7 +16,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
   queryBuilder: any;
   groupBySegment: any;
   resultFormats: any[];
-  queryTypes: any[];
   orderByTime: any[];
   policySegment: any;
   tagSegments: any[];
@@ -44,11 +43,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
     // Show a dropdown for flux
     if (this.datasource.is2x) {
       this.datasource.verifyQueryType(this.target);
-      this.queryTypes = [
-        { text: 'Classic', value: InfluxQueryType.Classic },
-        { text: 'InfluxQL', value: InfluxQueryType.InfluxQL },
-        { text: 'Flux', value: InfluxQueryType.Flux },
-      ];
     }
 
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
@@ -85,6 +79,12 @@ export class InfluxQueryCtrl extends QueryCtrl {
       value: '-- remove tag filter --',
     });
   }
+
+  onChange = (target: InfluxQuery) => {
+    this.target.queryType = target.queryType;
+    this.target.query = target.query;
+    this.datasource.verifyQueryType(this.target);
+  };
 
   removeOrderByTime() {
     this.target.orderByTime = 'ASC';
