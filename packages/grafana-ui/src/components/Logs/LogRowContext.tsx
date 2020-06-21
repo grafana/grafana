@@ -102,11 +102,6 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
 
-  const onClickLoadMore = (event: React.SyntheticEvent) => {
-    event.stopPropagation();
-    onLoadMoreContext();
-  };
-
   return (
     <div className={header}>
       <span
@@ -125,7 +120,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
               cursor: pointer;
             }
           `}
-          onClick={onClickLoadMore}
+          onClick={onLoadMoreContext}
         >
           Load 10 more
         </span>
