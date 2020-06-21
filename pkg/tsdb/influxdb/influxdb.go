@@ -92,7 +92,13 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, err
 	}
 
-	httpClient, err := dsInfo.GetHttpClient()
+	var httpClient *http.Client
+	version := dsInfo.JsonData.Get("version").MustString("1x")
+	if version == "2x" {
+		glog.Info("TODO use org & token to create a new client")
+	}
+
+	httpClient, err = dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
 	}
