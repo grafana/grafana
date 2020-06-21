@@ -1,22 +1,27 @@
 package search
 
 import (
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"sort"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 var (
 	sortAlphaAsc = SortOption{
 		Name:        "alpha-asc",
-		DisplayName: "A-Z",
+		DisplayName: "Alphabetically (A-Z)",
 		Description: "Sort results in an alphabetically ascending order",
-		Filter:      searchstore.TitleSorter{},
+		Filter: []SortOptionFilter{
+			searchstore.TitleSorter{},
+		},
 	}
 	sortAlphaDesc = SortOption{
 		Name:        "alpha-desc",
-		DisplayName: "Z-A",
+		DisplayName: "Alphabetically (Z-A)",
 		Description: "Sort results in an alphabetically descending order",
-		Filter:      searchstore.TitleSorter{Descending: true},
+		Filter: []SortOptionFilter{
+			searchstore.TitleSorter{Descending: true},
+		},
 	}
 )
 
@@ -24,7 +29,11 @@ type SortOption struct {
 	Name        string
 	DisplayName string
 	Description string
-	Filter      searchstore.FilterOrderBy
+	Filter      []SortOptionFilter
+}
+
+type SortOptionFilter interface {
+	searchstore.FilterOrderBy
 }
 
 // RegisterSortOption allows for hooking in more search options from

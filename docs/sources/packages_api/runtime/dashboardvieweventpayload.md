@@ -5,7 +5,6 @@
 title = "DashboardViewEventPayload"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## DashboardViewEventPayload interface

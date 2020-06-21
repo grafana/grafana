@@ -1,7 +1,8 @@
-import { IconName, IconButton, stylesFactory, useTheme } from '@grafana/ui';
+import { IconButton, IconName, stylesFactory, useTheme } from '@grafana/ui';
 import React from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface QueryOperationActionProps {
   icon: IconName;
@@ -27,7 +28,7 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon
       disabled={!!disabled}
       onClick={onClick}
       surface="header"
-      aria-label={`${title} query operation action`}
+      aria-label={selectors.components.QueryEditorRow.actionButton(title)}
     />
   );
 };

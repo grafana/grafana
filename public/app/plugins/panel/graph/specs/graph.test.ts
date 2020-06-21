@@ -517,7 +517,7 @@ describe('grafanaGraph', () => {
 
       it('should format dates as hours minutes', () => {
         const axis = ctx.plotOptions.xaxis;
-        expect(axis.timeformat).toBe('%H:%M');
+        expect(axis.timeformat).toBe('HH:mm');
       });
     });
 
@@ -531,7 +531,7 @@ describe('grafanaGraph', () => {
 
       it('should format dates as month days', () => {
         const axis = ctx.plotOptions.xaxis;
-        expect(axis.timeformat).toBe('%m/%d');
+        expect(axis.timeformat).toBe('MM/DD');
       });
     });
   });

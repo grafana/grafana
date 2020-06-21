@@ -10,7 +10,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { AppEvents, locationUtil } from '@grafana/data';
+import { AppEvents, locationUtil, TimeZone } from '@grafana/data';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class SettingsCtrl {
@@ -25,7 +25,6 @@ export class SettingsCtrl {
   sections: any[];
   hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;
-  useAngularTemplating: boolean;
 
   /** @ngInject */
   constructor(
@@ -60,7 +59,6 @@ export class SettingsCtrl {
     appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
 
     this.selectors = selectors.pages.Dashboard.Settings.General;
-    this.useAngularTemplating = !getConfig().featureToggles.newVariables;
   }
 
   buildSectionList() {
@@ -254,6 +252,22 @@ export class SettingsCtrl {
 
   getDashboard = () => {
     return this.dashboard;
+  };
+
+  onRefreshIntervalChange = (intervals: string[]) => {
+    this.dashboard.timepicker.refresh_intervals = intervals;
+  };
+
+  onNowDelayChange = (nowDelay: string) => {
+    this.dashboard.timepicker.nowDelay = nowDelay;
+  };
+
+  onHideTimePickerChange = (hide: boolean) => {
+    this.dashboard.timepicker.hidden = hide;
+  };
+
+  onTimeZoneChange = (timeZone: TimeZone) => {
+    this.dashboard.timezone = timeZone;
   };
 }
 

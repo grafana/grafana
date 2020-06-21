@@ -6,8 +6,10 @@ import {
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  PanelData,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
+import { PanelQueryRunner } from './PanelQueryRunner';
 
 class TablePanelCtrl {}
 
@@ -84,6 +86,8 @@ describe('PanelModel', () => {
 
       modelJson = {
         type: 'table',
+        maxDataPoints: 100,
+        interval: '5m',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: persistedOptionsMock,
@@ -214,8 +218,21 @@ describe('PanelModel', () => {
           });
         });
 
+        model.editSourceId = 1001;
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
+      });
+
+      it('should keep editSourceId', () => {
+        expect(model.editSourceId).toBe(1001);
+      });
+
+      it('should keep maxDataPoints', () => {
+        expect(model.maxDataPoints).toBe(100);
+      });
+
+      it('should keep interval', () => {
+        expect(model.interval).toBe('5m');
       });
 
       it('should apply next panel option defaults', () => {
@@ -283,6 +300,58 @@ describe('PanelModel', () => {
         model.changePlugin(getPanelPlugin({ id: 'react2' }));
         const sameQueryRunner = model.getQueryRunner();
         expect(panelQueryRunner).toBe(sameQueryRunner);
+      });
+    });
+
+    describe('restoreModel', () => {
+      it('Should clean state and set properties from model', () => {
+        model.restoreModel({
+          title: 'New title',
+          options: { new: true },
+        });
+        expect(model.title).toBe('New title');
+        expect(model.options.new).toBe(true);
+      });
+
+      it('Should delete properties that are now gone on new model', () => {
+        model.someProperty = 'value';
+        model.restoreModel({
+          title: 'New title',
+          options: {},
+        });
+
+        expect(model.someProperty).toBeUndefined();
+      });
+
+      it('Should remove old angular panel specfic props', () => {
+        model.axes = [{ prop: 1 }];
+        model.thresholds = [];
+
+        model.restoreModel({
+          title: 'New title',
+          options: {},
+        });
+
+        expect(model.axes).toBeUndefined();
+        expect(model.thresholds).toBeUndefined();
+      });
+
+      it('Should be able to set defaults back to default', () => {
+        model.transparent = true;
+
+        model.restoreModel({});
+        expect(model.transparent).toBe(false);
+      });
+    });
+
+    describe('destroy', () => {
+      it('Should still preserve last query result', () => {
+        model.getQueryRunner().useLastResultFrom({
+          getLastResult: () => ({} as PanelData),
+        } as PanelQueryRunner);
+
+        model.destroy();
+        expect(model.getQueryRunner().getLastResult()).toBeDefined();
       });
     });
   });

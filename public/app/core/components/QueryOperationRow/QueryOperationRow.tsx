@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { renderOrCallToRender, Icon, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
@@ -109,7 +109,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.xl};
+      margin-left: ${theme.spacing.lg};
     `,
   };
 });

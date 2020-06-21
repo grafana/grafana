@@ -5,7 +5,6 @@
 title = "FieldConfigProperty"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldConfigProperty enum

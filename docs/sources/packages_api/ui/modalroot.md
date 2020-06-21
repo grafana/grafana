@@ -5,7 +5,6 @@
 title = "ModalRoot"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ModalRoot variable

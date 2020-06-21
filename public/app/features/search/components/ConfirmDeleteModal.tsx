@@ -46,7 +46,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
     });
   };
 
-  return (
+  return isOpen ? (
     <ConfirmModal
       isOpen={isOpen}
       title="Delete"
@@ -59,7 +59,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
       onConfirm={deleteItems}
       onDismiss={onDismiss}
     />
-  );
+  ) : null;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

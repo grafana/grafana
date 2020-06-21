@@ -5,7 +5,6 @@
 title = "QueryResultMetaNotice"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## QueryResultMetaNotice interface

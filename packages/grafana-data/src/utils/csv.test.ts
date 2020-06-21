@@ -4,6 +4,7 @@ import { getDataFrameRow } from '../dataframe/processDataFrame';
 // Test with local CSV files
 import fs from 'fs';
 import { toDataFrameDTO } from '../dataframe/processDataFrame';
+import { MutableDataFrame } from '../dataframe';
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -17,7 +18,7 @@ describe('read csv', () => {
     const rows = 4;
     expect(series.length).toBe(rows);
 
-    // Make sure everythign it padded properly
+    // Make sure everything is padded properly
     for (const field of series.fields) {
       expect(field.values.length).toBe(rows);
     }
@@ -86,5 +87,32 @@ describe('write csv', () => {
     expect(fields.length).toBe(3);
     expect(getDataFrameRow(f[0], 0)).toEqual(firstRow);
     expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
+  });
+});
+
+describe('DataFrame to CSV', () => {
+  it('should escape double quotes in the field names', () => {
+    const dataFrame = new MutableDataFrame({
+      fields: [
+        { name: 'Time', values: [1589455688623] },
+        // As we have traceId in message already this will shadow it.
+        {
+          name: 'Value',
+          values: ['1234'],
+          labels: {
+            label1: 'value1',
+            label2: 'value1',
+          },
+        },
+      ],
+    });
+
+    const csv = toCSV([dataFrame]);
+    expect(csv).toMatchInlineSnapshot(`
+      "\\"Time\\",\\"{label1=\\"\\"value1\\"\\", label2=\\"\\"value1\\"\\"}\\"
+      1589455688623,1234
+
+      "
+    `);
   });
 });

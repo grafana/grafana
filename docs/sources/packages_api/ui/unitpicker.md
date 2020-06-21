@@ -5,7 +5,6 @@
 title = "UnitPicker"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## UnitPicker class
@@ -24,7 +23,6 @@ import { UnitPicker } from '@grafana/ui';
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [defaultProps](#defaultprops-property) | <code>static</code> | <code>{</code><br/><code>        width: number;</code><br/><code>    }</code> |  |
 |  [onChange](#onchange-property) |  | <code>(value: SelectableValue&lt;string&gt;) =&gt; void</code> |  |
 
 <b>Methods</b>
@@ -32,16 +30,6 @@ import { UnitPicker } from '@grafana/ui';
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
 |  [render()](#render-method) |  |  |
-
-### defaultProps property
-
-<b>Signature</b>
-
-```typescript
-static defaultProps: {
-        width: number;
-    };
-```
 
 ### onChange property
 

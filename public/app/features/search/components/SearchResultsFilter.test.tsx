@@ -21,6 +21,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     //@ts-ignore
     query: { starred: false, sort: null, tag: ['tag'] },
     onSortChange: noop,
+    editable: true,
   };
 
   Object.assign(props, propOverrides);
@@ -62,6 +63,7 @@ describe('SearchResultsFilter', () => {
     const option = { value: true, label: 'Yes' };
     //@ts-ignore
     const { wrapper } = setup({ onStarredFilterChange: mockFilterStarred }, mount);
+    //@ts-ignore
     wrapper
       .find('Checkbox')
       .at(1)
@@ -82,8 +84,8 @@ describe('SearchResultsFilter', () => {
     wrapper
       .find({ placeholder: 'Filter by tag' })
       .at(0)
-      .prop('onChange')(tags[0]);
+      .prop('onChange')([tags[0]]);
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
-    expect(mockFilterByTags).toHaveBeenCalledWith(tags[0]);
+    expect(mockFilterByTags).toHaveBeenCalledWith(['tag1']);
   });
 });

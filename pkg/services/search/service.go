@@ -1,9 +1,9 @@
 package search
 
 import (
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"sort"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -48,8 +48,7 @@ type FindPersistedDashboardsQuery struct {
 	Page         int64
 	Permission   models.PermissionType
 
-	FeatureSearch2 bool
-	SortBy         searchstore.FilterOrderBy
+	Filters []interface{}
 
 	Result HitList
 }
@@ -72,29 +71,23 @@ func (s *SearchService) Init() error {
 }
 
 func (s *SearchService) searchHandler(query *Query) error {
-	sortOpt, exists := s.sortOptions[query.Sort]
-	if !exists {
-		sortOpt = sortAlphaAsc
-	}
-
-	search2 := false
-	if s.Cfg != nil {
-		search2 = s.Cfg.FeatureToggles["search2"]
-	}
-
 	dashboardQuery := FindPersistedDashboardsQuery{
-		Title:          query.Title,
-		SignedInUser:   query.SignedInUser,
-		IsStarred:      query.IsStarred,
-		DashboardIds:   query.DashboardIds,
-		Type:           query.Type,
-		FolderIds:      query.FolderIds,
-		Tags:           query.Tags,
-		Limit:          query.Limit,
-		Page:           query.Page,
-		Permission:     query.Permission,
-		FeatureSearch2: search2,
-		SortBy:         sortOpt.Filter,
+		Title:        query.Title,
+		SignedInUser: query.SignedInUser,
+		IsStarred:    query.IsStarred,
+		DashboardIds: query.DashboardIds,
+		Type:         query.Type,
+		FolderIds:    query.FolderIds,
+		Tags:         query.Tags,
+		Limit:        query.Limit,
+		Page:         query.Page,
+		Permission:   query.Permission,
+	}
+
+	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
+		for _, filter := range sortOpt.Filter {
+			dashboardQuery.Filters = append(dashboardQuery.Filters, filter)
+		}
 	}
 
 	if err := bus.Dispatch(&dashboardQuery); err != nil {

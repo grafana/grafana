@@ -5,7 +5,6 @@
 title = "LogLevel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogLevel enum
@@ -38,7 +37,9 @@ import { LogLevel } from '@grafana/data';
 |  eror | <code>&quot;error&quot;</code> |  |
 |  err | <code>&quot;error&quot;</code> |  |
 |  error | <code>&quot;error&quot;</code> |  |
+|  fatal | <code>&quot;critical&quot;</code> |  |
 |  info | <code>&quot;info&quot;</code> |  |
+|  information | <code>&quot;info&quot;</code> |  |
 |  notice | <code>&quot;info&quot;</code> |  |
 |  trace | <code>&quot;trace&quot;</code> |  |
 |  unknown | <code>&quot;unknown&quot;</code> |  |

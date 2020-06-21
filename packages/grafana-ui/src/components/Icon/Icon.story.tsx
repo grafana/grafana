@@ -14,6 +14,9 @@ export default {
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {
+    options: {
+      showPanel: false,
+    },
     docs: {
       page: mdx,
     },

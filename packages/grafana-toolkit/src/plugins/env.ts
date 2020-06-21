@@ -97,26 +97,22 @@ export const writeJobStats = (startTime: number, workDir: string) => {
   });
 };
 
+// https://circleci.com/api/v1.1/project/github/NatelEnergy/grafana-discrete-panel/latest/artifacts
 export async function getCircleDownloadBaseURL(): Promise<string | undefined> {
   try {
     const axios = require('axios');
-    const buildNumber = getBuildNumber();
     const repo = process.env.CIRCLE_PROJECT_REPONAME;
     const user = process.env.CIRCLE_PROJECT_USERNAME;
     let url = `https://circleci.com/api/v1.1/project/github/${user}/${repo}/latest/artifacts`;
     const rsp = await axios.get(url);
     for (const s of rsp.data) {
-      let idx = s.url.indexOf('-');
-      if (idx > 0) {
-        url = s.url.substring(idx);
-        idx = url.indexOf('circleci/plugin/ci');
-        if (idx > 0) {
-          url = url.substring(0, idx);
-          url = `https://${buildNumber}${url}circleci/plugin/ci`;
-          return url;
-        }
+      const { path, url } = s;
+      if (url && path && path.endsWith('report.json')) {
+        return url.substring(url.length - 'report.json'.length);
       }
     }
-  } catch {}
+  } catch (e) {
+    console.log('Error reading CircleCI artifact URL', e);
+  }
   return undefined;
 }

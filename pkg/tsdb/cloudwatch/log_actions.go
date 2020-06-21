@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,23 +21,34 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 
 	for _, query := range queryContext.Queries {
 		query := query
-
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, queryContext, query)
 			if err != nil {
 				return err
 			}
 
-			dataframeEnc, err := dataframe.MarshalArrow()
-			if err != nil {
-				return err
+			// When a query of the form "stats ... by ..." is made, we want to return
+			// one series per group defined in the query, but due to the format
+			// the query response is in, there does not seem to be a way to tell
+			// by the response alone if/how the results should be grouped.
+			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
+			// the "statsGroups" parameter is sent along with the query to the backend so that we
+			// can correctly group the CloudWatch logs response.
+			statsGroups := query.Model.Get("statsGroups").MustStringArray()
+			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
+				groupedFrames, err := groupResults(dataframe, statsGroups)
+				if err != nil {
+					return err
+				}
+
+				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(groupedFrames)}
+				return nil
 			}
 
-			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: [][]byte{dataframeEnc}}
+			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe})}
 			return nil
 		})
 	}
-
 	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
@@ -48,7 +58,6 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 	response := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-
 	for result := range resultChan {
 		response.Results[result.RefId] = result
 	}
@@ -119,7 +128,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	messages := make([]*string, 0)
@@ -135,7 +144,7 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	timestampField := data.NewField("ts", nil, timestamps)
-	timestampField.SetConfig(&data.FieldConfig{Title: "Time"})
+	timestampField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	messageField := data.NewField("line", nil, messages)
 
@@ -144,9 +153,9 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix").MustString("")
+
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
-
 	if len(logGroupNamePrefix) < 1 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
 			Limit: aws.Int64(parameters.Get("limit").MustInt64(50)),
@@ -157,9 +166,8 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
 		})
 	}
-
 	if err != nil || response == nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	logGroupNames := make([]*string, 0)
@@ -185,23 +193,33 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	}
 
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("invalid time range: Start time must be before end time")
+		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
+
+	// The fields @log and @logStream are always included in the results of a user's query
+	// so that a row's context can be retrieved later if necessary.
+	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
+	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
+	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
 		EndTime:       aws.Int64(endTime.Unix()),
-		Limit:         aws.Int64(parameters.Get("limit").MustInt64(1000)),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
-		QueryString:   aws.String("fields @timestamp,@log,@logStream|" + parameters.Get("queryString").MustString("")),
+		QueryString:   aws.String(modifiedQueryString),
 	}
+
+	if resultsLimit, err := parameters.Get("limit").Int64(); err == nil {
+		startQueryInput.Limit = aws.Int64(resultsLimit)
+	}
+
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 
 func (e *CloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
@@ -225,15 +243,13 @@ func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 
 	response, err := logsClient.StopQueryWithContext(ctx, queryInput)
 	if err != nil {
-		awsErr := err.(awserr.Error)
+		awsErr, ok := err.(awserr.Error)
 		// If the query has already stopped by the time CloudWatch receives the stop query request,
 		// an "InvalidParameterException" error is returned. For our purposes though the query has been
 		// stopped, so we ignore the error.
-		if awsErr.Code() == "InvalidParameterException" {
+		if ok && awsErr.Code() == "InvalidParameterException" {
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
-		} else {
-			err = errutil.Wrap(awsErr.Message(), err)
 		}
 	}
 
@@ -243,7 +259,7 @@ func (e *CloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 func (e *CloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	response, err := e.executeStopQuery(ctx, logsClient, parameters)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	dataFrame := data.NewFrame("StopQueryResponse", data.NewField("success", nil, []bool{*response.Success}))
@@ -261,11 +277,10 @@ func (e *CloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 func (e *CloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, refID string) (*data.Frame, error) {
 	getQueryResultsOutput, err := e.executeGetQueryResults(ctx, logsClient, parameters)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
-
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +299,7 @@ func (e *CloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, logsCl
 
 	getLogGroupFieldsOutput, err := logsClient.GetLogGroupFieldsWithContext(ctx, queryInput)
 	if err != nil {
-		return nil, errutil.Wrap(err.(awserr.Error).Message(), err)
+		return nil, err
 	}
 
 	fieldNames := make([]*string, 0)

@@ -5,7 +5,6 @@
 title = "getEchoSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getEchoSrv() function

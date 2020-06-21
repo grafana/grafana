@@ -5,7 +5,6 @@
 title = "IconType"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## IconType type

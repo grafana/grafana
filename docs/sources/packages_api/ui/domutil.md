@@ -5,7 +5,6 @@
 title = "DOMUtil"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## DOMUtil namespace

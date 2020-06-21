@@ -57,7 +57,7 @@ export interface PanelProps<T = any> {
   fieldConfig: FieldConfigSource;
   /** Field config change handler */
   onFieldConfigChange: (config: FieldConfigSource) => void;
-  /** Indicathes whether or not panel should be rendered transparent */
+  /** Indicates whether or not panel should be rendered transparent */
   transparent: boolean;
   /** Current width of the panel */
   width: number;
@@ -156,7 +156,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
    *
    * @param currentConfig Current panel options
    */
-  showIf?: (currentConfig: TOptions) => boolean;
+  showIf?: (currentConfig: TOptions) => boolean | undefined;
 }
 
 /**

@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { CoreEvents } from 'app/types';
+import { PanelQueryRunner } from '../dashboard/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -52,8 +52,10 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onMetricsPanelMounted() {
-    const queryRunner = this.panel.getQueryRunner();
-    this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
+    const queryRunner = this.panel.getQueryRunner() as PanelQueryRunner;
+    this.querySubscription = queryRunner
+      .getData({ withTransforms: true, withFieldConfig: true })
+      .subscribe(this.panelDataObserver);
   }
 
   private onPanelTearDown() {
@@ -185,11 +187,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       queries: panel.targets,
       panelId: panel.id,
       dashboardId: this.dashboard.id,
-      timezone: this.dashboard.timezone,
+      timezone: this.dashboard.getTimezone(),
       timeInfo: this.timeInfo,
       timeRange: this.range,
-      widthPixels: this.width,
-      maxDataPoints: panel.maxDataPoints,
+      maxDataPoints: panel.maxDataPoints || this.width,
       minInterval: panel.interval,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
@@ -205,7 +206,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     try {
-      this.events.emit(CoreEvents.dataFramesReceived, data);
+      this.events.emit(PanelEvents.dataFramesReceived, data);
     } catch (err) {
       this.processDataError(err);
     }

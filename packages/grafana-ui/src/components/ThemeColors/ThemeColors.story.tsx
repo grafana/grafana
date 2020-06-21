@@ -6,6 +6,9 @@ export default {
   component: ThemeColors,
   decorators: [],
   parameters: {
+    options: {
+      showPanel: false,
+    },
     docs: {},
   },
 };

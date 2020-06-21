@@ -5,7 +5,6 @@
 title = "getColorName"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getColorName variable

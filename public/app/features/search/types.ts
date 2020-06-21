@@ -23,6 +23,7 @@ export interface DashboardSection {
   selected?: boolean;
   type: DashboardSearchItemType;
   slug?: string;
+  itemsFetching?: boolean;
 }
 
 export interface DashboardSectionItem {
@@ -70,6 +71,7 @@ export interface DashboardQuery {
   skipStarred: boolean;
   folderIds: number[];
   sort: SelectableValue | null;
+  layout: SearchLayout;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
@@ -92,4 +94,12 @@ export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: F
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
+}
+
+export interface RouteParams {
+  query?: string | null;
+  sort?: string | null;
+  starred?: boolean | null;
+  tag?: string[] | null;
+  layout?: SearchLayout | null;
 }

@@ -5,7 +5,6 @@
 title = "DateTimeInput"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DateTimeInput type

@@ -5,7 +5,6 @@
 title = "Icon"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Icon variable

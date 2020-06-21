@@ -5,7 +5,6 @@
 title = "LogsDedupDescription"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogsDedupDescription enum

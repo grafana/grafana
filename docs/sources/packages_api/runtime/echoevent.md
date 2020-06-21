@@ -5,7 +5,6 @@
 title = "EchoEvent"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## EchoEvent interface

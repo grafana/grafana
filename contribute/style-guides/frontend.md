@@ -8,13 +8,15 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
   - [Table of Contents](#table-of-contents)
   - [Basic rules](#basic-rules)
   - [Naming conventions](#naming-conventions)
-  - [Files and directories naming conventions](#files-and-directories-naming-conventions)
+  - [File and directory naming conventions](#file-and-directory-naming-conventions)
   - [Code organization](#code-organization)
     - [Exports](#exports)
   - [Comments](#comments)
   - [React](#react)
     - [Props](#props)
   - [State management](#state-management)
+  
+  - [Proposal for removing or replacing Angular dependencies](https://github.com/grafana/grafana/pull/23048)
 
 ## Basic rules
 
@@ -172,6 +174,44 @@ const CONSTANT_VALUE = "This string won't change";
 
 _SASS styles are deprecated. Please migrate to Emotion whenever you need to modify SASS styles._
 
+### Typing
+
+In general, you should let Typescript infer the types so that there's no need to explicitly define type for each variable. 
+
+There are some exceptions to this:
+
+```typescript
+// Typescript needs to know type of arrays or objects otherwise it would infer it as array of any 
+
+// bad
+const stringArray = [];
+
+// good
+const stringArray: string[] = [];
+```
+
+Specify function return types explicitly in new code. This improves readability by being able to tell what a function returns just by looking at the signature. It also prevents errors when a function's return type is broader than expected by the author. 
+
+> Note: We don't have linting for this enabled because of lots of old code that needs to be fixed first.
+
+```typescript
+// bad
+function transform(value?: string) {
+  if (!value) {
+    return undefined
+  }
+  return applyTransform(value)
+};
+
+// good
+function transform(value?: string): TransformedValue | undefined {
+  if (!value) {
+    return undefined
+  }
+  return applyTransform(value)
+};
+```
+
 ### File and directory naming conventions
 
 Name files according to the primary export:
@@ -286,6 +326,6 @@ static defaultProps: Partial<Props> = { ... }
 ## State management
 
 - Don't mutate state in reducers or thunks.
-- Use helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. See [Redux framework](redux.md) for more details.
+- Use `createSlice`. See [Redux Toolkit](https://redux-toolkit.js.org/) for more details.
 - Use `reducerTester` to test reducers. See [Redux framework](redux.md) for more details.
 - Use state selectors to access state instead of accessing state directly.

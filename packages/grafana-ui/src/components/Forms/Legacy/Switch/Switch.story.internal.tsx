@@ -14,7 +14,7 @@ const getStory = (title: string, component: any) => ({
   },
 });
 
-export default getStory('General/Switch', Switch);
+export default getStory('Forms/Legacy/Switch', Switch);
 
 const getKnobs = () => {
   return {

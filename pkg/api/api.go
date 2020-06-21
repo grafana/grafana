@@ -18,6 +18,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn()
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
+	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL()
 	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
@@ -65,8 +66,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
 
-	r.Get("/d/:uid/:slug", reqSignedIn, hs.Index)
-	r.Get("/d/:uid", reqSignedIn, hs.Index)
+	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
+	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
@@ -266,7 +267,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/:id/resources", hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", hs.CallDatasourceResource)
-		apiRoute.Any("/datasources/:id/health", hs.CheckDatasourceHealth)
+		apiRoute.Any("/datasources/:id/health", Wrap(hs.CheckDatasourceHealth))
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
@@ -403,7 +404,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/users/:id/auth-tokens", Wrap(hs.AdminGetUserAuthTokens))
 		adminRoute.Post("/users/:id/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), Wrap(hs.AdminRevokeUserAuthToken))
 
-		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDasboards))
+		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
 		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLDAPCfg))

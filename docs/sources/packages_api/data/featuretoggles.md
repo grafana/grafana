@@ -5,7 +5,6 @@
 title = "FeatureToggles"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FeatureToggles interface
@@ -30,7 +29,6 @@ import { FeatureToggles } from '@grafana/data';
 |  [meta](#meta-property) | <code>boolean</code> |  |
 |  [newEdit](#newedit-property) | <code>boolean</code> |  |
 |  [newVariables](#newvariables-property) | <code>boolean</code> |  |
-|  [tracingIntegration](#tracingintegration-property) | <code>boolean</code> |  |
 |  [transformations](#transformations-property) | <code>boolean</code> |  |
 
 ### expressions property
@@ -67,14 +65,6 @@ newEdit: boolean;
 
 ```typescript
 newVariables: boolean;
-```
-
-### tracingIntegration property
-
-<b>Signature</b>
-
-```typescript
-tracingIntegration: boolean;
 ```
 
 ### transformations property

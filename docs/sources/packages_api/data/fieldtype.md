@@ -5,7 +5,6 @@
 title = "FieldType"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldType enum

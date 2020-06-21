@@ -5,7 +5,6 @@
 title = "StyleProps"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## StyleProps interface

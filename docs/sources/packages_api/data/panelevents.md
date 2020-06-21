@@ -5,7 +5,6 @@
 title = "PanelEvents"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents namespace
@@ -33,6 +32,7 @@ import { PanelEvents } from '@grafana/data';
 |  --- | --- |
 |  [componentDidMount](./componentdidmount/) |  |
 |  [dataError](./dataerror/) |  |
+|  [dataFramesReceived](./dataframesreceived/) |  |
 |  [dataReceived](./datareceived/) |  |
 |  [dataSnapshotLoad](./datasnapshotload/) |  |
 |  [editModeInitialized](./editmodeinitialized/) |  |

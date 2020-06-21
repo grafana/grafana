@@ -2,8 +2,9 @@ import React from 'react';
 import { mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import { mockSearch } from './mocks';
-import { DashboardSearch } from './DashboardSearch';
+import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
+import { SearchLayout } from '../types';
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -14,9 +15,10 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-const setup = async (): Promise<any> => {
+const setup = async (testProps?: Partial<Props>): Promise<any> => {
   const props: any = {
     onCloseSearch: () => {},
+    ...testProps,
   };
   let wrapper;
   //@ts-ignore
@@ -43,6 +45,8 @@ describe('DashboardSearch', () => {
       skipStarred: false,
       starred: false,
       folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
     });
   });
 
@@ -68,6 +72,8 @@ describe('DashboardSearch', () => {
       tag: [],
       starred: false,
       folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
     });
   });
 
@@ -108,6 +114,22 @@ describe('DashboardSearch', () => {
       tag: ['TestTag'],
       starred: false,
       folderIds: [],
+      layout: SearchLayout.Folders,
+      sort: undefined,
     });
+  });
+
+  it('should call search api with provided search params', async () => {
+    const params = { query: 'test query', tag: ['tag1'], sort: { value: 'asc' } };
+    await setup({ params });
+
+    expect(mockSearch).toHaveBeenCalledTimes(1);
+    expect(mockSearch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: 'test query',
+        tag: ['tag1'],
+        sort: 'asc',
+      })
+    );
   });
 });

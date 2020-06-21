@@ -40,7 +40,7 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> ex
    *
    * @param currentConfig Current options values
    */
-  showIf?: (currentConfig: TOptions) => boolean;
+  showIf?: (currentConfig: TOptions) => boolean | undefined;
   /**
    * Function that returns number of items if given option represents a collection, i.e. array of items.
    * @param value
@@ -73,6 +73,10 @@ export interface OptionsUIRegistryBuilderAPI<
 
   addTextInput?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(
     config: OptionEditorConfig<TOptions, TSettings, string>
+  ): this;
+
+  addStringArray?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(
+    config: OptionEditorConfig<TOptions, TSettings, string[]>
   ): this;
 
   addSelect?<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(

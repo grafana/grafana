@@ -5,7 +5,6 @@
 title = "ClickOutsideWrapper"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ClickOutsideWrapper class

@@ -5,7 +5,6 @@
 title = "FieldCalcs"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldCalcs interface
@@ -13,7 +12,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export interface FieldCalcs 
+export interface FieldCalcs extends Record<string, any> 
 ```
 <b>Import</b>
 

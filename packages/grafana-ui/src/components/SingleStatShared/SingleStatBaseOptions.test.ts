@@ -156,6 +156,29 @@ describe('sharedSingleStatMigrationHandler', () => {
     `);
   });
 
+  it('Rename title to displayName', () => {
+    const panel = {
+      options: {
+        fieldOptions: {
+          stat: 'last',
+          decimals: 5,
+          defaults: {
+            title: 'newTitle',
+            min: 0,
+            max: 100,
+            mappings: [],
+          },
+          override: {},
+        },
+      },
+      title: 'Usage',
+      type: 'bargauge',
+    };
+
+    sharedSingleStatMigrationHandler(panel as any);
+    expect((panel as any).fieldConfig.defaults.displayName).toBe('newTitle');
+  });
+
   it('change from angular singlestat with no enabled gauge', () => {
     const old: any = {
       angular: {

@@ -5,7 +5,6 @@
 title = "VariableModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VariableModel interface

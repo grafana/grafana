@@ -5,7 +5,6 @@
 title = "GrafanaBootConfig"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## GrafanaBootConfig class

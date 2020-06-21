@@ -209,6 +209,16 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveEditors.Set(float64(statsQuery.Result.ActiveEditors))
 	metrics.StatsTotalAdmins.Set(float64(statsQuery.Result.Admins))
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
+
+	dsStats := models.GetDataSourceStatsQuery{}
+	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+		metricsLogger.Error("Failed to get datasource stats", "error", err)
+		return
+	}
+
+	for _, dsStat := range dsStats.Result {
+		metrics.StatsTotalDataSources.WithLabelValues(dsStat.Type).Set(float64(dsStat.Count))
+	}
 }
 
 func getEdition() string {

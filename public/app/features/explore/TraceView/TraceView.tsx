@@ -1,14 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  KeyValuePair,
-  Link,
-  Span,
-  SpanData,
   ThemeOptions,
   ThemeProvider,
   ThemeType,
-  Trace,
-  TraceData,
   TracePageHeader,
   TraceTimelineViewer,
   transformTraceData,
@@ -22,6 +16,7 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
+import { TraceData, SpanData, Trace, Span, KeyValuePair, Link } from '@grafana/data';
 
 type Props = {
   trace: TraceData & { spans: SpanData[] };
@@ -56,7 +51,16 @@ export function TraceView(props: Props) {
 
   const theme = useTheme();
   const traceTheme = useMemo(
-    () => ({ type: theme.isDark ? ThemeType.Dark : ThemeType.Light, servicesColorPalette: colors } as ThemeOptions),
+    () =>
+      ({
+        type: theme.isDark ? ThemeType.Dark : ThemeType.Light,
+        servicesColorPalette: colors,
+        components: {
+          TraceName: {
+            fontSize: theme.typography.size.lg,
+          },
+        },
+      } as ThemeOptions),
     [theme]
   );
   const traceTimeline: TTraceTimeline = useMemo(
@@ -75,7 +79,7 @@ export function TraceView(props: Props) {
     <ThemeProvider value={traceTheme}>
       <UIElementsContext.Provider value={UIElements}>
         <TracePageHeader
-          canCollapse={true}
+          canCollapse={false}
           clearSearch={useCallback(() => {}, [])}
           focusUiFindMatches={useCallback(() => {}, [])}
           hideMap={false}

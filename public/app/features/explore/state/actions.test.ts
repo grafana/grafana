@@ -1,20 +1,28 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, toUtc } from '@grafana/data';
 
 import * as Actions from './actions';
-import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore, cancelQueries } from './actions';
+import {
+  cancelQueries,
+  changeDatasource,
+  changeMode,
+  loadDatasource,
+  navigateToExplore,
+  refreshExplore,
+} from './actions';
 import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
+  cancelQueriesAction,
+  changeModeAction,
   initializeExploreAction,
   InitializeExplorePayload,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
+  scanStopAction,
   setQueriesAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
-  cancelQueriesAction,
-  scanStopAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { makeInitialUpdateState } from './reducers';
@@ -57,8 +65,8 @@ const testRange = {
   },
 };
 jest.mock('app/core/utils/explore', () => ({
-  ...jest.requireActual('app/core/utils/explore'),
-  getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
+  ...((jest.requireActual('app/core/utils/explore') as unknown) as object),
+  getTimeRangeFromUrl: (range: any) => testRange,
 }));
 
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
@@ -323,6 +331,28 @@ describe('loading datasource', () => {
         ]);
       });
     });
+  });
+});
+
+describe('changing mode', () => {
+  it('should trigger changeModeAction and updateLocation', async () => {
+    const { exploreId, initialState, range } = setup();
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(changeMode)
+      .whenThunkIsDispatched(exploreId, ExploreMode.Logs);
+    const rawTimeRange = Actions.toRawTimeRange(range);
+    const leftQuery = JSON.stringify([
+      rawTimeRange.from,
+      rawTimeRange.to,
+      initialState.explore.left.datasourceInstance.name,
+      {},
+      { ui: [false, true, false, null] },
+    ]);
+
+    expect(dispatchedActions).toEqual([
+      changeModeAction({ exploreId, mode: ExploreMode.Logs }),
+      updateLocation({ query: { left: leftQuery, orgId: '1' }, replace: false }),
+    ]);
   });
 });
 

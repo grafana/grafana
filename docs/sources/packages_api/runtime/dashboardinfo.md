@@ -5,7 +5,6 @@
 title = "DashboardInfo"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## DashboardInfo interface

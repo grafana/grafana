@@ -50,6 +50,7 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 
 	var azureMonitorQueries []*tsdb.Query
 	var applicationInsightsQueries []*tsdb.Query
+	var azureLogAnalyticsQueries []*tsdb.Query
 
 	for _, query := range tsdbQuery.Queries {
 		queryType := query.Model.Get("queryType").MustString("")
@@ -59,6 +60,8 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 			azureMonitorQueries = append(azureMonitorQueries, query)
 		case "Application Insights":
 			applicationInsightsQueries = append(applicationInsightsQueries, query)
+		case "Azure Log Analytics":
+			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
 		default:
 			return nil, fmt.Errorf("Alerting not supported for %s", queryType)
 		}
@@ -74,6 +77,11 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		dsInfo:     e.dsInfo,
 	}
 
+	alaDatasource := &AzureLogAnalyticsDatasource{
+		httpClient: e.httpClient,
+		dsInfo:     e.dsInfo,
+	}
+
 	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)
 	if err != nil {
 		return nil, err
@@ -84,7 +92,16 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		return nil, err
 	}
 
+	alaResult, err := alaDatasource.executeTimeSeriesQuery(ctx, azureLogAnalyticsQueries, tsdbQuery.TimeRange)
+	if err != nil {
+		return nil, err
+	}
+
 	for k, v := range aiResult.Results {
+		azResult.Results[k] = v
+	}
+
+	for k, v := range alaResult.Results {
 		azResult.Results[k] = v
 	}
 

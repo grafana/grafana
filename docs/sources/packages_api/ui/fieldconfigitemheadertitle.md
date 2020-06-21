@@ -5,7 +5,6 @@
 title = "FieldConfigItemHeaderTitle"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## FieldConfigItemHeaderTitle variable

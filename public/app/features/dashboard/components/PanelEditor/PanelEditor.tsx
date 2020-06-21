@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
@@ -25,7 +25,7 @@ import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-import { VariableModel } from 'app/features/templating/types';
+import { VariableModel } from 'app/features/variables/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
@@ -42,7 +42,6 @@ interface ConnectedProps {
   location: LocationState;
   plugin?: PanelPlugin;
   panel: PanelModel;
-  data: PanelData;
   initDone: boolean;
   tabs: PanelEditorTab[];
   uiState: PanelEditorUIState;
@@ -183,11 +182,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   };
   renderHorizontalSplit(styles: EditorStyles) {
-    const { dashboard, panel, tabs, data, uiState } = this.props;
+    const { dashboard, panel, tabs, uiState } = this.props;
     return tabs.length > 0 ? (
       <SplitPane
         split="horizontal"
-        minSize={50}
+        minSize={200}
         primary="first"
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}
@@ -198,7 +197,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       >
         {this.renderPanel(styles)}
         <div className={styles.tabsWrapper} aria-label={selectors.components.PanelEditor.DataPane.content}>
-          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
+          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
         </div>
       </SplitPane>
     ) : (
@@ -264,7 +263,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 icon="cog"
                 onClick={this.onOpenDashboardSettings}
                 variant="secondary"
-                title="Open dashboad settings"
+                title="Open dashboard settings"
               />
               <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
                 Discard
@@ -349,8 +348,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   return {
     location: state.location,
     plugin: plugin,
-    panel: state.panelEditor.getPanel(),
-    data: state.panelEditor.getData(),
+    panel,
     initDone: state.panelEditor.initDone,
     tabs: getPanelEditorTabs(state.location, plugin),
     uiState: state.panelEditor.ui,

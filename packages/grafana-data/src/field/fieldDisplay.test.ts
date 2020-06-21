@@ -32,7 +32,7 @@ describe('FieldDisplay', () => {
       fieldConfig: {
         overrides: [],
         defaults: {
-          title: '$__cell_0 * $__field_name * $__series_name',
+          displayName: '$__cell_0 * $__field_name * $__series_name',
         },
       },
     });
@@ -159,6 +159,18 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].display.numeric).toEqual(0);
+  });
+
+  it('Should always return defaults with min/max 0 when there is no data', () => {
+    const options = createEmptyDisplayOptions({
+      fieldConfig: {
+        defaults: {},
+      },
+    });
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toEqual(0);
+    expect(display[0].field.max).toEqual(0);
   });
 
   describe('Value mapping', () => {

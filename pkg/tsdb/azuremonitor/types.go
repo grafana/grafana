@@ -51,12 +51,7 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-type ApplicationInsightsResponse struct {
-	MetricResponse *ApplicationInsightsMetricsResponse
-	QueryResponse  *ApplicationInsightsQueryResponse
-}
-
-// ApplicationInsightsResponse is the json response from the Application Insights API
+//ApplicationInsightsQueryResponse is the json response from the Application Insights API
 type ApplicationInsightsQueryResponse struct {
 	Tables []struct {
 		Name    string `json:"name"`
@@ -68,25 +63,65 @@ type ApplicationInsightsQueryResponse struct {
 	} `json:"tables"`
 }
 
-// ApplicationInsightsMetricsResponse is the json response from the Application Insights API
-type ApplicationInsightsMetricsResponse struct {
-	Name     string
-	Segments []struct {
-		Start     time.Time
-		End       time.Time
-		Segmented map[string]float64
-		Value     float64
-	}
-}
-
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
-	Tables []struct {
-		Name    string `json:"name"`
-		Columns []struct {
-			Name string `json:"name"`
-			Type string `json:"type"`
-		} `json:"columns"`
-		Rows [][]interface{} `json:"rows"`
-	} `json:"tables"`
+	Tables []AzureLogAnalyticsTable `json:"tables"`
+}
+
+//AzureLogAnalyticsTable is the table format for Log Analytics responses
+type AzureLogAnalyticsTable struct {
+	Name    string `json:"name"`
+	Columns []struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"columns"`
+	Rows [][]interface{} `json:"rows"`
+}
+
+// azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
+type azureMonitorJSONQuery struct {
+	AzureMonitor struct {
+		Aggregation         string  `json:"aggregation"`
+		Alias               string  `json:"alias"`
+		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+		Dimension           string  `json:"dimension"`
+		DimensionFilter     string  `json:"dimensionFilter"`
+		Format              string  `json:"format"`
+		MetricDefinition    string  `json:"metricDefinition"`
+		MetricName          string  `json:"metricName"`
+		MetricNamespace     string  `json:"metricNamespace"`
+		ResourceGroup       string  `json:"resourceGroup"`
+		ResourceName        string  `json:"resourceName"`
+		TimeGrain           string  `json:"timeGrain"`
+		Top                 string  `json:"top"`
+	} `json:"azureMonitor"`
+	Subscription string `json:"subscription"`
+}
+
+// insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
+type insightsJSONQuery struct {
+	AppInsights struct {
+		Aggregation         string  `json:"aggregation"`
+		Alias               string  `json:"alias"`
+		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+		Dimension           string  `json:"dimension"`
+		DimensionFilter     string  `json:"dimensionFilter"`
+		MetricName          string  `json:"metricName"`
+		RawQuery            *bool   `json:"rawQuery"`
+		RawQueryString      string  `json:"rawQueryString"`
+		TimeGrain           string  `json:"timeGrain"`
+		TimeColumn          string  `json:"timeColumn"`
+		ValueColumn         string  `json:"valueColumn"`
+		SegmentColumn       string  `json:"segmentColumn"`
+	} `json:"appInsights"`
+	Raw *bool `json:"raw"`
+}
+
+// logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
+type logJSONQuery struct {
+	AzureLogAnalytics struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+		Workspace    string `json:"workspace"`
+	} `json:"azureLogAnalytics"`
 }

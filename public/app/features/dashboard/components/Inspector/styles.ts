@@ -17,6 +17,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       flex-grow: 0;
       align-items: center;
       justify-content: flex-end;
+      margin-bottom: ${config.theme.spacing.sm};
     `,
     toolbarItem: css`
       margin-left: ${config.theme.spacing.md};
@@ -40,9 +41,6 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     dataFrameSelect: css`
       flex-grow: 2;
     `,
-    downloadCsv: css`
-      margin-left: 16px;
-    `,
     tabContent: css`
       height: 100%;
       display: flex;
@@ -53,6 +51,28 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       flex-direction: column;
       height: 100%;
       width: 100%;
+    `,
+    actionsWrapper: css`
+      display: flex;
+      flex-wrap: wrap;
+    `,
+    leftActions: css`
+      display: flex;
+      flex-grow: 1;
+    `,
+    options: css`
+      margin-top: 19px;
+    `,
+    dataDisplayOptions: css`
+      flex-grow: 1;
+      min-width: 300px;
+      margin-right: ${config.theme.spacing.sm};
+    `,
+    selects: css`
+      display: flex;
+      > * {
+        margin-right: ${config.theme.spacing.sm};
+      }
     `,
   };
 });

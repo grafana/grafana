@@ -45,10 +45,10 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
             </div>
           }
           confirmText="Delete"
-          onDismiss={() => setDeleteOrg(null)}
+          onDismiss={() => setDeleteOrg(undefined)}
           onConfirm={() => {
             onDelete(deleteOrg.id);
-            setDeleteOrg(null);
+            setDeleteOrg(undefined);
           }}
         />
       )}
