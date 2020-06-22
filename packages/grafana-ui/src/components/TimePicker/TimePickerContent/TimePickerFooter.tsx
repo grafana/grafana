@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { TimeZone, GrafanaTheme, getTimeZoneInfo } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';
 import { TimeZoneTitle } from '../../TimeZonePicker/TimeZoneTitle';
@@ -41,7 +41,7 @@ export const TimePickerFooter: FC<Props> = props => {
 
   if (isEditing) {
     return (
-      <div className={style.container}>
+      <div className={cx(style.container, style.editContainer)}>
         <div className={style.timeZoneContainer}>
           <TimeZonePicker value="" onChange={() => {}} />
         </div>
@@ -78,6 +78,9 @@ const getStyle = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
+    `,
+    editContainer: css`
+      padding: 7px 11px;
     `,
     spacer: css`
       margin-left: 7px;
