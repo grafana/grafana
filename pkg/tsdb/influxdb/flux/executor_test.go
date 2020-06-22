@@ -183,9 +183,9 @@ func TestAggregateGrouping(t *testing.T) {
 		// | Labels:                       | Labels: host=hostname.ru |
 		// | Type: []time.Time             | Type: []*float64         |
 		// +-------------------------------+--------------------------+
-		// | 2020-06-05 12:06:00 +0000 UTC | 8.291381590647958        |
-		// | 2020-06-05 12:07:00 +0000 UTC | 0.5341565263056448       |
-		// | 2020-06-05 12:08:00 +0000 UTC | 0.6676119389260387       |
+		// | 2020-06-05 12:06:00 +0000 UTC | 8.291                    |
+		// | 2020-06-05 12:07:00 +0000 UTC | 0.534                    |
+		// | 2020-06-05 12:08:00 +0000 UTC | 0.667                    |
 		// +-------------------------------+--------------------------+
 		// `
 
@@ -195,7 +195,7 @@ func TestAggregateGrouping(t *testing.T) {
 				time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC),
 				time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC),
 			}),
-			data.NewField("", nil, []*float64{
+			data.NewField("", map[string]string{"host": "hostname.ru"}, []*float64{
 				pointer.Float64(8.291),
 				pointer.Float64(0.534),
 				pointer.Float64(0.667),

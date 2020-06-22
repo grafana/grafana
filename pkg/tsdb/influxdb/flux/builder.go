@@ -142,16 +142,18 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 			fb.active.Fields[0].Name = "Time"
 			name, ok := record.ValueByKey("_field").(string)
 			if ok {
-				labels := make(map[string]string)
 				fb.active.Fields[1].Name = name
-				for _, name := range fb.labels {
-					val, ok := record.ValueByKey(name).(string)
-					if ok {
-						labels[name] = val
-					}
-				}
-				fb.active.Fields[1].Labels = labels
 			}
+
+			// set the labels
+			labels := make(map[string]string)
+			for _, name := range fb.labels {
+				val, ok := record.ValueByKey(name).(string)
+				if ok {
+					labels[name] = val
+				}
+			}
+			fb.active.Fields[1].Labels = labels
 		} else {
 			fields := make([]*data.Field, len(fb.columns))
 			for idx, col := range fb.columns {
