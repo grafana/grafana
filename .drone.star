@@ -403,18 +403,18 @@ def pipeline(kind, name):
                     'edition': 'oss',
                 },
             },
-            {
-                'name': 'build-oss-ubuntu-docker-images',
-                'image': 'grafana/drone-grafana-docker',
-                'depends_on': [
-                    'copy-oss-packages-for-docker',
-                ],
-                'settings': {
-                    'dry_run': True,
-                    'edition': 'oss',
-                    'ubuntu': True,
-                },
-            },
+            # {
+                # 'name': 'build-oss-ubuntu-docker-images',
+                # 'image': 'grafana/drone-grafana-docker',
+                # 'depends_on': [
+                    # 'copy-oss-packages-for-docker',
+                # ],
+                # 'settings': {
+                    # 'dry_run': True,
+                    # 'edition': 'oss',
+                    # 'ubuntu': True,
+                # },
+            # },
             {
                 'name': 'copy-enterprise-packages-for-docker',
                 'image': build_image,
@@ -438,19 +438,19 @@ def pipeline(kind, name):
                     'edition': 'enterprise',
                 },
             },
-            {
-                'name': 'build-enterprise-ubuntu-docker-images',
-                'image': 'grafana/drone-grafana-docker',
-                'depends_on': [
-                    'copy-enterprise-packages-for-docker',
-                ],
-                'settings': {
-                    'dry_run': True,
-                    'directory': 'grafana-enterprise',
-                    'edition': 'enterprise',
-                    'ubuntu': True,
-                },
-            },
+            # {
+                # 'name': 'build-enterprise-ubuntu-docker-images',
+                # 'image': 'grafana/drone-grafana-docker',
+                # 'depends_on': [
+                    # 'copy-enterprise-packages-for-docker',
+                # ],
+                # 'settings': {
+                    # 'dry_run': True,
+                    # 'directory': 'grafana-enterprise',
+                    # 'edition': 'enterprise',
+                    # 'ubuntu': True,
+                # },
+            # },
             {
                 'name': 'postgres-integration-test',
                 'image': build_image,
