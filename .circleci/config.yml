@@ -407,7 +407,7 @@ jobs:
           command: |
             if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
               echo Using test GPG key pair since building a forked PR
-              . scripts/build/gpg-test-vars.sh
+              source scripts/build/gpg-test-vars.sh
             fi
 
             # Necessary for signing bundled plugins
