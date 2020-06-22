@@ -75,8 +75,15 @@ export class InfluxQueryCtrl extends QueryCtrl {
     });
   }
 
+  /**
+   * Only called for flux
+   */
   onChange = (target: InfluxQuery) => {
     this.target.query = target.query;
+  };
+
+  onRunQuery = () => {
+    this.panelCtrl.refresh();
   };
 
   removeOrderByTime() {
@@ -247,6 +254,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   // Only valid for InfluxQL queries
   toggleEditorMode() {
+    if (this.datasource.is2x) {
+      return; // nothing
+    }
+
     try {
       this.target.query = this.queryModel.render(false);
     } catch (err) {

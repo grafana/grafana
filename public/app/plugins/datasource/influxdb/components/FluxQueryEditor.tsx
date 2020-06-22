@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import coreModule from 'app/core/core_module';
 import { InfluxQuery } from '../types';
 import { SelectableValue } from '@grafana/data';
-import { InlineFormLabel, LinkButton, Select, TextArea } from '@grafana/ui';
+import { InlineFormLabel, LinkButton, Segment, TextArea } from '@grafana/ui';
 
 interface Props {
   target: InfluxQuery;
@@ -16,7 +16,7 @@ const samples: Array<SelectableValue<string>> = [
     label: 'Simple query',
     description: 'filter by measurment and field',
     value: `from(bucket: "db/rp")
-  |> range(start: v.timeRangeStart, stop:timeRangeStop)
+  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)
   |> filter(fn: (r) =>
     r._measurement == "example-measurement" and
     r._field == "example-field"
@@ -51,7 +51,7 @@ v1.measurements(bucket: v.bucket)`,
     label: 'Schema Exploration: (fields)',
     description: 'Return every possible key in a single table',
     value: `from(bucket: v.bucket)
-  |> range(start: -30m)
+  |> range(start: v.timeRangeStart, stop:timeRangeStop)
   |> keys()
   |> keep(columns: ["_value"])
   |> group()
@@ -112,10 +112,10 @@ export class FluxQueryEditor extends Component<Props> {
         </div>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel width={6} tooltip="This supports queries copied from chronograph">
+            <InlineFormLabel width={5} tooltip="Queries can be copied from chronograph">
               Help
             </InlineFormLabel>
-            <Select width={20} options={samples} placeholder="Sample Query" onChange={this.onSampleChange} />
+            <Segment options={samples} value="Sample Query" onChange={this.onSampleChange} />
             <LinkButton
               icon="external-link-alt"
               variant="secondary"
@@ -137,6 +137,6 @@ export class FluxQueryEditor extends Component<Props> {
 coreModule.directive('fluxQueryEditor', [
   'reactDirective',
   (reactDirective: any) => {
-    return reactDirective(FluxQueryEditor, ['target', 'change']);
+    return reactDirective(FluxQueryEditor, ['target', 'change', 'refresh']);
   },
 ]);
