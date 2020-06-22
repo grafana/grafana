@@ -154,6 +154,14 @@ On Ubuntu 18.10 the following dependencies have been confirmed as needed for the
 libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libgtk-3-0 libasound2
 ```
 
+**Debian:**
+
+On Debian 9 (Stretch) the following dependencies have been confirmed as needed for the image rendering to function.
+
+```bash
+libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0
+```
+
 **Centos:**
 
 On a minimal Centos installation, the following dependencies have been confirmed as needed for the image rendering to function:
