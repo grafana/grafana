@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DataSourceResponse } from 'app/types/events';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO } from 'app/types';
+import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO, FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
@@ -84,7 +84,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async get(url: string, params?: any, requestId?: string) {
+  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
     return await this.request({ method: 'GET', url, params, requestId });
   }
 
@@ -261,7 +261,7 @@ export class BackendSrv implements BackendService {
   }
 
   getFolderByUid(uid: string) {
-    return this.get(`/api/folders/${uid}`);
+    return this.get<FolderDTO>(`/api/folders/${uid}`);
   }
 
   saveDashboard(

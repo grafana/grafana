@@ -1,14 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # abort if we get any error
-set -e
-
-# always make sure we have a clean workspace
-if ! git diff-index --quiet HEAD --; then
-    echo -e "\033[91mgit workspace is dirty and contains changes\033[0"
-    echo -e "\033[91mmake sure you have a clean workspace before running this script\033[0m"
-    exit 1
-fi
+set -eo pipefail
 
 # building grafana packages
 echo "building grafana packages..."
