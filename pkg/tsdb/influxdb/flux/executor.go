@@ -25,6 +25,11 @@ func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 	tables, err := runner.runQuery(ctx, flux)
 	if err != nil {
 		dr.Error = err
+		metaFrame := data.NewFrame("meta for error")
+		metaFrame.Meta = &data.FrameMeta{
+			ExecutedQueryString: flux,
+		}
+		dr.Frames = append(dr.Frames, metaFrame)
 		return
 	}
 

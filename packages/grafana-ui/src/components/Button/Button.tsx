@@ -72,6 +72,12 @@ export interface StyleProps {
   hasText: boolean;
 }
 
+const disabledStyles = css`
+  cursor: not-allowed;
+  opacity: 0.65;
+  box-shadow: none;
+`;
+
 export const getButtonStyles = stylesFactory((props: StyleProps) => {
   const { theme, variant } = props;
   const { padding, fontSize, height } = getPropertiesForButtonSize(props);
@@ -98,9 +104,7 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
 
         &[disabled],
         &:disabled {
-          cursor: not-allowed;
-          opacity: 0.65;
-          box-shadow: none;
+          ${disabledStyles};
         }
       `,
       getFocusStyle(theme),
@@ -157,7 +161,7 @@ Button.displayName = 'Button';
 
 type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & AnchorHTMLAttributes<HTMLAnchorElement>;
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
-  ({ variant, icon, children, className, ...otherProps }, ref) => {
+  ({ variant, icon, children, className, disabled, ...otherProps }, ref) => {
     const theme = useContext(ThemeContext);
     const styles = getButtonStyles({
       theme,
@@ -167,8 +171,22 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       hasIcon: icon !== undefined,
     });
 
+    const linkButtonStyles =
+      disabled &&
+      cx(
+        disabledStyles,
+        css`
+          pointer-events: none;
+        `
+      );
+
     return (
-      <a className={cx(styles.button, className)} {...otherProps} ref={ref}>
+      <a
+        className={cx(styles.button, linkButtonStyles, className)}
+        {...otherProps}
+        ref={ref}
+        tabIndex={disabled ? -1 : 0}
+      >
         <ButtonContent icon={icon} size={otherProps.size}>
           {children}
         </ButtonContent>
