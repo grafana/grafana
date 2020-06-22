@@ -198,6 +198,10 @@ export function getValueFormat(id?: string | null): ValueFormatter {
         return toFixedUnit(sub, true);
       }
 
+      if (key === 'suffix') {
+        return toFixedUnit(sub, false);
+      }
+
       if (key === 'time') {
         return toDateTimeValueFormatter(sub);
       }
