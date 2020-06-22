@@ -1,6 +1,10 @@
 
-<query-editor-row ng-if="ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="false">
-  <flux-query-editor target="ctrl.target" change="ctrl.onChange" refresh="ctrl.refresh"></flux-query-editor>
+<query-editor-row ng-if="ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
+  <flux-query-editor 
+    target="ctrl.target" 
+    change="ctrl.onChange" 
+    refresh="ctrl.onRunQuery"
+  ></flux-query-editor>
 </query-editor-row>
 
 <query-editor-row ng-if="!ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
