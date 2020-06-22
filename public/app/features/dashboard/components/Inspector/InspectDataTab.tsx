@@ -35,6 +35,7 @@ import { css, cx } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from '../../../../core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from '../../state';
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 const { Switch } = LegacyForms;
 
 interface Props {
@@ -146,6 +147,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
+      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 

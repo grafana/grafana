@@ -17,6 +17,7 @@ import {
   GrafanaTheme,
   TimeZone,
   DataLink,
+  DataSourceInstanceSettings,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -131,6 +132,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         data: options.data!,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
+        getDataSourceSettingsByUid: options.getDataSourceSettingsByUid,
         fieldConfigRegistry: fieldConfigRegistry,
       };
 
@@ -208,10 +210,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      f.getLinks = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
-        theme: options.theme,
-        timeZone: options.timeZone,
-      });
+      f.getLinks = getLinksSupplier(
+        frame,
+        f,
+        fieldScopedVars,
+        context.replaceVariables,
+        context.getDataSourceSettingsByUid,
+        {
+          theme: options.theme,
+          timeZone: options.timeZone,
+        }
+      );
 
       return f;
     });
@@ -350,6 +359,7 @@ export const getLinksSupplier = (
   field: Field,
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
+  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined,
   options: {
     theme: GrafanaTheme;
     timeZone?: TimeZone;
@@ -414,7 +424,10 @@ export const getLinksSupplier = (
 
     if (link.internal) {
       // For internal links at the moment only destination is Explore.
-      return mapInternalLinkToExplore(link, variables, {} as any, field);
+      return mapInternalLinkToExplore(link, variables, {} as any, field, {
+        replaceVariables,
+        getDataSourceSettingsByUid,
+      });
     } else {
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
       href = replaceVariables(href, variables);

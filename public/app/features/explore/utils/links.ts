@@ -2,6 +2,7 @@ import { splitOpen } from '../state/actions';
 import { Field, LinkModel, TimeRange } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { mapInternalLinkToExplore } from '@grafana/data/src/utils/dataLinks';
+import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -33,7 +34,11 @@ export const getFieldLinksForExplore = (
           }
           return linkModel;
         } else {
-          return mapInternalLinkToExplore(link, scopedVars, range, field, splitOpenFn);
+          return mapInternalLinkToExplore(link, scopedVars, range, field, {
+            onClickFn: splitOpenFn,
+            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+            getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
+          });
         }
       })
     : [];

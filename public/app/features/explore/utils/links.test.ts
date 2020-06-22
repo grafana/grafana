@@ -41,7 +41,7 @@ describe('getFieldLinksForExplore', () => {
       title: '',
       url: '',
       internal: {
-        query: 'query_1',
+        query: { query: 'query_1' },
         datasourceUid: 'uid_1',
       },
     });
@@ -57,7 +57,7 @@ describe('getFieldLinksForExplore', () => {
       links[0].onClick({});
     }
 
-    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: 'query_1' });
+    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: { query: 'query_1' } });
   });
 });
 
