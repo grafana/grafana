@@ -167,6 +167,7 @@ def pipeline(kind, name):
                     'cd grafana-enterprise',
                     'mkdir -p bin',
                     'cp ../bin/grabpl ./bin/',
+                    restore_yarn_cache,
                     'yarn install --frozen-lockfile --no-progress',
                 ],
             },
