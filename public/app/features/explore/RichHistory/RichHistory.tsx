@@ -200,6 +200,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           sortOrder={sortOrder}
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
+          searchFilter={searchFilter}
+          onSearchQuery={this.onSearchQuery}
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           exploreId={exploreId}

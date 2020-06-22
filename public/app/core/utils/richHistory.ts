@@ -367,13 +367,15 @@ export function filterQueries(
   sortOrder: SortOrder,
   listOfDatasourceFilters: string[],
   searchFilter: string,
-  timeFilter: [number, number]
+  timeFilter?: [number, number]
 ) {
   const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
   const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
   const sortedQueries = sortQueries(filteredQueriesByDsAndSearchFilter, sortOrder);
-  const filteredQueries = filterQueriesByTime(sortedQueries, timeFilter);
-  return filteredQueries;
+  if (timeFilter) {
+    return filterQueriesByTime(sortedQueries, timeFilter);
+  }
+  return sortedQueries;
 }
 
 /* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
