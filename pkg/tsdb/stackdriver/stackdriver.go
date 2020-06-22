@@ -656,7 +656,10 @@ func calcBucketBound(bucketOptions stackdriverBucketOptions, n int) string {
 }
 
 func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query *stackdriverQuery, proxyPass string) (*http.Request, error) {
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/", nil)
