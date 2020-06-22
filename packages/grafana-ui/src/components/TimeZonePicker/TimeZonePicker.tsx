@@ -25,7 +25,6 @@ export const TimeZonePicker: React.FC<Props> = ({ onChange, value, width }) => {
 
   return (
     <Select
-      isOpen={true}
       width={width}
       filterOption={filterBySearchIndex}
       options={groupedTimeZones}

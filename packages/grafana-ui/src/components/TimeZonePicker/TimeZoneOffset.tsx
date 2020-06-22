@@ -55,6 +55,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
   return {
     localTime: css`
+      display: none;
       ${textBase};
       color: ${theme.colors.text};
     `,

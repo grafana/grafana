@@ -1,6 +1,6 @@
 import React, { forwardRef, PropsWithChildren } from 'react';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme, SelectableValue, getTimeZoneInfo } from '@grafana/data';
 import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Icon } from '../Icon/Icon';
@@ -28,6 +28,10 @@ export const TimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
+  if (!data.value) {
+    return null;
+  }
+
   return (
     <div ref={ref} className={containerStyles} {...innerProps} aria-label="Select option">
       <div className={styles.body}>
@@ -45,7 +49,7 @@ export const TimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props
         </div>
         <div className={styles.row}>
           <div className={styles.leftColumn}>
-            <TimeZoneDescription timestamp={timestamp} timeZone={data.value} />
+            <TimeZoneDescription info={getTimeZoneInfo(data.value, timestamp)} />
           </div>
           <div className={styles.rightColumn}>
             <TimeZoneOffset timestamp={timestamp} timeZone={data.value} className={offsetClassName} />
