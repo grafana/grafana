@@ -109,8 +109,8 @@
       name: Azure Monitor
     - link: /features/datasources/elasticsearch/
       name: Elasticsearch
-    - link: /features/datasources/stackdriver/
-      name: Google Stackdriver
+    - link: /features/datasources/cloudmonitoring/
+      name: Google Cloud Monitoring
     - link: /features/datasources/graphite/
       name: Graphite
     - link: /features/datasources/influxdb/
