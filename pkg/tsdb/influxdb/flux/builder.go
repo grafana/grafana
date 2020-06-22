@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	influxdb2 "github.com/influxdata/influxdb-client-go"
+	"github.com/influxdata/influxdb-client-go/api/query"
 )
 
 // Copied from: (Apache 2 license)
@@ -26,9 +26,9 @@ type columnInfo struct {
 	converter *data.FieldConverter
 }
 
-// This is an interface to help testing
+// FrameBuilder This is an interface to help testing
 type FrameBuilder struct {
-	tableId      int64
+	tableID      int64
 	active       *data.Frame
 	frames       []*data.Frame
 	value        *data.FieldConverter
@@ -72,10 +72,10 @@ func getConverter(t string) (*data.FieldConverter, error) {
 // Init initializes the frame to be returned
 // fields points at entries in the frame, and provides easier access
 // names indexes the columns encountered
-func (fb *FrameBuilder) Init(metadata *influxdb2.FluxTableMetadata) error {
+func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	columns := metadata.Columns()
 	fb.frames = make([]*data.Frame, 0)
-	fb.tableId = -1
+	fb.tableID = -1
 	fb.value = nil
 	fb.columns = make([]columnInfo, 0)
 	fb.isTimeSeries = false
@@ -120,9 +120,9 @@ func (fb *FrameBuilder) Init(metadata *influxdb2.FluxTableMetadata) error {
 // Tags are appended as labels
 // _measurement holds the dataframe name
 // _field holds the field name.
-func (fb *FrameBuilder) Append(record *influxdb2.FluxRecord) error {
+func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 	table, ok := record.ValueByKey("table").(int64)
-	if ok && table != fb.tableId {
+	if ok && table != fb.tableID {
 		fb.totalSeries++
 		if fb.totalSeries > fb.maxSeries {
 			return fmt.Errorf("reached max series limit (%d)", fb.maxSeries)
@@ -153,7 +153,7 @@ func (fb *FrameBuilder) Append(record *influxdb2.FluxRecord) error {
 		}
 
 		fb.frames = append(fb.frames, fb.active)
-		fb.tableId = table
+		fb.tableID = table
 	}
 
 	if fb.isTimeSeries {
