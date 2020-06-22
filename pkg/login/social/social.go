@@ -6,6 +6,7 @@ import (
 
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/auth"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -96,6 +97,7 @@ func NewOAuthService() {
 			TlsClientKey:       sec.Key("tls_client_key").String(),
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
+			ConfigFile:         sec.Key("config_file").String(),
 		}
 
 		if !info.Enabled {
@@ -107,6 +109,30 @@ func NewOAuthService() {
 		}
 
 		setting.OAuthService.OAuthInfos[name] = info
+
+		setting.OAuthService.OrgToRoleMap = make(map[string][]setting.OAuthOrgRoleGroup)
+		logger := log.New("oauth." + name)
+		if info.ConfigFile != "" {
+			authConfig, err := auth.GetConfig(info.ConfigFile)
+			if err != nil {
+				logger.Info("Error", "err", err)
+			}
+			for _, auth := range authConfig.AuthMappings {
+				groups := auth.Groups
+				for _, group := range groups {
+					logger.Debug("Group: ", "group", group)
+
+					s := setting.OAuthOrgRoleGroup{
+						Role:         group.OrgRole,
+						OrgID:        group.OrgID,
+						GrafanaAdmin: group.IsGrafanaAdmin,
+					}
+
+					setting.OAuthService.OrgToRoleMap[group.GroupDN] = append(setting.OAuthService.OrgToRoleMap[group.GroupDN], s)
+
+				}
+			}
+		}
 
 		config := oauth2.Config{
 			ClientID:     info.ClientId,

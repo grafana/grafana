@@ -79,13 +79,14 @@ type UserInfoJson struct {
 	Email       string              `json:"email"`
 	Upn         string              `json:"upn"`
 	Attributes  map[string][]string `json:"attributes"`
+	Groups      []string            `json:"groups"`
 	rawJSON     []byte
 }
 
 func (info *UserInfoJson) String() string {
 	return fmt.Sprintf(
-		"Name: %s, Displayname: %s, Login: %s, Username: %s, Email: %s, Upn: %s, Attributes: %v",
-		info.Name, info.DisplayName, info.Login, info.Username, info.Email, info.Upn, info.Attributes)
+		"Name: %s, Displayname: %s, Login: %s, Username: %s, Email: %s, Upn: %s, Attributes: %v, Groups: %v",
+		info.Name, info.DisplayName, info.Login, info.Username, info.Email, info.Upn, info.Attributes, info.Groups)
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -120,6 +121,8 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	if !s.IsOrganizationMember(client) {
 		return nil, errors.New("User not a member of one of the required organizations")
 	}
+
+	userInfo.Groups = data.Groups
 
 	s.log.Debug("User info result", "result", userInfo)
 	return userInfo, nil

@@ -196,6 +196,30 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		}
 	}
 
+	orgToRoleMap := setting.OAuthService.OrgToRoleMap
+
+	for _, group := range userInfo.Groups {
+		if orgs, ok := orgToRoleMap[group]; ok {
+			for _, org := range orgs {
+				if org.OrgID == 0 {
+					org.OrgID = 1
+				}
+
+				if !isRoleAssignable(extUser.OrgRoles[org.OrgID], models.RoleType(org.Role)) {
+					continue
+				}
+
+				extUser.OrgRoles[org.OrgID] = models.RoleType(org.Role)
+
+				oauthLogger.Debug("OAuthLogin Org Roles", "orgId", org.OrgID, "role", org.Role)
+
+				if org.GrafanaAdmin != nil && *org.GrafanaAdmin == true {
+					extUser.IsGrafanaAdmin = org.GrafanaAdmin
+				}
+			}
+		}
+	}
+
 	// add/update user in grafana
 	cmd := &models.UpsertUserCommand{
 		ReqContext:    ctx,
@@ -241,4 +265,20 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 func hashStatecode(code, seed string) string {
 	hashBytes := sha256.Sum256([]byte(code + setting.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
+}
+
+func isRoleAssignable(currentRole models.RoleType, incomingRole models.RoleType) bool {
+	// role hierarchy
+	roleHierarchy := map[models.RoleType]int{
+		models.ROLE_VIEWER: 0,
+		models.ROLE_EDITOR: 1,
+		models.ROLE_ADMIN:  2,
+	}
+
+	// If the incoming role is less than ( less privilege ) than the currently assigned role ( more privilege ), skip this mapping.
+	if currentRole != "" && roleHierarchy[models.RoleType(incomingRole)] < roleHierarchy[currentRole] {
+		return false
+	}
+
+	return true
 }

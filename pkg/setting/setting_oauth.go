@@ -17,10 +17,23 @@ type OAuthInfo struct {
 	TlsClientKey           string
 	TlsClientCa            string
 	TlsSkipVerify          bool
+	ConfigFile             string
+}
+
+type OAuthOrgRoleGroup struct {
+	Role         string
+	OrgID        int64
+	GrafanaAdmin *bool
 }
 
 type OAuther struct {
-	OAuthInfos map[string]*OAuthInfo
+	OAuthInfos   map[string]*OAuthInfo
+	OrgToRoleMap map[string][]OAuthOrgRoleGroup
+}
+
+type OAuthOrgInfo struct {
+	Role  string
+	OrgId int64
 }
 
 var OAuthService *OAuther
