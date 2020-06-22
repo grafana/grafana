@@ -1,28 +1,28 @@
 +++
-title = "Using Stackdriver in Grafana"
-description = "Guide for using Stackdriver in Grafana"
-keywords = ["grafana", "stackdriver", "google", "guide"]
+title = "Using Google Cloud Monitoring in Grafana"
+description = "Guide for using Google Cloud Monitoring in Grafana"
+keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/stackdriver"]
+aliases = ["/docs/grafana/latest/datasources/cloudmonitoring"]
 [menu.docs]
-name = "Google Stackdriver"
+name = "Google Cloud Monitoring"
 parent = "datasources"
 weight = 4
 +++
 
-# Using Google Stackdriver in Grafana
+# Using Google Cloud Monitoring in Grafana
 
 > Available as a beta feature in Grafana v5.3.x and v5.4.x.
 > Officially released in Grafana v6.0.0
 
-Grafana ships with built-in support for Google Stackdriver. Just add it as a data source and you are ready to build dashboards for your Stackdriver metrics.
+Grafana ships with built-in support for Google Cloud Monitoring. Just add it as a data source and you are ready to build dashboards for your Google Cloud Monitoring metrics.
 
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
-4. Select `Stackdriver` from the _Type_ dropdown.
+4. Select `Cloud Monitoring` from the _Type_ dropdown.
 5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
@@ -35,11 +35,11 @@ Grafana ships with built-in support for Google Stackdriver. Just add it as a dat
 
 ## Authentication
 
-There are two ways to authenticate the Stackdriver plugin - either by uploading a Google JWT file, or by automatically retrieving credentials from Google metadata server. The latter option is only available when running Grafana on GCE virtual machine.
+There are two ways to authenticate the Google Cloud Monitoring plugin - either by uploading a Google JWT file, or by automatically retrieving credentials from Google metadata server. The latter option is only available when running Grafana on GCE virtual machine.
 
 ### Using a Google Service Account Key File
 
-To authenticate with the Stackdriver API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana data source integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one data source per GCP Project.
+To authenticate with the Google Cloud Monitoring API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana data source integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one data source per GCP Project.
 
 #### Enable APIs
 
@@ -50,31 +50,31 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+{{< docs-imagebox img="/img/docs/v53/cloudmonitoring_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-   {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
+   {{< docs-imagebox img="/img/docs/v53/cloudmonitoring_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-   {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
+   {{< docs-imagebox img="/img/docs/v53/cloudmonitoring_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-   {{< docs-imagebox img="/img/docs/v53/stackdriver_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
+   {{< docs-imagebox img="/img/docs/v53/cloudmonitoring_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
 
-5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
+5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
 6. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
-   {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+   {{< docs-imagebox img="/img/docs/v53/cloudmonitoring_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-   {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+   {{< docs-imagebox img="/img/docs/v53/cloudmonitoring_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ### Using GCE Default Service Account
 
@@ -82,13 +82,13 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 
 1. First of all, you need to create a Service Account that can be used by the GCE virtual machine. See detailed instructions on how to do that [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
 2. Make sure the GCE virtual machine instance is being run as the service account that you just created. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
-3. Allow access to the `Stackdriver Monitoring API` scope. See instructions [here](changeserviceaccountandscopes).
+3. Allow access to the `Cloud Monitoring Monitoring API` scope. See instructions [here](changeserviceaccountandscopes).
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 
 ## Using the Query Editor
 
-The Stackdriver query editor allows you to build two types of queries - **Metric** and **Service Level Objective (SLO)**. Both types return time series data.
+The Google Cloud Monitoring query editor allows you to build two types of queries - **Metric** and **Service Level Objective (SLO)**. Both types return time series data.
 
 ### Metric Queries
 
@@ -104,7 +104,7 @@ To create a metric query, follow these steps:
 4. Choose a metric from the **Metric** dropdown.
 5. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
 
-Stackdriver metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
+Google Cloud Monitoring metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
 
 #### Filter
 
@@ -126,14 +126,14 @@ The `Aligner` field allows you to align multiple time series after the same grou
 
 ##### Alignment Period/Group by Time
 
-The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Stackdriver default groupings (which allows you to compare graphs in Grafana with graphs in the Stackdriver UI).
-The option is called `Stackdriver auto` and the defaults are:
+The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Google Cloud Monitoring default groupings (which allows you to compare graphs in Grafana with graphs in the Google Cloud Monitoring UI).
+The option is called `cloud monitoring auto` and the defaults are:
 
 - 1m for time ranges < 23 hours
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -190,7 +190,7 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
-The SLO query builder in the Stackdriver data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Stackdriver's [official docs](https://cloud.google.com/monitoring/service-monitoring).
+The SLO query builder in the Google Cloud Monitoring data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Cloud Monitoring's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
 #### How to create an SLO query
 
@@ -236,20 +236,20 @@ types of template variables.
 
 ### Query Variable
 
-Variable of the type _Query_ allows you to query Stackdriver for various types of data. The Stackdriver data source plugin provides the following `Query Types`.
+Variable of the type _Query_ allows you to query Google Cloud Monitoring for various types of data. The Google Cloud Monitoring data source plugin provides the following `Query Types`.
 
-| Name                             | Description                                                                                       |
-| -------------------------------- | ------------------------------------------------------------------------------------------------- |
-| _Metric Types_                   | Returns a list of metric type names that are available for the specified service.                 |
-| _Labels Keys_                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.           |
-| _Labels Values_                  | Returns a list of values for the label in the specified metric.                                   |
-| _Resource Types_                 | Returns a list of resource types for the specified metric.                                    |
-| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the specified metric.              |
-| _Aligners_                       | Returns a list of aligners (per series aligners) for the specified metric.                    |
-| _Alignment periods_              | Returns a list of all alignment periods that are available in Stackdriver query editor in Grafana |
-| _Selectors_                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries            |
-| _SLO Services_                   | Returns a list of Service Monitoring services that can be used in SLO queries                     |
-| _Service Level Objectives (SLO)_ | Returns a list of SLO's for the specified SLO service                                             |
+| Name                             | Description                                                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| _Metric Types_                   | Returns a list of metric type names that are available for the specified service.                             |
+| _Labels Keys_                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.                       |
+| _Labels Values_                  | Returns a list of values for the label in the specified metric.                                               |
+| _Resource Types_                 | Returns a list of resource types for the specified metric.                                                    |
+| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the specified metric.                              |
+| _Aligners_                       | Returns a list of aligners (per series aligners) for the specified metric.                                    |
+| _Alignment periods_              | Returns a list of all alignment periods that are available in Google Cloud Monitoring query editor in Grafana |
+| _Selectors_                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries                        |
+| _SLO Services_                   | Returns a list of Service Monitoring services that can be used in SLO queries                                 |
+| _Service Level Objectives (SLO)_ | Returns a list of SLO's for the specified SLO service                                                         |
 
 ### Using variables in queries
 
@@ -262,10 +262,10 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/v53/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
-queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Stackdriver annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Stackdriver.
+queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
 
 With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:
 
@@ -294,8 +294,8 @@ Here is a provisioning example using the JWT (Service Account key file) authenti
 apiVersion: 1
 
 datasources:
-  - name: Stackdriver
-    type: stackdriver
+  - name: Google Cloud Monitoring
+    type: cloud-monitoring
     access: proxy
     jsonData:
       tokenUri: https://oauth2.googleapis.com/token
@@ -317,8 +317,8 @@ Here is a provisioning example using GCE Default Service Account authentication.
 apiVersion: 1
 
 datasources:
-  - name: Stackdriver
-    type: stackdriver
+  - name: Google Cloud Monitoring
+    type: cloud-monitoring
     access: proxy
     jsonData:
       authenticationType: gce
