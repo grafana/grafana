@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -129,6 +130,13 @@ func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Co
 					values[i] = v
 				} else {
 					t.log.Debug("Rows", "Error converting numeric to float", value)
+				}
+			case "UNIQUEIDENTIFIER":
+				v, err := uuid.FromBytes(value)
+				if err == nil {
+					values[i] = v.String()
+				} else {
+					t.log.Debug("Rows", "Error converting uniqueidentifier to string", value)
 				}
 			default:
 				t.log.Debug("Rows", "Unknown database type", columnTypes[i].DatabaseTypeName(), "value", value)
