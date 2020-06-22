@@ -15,7 +15,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-Check out the [configuration]({{< relref "../administration/configuration" >}}) page for more information on what you can configure in `grafana.ini`
+Check out the [configuration]({{< relref "configuration.md" >}}) page for more information on what you can configure in `grafana.ini`
 
 ### Config File Locations
 
@@ -177,7 +177,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
-Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../administration/configuration/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "configuration.md#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 | Name              | Type   | Datasource | Description                             |
 | ----------------- | ------ | ---------- | --------------------------------------- |
@@ -191,7 +191,7 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 
 #### Custom HTTP headers for datasources
 
-Datasources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
+Data sources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
 going to that datasource. The header name is configured in the `jsonData` field and the header value should be
 configured in `secureJsonData`.
 
@@ -212,7 +212,7 @@ datasources:
 
 > This feature is available from v7.1
 
-You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "/configuration/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "configuration.md#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
 ### Example plugin configuration file
 
@@ -240,7 +240,7 @@ apps:
 
 ## Dashboards
 
-You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../administration/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
