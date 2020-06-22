@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"testing"
@@ -95,9 +96,9 @@ func TestSearchJSONForEmail(t *testing.T) {
 				if test.ExpectedError == "" {
 					require.NoError(t, err, "Testing case %q", test.Name)
 				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+					assert.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
 				}
-				require.Equal(t, test.ExpectedResult, actualResult)
+				assert.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
 	})
@@ -158,9 +159,9 @@ func TestSearchJSONForRole(t *testing.T) {
 				if test.ExpectedError == "" {
 					require.NoError(t, err, "Testing case %q", test.Name)
 				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+					assert.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
 				}
-				require.Equal(t, test.ExpectedResult, actualResult)
+				assert.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
 	})
@@ -325,9 +326,9 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				token := staticToken.WithExtra(test.OAuth2Extra)
 				actualResult, err := provider.UserInfo(ts.Client(), token)
 				require.NoError(t, err)
-				require.Equal(t, test.ExpectedEmail, actualResult.Email)
-				require.Equal(t, test.ExpectedEmail, actualResult.Login)
-				require.Equal(t, test.ExpectedRole, actualResult.Role)
+				assert.Equal(t, test.ExpectedEmail, actualResult.Email)
+				assert.Equal(t, test.ExpectedEmail, actualResult.Login)
+				assert.Equal(t, test.ExpectedRole, actualResult.Role)
 			})
 		}
 	})
