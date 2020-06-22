@@ -117,6 +117,13 @@ type insightsJSONQuery struct {
 	Raw *bool `json:"raw"`
 }
 
+type insightsAnalyticsJSONQuery struct {
+	InsightsAnalytics struct {
+		Query string `json:"query"`
+		Type  string `json:"type"`
+	} `json:"insightsAnalytics"`
+}
+
 // logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
 type logJSONQuery struct {
 	AzureLogAnalytics struct {
