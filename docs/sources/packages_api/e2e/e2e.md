@@ -5,7 +5,6 @@
 title = "e2e"
 keywords = ["grafana","documentation","sdk","@grafana/e2e"]
 type = "docs"
-draft = true
 +++
 
 ## e2e variable

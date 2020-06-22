@@ -108,27 +108,27 @@ export class AlertTabCtrl {
   getNotificationIcon(type: string): string {
     switch (type) {
       case 'email':
-        return 'fa fa-envelope';
+        return 'envelope';
       case 'slack':
-        return 'fa fa-slack';
+        return 'slack';
       case 'victorops':
         return 'fa fa-pagelines';
       case 'webhook':
-        return 'fa fa-cubes';
+        return 'cube';
       case 'pagerduty':
         return 'fa fa-bullhorn';
       case 'opsgenie':
-        return 'fa fa-bell';
+        return 'bell';
       case 'hipchat':
         return 'fa fa-mail-forward';
       case 'pushover':
-        return 'fa fa-mobile';
+        return 'mobile-android';
       case 'kafka':
-        return 'fa fa-random';
+        return 'arrow-random';
       case 'teams':
         return 'fa fa-windows';
     }
-    return 'fa fa-bell';
+    return 'bell';
   }
 
   getNotifications() {
@@ -168,8 +168,8 @@ export class AlertTabCtrl {
   removeNotification(an: any) {
     // remove notifiers refeered to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
-    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid);
+    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid);
   }
 
   addAlertRuleTag() {
@@ -412,7 +412,7 @@ export class AlertTabCtrl {
       title: 'Delete Alert',
       text: 'Are you sure you want to delete this alert rule?',
       text2: 'You need to save dashboard for the delete to take effect',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       yesText: 'Delete',
       onConfirm: () => {
         delete this.panel.alert;
@@ -461,7 +461,7 @@ export class AlertTabCtrl {
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert History',
       text: 'Are you sure you want to remove all history & annotations for this alert?',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       yesText: 'Yes',
       onConfirm: () => {
         promiseToDigest(this.$scope)(

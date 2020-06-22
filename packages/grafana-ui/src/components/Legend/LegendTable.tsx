@@ -1,9 +1,10 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
 import { LegendComponentProps } from './Legend';
+import { Icon } from '../Icon/Icon';
 import { ThemeContext } from '../../themes/ThemeContext';
 
-interface LegendTableProps extends LegendComponentProps {
+export interface LegendTableProps extends LegendComponentProps {
   columns: string[];
   sortBy?: string;
   sortDesc?: boolean;
@@ -40,7 +41,7 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
               <th
                 key={columnHeader}
                 className={css`
-                  color: ${theme.colors.blue};
+                  color: ${theme.colors.textBlue};
                   font-weight: bold;
                   text-align: right;
                   cursor: pointer;
@@ -53,13 +54,11 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
               >
                 {columnHeader}
                 {sortBy === columnHeader && (
-                  <span
-                    className={cx(
-                      `fa fa-caret-${sortDesc ? 'down' : 'up'}`,
-                      css`
-                        margin-left: ${theme.spacing.sm};
-                      `
-                    )}
+                  <Icon
+                    className={css`
+                      margin-left: ${theme.spacing.sm};
+                    `}
+                    name={sortDesc ? 'angle-down' : 'angle-up'}
                   />
                 )}
               </th>

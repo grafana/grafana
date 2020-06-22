@@ -5,7 +5,6 @@
 title = "FieldCache"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldCache class
@@ -38,9 +37,10 @@ import { FieldCache } from '@grafana/data';
 |  --- | --- | --- |
 |  [getFieldByName(name)](#getfieldbyname-method) |  | Returns the first field with the given name. |
 |  [getFields(type)](#getfields-method) |  |  |
-|  [getFirstFieldOfType(type)](#getfirstfieldoftype-method) |  |  |
+|  [getFirstFieldOfType(type, includeHidden)](#getfirstfieldoftype-method) |  |  |
 |  [hasFieldNamed(name)](#hasfieldnamed-method) |  |  |
 |  [hasFieldOfType(type)](#hasfieldoftype-method) |  |  |
+|  [hasFieldWithNameAndType(name, type)](#hasfieldwithnameandtype-method) |  |  |
 
 ### constructor(data)
 
@@ -106,13 +106,14 @@ getFields(type?: FieldType): FieldWithIndex[];
 <b>Signature</b>
 
 ```typescript
-getFirstFieldOfType(type: FieldType): FieldWithIndex | undefined;
+getFirstFieldOfType(type: FieldType, includeHidden?: boolean): FieldWithIndex | undefined;
 ```
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  type | <code>FieldType</code> |  |
+|  includeHidden | <code>boolean</code> |  |
 
 <b>Returns:</b>
 
@@ -146,6 +147,24 @@ hasFieldOfType(type: FieldType): boolean;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
+|  type | <code>FieldType</code> |  |
+
+<b>Returns:</b>
+
+`boolean`
+
+### hasFieldWithNameAndType method
+
+<b>Signature</b>
+
+```typescript
+hasFieldWithNameAndType(name: string, type: FieldType): boolean;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  name | <code>string</code> |  |
 |  type | <code>FieldType</code> |  |
 
 <b>Returns:</b>

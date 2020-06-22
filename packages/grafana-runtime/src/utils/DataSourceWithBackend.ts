@@ -5,26 +5,44 @@ import {
   DataSourceInstanceSettings,
   DataQuery,
   DataSourceJsonData,
+  ScopedVars,
 } from '@grafana/data';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { config } from '..';
 import { getBackendSrv } from '../services';
+import { toDataQueryResponse } from './queryResponse';
 
-// Ideally internal (exported for consistency)
 const ExpressionDatasourceID = '__expr__';
 
+/**
+ * Describes the current health status of a data source plugin.
+ *
+ * @public
+ */
 export enum HealthStatus {
   Unknown = 'UNKNOWN',
   OK = 'OK',
   Error = 'ERROR',
 }
 
+/**
+ * Describes the payload returned when checking the health of a data source
+ * plugin.
+ *
+ * @public
+ */
 export interface HealthCheckResult {
   status: HealthStatus;
   message: string;
   details?: Record<string, any>;
 }
 
+/**
+ * Extend this class to implement a data source plugin that is depending on the Grafana
+ * backend API.
+ *
+ * @public
+ */
 export class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
@@ -36,30 +54,43 @@ export class DataSourceWithBackend<
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints, range, requestId } = request;
+  query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
+    const { intervalMs, maxDataPoints, range, requestId } = request;
     const orgId = config.bootData.user.orgId;
+    let targets = request.targets;
+    if (this.filterQuery) {
+      targets = targets.filter(q => this.filterQuery!(q));
+    }
     const queries = targets.map(q => {
+      let datasourceId = this.id;
       if (q.datasource === ExpressionDatasourceID) {
         return {
           ...q,
-          datasourceId: this.id,
+          datasourceId,
           orgId,
         };
       }
-      const dsName = q.datasource && q.datasource !== 'default' ? q.datasource : config.defaultDatasource;
-      const ds = config.datasources[dsName];
-      if (!ds) {
-        throw new Error('Unknown Datasource: ' + q.datasource);
+      if (q.datasource) {
+        const dsName = q.datasource === 'default' ? config.defaultDatasource : q.datasource;
+        const ds = config.datasources[dsName];
+        if (!ds) {
+          throw new Error('Unknown Datasource: ' + q.datasource);
+        }
+        datasourceId = ds.id;
       }
       return {
-        ...this.applyTemplateVariables(q),
-        datasourceId: ds.id,
+        ...this.applyTemplateVariables(q, request.scopedVars),
+        datasourceId,
         intervalMs,
         maxDataPoints,
         orgId,
       };
     });
+
+    // Return early if no queries exist
+    if (!queries.length) {
+      return of({ data: [] });
+    }
 
     const body: any = {
       queries,
@@ -78,40 +109,60 @@ export class DataSourceWithBackend<
         requestId,
       })
       .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp?.data);
+        const dqs = toDataQueryResponse(rsp);
+        if (this.processResponse) {
+          return this.processResponse(dqs);
+        }
+        return dqs;
+      })
+      .catch(err => {
+        err.isHandled = true; // Avoid extra popup warning
+        const dqs = toDataQueryResponse(err);
+        if (this.processResponse) {
+          return this.processResponse(dqs);
+        }
+        return dqs;
       });
 
     return from(req);
   }
 
   /**
-   * Override to apply template variables
+   * Optionally augment the response before returning the results to the
    */
-  applyTemplateVariables(query: DataQuery) {
-    return query;
-  }
+  processResponse?(res: DataQueryResponse): Promise<DataQueryResponse>;
 
   /**
-   * This makes the arrow library loading async.
+   * Override to skip executing a query
+   *
+   * @virtual
    */
-  async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    const { resultsToDataFrames } = await import(
-      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/ArrowDataFrame'
-    );
-    return { data: resultsToDataFrames(rsp) };
+  filterQuery?(query: TQuery): boolean;
+
+  /**
+   * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can
+   * be used to modify the query structure before sending to the backend.
+   *
+   * NOTE: if you do modify the structure or use template variables, alerting queries may not work
+   * as expected
+   *
+   * @virtual
+   */
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
+    return query;
   }
 
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(path: string, params?: any): Promise<Record<string, any>> {
+  async getResource(path: string, params?: any): Promise<any> {
     return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(path: string, body?: any): Promise<Record<string, any>> {
+  async postResource(path: string, body?: any): Promise<any> {
     return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
   }
 

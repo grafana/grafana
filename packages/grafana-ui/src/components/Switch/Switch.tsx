@@ -1,71 +1,101 @@
-import React, { PureComponent } from 'react';
+import React, { HTMLProps, useRef } from 'react';
+import { css, cx } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
-import { Tooltip } from '../Tooltip/Tooltip';
-import * as PopperJS from 'popper.js';
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme } from '../../themes';
+import { focusCss } from '../../themes/mixins';
 
-export interface Props {
-  label: string;
-  checked: boolean;
-  className?: string;
-  labelClass?: string;
-  switchClass?: string;
-  tooltip?: string;
-  tooltipPlacement?: PopperJS.Placement;
-  transparent?: boolean;
-  onChange: (event?: React.SyntheticEvent<HTMLInputElement>) => void;
+export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+  value?: boolean;
 }
 
-export interface State {
-  id: string;
-}
+export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    switch: css`
+      width: 32px;
+      height: 16px;
+      position: relative;
 
-export class Switch extends PureComponent<Props, State> {
-  state = {
-    id: uniqueId(),
+      input {
+        opacity: 0;
+        left: -100vw;
+        z-index: -1000;
+        position: absolute;
+
+        &:disabled + label {
+          background: ${theme.colors.formSwitchBgDisabled};
+          cursor: not-allowed;
+        }
+
+        &:checked + label {
+          background: ${theme.colors.formSwitchBgActive};
+
+          &:hover {
+            background: ${theme.colors.formSwitchBgActiveHover};
+          }
+
+          &::after {
+            transform: translate3d(18px, -50%, 0);
+          }
+        }
+
+        &:focus + label {
+          ${focusCss(theme)};
+        }
+      }
+
+      label {
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        border: none;
+        border-radius: 50px;
+        background: ${theme.colors.formSwitchBg};
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: ${theme.colors.formSwitchBgHover};
+        }
+
+        &::after {
+          position: absolute;
+          display: block;
+          content: '';
+          width: 12px;
+          height: 12px;
+          border-radius: 6px;
+          background: ${theme.colors.formSwitchDot};
+          top: 50%;
+          transform: translate3d(2px, -50%, 0);
+          transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+      }
+    }
+    `,
   };
+});
 
-  internalOnChange = (event: React.FormEvent<HTMLInputElement>) => {
-    event.stopPropagation();
-    this.props.onChange(event);
-  };
-
-  render() {
-    const {
-      labelClass = '',
-      switchClass = '',
-      label,
-      checked,
-      transparent,
-      className,
-      tooltip,
-      tooltipPlacement,
-    } = this.props;
-
-    const labelId = this.state.id;
-    const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
-    const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
+export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+  ({ value, checked, disabled = false, onChange, ...inputProps }, ref) => {
+    const theme = useTheme();
+    const styles = getSwitchStyles(theme);
+    const switchIdRef = useRef(uniqueId('switch-'));
 
     return (
-      <div className="gf-form-switch-container-react">
-        <label htmlFor={labelId} className={`gf-form gf-form-switch-container ${className || ''}`}>
-          {label && (
-            <div className={labelClassName}>
-              {label}
-              {tooltip && (
-                <Tooltip placement={tooltipPlacement ? tooltipPlacement : 'auto'} content={tooltip} theme={'info'}>
-                  <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                    <i className="fa fa-info-circle" />
-                  </div>
-                </Tooltip>
-              )}
-            </div>
-          )}
-          <div className={switchClassName}>
-            <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
-            <span className="gf-form-switch__slider" />
-          </div>
-        </label>
+      <div className={cx(styles.switch)}>
+        <input
+          type="checkbox"
+          disabled={disabled}
+          checked={value}
+          onChange={event => {
+            onChange?.(event);
+          }}
+          id={switchIdRef.current}
+          {...inputProps}
+          ref={ref}
+        />
+        <label htmlFor={switchIdRef.current} />
       </div>
     );
   }
-}
+);

@@ -1,14 +1,15 @@
-import React, { useState, memo } from 'react';
-import { useMedia } from 'react-use';
+import { GrafanaTheme, isDateTime, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import { css } from 'emotion';
-import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption, TimeRange, TimeZone, isDateTime } from '@grafana/data';
+import React, { memo, useState } from 'react';
+import { useMedia } from 'react-use';
+import { stylesFactory, useTheme } from '../../../themes';
+import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
+import { Icon } from '../../Icon/Icon';
+import { getThemeColors } from './colors';
+import { mapRangeToTimeOption } from './mapper';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
-import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { TimeRangeList } from './TimeRangeList';
-import { mapRangeToTimeOption } from './mapper';
-import { getThemeColors } from './colors';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = getThemeColors(theme);
@@ -193,7 +194,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
     <>
       <div className={styles.header} onClick={() => setCollapsed(!collapsed)}>
         <TimePickerTitle>Absolute time range</TimePickerTitle>
-        {collapsed ? <i className="fa fa-caret-up" /> : <i className="fa fa-caret-down" />}
+        {<Icon name={collapsed ? 'angle-up' : 'angle-down'} />}
       </div>
       {collapsed && (
         <div className={styles.body}>
@@ -262,7 +263,11 @@ const EmptyRecentList = memo(() => {
         </span>
       </div>
       <div>
-        <a className={styles.link} href="https://grafana.com/docs/grafana/latest/reference/timerange/" target="_new">
+        <a
+          className={styles.link}
+          href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
+          target="_new"
+        >
           Read the documentation
         </a>
         <span> to find out more about how to enter custom time ranges.</span>

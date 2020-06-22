@@ -38,3 +38,10 @@ export interface AlertRulesState {
   searchQuery: string;
   isLoading: boolean;
 }
+
+export interface AlertNotification {
+  isDefault: boolean;
+  name: string;
+  id: number;
+  type: string;
+}

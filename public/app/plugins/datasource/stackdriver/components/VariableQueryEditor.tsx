@@ -15,6 +15,9 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     { value: MetricFindQueryTypes.Aggregations, name: 'Aggregations' },
     { value: MetricFindQueryTypes.Aligners, name: 'Aligners' },
     { value: MetricFindQueryTypes.AlignmentPeriods, name: 'Alignment Periods' },
+    { value: MetricFindQueryTypes.Selectors, name: 'Selectors' },
+    { value: MetricFindQueryTypes.SLOServices, name: 'SLO Services' },
+    { value: MetricFindQueryTypes.SLO, name: 'Service Level Objectives (SLO)' },
   ];
 
   defaults: VariableQueryData = {
@@ -26,8 +29,11 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     labelKey: '',
     metricTypes: [],
     services: [],
+    sloServices: [],
+    selectedSLOService: '',
     projects: [],
     projectName: '',
+    loading: true,
   };
 
   constructor(props: VariableQueryProps) {
@@ -63,6 +69,8 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       this.props.templateSrv.replace(selectedService)
     );
 
+    const sloServices = await this.props.datasource.getSLOServices(this.state.projectName);
+
     const state: any = {
       services,
       selectedService,
@@ -71,15 +79,24 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       metricDescriptors,
       projects: projects.map(({ value, label }: any) => ({ value, name: label })),
       ...(await this.getLabels(selectedMetricType, this.state.projectName)),
+      sloServices: sloServices.map(({ value, label }: any) => ({ value, name: label })),
+      loading: false,
     };
-    this.setState(state);
+    this.setState(state, () => this.onPropsChange());
   }
+
+  onPropsChange = () => {
+    const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
+    const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
+    this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+  };
 
   async onQueryTypeChange(queryType: string) {
     const state: any = {
       selectedQueryType: queryType,
       ...(await this.getLabels(this.state.selectedMetricType, this.state.projectName, queryType)),
     };
+
     this.setState(state);
   }
 
@@ -93,7 +110,16 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       this.props.templateSrv.replace(this.state.selectedService)
     );
 
-    this.setState({ ...labels, metricTypes, selectedMetricType, metricDescriptors, projectName });
+    const sloServices = await this.props.datasource.getSLOServices(projectName);
+
+    this.setState({
+      ...labels,
+      metricTypes,
+      selectedMetricType,
+      metricDescriptors,
+      projectName,
+      sloServices: sloServices.map(({ value, label }: any) => ({ value, name: label })),
+    });
   }
 
   async onServiceChange(service: string) {
@@ -121,13 +147,15 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   }
 
   onLabelKeyChange(labelKey: string) {
-    this.setState({ labelKey });
+    this.setState({ labelKey }, () => this.onPropsChange());
   }
 
-  componentDidUpdate() {
-    const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
-    const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
-    this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
+  componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
+    const selecQueryTypeChanged = prevState.selectedQueryType !== this.state.selectedQueryType;
+    const selectSLOServiceChanged = this.state.selectedSLOService !== prevState.selectedSLOService;
+    if (selecQueryTypeChanged || selectSLOServiceChanged) {
+      this.onPropsChange();
+    }
   }
 
   async getLabels(selectedMetricType: string, projectName: string, selectedQueryType = this.state.selectedQueryType) {
@@ -220,12 +248,59 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
             />
           </>
         );
+      case MetricFindQueryTypes.SLOServices:
+        return (
+          <>
+            <SimpleSelect
+              value={this.state.projectName}
+              options={this.insertTemplateVariables(this.state.projects)}
+              onValueChange={e => this.onProjectChange(e.target.value)}
+              label="Project"
+            />
+          </>
+        );
+
+      case MetricFindQueryTypes.SLO:
+        return (
+          <>
+            <SimpleSelect
+              value={this.state.projectName}
+              options={this.insertTemplateVariables(this.state.projects)}
+              onValueChange={e => this.onProjectChange(e.target.value)}
+              label="Project"
+            />
+            <SimpleSelect
+              value={this.state.selectedSLOService}
+              options={this.insertTemplateVariables(this.state.sloServices)}
+              onValueChange={e => {
+                this.setState({
+                  ...this.state,
+                  selectedSLOService: e.target.value,
+                });
+              }}
+              label="SLO Service"
+            />
+          </>
+        );
       default:
         return '';
     }
   }
 
   render() {
+    if (this.state.loading) {
+      return (
+        <div className="gf-form max-width-21">
+          <span className="gf-form-label width-10 query-keyword">Query Type</span>
+          <div className="gf-form-select-wrapper max-width-12">
+            <select className="gf-form-input">
+              <option>Loading...</option>
+            </select>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
         <SimpleSelect

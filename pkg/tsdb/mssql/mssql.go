@@ -3,27 +3,28 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
+	"regexp"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 
 	_ "github.com/denisenkom/go-mssqldb"
-	"github.com/go-xorm/core"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"xorm.io/core"
 )
 
 func init() {
 	tsdb.RegisterTsdbQueryEndpoint("mssql", newMssqlQueryEndpoint)
 }
 
-func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	logger := log.New("tsdb.mssql")
+var logger = log.New("tsdb.mssql")
 
+func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
@@ -46,12 +47,46 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 }
 
+// ParseURL tries to parse an MSSQL URL string into a URL object.
+func ParseURL(u string) (*url.URL, error) {
+	logger.Debug("Parsing MSSQL URL", "url", u)
+
+	// Recognize ODBC connection strings like host\instance:1234
+	reODBC := regexp.MustCompile(`^[^\\:]+(?:\\[^:]+)?(?::\d+)?$`)
+	var host string
+	switch {
+	case reODBC.MatchString(u):
+		logger.Debug("Recognized as ODBC URL format", "url", u)
+		host = u
+	default:
+		logger.Debug("Couldn't recognize as valid MSSQL URL", "url", u)
+		return nil, fmt.Errorf("unrecognized MSSQL URL format: %q", u)
+	}
+	return &url.URL{
+		Scheme: "sqlserver",
+		Host:   host,
+	}, nil
+}
+
 func generateConnectionString(datasource *models.DataSource) (string, error) {
-	addr, err := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
-	if err != nil {
-		return "", errutil.Wrapf(err, "Invalid data source URL '%s'", datasource.Url)
+	var addr util.NetworkAddress
+	if datasource.Url != "" {
+		u, err := ParseURL(datasource.Url)
+		if err != nil {
+			return "", err
+		}
+		addr, err = util.SplitHostPortDefault(u.Host, "localhost", "1433")
+		if err != nil {
+			return "", err
+		}
+	} else {
+		addr = util.NetworkAddress{
+			Host: "localhost",
+			Port: "1433",
+		}
 	}
 
+	logger.Debug("Generating connection string", "url", datasource.Url, "host", addr.Host, "port", addr.Port)
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,

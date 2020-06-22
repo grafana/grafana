@@ -23,7 +23,7 @@ Try to *chunk* your content. This means you should organize the document so that
 
 ### Chunking example
 
-If I was writing a topic called *Doggie handbook*, I might organize it like this. 
+If I was writing content for a site called *Doggie handbook*, I might organize it like this. 
 
 **Concept**
 * What a dog is

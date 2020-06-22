@@ -5,7 +5,6 @@
 title = "JsonExplorer"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## JsonExplorer class
@@ -61,10 +60,10 @@ constructor(json: any, open?: number, config?: JsonExplorerConfig, key?: string 
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  json | <code>any</code> |  |
-|  open | <code>number</code> |  |
-|  config | <code>JsonExplorerConfig</code> |  |
-|  key | <code>string &#124; undefined</code> |  |
+|  json | <code>any</code> | The JSON object you want to render. It has to be an object or array. Do NOT pass raw JSON string. |
+|  open | <code>number</code> | his number indicates up to how many levels the rendered tree should expand. Set it to <code>0</code> to make the whole tree collapsed or set it to <code>Infinity</code> to expand the tree deeply |
+|  config | <code>JsonExplorerConfig</code> | defaultConfig = { hoverPreviewEnabled: false, hoverPreviewArrayCount: 100, hoverPreviewFieldCount: 5 }<!-- -->Available configurations: \#\#\#\#\#Hover Preview \* <code>hoverPreviewEnabled</code>: enable preview on hover \* <code>hoverPreviewArrayCount</code>: number of array items to show in preview Any array larger than this number will be shown as <code>Array[XXX]</code> where <code>XXX</code> is length of the array. \* <code>hoverPreviewFieldCount</code>: number of object properties to show for object preview. Any object with more properties that thin number will be truncated. |
+|  key | <code>string &#124; undefined</code> | The key that this object in it's parent context |
 
 ### json property
 

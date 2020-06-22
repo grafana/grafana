@@ -14,7 +14,7 @@ import {
   FieldColorMode,
 } from '@grafana/data';
 
-// Compontents
+// Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
@@ -72,7 +72,7 @@ export class BarGauge extends PureComponent<Props> {
         steps: [],
       },
     },
-    itemSpacing: 10,
+    itemSpacing: 8,
     showUnfilled: true,
   };
 

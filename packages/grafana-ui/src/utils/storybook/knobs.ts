@@ -1,5 +1,5 @@
 import { select } from '@storybook/addon-knobs';
-import { getAvailableIcons } from '../../components/Icon/types';
+import { getAvailableIcons } from '../../types';
 
 const VISUAL_GROUP = 'Visual options';
 

@@ -5,7 +5,6 @@
 title = "getTheme"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## getTheme variable

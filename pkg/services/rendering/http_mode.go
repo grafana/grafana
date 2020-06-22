@@ -46,6 +46,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
 	queryParams.Add("encoding", opts.Encoding)
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
+	queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
 	rendererUrl.RawQuery = queryParams.Encode()
 
 	req, err := http.NewRequest("GET", rendererUrl.String(), nil)
@@ -54,6 +55,10 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	}
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+	for k, v := range opts.Headers {
+		req.Header[k] = v
+	}
 
 	// gives service some additional time to timeout and return possible errors.
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)

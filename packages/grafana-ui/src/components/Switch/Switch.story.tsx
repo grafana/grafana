@@ -1,32 +1,30 @@
-import React, { useState } from 'react';
-
+import React, { useState, useCallback } from 'react';
+import { boolean } from '@storybook/addon-knobs';
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Switch } from './Switch';
-import { text } from '@storybook/addon-knobs';
 import mdx from './Switch.mdx';
 
-const getStory = (title: string, component: any) => ({
-  title,
+export default {
+  title: 'Forms/Switch',
+  component: Switch,
+  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {
-    component,
     docs: {
       page: mdx,
     },
   },
-});
-
-export default getStory('General/Switch', Switch);
-
-const getKnobs = () => {
-  return {
-    label: text('Label Text', 'Label'),
-    tooltip: text('Tooltip', ''),
-  };
 };
 
-const SwitchWrapper = () => {
-  const { label, tooltip } = getKnobs();
+export const controlled = () => {
   const [checked, setChecked] = useState(false);
-  return <Switch label={label} checked={checked} onChange={() => setChecked(!checked)} tooltip={tooltip} />;
+  const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
+  const BEHAVIOUR_GROUP = 'Behaviour props';
+  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
+  return <Switch checked={checked} disabled={disabled} onChange={onChange} />;
 };
 
-export const basic = () => <SwitchWrapper />;
+export const uncontrolled = () => {
+  const BEHAVIOUR_GROUP = 'Behaviour props';
+  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
+  return <Switch disabled={disabled} />;
+};

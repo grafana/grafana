@@ -14,20 +14,25 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  TIME_SERIES_TIME_FIELD_NAME,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
+import { ArrayDataFrame } from './ArrayDataFrame';
+import { getFieldDisplayName } from '../field/fieldState';
+import { fieldIndexComparer } from '../field/fieldComparers';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
-    const { text, ...disp } = c;
+    const { text, type, ...disp } = c as any;
     return {
       name: text, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
       values: new ArrayVector(),
-      type: FieldType.other,
+      type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
 
@@ -42,9 +47,11 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   }
 
   for (const f of fields) {
-    const t = guessFieldTypeForField(f);
-    if (t) {
-      f.type = t;
+    if (f.type === FieldType.other) {
+      const t = guessFieldTypeForField(f);
+      if (t) {
+        f.type = t;
+      }
     }
   }
 
@@ -60,6 +67,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const times: number[] = [];
   const values: TimeSeriesValue[] = [];
+
   for (const point of timeSeries.datapoints) {
     values.push(point[0]);
     times.push(point[1] as number);
@@ -67,7 +75,13 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   const fields = [
     {
-      name: timeSeries.target || 'Value',
+      name: TIME_SERIES_TIME_FIELD_NAME,
+      type: FieldType.time,
+      config: {},
+      values: new ArrayVector<number>(times),
+    },
+    {
+      name: TIME_SERIES_VALUE_FIELD_NAME,
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
@@ -75,13 +89,11 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       values: new ArrayVector<TimeSeriesValue>(values),
       labels: timeSeries.tags,
     },
-    {
-      name: 'Time',
-      type: FieldType.time,
-      config: {},
-      values: new ArrayVector<number>(times),
-    },
   ];
+
+  if (timeSeries.title) {
+    (fields[1].config as FieldConfig).displayName = timeSeries.title;
+  }
 
   return {
     name: timeSeries.target,
@@ -110,13 +122,13 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
     name: graphSeries.label,
     fields: [
       {
-        name: graphSeries.label || 'Value',
+        name: graphSeries.label || TIME_SERIES_VALUE_FIELD_NAME,
         type: FieldType.number,
         config: {},
         values: x,
       },
       {
-        name: 'Time',
+        name: TIME_SERIES_TIME_FIELD_NAME,
         type: FieldType.time,
         config: {
           unit: 'dateTimeAsIso',
@@ -160,11 +172,28 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
 const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 
 /**
+ * Given a name and value, this will pick a reasonable field type
+ */
+export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType {
+  if (name) {
+    name = name.toLowerCase();
+    if (name === 'date' || name === 'time') {
+      return FieldType.time;
+    }
+  }
+  return guessFieldTypeFromValue(v);
+}
+
+/**
  * Given a value this will guess the best column type
  *
  * TODO: better Date/Time support!  Look for standard date strings?
  */
 export function guessFieldTypeFromValue(v: any): FieldType {
+  if (v instanceof Date || isDateTime(v)) {
+    return FieldType.time;
+  }
+
   if (isNumber(v)) {
     return FieldType.number;
   }
@@ -183,10 +212,6 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 
   if (isBoolean(v)) {
     return FieldType.boolean;
-  }
-
-  if (v instanceof Date || isDateTime(v)) {
-    return FieldType.time;
   }
 
   return FieldType.other;
@@ -217,17 +242,19 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 }
 
 /**
- * @returns a copy of the series with the best guess for each field type
- * If the series already has field types defined, they will be used
+ * @returns A copy of the series with the best guess for each field type.
+ * If the series already has field types defined, they will be used, unless `guessDefined` is true.
+ * @param series The DataFrame whose field's types should be guessed
+ * @param guessDefined Whether to guess types of fields with already defined types
  */
-export const guessFieldTypes = (series: DataFrame): DataFrame => {
-  for (let i = 0; i < series.fields.length; i++) {
-    if (!series.fields[i].type) {
+export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFrame => {
+  for (const field of series.fields) {
+    if (!field.type || field.type === FieldType.other || guessDefined) {
       // Something is missing a type, return a modified copy
       return {
         ...series,
         fields: series.fields.map(field => {
-          if (field.type && field.type !== FieldType.other) {
+          if (field.type && field.type !== FieldType.other && !guessDefined) {
             return field;
           }
           // Calculate a reasonable schema value
@@ -247,10 +274,13 @@ export const isTableData = (data: any): data is DataFrame => data && data.hasOwn
 
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
-export const toDataFrame = (data: any): DataFrame => {
-  if (data.hasOwnProperty('fields')) {
+/**
+ * Inspect any object and return the results as a DataFrame
+ */
+export function toDataFrame(data: any): DataFrame {
+  if ('fields' in data) {
     // DataFrameDTO does not have length
-    if (data.hasOwnProperty('length')) {
+    if ('length' in data) {
       return data as DataFrame;
     }
 
@@ -275,9 +305,13 @@ export const toDataFrame = (data: any): DataFrame => {
     return convertTableToDataFrame(data);
   }
 
+  if (Array.isArray(data)) {
+    return new ArrayDataFrame(data);
+  }
+
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
-};
+}
 
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;
@@ -285,29 +319,38 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   const rowCount = frame.length;
   const rows: any[][] = [];
 
-  for (let i = 0; i < rowCount; i++) {
-    const row: any[] = [];
-    for (let j = 0; j < fields.length; j++) {
-      row.push(fields[j].values.get(i));
-    }
-    rows.push(row);
-  }
-
   if (fields.length === 2) {
-    let type = fields[1].type;
-    if (!type) {
-      type = guessFieldTypeForField(fields[1]) || FieldType.other;
-    }
-    if (type === FieldType.time) {
+    const { timeField, timeIndex } = getTimeField(frame);
+    if (timeField) {
+      const valueIndex = timeIndex === 0 ? 1 : 0;
+      const valueField = fields[valueIndex];
+      const timeField = fields[timeIndex!];
+
+      // Make sure it is [value,time]
+      for (let i = 0; i < rowCount; i++) {
+        rows.push([
+          valueField.values.get(i), // value
+          timeField.values.get(i), // time
+        ]);
+      }
+
       return {
-        alias: fields[0].name || frame.name,
-        target: fields[0].name || frame.name,
+        alias: frame.name,
+        target: getFieldDisplayName(valueField, frame),
         datapoints: rows,
         unit: fields[0].config ? fields[0].config.unit : undefined,
         refId: frame.refId,
         meta: frame.meta,
       } as TimeSeries;
     }
+  }
+
+  for (let i = 0; i < rowCount; i++) {
+    const row: any[] = [];
+    for (let j = 0; j < fields.length; j++) {
+      row.push(fields[j].values.get(i));
+    }
+    rows.push(row);
   }
 
   if (frame.meta && frame.meta.json) {
@@ -349,31 +392,10 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
   for (let i = 0; i < data.length; i++) {
     index.push(i);
   }
-  const values = field.values;
 
-  // Numeric Comparison
-  let compare = (a: number, b: number) => {
-    const vA = values.get(a);
-    const vB = values.get(b);
-    return vA - vB; // works for numbers!
-  };
+  const fieldComparer = fieldIndexComparer(field, reverse);
+  index.sort(fieldComparer);
 
-  // String Comparison
-  if (field.type === FieldType.string) {
-    compare = (a: number, b: number) => {
-      const vA: string = values.get(a);
-      const vB: string = values.get(b);
-      return vA.localeCompare(vB);
-    };
-  }
-
-  // Run the sort function
-  index.sort(compare);
-  if (reverse) {
-    index.reverse();
-  }
-
-  // Return a copy that maps sorted values
   return {
     ...data,
     fields: data.fields.map(f => {
@@ -401,18 +423,6 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
     }),
   };
 }
-
-export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
-  for (let i = 0; i < series.fields.length; i++) {
-    if (series.fields[i].type === FieldType.time) {
-      return {
-        timeField: series.fields[i],
-        timeIndex: i,
-      };
-    }
-  }
-  return {};
-};
 
 /**
  * Wrapper to get an array from each field value
@@ -457,3 +467,15 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
     name: data.name,
   };
 }
+
+export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      return {
+        timeField: series.fields[i],
+        timeIndex: i,
+      };
+    }
+  }
+  return {};
+};

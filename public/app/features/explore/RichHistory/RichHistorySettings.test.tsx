@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { RichHistorySettings, RichHistorySettingsProps } from './RichHistorySettings';
-import { Forms } from '@grafana/ui';
+import { Select, Switch } from '@grafana/ui';
 
 const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {
@@ -23,13 +23,13 @@ const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
 describe('RichHistorySettings', () => {
   it('should render component with correct retention period', () => {
     const wrapper = setup();
-    expect(wrapper.find(Forms.Select).text()).toEqual('2 weeks');
+    expect(wrapper.find(Select).text()).toEqual('2 weeks');
   });
   it('should render component with correctly checked starredTabAsFirstTab settings', () => {
     const wrapper = setup();
     expect(
       wrapper
-        .find(Forms.Switch)
+        .find(Switch)
         .at(0)
         .prop('value')
     ).toBe(true);
@@ -38,7 +38,7 @@ describe('RichHistorySettings', () => {
     const wrapper = setup();
     expect(
       wrapper
-        .find(Forms.Switch)
+        .find(Switch)
         .at(1)
         .prop('value')
     ).toBe(false);

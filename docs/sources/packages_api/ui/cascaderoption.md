@@ -5,7 +5,6 @@
 title = "CascaderOption"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## CascaderOption interface
@@ -27,9 +26,9 @@ import { CascaderOption } from '@grafana/ui';
 |  [children](#children-property) | <code>CascaderOption[]</code> | Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility. |
 |  [disabled](#disabled-property) | <code>boolean</code> |  |
 |  [items](#items-property) | <code>CascaderOption[]</code> | Items will be just flattened into the main list of items recursively. |
-|  [label](#label-property) | <code>string</code> |  |
-|  [title](#title-property) | <code>string</code> |  |
-|  [value](#value-property) | <code>any</code> |  |
+|  [label](#label-property) | <code>string</code> | The label to display in the UI |
+|  [title](#title-property) | <code>string</code> | Avoid using |
+|  [value](#value-property) | <code>any</code> | The value used under the hood |
 
 ### children property
 
@@ -61,6 +60,8 @@ items?: CascaderOption[];
 
 ### label property
 
+The label to display in the UI
+
 <b>Signature</b>
 
 ```typescript
@@ -69,6 +70,8 @@ label: string;
 
 ### title property
 
+Avoid using
+
 <b>Signature</b>
 
 ```typescript
@@ -76,6 +79,8 @@ title?: string;
 ```
 
 ### value property
+
+The value used under the hood
 
 <b>Signature</b>
 

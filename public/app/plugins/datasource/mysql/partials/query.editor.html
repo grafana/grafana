@@ -116,24 +116,19 @@
     <div class="gf-form">
       <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
-        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
-        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+        <icon name="'angle-down'" ng-show="ctrl.showHelp" style="margin-top: 3px;"></icon>
+        <icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px;"></icon>
       </label>
     </div>
-    <div class="gf-form" ng-show="ctrl.lastQueryMeta">
-      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showQueryInspector()">
         Generated SQL
-        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
-        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+        <icon name="'angle-right'" style="margin-top: 3px;"></icon>
       </label>
     </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>
-  </div>
-
-  <div class="gf-form" ng-show="ctrl.showLastQuerySQL">
-    <pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
   </div>
 
   <div class="gf-form"  ng-show="ctrl.showHelp">

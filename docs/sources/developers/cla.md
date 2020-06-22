@@ -6,6 +6,7 @@ aliases = ["/docs/grafana/latest/project/cla", "docs/contributing/cla.html", "do
 [menu.docs]
 parent = "contribute"
 weight = 1
+
 +++
 
 # Grafana Labs Contributor License Agreement

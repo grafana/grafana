@@ -1,7 +1,7 @@
 import { AnyAction } from 'redux';
-import { UrlQueryMap } from '@grafana/runtime';
+import { UrlQueryMap } from '@grafana/data';
 
-import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
+import { getRootReducer, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -9,10 +9,20 @@ import { createTextBoxVariableAdapter } from '../textbox/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
-import { initDashboardTemplating, processVariables, setOptionFromUrl, validateVariableSelectionState } from './actions';
+import {
+  cancelVariables,
+  changeVariableMultiValue,
+  cleanUpVariables,
+  initDashboardTemplating,
+  initVariablesTransaction,
+  processVariables,
+  setOptionFromUrl,
+  validateVariableSelectionState,
+} from './actions';
 import {
   addInitLock,
   addVariable,
+  changeVariableProp,
   removeInitLock,
   removeVariable,
   resolveInitLock,
@@ -27,7 +37,22 @@ import {
   textboxBuilder,
 } from '../shared/testing/builders';
 import { changeVariableName } from '../editor/actions';
-import { changeVariableNameFailed, changeVariableNameSucceeded, setIdInEditor } from '../editor/reducer';
+import {
+  changeVariableNameFailed,
+  changeVariableNameSucceeded,
+  initialVariableEditorState,
+  setIdInEditor,
+} from '../editor/reducer';
+import { DashboardState, LocationState } from '../../../types';
+import {
+  TransactionStatus,
+  variablesClearTransaction,
+  variablesCompleteTransaction,
+  variablesInitTransaction,
+} from './transactionReducer';
+import { initialState } from '../pickers/OptionsPicker/reducer';
+import { cleanVariables } from './variablesReducer';
+import { expect } from '../../../../test/lib/common';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -35,6 +60,12 @@ variableAdapters.setInit(() => [
   createTextBoxVariableAdapter(),
   createConstantVariableAdapter(),
 ]);
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  getTimeSrv: () => ({
+    timeRange: jest.fn().mockReturnValue(undefined),
+  }),
+}));
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
@@ -136,17 +167,24 @@ describe('shared actions', () => {
 
   describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
     it.each`
-      urlValue      | expected
-      ${'B'}        | ${['B']}
-      ${['B']}      | ${['B']}
-      ${'X'}        | ${['X']}
-      ${''}         | ${['']}
-      ${['A', 'B']} | ${['A', 'B']}
-      ${null}       | ${[null]}
-      ${undefined}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
+      urlValue      | isMulti  | expected
+      ${'B'}        | ${false} | ${'B'}
+      ${['B']}      | ${false} | ${'B'}
+      ${'X'}        | ${false} | ${'X'}
+      ${''}         | ${false} | ${''}
+      ${null}       | ${false} | ${null}
+      ${undefined}  | ${false} | ${undefined}
+      ${'B'}        | ${true}  | ${['B']}
+      ${['B']}      | ${true}  | ${['B']}
+      ${'X'}        | ${true}  | ${['X']}
+      ${''}         | ${true}  | ${['']}
+      ${['A', 'B']} | ${true}  | ${['A', 'B']}
+      ${null}       | ${true}  | ${[null]}
+      ${undefined}  | ${true}  | ${[undefined]}
+    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
       const custom = customBuilder()
         .withId('0')
+        .withMulti(isMulti)
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
         .build();
@@ -176,7 +214,7 @@ describe('shared actions', () => {
         ${['A', 'B', 'C']} | ${'B'}       | ${'C'}       | ${'B'}
         ${['A', 'B', 'C']} | ${'X'}       | ${undefined} | ${'A'}
         ${['A', 'B', 'C']} | ${'X'}       | ${'C'}       | ${'C'}
-        ${undefined}       | ${'B'}       | ${undefined} | ${'A'}
+        ${undefined}       | ${'B'}       | ${undefined} | ${'should not dispatch setCurrentVariableValue'}
       `('then correct actions are dispatched', async ({ withOptions, withCurrent, defaultValue, expected }) => {
         let custom;
 
@@ -436,6 +474,165 @@ describe('shared actions', () => {
               errorText: 'Variable with the same name already exists',
             })
           );
+      });
+    });
+  });
+
+  describe('changeVariableMultiValue', () => {
+    describe('when changeVariableMultiValue is dispatched for variable with multi enabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(true)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), false), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: false,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: 'A',
+                  text: 'A',
+                  selected: true,
+                },
+              })
+            )
+          );
+      });
+    });
+
+    describe('when changeVariableMultiValue is dispatched for variable with multi disabled', () => {
+      it('then correct actions are dispatched', () => {
+        const custom = customBuilder()
+          .withId('custom')
+          .withMulti(false)
+          .withCurrent(['A'], ['A'])
+          .build();
+
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), true), true)
+          .thenDispatchedActionsShouldEqual(
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'multi',
+                propValue: true,
+              })
+            ),
+            changeVariableProp(
+              toVariablePayload(custom, {
+                propName: 'current',
+                propValue: {
+                  value: ['A'],
+                  text: ['A'],
+                  selected: true,
+                },
+              })
+            )
+          );
+      });
+    });
+  });
+
+  describe('initVariablesTransaction', () => {
+    type ReducersUsedInContext = {
+      templating: TemplatingState;
+      dashboard: DashboardState;
+      location: LocationState;
+    };
+    const constant = constantBuilder()
+      .withId('constant')
+      .withName('constant')
+      .build();
+    const templating: any = { list: [constant] };
+    const uid = 'uid';
+    const dashboard: any = { title: 'Some dash', uid, templating };
+
+    describe('when called and the previous dashboard has completed', () => {
+      it('then correct actions are dispatched', async () => {
+        const tester = await reduxTester<ReducersUsedInContext>()
+          .givenRootReducer(getRootReducer())
+          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
+
+        tester.thenDispatchedActionsShouldEqual(
+          variablesInitTransaction({ uid }),
+          addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })),
+          addInitLock(toVariablePayload(constant)),
+          resolveInitLock(toVariablePayload(constant)),
+          removeInitLock(toVariablePayload(constant)),
+          variablesCompleteTransaction({ uid })
+        );
+      });
+    });
+
+    describe('when called and the previous dashboard is still processing variables', () => {
+      it('then correct actions are dispatched', async () => {
+        const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
+
+        const tester = await reduxTester<ReducersUsedInContext>({
+          preloadedState: ({
+            templating: {
+              transaction: transactionState,
+              variables: {},
+              optionsPicker: { ...initialState },
+              editor: { ...initialVariableEditorState },
+            },
+          } as unknown) as ReducersUsedInContext,
+        })
+          .givenRootReducer(getRootReducer())
+          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
+
+        tester.thenDispatchedActionsShouldEqual(
+          cleanVariables(),
+          variablesClearTransaction(),
+          variablesInitTransaction({ uid }),
+          addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })),
+          addInitLock(toVariablePayload(constant)),
+          resolveInitLock(toVariablePayload(constant)),
+          removeInitLock(toVariablePayload(constant)),
+          variablesCompleteTransaction({ uid })
+        );
+      });
+    });
+  });
+
+  describe('cleanUpVariables', () => {
+    describe('when called', () => {
+      it('then correct actions are dispatched', async () => {
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(cleanUpVariables())
+          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+      });
+    });
+  });
+
+  describe('cancelVariables', () => {
+    const cancelAllInFlightRequestsMock = jest.fn();
+    const backendSrvMock: any = {
+      cancelAllInFlightRequests: cancelAllInFlightRequestsMock,
+    };
+
+    describe('when called', () => {
+      it('then cancelAllInFlightRequests should be called and correct actions are dispatched', async () => {
+        reduxTester<{ templating: TemplatingState }>()
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(cancelVariables({ getBackendSrv: () => backendSrvMock }))
+          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+
+        expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
       });
     });
   });

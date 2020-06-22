@@ -75,7 +75,7 @@ type serviceTestStruct struct {
 	startService func()
 	cancel       func()
 
-	mock    *dashboards.DashboardProvisionerMock
+	mock    *dashboards.ProvisionerMock
 	service *provisioningServiceImpl
 }
 
@@ -95,6 +95,7 @@ func setup() *serviceTestStruct {
 		func(path string) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
+		nil,
 		nil,
 		nil,
 	)

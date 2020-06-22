@@ -1,4 +1,3 @@
-import omitBy from 'lodash/omitBy';
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
@@ -7,20 +6,20 @@ import classNames from 'classnames';
 import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
+import { Icon, IconButton, LegacyForms, SetInterval, ToggleButton, ToggleButtonGroup, Tooltip } from '@grafana/ui';
+import { DataQuery, ExploreMode, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
-  changeDatasource,
   cancelQueries,
+  changeDatasource,
+  changeMode,
+  changeRefreshInterval,
   clearQueries,
-  splitClose,
   runQueries,
+  splitClose,
   splitOpen,
   syncTimes,
-  changeRefreshInterval,
-  changeMode,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -33,6 +32,8 @@ import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
+
+const { ButtonSelect } = LegacyForms;
 
 const getStyles = memoizeOne(() => {
   return {
@@ -132,18 +133,15 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       });
     }
 
-    const dashViewOptions = {
-      fullscreen: withChanges || dash.meta.fullscreen,
-      edit: withChanges || dash.meta.isEditing,
-    };
+    const query: any = {};
 
-    this.props.updateLocation({
-      path: `/d/${dash.uid}/:${titleSlug}`,
-      query: {
-        ...omitBy(dashViewOptions, v => !v),
-        panelId: originPanelId,
-      },
-    });
+    if (withChanges || dash.panelInEdit) {
+      query.editPanel = originPanelId;
+    } else if (dash.panelInView) {
+      query.viewPanel = originPanelId;
+    }
+
+    this.props.updateLocation({ path: `/d/${dash.uid}/:${titleSlug}`, query });
   };
 
   // Remove explore specific parameters from queries
@@ -194,6 +192,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
+    const showModeToggle = supportedModes.length > 1;
+
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
         <div className="explore-toolbar-item">
@@ -201,15 +201,20 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
                 <span className="navbar-page-btn">
-                  <i className="gicon gicon-explore" />
+                  <Icon
+                    name="compass"
+                    size="lg"
+                    className={css`
+                      margin-right: 6px;
+                      margin-bottom: 3px;
+                    `}
+                  />
                   Explore
                 </span>
               )}
             </div>
             {splitted && (
-              <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
-                <i className="fa fa-times fa-fw" />
-              </a>
+              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
             )}
           </div>
         </div>
@@ -231,25 +236,23 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
-                {supportedModes.length > 1 ? (
+                {showModeToggle ? (
                   <div className="query-type-toggle">
                     <ToggleButtonGroup label="" transparent={true}>
-                      <ToggleButton
-                        key={ExploreMode.Metrics}
-                        value={ExploreMode.Metrics}
-                        onChange={this.onModeChange}
-                        selected={selectedMode === ExploreMode.Metrics}
-                      >
-                        {'Metrics'}
-                      </ToggleButton>
-                      <ToggleButton
-                        key={ExploreMode.Logs}
-                        value={ExploreMode.Logs}
-                        onChange={this.onModeChange}
-                        selected={selectedMode === ExploreMode.Logs}
-                      >
-                        {'Logs'}
-                      </ToggleButton>
+                      {[ExploreMode.Metrics, ExploreMode.Logs, ExploreMode.Tracing]
+                        .filter(mode => supportedModes.includes(mode))
+                        .map(mode => {
+                          return (
+                            <ToggleButton
+                              key={mode}
+                              value={mode}
+                              onChange={this.onModeChange}
+                              selected={selectedMode === mode}
+                            >
+                              {mode}
+                            </ToggleButton>
+                          );
+                        })}
                     </ToggleButtonGroup>
                   </div>
                 ) : null}
@@ -260,7 +263,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               <div className="explore-toolbar-content-item">
                 <Tooltip content={'Return to panel'} placement="bottom">
                   <button className={panelReturnClasses} onClick={() => this.returnToPanel()}>
-                    <i className="fa fa-arrow-left" />
+                    <Icon name="arrow-left" />
                   </button>
                 </Tooltip>
                 {originDashboardIsEditable && (
@@ -279,8 +282,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 <ResponsiveButton
                   splitted={splitted}
                   title="Split"
-                  onClick={split}
-                  iconClassName="fa fa-fw fa-columns icon-margin-right"
+                  /* This way ResponsiveButton doesn't add event as a parameter when invoking split function
+                   * which breaks splitting functionality
+                   */
+                  onClick={() => split()}
+                  icon="columns"
+                  iconClassName="icon-margin-right"
                   disabled={isLive}
                 />
               </div>
@@ -306,7 +313,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   splitted={splitted}
                   title="Clear All"
                   onClick={this.onClearAll}
-                  iconClassName="fa fa-fw fa-trash icon-margin-right"
+                  icon="trash-alt"
+                  iconClassName="icon-margin-right"
                 />
               </div>
             )}
@@ -315,6 +323,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 refreshInterval={refreshInterval}
                 onChangeRefreshInterval={this.onChangeRefreshInterval}
                 splitted={splitted}
+                isLive={isLive}
                 loading={loading || (isLive && !isPaused)}
                 onRun={this.onRunQuery}
                 showDropdown={!isLive}

@@ -115,6 +115,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Swiss franc (CHF)', id: 'currencyCHF', fn: currency('CHF') },
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
+      { name: 'Milli Bitcoin (฿)', id: 'currencymBTC', fn: currency('mBTC') },
+      { name: 'Micro Bitcoin (฿)', id: 'currencyμBTC', fn: currency('μBTC') },
       { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
       { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
       { name: 'South Korean Won (₩)', id: 'currencyKRW', fn: currency('₩') },
@@ -123,8 +125,8 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Data (IEC)',
     formats: [
-      { name: 'bits', id: 'bits', fn: binarySIPrefix('b') },
-      { name: 'bytes', id: 'bytes', fn: binarySIPrefix('B') },
+      { name: 'bits(IEC)', id: 'bits', fn: binarySIPrefix('b') },
+      { name: 'bytes(IEC)', id: 'bytes', fn: binarySIPrefix('B') },
       { name: 'kibibytes', id: 'kbytes', fn: binarySIPrefix('B', 1) },
       { name: 'mebibytes', id: 'mbytes', fn: binarySIPrefix('B', 2) },
       { name: 'gibibytes', id: 'gbytes', fn: binarySIPrefix('B', 3) },
@@ -135,8 +137,8 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Data (Metric)',
     formats: [
-      { name: 'bits', id: 'decbits', fn: decimalSIPrefix('b') },
-      { name: 'bytes', id: 'decbytes', fn: decimalSIPrefix('B') },
+      { name: 'bits(Metric)', id: 'decbits', fn: decimalSIPrefix('b') },
+      { name: 'bytes(Metric)', id: 'decbytes', fn: decimalSIPrefix('B') },
       { name: 'kilobytes', id: 'deckbytes', fn: decimalSIPrefix('B', 1) },
       { name: 'megabytes', id: 'decmbytes', fn: decimalSIPrefix('B', 2) },
       { name: 'gigabytes', id: 'decgbytes', fn: decimalSIPrefix('B', 3) },
@@ -149,16 +151,16 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'packets/sec', id: 'pps', fn: decimalSIPrefix('pps') },
       { name: 'bits/sec', id: 'bps', fn: decimalSIPrefix('bps') },
-      { name: 'bytes/sec', id: 'Bps', fn: decimalSIPrefix('Bs') },
-      { name: 'kilobytes/sec', id: 'KBs', fn: decimalSIPrefix('Bs', 1) },
+      { name: 'bytes/sec', id: 'Bps', fn: decimalSIPrefix('B/s') },
+      { name: 'kilobytes/sec', id: 'KBs', fn: decimalSIPrefix('B/s', 1) },
       { name: 'kilobits/sec', id: 'Kbits', fn: decimalSIPrefix('bps', 1) },
-      { name: 'megabytes/sec', id: 'MBs', fn: decimalSIPrefix('Bs', 2) },
+      { name: 'megabytes/sec', id: 'MBs', fn: decimalSIPrefix('B/s', 2) },
       { name: 'megabits/sec', id: 'Mbits', fn: decimalSIPrefix('bps', 2) },
-      { name: 'gigabytes/sec', id: 'GBs', fn: decimalSIPrefix('Bs', 3) },
+      { name: 'gigabytes/sec', id: 'GBs', fn: decimalSIPrefix('B/s', 3) },
       { name: 'gigabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 3) },
-      { name: 'terabytes/sec', id: 'TBs', fn: decimalSIPrefix('Bs', 4) },
+      { name: 'terabytes/sec', id: 'TBs', fn: decimalSIPrefix('B/s', 4) },
       { name: 'terabits/sec', id: 'Tbits', fn: decimalSIPrefix('bps', 4) },
-      { name: 'petabytes/sec', id: 'PBs', fn: decimalSIPrefix('Bs', 5) },
+      { name: 'petabytes/sec', id: 'PBs', fn: decimalSIPrefix('B/s', 5) },
       { name: 'petabits/sec', id: 'Pbits', fn: decimalSIPrefix('bps', 5) },
     ],
   },
@@ -257,7 +259,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'length',
+    name: 'Length',
     formats: [
       { name: 'millimeter (mm)', id: 'lengthmm', fn: decimalSIPrefix('m', -1) },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },

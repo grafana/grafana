@@ -1,11 +1,12 @@
 import React from 'react';
-import { Input } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
 
 import StackdriverDatasource from '../datasource';
-import { Metrics, Filters, AnnotationsHelp, Project } from './';
+import { Metrics, LabelFilter, AnnotationsHelp, Project } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
 
@@ -41,7 +42,9 @@ const DefaultTarget: State = {
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  async componentDidMount() {
+  async UNSAFE_componentWillMount() {
+    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+    // migration hook for this module.ts, we can do the migrations there instead.
     const { target, datasource } = this.props;
     if (!target.projectName) {
       target.projectName = datasource.getDefaultProject();
@@ -86,7 +89,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const { projectName, metricType, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
+    const { metricType, projectName, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
     const { datasource } = this.props;
 
     return (
@@ -107,7 +110,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         >
           {metric => (
             <>
-              <Filters
+              <LabelFilter
                 labels={labels}
                 filters={filters}
                 onChange={value => this.onChange('filters', value)}

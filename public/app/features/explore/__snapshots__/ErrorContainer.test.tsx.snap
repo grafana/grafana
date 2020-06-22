@@ -14,8 +14,8 @@ exports[`ErrorContainer should render component 1`] = `
       <div
         className="alert-icon"
       >
-        <i
-          className="fa fa-exclamation-triangle"
+        <Icon
+          name="exclamation-triangle"
         />
       </div>
       <div

@@ -5,7 +5,6 @@
 title = "sharedSingleStatMigrationHandler"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## sharedSingleStatMigrationHandler() function

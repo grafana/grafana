@@ -57,8 +57,8 @@ function dashboardGridScenario(description: string, scenarioFn: (ctx: ScenarioCo
         setupFn = fn;
       },
       props: {
-        isEditing: false,
-        isFullscreen: false,
+        editPanel: null,
+        viewPanel: null,
         scrollTop: 0,
         dashboard: getTestDashboard(),
       },

@@ -29,10 +29,20 @@ func TestDashboardModel(t *testing.T) {
 		So(dashboard.Slug, ShouldEqual, "grafana-play-home")
 	})
 
-	Convey("Can slugify title", t, func() {
-		slug := SlugifyTitle("Grafana Play Home")
+	Convey("Can slugify titles", t, func() {
+		tests := map[string]string{
+			"Grafana Play Home": "grafana-play-home",
+			"snöräv-över-ån":    "snorav-over-an",
+			"漢字":                "han-zi",      // Hanzi for hanzi
+			"🇦🇶":                "8J-HpvCfh7Y", // flag of Antarctica-emoji, using fallback
+			"𒆠":                 "8JKGoA",      // cuneiform Ki, using fallback
+		}
 
-		So(slug, ShouldEqual, "grafana-play-home")
+		for input, expected := range tests {
+			slug := SlugifyTitle(input)
+
+			So(slug, ShouldEqual, expected)
+		}
 	})
 
 	Convey("Given a dashboard json", t, func() {

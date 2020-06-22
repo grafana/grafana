@@ -46,30 +46,30 @@
 }
 
 .tag-filter {
-  line-height: 22px;
   flex-grow: 1;
 
   .label-tag {
     margin-left: 6px;
-    font-size: 11px;
     cursor: pointer;
 
     .fa.fa-remove {
       margin-right: 3px;
     }
   }
+}
 
-  .tag-filter-option {
-    position: relative;
-    text-align: left;
-    width: 100%;
-    display: block;
-    border-radius: 0;
-  }
+.tag-filter-option {
+  position: relative;
+  text-align: left;
+  width: 100%;
+  display: block;
+  border-radius: 0;
+  cursor: pointer;
+  padding: 2px 0;
+}
 
-  .tag-count-label {
-    margin-left: 3px;
-  }
+.tag-count-label {
+  margin-left: 3px;
 }
 
 .tag-filter-values {

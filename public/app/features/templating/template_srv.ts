@@ -1,12 +1,12 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { escapeHtml } from 'app/core/utils/text';
-import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
-import { getFilteredVariables, getVariableClones, getVariableWithName } from '../variables/state/selectors';
-import { getConfig } from 'app/core/config';
-import { variableRegex } from './utils';
+import { deprecationWarning, ScopedVars, textUtil, TimeRange } from '@grafana/data';
+import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
+import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
-import { VariableModel } from './types';
+import { VariableModel } from '../variables/types';
+import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import { variableAdapters } from '../variables/adapters';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -16,7 +16,19 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
-export class TemplateSrv {
+export interface TemplateSrvDependencies {
+  getFilteredVariables: typeof getFilteredVariables;
+  getVariables: typeof getVariables;
+  getVariableWithName: typeof getVariableWithName;
+}
+
+const runtimeDependencies: TemplateSrvDependencies = {
+  getFilteredVariables,
+  getVariables,
+  getVariableWithName,
+};
+
+export class TemplateSrv implements BaseTemplateSrv {
   private _variables: any[];
   private regex = variableRegex;
   private index: any = {};
@@ -25,7 +37,7 @@ export class TemplateSrv {
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
-  constructor() {
+  constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
     this._variables = [];
@@ -52,11 +64,7 @@ export class TemplateSrv {
   }
 
   getVariables(): VariableModel[] {
-    if (getConfig().featureToggles.newVariables) {
-      return getVariableClones();
-    }
-
-    return this._variables;
+    return this.dependencies.getVariables();
   }
 
   updateIndex() {
@@ -181,9 +189,9 @@ export class TemplateSrv {
       }
       case 'html': {
         if (_.isArray(value)) {
-          return escapeHtml(value.join(', '));
+          return textUtil.escapeHtml(value.join(', '));
         }
-        return escapeHtml(value);
+        return textUtil.escapeHtml(value);
       }
       case 'json': {
         return JSON.stringify(value);
@@ -304,7 +312,7 @@ export class TemplateSrv {
     return scopedVar.value;
   }
 
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): any {
+  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string {
     if (!target) {
       return target;
     }
@@ -386,8 +394,8 @@ export class TemplateSrv {
     });
   }
 
-  fillVariableValuesForUrl(params: any, scopedVars?: ScopedVars) {
-    _.each(this._variables, variable => {
+  fillVariableValuesForUrl = (params: any, scopedVars?: ScopedVars) => {
+    _.each(this.getVariables(), variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -397,10 +405,10 @@ export class TemplateSrv {
         if (variable.skipUrlSync) {
           return;
         }
-        params['var-' + variable.name] = variable.getValueForUrl();
+        params['var-' + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable);
       }
     });
-  }
+  };
 
   distributeVariable(value: any, variable: any) {
     value = _.map(value, (val: any, index: number) => {
@@ -418,22 +426,19 @@ export class TemplateSrv {
       return;
     }
 
-    if (getConfig().featureToggles.newVariables && !this.index[name]) {
-      return getVariableWithName(name);
+    if (!this.index[name]) {
+      return this.dependencies.getVariableWithName(name);
     }
 
     return this.index[name];
   };
 
   private getAdHocVariables = (): any[] => {
-    if (getConfig().featureToggles.newVariables) {
-      return getFilteredVariables(isAdHoc);
-    }
-    if (Array.isArray(this._variables)) {
-      return this._variables.filter(isAdHoc);
-    }
-    return [];
+    return this.dependencies.getFilteredVariables(isAdHoc);
   };
 }
 
-export default new TemplateSrv();
+// Expose the template srv
+const srv = new TemplateSrv();
+setTemplateSrv(srv);
+export default srv;

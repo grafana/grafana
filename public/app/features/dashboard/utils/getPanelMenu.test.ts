@@ -1,5 +1,6 @@
-import { PanelModel, DashboardModel } from '../state';
+import { DashboardModel, PanelModel } from '../state';
 import { getPanelMenu } from './getPanelMenu';
+import { describe } from '../../../../test/lib/common';
 
 describe('getPanelMenu', () => {
   it('should return the correct panel menu items', () => {
@@ -10,25 +11,38 @@ describe('getPanelMenu', () => {
     expect(menuItems).toMatchInlineSnapshot(`
       Array [
         Object {
-          "iconClassName": "gicon gicon-viewer",
+          "iconClassName": "eye",
           "onClick": [Function],
           "shortcut": "v",
           "text": "View",
         },
         Object {
-          "iconClassName": "gicon gicon-editor",
+          "iconClassName": "edit",
           "onClick": [Function],
           "shortcut": "e",
           "text": "Edit",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-share",
+          "iconClassName": "share-alt",
           "onClick": [Function],
           "shortcut": "p s",
           "text": "Share",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-cube",
+          "iconClassName": "info-circle",
+          "onClick": [Function],
+          "shortcut": "i",
+          "subMenu": Array [
+            Object {
+              "onClick": [Function],
+              "text": "Panel JSON",
+            },
+          ],
+          "text": "Inspect",
+          "type": "submenu",
+        },
+        Object {
+          "iconClassName": "cube",
           "onClick": [Function],
           "subMenu": Array [
             Object {
@@ -40,9 +54,75 @@ describe('getPanelMenu', () => {
               "onClick": [Function],
               "text": "Copy",
             },
+          ],
+          "text": "More...",
+          "type": "submenu",
+        },
+        Object {
+          "type": "divider",
+        },
+        Object {
+          "iconClassName": "trash-alt",
+          "onClick": [Function],
+          "shortcut": "p r",
+          "text": "Remove",
+        },
+      ]
+    `);
+  });
+
+  describe('when panel is in view mode', () => {
+    it('should return the correct panel menu items', () => {
+      const getExtendedMenu = () => [{ text: 'Toggle legend', shortcut: 'p l', click: jest.fn() }];
+      const ctrl: any = { getExtendedMenu };
+      const scope: any = { $$childHead: { ctrl } };
+      const angularComponent: any = { getScope: () => scope };
+      const panel = new PanelModel({ isViewing: true });
+      const dashboard = new DashboardModel({});
+
+      const menuItems = getPanelMenu(dashboard, panel, angularComponent);
+      expect(menuItems).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "iconClassName": "eye",
+          "onClick": [Function],
+          "shortcut": "v",
+          "text": "View",
+        },
+        Object {
+          "iconClassName": "edit",
+          "onClick": [Function],
+          "shortcut": "e",
+          "text": "Edit",
+        },
+        Object {
+          "iconClassName": "share-alt",
+          "onClick": [Function],
+          "shortcut": "p s",
+          "text": "Share",
+        },
+        Object {
+          "iconClassName": "info-circle",
+          "onClick": [Function],
+          "shortcut": "i",
+          "subMenu": Array [
             Object {
               "onClick": [Function],
               "text": "Panel JSON",
+            },
+          ],
+          "text": "Inspect",
+          "type": "submenu",
+        },
+        Object {
+          "iconClassName": "cube",
+          "onClick": [Function],
+          "subMenu": Array [
+            Object {
+              "href": undefined,
+              "onClick": [Function],
+              "shortcut": "p l",
+              "text": "Toggle legend",
             },
           ],
           "text": "More...",
@@ -52,12 +132,13 @@ describe('getPanelMenu', () => {
           "type": "divider",
         },
         Object {
-          "iconClassName": "fa fa-fw fa-trash",
+          "iconClassName": "trash-alt",
           "onClick": [Function],
           "shortcut": "p r",
           "text": "Remove",
         },
       ]
     `);
+    });
   });
 });

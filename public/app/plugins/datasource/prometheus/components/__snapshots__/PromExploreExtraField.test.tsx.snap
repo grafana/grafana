@@ -2,7 +2,8 @@
 
 exports[`PrometheusExploreExtraField should render component 1`] = `
 <div
-  className="gf-form-inline explore-input--ml"
+  aria-label="Prometheus extra field"
+  className="gf-form-inline"
 >
   <div
     className="gf-form"

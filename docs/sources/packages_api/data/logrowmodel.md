@@ -5,7 +5,6 @@
 title = "LogRowModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogRowModel interface
@@ -35,6 +34,7 @@ import { LogRowModel } from '@grafana/data';
 |  [rowIndex](#rowindex-property) | <code>number</code> |  |
 |  [searchWords](#searchwords-property) | <code>string[]</code> |  |
 |  [timeEpochMs](#timeepochms-property) | <code>number</code> |  |
+|  [timeEpochNs](#timeepochns-property) | <code>string</code> |  |
 |  [timeFromNow](#timefromnow-property) | <code>string</code> |  |
 |  [timeLocal](#timelocal-property) | <code>string</code> |  |
 |  [timeUtc](#timeutc-property) | <code>string</code> |  |
@@ -127,6 +127,14 @@ searchWords?: string[];
 
 ```typescript
 timeEpochMs: number;
+```
+
+### timeEpochNs property
+
+<b>Signature</b>
+
+```typescript
+timeEpochNs: string;
 ```
 
 ### timeFromNow property

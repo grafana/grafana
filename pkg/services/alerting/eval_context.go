@@ -112,7 +112,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	return c.dashboardRef, nil
 }
 
-const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
+const urlFormat = "%s?tab=alert&editPanel=%d&orgId=%d"
 
 // GetRuleURL returns the url to the dashboard containing the alert.
 func (c *EvalContext) GetRuleURL() (string, error) {

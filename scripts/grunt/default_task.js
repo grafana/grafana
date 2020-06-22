@@ -5,7 +5,6 @@ module.exports = function(grunt) {
   // prettier-ignore
   grunt.registerTask('default', [
     'clean:build',
-    'phantomjs',
   ]);
 
   // prettier-ignore

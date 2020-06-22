@@ -86,16 +86,16 @@ copied panel into the current dashboard.
 
 ### Graph Panel
 
-New enhancements includes support for multiple series stacking in histogram mode, thresholds for right Y axis, aligning left and right Y-axes to one level and additional units. More information in the [Graph panel documentation](/features/panels/graph/).
+New enhancements include support for multiple series stacking in histogram mode, thresholds for right Y axis, aligning left and right Y-axes to one level and additional units. More information in the [Graph panel documentation](/features/panels/graph/).
 
 ### Table Panel
 
-New enhancements includes support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
+New enhancements include support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
 
 ## New variable interpolation syntax
 
 We now support a new option for rendering variables that gives the user full control of how the value(s) should be rendered.
-In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/reference/templating/#advanced-formatting-options).
+In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/variables/templates-and-variables/#advanced-formatting-options).
 
 Filter Option | Example | Raw | Interpolated | Description
 ------------ | ------------- | ------------- | -------------  | -------------

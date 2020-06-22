@@ -12,8 +12,8 @@ exports[`QueryRowActions should render component 1`] = `
       className="gf-form-label gf-form-label--btn"
       onClick={[Function]}
     >
-      <i
-        className="fa fa-pencil"
+      <Icon
+        name="pen"
       />
     </button>
   </div>
@@ -35,10 +35,10 @@ exports[`QueryRowActions should render component 1`] = `
       className="gf-form-label gf-form-label--btn"
       disabled={true}
       onClick={[Function]}
-      title="Disable/enable query"
+      title="Disable query"
     >
-      <i
-        className="fa fa-eye"
+      <Icon
+        name="eye"
       />
     </button>
   </div>
@@ -50,8 +50,8 @@ exports[`QueryRowActions should render component 1`] = `
       onClick={[Function]}
       title="Remove query"
     >
-      <i
-        className="fa fa-minus"
+      <Icon
+        name="minus"
       />
     </button>
   </div>

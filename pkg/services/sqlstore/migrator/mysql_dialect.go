@@ -7,7 +7,7 @@ import (
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 )
 
 type Mysql struct {
@@ -146,6 +146,13 @@ func (db *Mysql) isThisError(err error, errcode uint16) bool {
 
 func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_DUP_ENTRY)
+}
+
+func (db *Mysql) ErrorMessage(err error) string {
+	if driverErr, ok := err.(*mysql.MySQLError); ok {
+		return driverErr.Message
+	}
+	return ""
 }
 
 func (db *Mysql) IsDeadlock(err error) bool {

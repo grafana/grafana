@@ -43,4 +43,21 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData?.series[0].refId).toBe('B');
     expect(panelData?.error!.refId).toBe('B');
   });
+
+  it('should include errors when missing data', () => {
+    const withError = ({
+      series: [],
+      error: {
+        message: 'Error!!',
+      },
+    } as unknown) as PanelData;
+
+    const panelData = filterPanelDataToQuery(withError, 'B');
+    expect(panelData).toBeDefined();
+
+    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
+    expect(panelData.state).toBe(LoadingState.Error);
+    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
+    expect(panelData.error).toBe(withError.error);
+  });
 });

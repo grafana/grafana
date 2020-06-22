@@ -5,7 +5,6 @@
 title = "editModeInitialized"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.editModeInitialized variable

@@ -5,7 +5,6 @@
 title = "LogsMetaItem"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogsMetaItem interface

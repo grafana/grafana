@@ -32,8 +32,9 @@ describe('On remove mapping', () => {
   it('Should remove mapping at index 0', () => {
     const onChangeSpy = jest.fn();
     const wrapper = setup(onChangeSpy);
-    const remove = wrapper.find('*[aria-label="FieldConfigItemHeaderTitle remove button"]');
+    const remove = wrapper.find('button[aria-label="ValueMappingsEditor remove button"]');
     remove.at(0).simulate('click');
+
     expect(onChangeSpy).toBeCalledWith([
       { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
     ]);
@@ -43,7 +44,7 @@ describe('On remove mapping', () => {
     const onChangeSpy = jest.fn();
     const wrapper = setup(onChangeSpy);
 
-    const remove = wrapper.find('*[aria-label="FieldConfigItemHeaderTitle remove button"]');
+    const remove = wrapper.find('button[aria-label="ValueMappingsEditor remove button"]');
     remove.at(1).simulate('click');
 
     expect(onChangeSpy).toBeCalledWith([

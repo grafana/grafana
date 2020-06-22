@@ -5,10 +5,11 @@
 title = "DataQuery"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataQuery interface
+
+These are the common properties available to all queries in all datasources Specific implementations will extend this interface adding the required properties for the given context
 
 <b>Signature</b>
 
@@ -25,10 +26,9 @@ import { DataQuery } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [datasource](#datasource-property) | <code>string &#124; null</code> | For mixed data sources the selected datasource is on the query level. For non mixed scenarios this is undefined. |
-|  [hide](#hide-property) | <code>boolean</code> | true if query is disabled (ie not executed / sent to TSDB) |
+|  [hide](#hide-property) | <code>boolean</code> | true if query is disabled (ie should not be returned to the dashboard) |
 |  [key](#key-property) | <code>string</code> | Unique, guid like, string used in explore mode |
-|  [maxLines](#maxlines-property) | <code>number</code> | For limiting result lines. |
-|  [metric](#metric-property) | <code>any</code> |  |
+|  [queryType](#querytype-property) | <code>string</code> | Specify the query flavor |
 |  [refId](#refid-property) | <code>string</code> | A - Z |
 
 ### datasource property
@@ -43,7 +43,7 @@ datasource?: string | null;
 
 ### hide property
 
-true if query is disabled (ie not executed / sent to TSDB)
+true if query is disabled (ie should not be returned to the dashboard)
 
 <b>Signature</b>
 
@@ -61,22 +61,14 @@ Unique, guid like, string used in explore mode
 key?: string;
 ```
 
-### maxLines property
+### queryType property
 
-For limiting result lines.
-
-<b>Signature</b>
-
-```typescript
-maxLines?: number;
-```
-
-### metric property
+Specify the query flavor
 
 <b>Signature</b>
 
 ```typescript
-metric?: any;
+queryType?: string;
 ```
 
 ### refId property
