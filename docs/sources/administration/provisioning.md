@@ -65,7 +65,7 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 
 > This feature is available from v5.0
 
-It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
+You can manage data sources in Grafana by adding one or more YAML config files in the [`provisioning/datasources`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the data source already exists, then Grafana updates it to match the configuration file. The config file can also contain a list of data sources that should be deleted. That list is called `deleteDatasources`. Grafana deletes data sources listed in `deleteDatasources` before inserting or updating those in the `datasource` list.
 
 ### Running Multiple Grafana Instances
 
@@ -208,9 +208,39 @@ datasources:
       httpHeaderValue2: 'Bearer XXXXXXXXX'
 ```
 
+## Plugins
+
+> This feature is available from v7.1
+
+You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+
+### Example plugin configuration file
+
+```yaml
+apiVersion: 1
+
+apps:
+  # <string> the type of app, plugin identifier. Required
+  - type: raintank-worldping-app
+    # <int> Org ID. Default to 1, unless org_name is specified
+    org_id: 1
+    # <string> Org name. Overrides org_id unless org_id not specified
+    org_name: Main Org.
+    # <bool> disable the app. Default to false.
+    disabled: false
+    # <map> fields that will be converted to json and stored in jsonData. Custom per app.
+    jsonData:
+      # key/value pairs of string to object
+      key: value
+    # <map> fields that will be converted to json, encrypted and stored in secureJsonData. Custom per app.
+    secureJsonData:
+      # key/value pairs of string to string
+      key: value
+```
+
 ## Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 

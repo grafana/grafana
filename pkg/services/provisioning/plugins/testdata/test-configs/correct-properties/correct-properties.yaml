@@ -1,0 +1,10 @@
+apps:
+  - type: $ENABLE_PLUGIN_VAR
+    org_id: 2
+    disabled: false
+  - type: test-plugin-2
+    org_id: 3
+    disabled: true
+  - type: test-plugin
+    org_name: Org 3
+  - type: test-plugin-2

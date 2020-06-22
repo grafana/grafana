@@ -405,6 +405,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/users/:id/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), Wrap(hs.AdminRevokeUserAuthToken))
 
 		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDashboards))
+		adminRoute.Post("/provisioning/plugins/reload", Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
 		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLDAPCfg))
