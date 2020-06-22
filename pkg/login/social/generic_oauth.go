@@ -17,12 +17,14 @@ import (
 
 type SocialGenericOAuth struct {
 	*SocialBase
-	allowedOrganizations []string
-	apiUrl               string
-	emailAttributeName   string
-	emailAttributePath   string
-	roleAttributePath    string
-	teamIds              []int
+	allowedOrganizations  []string
+	apiUrl                string
+	emailAttributeName    string
+	emailAttributePath    string
+	roleAttributePath     string
+	usernameAttributePath string
+	teamIds               []int
+	tokenAttributeName    string
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -93,7 +95,6 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	var err error
 
 	userInfo := &BasicUserInfo{}
-
 	if s.extractToken(&data, token) {
 		s.fillUserInfo(userInfo, &data)
 	}
@@ -148,9 +149,13 @@ func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInf
 func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
 	var err error
 
-	idToken := token.Extra("id_token")
+	if s.tokenAttributeName == "" {
+		s.tokenAttributeName = "id_token"
+	}
+
+	idToken := token.Extra(s.tokenAttributeName)
 	if idToken == nil {
-		s.log.Debug("No id_token found", "token", token)
+		s.log.Warn("Attribute not found in JSON", "name", s.tokenAttributeName, "token", token)
 		return false
 	}
 
@@ -242,6 +247,15 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 	if data.Login != "" {
 		return data.Login
+	}
+
+	if s.usernameAttributePath != "" {
+		login, err := s.searchJSONForAttr(s.usernameAttributePath, data.rawJSON)
+		if err != nil {
+			s.log.Error("Failed to search JSON for attribute", "error", err)
+			return ""
+		}
+		return login
 	}
 
 	if data.Username != "" {
