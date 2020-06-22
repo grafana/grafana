@@ -15,9 +15,11 @@ const setup = (propOverrides?: Partial<Props>) => {
     datasourceFilters: null,
     retentionPeriod: 14,
     height: 100,
+    searchFilter: '',
     exploreId: ExploreId.left,
     onChangeSortOrder: jest.fn(),
     onSelectDatasourceFilters: jest.fn(),
+    onSearchQuery: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

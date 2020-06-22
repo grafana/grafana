@@ -7,6 +7,7 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
+  filterQueries,
 } from './richHistory';
 import store from 'app/core/store';
 import { SortOrder } from './explore';
@@ -165,6 +166,25 @@ describe('createDateStringFromTs', () => {
   it('should correctly create string value from timestamp', () => {
     const value = createDateStringFromTs(1583932327000);
     expect(value).toEqual('March 11');
+  });
+});
+
+describe('filterQueries', () => {
+  it('should filter out queries based on data source filter', () => {
+    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, ['not provided data source'], '');
+    expect(filteredQueries).toHaveLength(0);
+  });
+  it('should keep queries based on data source filter', () => {
+    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, ['datasource history name'], '');
+    expect(filteredQueries).toHaveLength(1);
+  });
+  it('should filter out all queries based on search filter', () => {
+    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, [], 'i do not exist in query');
+    expect(filteredQueries).toHaveLength(0);
+  });
+  it('should filter out all queries based on search filter', () => {
+    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, [], 'query1');
+    expect(filteredQueries).toHaveLength(1);
   });
 });
 

@@ -12,9 +12,11 @@ const setup = (propOverrides?: Partial<Props>) => {
     sortOrder: SortOrder.Ascending,
     activeDatasourceOnly: false,
     datasourceFilters: null,
+    searchFilter: '',
     exploreId: ExploreId.left,
     onChangeSortOrder: jest.fn(),
     onSelectDatasourceFilters: jest.fn(),
+    onSearchQuery: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

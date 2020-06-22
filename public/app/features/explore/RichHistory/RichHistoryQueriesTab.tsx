@@ -11,9 +11,7 @@ import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { SortOrder } from 'app/core/utils/explore';
 import {
-  sortQueries,
   mapNumbertoTimeInSlider,
-  createRetentionPeriodBoundary,
   mapQueriesToHeadings,
   createDatasourcesList,
   filterQueries,
