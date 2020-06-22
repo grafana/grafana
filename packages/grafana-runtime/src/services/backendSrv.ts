@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 /**
  * Used to initiate a remote call via the {@link BackendSrv}
  *
@@ -38,6 +40,18 @@ export type BackendSrvRequest = {
   [key: string]: any;
 };
 
+export interface FetchResponse<T> {
+  data: T;
+  readonly status: number;
+  readonly statusText: string;
+  readonly ok: boolean;
+  readonly headers: Headers;
+  readonly redirected: boolean;
+  readonly type: ResponseType;
+  readonly url: string;
+  readonly config: any;
+}
+
 /**
  * Used to communicate via http(s) to a remote backend such as the Grafana backend,
  * a datasource etc. The BackendSrv is using the {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | Fetch API}
@@ -69,6 +83,7 @@ export interface BackendSrv {
    * when initializing the request.
    */
   datasourceRequest(options: BackendSrvRequest): Promise<any>;
+  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>>;
 }
 
 let singletonInstance: BackendSrv;

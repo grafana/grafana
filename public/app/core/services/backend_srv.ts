@@ -1,12 +1,11 @@
 import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
-import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-import { DataSourceResponse } from 'app/types/events';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO, FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
@@ -33,8 +32,6 @@ interface ErrorResponseProps extends FetchResponseProps {
   status?: string;
   error?: string | any;
 }
-
-export interface FetchResponse<T extends FetchResponseProps = any> extends DataSourceResponse<T> {}
 
 interface SuccessResponse extends FetchResponseProps, Record<any, any> {}
 
@@ -180,6 +177,26 @@ export class BackendSrv implements BackendService {
       .toPromise();
   }
 
+  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
+    options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
+
+    const fromFetchStream = this.getFromFetchStream<T>(options);
+    const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
+    const successStream = fromFetchStream.pipe(
+      filter(response => response.ok === true),
+      tap(response => {
+        if (options.method !== 'GET' && options.showSuccessAlert !== false) {
+          const data: { message: string } = response.data as any;
+          if (data?.message) {
+            this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+          }
+        }
+      })
+    );
+
+    return merge(successStream, failureStream);
+  }
+
   resolveCancelerIfExists(requestId: string) {
     this.inFlightRequests.next(requestId);
   }
@@ -207,7 +224,7 @@ export class BackendSrv implements BackendService {
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
-        const fetchSuccessResponse: DataSourceSuccessResponse = { ...response };
+        const fetchSuccessResponse: FetchResponse<any> = { ...response };
         return fetchSuccessResponse;
       }),
       tap(res => {
@@ -429,20 +446,21 @@ export class BackendSrv implements BackendService {
     return options;
   };
 
-  private getFromFetchStream = (options: BackendSrvRequest) => {
+  private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
         const textData = await response.text(); // this could be just a string, prometheus requests for instance
-        let data;
+        let data: T;
+
         try {
           data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
         } catch {
-          data = textData;
+          data = textData as any;
         }
-        const fetchResponse: FetchResponse = {
+        const fetchResponse: FetchResponse<T> = {
           status,
           statusText,
           ok,
@@ -457,78 +475,80 @@ export class BackendSrv implements BackendService {
       }),
       share() // sharing this so we can split into success and failure and then merge back
     );
-  };
+  }
 
-  private toFailureStream = (options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> => inputStream =>
-    inputStream.pipe(
-      filter(response => response.ok === false),
-      mergeMap(response => {
-        const { status, statusText, data } = response;
-        const fetchErrorResponse: ErrorResponse = { status, statusText, data };
-        return throwError(fetchErrorResponse);
-      }),
-      retryWhen((attempts: Observable<any>) =>
-        attempts.pipe(
-          mergeMap((error, i) => {
-            const firstAttempt = i === 0 && options.retry === 0;
+  private toFailureStream<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
+    return inputStream =>
+      inputStream.pipe(
+        filter(response => response.ok === false),
+        mergeMap(response => {
+          const { status, statusText, data } = response;
+          const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+          return throwError(fetchErrorResponse);
+        }),
+        retryWhen((attempts: Observable<any>) =>
+          attempts.pipe(
+            mergeMap((error, i) => {
+              const firstAttempt = i === 0 && options.retry === 0;
 
-            if (error.status === 401 && this.dependencies.contextSrv.user.isSignedIn && firstAttempt) {
-              return from(this.loginPing()).pipe(
-                catchError(err => {
-                  if (err.status === 401) {
-                    this.dependencies.logout();
+              if (error.status === 401 && this.dependencies.contextSrv.user.isSignedIn && firstAttempt) {
+                return from(this.loginPing()).pipe(
+                  catchError(err => {
+                    if (err.status === 401) {
+                      this.dependencies.logout();
+                      return throwError(err);
+                    }
                     return throwError(err);
-                  }
-                  return throwError(err);
-                })
-              );
-            }
+                  })
+                );
+              }
 
-            return throwError(error);
-          })
+              return throwError(error);
+            })
+          )
         )
-      )
-    );
+      );
+  }
 
-  private toDataSourceRequestFailureStream = (
-    options: BackendSrvRequest
-  ): MonoTypeOperatorFunction<FetchResponse> => inputStream =>
-    inputStream.pipe(
-      filter(response => response.ok === false),
-      mergeMap(response => {
-        const { status, statusText, data } = response;
-        const fetchErrorResponse: ErrorResponse = { status, statusText, data };
-        return throwError(fetchErrorResponse);
-      }),
-      retryWhen((attempts: Observable<any>) =>
-        attempts.pipe(
-          mergeMap((error, i) => {
-            const requestIsLocal = !options.url.match(/^http/);
-            const firstAttempt = i === 0 && options.retry === 0;
+  private toDataSourceRequestFailureStream(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
+    return inputStream =>
+      inputStream.pipe(
+        filter(response => response.ok === false),
+        mergeMap(response => {
+          const { status, statusText, data } = response;
+          const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+          return throwError(fetchErrorResponse);
+        }),
+        retryWhen((attempts: Observable<any>) =>
+          attempts.pipe(
+            mergeMap((error, i) => {
+              const requestIsLocal = !options.url.match(/^http/);
+              const firstAttempt = i === 0 && options.retry === 0;
 
-            // First retry, if loginPing returns 401 this retry sequence will abort with throwError and user is logged out
-            if (requestIsLocal && firstAttempt && error.status === 401) {
-              return from(this.loginPing()).pipe(
-                catchError(err => {
-                  if (err.status === 401) {
-                    this.dependencies.logout();
+              // First retry, if loginPing returns 401 this retry sequence will abort with throwError and user is logged out
+              if (requestIsLocal && firstAttempt && error.status === 401) {
+                return from(this.loginPing()).pipe(
+                  catchError(err => {
+                    if (err.status === 401) {
+                      this.dependencies.logout();
+                      return throwError(err);
+                    }
                     return throwError(err);
-                  }
-                  return throwError(err);
-                })
-              );
-            }
+                  })
+                );
+              }
 
-            return throwError(error);
-          })
+              return throwError(error);
+            })
+          )
         )
-      )
-    );
+      );
+  }
 
   private handleStreamCancellation = (
     options: BackendSrvRequest,
     resultType: CancellationType
-  ): MonoTypeOperatorFunction<FetchResponse | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
+  ): MonoTypeOperatorFunction<FetchResponse<any> | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
     inputStream.pipe(
       takeUntil(
         this.inFlightRequests.pipe(
