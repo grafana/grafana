@@ -52,7 +52,8 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return flux.Query(ctx, dsInfo, tsdbQuery)
 	}
 
-	result := &tsdb.Response{}
+	// NOTE: the following path is currently only called from alerting queries
+	// In dashboards, the request runs through proxy and are managed in the frontend
 
 	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
@@ -73,9 +74,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, err
 	}
 
-	var httpClient *http.Client
-
-	httpClient, err = dsInfo.GetHttpClient()
+	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +102,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, response.Err
 	}
 
+	result := &tsdb.Response{}
 	result.Results = make(map[string]*tsdb.QueryResult)
 	result.Results["A"] = e.ResponseParser.Parse(&response, query)
 
