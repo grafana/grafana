@@ -169,7 +169,7 @@ To select a custom unit enter the unit and select the last `Custom: xxx` option 
 - `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the
   source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that
   SI scale character.
-- `count:<unit>` Use this for a custom count unit.
+- `count:<unit>` for a custom count unit.
 - `currency:<unit>` Use this for custom a currency unit.
 
 You can also paste a native emoji in the unit picker and pick it as a custom unit:
