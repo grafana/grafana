@@ -60,7 +60,6 @@ export const LoginPage: FC = () => {
                     </LoginForm>
                   </>
                 )}
-
                 <LoginServiceButtons />
                 {!disableUserSignUp && <UserSignup />}
               </InnerBox>
