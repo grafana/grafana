@@ -465,6 +465,8 @@ Content-Type: application/json
 
 `POST /api/admin/provisioning/datasources/reload`
 
+`POST /api/admin/provisioning/plugins/reload`
+
 `POST /api/admin/provisioning/notifications/reload`
 
 Reloads the provisioning config files for specified type and provision entities again. It won't return

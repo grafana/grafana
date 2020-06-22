@@ -599,6 +599,10 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 
+### default_home_dashboard_path
+
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+
 <hr />
 
 ## [auth.anonymous]

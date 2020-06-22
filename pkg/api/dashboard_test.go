@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -13,9 +14,57 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+func TestGetHomeDashboard(t *testing.T) {
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}}
+	cfg := setting.NewCfg()
+	cfg.StaticRootPath = "../../public/"
+
+	hs := &HTTPServer{Cfg: cfg, Bus: bus.New()}
+	hs.Bus.AddHandler(func(query *models.GetPreferencesWithDefaultsQuery) error {
+		query.Result = &models.Preferences{
+			HomeDashboardId: 0,
+		}
+		return nil
+	})
+
+	tests := []struct {
+		name                  string
+		defaultSetting        string
+		expectedDashboardPath string
+	}{
+		{name: "using default config", defaultSetting: "", expectedDashboardPath: "../../public/dashboards/home.json"},
+		{name: "custom path", defaultSetting: "../../public/dashboards/default.json", expectedDashboardPath: "../../public/dashboards/default.json"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dash := dtos.DashboardFullWithMeta{}
+			dash.Meta.IsHome = true
+			dash.Meta.FolderTitle = "General"
+
+			homeDashJSON, err := ioutil.ReadFile(tc.expectedDashboardPath)
+			require.NoError(t, err, "must be able to read expected dashboard file")
+			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
+			bytes, err := simplejson.NewJson(homeDashJSON)
+			require.NoError(t, err, "must be able to encode file as JSON")
+
+			dash.Dashboard = bytes
+
+			b, err := json.Marshal(dash)
+			require.NoError(t, err, "must be able to marshal object to JSON")
+
+			res := hs.GetHomeDashboard(req)
+			nr, ok := res.(*NormalResponse)
+			require.True(t, ok, "should return *NormalResponse")
+			require.Equal(t, b, nr.body, "default home dashboard should equal content on disk")
+		})
+	}
+}
 
 // This tests three main scenarios.
 // If a user has access to execute an action on a dashboard:
