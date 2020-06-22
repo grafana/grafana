@@ -189,6 +189,11 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 	cfgs := []*aws.Config{
 		{Region: aws.String(dsInfo.Region)},
 	}
+	// Choose authentication scheme based on the type chosen for the data source
+	// Basically, we support the following methods:
+	// Shared credentials: Providing access key pair sourced from user's AWS credentials file
+	// Static credentials: Providing access key pair directly
+	// SDK: Leave it to SDK to decide
 	switch dsInfo.AuthType {
 	case "arn":
 		plog.Debug("Authenticating towards AWS with AssumeRoleProvider", "arn", dsInfo.AssumeRoleArn, "region",
@@ -217,12 +222,8 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 		})
 	case "keys":
 		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
-		provider := &credentials.StaticProvider{Value: credentials.Value{
-			AccessKeyID:     dsInfo.AccessKey,
-			SecretAccessKey: dsInfo.SecretKey,
-		}}
 		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewCredentials(provider),
+			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
 		})
 	case "sdk":
 		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
