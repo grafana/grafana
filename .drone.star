@@ -61,7 +61,7 @@ def pipeline(kind, name):
                 'name': 'install-deps',
                 'image': build_image,
                 'environment': {
-                    'GRABPL_VERSION': '0.4.14',
+                    'GRABPL_VERSION': '0.4.15',
                     'DOCKERIZE_VERSION': '0.6.1',
                 },
                 'commands': [
