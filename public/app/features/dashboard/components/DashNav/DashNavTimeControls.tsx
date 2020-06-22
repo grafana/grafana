@@ -1,6 +1,6 @@
 // Libaries
 import React, { Component } from 'react';
-import { dateMath, GrafanaTheme } from '@grafana/data';
+import { dateMath, GrafanaTheme, TimeZone } from '@grafana/data';
 import { css } from 'emotion';
 
 // Types
@@ -87,6 +87,11 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     getTimeSrv().setTime(nextRange);
   };
 
+  onChangeTimeZone = (timeZone: TimeZone) => {
+    this.props.dashboard.timezone = timeZone;
+    this.onRefresh();
+  };
+
   onZoom = () => {
     appEvents.emit(CoreEvents.zoomOut, 2);
   };
@@ -99,6 +104,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
     const styles = getStyles(theme);
+    console.log('timeZone', timeZone);
 
     return (
       <div className={styles.container}>
@@ -109,6 +115,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
           onMoveBackward={this.onMoveBack}
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}
+          onChangeTimeZone={this.onChangeTimeZone}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}

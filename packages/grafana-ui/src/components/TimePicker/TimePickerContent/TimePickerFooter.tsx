@@ -12,10 +12,11 @@ import { IconButton } from '../../IconButton/IconButton';
 interface Props {
   timeZone?: TimeZone;
   timestamp: number;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
 }
 
 export const TimePickerFooter: FC<Props> = props => {
-  const { timeZone, timestamp } = props;
+  const { timeZone, timestamp, onChangeTimeZone } = props;
   const [isEditing, setEditing] = useState(false);
 
   const onToggleChangeTz = useCallback(
@@ -45,7 +46,14 @@ export const TimePickerFooter: FC<Props> = props => {
     return (
       <div className={cx(style.container, style.editContainer)}>
         <div className={style.timeZoneContainer}>
-          <TimeZonePicker value="" onChange={() => onToggleChangeTz(undefined)} autoFocus={true} />
+          <TimeZonePicker
+            value={timeZone}
+            onChange={timeZone => {
+              onToggleChangeTz(undefined);
+              onChangeTimeZone(timeZone);
+            }}
+            autoFocus={true}
+          />
         </div>
         <div className={style.spacer} />
         <IconButton name="times" size="lg" onClick={onToggleChangeTz} />
@@ -100,6 +108,5 @@ const getStyle = stylesFactory((theme: GrafanaTheme) => {
       align-items: baseline;
       flex-grow: 1;
     `,
-    offset: css``,
   };
 });

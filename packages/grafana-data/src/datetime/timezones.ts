@@ -99,6 +99,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
       };
     }
 
+    case '':
     case 'default': {
       const tz = getTimeZone();
       const isInternal = tz === 'browser' || tz === 'utc';

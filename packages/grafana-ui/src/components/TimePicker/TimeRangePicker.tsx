@@ -98,6 +98,7 @@ export interface Props extends Themeable {
   timeSyncButton?: JSX.Element;
   isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
@@ -139,6 +140,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       isSynced,
       theme,
       history,
+      onChangeTimeZone,
     } = this.props;
 
     const { isOpen } = this.state;
@@ -176,6 +178,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
                   otherOptions={otherOptions}
                   quickOptions={quickOptions}
                   history={history}
+                  onChangeTimeZone={onChangeTimeZone}
                 />
               </ClickOutsideWrapper>
             )}

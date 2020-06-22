@@ -128,6 +128,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
 interface Props {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
   timeZone?: TimeZone;
   quickOptions?: TimeOption[];
   otherOptions?: TimeOption[];
@@ -174,7 +175,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
           />
         </CustomScrollbar>
       </div>
-      <TimePickerFooter timestamp={Date.now()} timeZone={props.timeZone} />
+      <TimePickerFooter timestamp={Date.now()} timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />
     </div>
   );
 };
