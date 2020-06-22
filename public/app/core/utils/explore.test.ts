@@ -25,7 +25,7 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
-import {serializeStateToUrlParam} from "@grafana/data/src/utils/url";
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',

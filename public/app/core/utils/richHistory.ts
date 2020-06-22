@@ -10,7 +10,7 @@ import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
-import {serializeStateToUrlParam} from "@grafana/data/src/utils/url";
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 

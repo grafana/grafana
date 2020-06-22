@@ -1,6 +1,6 @@
 // Libraries
 import _ from 'lodash';
-import {Unsubscribable} from 'rxjs';
+import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
   CoreApp,
@@ -25,14 +25,14 @@ import {
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
-import {getNextRefIdChar} from './query';
+import { getNextRefIdChar } from './query';
 // Types
-import {RefreshPicker} from '@grafana/ui';
-import {ExploreUrlState, QueryOptions, QueryTransaction} from 'app/types/explore';
-import {config} from '../config';
-import {TimeSrv} from 'app/features/dashboard/services/TimeSrv';
-import {DataSourceSrv} from '@grafana/runtime';
-import {PanelModel} from 'app/features/dashboard/state';
+import { RefreshPicker } from '@grafana/ui';
+import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { config } from '../config';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DataSourceSrv } from '@grafana/runtime';
+import { PanelModel } from 'app/features/dashboard/state';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
