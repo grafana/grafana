@@ -16,7 +16,7 @@ const samples: Array<SelectableValue<string>> = [
     label: 'Simple query',
     description: 'filter by measurment and field',
     value: `from(bucket: "db/rp")
-  |> range(start: v.timeRangeStart, stop:timeRangeStop)
+  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)
   |> filter(fn: (r) =>
     r._measurement == "example-measurement" and
     r._field == "example-field"
