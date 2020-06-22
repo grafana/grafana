@@ -186,8 +186,9 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 }
 
 func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
+	regionCfg := &aws.Config{Region: aws.String(dsInfo.Region)}
 	cfgs := []*aws.Config{
-		{Region: aws.String(dsInfo.Region)},
+		regionCfg,
 	}
 	// Choose authentication scheme based on the type chosen for the data source
 	// Basically, we support the following methods:
@@ -195,25 +196,6 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 	// Static credentials: Providing access key pair directly
 	// SDK: Leave it to SDK to decide
 	switch dsInfo.AuthType {
-	case "arn":
-		plog.Debug("Authenticating towards AWS with AssumeRoleProvider", "arn", dsInfo.AssumeRoleArn, "region",
-			dsInfo.Region)
-
-		stsSess, err := session.NewSession(cfgs...)
-		if err != nil {
-			return nil, fmt.Errorf("creating session for AssumeRoleProvider failed: %w", err)
-		}
-
-		provider := &stscreds.AssumeRoleProvider{
-			Client:          sts.New(stsSess),
-			RoleARN:         dsInfo.AssumeRoleArn,
-			RoleSessionName: "GrafanaSession",
-			Duration:        15 * time.Minute,
-		}
-
-		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewCredentials(provider),
-		})
 	case "credentials":
 		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
 			"region", dsInfo.Region)
@@ -228,14 +210,26 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 	case "sdk":
 		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
 	default:
-		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "arn", "credentials", "keys" or "sdk"`,
+		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "credentials", "keys" or "sdk"`,
 			dsInfo.AuthType)
 	}
-
 	sess, err := session.NewSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
+
+	// We should assume a role in AWS
+	if dsInfo.AssumeRoleArn != "" {
+		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleArn)
+
+		sess, err = session.NewSession(regionCfg, &aws.Config{
+			Credentials: stscreds.NewCredentials(sess, dsInfo.AssumeRoleArn),
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	plog.Debug("Successfully authenticated towards AWS")
 	return sess, nil
 }
