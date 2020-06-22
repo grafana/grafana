@@ -1,9 +1,8 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { useClick } from '../../../core/hooks/useClick';
 
 interface Props {
   isCurrent: boolean;
@@ -14,10 +13,6 @@ interface Props {
 
 const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disabled }) => {
   const theme = useTheme();
-  const ref = useRef(null);
-  useClick(ref, disabled ? () => {} : onClick, () => {
-    console.log('double click');
-  });
   const styles = getStyles(theme);
   const cssClass = cx({
     [styles.item]: true,
@@ -27,7 +22,7 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PluginVisualization.item(plugin.name)}>
-      <div className={cssClass} title={plugin.name} ref={ref}>
+      <div className={cssClass} onClick={disabled ? () => {} : onClick} title={plugin.name}>
         <div className={styles.bg} />
         <div className={styles.itemContent}>
           <div className={styles.name} title={plugin.name}>

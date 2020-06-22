@@ -34,7 +34,11 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
       return null;
     }
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
-      changePanelPlugin(panel, meta.id);
+      if (meta.id === plugin.meta.id) {
+        onToggleOptionGroup(false);
+      } else {
+        changePanelPlugin(panel, meta.id);
+      }
     };
 
     const onKeyPress = useCallback(
