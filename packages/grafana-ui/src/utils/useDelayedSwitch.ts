@@ -24,7 +24,7 @@ export function useDelayedSwitch(value: boolean, options: DelayOptions = {}): bo
   useEffect(() => {
     let timeout: number | undefined;
     if (value) {
-      // If toggling to "on" state we always setTimout no matter how long we have been "off".
+      // If toggling to "on" state we always setTimeout no matter how long we have been "off".
       timeout = setTimeout(() => {
         onStartTime.current = new Date();
         setDelayedValue(value);
