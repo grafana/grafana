@@ -465,7 +465,7 @@ Content-Type: application/json
 
 `POST /api/admin/provisioning/datasources/reload`
 
-`POST /api/admin/provisioning/apps/reload`
+`POST /api/admin/provisioning/plugins/reload`
 
 `POST /api/admin/provisioning/notifications/reload`
 

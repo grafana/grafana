@@ -208,13 +208,13 @@ datasources:
       httpHeaderValue2: 'Bearer XXXXXXXXX'
 ```
 
-## Apps
+## Plugins
 
 > This feature is available from v7.1
 
-It's possible to manage (enable/disable) apps in Grafana by adding one or more YAML config files in the [`provisioning/apps`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana will update each app to match the configuration file.
+It's possible to manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../installation/configuration/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana will update each app to match the configuration file.
 
-### Example app configuration file
+### Example plugin configuration file
 
 ```yaml
 apiVersion: 1
