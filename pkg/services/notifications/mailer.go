@@ -183,6 +183,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		Body:          buffer.String(),
 		EmbeddedFiles: cmd.EmbeddedFiles,
 		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
+		ReplyTo:       cmd.ReplyTo,
 	}, nil
 }
 
