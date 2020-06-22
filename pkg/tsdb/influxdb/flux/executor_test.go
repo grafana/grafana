@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/xorcare/pointer"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go"
 	"github.com/influxdata/influxdb-client-go/api"
@@ -163,31 +165,47 @@ func TestAggregateGrouping(t *testing.T) {
 		}
 
 		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
-
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
+		}
+
+		if len(dr.Frames) != 1 {
+			t.Fatal("Expected one frame")
 		}
 
 		str, _ := dr.Frames[0].StringTable(-1, -1)
 		fmt.Println(str)
 
-		expect := `Name: 
-Dimensions: 2 Fields by 3 Rows
-+-------------------------------+--------------------------+
-| Name: Time                    | Name:                    |
-| Labels:                       | Labels: host=hostname.ru |
-| Type: []time.Time             | Type: []*float64         |
-+-------------------------------+--------------------------+
-| 2020-06-05 12:06:00 +0000 UTC | 8.291381590647958        |
-| 2020-06-05 12:07:00 +0000 UTC | 0.5341565263056448       |
-| 2020-06-05 12:08:00 +0000 UTC | 0.6676119389260387       |
-+-------------------------------+--------------------------+
-`
+		// 	 `Name:
+		// Dimensions: 2 Fields by 3 Rows
+		// +-------------------------------+--------------------------+
+		// | Name: Time                    | Name:                    |
+		// | Labels:                       | Labels: host=hostname.ru |
+		// | Type: []time.Time             | Type: []*float64         |
+		// +-------------------------------+--------------------------+
+		// | 2020-06-05 12:06:00 +0000 UTC | 8.291381590647958        |
+		// | 2020-06-05 12:07:00 +0000 UTC | 0.5341565263056448       |
+		// | 2020-06-05 12:08:00 +0000 UTC | 0.6676119389260387       |
+		// +-------------------------------+--------------------------+
+		// `
 
-		if diff := cmp.Diff(str, expect); diff != "" {
-			t.Fatalf("mismatch %s (-want +got):\n%s", "aggregate.csv", diff)
+		expectedFrame := data.NewFrame("",
+			data.NewField("Time", nil, []time.Time{
+				time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC),
+				time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC),
+				time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC),
+			}),
+			data.NewField("", nil, []*float64{
+				pointer.Float64(8.291),
+				pointer.Float64(0.534),
+				pointer.Float64(0.667),
+			}),
+		)
+		expectedFrame.Meta = &data.FrameMeta{}
+
+		if diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
-
 	})
 }
 

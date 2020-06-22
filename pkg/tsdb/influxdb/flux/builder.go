@@ -128,18 +128,11 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 		}
 
 		if fb.isTimeSeries {
-			frameName := ""
-			name := record.ValueByKey("_measurement")
-			if name != nil {
-				frameName = name.(string)
+			frameName, ok := record.ValueByKey("_measurement").(string)
+			if !ok {
+				frameName = "" // empty frame name
 			}
-			name = record.ValueByKey("_field")
 
-			// Series Data
-			labels := make(map[string]string)
-			for _, name := range fb.labels {
-				labels[name] = record.ValueByKey(name).(string)
-			}
 			fb.active = data.NewFrame(
 				frameName,
 				data.NewFieldFromFieldType(data.FieldTypeTime, 0),
@@ -147,9 +140,17 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 			)
 
 			fb.active.Fields[0].Name = "Time"
-			fb.active.Fields[1].Labels = labels
-			if name != nil {
-				fb.active.Fields[1].Name = name.(string)
+			name, ok := record.ValueByKey("_field").(string)
+			if ok {
+				labels := make(map[string]string)
+				fb.active.Fields[1].Name = name
+				for _, name := range fb.labels {
+					val, ok := record.ValueByKey(name).(string)
+					if ok {
+						labels[name] = val
+					}
+				}
+				fb.active.Fields[1].Labels = labels
 			}
 		} else {
 			fields := make([]*data.Field, len(fb.columns))
