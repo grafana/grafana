@@ -329,6 +329,53 @@ export function notEmptyQuery(query: DataQuery) {
   return false;
 }
 
+export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
+  const filteredQueries = queries.filter(query => {
+    const searchInComment = query.comment.includes(searchFilter);
+    const searchInQueries = query.queries.filter(query => {
+      const queryHasSearchedValue = Object.values(_.omit(query, 'datasource')).some(value =>
+        value.toString().includes(searchFilter)
+      );
+      return queryHasSearchedValue;
+    });
+    return searchInComment || searchInQueries.length > 0;
+  });
+
+  return filteredQueries;
+}
+
+export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
+  const filteredQueries =
+    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
+      ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+      : queries;
+
+  return filteredQueries;
+}
+
+export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
+  const filteredQueries = queries?.filter(
+    q =>
+      q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
+      q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
+  );
+  return filteredQueries;
+}
+
+export function filterQueries(
+  queries: RichHistoryQuery[],
+  sortOrder: SortOrder,
+  listOfDatasourceFilters: string[],
+  searchFilter: string,
+  timeFilter: [number, number]
+) {
+  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
+  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
+  const sortedQueries = sortQueries(filteredQueriesByDsAndSearchFilter, sortOrder);
+  const filteredQueries = filterQueriesByTime(sortedQueries, timeFilter);
+  return filteredQueries;
+}
+
 /* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
 function migrateRichHistory(richHistory: RichHistoryQuery[]) {
   const transformedRichHistory = richHistory.map(query => {
