@@ -16,19 +16,34 @@ import { formatUtcOffset } from './TimeZoneOffset';
 export interface Props {
   value: TimeZone;
   width?: number;
+  autoFocus?: boolean;
   onChange: (newValue: string) => void;
 }
 
-export const TimeZonePicker: React.FC<Props> = ({ onChange, value, width }) => {
+export const TimeZonePicker: React.FC<Props> = props => {
+  const { onChange, value, width, autoFocus = false } = props;
   const groupedTimeZones = useTimeZones();
   const filterBySearchIndex = useFilterBySearchIndex();
 
+  const onChangeTz = useCallback(
+    (selectable: SelectableValue<string>) => {
+      if (!selectable.value) {
+        return onChange(value);
+      }
+      onChange(selectable.value);
+    },
+    [onChange, value]
+  );
+
   return (
     <Select
+      placeholder="Search time zone by name, city, country, abbreviation..."
+      autoFocus={autoFocus}
+      openMenuOnFocus={true}
       width={width}
       filterOption={filterBySearchIndex}
       options={groupedTimeZones}
-      onChange={() => {}}
+      onChange={onChangeTz}
       components={{ Option: TimeZoneOption, Group: TimeZoneGroup }}
     />
   );

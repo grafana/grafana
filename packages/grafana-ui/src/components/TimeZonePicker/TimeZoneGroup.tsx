@@ -7,17 +7,19 @@ interface Props {
   label: string | undefined;
 }
 
+const stopPropagation = (event: React.MouseEvent) => event.stopPropagation();
+
 export const TimeZoneGroup: React.FC<PropsWithChildren<Props>> = props => {
   const theme = useTheme();
   const { children, label } = props;
   const styles = getStyles(theme);
 
   if (!label) {
-    return <div>{children}</div>;
+    return <div onClick={stopPropagation}>{children}</div>;
   }
 
   return (
-    <div>
+    <div onClick={stopPropagation}>
       <div className={styles.header}>
         <span className={styles.label}>{label}</span>
       </div>

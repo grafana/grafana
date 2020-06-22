@@ -19,8 +19,10 @@ export const TimePickerFooter: FC<Props> = props => {
   const [isEditing, setEditing] = useState(false);
 
   const onToggleChangeTz = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
+    (event: React.MouseEvent | undefined) => {
+      if (event) {
+        event.stopPropagation();
+      }
       setEditing(!isEditing);
     },
     [isEditing, setEditing]
@@ -43,7 +45,7 @@ export const TimePickerFooter: FC<Props> = props => {
     return (
       <div className={cx(style.container, style.editContainer)}>
         <div className={style.timeZoneContainer}>
-          <TimeZonePicker value="" onChange={() => {}} />
+          <TimeZonePicker value="" onChange={() => onToggleChangeTz(undefined)} autoFocus={true} />
         </div>
         <div className={style.spacer} />
         <IconButton name="times" size="lg" onClick={onToggleChangeTz} />

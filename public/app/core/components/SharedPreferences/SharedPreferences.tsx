@@ -12,8 +12,9 @@ import {
   Button,
   RadioButtonGroup,
   FieldSet,
+  TimeZonePicker,
 } from '@grafana/ui';
-import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
@@ -35,18 +36,6 @@ const themes: SelectableValue[] = [
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
 ];
-
-const grafanaTimeZones = [
-  { value: '', label: 'Default' },
-  { value: 'browser', label: 'Local browser time' },
-  { value: 'utc', label: 'UTC' },
-];
-
-const timeZones = getTimeZoneGroups().reduce((tzs, group) => {
-  const options = group.options.map(tz => ({ value: tz, label: tz }));
-  tzs.push.apply(tzs, options);
-  return tzs;
-}, grafanaTimeZones);
 
 export class SharedPreferences extends PureComponent<Props, State> {
   backendSrv = backendSrv;
@@ -112,11 +101,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ theme: value });
   };
 
-  onTimeZoneChanged = (timezone: SelectableValue<string>) => {
-    if (!timezone || typeof timezone.value !== 'string') {
+  onTimeZoneChanged = (timezone: string) => {
+    if (!timezone) {
       return;
     }
-    this.setState({ timezone: timezone.value });
+    this.setState({ timezone: timezone });
   };
 
   onHomeDashboardChanged = (dashboardId: number) => {
@@ -168,12 +157,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
-                <Select
-                  isSearchable={true}
-                  value={timeZones.find(item => item.value === timezone)}
-                  onChange={this.onTimeZoneChanged}
-                  options={timeZones}
-                />
+                <TimeZonePicker value={timezone} onChange={this.onTimeZoneChanged} />
               </Field>
               <div className="gf-form-button-row">
                 <Button variant="primary">Save</Button>
