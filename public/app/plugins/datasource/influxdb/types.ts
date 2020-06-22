@@ -1,8 +1,8 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export enum InfluxVersion {
-  V1x = '1x',
-  V2x = '2x',
+  InfluxQL = 'InfluxQL',
+  Flux = 'Flux',
 }
 
 export interface InfluxOptions extends DataSourceJsonData {
@@ -11,14 +11,14 @@ export interface InfluxOptions extends DataSourceJsonData {
   timeInterval: string;
   httpMode: string;
 
-  // Influx 2.0
+  // With Flux
   organization?: string;
   defaultBucket?: string;
   maxSeries?: number;
 }
 
 export interface InfluxSecureJsonData {
-  // Influx 2.0
+  // For Flux
   token?: string;
 
   // In 1x a different password can be sent than then HTTP auth
@@ -38,14 +38,7 @@ export interface InfluxQueryTag {
   value: string;
 }
 
-export enum InfluxQueryType {
-  Classic = 'Classic', // InfluxQL query builder
-  InfluxQL = 'InfluxQL', // raw InfluxQL
-  Flux = 'Flux',
-}
-
 export interface InfluxQuery extends DataQuery {
-  queryType?: InfluxQueryType;
   policy?: string;
   measurement?: string;
   resultFormat?: 'time_series' | 'table';
@@ -57,6 +50,6 @@ export interface InfluxQuery extends DataQuery {
   slimit?: string;
   tz?: string;
   fill?: string;
-  rawQuery?: boolean; // deprecated (use raw InfluxQL)
+  rawQuery?: boolean;
   query?: string;
 }

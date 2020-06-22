@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import coreModule from 'app/core/core_module';
-import { InfluxQuery, InfluxQueryType } from '../types';
+import { InfluxQuery } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { InlineFormLabel, LinkButton, Select, TextArea } from '@grafana/ui';
 
@@ -9,12 +9,6 @@ interface Props {
   change: (target: InfluxQuery) => void;
   refresh: () => void;
 }
-
-const queryTypes: Array<SelectableValue<InfluxQueryType>> = [
-  { label: 'Classic', value: InfluxQueryType.Classic, description: 'Interactive query builder' },
-  { label: 'InfluxQL', value: InfluxQueryType.InfluxQL, description: 'The InfluxDB SQL-like query language ' }, // https://docs.influxdata.com/influxdb/v1.8/query_language/
-  { label: 'Flux', value: InfluxQueryType.Flux, description: 'Advanced data scripting and query language' },
-];
 
 const samples: Array<SelectableValue<string>> = [
   { label: 'Show buckets', description: 'List the avaliable buckets (table)', value: 'buckets()' },
@@ -82,13 +76,7 @@ v1.tagValues(
   },
 ];
 
-class FluxQueryEditor extends Component<Props> {
-  onQueryTypeChange = (e: SelectableValue<InfluxQueryType>) => {
-    const { target, change } = this.props;
-    change({ ...target, queryType: e.value });
-    this.props.refresh();
-  };
-
+export class FluxQueryEditor extends Component<Props> {
   onFluxQueryChange = (e: any) => {
     const { target, change } = this.props;
     change({ ...target, query: e.currentTarget.value });
@@ -113,47 +101,34 @@ class FluxQueryEditor extends Component<Props> {
     const { target } = this.props;
     return (
       <>
+        <div className="gf-form">
+          <TextArea
+            value={target.query || ''}
+            onChange={this.onFluxQueryChange}
+            onBlur={this.onFluxBlur}
+            placeholder="Flux query"
+            rows={10}
+          />
+        </div>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <label className="gf-form-label query-keyword width-7">QUERY</label>
-            <Select
-              width={22}
-              options={queryTypes}
-              value={queryTypes.find(v => v.value === target.queryType)}
-              onChange={this.onQueryTypeChange}
-            />
+            <InlineFormLabel width={6} tooltip="This supports queries copied from chronograph">
+              Help
+            </InlineFormLabel>
+            <Select width={20} options={samples} placeholder="Sample Query" onChange={this.onSampleChange} />
+            <LinkButton
+              icon="external-link-alt"
+              variant="secondary"
+              target="blank"
+              href="https://docs.influxdata.com/flux/latest/introduction/getting-started/"
+            >
+              Flux docs
+            </LinkButton>
           </div>
-          {target.queryType === InfluxQueryType.Flux && (
-            <div className="gf-form">
-              <InlineFormLabel width={6} tooltip="This supports queries copied from chronograph">
-                Help
-              </InlineFormLabel>
-              <Select width={20} options={samples} placeholder="Sample Query" onChange={this.onSampleChange} />
-              <LinkButton
-                icon="external-link-alt"
-                variant="secondary"
-                target="blank"
-                href="https://docs.influxdata.com/flux/latest/introduction/getting-started/"
-              >
-                Flux docs
-              </LinkButton>
-            </div>
-          )}
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow"></div>
           </div>
         </div>
-        {target.queryType === InfluxQueryType.Flux && (
-          <div className="gf-form">
-            <TextArea
-              value={target.query || ''}
-              onChange={this.onFluxQueryChange}
-              onBlur={this.onFluxBlur}
-              placeholder="Flux query"
-              rows={10}
-            />
-          </div>
-        )}
       </>
     );
   }

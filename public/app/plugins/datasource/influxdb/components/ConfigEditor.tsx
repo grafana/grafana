@@ -18,8 +18,16 @@ const httpModes = [
 ] as SelectableValue[];
 
 const versions = [
-  { label: '1.x', value: InfluxVersion.V1x },
-  { label: '2.x (beta)', value: InfluxVersion.V2x, description: 'Supports both Flux and InfluxQL queries' },
+  {
+    label: 'InfluxQL',
+    value: InfluxVersion.InfluxQL,
+    description: 'The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x',
+  },
+  {
+    label: 'Flux',
+    value: InfluxVersion.Flux,
+    description: 'Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+ (beta)',
+  },
 ] as Array<SelectableValue<InfluxVersion>>;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
@@ -45,7 +53,7 @@ export class ConfigEditor extends PureComponent<Props> {
         version: selected.value,
       },
     };
-    if (selected.value === InfluxVersion.V2x) {
+    if (selected.value === InfluxVersion.Flux) {
       copy.access = 'proxy';
       copy.basicAuth = true;
       copy.jsonData.httpMode = 'POST';
@@ -75,10 +83,10 @@ export class ConfigEditor extends PureComponent<Props> {
     return (
       <div>
         <div className="gf-form-group">
-          <div className="grafana-info-box">
-            <h5>Support for flux in InfluxDB 2.0 is currently in beta</h5>
+          <div className="width-30 grafana-info-box">
+            <h5>Support for flux in Grafana is currently in beta</h5>
             <p>
-              Please report any issues in github: <br />
+              Please report any issues to: <br />
               <a href="https://github.com/grafana/grafana/issues/new/choose">
                 https://github.com/grafana/grafana/issues
               </a>
@@ -285,14 +293,13 @@ export class ConfigEditor extends PureComponent<Props> {
 
     return (
       <>
-        <h3 className="page-heading">InfluxDB</h3>
+        <h3 className="page-heading">Query Language</h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <InlineFormLabel className="width-10">Version</InlineFormLabel>
               <Select
-                className="width-20"
-                value={options.jsonData.version === InfluxVersion.V2x ? versions[1] : versions[0]}
+                className="width-30"
+                value={options.jsonData.version === InfluxVersion.Flux ? versions[1] : versions[0]}
                 options={versions}
                 defaultValue={versions[0]}
                 onChange={this.onVersionChanged}
@@ -301,7 +308,7 @@ export class ConfigEditor extends PureComponent<Props> {
           </div>
         </div>
 
-        {options.jsonData.version === InfluxVersion.V2x ? this.renderInflux2x() : this.renderInflux1x()}
+        {options.jsonData.version === InfluxVersion.Flux ? this.renderInflux2x() : this.renderInflux1x()}
       </>
     );
   }

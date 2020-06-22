@@ -1,7 +1,10 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
-  <flux-query-editor ng-if="ctrl.datasource.is2x" target="ctrl.target" change="ctrl.onChange" refresh="ctrl.refresh"></flux-query-editor>
-  
-  <div ng-if="ctrl.target.queryType === 'InfluxQL' || !ctrl.target.queryType">
+
+<query-editor-row ng-if="ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="false">
+  <flux-query-editor target="ctrl.target" change="ctrl.onChange" refresh="ctrl.refresh"></flux-query-editor>
+</query-editor-row>
+
+<query-editor-row ng-if="!ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
+  <div ng-if="ctrl.target.rawQuery">
     <div class="gf-form">
       <textarea
         rows="3"
@@ -42,7 +45,7 @@
     </div>
   </div>
 
-  <div ng-if="ctrl.target.queryType === 'Classic'">
+  <div ng-if="!ctrl.target.rawQuery">
     <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-7">FROM</label>

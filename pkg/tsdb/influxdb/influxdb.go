@@ -43,35 +43,16 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func AllFlux(queries *tsdb.TsdbQuery) (bool, error) {
-	var hasFlux bool
-	var allFlux bool
-	for i, q := range queries.Queries {
-		qType := q.Model.Get("queryType").MustString("")
-		if qType == "Flux" {
-			hasFlux = true
-			if i == 0 && hasFlux {
-				allFlux = true
-				continue
-			}
-		}
-		if allFlux && qType != "Flux" {
-			return true, fmt.Errorf("when using flux, all queries must be a flux query")
-		}
-	}
-	return allFlux, nil
-}
-
 func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
-	allFlux, err := AllFlux(tsdbQuery)
-	if err != nil {
-		return nil, err
-	}
 
-	if allFlux {
+	glog.Info("query", "q", tsdbQuery.Queries)
+
+	version := dsInfo.JsonData.Get("version").MustString("")
+	if version == "Flux" {
 		return flux.Query(ctx, dsInfo, tsdbQuery)
 	}
+
+	result := &tsdb.Response{}
 
 	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
@@ -93,10 +74,6 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	var httpClient *http.Client
-	version := dsInfo.JsonData.Get("version").MustString("1x")
-	if version == "2x" {
-		glog.Info("TODO use org & token to create a new client")
-	}
 
 	httpClient, err = dsInfo.GetHttpClient()
 	if err != nil {
