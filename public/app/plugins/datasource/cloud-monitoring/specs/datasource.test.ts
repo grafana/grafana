@@ -9,7 +9,7 @@ import { CustomVariableModel } from '../../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 

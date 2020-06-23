@@ -7,7 +7,7 @@ import { getLocationSrv } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { InspectTab } from '../../components/Inspector/PanelInspector';
+import { InspectTab } from '../../components/Inspector/types';
 
 enum InfoMode {
   Error = 'Error',
