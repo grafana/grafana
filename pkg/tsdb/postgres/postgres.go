@@ -3,11 +3,12 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -47,20 +48,52 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
 	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
-	if err == nil {
-		logger.Debug("Successfully connected to Postgres")
-	} else {
+	if err != nil {
 		logger.Debug("Failed connecting to Postgres", "err", err)
+		return nil, err
 	}
+
+	logger.Debug("Successfully connected to Postgres")
 	return endpoint, err
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
+	logger.Debug("Trying to generate Postgres connection string")
+
 	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
 
-	// Always pass SSL mode
-	sslOpts := fmt.Sprintf("sslmode=%s", url.QueryEscape(sslMode))
+	reHost := regexp.MustCompile(`^([^/]+(?::\d+)?)|(/.+)$`)
+	ms := reHost.FindStringSubmatch(datasource.Url)
+	if len(ms) == 0 {
+		return "", fmt.Errorf("invalid host specifier: %q", datasource.Url)
+	}
+
+	var host string
+	var port int
+	if ms[1] != "" {
+		sp := strings.SplitN(ms[1], ":", 2)
+		host = sp[0]
+		var err error
+		port, err = strconv.Atoi(sp[1])
+		if err != nil {
+			return "", errutil.Wrapf(err, "invalid port in host specifier %q", ms[1])
+		}
+
+		logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+	} else {
+		host = ms[2]
+		if ms[2] == "" {
+			panic(fmt.Sprintf("Invalid regex: %s", strings.Join(ms, ",")))
+		}
+		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
+	}
+
+	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s' sslmode='%s'",
+		datasource.User, datasource.DecryptedPassword(), host, datasource.Database, sslMode)
+	if port > 0 {
+		connStr += fmt.Sprintf(" port=%d", port)
+	}
 	if isSSLDisabled {
 		logger.Debug("Postgres SSL is disabled")
 	} else {
@@ -69,7 +102,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		// Attach root certificate if provided
 		if sslRootCert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslRootCert != "" {
 			logger.Debug("Setting server root certificate", "sslRootCert", sslRootCert)
-			sslOpts = fmt.Sprintf("%s&sslrootcert=%s", sslOpts, url.QueryEscape(sslRootCert))
+			connStr += fmt.Sprintf(" sslrootcert='%s'", sslRootCert)
 		}
 
 		// Attach client certificate and key if both are provided
@@ -77,20 +110,14 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		sslKey := datasource.JsonData.Get("sslKeyFile").MustString("")
 		if sslCert != "" && sslKey != "" {
 			logger.Debug("Setting SSL client auth", "sslCert", sslCert, "sslKey", sslKey)
-			sslOpts = fmt.Sprintf("%s&sslcert=%s&sslkey=%s", sslOpts, url.QueryEscape(sslCert), url.QueryEscape(sslKey))
+			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", sslCert, sslKey)
 		} else if sslCert != "" || sslKey != "" {
 			return "", fmt.Errorf("SSL client certificate and key must both be specified")
 		}
 	}
 
-	u := &url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
-		Host:   datasource.Url, Path: datasource.Database,
-		RawQuery: sslOpts,
-	}
-
-	return u.String(), nil
+	logger.Debug("Generated Postgres connection string successfully")
+	return connStr, nil
 }
 
 type postgresQueryResultTransformer struct {
