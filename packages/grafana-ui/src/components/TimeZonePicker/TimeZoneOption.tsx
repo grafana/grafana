@@ -61,7 +61,7 @@ export const TimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props
 });
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const offsetHoverBg = theme.isDark ? theme.palette.gray05 : '#FFF';
+  const offsetHoverBg = theme.isDark ? theme.palette.gray05 : theme.palette.white;
 
   return {
     container: css`
