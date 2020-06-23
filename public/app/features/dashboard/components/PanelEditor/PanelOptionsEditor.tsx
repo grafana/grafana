@@ -71,7 +71,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
 
         return optionsToShow.length > 0 ? (
           <OptionsGroup title={c} defaultToClosed id={`${c}/${i}`} key={`${c}/${i}`}>
-            {() => <div>{optionsToShow}</div>}
+            <div>{optionsToShow}</div>
           </OptionsGroup>
         ) : null;
       })}

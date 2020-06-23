@@ -1,5 +1,6 @@
 import React, { FC, memo, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
+import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
@@ -15,7 +16,7 @@ export interface OptionsGroupProps {
   nested?: boolean;
   persistMe?: boolean;
   onToggle?: (isExpanded: boolean) => void;
-  children: (toggleExpand: (expanded: boolean) => void) => ReactNode;
+  children: ((toggleExpand: (expanded: boolean) => void) => ReactNode) | ReactNode;
 }
 
 export const OptionsGroup: FC<OptionsGroupProps> = ({
@@ -109,7 +110,7 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
         </div>
         <div style={{ width: '100%' }}>{renderTitle ? renderTitle(isExpanded) : title}</div>
       </div>
-      {isExpanded && <div className={styles.body}>{children(toggleExpand)}</div>}
+      {isExpanded && <div className={styles.body}>{_.isFunction(children) ? children(toggleExpand) : children}</div>}
     </div>
   );
 };

@@ -128,59 +128,55 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   return (
     <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
-      {() => (
-        <>
-          <Field label={matcherLabel} description={matcherUi.description}>
-            <matcherUi.component
-              matcher={matcherUi.matcher}
-              data={data}
-              options={override.matcher.options}
-              onChange={option => onMatcherConfigChange(option)}
+      <Field label={matcherLabel} description={matcherUi.description}>
+        <matcherUi.component
+          matcher={matcherUi.matcher}
+          data={data}
+          options={override.matcher.options}
+          onChange={option => onMatcherConfigChange(option)}
+        />
+      </Field>
+
+      <div>
+        {override.properties.map((p, j) => {
+          const item = registry.getIfExists(p.id);
+
+          if (!item) {
+            return <div>Unknown property: {p.id}</div>;
+          }
+          const isCollapsible =
+            Array.isArray(p.value) || COLLECTION_STANDARD_PROPERTIES.includes(p.id as FieldConfigProperty);
+
+          return (
+            <DynamicConfigValueEditor
+              key={`${p.id}/${j}`}
+              isCollapsible={isCollapsible}
+              onChange={value => onDynamicConfigValueChange(j, value)}
+              onRemove={() => onDynamicConfigValueRemove(j)}
+              property={p}
+              registry={registry}
+              context={{
+                data,
+                getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+              }}
             />
-          </Field>
-
-          <div>
-            {override.properties.map((p, j) => {
-              const item = registry.getIfExists(p.id);
-
-              if (!item) {
-                return <div>Unknown property: {p.id}</div>;
-              }
-              const isCollapsible =
-                Array.isArray(p.value) || COLLECTION_STANDARD_PROPERTIES.includes(p.id as FieldConfigProperty);
-
-              return (
-                <DynamicConfigValueEditor
-                  key={`${p.id}/${j}`}
-                  isCollapsible={isCollapsible}
-                  onChange={value => onDynamicConfigValueChange(j, value)}
-                  onRemove={() => onDynamicConfigValueRemove(j)}
-                  property={p}
-                  registry={registry}
-                  context={{
-                    data,
-                    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
-                  }}
-                />
-              );
-            })}
-            {override.matcher.options && (
-              <div className={styles.propertyPickerWrapper}>
-                <ValuePicker
-                  label="Add override property"
-                  variant="secondary"
-                  icon="plus"
-                  options={configPropertiesOptions}
-                  onChange={o => {
-                    onDynamicConfigValueAdd(o.value);
-                  }}
-                  isFullWidth={false}
-                />
-              </div>
-            )}
+          );
+        })}
+        {override.matcher.options && (
+          <div className={styles.propertyPickerWrapper}>
+            <ValuePicker
+              label="Add override property"
+              variant="secondary"
+              icon="plus"
+              options={configPropertiesOptions}
+              onChange={o => {
+                onDynamicConfigValueAdd(o.value);
+              }}
+              isFullWidth={false}
+            />
           </div>
-        </>
-      )}
+        )}
+      </div>
     </OptionsGroup>
   );
 };
