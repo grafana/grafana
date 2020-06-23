@@ -82,8 +82,8 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
     };
     setDataSourceSrv({
       getDataSourceSettingsByUid() {
-        return {} as any
-      }
+        return {} as any;
+      },
     } as any);
 
     beforeEach(async () => {
