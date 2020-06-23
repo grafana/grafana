@@ -159,7 +159,7 @@ def pipeline_set(kind, name):
                     'commands': [
                         'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
                         './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition oss --build-id ' +
-                            '$DRONE_BUILD_NUMBER',
+                            '$DRONE_BUILD_NUMBER --variants osx64,win64,linux-x64,linux-x64-musl',
                     ],
                 },
                 {
@@ -241,7 +241,8 @@ def pipeline_set(kind, name):
                     },
                     'commands': [
                         '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --github-token ' +
-                            '"$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER',
+                            '"$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER ' +
+                            '--variants linux-x64,linux-x64-musl,osx64,win64',
                     ],
                 },
                 {
