@@ -23,9 +23,9 @@ export default class InsightsAnalyticsDatasource extends AppInsightsDatasource {
       refId: target.refId,
       queryType: AzureQueryType.InsightsAnalytics,
       insightsAnalytics: {
-        type: 'timeSeriesQuery',
+        type: 'timeSeriesQuery', // Is this needed?
         query: getTemplateSrv().replace(item.query, scopedVars),
-        format: target.format,
+        resultFormat: item.resultFormat,
       },
     };
   }
