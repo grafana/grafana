@@ -36,7 +36,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 1. Click **Save** to save changes and close the window.
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
-## Delete a panel link
+## Delete a data link
 
 1. On the Field tab, find the link that you want to delete. (Panel tab for graph visualizations.)
 1. Click the **X** icon next to the link you want to delete. 
