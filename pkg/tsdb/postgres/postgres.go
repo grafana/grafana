@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -63,31 +62,25 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
 
-	reHost := regexp.MustCompile(`^([^/].*(?::\d+)?)|(/.*)$`)
-	ms := reHost.FindStringSubmatch(datasource.Url)
-	if len(ms) == 0 {
-		return "", fmt.Errorf("invalid host specifier: %q", datasource.Url)
-	}
-
 	var host string
 	var port int
-	if ms[1] != "" {
-		sp := strings.SplitN(ms[1], ":", 2)
+	if strings.HasPrefix(datasource.Url, "/") {
+		host = datasource.Url
+		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
+	} else {
+		sp := strings.SplitN(datasource.Url, ":", 2)
 		host = sp[0]
 		if len(sp) > 1 {
 			var err error
 			port, err = strconv.Atoi(sp[1])
 			if err != nil {
-				return "", errutil.Wrapf(err, "invalid port in host specifier %q", ms[1])
+				return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
 			}
 
 			logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
 		} else {
 			logger.Debug("Generating connection string with network host", "host", host)
 		}
-	} else {
-		host = ms[2]
-		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	}
 
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s' sslmode='%s'",
