@@ -22,7 +22,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
-  optionsKey: Record<AzureQueryType, any>;
+  optionsKey: Record<AzureQueryType, string>;
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
