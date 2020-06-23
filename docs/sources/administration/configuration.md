@@ -537,7 +537,7 @@ Set the default UI theme: `dark` or `light`. Default is `dark`.
 
 ### External user management
 
-Transfers user management to grafana.com. Only applicable to Grafana Cloud.
+If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description. 
 
 ### viewers_can_edit
 
