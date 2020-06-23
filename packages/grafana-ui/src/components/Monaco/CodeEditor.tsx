@@ -1,10 +1,35 @@
 import React from 'react';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
-import MonacoEditor from 'react-monaco-editor';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import { MonacoEditorProps } from 'react-monaco-editor';
+import { KeyCode, editor, KeyMod } from 'monaco-editor/esm/vs/editor/editor.api';
+import { useAsyncDependency } from '../../utils/useAsyncDependency';
+import { ErrorWithStack, LoadingPlaceholder } from '..';
 
 export type CodeEditorChangeHandler = (value: string) => void;
+
+const MonacoEditor: React.FC<MonacoEditorProps> = props => {
+  const { loading, error, dependency } = useAsyncDependency(
+    import(/* webpackChunkName: "react-monaco-editor" */ 'react-monaco-editor')
+  );
+
+  if (loading) {
+    return <LoadingPlaceholder text={'Loading...'} />;
+  }
+
+  if (error) {
+    return (
+      <ErrorWithStack
+        title="Code editor failed to load"
+        error={error}
+        errorInfo={{ componentStack: error?.stack || '' }}
+      />
+    );
+  }
+
+  const ReactMonaco = dependency.default;
+  return <ReactMonaco {...props} />;
+};
 
 interface CodeEditorProps extends Themeable {
   value: string;
@@ -20,7 +45,7 @@ interface CodeEditorProps extends Themeable {
    *
    * @experimental
    */
-  onEditorDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
+  onEditorDidMount?: (editor: editor.IStandaloneCodeEditor) => void;
 
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
@@ -43,13 +68,13 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
     }
   };
 
-  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  editorDidMount = (editor: editor.IStandaloneCodeEditor) => {
     const { onSave, onEditorDidMount } = this.props;
 
     this.getEditorValue = () => editor.getValue();
 
     if (onSave) {
-      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+      editor.addCommand(KeyMod.CtrlCmd | KeyCode.KEY_S, () => {
         onSave(this.getEditorValue());
       });
     }
