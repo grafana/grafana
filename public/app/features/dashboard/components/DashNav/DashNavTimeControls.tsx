@@ -9,7 +9,7 @@ import { LocationState, CoreEvents } from 'app/types';
 import { TimeRange } from '@grafana/data';
 
 // State
-import { updateLocation } from 'app/core/actions';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 
 // Components
 import { RefreshPicker, withTheme, stylesFactory, Themeable } from '@grafana/ui';
@@ -31,8 +31,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export interface Props extends Themeable {
   dashboard: DashboardModel;
-  updateLocation: typeof updateLocation;
   location: LocationState;
+  onChangeTimeZone: typeof updateTimeZoneForSession;
 }
 class UnthemedDashNavTimeControls extends Component<Props> {
   componentDidMount() {
@@ -89,6 +89,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
 
   onChangeTimeZone = (timeZone: TimeZone) => {
     this.props.dashboard.timezone = timeZone;
+    this.props.onChangeTimeZone(timeZone);
     this.onRefresh();
   };
 

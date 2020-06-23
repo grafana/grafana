@@ -905,6 +905,8 @@ export class DashboardModel {
   }
 
   getTimezone(): TimeZone {
+    console.log('contextSrv', contextSrv?.user?.timezone);
+    console.log('dashboard', this.timezone);
     return (this.timezone ? this.timezone : contextSrv?.user?.timezone) as TimeZone;
   }
 

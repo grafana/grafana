@@ -170,7 +170,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
               </button>
             </Tooltip>
             {isOpen && (
-              <ClickOutsideWrapper onClick={this.onClose}>
+              <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
                 <TimePickerContent
                   timeZone={timeZone}
                   value={value}

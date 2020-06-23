@@ -63,6 +63,7 @@ function createToolbar(supportedModes: ExploreMode[]) {
       setDashboardQueriesToUpdateOnLoad={(() => {}) as any}
       exploreId={ExploreId.left}
       onChangeTime={(() => {}) as any}
+      onChangeTimeZone={(() => {}) as any}
     />
   );
 }
