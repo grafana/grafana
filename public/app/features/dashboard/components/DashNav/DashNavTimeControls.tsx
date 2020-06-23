@@ -104,7 +104,6 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
     const styles = getStyles(theme);
-    console.log('timeZone', timeZone);
 
     return (
       <div className={styles.container}>

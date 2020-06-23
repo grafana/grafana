@@ -61,6 +61,8 @@ export const TimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props
 });
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const offsetHoverBg = theme.isDark ? theme.palette.gray05 : '#FFF';
+
   return {
     container: css`
       display: flex;
@@ -76,7 +78,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         background: ${theme.colors.dropdownOptionHoverBg};
 
         span.${offsetClassName} {
-          background: ${theme.palette.gray05};
+          background: ${offsetHoverBg};
         }
       }
     `,
@@ -91,7 +93,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border-left-width: 2px;
 
       span.${offsetClassName} {
-        background: ${theme.palette.gray05};
+        background: ${offsetHoverBg};
       }
     `,
     body: css`

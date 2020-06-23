@@ -7,7 +7,6 @@ import { TimeZoneDescription } from '../../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../../TimeZonePicker/TimeZoneOffset';
 import { Button } from '../../Button';
 import { TimeZonePicker } from '../../TimeZonePicker/TimeZonePicker';
-import { IconButton } from '../../IconButton/IconButton';
 
 interface Props {
   timeZone?: TimeZone;
@@ -20,7 +19,7 @@ export const TimePickerFooter: FC<Props> = props => {
   const [isEditing, setEditing] = useState(false);
 
   const onToggleChangeTz = useCallback(
-    (event: React.MouseEvent | undefined) => {
+    (event?: React.MouseEvent) => {
       if (event) {
         event.stopPropagation();
       }
@@ -49,14 +48,13 @@ export const TimePickerFooter: FC<Props> = props => {
           <TimeZonePicker
             value={timeZone}
             onChange={timeZone => {
-              onToggleChangeTz(undefined);
+              onToggleChangeTz();
               onChangeTimeZone(timeZone);
             }}
             autoFocus={true}
+            onBlur={() => onToggleChangeTz()}
           />
         </div>
-        <div className={style.spacer} />
-        <IconButton name="times" size="lg" onClick={onToggleChangeTz} />
       </div>
     );
   }
@@ -90,7 +88,7 @@ const getStyle = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
     `,
     editContainer: css`
-      padding: 7px 11px;
+      padding: 7px;
     `,
     spacer: css`
       margin-left: 7px;

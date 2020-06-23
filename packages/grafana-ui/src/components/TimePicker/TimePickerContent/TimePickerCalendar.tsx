@@ -7,31 +7,28 @@ import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
 import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
-import { getThemeColors } from './colors';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = getThemeColors(theme);
-
   return {
     container: css`
       top: 0;
       position: absolute;
       right: 546px;
-      box-shadow: 0px 0px 20px ${colors.shadow};
-      background-color: ${colors.background};
+      box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
+      background-color: ${theme.colors.bodyBg};
       z-index: -1;
 
       &:after {
         display: block;
-        background-color: ${colors.background};
+        background-color: ${theme.colors.bodyBg};
         width: 19px;
         height: 381px;
         content: ' ';
         position: absolute;
         top: 0;
         right: -19px;
-        border-left: 1px solid ${colors.border};
+        border-left: 1px solid ${theme.colors.border1};
       }
     `,
     modal: css`
@@ -59,11 +56,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getFooterStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = getThemeColors(theme);
-
   return {
     container: css`
-      background-color: ${colors.background};
+      background-color: ${theme.colors.bodyBg};
       display: flex;
       justify-content: center;
       padding: 10px;
@@ -78,12 +73,10 @@ const getFooterStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = getThemeColors(theme);
-
   return {
     title: css`
       color: ${theme.colors.text};
-      background-color: ${colors.background};
+      background-color: ${theme.colors.bodyBg};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
 
@@ -93,7 +86,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     body: css`
       z-index: ${theme.zIndex.modal};
-      background-color: ${colors.background};
+      background-color: ${theme.colors.bodyBg};
       width: 268px;
 
       .react-calendar__navigation__label,
@@ -177,11 +170,9 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = getThemeColors(theme);
-
   return {
     container: css`
-      background-color: ${colors.background};
+      background-color: ${theme.colors.bodyBg};
       display: flex;
       justify-content: space-between;
       padding: 7px;

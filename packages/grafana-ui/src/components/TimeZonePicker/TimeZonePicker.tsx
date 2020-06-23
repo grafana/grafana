@@ -18,10 +18,11 @@ export interface Props {
   width?: number;
   autoFocus?: boolean;
   onChange: (newValue: string) => void;
+  onBlur?: () => void;
 }
 
 export const TimeZonePicker: React.FC<Props> = props => {
-  const { onChange, value, width, autoFocus = false } = props;
+  const { onChange, value, width, autoFocus = false, onBlur } = props;
   const groupedTimeZones = useTimeZones();
   const selected = useSelectedTimeZone(groupedTimeZones, value);
   const filterBySearchIndex = useFilterBySearchIndex();
@@ -46,6 +47,7 @@ export const TimeZonePicker: React.FC<Props> = props => {
       filterOption={filterBySearchIndex}
       options={groupedTimeZones}
       onChange={onChangeTz}
+      onBlur={onBlur}
       components={{ Option: TimeZoneOption, Group: TimeZoneGroup }}
     />
   );
