@@ -15,11 +15,72 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
 	_ "github.com/lib/pq"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+// Test newPostgresQueryEndpoint.
+func TestNewPostgresQueryEndpoint(t *testing.T) {
+	origFactory := sqleng.NewXormEngine
+	t.Cleanup(func() {
+		sqleng.NewXormEngine = origFactory
+	})
+	var gotDriver string
+	var gotConnStr string
+	sqleng.NewXormEngine = func(driverName string, connStr string) (*xorm.Engine, error) {
+		gotDriver = driverName
+		gotConnStr = connStr
+		return nil, fmt.Errorf("stop here")
+	}
+
+	testCases := []struct {
+		desc       string
+		host       string
+		user       string
+		database   string
+		expConnStr string
+	}{
+		{
+			desc:       "Unix socket host",
+			host:       "/var/run/postgresql",
+			user:       "user",
+			database:   "database",
+			expConnStr: "user='user' password='' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+		},
+		{
+			desc:       "TCP host",
+			host:       "host",
+			user:       "user",
+			database:   "database",
+			expConnStr: "user='user' password='' host='host' dbname='database' sslmode='verify-full'",
+		},
+		{
+			desc:       "TCP/port host",
+			host:       "host:1234",
+			user:       "user",
+			database:   "database",
+			expConnStr: "user='user' password='' host='host' dbname='database' sslmode='verify-full' port=1234",
+		},
+	}
+	for _, tt := range testCases {
+		ds := &models.DataSource{
+			Url:      tt.host,
+			User:     tt.user,
+			Database: tt.database,
+			JsonData: simplejson.New(),
+		}
+		_, err := newPostgresQueryEndpoint(ds)
+		require.Error(t, err, tt.desc)
+		require.Equal(t, "stop here", err.Error(), tt.desc)
+
+		assert.Equal(t, "postgres", gotDriver, tt.desc)
+		assert.Equal(t, tt.expConnStr, gotConnStr, tt.desc)
+	}
+}
 
 // To run this test, set runPostgresTests=true
 // Or from the commandline: GRAFANA_TEST_DB=postgres go test -v ./pkg/tsdb/postgres

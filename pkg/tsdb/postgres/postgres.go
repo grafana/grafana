@@ -74,13 +74,17 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	if ms[1] != "" {
 		sp := strings.SplitN(ms[1], ":", 2)
 		host = sp[0]
-		var err error
-		port, err = strconv.Atoi(sp[1])
-		if err != nil {
-			return "", errutil.Wrapf(err, "invalid port in host specifier %q", ms[1])
-		}
+		if len(sp) > 1 {
+			var err error
+			port, err = strconv.Atoi(sp[1])
+			if err != nil {
+				return "", errutil.Wrapf(err, "invalid port in host specifier %q", ms[1])
+			}
 
-		logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+			logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+		} else {
+			logger.Debug("Generating connection string with network host", "host", host)
+		}
 	} else {
 		host = ms[2]
 		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
