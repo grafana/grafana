@@ -158,8 +158,8 @@ def pipeline_set(kind, name):
                     },
                     'commands': [
                         'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
-                        './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition oss --build-id ' +
-                            '$DRONE_BUILD_NUMBER --variants osx64,win64,linux-x64,linux-x64-musl',
+                        './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition oss ' +
+                            '--build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64',
                     ],
                 },
                 {
@@ -313,18 +313,19 @@ def pipeline_set(kind, name):
                 },
                 {
                     'name': 'build-docker-images',
-                    'image': 'grafana/drone-grafana-docker',
+                    'image': 'grafana/drone-grafana-docker:0.2.0',
                     'depends_on': [
                         'copy-packages-for-docker',
                     ],
                     'settings': {
                         'dry_run': True,
                         'edition': 'oss',
+                        'archs': 'amd64',
                     },
                 },
                 # {
                     # 'name': 'build-ubuntu-docker-images',
-                    # 'image': 'grafana/drone-grafana-docker',
+                    # 'image': 'grafana/drone-grafana-docker:0.2.0',
                     # 'depends_on': [
                         # 'copy-packages-for-docker',
                     # ],
@@ -405,7 +406,7 @@ def pipeline_set(kind, name):
                     },
                     'commands': [
                         './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition enterprise ' +
-                            '--build-id $DRONE_BUILD_NUMBER',
+                            '--build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64',
                     ],
                 },
                 {
@@ -454,7 +455,8 @@ def pipeline_set(kind, name):
                     },
                     'commands': [
                         '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --github-token ' +
-                            '"$${GITHUB_TOKEN}" --edition enterprise --build-id $DRONE_BUILD_NUMBER',
+                            '"$${GITHUB_TOKEN}" --edition enterprise --build-id $DRONE_BUILD_NUMBER ' +
+                            '--variants linux-x64,linux-x64-musl,osx64,win64',
                     ],
                 },
                 {
@@ -470,7 +472,7 @@ def pipeline_set(kind, name):
                 },
                 {
                     'name': 'build-docker-images',
-                    'image': 'grafana/drone-grafana-docker',
+                    'image': 'grafana/drone-grafana-docker:0.2.0',
                     'when': exclude_forks_cond,
                     'depends_on': [
                         'copy-packages-for-docker',
@@ -478,11 +480,12 @@ def pipeline_set(kind, name):
                     'settings': {
                         'dry_run': True,
                         'edition': 'enterprise',
+                        'archs': 'amd64',
                     },
                 },
                 # {
                     # 'name': 'build-ubuntu-docker-images',
-                    # 'image': 'grafana/drone-grafana-docker',
+                    # 'image': 'grafana/drone-grafana-docker:0.2.0',
                     # 'when': exclude_forks_cond,
                     # 'depends_on': [
                         # 'copy-packages-for-docker',
