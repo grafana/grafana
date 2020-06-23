@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -179,6 +180,13 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
+
+	obj := MetricsResult{}
+	err = json.Unmarshal(body, &obj)
+	if err != nil {
+		return nil, err
+	}
+	azlog.Debug(spew.Sdump(obj))
 
 	queryResult.Series, err = e.parseTimeSeriesFromMetrics(body, query)
 	if err != nil {
