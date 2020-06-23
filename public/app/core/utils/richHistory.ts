@@ -330,7 +330,7 @@ export function notEmptyQuery(query: DataQuery) {
 }
 
 export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
-  const filteredQueries = queries.filter(query => {
+  return queries.filter(query => {
     const hasMatchingComment = query.comment.includes(searchFilter);
     if (hasMatchingComment) {
       return true;
@@ -345,25 +345,20 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
 
     return hasMatchingQueries.length > 0;
   });
-  return filteredQueries;
 }
 
 export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[] | null) {
-  const filteredQueries =
-    listOfDatasourceFilters?.length > 0
-      ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
-      : queries;
-
-  return filteredQueries;
+  return listOfDatasourceFilters?.length > 0
+    ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+    : queries;
 }
 
 export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
-  const filteredQueries = queries.filter(
+  return queries.filter(
     q =>
       q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
       q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
   );
-  return filteredQueries;
 }
 
 export function filterAndSortQueries(
