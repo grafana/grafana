@@ -537,7 +537,7 @@ Set the default UI theme: `dark` or `light`. Default is `dark`.
 
 ### External user management
 
-Grafana Cloud settings. Not used for other applications.
+Transfers user management to grafana.com. Only applicable to Grafana Cloud.
 
 ### viewers_can_edit
 
