@@ -1,20 +1,24 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { FieldType } from '@grafana/data';
+import { FieldType, QueryResultMeta, TimeSeries, TableData } from '@grafana/data';
 
 export default class InfluxSeries {
+  refId: string;
   series: any;
   alias: any;
   annotation: any;
+  meta?: QueryResultMeta;
 
-  constructor(options: { series: any; alias?: any; annotation?: any }) {
+  constructor(options: { series: any; alias?: any; annotation?: any; meta?: QueryResultMeta; refId?: string }) {
     this.series = options.series;
     this.alias = options.alias;
     this.annotation = options.annotation;
+    this.meta = options.meta;
+    this.refId = options.refId;
   }
 
-  getTimeSeries() {
-    const output: any[] = [];
+  getTimeSeries(): TimeSeries[] {
+    const output: TimeSeries[] = [];
     let i, j;
 
     if (this.series.length === 0) {
@@ -47,7 +51,7 @@ export default class InfluxSeries {
           }
         }
 
-        output.push({ target: seriesName, datapoints: datapoints });
+        output.push({ target: seriesName, datapoints: datapoints, meta: this.meta, refId: this.refId });
       }
     });
 
@@ -143,9 +147,12 @@ export default class InfluxSeries {
     return list;
   }
 
-  getTable() {
+  getTable(): TableData {
     const table = new TableModel();
     let i, j;
+
+    table.refId = this.refId;
+    table.meta = this.meta;
 
     if (this.series.length === 0) {
       return table;
