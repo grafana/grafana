@@ -384,7 +384,7 @@ $panel-grid-placeholder-bg: darken(${theme.palette.blue77}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue80};
 
 // logs
-$logs-color-unkown: $gray-2;
+$logs-color-unknown: $gray-2;
 
 // toggle-group
 $button-toggle-group-btn-active-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
