@@ -537,9 +537,7 @@ Set the default UI theme: `dark` or `light`. Default is `dark`.
 
 ### External user management
 
-external_manage_link_url =
-external_manage_link_name =
-external_manage_info =
+Grafana Cloud settings. Not used for other applications.
 
 ### viewers_can_edit
 
