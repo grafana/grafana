@@ -309,16 +309,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super
         .query(request)
         .toPromise()
-        .then((res: any) => {
-          const data: DataQueryResponse = res.data;
-          if (data && data.state === LoadingState.Done) {
-            const buckets = data.data[0].length;
-            return { status: 'success', message: `Data source is working (${buckets} buckets)` };
+        .then((res: DataQueryResponse) => {
+          if (!res || !res.data || res.state !== LoadingState.Done) {
+            console.log('InfluxDB Error', res);
+            return { status: 'error', message: 'Error reading InfluxDB' };
           }
-          console.log('InfluxDB Error', data);
+          const first = res.data[0];
+          if (first && first.length) {
+            return { status: 'success', message: `${first.length} buckets found` };
+          }
+          console.log('InfluxDB Error', res);
           return { status: 'error', message: 'Error reading buckets' };
         })
         .catch((err: any) => {
+          console.log('InfluxDB Error', err);
           return { status: 'error', message: err.message };
         });
     }
