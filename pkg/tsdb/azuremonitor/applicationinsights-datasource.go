@@ -92,72 +92,43 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 		insightsJSONModel := queryJSONModel.AppInsights
 		azlog.Debug("Application Insights", "target", insightsJSONModel)
 
-		if insightsJSONModel.RawQuery == nil {
-			return nil, fmt.Errorf("missing the 'rawQuery' property")
-		}
-
-		if *insightsJSONModel.RawQuery {
-			var rawQueryString string
-			if insightsJSONModel.RawQueryString == "" {
-				return nil, errors.New("rawQuery requires rawQueryString")
-			}
-
-			rawQueryString, err := KqlInterpolate(query, timeRange, insightsJSONModel.RawQueryString)
+		azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
+		timeGrain := insightsJSONModel.TimeGrain
+		timeGrains := insightsJSONModel.AllowedTimeGrainsMs
+		if timeGrain == "auto" {
+			timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {
 				return nil, err
 			}
-
-			params := url.Values{}
-			params.Add("query", rawQueryString)
-
-			applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
-				RefID:             query.RefId,
-				IsRaw:             true,
-				ApiURL:            "query",
-				Params:            params,
-				TimeColumnName:    insightsJSONModel.TimeColumn,
-				ValueColumnName:   insightsJSONModel.ValueColumn,
-				SegmentColumnName: insightsJSONModel.SegmentColumn,
-				Target:            params.Encode(),
-			})
-		} else {
-			azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
-			timeGrain := insightsJSONModel.TimeGrain
-			timeGrains := insightsJSONModel.AllowedTimeGrainsMs
-			if timeGrain == "auto" {
-				timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			params := url.Values{}
-			params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
-			if timeGrain != "none" {
-				params.Add("interval", timeGrain)
-			}
-			params.Add("aggregation", insightsJSONModel.Aggregation)
-
-			dimension := strings.TrimSpace(insightsJSONModel.Dimension)
-			// Azure Monitor combines this and the following logic such that if dimensionFilter, must also Dimension, should that be done here as well?
-			if dimension != "" && !strings.EqualFold(dimension, "none") {
-				params.Add("segment", dimension)
-			}
-
-			dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
-			if dimensionFilter != "" {
-				params.Add("filter", dimensionFilter)
-			}
-
-			applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
-				RefID:  query.RefId,
-				IsRaw:  false,
-				ApiURL: azureURL,
-				Params: params,
-				Alias:  insightsJSONModel.Alias,
-				Target: params.Encode(),
-			})
 		}
+
+		params := url.Values{}
+		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
+		if timeGrain != "none" {
+			params.Add("interval", timeGrain)
+		}
+		params.Add("aggregation", insightsJSONModel.Aggregation)
+
+		dimension := strings.TrimSpace(insightsJSONModel.Dimension)
+		// Azure Monitor combines this and the following logic such that if dimensionFilter, must also Dimension, should that be done here as well?
+		if dimension != "" && !strings.EqualFold(dimension, "none") {
+			params.Add("segment", dimension)
+		}
+
+		dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
+		if dimensionFilter != "" {
+			params.Add("filter", dimensionFilter)
+		}
+
+		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
+			RefID:  query.RefId,
+			IsRaw:  false,
+			ApiURL: azureURL,
+			Params: params,
+			Alias:  insightsJSONModel.Alias,
+			Target: params.Encode(),
+		})
+
 	}
 
 	return applicationInsightsQueries, nil
@@ -209,18 +180,10 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
-	if query.IsRaw {
-		queryResult.Series, queryResult.Meta, err = e.parseTimeSeriesFromQuery(body, query)
-		if err != nil {
-			queryResult.Error = err
-			return queryResult, nil
-		}
-	} else {
-		queryResult.Series, err = e.parseTimeSeriesFromMetrics(body, query)
-		if err != nil {
-			queryResult.Error = err
-			return queryResult, nil
-		}
+	queryResult.Series, err = e.parseTimeSeriesFromMetrics(body, query)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
 	}
 
 	return queryResult, nil
@@ -278,96 +241,6 @@ func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourc
 	}
 
 	return pluginRoute, pluginRouteName, nil
-}
-
-func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, query *ApplicationInsightsQuery) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
-	var data ApplicationInsightsQueryResponse
-	err := json.Unmarshal(body, &data)
-	if err != nil {
-		azlog.Debug("Failed to unmarshal Application Insights response", "error", err, "body", string(body))
-		return nil, nil, err
-	}
-
-	type Metadata struct {
-		Columns []string `json:"columns"`
-	}
-
-	meta := Metadata{}
-
-	for _, t := range data.Tables {
-		if t.Name == "PrimaryResult" {
-			timeIndex, valueIndex, segmentIndex := -1, -1, -1
-			meta.Columns = make([]string, 0)
-			for i, v := range t.Columns {
-				meta.Columns = append(meta.Columns, v.Name)
-				switch v.Name {
-				case query.TimeColumnName:
-					timeIndex = i
-				case query.ValueColumnName:
-					valueIndex = i
-				case query.SegmentColumnName:
-					segmentIndex = i
-				}
-			}
-
-			if timeIndex == -1 {
-				azlog.Info("no time column specified, returning existing columns, no data")
-				return nil, simplejson.NewFromAny(meta), nil
-			}
-
-			if valueIndex == -1 {
-				azlog.Info("no value column specified, returning existing columns, no data")
-				return nil, simplejson.NewFromAny(meta), nil
-			}
-
-			var getPoints func([]interface{}) *tsdb.TimeSeriesPoints
-			slice := tsdb.TimeSeriesSlice{}
-			if segmentIndex == -1 {
-				legend := formatApplicationInsightsLegendKey(query.Alias, query.ValueColumnName, "", "")
-				series := tsdb.NewTimeSeries(legend, []tsdb.TimePoint{})
-				slice = append(slice, series)
-				getPoints = func(row []interface{}) *tsdb.TimeSeriesPoints {
-					return &series.Points
-				}
-			} else {
-				mapping := map[string]*tsdb.TimeSeriesPoints{}
-				getPoints = func(row []interface{}) *tsdb.TimeSeriesPoints {
-					segment := fmt.Sprintf("%v", row[segmentIndex])
-					if points, ok := mapping[segment]; ok {
-						return points
-					}
-					legend := formatApplicationInsightsLegendKey(query.Alias, query.ValueColumnName, query.SegmentColumnName, segment)
-					series := tsdb.NewTimeSeries(legend, []tsdb.TimePoint{})
-					slice = append(slice, series)
-					mapping[segment] = &series.Points
-					return &series.Points
-				}
-			}
-
-			for _, r := range t.Rows {
-				timeStr, ok := r[timeIndex].(string)
-				if !ok {
-					return nil, simplejson.NewFromAny(meta), errors.New("invalid time value")
-				}
-				timeValue, err := time.Parse(time.RFC3339Nano, timeStr)
-				if err != nil {
-					return nil, simplejson.NewFromAny(meta), err
-				}
-
-				var value float64
-				if value, err = getFloat(r[valueIndex]); err != nil {
-					return nil, simplejson.NewFromAny(meta), err
-				}
-
-				points := getPoints(r)
-				*points = append(*points, tsdb.NewTimePoint(null.FloatFrom(value), float64(timeValue.Unix()*1000)))
-			}
-
-			return slice, simplejson.NewFromAny(meta), nil
-		}
-	}
-
-	return nil, nil, errors.New("could not find table")
 }
 
 func (e *ApplicationInsightsDatasource) parseTimeSeriesFromMetrics(body []byte, query *ApplicationInsightsQuery) (tsdb.TimeSeriesSlice, error) {
