@@ -149,6 +149,7 @@ def pipeline_set(kind, name):
                     'depends_on': [
                         'install-deps',
                         'lint-go',
+                        'test-backend',
                     ],
                     'environment': {
                         'GITHUB_TOKEN': {
@@ -165,6 +166,7 @@ def pipeline_set(kind, name):
                     'image': build_image,
                     'depends_on': [
                         'install-deps',
+                        'test-frontend',
                     ],
                     'environment': {
                         'GITHUB_TOKEN': {
