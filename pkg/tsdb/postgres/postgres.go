@@ -83,9 +83,6 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
 	} else {
 		host = ms[2]
-		if ms[2] == "" {
-			panic(fmt.Sprintf("Invalid regex: %s", strings.Join(ms, ",")))
-		}
 		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	}
 
