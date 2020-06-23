@@ -63,7 +63,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
 
-	reHost := regexp.MustCompile(`^([^/]+(?::\d+)?)|(/.+)$`)
+	reHost := regexp.MustCompile(`^([^/].*(?::\d+)?)|(/.+)$`)
 	ms := reHost.FindStringSubmatch(datasource.Url)
 	if len(ms) == 0 {
 		return "", fmt.Errorf("invalid host specifier: %q", datasource.Url)
