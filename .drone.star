@@ -157,6 +157,7 @@ def pipeline_set(kind, name):
                         },
                     },
                     'commands': [
+                        'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
                         './bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition oss --build-id ' +
                             '$DRONE_BUILD_NUMBER',
                     ],
@@ -350,8 +351,7 @@ def pipeline_set(kind, name):
                         './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
                         'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
                             'devenv/docker/blocks/postgres_tests/setup.sql',
-                        'rm -rf $(go env GOCACHE)',
-                        'cp -r go-cache $(go env GOCACHE)',
+                        'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
                         # Make sure that we don't use cached results for another database
                         'go clean -testcache',
                         './bin/grabpl integration-tests --database postgres',
@@ -373,8 +373,7 @@ def pipeline_set(kind, name):
                         'apt-get install -yq default-mysql-client',
                         './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
                         'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-                        'rm -rf $(go env GOCACHE)',
-                        'cp -r go-cache $(go env GOCACHE)',
+                        'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
                         # Make sure that we don't use cached results for another database
                         'go clean -testcache',
                         './bin/grabpl integration-tests --database mysql',
