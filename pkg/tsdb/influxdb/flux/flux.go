@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	influxdb2 "github.com/influxdata/influxdb-client-go"
+	"github.com/influxdata/influxdb-client-go/api"
 )
 
 var (
@@ -53,11 +54,11 @@ type Runner struct {
 
 // This is an interface to help testing
 type queryRunner interface {
-	runQuery(ctx context.Context, q string) (*influxdb2.QueryTableResult, error)
+	runQuery(ctx context.Context, q string) (*api.QueryTableResult, error)
 }
 
 // runQuery executes fluxQuery against the Runner's organization and returns an flux typed result.
-func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*influxdb2.QueryTableResult, error) {
+func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
 	return r.client.QueryApi(r.org).Query(ctx, fluxQuery)
 }
 
