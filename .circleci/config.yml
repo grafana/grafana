@@ -35,13 +35,13 @@ executors:
       - image: cimg/base:stable
   node:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:12.18
   go:
     docker:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.19
+      - image: grafana/build-container:1.2.20
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.11
+            VERSION=0.4.14
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp

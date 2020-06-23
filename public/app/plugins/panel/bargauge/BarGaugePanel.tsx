@@ -45,17 +45,17 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { value } = valueProps;
     const { hasLinks, getLinks } = value;
 
-    if (!hasLinks || !getLinks) {
-      return this.renderComponent(valueProps, {});
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
     }
 
-    return (
-      <DataLinksContextMenu links={getLinks}>
-        {api => {
-          return this.renderComponent(valueProps, api);
-        }}
-      </DataLinksContextMenu>
-    );
+    return this.renderComponent(valueProps, {});
   };
 
   getValues = (): FieldDisplay[] => {
