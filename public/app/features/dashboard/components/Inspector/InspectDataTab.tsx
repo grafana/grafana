@@ -14,14 +14,14 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, HorizontalGroup, VerticalGroup, Container } from '@grafana/ui';
+import { Button, Field, Icon, Switch, Select, Table, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -204,7 +204,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
-        title={'Data display options'}
+        title="Table data options"
         headerElement={<CollapsedText>{this.getActiveString()}</CollapsedText>}
         isOpen={false}
       >
