@@ -15,7 +15,7 @@ export interface OptionsGroupProps {
   nested?: boolean;
   persistMe?: boolean;
   onToggle?: (isExpanded: boolean) => void;
-  children: (toggleExpand?: any) => ReactNode;
+  children: (toggleExpand: (expanded: boolean) => void) => ReactNode;
 }
 
 export const OptionsGroup: FC<OptionsGroupProps> = ({
@@ -88,7 +88,7 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
   nested = false,
   onToggle,
 }) => {
-  const [isExpanded, toggleExpand] = useState(defaultToClosed ? false : true);
+  const [isExpanded, toggleExpand] = useState(!defaultToClosed);
   const theme = useTheme();
   const styles = getStyles(theme, isExpanded, nested);
   useEffect(() => {
@@ -109,7 +109,7 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
         </div>
         <div style={{ width: '100%' }}>{renderTitle ? renderTitle(isExpanded) : title}</div>
       </div>
-      {isExpanded && <div className={styles.body}>{children({ toggleExpand })}</div>}
+      {isExpanded && <div className={styles.body}>{children(toggleExpand)}</div>}
     </div>
   );
 };
