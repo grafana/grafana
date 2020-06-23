@@ -117,7 +117,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, activeDatasourceOnly);
   };
 
-  onSearchQuery = (value: string) => {
+  onSearchFilterChange = (value: string) => {
     this.setState({
       searchFilter: value,
     });
@@ -183,7 +183,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           searchFilter={searchFilter}
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
-          onSearchQuery={this.onSearchQuery}
+          onSearchFilterChange={this.onSearchFilterChange}
           exploreId={exploreId}
           height={height}
         />
@@ -201,7 +201,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
           searchFilter={searchFilter}
-          onSearchQuery={this.onSearchQuery}
+          onSearchFilterChange={this.onSearchFilterChange}
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           exploreId={exploreId}

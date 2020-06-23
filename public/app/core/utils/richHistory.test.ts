@@ -7,7 +7,7 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  filterQueries,
+  filterAndSortQueries,
 } from './richHistory';
 import store from 'app/core/store';
 import { SortOrder } from './explore';
@@ -171,19 +171,34 @@ describe('createDateStringFromTs', () => {
 
 describe('filterQueries', () => {
   it('should filter out queries based on data source filter', () => {
-    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, ['not provided data source'], '');
+    const filteredQueries = filterAndSortQueries(
+      mock.storedHistory,
+      SortOrder.Ascending,
+      ['not provided data source'],
+      ''
+    );
     expect(filteredQueries).toHaveLength(0);
   });
   it('should keep queries based on data source filter', () => {
-    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, ['datasource history name'], '');
+    const filteredQueries = filterAndSortQueries(
+      mock.storedHistory,
+      SortOrder.Ascending,
+      ['datasource history name'],
+      ''
+    );
     expect(filteredQueries).toHaveLength(1);
   });
   it('should filter out all queries based on search filter', () => {
-    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, [], 'i do not exist in query');
+    const filteredQueries = filterAndSortQueries(
+      mock.storedHistory,
+      SortOrder.Ascending,
+      [],
+      'i do not exist in query'
+    );
     expect(filteredQueries).toHaveLength(0);
   });
-  it('should filter out all queries based on search filter', () => {
-    const filteredQueries = filterQueries(mock.storedHistory, SortOrder.Ascending, [], 'query1');
+  it('should include queries based on search filter', () => {
+    const filteredQueries = filterAndSortQueries(mock.storedHistory, SortOrder.Ascending, [], 'query1');
     expect(filteredQueries).toHaveLength(1);
   });
 });

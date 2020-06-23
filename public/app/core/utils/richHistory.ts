@@ -261,7 +261,7 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi) {
+export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi | undefined) {
   /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
    * to format query text
    */
@@ -331,30 +331,34 @@ export function notEmptyQuery(query: DataQuery) {
 
 export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
   const filteredQueries = queries.filter(query => {
-    const searchInComment = query.comment.includes(searchFilter);
-    const searchInQueries = query.queries.filter(query => {
-      const queryHasSearchedValue = Object.values(_.omit(query, 'datasource')).some(value =>
-        value.toString().includes(searchFilter)
-      );
-      return queryHasSearchedValue;
-    });
-    return searchInComment || searchInQueries.length > 0;
-  });
+    const hasMatchingComment = query.comment.includes(searchFilter);
+    if (hasMatchingComment) {
+      return true;
+    }
 
+    const hasMatchingQueries = query.queries.filter(query =>
+      // Remove fields in which we don't want to be searching
+      Object.values(_.omit(query, ['datasource', 'key', 'refId'])).some(value =>
+        value.toString().includes(searchFilter)
+      )
+    );
+
+    return hasMatchingQueries.length > 0;
+  });
   return filteredQueries;
 }
 
-export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
+export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[] | null) {
   const filteredQueries =
-    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
-      ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+    listOfDatasourceFilters?.length > 0
+      ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
       : queries;
 
   return filteredQueries;
 }
 
 export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
-  const filteredQueries = queries?.filter(
+  const filteredQueries = queries.filter(
     q =>
       q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
       q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
@@ -362,20 +366,20 @@ export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [nu
   return filteredQueries;
 }
 
-export function filterQueries(
+export function filterAndSortQueries(
   queries: RichHistoryQuery[],
   sortOrder: SortOrder,
-  listOfDatasourceFilters: string[],
+  listOfDatasourceFilters: string[] | null,
   searchFilter: string,
   timeFilter?: [number, number]
 ) {
   const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
   const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
-  const sortedQueries = sortQueries(filteredQueriesByDsAndSearchFilter, sortOrder);
-  if (timeFilter) {
-    return filterQueriesByTime(sortedQueries, timeFilter);
-  }
-  return sortedQueries;
+  const filteredQueriesToBeSorted = timeFilter
+    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
+    : filteredQueriesByDsAndSearchFilter;
+
+  return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
 /* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */

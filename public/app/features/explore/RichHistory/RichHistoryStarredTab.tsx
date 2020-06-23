@@ -10,7 +10,7 @@ import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { SortOrder } from '../../../core/utils/explore';
-import { filterQueries, createDatasourcesList } from '../../../core/utils/richHistory';
+import { filterAndSortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
@@ -27,7 +27,7 @@ export interface Props {
   searchFilter: string;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
-  onSearchQuery: (value: string) => void;
+  onSearchFilterChange: (value: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -84,7 +84,7 @@ export function RichHistoryStarredTab(props: Props) {
     activeDatasourceOnly,
     exploreId,
     searchFilter,
-    onSearchQuery,
+    onSearchFilterChange,
   } = props;
 
   const theme = useTheme();
@@ -95,7 +95,7 @@ export function RichHistoryStarredTab(props: Props) {
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   const starredQueries = queries.filter(q => q.starred === true);
-  const filteredQueries = filterQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchFilter);
+  const filteredQueries = filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchFilter);
 
   return (
     <div className={styles.container}>
@@ -118,7 +118,7 @@ export function RichHistoryStarredTab(props: Props) {
               inputClassName="gf-form-input"
               placeholder="Search queries"
               value={searchFilter}
-              onChange={onSearchQuery}
+              onChange={onSearchFilterChange}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>

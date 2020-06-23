@@ -14,7 +14,7 @@ import {
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
   createDatasourcesList,
-  filterQueries,
+  filterAndSortQueries,
 } from 'app/core/utils/richHistory';
 
 // Components
@@ -34,7 +34,7 @@ export interface Props {
   searchFilter: string;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
-  onSearchQuery: (value: string) => void;
+  onSearchFilterChange: (value: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
@@ -136,7 +136,7 @@ export function RichHistoryQueriesTab(props: Props) {
     activeDatasourceOnly,
     retentionPeriod,
     searchFilter,
-    onSearchQuery,
+    onSearchFilterChange,
     exploreId,
     height,
   } = props;
@@ -150,7 +150,7 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
-  const filteredQueries = filterQueries(queries, sortOrder, listOfDatasourceFilters, searchFilter, timeFilter);
+  const filteredQueries = filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchFilter, timeFilter);
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
@@ -198,7 +198,7 @@ export function RichHistoryQueriesTab(props: Props) {
               inputClassName="gf-form-input"
               placeholder="Search queries"
               value={searchFilter}
-              onChange={onSearchQuery}
+              onChange={onSearchFilterChange}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
