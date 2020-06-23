@@ -1,11 +1,19 @@
 import _ from 'lodash';
 
-import { dateMath, DataSourceInstanceSettings, ScopedVars, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import {
+  dateMath,
+  DataSourceInstanceSettings,
+  ScopedVars,
+  DataQueryRequest,
+  DataQueryResponse,
+  dateTime,
+  LoadingState,
+} from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { InfluxQuery, InfluxOptions, InfluxQueryType } from './types';
+import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 
@@ -21,7 +29,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   interval: any;
   responseParser: any;
   httpMode: string;
-  enableFlux: boolean;
+  is2x: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>) {
     super(instanceSettings);
@@ -40,41 +48,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
-    this.enableFlux = !!settingsData.enableFlux;
+    this.is2x = settingsData.version === InfluxVersion.Flux;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
-    let hasFlux = false;
-    let allFlux = true;
-
-    // Update the queryType fields and manage migrations
-    for (const target of request.targets) {
-      if (target.queryType === InfluxQueryType.Flux) {
-        hasFlux = true;
-      } else {
-        allFlux = false;
-        if (target.queryType === InfluxQueryType.Classic) {
-          delete target.rawQuery;
-        } else if (target.rawQuery) {
-          target.queryType = InfluxQueryType.InfluxQL;
-        } else if (target.queryType === InfluxQueryType.InfluxQL) {
-          target.rawQuery = true; // so the old version works
-        } else {
-          target.queryType = InfluxQueryType.Classic; // Explicitly set it to classic
-          delete target.rawQuery;
-        }
-      }
-    }
-
-    // Process flux queries (data frame request)
-    if (hasFlux) {
-      if (!this.enableFlux) {
-        throw 'Flux not enabled for this datasource';
-      }
-      if (!allFlux) {
-        throw 'All queries must be flux';
-      }
-      // Calls /api/tsdb/query
+    if (this.is2x) {
       return super.query(request);
     }
 
@@ -311,8 +289,40 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ).join('&');
   }
 
-  // TODO: remove this so that everything gets sent to /healthcheck!
   testDatasource() {
+    if (this.is2x) {
+      // TODO: eventually use the real /health endpoint
+      const request: DataQueryRequest<InfluxQuery> = {
+        targets: [{ refId: 'test', query: 'buckets()' }],
+        requestId: `${this.id}-health-${Date.now()}`,
+        dashboardId: 0,
+        panelId: 0,
+        interval: '1m',
+        intervalMs: 60000,
+        maxDataPoints: 423,
+        range: {
+          from: dateTime(1000),
+          to: dateTime(2000),
+        },
+      } as DataQueryRequest<InfluxQuery>;
+
+      return super
+        .query(request)
+        .toPromise()
+        .then((res: any) => {
+          const data: DataQueryResponse = res.data;
+          if (data && data.state === LoadingState.Done) {
+            const buckets = data.data[0].length;
+            return { status: 'success', message: `Data source is working (${buckets} buckets)` };
+          }
+          console.log('InfluxDB Error', data);
+          return { status: 'error', message: 'Error reading buckets' };
+        })
+        .catch((err: any) => {
+          return { status: 'error', message: err.message };
+        });
+    }
+
     const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 
