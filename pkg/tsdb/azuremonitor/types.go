@@ -114,8 +114,8 @@ type insightsJSONQuery struct {
 
 type insightsAnalyticsJSONQuery struct {
 	InsightsAnalytics struct {
-		Query string `json:"query"`
-		Type  string `json:"type"`
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
 	} `json:"insightsAnalytics"`
 }
 

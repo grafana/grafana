@@ -33,7 +33,7 @@ type InsightsAnalyticsQuery struct {
 	RawQuery          string
 	InterpolatedQuery string
 
-	FormatAs string
+	ResultFormat string
 
 	Params url.Values
 	Target string
@@ -73,7 +73,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 		}
 
 		qm.RawQuery = queryJSONModel.InsightsAnalytics.Query
-		qm.FormatAs = queryJSONModel.InsightsAnalytics.Type
+		qm.ResultFormat = queryJSONModel.InsightsAnalytics.ResultFormat
 		qm.RefID = query.RefId
 
 		if qm.RawQuery == "" {
@@ -160,7 +160,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 		return queryResultError(err)
 	}
 
-	if query.FormatAs == "timeSeriesQuery" {
+	if query.ResultFormat == "time_series" {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
