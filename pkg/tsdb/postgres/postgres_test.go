@@ -43,6 +43,7 @@ func TestNewPostgresQueryEndpoint(t *testing.T) {
 		user       string
 		database   string
 		expConnStr string
+		expErr     string
 	}{
 		{
 			desc:       "Unix socket host",
@@ -65,6 +66,13 @@ func TestNewPostgresQueryEndpoint(t *testing.T) {
 			database:   "database",
 			expConnStr: "user='user' password='' host='host' dbname='database' sslmode='verify-full' port=1234",
 		},
+		{
+			desc:     "Invalid port",
+			host:     "host:invalid",
+			user:     "user",
+			database: "database",
+			expErr:   "invalid port in host specifier",
+		},
 	}
 	for _, tt := range testCases {
 		ds := &models.DataSource{
@@ -75,10 +83,14 @@ func TestNewPostgresQueryEndpoint(t *testing.T) {
 		}
 		_, err := newPostgresQueryEndpoint(ds)
 		require.Error(t, err, tt.desc)
-		require.Equal(t, "stop here", err.Error(), tt.desc)
-
-		assert.Equal(t, "postgres", gotDriver, tt.desc)
-		assert.Equal(t, tt.expConnStr, gotConnStr, tt.desc)
+		if tt.expErr == "" {
+			require.Equal(t, "stop here", err.Error(), tt.desc)
+			assert.Equal(t, "postgres", gotDriver, tt.desc)
+			assert.Equal(t, tt.expConnStr, gotConnStr, tt.desc)
+		} else {
+			assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
+				fmt.Sprintf("%s: %q doesn't start with %q", tt.desc, err, tt.expErr))
+		}
 	}
 }
 
