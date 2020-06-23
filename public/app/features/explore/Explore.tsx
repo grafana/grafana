@@ -19,6 +19,8 @@ import {
   RawTimeRange,
   TimeRange,
   TimeZone,
+  ExploreUIState,
+  ExploreUrlState,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -38,7 +40,7 @@ import {
   updateTimeRange,
 } from './state/actions';
 
-import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   DEFAULT_RANGE,

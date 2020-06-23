@@ -2,7 +2,7 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import { ExploreUrlState } from '../../../../public/app/types';
+import { ExploreUrlState } from '../types/explore';
 
 /**
  * Type to represent the value of a single query variable.

@@ -8,6 +8,7 @@ import {
   RawTimeRange,
   toDataFrame,
   UrlQueryMap,
+  ExploreUrlState,
 } from '@grafana/data';
 
 import {
@@ -18,7 +19,7 @@ import {
   makeExploreItemState,
   makeInitialUpdateState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   changeModeAction,

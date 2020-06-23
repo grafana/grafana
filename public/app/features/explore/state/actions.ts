@@ -17,6 +17,8 @@ import {
   RawTimeRange,
   TimeRange,
   ExploreMode,
+  ExploreUrlState,
+  ExploreUIState,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -46,9 +48,9 @@ import {
   getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
-import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
+import { ExploreItemState, ThunkResult } from 'app/types';
 
-import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
+import { ExploreId, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeModeAction,
