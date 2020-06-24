@@ -580,6 +580,13 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         }
         query.region = this.replace(query.region, scopedVars, true, 'region');
         query.region = this.getActualRegion(query.region);
+
+        // interpolate log groups
+        if (query.logGroupNames) {
+          query.logGroupNames = query.logGroupNames.map((logGroup: string) =>
+            this.replace(logGroup, scopedVars, true, 'log groups')
+          );
+        }
       });
     }
 
