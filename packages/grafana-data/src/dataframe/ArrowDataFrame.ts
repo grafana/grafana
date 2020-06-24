@@ -159,10 +159,15 @@ class NumberColumn extends FunctionalVector<number> {
   }
 
   get(index: number): number {
+    const v = this.col.get(index);
+    if (v === null || isNaN(v)) {
+      return v;
+    }
+
     // The conversion operations are always silent, never give errors,
     // but if the bigint is too huge and won’t fit the number type,
     // then extra bits will be cut off, so we should be careful doing such conversion.
     // See https://javascript.info/bigint
-    return Number(this.col.get(index));
+    return Number(v);
   }
 }
