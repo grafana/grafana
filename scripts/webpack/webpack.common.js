@@ -65,13 +65,12 @@ module.exports = {
       {
         context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
         from: 'min/vs/**',
-        to: 'monaco/', // inside the public/build folder
+        to: '../lib/monaco/', // inside the public/build folder
         globOptions: {
           ignore: [
-            // Ignore editor localizations
-            // needs at least one? '**/editor.main.nls.*',
-
             // Skip unnecessary languages
+            '**/basic-languages/abap/**',
+            '**/basic-languages/cameligo/**',
             '**/basic-languages/apex/**',
             '**/basic-languages/azcli/**',
             '**/basic-languages/bat/**',
@@ -83,6 +82,7 @@ module.exports = {
             '**/basic-languages/csharp/**',
             '**/basic-languages/csp/**',
             '**/basic-languages/java/**',
+            '**/basic-languages/kotlin/**',
             '**/basic-languages/lua/**',
             '**/basic-languages/objective-c/**',
             '**/basic-languages/php/**',
@@ -94,6 +94,10 @@ module.exports = {
             '**/basic-languages/rust/**',
             '**/basic-languages/vb/**',
             '**/basic-languages/st/**',
+            '**/basic-languages/sb/**',
+            '**/basic-languages/scheme/**',
+            '**/basic-languages/swift/**',
+            '**/basic-languages/twig/**',
           ],
         },
       },

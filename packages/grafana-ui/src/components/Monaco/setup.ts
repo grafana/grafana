@@ -7,11 +7,10 @@ export function checkSetup() {
     return;
   }
 
-  // Use local monaco values
-  monaco.config({ paths: { vs: '/public/build/monaco/min/vs' } });
+  console.log('Init Monaco!');
 
-  // you can configure the locales
-  // monaco.config({ 'vs/nls': { availableLanguages: { '*': 'en' } } });
+  // Use local monaco values
+  monaco.config({ paths: { vs: 'public/lib/monaco/min/vs' } });
 
   console.log('TODO SETUP!', monaco);
   initalized = true;
