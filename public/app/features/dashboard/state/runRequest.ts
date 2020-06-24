@@ -170,9 +170,11 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   for (const result of results) {
     const dataFrame = guessFieldTypes(toDataFrame(result));
 
-    // clear out the cached info
-    for (const field of dataFrame.fields) {
-      field.state = null;
+    if (result.fields) {
+      // clear out the cached info
+      for (const field of dataFrame.fields) {
+        field.state = null;
+      }
     }
 
     dataFrames.push(dataFrame);

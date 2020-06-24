@@ -186,7 +186,11 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
 }
 
 function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+  return (
+    series.fields &&
+    series.fields.some(f => f.type === FieldType.time) &&
+    series.fields.some(f => f.type === FieldType.string)
+  );
 }
 
 /**
@@ -283,7 +287,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
-    if (isLogsData(dataFrame)) {
+    if (isLogsData(dataFrame) || !dataFrame.fields) {
       logSeries.push(dataFrame);
       continue;
     }
@@ -318,6 +322,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   // Find the fields we care about and collect all labels
   const allSeries: LogFields[] = logSeries.map(series => {
+    if (!series.fields) {
+      return undefined;
+    }
+
     const fieldCache = new FieldCache(series);
 
     const stringField = fieldCache.hasFieldNamed('line')
@@ -344,6 +352,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
+    if (!info) {
+      break;
+    }
+
     const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
     const labels = stringField.labels;
     const uniqueLabels = findUniqueLabels(labels, commonLabels);
