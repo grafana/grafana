@@ -2,7 +2,7 @@ def main(ctx):
     return pr_pipeline_set()
 
 build_image = 'grafana/build-container:1.2.21'
-grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0',
+grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 exclude_forks_cond = {
     'repo': {
         'include': [
