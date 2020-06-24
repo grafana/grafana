@@ -55,7 +55,7 @@ export const TimePickerFooter: FC<Props> = props => {
               }
             }}
             autoFocus={true}
-            onBlur={() => onToggleChangeTz()}
+            onBlur={onToggleChangeTz}
           />
         </div>
       </div>
