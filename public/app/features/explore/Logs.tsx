@@ -225,7 +225,7 @@ export class Logs extends PureComponent<Props, State> {
           </div>
         </div>
 
-        {hasData && meta && (
+        {meta && (
           <MetaInfoText
             metaItems={meta.map(item => {
               return {
