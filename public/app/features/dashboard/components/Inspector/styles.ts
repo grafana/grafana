@@ -66,7 +66,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       }
     `,
     options: css`
-      padding-top: 10px;
+      padding-top: ${config.theme.spacing.sm};
     `,
     dataDisplayOptions: css`
       flex-grow: 1;

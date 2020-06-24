@@ -14,7 +14,7 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, VerticalGroup } from '@grafana/ui';
+import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, HorizontalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -25,7 +25,7 @@ import { css } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { CollapsedText } from './CollapsedText';
+import { DetailText } from './DetailText';
 
 interface Props {
   dashboard: DashboardModel;
@@ -94,10 +94,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
     saveAs(blob, fileName);
   };
-
-  // onSelectedFrameChanged = (item: SelectableValue<number>) => {
-  //   this.setState({ dataFrameIndex: item.value || 0 });
-  // };
 
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
@@ -205,7 +201,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     return (
       <QueryOperationRow
         title="Table data options"
-        headerElement={<CollapsedText>{this.getActiveString()}</CollapsedText>}
+        headerElement={<DetailText>{this.getActiveString()}</DetailText>}
         isOpen={false}
       >
         <div className={styles.options}>
@@ -228,7 +224,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             {showPanelTransformationsOption && (
               <Field
                 label="Apply panel transformations"
-                description="Data shown in the table will be transformed using transformations defined in the panel"
+                description="Table data is displayed with transformations defined in the panel Transform tab."
               >
                 <Switch
                   checked={!!options.withTransforms}
@@ -239,7 +235,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             {showFieldConfigsOption && (
               <Field
                 label="Apply field configuration"
-                description="Data shown in the table will have panel field configuration applied, for example units or display name"
+                description="Table data is displayed with options defined in the Field and Override tabs."
               >
                 <Switch
                   checked={!!options.withFieldConfig}

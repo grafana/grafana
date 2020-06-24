@@ -10,7 +10,7 @@ const getStyles = (theme: GrafanaTheme) => css`
   color: ${theme.colors.textWeak};
 `;
 
-export const CollapsedText: FC = ({ children }) => {
+export const DetailText: FC = ({ children }) => {
   const collapsedTextStyles = useStyles(getStyles);
   return <p className={collapsedTextStyles}>{children}</p>;
 };
