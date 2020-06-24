@@ -301,20 +301,35 @@ export function lokiStreamsToDataframes(
   const custom = {
     lokiQueryStatKey: 'Summary: total bytes processed',
   };
+
+  const meta = {
+    searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
+    limit,
+    stats,
+    custom,
+  };
+
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
+
     return {
       ...dataFrame,
       refId: target.refId,
-      meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
-        limit,
-        stats,
-        custom,
-      },
+      meta,
     };
   });
+
+  if (stats.length && !data.length) {
+    return [
+      {
+        fields: null,
+        length: null,
+        refId: target.refId,
+        meta,
+      },
+    ];
+  }
 
   return series;
 }
