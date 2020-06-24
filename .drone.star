@@ -2,6 +2,7 @@ def main(ctx):
     return pr_pipeline_set()
 
 build_image = 'grafana/build-container:1.2.21'
+grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0',
 exclude_forks_cond = {
     'repo': {
         'include': [
@@ -313,7 +314,7 @@ def pipeline_set(kind, name):
                 },
                 {
                     'name': 'build-docker-images',
-                    'image': 'grafana/drone-grafana-docker:0.2.0',
+                    'image': grafana_docker_image,
                     'depends_on': [
                         'copy-packages-for-docker',
                     ],
@@ -325,7 +326,7 @@ def pipeline_set(kind, name):
                 },
                 # {
                     # 'name': 'build-ubuntu-docker-images',
-                    # 'image': 'grafana/drone-grafana-docker:0.2.0',
+                    # 'image': grafana_docker_image,
                     # 'depends_on': [
                         # 'copy-packages-for-docker',
                     # ],
@@ -472,7 +473,7 @@ def pipeline_set(kind, name):
                 },
                 {
                     'name': 'build-docker-images',
-                    'image': 'grafana/drone-grafana-docker:0.2.0',
+                    'image': grafana_docker_image,
                     'when': exclude_forks_cond,
                     'depends_on': [
                         'copy-packages-for-docker',
@@ -485,7 +486,7 @@ def pipeline_set(kind, name):
                 },
                 # {
                     # 'name': 'build-ubuntu-docker-images',
-                    # 'image': 'grafana/drone-grafana-docker:0.2.0',
+                    # 'image': grafana_docker_image,
                     # 'when': exclude_forks_cond,
                     # 'depends_on': [
                         # 'copy-packages-for-docker',
