@@ -14,6 +14,7 @@ if (Cypress.env('SLOWMO')) {
   const commandsToModify = ['clear', 'click', 'contains', 'reload', 'then', 'trigger', 'type', 'visit'];
 
   commandsToModify.forEach(command => {
+    // @ts-ignore -- https://github.com/cypress-io/cypress/issues/7807
     Cypress.Commands.overwrite(command, (originalFn, ...args) => {
       const origVal = originalFn(...args);
 
