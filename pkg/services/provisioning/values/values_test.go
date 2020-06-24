@@ -287,8 +287,7 @@ func TestValues_expanderError(t *testing.T) {
 	setting.AddExpander("fail", 0, failExpander{})
 
 	data := &Data{}
-	input := "top:\n  val: $__fail{val}"
-	err := yaml.Unmarshal([]byte(fmt.Sprintf(input)), data)
+	err := yaml.Unmarshal([]byte("top:\n  val: $__fail{val}"), data)
 	require.Error(t, err)
 	require.Truef(t, errors.Is(err, expandErr), "expected error to wrap: %v\ngot: %v", expandErr, err)
 	assert.Empty(t, data)
