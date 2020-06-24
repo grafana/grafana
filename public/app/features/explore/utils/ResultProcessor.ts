@@ -4,13 +4,12 @@ import {
   DataFrame,
   FieldType,
   TimeZone,
-  toDataFrame,
   getDisplayProcessor,
   ExploreMode,
   PreferredVisualisationType,
+  standardTransformers,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
-import TableModel, { mergeTablesIntoModel, MutableColumn } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
@@ -69,36 +68,8 @@ export class ResultProcessor {
       return null;
     }
 
-    const tables = onlyTables.map(frame => {
-      const { fields } = frame;
-      const fieldCount = fields.length;
-      const rowCount = frame.length;
-
-      const columns: MutableColumn[] = fields.map(field => ({
-        text: field.name,
-        type: field.type,
-        filterable: field.config.filterable,
-        custom: field.config.custom,
-      }));
-
-      const rows: any[][] = [];
-      for (let i = 0; i < rowCount; i++) {
-        const row: any[] = [];
-        for (let j = 0; j < fieldCount; j++) {
-          row.push(frame.fields[j].values.get(i));
-        }
-        rows.push(row);
-      }
-
-      return new TableModel({
-        columns,
-        rows,
-        meta: frame.meta,
-      });
-    });
-
-    const mergedTable = mergeTablesIntoModel(new TableModel(), ...tables);
-    const data = toDataFrame(mergedTable);
+    const mergeTransformer = standardTransformers.mergeTransformer.transformer({});
+    const data = mergeTransformer(onlyTables)[0];
 
     // set display processor
     for (const field of data.fields) {
