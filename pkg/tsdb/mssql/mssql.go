@@ -7,11 +7,10 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
-	_ "github.com/denisenkom/go-mssqldb"
+	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -132,9 +131,9 @@ func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Co
 					t.log.Debug("Rows", "Error converting numeric to float", value)
 				}
 			case "UNIQUEIDENTIFIER":
-				v, err := uuid.FromBytes(value)
-				if err == nil {
-					values[i] = v.String()
+				uuid := &mssql.UniqueIdentifier{}
+				if err := uuid.Scan(value); err == nil {
+					values[i] = uuid.String()
 				} else {
 					t.log.Debug("Rows", "Error converting uniqueidentifier to string", value)
 				}
