@@ -331,19 +331,18 @@ export function notEmptyQuery(query: DataQuery) {
 
 export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
   return queries.filter(query => {
-    const hasMatchingComment = query.comment.includes(searchFilter);
-    if (hasMatchingComment) {
+    if (query.comment.includes(searchFilter)) {
       return true;
     }
 
-    const hasMatchingQueries = query.queries.filter(query =>
+    const listOfmatchingQueries = query.queries.filter(query =>
       // Remove fields in which we don't want to be searching
-      Object.values(_.omit(query, ['datasource', 'key', 'refId'])).some(value =>
+      Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some(value =>
         value.toString().includes(searchFilter)
       )
     );
 
-    return hasMatchingQueries.length > 0;
+    return listOfmatchingQueries.length > 0;
   });
 }
 
