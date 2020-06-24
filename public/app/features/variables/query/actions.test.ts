@@ -188,6 +188,32 @@ describe('query actions', () => {
     });
   });
 
+  describe('when updateQueryVariableOptions is dispatched for variable with searchFilter', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: true, useTags: false });
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+
+      mockDatasourceMetrics(variable, optionsMetrics, []);
+
+      const tester = await reduxTester<{ templating: TemplatingState }>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable), 'search'), true);
+
+      const update = { results: optionsMetrics, templatedRegex: '' };
+
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
+        const [clearErrors, updateOptions] = actions;
+        const expectedNumberOfActions = 2;
+
+        expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
+        return actions.length === expectedNumberOfActions;
+      });
+    });
+  });
+
   describe('when updateQueryVariableOptions is dispatched and fails for variable open in editor', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
