@@ -1,7 +1,7 @@
 import React, { PropsWithChildren } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { useTheme, stylesFactory } from '../../themes';
+import { useTheme, stylesFactory } from '../../../themes';
 
 interface Props {
   label: string | undefined;

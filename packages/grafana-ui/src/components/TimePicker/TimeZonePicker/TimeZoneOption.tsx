@@ -1,9 +1,9 @@
 import React, { PropsWithChildren } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, SelectableValue, getTimeZoneInfo } from '@grafana/data';
-import { useTheme } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { Icon } from '../Icon/Icon';
+import { useTheme } from '../../../themes/ThemeContext';
+import { stylesFactory } from '../../../themes/stylesFactory';
+import { Icon } from '../../Icon/Icon';
 import { TimeZoneOffset } from './TimeZoneOffset';
 import { TimeZoneDescription } from './TimeZoneDescription';
 import { TimeZoneTitle } from './TimeZoneTitle';

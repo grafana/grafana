@@ -10,9 +10,9 @@ import {
   InternalTimeZones,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
-import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZoneOption';
-import { TimeZoneGroup } from './TimeZoneGroup';
-import { formatUtcOffset } from './TimeZoneOffset';
+import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZonePicker/TimeZoneOption';
+import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
+import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
 
 export interface Props {
   value?: TimeZone;

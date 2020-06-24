@@ -5,7 +5,7 @@ import { css, cx } from 'emotion';
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { TimePickerContent } from './TimePickerContent/TimePickerContent';
+import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
