@@ -1,20 +1,20 @@
 import { ComponentType } from 'react';
-import { MetaVariable, VariableHide } from '../types';
+import { SystemVariable, VariableHide } from '../types';
 import { VariableAdapter } from '../adapters';
 import { NEW_VARIABLE_ID } from '../state/types';
 import { Deferred } from '../../../core/utils/deferred';
 import { VariablePickerProps } from '../pickers/types';
 import { VariableEditorProps } from '../editor/types';
 
-export const createMetaVariableAdapter = (): VariableAdapter<MetaVariable<any>> => {
+export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<any>> => {
   return {
-    id: 'meta',
+    id: 'system',
     description: '',
-    name: 'meta',
+    name: 'system',
     initialState: {
       id: NEW_VARIABLE_ID,
       global: false,
-      type: 'meta',
+      type: 'system',
       name: '',
       label: (null as unknown) as string,
       hide: VariableHide.hideVariable,

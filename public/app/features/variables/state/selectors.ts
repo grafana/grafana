@@ -29,10 +29,17 @@ export const getVariableWithName = (name: string, state: StoreState = getState()
 };
 
 export const getVariables = (state: StoreState = getState(), includeNewVariable = false): VariableModel[] => {
-  return getFilteredVariables(
-    variable => (includeNewVariable ? true : variable.id !== NEW_VARIABLE_ID && variable.type !== 'meta'),
-    state
-  );
+  const filter = (variable: VariableModel) => {
+    if (variable.type === 'system') {
+      return false;
+    }
+    if (includeNewVariable) {
+      return true;
+    }
+    return variable.id !== NEW_VARIABLE_ID;
+  };
+
+  return getFilteredVariables(filter, state);
 };
 
 export const getSubMenuVariables = (state: StoreState): VariableModel[] => {
