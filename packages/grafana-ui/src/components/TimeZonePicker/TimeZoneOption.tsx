@@ -1,4 +1,4 @@
-import React, { forwardRef, PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, SelectableValue, getTimeZoneInfo } from '@grafana/data';
 import { useTheme } from '../../themes/ThemeContext';
