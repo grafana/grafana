@@ -27,10 +27,7 @@ export const updateQueryVariableOptions = (
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
-      if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
-        queryOptions.range = getTimeSrv().timeRange();
-      }
+      const queryOptions: any = { range: getTimeSrv().timeRange(), variable: variableInState, searchFilter };
 
       if (!dataSource.metricFindQuery) {
         return;
