@@ -31,7 +31,7 @@ export const TimeZonePicker: React.FC<Props> = props => {
 
   const onChangeTz = useCallback(
     (selectable: SelectableValue<string>) => {
-      if (!selectable || !selectable.value) {
+      if (!selectable || typeof selectable.value === 'undefined') {
         return onChange(value);
       }
       onChange(selectable.value);
