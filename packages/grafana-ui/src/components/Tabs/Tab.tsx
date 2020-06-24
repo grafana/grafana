@@ -11,11 +11,10 @@ import { Counter } from './Counter';
 export interface TabProps extends HTMLProps<HTMLLIElement> {
   label: string;
   active?: boolean;
-  /** With provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
+  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
   href?: string;
   icon?: IconName;
-  /** May cause unintended behaviour when used with href */
-  onChangeTab: () => void;
+  onChangeTab: (event?: React.MouseEvent<HTMLLIElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number;
 }
@@ -36,9 +35,7 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
       <li
         {...otherProps}
         className={cx(!href && tabsStyles.padding, tabsStyles.tabItem, active && tabsStyles.activeStyle)}
-        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-          onChangeTab();
-        }}
+        onClick={onChangeTab}
         aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
         ref={ref}
       >
