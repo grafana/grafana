@@ -22,7 +22,7 @@ export interface SelectableZone extends SelectableValue<string> {
   searchIndex: string;
 }
 
-export const WideTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props>>((props, ref) => {
+export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
   const { children, innerProps, data, isSelected, isFocused } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -34,7 +34,7 @@ export const WideTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<P
   }
 
   return (
-    <div ref={ref} className={containerStyles} {...innerProps} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} aria-label="Select option">
       <div className={cx(styles.leftColumn, styles.row)}>
         <div className={cx(styles.leftColumn, styles.wideRow)}>
           <TimeZoneTitle title={children} />
@@ -52,9 +52,9 @@ export const WideTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<P
       </div>
     </div>
   );
-});
+};
 
-export const CompactTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props>>((props, ref) => {
+export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
   const { children, innerProps, data, isSelected, isFocused } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -91,7 +91,7 @@ export const CompactTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildre
       </div>
     </div>
   );
-});
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const offsetHoverBg = theme.isDark ? theme.palette.gray05 : theme.palette.white;

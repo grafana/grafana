@@ -55,7 +55,7 @@ export const getTimeZones = memoize((includeInternal = false): TimeZone[] => {
   }
 
   return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
-    const countriesForZone = countriesByTimeZone()[zone];
+    const countriesForZone = countriesByTimeZone[zone];
 
     if (!Array.isArray(countriesForZone) || countriesForZone.length === 0) {
       return zones;
@@ -111,7 +111,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
       const info = (isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp)) ?? {};
 
       return {
-        countries: countriesByTimeZone()[tz] ?? [],
+        countries: countriesByTimeZone[tz] ?? [],
         abbreviation: '',
         offsetInMins: 0,
         ...info,
@@ -125,7 +125,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
       const info = mapToInfo(tz, timestamp) ?? {};
 
       return {
-        countries: countriesByTimeZone()[tz] ?? [],
+        countries: countriesByTimeZone[tz] ?? [],
         abbreviation: 'Your local time',
         offsetInMins: new Date().getTimezoneOffset(),
         ...info,
@@ -156,34 +156,11 @@ const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefi
   return {
     name: timeZone,
     zone: timeZone,
-    countries: countriesByTimeZone()[timeZone] ?? [],
+    countries: countriesByTimeZone[timeZone] ?? [],
     abbreviation: abbrevationWithoutOffset(momentTz.abbr(timestamp)),
     offsetInMins: momentTz.utcOffset(timestamp),
   };
 };
-
-const countriesByTimeZone = memoize(
-  (): Record<string, TimeZoneCountry[]> => {
-    return moment.tz.countries().reduce((all: Record<string, TimeZoneCountry[]>, code) => {
-      const timeZones = moment.tz.zonesForCountry(code);
-
-      return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
-        if (!all[timeZone]) {
-          all[timeZone] = [];
-        }
-
-        const name = countryByCode[code];
-
-        if (!name) {
-          return all;
-        }
-
-        all[timeZone].push({ code, name });
-        return all;
-      }, all);
-    }, {});
-  }
-);
 
 // Country names by ISO 3166-1-alpha-2 code
 const countryByCode: Record<string, string> = {
@@ -433,3 +410,23 @@ const countryByCode: Record<string, string> = {
   ZM: 'Zambia',
   ZW: 'Zimbabwe',
 };
+
+const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
+  return moment.tz.countries().reduce((all: Record<string, TimeZoneCountry[]>, code) => {
+    const timeZones = moment.tz.zonesForCountry(code);
+    return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
+      if (!all[timeZone]) {
+        all[timeZone] = [];
+      }
+
+      const name = countryByCode[code];
+
+      if (!name) {
+        return all;
+      }
+
+      all[timeZone].push({ code, name });
+      return all;
+    }, all);
+  }, {});
+})();
