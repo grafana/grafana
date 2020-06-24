@@ -72,7 +72,7 @@ describe('<QueryField />', () => {
       expect(wrapper.instance().editor).toBeFalsy();
       expect(spyOnChange).not.toBeCalled();
     });
-    it('should not re-render the editor twice once syntax is fully lodaded', () => {
+    it('should not re-render the editor twice once syntax is fully loaded', () => {
       const wrapper: any = shallow(<QueryField query="my query" portalOrigin="mock-origin" />);
       const spyOnChange = jest.spyOn(wrapper.instance(), 'onChange').mockImplementation(jest.fn());
       wrapper.instance().editor = { insertText: () => ({ deleteBackward: () => ({ value: 'fooo' }) }) };

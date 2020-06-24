@@ -21,7 +21,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 1. Drill down and examine metrics
 1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
-If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the data source supports both graph and table data).
+If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
 
 ## Start exploring
 
@@ -35,7 +35,7 @@ If you want to start with an existing query in a panel then choose the Explore o
 
 {{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your data source in the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
+Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
@@ -114,7 +114,7 @@ The first version of Explore features a custom querying experience for Prometheu
 
 ### Metrics explorer
 
-On the left-hand side of the query field is a `Metrics` button, clicking on this opens the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all the Alert Manager metrics will be grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
+On the left side of the query field, click **Metrics** to open the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all Alertmanager metrics are grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
 {{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 

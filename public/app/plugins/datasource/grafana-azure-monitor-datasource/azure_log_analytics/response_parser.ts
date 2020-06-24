@@ -65,7 +65,7 @@ export default class ResponseParser {
       bucket.datapoints.push([row[valueIndex], epoch]);
       bucket.refId = query.refId;
       bucket.meta = {
-        query: query.query,
+        executedQueryString: query.query,
       };
     });
 
@@ -81,7 +81,7 @@ export default class ResponseParser {
       rows: rows,
       refId: query.refId,
       meta: {
-        query: query.query,
+        executedQueryString: query.query,
       },
     };
 

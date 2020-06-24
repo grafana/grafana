@@ -53,7 +53,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
     </a>
-    <a href="{{< relref "installation/configuration.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "administration/configuration.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
     </a>

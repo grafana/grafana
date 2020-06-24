@@ -146,7 +146,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here]({{< relref "configuration/#disable-sanitize-html" >}}) about this new setting.
+Read more [here]({{< relref "../administration/configuration/#disable-sanitize-html" >}}) about this new setting.
 
 ### Authentication and security
 
@@ -191,7 +191,7 @@ configuration.
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "configuration/#allow-embedding" >}}) about
+that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "../administration/configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used
@@ -237,7 +237,7 @@ The Generic OAuth setting `send_client_credentials_via_post`, used for supportin
 
 Chrome 80 treats cookies as `SameSite=Lax` by default if no `SameSite` attribute is specified, see https://www.chromestatus.com/feature/5088147346030592.
 
-Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "configuration/#cookie-samesite" >}}) for more information.
+Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "../administration/configuration/#cookie-samesite" >}}) for more information.
 
 **Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
 
@@ -252,12 +252,12 @@ PhantomJS was deprecated in [Grafana v6.4]({{< relref "../guides/whats-new-in-v6
 
 ### Dashboard minimum refresh interval enforced
 
-A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. Read more [here]({{< relref "configuration/#min-refresh-interval" >}}) about this setting.
+A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. Read more [here]({{< relref "../administration/configuration/#min-refresh-interval" >}}) about this setting.
 
 ### Backend plugins
 
-Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "configuration/#allow-loading-unsigned-plugins" >}}) about this setting.
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "../administration/#allow-loading-unsigned-plugins" >}}) about this setting.
 
 ### Cookie path
 
-Starting from Grafana v7.0.0, the cookie path does not include the trailing slash if Grafana is served from a subpath in order to align with [RFC 6265](https://tools.ietf.org/html/rfc6265#section-5.1.4). However, stale session cookies (set before the upgrade) can result in unsuccessful logins because they can not be deleted during the standard login phase due to the changed cookie path. Therefore users experiencing login problems are advised to manually delete old session cookies, or administrators can fix this for all users by changing the [`login_cookie_name`]({{< relref "configuration/#login-cookie-name" >}}), so the old cookie would get ignored.
+Starting from Grafana v7.0.0, the cookie path does not include the trailing slash if Grafana is served from a subpath in order to align with [RFC 6265](https://tools.ietf.org/html/rfc6265#section-5.1.4). However, stale session cookies (set before the upgrade) can result in unsuccessful logins because they can not be deleted during the standard login phase due to the changed cookie path. Therefore users experiencing login problems are advised to manually delete old session cookies, or administrators can fix this for all users by changing the [`login_cookie_name`]({{< relref "../administration/#login-cookie-name" >}}), so the old cookie would get ignored.
