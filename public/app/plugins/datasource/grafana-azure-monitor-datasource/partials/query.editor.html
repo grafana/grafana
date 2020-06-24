@@ -7,7 +7,7 @@
       <label class="gf-form-label query-keyword width-9">Service</label>
       <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
         <select
-          class="gf-form-input service-dropdown"
+          class="gf-form-input service-dropdown min-width-12"
           ng-model="ctrl.target.queryType"
           ng-options="f as f for f in ['Application Insights', 'Azure Monitor', 'Azure Log Analytics', 'Insights Analytics']"
           ng-change="ctrl.onQueryTypeChange()"
@@ -456,9 +456,9 @@
             ng-blur="ctrl.refresh()"
           />
         </div>
-      </div>
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
       </div>
   </div>
 
