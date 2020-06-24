@@ -35,7 +35,7 @@ type AlertNotification struct {
 	Frequency             time.Duration                 `json:"frequency"`
 	IsDefault             bool                          `json:"isDefault"`
 	Settings              *simplejson.Json              `json:"settings"`
-	SecureSettings        securejsondata.SecureJsonData `json:"secure_settings"`
+	SecureSettings        securejsondata.SecureJsonData `json:"secureSettings"`
 	Created               time.Time                     `json:"created"`
 	Updated               time.Time                     `json:"updated"`
 }
