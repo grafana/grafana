@@ -5,6 +5,10 @@ import Editor from '@monaco-editor/react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { checkSetup } from './setup';
 
+// ??? Can we only import types?
+// import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+// import { KeyCode, KeyMod } from 'monaco-editor/esm/vs/editor/editor.api';
+
 export interface Props extends Themeable {
   text: string;
 
@@ -29,12 +33,12 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     this.props.onChange(val);
   };
 
-  onEditorDidMount = (getEditorValue: () => string, editor: object) => {
+  onEditorDidMount = (getEditorValue: () => string, editor: any) => {
     this.getEditorValue = getEditorValue;
 
     // Listen for save command
-    console.log('Register save commnad!!!');
-    // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+    console.log('Register save commnad!!!', editor);
+    // editor.addCommand(KeyMod.CtrlCmd | KeyCode.KEY_S, () => {
     //   console.log('SAVE pressed!');
     // });
   };
