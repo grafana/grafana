@@ -33,7 +33,6 @@ export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> 
 
     _.set(config, 'bootData.user.timezone', timeZone);
     _.set(contextSrv, 'user.timezone', timeZone);
-    setTimeZoneResolver(() => config.bootData.user.timezone);
 
     dispatch(updateTimeZone(timeZone));
   };
