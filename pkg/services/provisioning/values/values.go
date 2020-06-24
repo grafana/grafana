@@ -209,7 +209,7 @@ func transformMap(i map[interface{}]interface{}) (interface{}, interface{}) {
 	return transformed, raw
 }
 
-// interpolateValue returns final value after interpolation. In addition to environment variable interpolation
+// interpolateValue returns the final value after interpolation. In addition to environment variable interpolation,
 // expanders available for the settings file are expanded here.
 // For a literal '$', '$$' can be used to avoid interpolation.
 func interpolateValue(val string) (string, string, error) {
