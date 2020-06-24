@@ -74,7 +74,7 @@ EROR[06-01|16:45:59] Failed to load plugin   error=plugin <plugin id> is unsigne
 
 ## Allow unsigned plugins
 
-While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../installation/configuration.md#allow-loading-unsigned-plugins" >}}). Allowing unsigned plugins will not skip verifying the authenticity of a plugin if plugin has a _MANIFEST.txt_ file.
+While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../administration/configuration.md#allow-loading-unsigned-plugins" >}}). Allowing unsigned plugins will not skip verifying the authenticity of a plugin if plugin has a _MANIFEST.txt_ file.
 
 If you run an unsigned backend plugin, then Grafana writes a warning message to the server log:
 

@@ -21,7 +21,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../installation/configuration.md#smtp" >}}) in [Configuration]({{< relref "../installation/configuration.md" >}}) for more information.
+* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
 * The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
 
 ## Create or update a report
@@ -109,7 +109,7 @@ When generating reports, each panel renders separately before being collected in
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
- These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+ These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
 ```ini
 [reporting]
@@ -132,7 +132,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ## Troubleshoot reporting
 
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md#filters" >}}) for more information.
 
 ```bash
 [log]
