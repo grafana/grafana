@@ -97,7 +97,7 @@ const useSelectedTimeZone = (
 
     const group = groups.find(group => {
       if (!group.label) {
-        return isEmpty(timeZone);
+        return isInternal(timeZone);
       }
       return timeZone.startsWith(group.label);
     });
@@ -106,9 +106,21 @@ const useSelectedTimeZone = (
       if (isEmpty(timeZone)) {
         return option.value === InternalTimeZones.default;
       }
-      return option.value === timeZone;
+      return toLower(option.value) === timeZone;
     });
   }, [groups, timeZone]);
+};
+
+const isInternal = (timeZone: TimeZone): boolean => {
+  switch (timeZone) {
+    case InternalTimeZones.default:
+    case InternalTimeZones.localBrowserTime:
+    case InternalTimeZones.utc:
+      return true;
+
+    default:
+      return false;
+  }
 };
 
 const useFilterBySearchIndex = () => {

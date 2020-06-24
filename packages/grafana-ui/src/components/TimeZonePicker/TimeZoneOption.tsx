@@ -66,7 +66,7 @@ export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props,
   }
 
   return (
-    <div ref={ref} className={containerStyles} {...innerProps} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} aria-label="Select option">
       <div className={styles.body}>
         <div className={styles.row}>
           <div className={styles.leftColumn}>
