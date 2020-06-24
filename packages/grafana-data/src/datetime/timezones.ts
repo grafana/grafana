@@ -3,6 +3,12 @@ import { memoize } from 'lodash';
 import { TimeZone } from '../types';
 import { getTimeZone } from './common';
 
+export enum InternalTimeZones {
+  default = '',
+  localBrowserTime = 'browser',
+  utc = 'utc',
+}
+
 export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   switch (getTimeZone({ timeZone })) {
     case 'browser':
@@ -45,7 +51,7 @@ export const getTimeZones = memoize((includeInternal = false): TimeZone[] => {
   const initial: TimeZone[] = [];
 
   if (includeInternal) {
-    initial.push.apply(initial, ['default', 'browser', 'utc']);
+    initial.push.apply(initial, [InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc]);
   }
 
   return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
@@ -89,7 +95,7 @@ export const getTimeZoneGroups = memoize((includeInternal = false): GroupedTimeZ
 
 const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
   switch (zone) {
-    case 'utc': {
+    case InternalTimeZones.utc: {
       return {
         name: 'Coordinated Universal Time',
         zone,
@@ -99,8 +105,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
       };
     }
 
-    case '':
-    case 'default': {
+    case InternalTimeZones.default: {
       const tz = getTimeZone();
       const isInternal = tz === 'browser' || tz === 'utc';
       const info = (isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp)) ?? {};
@@ -115,7 +120,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
       };
     }
 
-    case 'browser': {
+    case InternalTimeZones.localBrowserTime: {
       const tz = moment.tz.guess(true);
       const info = mapToInfo(tz, timestamp) ?? {};
 

@@ -14,7 +14,7 @@ export const TimeZoneOffset: React.FC<PropsWithChildren<Props>> = props => {
   const { timestamp, timeZone, className } = props;
   const styles = getStyles(theme);
 
-  if (!timeZone) {
+  if (typeof timeZone === 'undefined') {
     return null;
   }
 

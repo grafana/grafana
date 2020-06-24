@@ -28,7 +28,7 @@ export const WideTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<P
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (!data.value) {
+  if (typeof data.value === 'undefined') {
     return null;
   }
 
@@ -60,7 +60,7 @@ export const CompactTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildre
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (!data.value) {
+  if (typeof data.value === 'undefined') {
     return null;
   }
 

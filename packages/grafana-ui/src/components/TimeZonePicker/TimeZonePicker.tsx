@@ -7,6 +7,7 @@ import {
   getTimeZoneGroups,
   GroupedTimeZones,
   TimeZone,
+  InternalTimeZones,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZoneOption';
@@ -103,7 +104,7 @@ const useSelectedTimeZone = (
 
     return group?.options.find(option => {
       if (isEmpty(timeZone)) {
-        return option.value === 'default';
+        return option.value === InternalTimeZones.default;
       }
       return option.value === timeZone;
     });
@@ -122,7 +123,7 @@ const useFilterBySearchIndex = () => {
 const useSearchIndex = (info: TimeZoneInfo, timestamp: number): string => {
   return useMemo(() => {
     const parts: string[] = [
-      toLower(info.zone),
+      toLower(info.name),
       toLower(info.abbreviation),
       toLower(formatUtcOffset(timestamp, info.zone)),
     ];
