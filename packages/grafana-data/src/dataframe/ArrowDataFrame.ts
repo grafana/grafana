@@ -51,9 +51,13 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
       const values: Vector<any> = col;
       switch ((schema.typeId as unknown) as ArrowType) {
         case ArrowType.Decimal:
-        case ArrowType.Int:
         case ArrowType.FloatingPoint: {
           type = FieldType.number;
+          break;
+        }
+        case ArrowType.Int: {
+          type = FieldType.number;
+          console.log('INT field', schema);
           break;
         }
         case ArrowType.Bool: {
