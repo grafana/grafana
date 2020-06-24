@@ -12,7 +12,7 @@ weight = 3
 
 # Google OAuth2 Authentication
 
-To enable the Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
+To enable Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
 
 ## Create Google OAuth keys
 
@@ -23,7 +23,7 @@ First, you need to create a Google OAuth Client:
 3. Enter the following:
    - Application Type: Web Application
    - Name: Grafana
-   - Authorized Javascript Origins: https://grafana.mycompany.com
+   - Authorized JavaScript Origins: https://grafana.mycompany.com
    - Authorized Redirect URLs: https://grafana.mycompany.com/login/google
    - Replace https://grafana.mycompany.com with the URL of your Grafana instance.
 4. Click Create
