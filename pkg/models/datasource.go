@@ -22,7 +22,7 @@ const (
 	DS_MSSQL            = "mssql"
 	DS_ACCESS_DIRECT    = "direct"
 	DS_ACCESS_PROXY     = "proxy"
-	DS_CLOUD_MONITORING = "cloud-moniroting"
+	DS_CLOUD_MONITORING = "cloud-monitoring"
 	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
 	DS_LOKI             = "loki"
 )
