@@ -70,13 +70,10 @@ export const HomeLink: FC<HomeLinkProps> = ({ title, url, target, icon }) => {
 
 export const VersionFooter: FC = () => {
   const styles = getStyles();
-  const { version, commit } = config.buildInfo;
+  const { hideVersion, version, commit } = config.buildInfo;
+  const versionString = hideVersion ? '' : `Version ${version} (${commit})`;
 
-  return (
-    <div className={styles.footer}>
-      Version {version} ({commit})
-    </div>
-  );
+  return <div className={styles.footer}>{versionString}</div>;
 };
 
 export const getStyles = stylesFactory(() => {

@@ -15,6 +15,7 @@ awsconfig
 .yarnrc
 .yarn/
 vendor/
+.eslintcache
 
 # Enterprise emails
 /emails/templates/enterprise_*
@@ -112,7 +113,7 @@ compilation-stats.json
 /packages/grafana-e2e/cypress/logs
 /e2e/server.log
 /e2e/**/screenshots
-!/e2e/**/screenshots/expeced/*
+!/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
 
 # report dumping the whole system env

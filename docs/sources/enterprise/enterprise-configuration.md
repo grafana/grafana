@@ -12,7 +12,7 @@ weight = 300
 
 # Grafana Enterprise configuration
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about available configuration options.
 
 ## [white_labeling]
 
@@ -35,11 +35,11 @@ login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg
 
 ### menu_logo
 
-Set to complete url to override menu logo.
+Set to complete URL to override menu logo.
 
 ### fav_icon
 
-Set to complete url to override fav icon (icon shown in browser tab).
+Set to complete URL to override fav icon (icon shown in browser tab).
 
 ### apple_touch_icon
 

@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DataSourceResponse } from 'app/types/events';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO } from 'app/types';
+import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO, FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
@@ -53,6 +53,8 @@ enum CancellationType {
   dataSourceRequest,
 }
 
+const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
+
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
   appEvents: Emitter;
@@ -82,7 +84,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async get(url: string, params?: any, requestId?: string) {
+  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
     return await this.request({ method: 'GET', url, params, requestId });
   }
 
@@ -182,6 +184,10 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(requestId);
   }
 
+  cancelAllInFlightRequests() {
+    this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
+  }
+
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
     // A requestId is provided by the datasource as a unique identifier for a
     // particular query. Every observable below has a takeUntil that subscribes to this.inFlightRequests and
@@ -255,7 +261,7 @@ export class BackendSrv implements BackendService {
   }
 
   getFolderByUid(uid: string) {
-    return this.get(`/api/folders/${uid}`);
+    return this.get<FolderDTO>(`/api/folders/${uid}`);
   }
 
   saveDashboard(
@@ -528,12 +534,18 @@ export class BackendSrv implements BackendService {
         this.inFlightRequests.pipe(
           filter(requestId => {
             let cancelRequest = false;
+
             if (options && options.requestId && options.requestId === requestId) {
               // when a new requestId is started it will be published to inFlightRequests
               // if a previous long running request that hasn't finished yet has the same requestId
               // we need to cancel that request
               cancelRequest = true;
             }
+
+            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
+              cancelRequest = true;
+            }
+
             return cancelRequest;
           })
         )

@@ -85,3 +85,9 @@ func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 
 	return &enabledPlugins, nil
 }
+
+// IsAppInstalled checks if an app plugin with provided plugin ID is installed.
+func IsAppInstalled(pluginID string) bool {
+	_, exists := Apps[pluginID]
+	return exists
+}

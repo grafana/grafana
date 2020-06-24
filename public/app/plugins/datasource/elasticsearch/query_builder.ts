@@ -55,6 +55,10 @@ export class ElasticQueryBuilder {
 
     if (aggDef.settings.min_doc_count !== void 0) {
       queryNode.terms.min_doc_count = parseInt(aggDef.settings.min_doc_count, 10);
+
+      if (isNaN(queryNode.terms.min_doc_count)) {
+        queryNode.terms.min_doc_count = aggDef.settings.min_doc_count;
+      }
     }
 
     if (aggDef.settings.missing) {

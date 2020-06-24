@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { TNil } from './types';
-import { Span, SpanReference, Trace } from './types/trace';
+import { TraceSpan, TraceSpanReference, Trace } from '@grafana/data';
 
 /**
  * `Accessors` is necessary because `ScrollManager` needs to be created by
@@ -37,7 +37,7 @@ export type Accessors = {
   mapSpanIndexToRowIndex: (spanIndex: number) => number;
 };
 
-interface IScroller {
+interface Scroller {
   scrollTo: (rowIndex: number) => void;
   // TODO arg names throughout
   scrollBy: (rowIndex: number, opt?: boolean) => void;
@@ -47,18 +47,18 @@ interface IScroller {
  * Returns `{ isHidden: true, ... }` if one of the parents of `span` is
  * collapsed, e.g. has children hidden.
  *
- * @param {Span} span The Span to check for.
+ * @param {TraceSpan} span The Span to check for.
  * @param {Set<string>} childrenAreHidden The set of Spans known to have hidden
  *                                        children, either because it is
  *                                        collapsed or has a collapsed parent.
- * @param {Map<string, Span | TNil} spansMap Mapping from spanID to Span.
+ * @param {Map<string, TraceSpan | TNil} spansMap Mapping from spanID to Span.
  * @returns {{ isHidden: boolean, parentIds: Set<string> }}
  */
-function isSpanHidden(span: Span, childrenAreHidden: Set<string>, spansMap: Map<string, Span | TNil>) {
+function isSpanHidden(span: TraceSpan, childrenAreHidden: Set<string>, spansMap: Map<string, TraceSpan | TNil>) {
   const parentIDs = new Set<string>();
-  let { references }: { references: SpanReference[] | TNil } = span;
+  let { references }: { references: TraceSpanReference[] | TNil } = span;
   let parentID: undefined | string;
-  const checkRef = (ref: SpanReference) => {
+  const checkRef = (ref: TraceSpanReference) => {
     if (ref.refType === 'CHILD_OF' || ref.refType === 'FOLLOWS_FROM') {
       parentID = ref.spanID;
       parentIDs.add(parentID);
@@ -87,10 +87,10 @@ function isSpanHidden(span: Span, childrenAreHidden: Set<string>, spansMap: Map<
  */
 export default class ScrollManager {
   _trace: Trace | TNil;
-  _scroller: IScroller;
+  _scroller: Scroller;
   _accessors: Accessors | TNil;
 
-  constructor(trace: Trace | TNil, scroller: IScroller) {
+  constructor(trace: Trace | TNil, scroller: Scroller) {
     this._trace = trace;
     this._scroller = scroller;
     this._accessors = undefined;
@@ -157,8 +157,8 @@ export default class ScrollManager {
     const _collapsed = xrs.getCollapsedChildren();
     const childrenAreHidden = _collapsed ? new Set(_collapsed) : null;
     // use empty Map as fallback to make flow happy
-    const spansMap: Map<string, Span> = childrenAreHidden
-      ? new Map(spans.map(s => [s.spanID, s] as [string, Span]))
+    const spansMap: Map<string, TraceSpan> = childrenAreHidden
+      ? new Map(spans.map(s => [s.spanID, s] as [string, TraceSpan]))
       : new Map();
     const boundary = direction < 0 ? -1 : spans.length;
     let nextSpanIndex: number | undefined;
