@@ -295,7 +295,7 @@ apiVersion: 1
 
 datasources:
   - name: Google Cloud Monitoring
-    type: cloud-monitoring
+    type: stackdriver
     access: proxy
     jsonData:
       tokenUri: https://oauth2.googleapis.com/token
@@ -318,7 +318,7 @@ apiVersion: 1
 
 datasources:
   - name: Google Cloud Monitoring
-    type: cloud-monitoring
+    type: stackdriver
     access: proxy
     jsonData:
       authenticationType: gce

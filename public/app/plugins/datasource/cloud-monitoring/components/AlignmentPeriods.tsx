@@ -30,7 +30,7 @@ export const AlignmentPeriods: FC<Props> = ({
     ...ap,
     label: ap.text,
   }));
-  const visibleOptions = options.filter(ap => !!!ap.hidden);
+  const visibleOptions = options.filter(ap => !ap.hidden);
 
   return (
     <>
