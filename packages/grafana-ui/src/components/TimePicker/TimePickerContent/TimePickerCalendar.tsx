@@ -10,20 +10,24 @@ import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
+
   return {
     container: css`
-      top: 0;
+      top: -1px;
       position: absolute;
-      right: 546px;
+      right: 544px;
       box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
       background-color: ${theme.colors.bodyBg};
       z-index: -1;
+      border: 1px solid ${containerBorder};
+      border-radius: 2px 0 0 2px;
 
       &:after {
         display: block;
         background-color: ${theme.colors.bodyBg};
         width: 19px;
-        height: 381px;
+        height: 100%;
         content: ' ';
         position: absolute;
         top: 0;
