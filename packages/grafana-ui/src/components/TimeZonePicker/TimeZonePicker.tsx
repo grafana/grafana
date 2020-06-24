@@ -9,23 +9,24 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
-import { TimeZoneOption, SelectableZone } from './TimeZoneOption';
+import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZoneOption';
 import { TimeZoneGroup } from './TimeZoneGroup';
 import { formatUtcOffset } from './TimeZoneOffset';
 
 export interface Props {
-  value: TimeZone;
+  value?: TimeZone;
   width?: number;
   autoFocus?: boolean;
-  onChange: (newValue: string) => void;
+  onChange: (timeZone: TimeZone | undefined) => void;
   onBlur?: () => void;
 }
 
 export const TimeZonePicker: React.FC<Props> = props => {
-  const { onChange, value, width, autoFocus = false, onBlur } = props;
+  const { onChange, width, autoFocus = false, onBlur, value } = props;
   const groupedTimeZones = useTimeZones();
   const selected = useSelectedTimeZone(groupedTimeZones, value);
   const filterBySearchIndex = useFilterBySearchIndex();
+  const TimeZoneOption = width && width <= 45 ? CompactTimeZoneOption : WideTimeZoneOption;
 
   const onChangeTz = useCallback(
     (selectable: SelectableValue<string>) => {
@@ -84,8 +85,15 @@ const useTimeZones = (): SelectableZoneGroup[] => {
   });
 };
 
-const useSelectedTimeZone = (groups: SelectableZoneGroup[], timeZone: TimeZone): SelectableZone | undefined => {
+const useSelectedTimeZone = (
+  groups: SelectableZoneGroup[],
+  timeZone: TimeZone | undefined
+): SelectableZone | undefined => {
   return useMemo(() => {
+    if (timeZone === undefined) {
+      return undefined;
+    }
+
     const group = groups.find(group => {
       if (!group.label) {
         return isEmpty(timeZone);

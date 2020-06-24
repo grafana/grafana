@@ -21,7 +21,39 @@ export interface SelectableZone extends SelectableValue<string> {
   searchIndex: string;
 }
 
-export const TimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props>>((props, ref) => {
+export const WideTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props>>((props, ref) => {
+  const { children, innerProps, data, isSelected, isFocused } = props;
+  const theme = useTheme();
+  const styles = getStyles(theme);
+  const timestamp = Date.now();
+  const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
+
+  if (!data.value) {
+    return null;
+  }
+
+  return (
+    <div ref={ref} className={containerStyles} {...innerProps} aria-label="Select option">
+      <div className={cx(styles.leftColumn, styles.row)}>
+        <div className={cx(styles.leftColumn, styles.wideRow)}>
+          <TimeZoneTitle title={children} />
+          <div className={styles.spacer} />
+          <TimeZoneDescription info={getTimeZoneInfo(data.value, timestamp)} />
+        </div>
+        <div className={styles.rightColumn}>
+          <TimeZoneOffset timeZone={data.value} timestamp={timestamp} className={offsetClassName} />
+          {isSelected && (
+            <span>
+              <Icon name="check" />
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+export const CompactTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<Props>>((props, ref) => {
   const { children, innerProps, data, isSelected, isFocused } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -113,6 +145,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     rightColumn: css`
       justify-content: flex-end;
       align-items: center;
+    `,
+    wideRow: css`
+      display: flex;
+      flex-direction: row;
+      align-items: baseline;
+    `,
+    spacer: css`
+      margin-left: 6px;
     `,
   };
 });

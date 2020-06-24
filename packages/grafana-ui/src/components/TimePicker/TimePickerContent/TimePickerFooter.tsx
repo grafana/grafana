@@ -46,10 +46,12 @@ export const TimePickerFooter: FC<Props> = props => {
       <div className={cx(style.container, style.editContainer)}>
         <div className={style.timeZoneContainer}>
           <TimeZonePicker
-            value={timeZone}
             onChange={timeZone => {
               onToggleChangeTz();
-              onChangeTimeZone(timeZone);
+
+              if (timeZone) {
+                onChangeTimeZone(timeZone);
+              }
             }}
             autoFocus={true}
             onBlur={() => onToggleChangeTz()}
