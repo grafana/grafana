@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-hooks';
-import { Log } from '@grafana/data';
+import { TraceLog } from '@grafana/data';
 import { useDetailState } from './useDetailState';
 
 describe('useDetailState', () => {
@@ -21,7 +21,7 @@ describe('useDetailState', () => {
     act(() => result.current.detailLogsToggle('span1'));
     expect(result.current.detailStates.get('span1')?.logs.isOpen).toBe(true);
 
-    const log = { timestamp: 1 } as Log;
+    const log = { timestamp: 1 } as TraceLog;
     act(() => result.current.detailLogItemToggle('span1', log));
     expect(result.current.detailStates.get('span1')?.logs.openedItems.has(log)).toBe(true);
   });
