@@ -8,7 +8,7 @@ Object {
       "labels": Object {
         "aLabelKey": "aLabelValue",
       },
-      "name": "string_values",
+      "name": "0🦥: string_values",
       "type": "string",
       "values": Array [
         "Go Min",
@@ -39,7 +39,7 @@ Object {
         "aLabelKey": "aLabelValue",
         "bLabelKey": "bLabelValue",
       },
-      "name": "nullable_string_values",
+      "name": "1🦥: nullable_string_values",
       "type": "string",
       "values": Array [
         "Grafana",
@@ -55,7 +55,7 @@ Object {
         "min": 0,
       },
       "labels": undefined,
-      "name": "int8_values",
+      "name": "2🦥: int8_values",
       "type": "number",
       "values": Array [
         -128,
@@ -68,12 +68,12 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_int8_values",
+      "name": "3🦥: nullable_int8_values",
       "type": "number",
       "values": Array [
         -128,
         -128,
-        null,
+        0,
         127,
         127,
       ],
@@ -81,7 +81,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "int16_values",
+      "name": "4🦥: int16_values",
       "type": "number",
       "values": Array [
         -32768,
@@ -94,12 +94,12 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_int16_values",
+      "name": "5🦥: nullable_int16_values",
       "type": "number",
       "values": Array [
         -32768,
         -32768,
-        null,
+        0,
         32767,
         32767,
       ],
@@ -107,7 +107,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "int32_values",
+      "name": "6🦥: int32_values",
       "type": "number",
       "values": Array [
         -2147483648,
@@ -120,12 +120,12 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_int32_values",
+      "name": "7🦥: nullable_int32_values",
       "type": "number",
       "values": Array [
         -2147483648,
         -2147483648,
-        null,
+        0,
         2147483647,
         2147483647,
       ],
@@ -133,33 +133,33 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "int64_values",
+      "name": "8🦥: int64_values",
       "type": "number",
       "values": Array [
-        "\\"-9223372036854775808\\"",
-        "\\"-9007199254740991\\"",
-        "\\"1\\"",
-        "\\"9007199254740991\\"",
-        "\\"9223372036854775807\\"",
+        -9223372036854776000,
+        -9007199254740991,
+        1,
+        9007199254740991,
+        9223372036854776000,
       ],
     },
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_int64_values",
+      "name": "9🦥: nullable_int64_values",
       "type": "number",
       "values": Array [
-        "\\"-9223372036854775808\\"",
-        "\\"-9007199254740991\\"",
-        null,
-        "\\"9007199254740991\\"",
-        "\\"9223372036854775807\\"",
+        -9223372036854776000,
+        -9007199254740991,
+        0,
+        9007199254740991,
+        9223372036854776000,
       ],
     },
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "uint8_values",
+      "name": "10🦥: uint8_values",
       "type": "number",
       "values": Array [
         0,
@@ -172,12 +172,12 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_uint8_values",
+      "name": "11🦥: nullable_uint8_values",
       "type": "number",
       "values": Array [
         0,
         0,
-        null,
+        0,
         255,
         255,
       ],
@@ -185,7 +185,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "uint16_values",
+      "name": "12🦥: uint16_values",
       "type": "number",
       "values": Array [
         0,
@@ -198,12 +198,12 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_uint16_values",
+      "name": "13🦥: nullable_uint16_values",
       "type": "number",
       "values": Array [
         0,
         0,
-        null,
+        0,
         65535,
         65535,
       ],
@@ -211,7 +211,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "uint32_values",
+      "name": "14🦥: uint32_values",
       "type": "number",
       "values": Array [
         0,
@@ -224,12 +224,12 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_uint32_values",
+      "name": "15🦥: nullable_uint32_values",
       "type": "number",
       "values": Array [
         0,
         0,
-        null,
+        0,
         4294967295,
         4294967295,
       ],
@@ -237,33 +237,33 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "uint64_values",
+      "name": "16🦥: uint64_values",
       "type": "number",
       "values": Array [
-        "\\"0\\"",
-        "\\"0\\"",
-        "\\"1\\"",
-        "\\"9007199254740991\\"",
-        "\\"18446744073709551615\\"",
+        0,
+        0,
+        1,
+        9007199254740991,
+        18446744073709552000,
       ],
     },
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_uint64_values",
+      "name": "17🦥: nullable_uint64_values",
       "type": "number",
       "values": Array [
-        "\\"0\\"",
-        "\\"0\\"",
-        null,
-        "\\"9007199254740991\\"",
-        "\\"18446744073709551615\\"",
+        0,
+        0,
+        0,
+        9007199254740991,
+        18446744073709552000,
       ],
     },
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "float32_values",
+      "name": "18🦥: float32_values",
       "type": "number",
       "values": Array [
         1.401298464324817e-45,
@@ -276,7 +276,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_float32_values",
+      "name": "19🦥: nullable_float32_values",
       "type": "number",
       "values": Array [
         1.401298464324817e-45,
@@ -289,7 +289,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "float64_values",
+      "name": "20🦥: float64_values",
       "type": "number",
       "values": Array [
         5e-324,
@@ -302,7 +302,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_float64_values",
+      "name": "21🦥: nullable_float64_values",
       "type": "number",
       "values": Array [
         5e-324,
@@ -315,7 +315,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "bool_values",
+      "name": "22🦥: bool_values",
       "type": "boolean",
       "values": Array [
         true,
@@ -328,7 +328,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_bool_values",
+      "name": "23🦥: nullable_bool_values",
       "type": "boolean",
       "values": Array [
         true,
@@ -341,7 +341,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "timestamps",
+      "name": "24🦥: timestamps",
       "type": "time",
       "values": Array [
         0,
@@ -354,7 +354,7 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
-      "name": "nullable_timestamps",
+      "name": "25🦥: nullable_timestamps",
       "type": "time",
       "values": Array [
         0,

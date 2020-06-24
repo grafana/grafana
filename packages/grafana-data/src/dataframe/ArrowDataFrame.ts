@@ -58,8 +58,7 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
         }
         case ArrowType.Int: {
           type = FieldType.number;
-          values = new NumberColumn(col);
-          console.log('INT field', schema);
+          values = new NumberColumn(col); // Cast to number
           break;
         }
         case ArrowType.Bool: {
@@ -79,7 +78,7 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
       }
 
       fields.push({
-        name: stripFieldNamePrefix(col.name),
+        name: col.name,
         type,
         values,
         config: parseOptionalMeta(col.metadata.get('config')) || {},
@@ -96,17 +95,6 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
     meta: parseOptionalMeta(meta.get('meta')),
     table,
   };
-}
-
-// fieldNamePrefixSep is the delimiter used with fieldNamePrefix.
-const fieldNamePrefixSep = '🦥: ';
-
-function stripFieldNamePrefix(name: string): string {
-  const idx = name.indexOf(fieldNamePrefixSep);
-  if (idx > 0) {
-    return name.substring(idx + fieldNamePrefixSep.length);
-  }
-  return name;
 }
 
 function toArrowVector(field: Field): ArrowVector {
@@ -135,16 +123,9 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
   if (table instanceof Table) {
     return table as Table;
   }
-  // Make sure the names are unique
-  const names = new Set<string>();
 
   table = Table.new(
     data.fields.map((field, index) => {
-      let name = field.name;
-      if (names.has(field.name)) {
-        name = `${index}${fieldNamePrefixSep}${field.name}`;
-      }
-      names.add(name);
       const column = Column.new(name, toArrowVector(field));
       if (field.labels) {
         column.metadata.set('labels', JSON.stringify(field.labels));
@@ -168,7 +149,7 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
   return table;
 }
 
-export class NumberColumn extends FunctionalVector<number> {
+class NumberColumn extends FunctionalVector<number> {
   constructor(private col: Column) {
     super();
   }
