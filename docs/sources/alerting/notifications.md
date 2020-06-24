@@ -76,7 +76,7 @@ VictorOps | `victorops` | yes, external only | no
 
 ### Email
 
-To enable email notifications you have to setup [SMTP settings]({{< relref "../installation/configuration/#smtp" >}})
+To enable email notifications you have to setup [SMTP settings]({{< relref "../administration/configuration/#smtp" >}})
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
 Be aware that if you use the `local` image storage email servers and clients might not be
@@ -213,11 +213,11 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
 
-You must configure an [external image storage provider]({{< relref "../installation/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
+You must configure an [external image storage provider]({{< relref "../administration/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 
 Notification services which need public image access are marked as 'external only'.
 
 ## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.
+This URL is based on the [domain]({{< relref "../administration/configuration/#domain" >}}) setting in Grafana.

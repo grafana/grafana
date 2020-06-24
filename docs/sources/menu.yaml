@@ -32,7 +32,7 @@
   link: /administration/
   children:
     - name: Configuration
-      link: /installation/configuration/
+      link: /administration/configuration/
     - name: Configure Docker image
       link: /installation/configure-docker/
     - name: Security
