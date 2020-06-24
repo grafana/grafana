@@ -16,7 +16,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     exploreId: ExploreId.left,
     onChangeSortOrder: jest.fn(),
     onSelectDatasourceFilters: jest.fn(),
-    onSearchQuery: jest.fn(),
+    onSearchFilterChange: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
