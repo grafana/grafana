@@ -31,6 +31,7 @@ import { alignCurrentWithMulti } from '../shared/multiOptions';
 import { isMulti } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import isEqual from 'lodash/isEqual';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -447,4 +448,29 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   }
 
   return queryParamsNew;
+};
+
+export const templateVarsChangedInUrl = (vars: UrlQueryMap): ThunkResult<void> => async (dispatch, getState) => {
+  const update: Array<Promise<any>> = [];
+  for (const variable of getVariables(getState())) {
+    const key = `var-${variable.name}`;
+    if (vars.hasOwnProperty(key)) {
+      if (isVariableUrlValueDifferentFromCurrent(variable, vars[key])) {
+        const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, vars[key]);
+        update.push(promise);
+      }
+    }
+  }
+
+  if (update.length) {
+    await Promise.all(update);
+    const dashboard = getState().dashboard.getModel();
+    dashboard?.templateVariableValueUpdated();
+    dashboard?.startRefresh();
+  }
+};
+
+const isVariableUrlValueDifferentFromCurrent = (variable: VariableModel, urlValue: any): boolean => {
+  // lodash isEqual handles array of value equality checks as well
+  return !isEqual(variableAdapters.get(variable.type).getValueForUrl(variable), urlValue);
 };
