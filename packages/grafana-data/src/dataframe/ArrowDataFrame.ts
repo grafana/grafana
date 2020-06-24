@@ -126,7 +126,7 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
 
   table = Table.new(
     data.fields.map((field, index) => {
-      const column = Column.new(name, toArrowVector(field));
+      const column = Column.new(field.name, toArrowVector(field));
       if (field.labels) {
         column.metadata.set('labels', JSON.stringify(field.labels));
       }
