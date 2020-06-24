@@ -267,7 +267,7 @@ func TestValues_readFile(t *testing.T) {
 
 	data := &Data{}
 	err = yaml.Unmarshal([]byte(fmt.Sprintf("val: $__file{%s}", file)), data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, data.Val.Value())
 }
 
