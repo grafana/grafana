@@ -7,11 +7,10 @@ import {
   DataSourceApi,
   DataQueryRequest,
   DataSourceInstanceSettings,
-  DataQueryResponse,
   DataQueryResponseData,
   LoadingState,
 } from '@grafana/data';
-import { Observable, of } from 'rxjs';
+import { Observable, of, from } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 
@@ -46,7 +45,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.optionsKey = optionsKey;
   }
 
-  query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponseData> {
+  query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponseData> {
     const byType: Record<AzureQueryType, DataQueryRequest<AzureMonitorQuery>> = ({} as unknown) as Record<
       AzureQueryType,
       DataQueryRequest<AzureMonitorQuery>
@@ -84,21 +83,23 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     // Distinct types are managed by distinct requests
-    const queries = Object.keys(byType).map((type: AzureQueryType) => {
+    const obs = Object.keys(byType).map((type: AzureQueryType) => {
       const req = byType[type];
       return this.pseudoDatasource[type].query(req);
     });
     // Single query can skip merge
-    if (queries.length === 1) {
-      return queries[0];
+    if (obs.length === 1) {
+      return obs[0];
     }
-    if (queries.length > 1) {
+    if (obs.length > 1) {
       // Not accurate, but simple and works
       // should likely be more like the mixed data source
-      const promises = queries.map(obs => obs.toPromise());
-      return Promise.all(promises).then(results => {
-        return { data: _.flatten(results) };
-      });
+      const promises = obs.map(o => o.toPromise());
+      return from(
+        Promise.all(promises).then(results => {
+          return { data: _.flatten(results) };
+        })
+      );
     }
     return of({ state: LoadingState.Done });
   }
