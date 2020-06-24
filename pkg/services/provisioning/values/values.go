@@ -120,7 +120,10 @@ func (val *JSONValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	interpolated := make(map[string]interface{})
 	raw := make(map[string]interface{})
 	for key, val := range unmarshaled {
-		interpolated[key], raw[key] = transformInterface(val)
+		interpolated[key], raw[key], err = transformInterface(val)
+		if err != nil {
+			return err
+		}
 	}
 
 	val.Raw = raw
@@ -164,11 +167,11 @@ func (val *StringMapValue) Value() map[string]string {
 // slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
 // map or slice value instead of modifying them in place and also return value without interpolation but with converted
 // type as a second value.
-func transformInterface(i interface{}) (interface{}, interface{}) {
+func transformInterface(i interface{}) (interface{}, interface{}, error) {
 	typeOf := reflect.TypeOf(i)
 
 	if typeOf == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	switch typeOf.Kind() {
@@ -177,36 +180,41 @@ func transformInterface(i interface{}) (interface{}, interface{}) {
 	case reflect.Map:
 		return transformMap(i.(map[interface{}]interface{}))
 	case reflect.String:
-		// TODO: Handle error
-		val, raw, _ := interpolateValue(i.(string))
-		return val, raw
+		return interpolateValue(i.(string))
 	default:
 		// Was int, float or some other value that we do not need to do any transform on.
-		return i, i
+		return i, i, nil
 	}
 }
 
-func transformSlice(i []interface{}) (interface{}, interface{}) {
+func transformSlice(i []interface{}) (interface{}, interface{}, error) {
 	var transformedSlice []interface{}
 	var rawSlice []interface{}
 	for _, val := range i {
-		transformed, raw := transformInterface(val)
+		transformed, raw, err := transformInterface(val)
+		if err != nil {
+			return nil, nil, err
+		}
 		transformedSlice = append(transformedSlice, transformed)
 		rawSlice = append(rawSlice, raw)
 	}
-	return transformedSlice, rawSlice
+	return transformedSlice, rawSlice, nil
 }
 
-func transformMap(i map[interface{}]interface{}) (interface{}, interface{}) {
+func transformMap(i map[interface{}]interface{}) (interface{}, interface{}, error) {
 	transformed := make(map[string]interface{})
 	raw := make(map[string]interface{})
 	for key, val := range i {
 		stringKey, ok := key.(string)
 		if ok {
-			transformed[stringKey], raw[stringKey] = transformInterface(val)
+			var err error
+			transformed[stringKey], raw[stringKey], err = transformInterface(val)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 	}
-	return transformed, raw
+	return transformed, raw, nil
 }
 
 // interpolateValue returns the final value after interpolation. In addition to environment variable interpolation,
