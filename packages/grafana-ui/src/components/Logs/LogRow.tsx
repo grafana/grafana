@@ -95,15 +95,19 @@ class UnThemedLogRow extends PureComponent<Props, State> {
    * hovered over Log Row and vice versa. This can't be done with css because we use 2 separate table rows without common parent element.
    */
   addHoverBackground = () => {
-    this.setState({
-      hasHoverBackground: true,
-    });
+    if (this.state.showDetails) {
+      this.setState({
+        hasHoverBackground: true,
+      });
+    }
   };
 
   clearHoverBackground = () => {
-    this.setState({
-      hasHoverBackground: false,
-    });
+    if (this.state.showDetails) {
+      this.setState({
+        hasHoverBackground: false,
+      });
+    }
   };
 
   toggleDetails = () => {
