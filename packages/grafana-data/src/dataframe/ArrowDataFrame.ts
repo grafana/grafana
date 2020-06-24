@@ -1,4 +1,5 @@
 import { DataFrame, FieldType, Field, Vector } from '../types';
+import { FunctionalVector } from '../vector/FunctionalVector';
 
 import {
   Table,
@@ -48,7 +49,7 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
     if (col) {
       const schema = table.schema.fields[i];
       let type = FieldType.other;
-      const values: Vector<any> = col;
+      let values: Vector<any> = col;
       switch ((schema.typeId as unknown) as ArrowType) {
         case ArrowType.Decimal:
         case ArrowType.FloatingPoint: {
@@ -57,6 +58,7 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
         }
         case ArrowType.Int: {
           type = FieldType.number;
+          values = new NumberColumn(col);
           console.log('INT field', schema);
           break;
         }
@@ -164,4 +166,22 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
     metadata.set('meta', JSON.stringify(data.meta));
   }
   return table;
+}
+
+export class NumberColumn extends FunctionalVector<number> {
+  constructor(private col: Column) {
+    super();
+  }
+
+  get length() {
+    return this.col.length;
+  }
+
+  get(index: number): number {
+    // The conversion operations are always silent, never give errors,
+    // but if the bigint is too huge and won’t fit the number type,
+    // then extra bits will be cut off, so we should be careful doing such conversion.
+    // See https://javascript.info/bigint
+    return Number(this.col.get(index));
+  }
 }
