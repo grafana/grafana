@@ -145,8 +145,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	secureSettings := model.SecureSettings.Decrypt()
-	token := secureSettings["token"]
+	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
