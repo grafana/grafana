@@ -69,7 +69,7 @@ func NewCloudMonitoringExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoi
 
 func init() {
 	slog = log.New("tsdb.cloudMonitoring")
-	tsdb.RegisterTsdbQueryEndpoint("cloud-monitoring", NewCloudMonitoringExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewCloudMonitoringExecutor)
 }
 
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
