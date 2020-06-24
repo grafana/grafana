@@ -89,9 +89,9 @@ This setting can also be set with an environment variable, which is useful if yo
 
 ### Root URL
 
-Update the [`root_url`](../installation/configuration/#root-url) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
+Update the [`root_url`](../administration/configuration/#root-url) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
 
-This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`](../installation/configuration/#root-url) in your configuration. 
+This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`](../administration/configuration/#root-url) in your configuration. 
 
 In your configuration file:
 

@@ -12,7 +12,7 @@ weight = 300
 
 # Grafana Enterprise configuration
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about available configuration options.
 
 ## [white_labeling]
 
