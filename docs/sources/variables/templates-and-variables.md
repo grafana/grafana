@@ -84,20 +84,7 @@ Type | Description
 *Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB, Prometheus, and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
 *Text box* | This variable type will display as a free text input field with an optional default value.
 
-## Adding a variable
 
-{{< docs-imagebox img="/img/docs/v50/variables_var_list.png" max-width="800px" >}}
-
-You add variables via Dashboard cogs menu > Templating. This opens up a list of variables and a `New` button to create a new variable.
-
-### Basic variable options
-
-Option | Description
-------- | --------
-*Name* | The name of the variable, this is the name you use when you refer to your variable in your metric queries. Must be unique and contain no white-spaces.
-*Label* | The name of the dropdown for this variable.
-*Hide* | Options to hide the dropdown select box.
-*Type* | Defines the variable type.
 
 ### Query options
 
