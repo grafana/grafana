@@ -14,6 +14,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
         historyOptions={Array []}
         isFullscreen={true}
         onChange={[Function]}
+        onChangeTimeZone={[Function]}
         timeZone="utc"
         value={
           Object {
@@ -42,6 +43,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
         historyOptions={Array []}
         isFullscreen={true}
         onChange={[Function]}
+        onChangeTimeZone={[Function]}
         timeZone="utc"
         value={
           Object {
@@ -93,8 +95,9 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
     </CustomScrollbar>
   </div>
   <Component
+    onChangeTimeZone={[Function]}
     timeZone="utc"
-    timestamp={1593003381309}
+    timestamp={1593007493951}
   />
 </div>
 `;
@@ -113,6 +116,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
         historyOptions={Array []}
         isFullscreen={false}
         onChange={[Function]}
+        onChangeTimeZone={[Function]}
         timeZone="utc"
         value={
           Object {
@@ -141,6 +145,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
         historyOptions={Array []}
         isFullscreen={false}
         onChange={[Function]}
+        onChangeTimeZone={[Function]}
         timeZone="utc"
         value={
           Object {
@@ -243,6 +248,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
         }
         isFullscreen={true}
         onChange={[Function]}
+        onChangeTimeZone={[Function]}
         timeZone="utc"
         value={
           Object {
@@ -306,6 +312,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
         }
         isFullscreen={true}
         onChange={[Function]}
+        onChangeTimeZone={[Function]}
         timeZone="utc"
         value={
           Object {
@@ -357,8 +364,9 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
     </CustomScrollbar>
   </div>
   <Component
+    onChangeTimeZone={[Function]}
     timeZone="utc"
-    timestamp={1593003381321}
+    timestamp={1593007493961}
   />
 </div>
 `;
