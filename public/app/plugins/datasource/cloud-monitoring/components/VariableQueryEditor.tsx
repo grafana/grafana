@@ -88,7 +88,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
   onPropsChange = () => {
     const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
     const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
-    this.props.onChange(queryModel, `Cloud Monitoring - ${query.name}`);
+    this.props.onChange(queryModel, `Google Cloud Monitoring - ${query.name}`);
   };
 
   async onQueryTypeChange(queryType: string) {

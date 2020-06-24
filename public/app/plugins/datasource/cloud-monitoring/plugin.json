@@ -1,5 +1,5 @@
 {
-  "name": "Cloud Monitoring",
+  "name": "Google Cloud Monitoring",
   "type": "datasource",
   "id": "stackdriver",
   "category": "cloud",

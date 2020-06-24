@@ -161,13 +161,13 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
 
   async testDatasource() {
     let status, message;
-    const defaultErrorMessage = 'Cannot connect to Cloud Monitoring API';
+    const defaultErrorMessage = 'Cannot connect to Google Cloud Monitoring API';
     try {
       await this.ensureGCEDefaultProject();
       const response = await this.api.test(this.getDefaultProject());
       if (response.status === 200) {
         status = 'success';
-        message = 'Successfully queried the Cloud Monitoring API.';
+        message = 'Successfully queried the Google Cloud Monitoring API.';
       } else {
         status = 'error';
         message = response.statusText ? response.statusText : defaultErrorMessage;
@@ -177,7 +177,7 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
       if (_.isString(error)) {
         message = error;
       } else {
-        message = 'Cloud Monitoring: ';
+        message = 'Google Cloud Monitoring: ';
         message += error.statusText ? error.statusText : defaultErrorMessage;
         if (error.data && error.data.error && error.data.error.code) {
           message += ': ' + error.data.error.code + '. ' + error.data.error.message;

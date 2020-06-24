@@ -82,7 +82,9 @@ describe('CloudMonitoringDataSource', () => {
 
       it('should return error status and a detailed error message', () => {
         expect(result.status).toEqual('error');
-        expect(result.message).toBe('Cloud Monitoring: Bad Request: 400. Field interval.endTime had an invalid value');
+        expect(result.message).toBe(
+          'Google Cloud Monitoring: Bad Request: 400. Field interval.endTime had an invalid value'
+        );
       });
     });
   });

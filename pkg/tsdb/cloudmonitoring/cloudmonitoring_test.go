@@ -16,10 +16,10 @@ import (
 )
 
 func TestCloudMonitoring(t *testing.T) {
-	Convey("Cloud Monitoring", t, func() {
+	Convey("Google Cloud Monitoring", t, func() {
 		executor := &CloudMonitoringExecutor{}
 
-		Convey("Parse migrated queries from frontend and build Cloud Monitoring API queries", func() {
+		Convey("Parse migrated queries from frontend and build Google Cloud Monitoring API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
@@ -262,7 +262,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 		})
 
-		Convey("Parse queries from frontend and build Cloud Monitoring API queries", func() {
+		Convey("Parse queries from frontend and build Google Cloud Monitoring API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
