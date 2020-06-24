@@ -227,6 +227,7 @@ type Cfg struct {
 	AppUrl           string
 	AppSubUrl        string
 	ServeFromSubPath bool
+	StaticRootPath   string
 
 	// build
 	BuildVersion string
@@ -271,6 +272,9 @@ type Cfg struct {
 	PluginsAllowUnsigned             []string
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
+
+	// Dashboards
+	DefaultHomeDashboardPath string
 
 	// Auth
 	LoginCookieName              string
@@ -699,6 +703,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
+	cfg.StaticRootPath = StaticRootPath
 
 	if err := cfg.validateStaticRootPath(); err != nil {
 		return err
@@ -777,6 +782,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
