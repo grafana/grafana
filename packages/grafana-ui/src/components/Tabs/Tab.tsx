@@ -11,12 +11,12 @@ import { Counter } from './Counter';
 export interface TabProps extends HTMLProps<HTMLLIElement> {
   label: string;
   active?: boolean;
-  /** With this it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
+  /** With provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
   href?: string;
   icon?: IconName;
   /** May cause unintended behaviour when used with href */
   onChangeTab: () => void;
-  /** A number next to the text. Usually used to display number of items in a tab's view. */
+  /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number;
 }
 
