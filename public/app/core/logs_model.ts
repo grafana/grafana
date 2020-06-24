@@ -153,6 +153,9 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
       ...valueField.config,
       color: series.color,
     };
+    valueField.name = series.alias;
+    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
 
     const points = getFlotPairs({
       xField: timeField,
