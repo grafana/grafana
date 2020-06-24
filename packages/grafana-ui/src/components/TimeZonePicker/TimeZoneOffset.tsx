@@ -2,6 +2,7 @@ import React, { PropsWithChildren } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, TimeZone, dateTimeFormat } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../themes';
+import isString from 'lodash/isString';
 
 interface Props {
   timestamp: number;
@@ -14,7 +15,7 @@ export const TimeZoneOffset: React.FC<PropsWithChildren<Props>> = props => {
   const { timestamp, timeZone, className } = props;
   const styles = getStyles(theme);
 
-  if (typeof timeZone === 'undefined') {
+  if (!isString(timeZone)) {
     return null;
   }
 

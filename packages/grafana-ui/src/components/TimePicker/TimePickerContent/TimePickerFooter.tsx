@@ -7,6 +7,7 @@ import { TimeZoneDescription } from '../../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../../TimeZonePicker/TimeZoneOffset';
 import { Button } from '../../Button';
 import { TimeZonePicker } from '../../TimeZonePicker/TimeZonePicker';
+import isString from 'lodash/isString';
 
 interface Props {
   timeZone?: TimeZone;
@@ -31,7 +32,7 @@ export const TimePickerFooter: FC<Props> = props => {
   const theme = useTheme();
   const style = getStyle(theme);
 
-  if (!timeZone) {
+  if (!isString(timeZone)) {
     return null;
   }
 
@@ -49,7 +50,7 @@ export const TimePickerFooter: FC<Props> = props => {
             onChange={timeZone => {
               onToggleChangeTz();
 
-              if (timeZone) {
+              if (isString(timeZone)) {
                 onChangeTimeZone(timeZone);
               }
             }}

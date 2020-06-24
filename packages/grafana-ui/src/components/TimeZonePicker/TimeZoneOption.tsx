@@ -7,6 +7,7 @@ import { Icon } from '../Icon/Icon';
 import { TimeZoneOffset } from './TimeZoneOffset';
 import { TimeZoneDescription } from './TimeZoneDescription';
 import { TimeZoneTitle } from './TimeZoneTitle';
+import isString from 'lodash/isString';
 
 interface Props {
   isFocused: boolean;
@@ -28,7 +29,7 @@ export const WideTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildren<P
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (typeof data.value === 'undefined') {
+  if (!isString(data.value)) {
     return null;
   }
 
@@ -60,7 +61,7 @@ export const CompactTimeZoneOption = forwardRef<HTMLDivElement, PropsWithChildre
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (typeof data.value === 'undefined') {
+  if (!isString(data.value)) {
     return null;
   }
 

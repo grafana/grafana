@@ -25,6 +25,10 @@ export const slice = createSlice({
 
 export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> => {
   return async (dispatch, getState) => {
+    if (!_.isString(timeZone) || _.isEmpty(timeZone)) {
+      return;
+    }
+
     const { updateTimeZone } = slice.actions;
 
     _.set(config, 'bootData.user.timezone', timeZone);

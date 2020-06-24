@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { toLower, isEmpty } from 'lodash';
+import { toLower, isEmpty, isString } from 'lodash';
 import {
   SelectableValue,
   getTimeZoneInfo,
@@ -31,7 +31,7 @@ export const TimeZonePicker: React.FC<Props> = props => {
 
   const onChangeTz = useCallback(
     (selectable: SelectableValue<string>) => {
-      if (!selectable || typeof selectable.value === 'undefined') {
+      if (!selectable || !isString(selectable.value)) {
         return onChange(value);
       }
       onChange(selectable.value);
