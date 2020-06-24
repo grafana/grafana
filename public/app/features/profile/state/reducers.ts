@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { UserState, ThunkResult } from 'app/types';
 import config from 'app/core/config';
-import { TimeZone, setTimeZoneResolver } from '@grafana/data';
+import { TimeZone } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 
 export const initialState: UserState = {
@@ -25,15 +25,13 @@ export const slice = createSlice({
 
 export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    if (!_.isString(timeZone) || _.isEmpty(timeZone)) {
-      return;
-    }
-
     const { updateTimeZone } = slice.actions;
 
-    _.set(config, 'bootData.user.timezone', timeZone);
-    _.set(contextSrv, 'user.timezone', timeZone);
+    if (!_.isString(timeZone) || _.isEmpty(timeZone)) {
+      timeZone = config?.bootData?.user?.timezone;
+    }
 
+    _.set(contextSrv, 'user.timezone', timeZone);
     dispatch(updateTimeZone(timeZone));
   };
 };
