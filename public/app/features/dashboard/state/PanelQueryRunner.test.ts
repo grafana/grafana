@@ -298,4 +298,48 @@ describe('PanelQueryRunner', () => {
       getTransformations: () => [({} as unknown) as DataTransformerConfig],
     }
   );
+
+  describeQueryRunnerScenario(
+    'getData',
+    ctx => {
+      it('should not apply transformations when transform option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+
+      it('should not apply field config when applyFieldConfig option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+        spy.mockClear();
+        ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: v => v,
+        theme: {} as GrafanaTheme,
+      }),
+      // @ts-ignore
+      getTransformations: () => [{}],
+    }
+  );
 });

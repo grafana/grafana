@@ -18,7 +18,7 @@ jest.mock('rxjs/operators', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -163,6 +163,7 @@ describe('CloudWatchDatasource', () => {
         ],
       });
     });
+
     it('should stop querying when no more data retrieved past max attempts', async () => {
       const fakeFrames = genMockFrames(10);
       for (let i = 7; i < fakeFrames.length; i++) {
@@ -242,6 +243,21 @@ describe('CloudWatchDatasource', () => {
         state: 'Done',
       });
       expect(i).toBe(3);
+    });
+
+    it('should call the replace method on provided log groups', () => {
+      const replaceSpy = jest.spyOn(ctx.ds, 'replace').mockImplementation((target: string) => target);
+      ctx.ds.makeLogActionRequest('StartQuery', [
+        {
+          queryString: 'test query string',
+          region: 'default',
+          logGroupNames: ['log-group', '${my_var}Variable', 'Cool${other_var}'],
+        },
+      ]);
+
+      expect(replaceSpy).toBeCalledWith('log-group', undefined, true, 'log groups');
+      expect(replaceSpy).toBeCalledWith('${my_var}Variable', undefined, true, 'log groups');
+      expect(replaceSpy).toBeCalledWith('Cool${other_var}', undefined, true, 'log groups');
     });
   });
 

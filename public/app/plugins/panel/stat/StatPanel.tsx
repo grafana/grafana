@@ -65,17 +65,17 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
-    if (!hasLinks || !getLinks) {
-      return this.renderComponent(valueProps, {});
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
     }
 
-    return (
-      <DataLinksContextMenu links={getLinks}>
-        {api => {
-          return this.renderComponent(valueProps, api);
-        }}
-      </DataLinksContextMenu>
-    );
+    return this.renderComponent(valueProps, {});
   };
 
   getValues = (): FieldDisplay[] => {

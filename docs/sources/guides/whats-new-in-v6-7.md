@@ -47,7 +47,7 @@ Grafana v6.7 comes with a new OAuth integration for Microsoft Azure Active Direc
 
 Allowing a low dashboard refresh interval can cause severe load on data sources and Grafana. Grafana v6.7 allows you to restrict the dashboard refresh interval so it cannot be set lower than a given interval. This provides a way for administrators to control dashboard refresh behavior on a global level.
 
-Refer to min_refresh_interval in [Configuration]({{< relref "../installation/configuration#min-refresh-interval" >}}) for more information and how to enable this feature.
+Refer to min_refresh_interval in [Configuration]({{< relref "../administration/configuration#min-refresh-interval" >}}) for more information and how to enable this feature.
 
 ### Stackdriver project selector
 
