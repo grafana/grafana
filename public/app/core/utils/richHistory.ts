@@ -335,14 +335,14 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
       return true;
     }
 
-    const listOfmatchingQueries = query.queries.filter(query =>
+    const listOfMatchingQueries = query.queries.filter(query =>
       // Remove fields in which we don't want to be searching
       Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some(value =>
         value.toString().includes(searchFilter)
       )
     );
 
-    return listOfmatchingQueries.length > 0;
+    return listOfMatchingQueries.length > 0;
   });
 }
 
