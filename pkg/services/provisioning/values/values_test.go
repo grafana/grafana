@@ -256,6 +256,7 @@ func TestValues_readFile(t *testing.T) {
 	file := f.Name()
 
 	defer func() {
+		require.NoError(t, f.Close())
 		require.NoError(t, os.Remove(file))
 	}()
 
