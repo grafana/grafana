@@ -176,9 +176,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
           />
         </CustomScrollbar>
       </div>
-      {isFullscreen && (
-        <TimePickerFooter timestamp={Date.now()} timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />
-      )}
+      {isFullscreen && <TimePickerFooter timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />}
     </div>
   );
 };

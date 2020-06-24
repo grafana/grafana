@@ -97,7 +97,6 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
   <Component
     onChangeTimeZone={[Function]}
     timeZone="utc"
-    timestamp={1593007493951}
   />
 </div>
 `;
@@ -366,7 +365,6 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
   <Component
     onChangeTimeZone={[Function]}
     timeZone="utc"
-    timestamp={1593007493961}
   />
 </div>
 `;

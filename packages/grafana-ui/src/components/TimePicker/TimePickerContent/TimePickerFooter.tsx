@@ -11,12 +11,12 @@ import isString from 'lodash/isString';
 
 interface Props {
   timeZone?: TimeZone;
-  timestamp: number;
+  timestamp?: number;
   onChangeTimeZone: (timeZone: TimeZone) => void;
 }
 
 export const TimePickerFooter: FC<Props> = props => {
-  const { timeZone, timestamp, onChangeTimeZone } = props;
+  const { timeZone, timestamp = Date.now(), onChangeTimeZone } = props;
   const [isEditing, setEditing] = useState(false);
 
   const onToggleChangeTz = useCallback(
