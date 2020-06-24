@@ -323,7 +323,7 @@ export function lokiStreamsToDataframes(
   if (stats.length && !data.length) {
     return [
       {
-        fields: null,
+        fields: [],
         length: null,
         refId: target.refId,
         meta,

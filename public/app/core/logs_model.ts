@@ -187,7 +187,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
 
 function isLogsData(series: DataFrame) {
   return (
-    series.fields &&
+    series.fields.length &&
     series.fields.some(f => f.type === FieldType.time) &&
     series.fields.some(f => f.type === FieldType.string)
   );
@@ -287,7 +287,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
-    if (isLogsData(dataFrame) || !dataFrame.fields) {
+    if (isLogsData(dataFrame) || !dataFrame.fields.length) {
       logSeries.push(dataFrame);
       continue;
     }
@@ -322,7 +322,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   // Find the fields we care about and collect all labels
   const allSeries: LogFields[] = logSeries.map(series => {
-    if (!series.fields) {
+    if (!series.fields.length) {
       return undefined;
     }
 
