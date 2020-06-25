@@ -14,8 +14,8 @@ import {
   Switch,
   useTheme,
 } from '@grafana/ui';
-import { OptionElement } from './OptionElement';
-import { NotificationChannel, NotificationChannelDTO, Option } from '../../../types';
+import { NotificationChannel, NotificationChannelDTO } from '../../../types';
+import { NotificationChannelOptions } from './NotificationChannelOptions';
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
@@ -42,6 +42,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
     watch(['type', 'settings.priority', 'sendReminder', 'uploadImage']);
   }, []);
 
+  const currentFormValues = getValues();
   return (
     <>
       <div className={styles.basicSettings}>
@@ -63,7 +64,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
         <Field label="Include image" description="Captures an image and include it in the notification">
           <Switch name="settings.uploadImage" ref={register} />
         </Field>
-        {getValues().uploadImage && !imageRendererAvailable && (
+        {currentFormValues.uploadImage && !imageRendererAvailable && (
           <InfoBox title="No image renderer available/installed">
             Grafana cannot find an image renderer to capture an image for the notification. Please make sure the Grafana
             Image Renderer plugin is installed. Please contact your Grafana administrator to install the plugin.
@@ -78,7 +79,7 @@ export const NewNotificationChannelForm: FC<Props> = ({
         <Field label="Send reminders" description="Send additional notifications for triggered alerts">
           <Switch name="sendReminder" ref={register} />
         </Field>
-        {getValues().sendReminder && (
+        {currentFormValues.sendReminder && (
           <>
             <Field
               label="Send reminder every"
@@ -94,39 +95,13 @@ export const NewNotificationChannelForm: FC<Props> = ({
         )}
       </div>
       {selectedChannel && (
-        <>
-          <h3>{selectedChannel.heading}</h3>
-          {selectedChannel.info !== '' && <InfoBox>{selectedChannel.info}</InfoBox>}
-          {selectedChannel.options.map((option: Option, index: number) => {
-            const key = `${option.label}-${index}`;
-
-            // Some options can be dependent on other options, this determines what is selected in the dependency options
-            // I think this needs more thought.
-            const selectedOptionValue =
-              getValues()[`settings.${option.showWhen.field}`] &&
-              (getValues()[`settings.${option.showWhen.field}`] as SelectableValue<string>).value;
-
-            if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
-              return null;
-            }
-
-            return (
-              <Field
-                key={key}
-                label={option.label}
-                description={option.description}
-                invalid={errors.settings && !!errors.settings[option.propertyName]}
-                error={
-                  errors.settings &&
-                  errors.settings[option.propertyName] &&
-                  errors.settings[option.propertyName].message
-                }
-              >
-                <OptionElement option={option} register={register} control={control} />
-              </Field>
-            );
-          })}
-        </>
+        <NotificationChannelOptions
+          selectedChannel={selectedChannel}
+          currentFormValues={currentFormValues}
+          register={register}
+          errors={errors}
+          control={control}
+        />
       )}
       <HorizontalGroup>
         <Button type="submit">Save</Button>

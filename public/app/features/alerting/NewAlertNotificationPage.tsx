@@ -59,7 +59,7 @@ class NewAlertNotificationPage extends PureComponent<Props> {
       ...defaultValues,
       ...data,
       type: data.type.value,
-      settings: { ...Object.assign(defaultValues.settings, settings) },
+      settings: { ...defaultValues.settings, ...settings },
     });
   };
 
