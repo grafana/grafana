@@ -28,6 +28,7 @@ enable = [
   "ineffassign",
   # "interfacer",
   # "misspell",
+  "nakedret",
   "rowserrcheck",
   "scopelint",
   "staticcheck",
