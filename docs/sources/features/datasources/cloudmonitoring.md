@@ -12,7 +12,6 @@ weight = 4
 
 # Using Google Cloud Monitoring in Grafana
 
-> Available as a beta feature in Grafana v5.3.x and v5.4.x.
 > Officially released in Grafana v6.0.0
 
 > Before Grafana v7.1 this data source was named Google Stackdriver.

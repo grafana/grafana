@@ -63,7 +63,7 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 	// Previously there was an assumption that the plugin directory
 	// should be public/app/plugins/<plugin type>/<plugin id>
 	// However this can be an issue if the plugin directory should be renamed to something else
-	_, currentDir := path.Split(fp.PluginDir)
+	currentDir := path.Base(fp.PluginDir)
 	fp.Module = path.Join("app/plugins", fp.Type, currentDir, "module")
 	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, currentDir)
 }
