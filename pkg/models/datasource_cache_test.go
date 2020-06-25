@@ -225,7 +225,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
 			res, err := transport.RoundTrip(req)
 			So(err, ShouldBeNil)
-			defer res.Body.Close()
+;			defer res.Body.Close()
 			body, err := ioutil.ReadAll(res.Body)
 			So(err, ShouldBeNil)
 			bodyStr := string(body)
