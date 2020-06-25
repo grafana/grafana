@@ -76,7 +76,7 @@ type AlertNotification struct {
 	Created               time.Time        `json:"created"`
 	Updated               time.Time        `json:"updated"`
 	Settings              *simplejson.Json `json:"settings"`
-	SecureSettings        map[string]bool  `json:"secureSettings"`
+	SecureFields        map[string]bool  `json:"secureFields"`
 }
 
 func NewAlertNotificationLookup(notification *models.AlertNotification) *AlertNotificationLookup {
