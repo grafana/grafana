@@ -35,16 +35,15 @@ exports[`Render should render organization and preferences 1`] = `
   <PageContents
     isLoading={false}
   >
-    <div>
+    <Component>
       <OrgProfile
-        onOrgNameChange={[Function]}
         onSubmit={[Function]}
         orgName="Cool org"
       />
       <SharedPreferences
         resourceUri="org"
       />
-    </div>
+    </Component>
   </PageContents>
 </Page>
 `;

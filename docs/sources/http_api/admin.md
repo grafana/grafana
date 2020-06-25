@@ -229,7 +229,7 @@ Content-Type: application/json
 }
 ```
 
-Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org](https://grafana.com/docs/grafana/latest/installation/configuration/#auto-assign-org) is set to `true`.
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org](https://grafana.com/docs/grafana/latest/administration/configuration/#auto-assign-org) is set to `true`.
 
 **Example Response**:
 
@@ -464,6 +464,8 @@ Content-Type: application/json
 `POST /api/admin/provisioning/dashboards/reload`
 
 `POST /api/admin/provisioning/datasources/reload`
+
+`POST /api/admin/provisioning/plugins/reload`
 
 `POST /api/admin/provisioning/notifications/reload`
 

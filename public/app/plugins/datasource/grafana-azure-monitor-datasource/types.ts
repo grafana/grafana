@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -124,14 +124,10 @@ export interface AzureLogsVariable {
   value: string;
 }
 
-export interface AzureLogsTableData {
+export interface AzureLogsTableData extends TableData {
   columns: AzureLogsTableColumn[];
   rows: any[];
   type: string;
-  refId: string;
-  meta: {
-    query: string;
-  };
 }
 
 export interface AzureLogsTableColumn {
