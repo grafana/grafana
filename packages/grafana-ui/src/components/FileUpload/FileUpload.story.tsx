@@ -15,5 +15,9 @@ export default {
 };
 
 export const single = () => {
-  return <FileUpload />;
+  return (
+    <FileUpload
+      onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}
+    />
+  );
 };
