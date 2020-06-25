@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -37,13 +37,14 @@ type ApplicationInsightsQuery struct {
 	IsRaw bool
 
 	// Text based raw query options
-	ApiURL            string
-	Params            url.Values
-	Alias             string
-	Target            string
-	TimeColumnName    string
-	ValueColumnName   string
-	SegmentColumnName string
+	ApiURL string
+	Params url.Values
+	Alias  string
+	Target string
+
+	metricName  string
+	dimensions  []string
+	aggregation string
 }
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
@@ -110,10 +111,13 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 		}
 		params.Add("aggregation", insightsJSONModel.Aggregation)
 
+		dims := []string{}
+
 		dimension := strings.TrimSpace(insightsJSONModel.Dimension)
 		// Azure Monitor combines this and the following logic such that if dimensionFilter, must also Dimension, should that be done here as well?
 		if dimension != "" && !strings.EqualFold(dimension, "none") {
 			params.Add("segment", dimension)
+			dims = append(dims, dimension)
 		}
 
 		dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
@@ -122,12 +126,15 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 		}
 
 		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
-			RefID:  query.RefId,
-			IsRaw:  false,
-			ApiURL: azureURL,
-			Params: params,
-			Alias:  insightsJSONModel.Alias,
-			Target: params.Encode(),
+			RefID:       query.RefId,
+			IsRaw:       false,
+			ApiURL:      azureURL,
+			Params:      params,
+			Alias:       insightsJSONModel.Alias,
+			Target:      params.Encode(),
+			metricName:  insightsJSONModel.MetricName,
+			aggregation: insightsJSONModel.Aggregation,
+			dimensions:  dims,
 		})
 
 	}
@@ -181,19 +188,18 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
-	obj := MetricsResult{}
-	err = json.Unmarshal(body, &obj)
+	mr := MetricsResult{}
+	err = json.Unmarshal(body, &mr)
 	if err != nil {
 		return nil, err
 	}
-	azlog.Debug(spew.Sdump(obj))
 
-	queryResult.Series, err = e.parseTimeSeriesFromMetrics(body, query)
+	frame, err := mr.ToFrame(query.metricName, query.aggregation, query.dimensions)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, nil
 	}
-
+	queryResult.Dataframes = tsdb.NewDecodedDataFrames(data.Frames{frame})
 	return queryResult, nil
 }
 
