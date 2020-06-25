@@ -32,7 +32,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 
 1. On the Field tab, find the link that you want to make changes to. (Panel tab for graph visualizations.)
 1. Click the Edit (pencil) icon to open the Edit link window. 
-1. Make any necessary changes.
+1. Make necessary changes (if any).
 1. Click **Save** to save changes and close the window.
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
