@@ -48,7 +48,7 @@ func formatShort(interval time.Duration) string {
 }
 
 func NewAlertNotification(notification *models.AlertNotification) *AlertNotification {
-	return &AlertNotification{
+	dto := &AlertNotification{
 		Id:                    notification.Id,
 		Uid:                   notification.Uid,
 		Name:                  notification.Name,
@@ -60,8 +60,16 @@ func NewAlertNotification(notification *models.AlertNotification) *AlertNotifica
 		SendReminder:          notification.SendReminder,
 		DisableResolveMessage: notification.DisableResolveMessage,
 		Settings:              notification.Settings,
-		SecureFields:        map[string]bool{}, 
+		SecureFields:          map[string]bool{},
 	}
+
+	if notification.SecureSettings != nil {
+		for k := range notification.SecureSettings.Decrypt() {
+			dto.SecureFields[k] = true
+		}
+	}
+
+	return dto
 }
 
 type AlertNotification struct {
@@ -76,7 +84,7 @@ type AlertNotification struct {
 	Created               time.Time        `json:"created"`
 	Updated               time.Time        `json:"updated"`
 	Settings              *simplejson.Json `json:"settings"`
-	SecureFields        map[string]bool  `json:"secureFields"`
+	SecureFields          map[string]bool  `json:"secureFields"`
 }
 
 func NewAlertNotificationLookup(notification *models.AlertNotification) *AlertNotificationLookup {

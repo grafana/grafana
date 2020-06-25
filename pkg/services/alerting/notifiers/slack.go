@@ -112,15 +112,21 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Token</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.secureSettings.token"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify Recipient for this to work
-        </info-popover>
+        <div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Token</label></div>
+        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.token">
+          <input type="text"
+            class="gf-form-input max-width-30"
+            ng-model="ctrl.model.secureSettings.token"
+            data-placement="right">
+          </input>
+          <info-popover mode="right-absolute">
+            Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify Recipient for this to work
+          </info-popover>
+        </div>
+        <div class="gf-form" ng-if="ctrl.model.secureFields.token">
+          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.token = false">reset</a>
+        </div>
       </div>
     `,
 	})
