@@ -4,16 +4,17 @@ import { addLabelToQuery } from './add_label_to_query';
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
 export const processHistogramLabels = (labels: string[]) => {
-  const resultSet: Set<string> = new Set();
+  const result = [];
   const regexp = new RegExp('_bucket($|:)');
   for (let index = 0; index < labels.length; index++) {
     const label = labels[index];
     const isHistogramValue = regexp.test(label);
     if (isHistogramValue) {
-      resultSet.add(label);
+      if (result.indexOf(label) === -1) {
+        result.push(label);
+      }
     }
   }
-  const result = [...resultSet];
 
   return { values: { __name__: result } };
 };

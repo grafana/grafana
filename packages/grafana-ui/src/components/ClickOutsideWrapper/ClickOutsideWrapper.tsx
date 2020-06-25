@@ -35,7 +35,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   componentWillUnmount() {
     window.removeEventListener('click', this.onOutsideClick, false);
     if (this.props.includeButtonPress) {
-      window.removeEventListener('keyup', this.onOutsideClick, false);
+      window.addEventListener('keyup', this.onOutsideClick, false);
     }
   }
 
