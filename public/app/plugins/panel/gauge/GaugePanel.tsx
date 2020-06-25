@@ -12,9 +12,14 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { options } = this.props;
-    const { value, width, height } = valueProps;
+    const { width, height, count, value } = valueProps;
     const { field, display } = value;
     const { openMenu, targetClassName } = menuProps;
+
+    // hide title if only 1 gauge is being displayed and no custom displayName set
+    if (count === 1 && !field.displayName) {
+      display.title = undefined;
+    }
 
     return (
       <Gauge
