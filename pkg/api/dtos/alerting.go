@@ -60,7 +60,7 @@ func NewAlertNotification(notification *models.AlertNotification) *AlertNotifica
 		SendReminder:          notification.SendReminder,
 		DisableResolveMessage: notification.DisableResolveMessage,
 		Settings:              notification.Settings,
-		SecureSettings:        map[string]bool{}, // don't fill secure data
+		SecureFields:        map[string]bool{}, 
 	}
 }
 
