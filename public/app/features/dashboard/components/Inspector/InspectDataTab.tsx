@@ -269,20 +269,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <Container>
-          <div className={styles.actionsWrapper}>
-            <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
-            <Button
-              variant="primary"
-              onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
-              className={css`
-                margin-bottom: 10px;
-              `}
-            >
-              Download CSV
-            </Button>
-          </div>
-        </Container>
+        <div className={styles.actionsWrapper}>
+          <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
+          <Button
+            variant="primary"
+            onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
+            className={css`
+              margin-bottom: 10px;
+            `}
+          >
+            Download CSV
+          </Button>
+        </div>
         <Container grow={1}>
           <AutoSizer>
             {({ width, height }) => {
