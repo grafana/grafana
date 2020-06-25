@@ -6,7 +6,9 @@ import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props {
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
+  /** Custom upload label text */
   label?: string;
+  /** Accepted file extensions */
   accept?: string;
   className?: string;
 }
