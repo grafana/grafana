@@ -264,18 +264,6 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		imageURL = evalContext.ImagePublicURL
 	}
 
-	var blocks []map[string]interface{}
-	if mentionsBuilder.Len() > 0 {
-		blocks = []map[string]interface{}{
-			{
-				"type": "section",
-				"text": map[string]interface{}{
-					"type": "mrkdwn",
-					"text": mentionsBuilder.String(),
-				},
-			},
-		}
-	}
 	attachment := map[string]interface{}{
 		"color":       evalContext.GetStateModel().Color,
 		"title":       evalContext.GetNotificationTitle(),
@@ -291,12 +279,22 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		attachment["image_url"] = imageURL
 	}
 	body := map[string]interface{}{
-		"text":   evalContext.GetNotificationTitle(),
-		"blocks": blocks,
+		"text": evalContext.GetNotificationTitle(),
 		"attachments": []map[string]interface{}{
 			attachment,
 		},
 		"parse": "full", // to linkify urls, users and channels in alert message.
+	}
+	if mentionsBuilder.Len() > 0 {
+		body["blocks"] = []map[string]interface{}{
+			{
+				"type": "section",
+				"text": map[string]interface{}{
+					"type": "mrkdwn",
+					"text": mentionsBuilder.String(),
+				},
+			},
+		}
 	}
 
 	//recipient override
