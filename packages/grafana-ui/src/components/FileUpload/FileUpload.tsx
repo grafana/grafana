@@ -1,7 +1,7 @@
 import React, { FC, FormEvent } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFormStyles } from '../index';
+import { getFormStyles, Icon } from '../index';
 import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props {
@@ -19,7 +19,7 @@ export const FileUpload: FC<Props> = ({ onFileUpload, className, label = 'Upload
 
   return (
     <label className={cx(style.button, className)}>
-      <Icon name="upload"/>
+      <Icon name="upload" className={style.icon} />
       {label}
       <input
         type="file"
@@ -41,6 +41,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     button: css`
       ${buttonFormStyle}
+    `,
+    icon: css`
+      margin-right: ${theme.spacing.xs};
     `,
   };
 });
