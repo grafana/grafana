@@ -36,13 +36,13 @@ Query expressions are different for each data source. For more information, refe
 
 ## Enter Query Options
 
-1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../features/datasources/add-a-data-source.md" >}}).
+1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}).
 1. In the **Refresh** list, select when the variable should update options.
    - **Never -** WHEN AND WHY WOULD THEY USE THIS?
    - **On Dashboard Load -** Queries the data source every time the dashboard loads. Ths slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized. 
    - **On Time Range Change -** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query. If you need more room, hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
-1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names return by your data source query.
+1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names return by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "filter-variables-with-regex.md" >}}).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
 
 ## Enter Selection Options
@@ -51,7 +51,7 @@ All selection options are optional, and they are off by default.
 
 ### Multi-value
 
-If you turn this on, then the variable dropdown list allows users to select multiple options at the same time.
+If you turn this on, then the variable dropdown list allows users to select multiple options at the same time. For more information, refer to [Formatting multi-value variables]({{< relref "formatting-multi-value-variables.md" >}}).
 
 ### Include All option
 
@@ -67,9 +67,7 @@ By default the `All` value includes all options in combined expression. This can
 
 In order to have custom regex, globs, or lucene syntax in the **Custom all value** option, it is never escaped so you will have to think about what is a valid value for your data source.
 
-## Enter Value groups/tags (Experimental feature)
-
-NEED MORE DETAILS HERE
+## Enter Value groups/tags (experimental feature)
 
 If you have many options in the dropdown for a multi-value variable, then you can use this feature to group the values into selectable tags.
 
@@ -81,9 +79,13 @@ This feature is off by default. Click **Enabled** to turn on the feature.
 
 Enter a data source query that should return a list of tags.
 
+NEED MORE DETAILS HERE
+
 ### Tag values query
 
 Enter a data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer the currently selected tag.
+
+NEED MORE DETAILS HERE
 
 ## Final steps
 

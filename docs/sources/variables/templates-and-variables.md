@@ -36,6 +36,20 @@ wmi_system_threads{instance=~"$server"}
 
 Variable values are always synced to the URL using the syntax `var-<varname>=value`.
 
+## Examples of templates and variables
+
+To see variable and template examples, go to any of the dashboards listed below.
+
+- [Elasticsearch Templated dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
+- [Graphite Templated Nested dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
+- [InfluxDB Templated dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
+
+Variables are listed in dropdown lists across the top of the screen. Select different variables to see how the visualizations change. 
+
+To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
+
+Variables can be used in titles, descriptions, text panels, and queries. Queries with text that starts with `$` are templates. Not all panels will have template queries.
+
 ## Variable syntax
 
 Panel titles and metric queries can refer to variables using two different syntaxes:
@@ -54,43 +68,48 @@ documentation topic for details on value escaping during interpolation.
 
 For advanced syntax to override data source default formatting, refer to [Advanced variable format options]({{< relref "advanced-variable-format-options.md" >}}).
 
-## Examples of templates and variables
-
-To see variable and template examples, go to any of the dashboards listed below.
-
-- [Elasticsearch Templated dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [Graphite Templated Nested dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
-- [InfluxDB Templated dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
-
-Variables are listed in dropdown lists across the top of the screen. Select different variables to see how the visualizations change. 
-
-To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
-
-Variables can be used in titles, descriptions, text panels, and queries. Queries with text that starts with `$` are templates. Not all panels will have template queries.
-
 ## Variable types
 
-Grafana also has global built-in variables that can be used in expressions in the query editor. Refer to [Global variables]({{< relref "global-variables" >}}) for more information.
+Grafana has global built-in variables that can be used in expressions in the query editor. Refer to [Global variables]({{< relref "global-variables" >}}) for more information.
 
 You can also define the following types of variables in Grafana. 
 
-Type | Description
-------- | --------
-*Query* | This variable type allows you to write a data source query that usually returns a list of metric names, tag values or keys. For example, a query that returns a list of server names, sensor ids or data centers.
-*Interval* | This variable can represent time spans. Instead of hard-coding a group by time or date histogram interval, use a variable of this type.
-*Data source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
-*Custom* | Define the variable options manually using a comma separated list.
-*Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
-*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB, Prometheus, and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
-*Text box* | This variable type will display as a free text input field with an optional default value.
+### Query
 
-## Interval variables
+Query variables allow you to write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, or data centers.
 
-Use the `Interval` type to create a variable that represents a time span (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range. You can specify how many times the current time range should be divided to calculate the current `auto` timespan.
+For instructions, refer to [Add a query variable]({{< relref "add-query-variable.md" >}}).
+
+### Custom
+
+Define the variable options manually using a comma-separated list.
+
+### Text box
+
+Text box variables display as a free text input field with an optional default value.
+
+### Constant
+
+Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables are made into an import option.
+
+### Data source
+
+Data source variables allow you to quickly change the data source for an entire dashboard. Useful if you have multiple instances of a data source in for example different environments.
+
+### Interval
+
+Interval variables represent time spans. Instead of hard-coding a group by time or date histogram interval, use an interval variable.
+
+You can use the `Interval` type to create a variable that represents a time span (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range. You can specify how many times the current time range should be divided to calculate the current `auto` timespan.
 
 This variable type is useful as a parameter to group by time (for InfluxDB), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
 
-Example using the template variable `myinterval` of type `Interval` in a graphite function:
+Example using the template variable `myinterval` of type `Interval` in a Graphite function:
 
 ```
 summarize($myinterval, sum, false)
+```
+
+### Ad hoc filters
+
+Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources. This variable type allows you to add key/value filters that are automatically added to all metric queries that use the specified data source.
