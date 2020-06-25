@@ -10,36 +10,48 @@ import (
 
 // ToFrame converts a MetricsResult (a Application Insights metrics query) to a dataframe.
 // Due to the dynamic nature of the MetricsResult object, the name of the metric, aggregation, and
-// and requested dimensions are used to determine the expected shape of the object
+// and requested dimensions are used to determine the expected shape of the object.
+// This builds all series into a single data.Frame with one time index (a wide formatted time series frame).
 func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data.Frame, error) {
 	dimLen := len(dimensions)
 
-	// The Response has both Start and End time, so we name the column "StartTime".
-	frame := data.NewFrame("", data.NewField("StartTime", nil, []time.Time{})) // The Response has both Start and End time, so we name the column "StartTime".
+	// The Response has both Start and End times, so we name the column "StartTime".
+	frame := data.NewFrame("", data.NewField("StartTime", nil, []time.Time{}))
 
-	fieldIdxMap := map[string]int{}
+	fieldIdxMap := map[string]int{} // a map of a string representation of the labels to the Field index in the frame.
 
-	rowCounter := 0
+	rowCounter := 0 // row in the resulting frame
 
-	for _, seg := range *mr.Value.Segments {
+	if mr == nil || mr.Value == nil { // never seen this response, but to ensure there is no panic
+		return nil, fmt.Errorf("unexpected nil response or response value in metrics result")
+	}
+
+	for _, seg := range *mr.Value.Segments { // each top level segment in the response shares timestamps.
 		frame.Extend(1)
-		frame.Set(0, rowCounter, seg.Start)
+		frame.Set(0, rowCounter, seg.Start) // field 0 is the time field
 		labels := data.Labels{}
 
-		handleInnerSegment := func(s MetricsSegmentInfo) error {
+		// handleLeafSegment is for the leaf MetricsSegmentInfo nodes in the response.
+		// A leaf node contains an aggregated value, and when there are multiple dimensions, a label key/value pair.
+		handleLeafSegment := func(s MetricsSegmentInfo) error {
+
+			// since this is a dynamic response, everything we are interested in here from JSON
+			// is Marshalled (mapped) into the AdditionalProperties property.
 			met, ok := s.AdditionalProperties[metric]
 			if !ok {
-				return fmt.Errorf("expected additional properties not found on inner segment while handling azure query")
+				return fmt.Errorf("expected additional properties for metric %v not found in inner segment", metric)
 			}
 			metMap, ok := met.(map[string]interface{})
 			if !ok {
-				return fmt.Errorf("unexpected type for additional properties not found on inner segment while handling azure query")
+				return fmt.Errorf("unexpected type for additional properties not found in inner segment, want map[string]interface{}, but got %T", met)
+
 			}
 			metVal, ok := metMap[agg]
 			if !ok {
-				return fmt.Errorf("expected aggregation value for aggregation %v not found on inner segment while handling azure query", agg)
+				return fmt.Errorf("expected value for aggregation %v not found in inner segment", agg)
 			}
-			if dimLen != 0 {
+
+			if dimLen != 0 { // when there are dimensions, the final dimension is in this inner segment.
 				key := dimensions[dimLen-1]
 				val, ok := s.AdditionalProperties[key]
 				if !ok {
@@ -51,14 +63,18 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 				}
 				labels[key] = sVal
 			}
+
 			if _, ok := fieldIdxMap[labels.String()]; !ok {
+				// When we find a new combintation of labels for the metric, a new Field is appended.
 				frame.Fields = append(frame.Fields, data.NewField(metric, labels.Copy(), make([]*float64, rowCounter+1)))
 				fieldIdxMap[labels.String()] = len(frame.Fields) - 1
 			}
+
 			var v *float64
 			if val, ok := metVal.(float64); ok {
 				v = &val
 			}
+
 			frame.Set(fieldIdxMap[labels.String()], rowCounter, v)
 
 			return nil
@@ -66,41 +82,48 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 
 		// Simple case with no Segments/Dimensions
 		if dimLen == 0 {
-			err := handleInnerSegment(seg)
-			rowCounter++
-			if err != nil {
+			if err := handleLeafSegment(seg); err != nil {
 				return nil, err
 			}
+			rowCounter++
 			continue
 		}
+
+		// Multiple dimension case
 		var traverse func(segments *[]MetricsSegmentInfo, depth int) error
+
+		// traverse walks segments collecting dimensions as labels until leaf segments are
+		// reached, and then handleInnerSegment is called. The final k/v label pair is
+		// in the leaf segment.
+		// A non-recursive implementation would probably be better.
 		traverse = func(segments *[]MetricsSegmentInfo, depth int) error {
 			if segments == nil {
 				return nil
 			}
 			for _, seg := range *segments {
 				if seg.Segments == nil {
-					if err := handleInnerSegment(seg); err != nil {
+					if err := handleLeafSegment(seg); err != nil {
 						return err
 					}
 					continue
 				}
-				segStr := dimensions[depth]
-				rawLabelValue, ok := seg.AdditionalProperties[segStr]
+				dimension := dimensions[depth]
+				rawLabelValue, ok := seg.AdditionalProperties[dimension]
 				if !ok {
-					return fmt.Errorf("expected label key %v not found", segStr)
+					return fmt.Errorf("expected label key %v not found at expected depth %v in response", dimension, depth)
 				}
 				labelValue, ok := rawLabelValue.(string)
 				if !ok {
-					return fmt.Errorf("unexpected non string value for the label value for key %v, got type %T with a value of %v", segStr, rawLabelValue, rawLabelValue)
+					return fmt.Errorf("unexpected non string value for the label value for key %v, got type %T with a value of %v", dimension, rawLabelValue, rawLabelValue)
 				}
-				labels[segStr] = labelValue
+				labels[dimension] = labelValue
 				if err := traverse(seg.Segments, depth+1); err != nil {
 					return err
 				}
 			}
 			return nil
 		}
+
 		if err := traverse(seg.Segments, 0); err != nil {
 			return nil, err
 		}
@@ -110,11 +133,13 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 }
 
 // MetricsResult a metric result.
+// This is copied from azure-sdk-for-go/services/preview/appinsights/v1/insights.
 type MetricsResult struct {
 	Value *MetricsResultInfo `json:"value,omitempty"`
 }
 
 // MetricsResultInfo a metric result data.
+// This is copied from azure-sdk-for-go/services/preview/appinsights/v1/insights (except time Type is changed).
 type MetricsResultInfo struct {
 	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
 	AdditionalProperties map[string]interface{} `json:""`
@@ -128,7 +153,8 @@ type MetricsResultInfo struct {
 	Segments *[]MetricsSegmentInfo `json:"segments,omitempty"`
 }
 
-// MetricsSegmentInfo a metric segment
+// MetricsSegmentInfo is a metric segment.
+// This is copied from azure-sdk-for-go/services/preview/appinsights/v1/insights (except time Type is changed).
 type MetricsSegmentInfo struct {
 	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
 	AdditionalProperties map[string]interface{} `json:""`
@@ -141,6 +167,7 @@ type MetricsSegmentInfo struct {
 }
 
 // UnmarshalJSON is the custom unmarshaler for MetricsResultInfo struct.
+// This is copied from azure-sdk-for-go/services/preview/appinsights/v1/insights (except time Type is changed).
 func (mri *MetricsSegmentInfo) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
 	err := json.Unmarshal(body, &m)
@@ -195,6 +222,7 @@ func (mri *MetricsSegmentInfo) UnmarshalJSON(body []byte) error {
 }
 
 // UnmarshalJSON is the custom unmarshaler for MetricsResultInfo struct.
+// This is copied from azure-sdk-for-go/services/preview/appinsights/v1/insights (except time Type is changed).
 func (mri *MetricsResultInfo) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
 	err := json.Unmarshal(body, &m)
