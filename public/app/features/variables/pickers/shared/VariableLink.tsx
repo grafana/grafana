@@ -38,7 +38,7 @@ export class VariableLink extends PureComponent<Props> {
           {tags.map(tag => {
             const { color, borderColor } = getTagColorsFromName(tag.text.toString());
             return (
-              <span bs-tooltip="tag.valuesText" data-placement="bottom" key={`${tag.text}`}>
+              <span key={`${tag.text}`}>
                 <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
                   &nbsp;&nbsp;
                   <Icon name="tag-alt" />
