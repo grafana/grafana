@@ -112,6 +112,62 @@ func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuer
 	return result, nil
 }
 
+func buildDeepLink(query *stackdriverQuery) string {
+	// TODO only for metric query
+	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
+	if err != nil {
+		return ""
+	}
+
+	q := u.Query()
+	q.Set("project", query.ProjectName)
+
+	groupBys := make([]string, 0)
+	for _, groupBy := range query.Params["aggregation.groupByFields"] {
+		groupBys = append(groupBys, groupBy)
+	}
+
+	pageState := map[string]interface{}{
+		"xyChart": map[string]interface{}{
+			"constantLines": []string{},
+			"dataSets": []map[string]interface{}{
+				{
+					"timeSeriesFilter": map[string]interface{}{
+						"aggregations":           []string{},
+						"crossSeriesReducer":     query.Params.Get("aggregation.crossSeriesReducer"),
+						"filter":                 query.Params.Get("filter"),
+						"groupByFields":          groupBys,
+						"minAlignmentPeriod":     strings.TrimPrefix(query.Params.Get("aggregation.alignmentPeriod"), "+"), // get rid off leading +,
+						"perSeriesAligner":       query.Params.Get("aggregation.perSeriesAligner"),
+						"secondaryGroupByFields": []string{},
+						"unitOverride":           "1",
+					},
+				},
+			},
+			"timeshiftDuration": "0s",
+			"y1Axis": map[string]string{
+				"label": "y1Axis",
+				"scale": "LINEAR",
+			},
+		},
+		"timeSelection": map[string]string{
+			"timeRange": "custom",
+			"start":     query.Params.Get("interval.startTime"),
+			"end":       query.Params.Get("interval.endTime"),
+		},
+	}
+
+	blob, err := json.Marshal(pageState)
+	if err != nil {
+		slog.Error("Failed to generate deep link", "pageState", pageState, "ProjectName", query.ProjectName, "query", query.RefID)
+		return ""
+	}
+
+	q.Set("pageState", string(blob))
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
 func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
@@ -132,6 +188,7 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 			queryRes.Error = err
 		}
 		result.Results[query.RefID] = queryRes
+		queryRes.Meta.Set("deepLink", buildDeepLink(query))
 	}
 
 	return result, nil
