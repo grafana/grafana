@@ -32,7 +32,7 @@ type NotifierPlugin struct {
 	Options         []NotifierOption `json:"options"`
 }
 
-// Option holds information about options specific for the NotifierPlugin.
+// NotifierOption holds information about options specific for the NotifierPlugin.
 type NotifierOption struct {
 	Element        ElementType    `json:"element"`
 	InputType      InputType      `json:"inputType"`
