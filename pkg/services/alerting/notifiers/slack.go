@@ -29,7 +29,13 @@ func init() {
       <h3 class="page-heading">Slack settings</h3>
       <div class="gf-form max-width-30">
         <span class="gf-form-label width-8">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
+        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.url">
+          <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.secureSettings.url" placeholder="Slack incoming webhook url"></input>
+        </div>
+        <div class="gf-form" ng-if="ctrl.model.secureFields.url">
+          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.url = false">reset</a>
+        </div>
       </div>
       <div class="gf-form max-width-30">
         <span class="gf-form-label width-8">Recipient</span>
@@ -136,7 +142,7 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	url := model.Settings.Get("url").MustString()
+	url := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
