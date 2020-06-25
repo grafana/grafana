@@ -13,6 +13,7 @@ import {
   Bool,
   Column,
 } from 'apache-arrow';
+import { getFieldDisplayName } from '../field';
 
 export interface ArrowDataFrame extends DataFrame {
   table: Table;
@@ -117,16 +118,33 @@ function toArrowVector(field: Field): ArrowVector {
   return builder.finish().toVector();
 }
 
-export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
+export function grafanaDataFrameToArrowTable(data: DataFrame, forReload?: boolean): Table {
   // Return the original table
   let table = (data as any).table;
-  if (table instanceof Table) {
-    return table as Table;
+  if (table instanceof Table && table.numCols === data.fields.length) {
+    if (!forReload) {
+      for (let i = 0; i < table.numCols; i++) {
+        const col = table.getColumnAt(i);
+        if (!col) {
+          table = undefined;
+          break;
+        }
+        col.name = getFieldDisplayName(data.fields[i], data);
+      }
+    }
+    if (table) {
+      return table as Table;
+    }
   }
 
   table = Table.new(
     data.fields.map((field, index) => {
-      const column = Column.new(field.name, toArrowVector(field));
+      let name = field.name;
+      // when used directly as an arrow table the name should match the arrow schema
+      if (!forReload) {
+        name = getFieldDisplayName(field, data);
+      }
+      const column = Column.new(name, toArrowVector(field));
       if (field.labels) {
         column.metadata.set('labels', JSON.stringify(field.labels));
       }
