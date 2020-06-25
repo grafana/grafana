@@ -391,7 +391,7 @@ export function rangeQueryResponseToTimeSeries(
   responseListLength: number
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
-  const meta = {
+  const meta: QueryResultMeta = {
     preferredVisualisationType: 'graph',
   };
 
