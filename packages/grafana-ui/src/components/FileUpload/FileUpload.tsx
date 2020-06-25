@@ -19,6 +19,7 @@ export const FileUpload: FC<Props> = ({ onFileUpload, className, label = 'Upload
 
   return (
     <label className={cx(style.button, className)}>
+      <Icon name="upload"/>
       {label}
       <input
         type="file"
