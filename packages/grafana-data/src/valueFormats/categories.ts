@@ -115,6 +115,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Swiss franc (CHF)', id: 'currencyCHF', fn: currency('CHF') },
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
+      { name: 'Milli Bitcoin (฿)', id: 'currencymBTC', fn: currency('mBTC') },
+      { name: 'Micro Bitcoin (฿)', id: 'currencyμBTC', fn: currency('μBTC') },
       { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
       { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
       { name: 'South Korean Won (₩)', id: 'currencyKRW', fn: currency('₩') },
@@ -257,7 +259,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'length',
+    name: 'Length',
     formats: [
       { name: 'millimeter (mm)', id: 'lengthmm', fn: decimalSIPrefix('m', -1) },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },

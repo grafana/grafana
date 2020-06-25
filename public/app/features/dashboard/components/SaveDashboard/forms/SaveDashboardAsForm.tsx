@@ -7,7 +7,7 @@ import validationSrv from 'app/features/manage-dashboards/services/ValidationSrv
 
 interface SaveDashboardAsFormDTO {
   title: string;
-  $folder: { id: number; title: string };
+  $folder: { id?: number; title?: string };
   copyTags: boolean;
 }
 

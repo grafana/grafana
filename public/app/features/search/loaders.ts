@@ -1,7 +1,8 @@
 import { backendSrv } from 'app/core/services/backend_srv';
+import { NavModel } from '@grafana/data';
 
 export const loadFolderPage = (uid: string, activeChildId: string) => {
-  const navModel = {
+  const navModel: Pick<NavModel, 'main'> = {
     main: {
       icon: 'folder-open',
       id: 'manage-folder',
@@ -35,7 +36,7 @@ export const loadFolderPage = (uid: string, activeChildId: string) => {
     },
   };
 
-  return backendSrv.getFolderByUid(uid).then((folder: any) => {
+  return backendSrv.getFolderByUid(uid).then(folder => {
     const folderTitle = folder.title;
     const folderUrl = folder.url;
     navModel.main.text = folderTitle;

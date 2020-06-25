@@ -85,5 +85,5 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
   }
 }
 
-// This component is to enable SeriecColorPickerPopover usage via series-color-picker-popover directive
+// This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
 export const SeriesColorPickerPopoverWithTheme = withTheme(SeriesColorPickerPopover);

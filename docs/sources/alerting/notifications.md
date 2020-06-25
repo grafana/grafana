@@ -76,7 +76,7 @@ VictorOps | `victorops` | yes, external only | no
 
 ### Email
 
-To enable email notifications you have to setup [SMTP settings]({{< relref "../installation/configuration/#smtp" >}})
+To enable email notifications you have to setup [SMTP settings]({{< relref "../administration/configuration/#smtp" >}})
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
 Be aware that if you use the `local` image storage email servers and clients might not be
@@ -94,8 +94,8 @@ Addresses | Email addresses to recipients. You can enter multiple email addresse
 To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
 [Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
 firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store)
-in Grafana or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token
-provided (https://api.slack.com/bot-users), which starts with "xoxb".
+in Grafana or a bot integration via Slack Apps. [Follow Slack's guide to set up a bot integration](https://api.slack.com/bot-users) and use the token
+provided, which starts with "xoxb".
 
 Setting | Description
 ---------- | -----------
@@ -213,14 +213,11 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
 
-Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
-Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
-
-Be aware that some notifiers require public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
+You must configure an [external image storage provider]({{< relref "../administration/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 
 Notification services which need public image access are marked as 'external only'.
 
 ## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.
+This URL is based on the [domain]({{< relref "../administration/configuration/#domain" >}}) setting in Grafana.

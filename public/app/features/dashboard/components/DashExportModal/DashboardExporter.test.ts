@@ -8,6 +8,10 @@ import { createConstantVariableAdapter } from '../../../variables/constant/adapt
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 
+function getStub(arg: string) {
+  return Promise.resolve(stubs[arg || 'gfdb']);
+}
+
 jest.mock('app/core/store', () => {
   return {
     getBool: jest.fn(),
@@ -16,7 +20,7 @@ jest.mock('app/core/store', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getDataSourceSrv: () => ({
     get: jest.fn(arg => getStub(arg)),
   }),
@@ -269,7 +273,3 @@ stubs['-- Grafana --'] = {
     builtIn: true,
   },
 };
-
-function getStub(arg: string) {
-  return Promise.resolve(stubs[arg || 'gfdb']);
-}

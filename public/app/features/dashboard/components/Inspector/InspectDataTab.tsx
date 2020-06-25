@@ -14,7 +14,7 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, VerticalGroup } from '@grafana/ui';
+import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -24,13 +24,12 @@ import { saveAs } from 'file-saver';
 import { css } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
 
 interface Props {
-  dashboard: DashboardModel;
   panel: PanelModel;
-  data: DataFrame[];
+  data?: DataFrame[];
   isLoading: boolean;
   options: GetDataOptions;
   onOptionsChange: (options: GetDataOptions) => void;
@@ -270,20 +269,21 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <div className={styles.actionsWrapper}>
-          <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
-          <Button
-            variant="primary"
-            onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
-            className={css`
-              margin-bottom: 10px;
-            `}
-          >
-            Download CSV
-          </Button>
-        </div>
-
-        <div style={{ flexGrow: 1 }}>
+        <Container>
+          <div className={styles.actionsWrapper}>
+            <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
+            <Button
+              variant="primary"
+              onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
+              className={css`
+                margin-bottom: 10px;
+              `}
+            >
+              Download CSV
+            </Button>
+          </div>
+        </Container>
+        <Container grow={1}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -297,7 +297,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               );
             }}
           </AutoSizer>
-        </div>
+        </Container>
       </div>
     );
   }

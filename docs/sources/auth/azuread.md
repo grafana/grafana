@@ -94,7 +94,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 ## Enable Azure AD OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../installation/configuration.md#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}):
 
 ```ini
 [auth.azuread]
@@ -110,7 +110,7 @@ allowed_domains =
 allowed_groups =
 ```
 
-> Note: Ensure that the [root_url]({{< relref "../installation/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
+> Note: Ensure that the [root_url]({{< relref "../administration/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
 
 ### Configure allowed groups and domains
 

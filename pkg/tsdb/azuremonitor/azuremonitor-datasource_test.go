@@ -370,7 +370,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			err = datasource.parseResponse(res, azData, tt.mockQuery)
 			require.NoError(t, err)
 
-			frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+			frames, err := res.Dataframes.Decoded()
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expectedFrames, frames, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

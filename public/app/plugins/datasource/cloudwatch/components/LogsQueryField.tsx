@@ -42,6 +42,7 @@ export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<Cl
   syntaxLoaded: boolean;
   syntax: Grammar;
   exploreId: ExploreId;
+  allowCustomValue?: boolean;
 }
 
 const containerClass = css`
@@ -130,6 +131,14 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       return Promise.resolve();
     }
 
+    // No need to fetch matching log groups if the search term isn't valid
+    // This is also useful for preventing searches when a user is typing out a log group with template vars
+    // See https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_LogGroup.html for the source of the pattern below
+    const logGroupNamePattern = /^[\.\-_/#A-Za-z0-9]+$/;
+    if (!logGroupNamePattern.test(searchTerm)) {
+      return Promise.resolve();
+    }
+
     this.setState({
       loadingLogGroups: true,
     });
@@ -158,7 +167,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     this.fetchLogGroupOptions(query.region).then(logGroups => {
       this.setState(state => {
-        const selectedLogGroups = intersectionBy(state.selectedLogGroups, logGroups, 'value');
+        const selectedLogGroups = state.selectedLogGroups;
         if (onChange) {
           const nextQuery = {
             ...query,
@@ -200,21 +209,22 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     }
   };
 
-  setSelectedLogGroups = (v: Array<SelectableValue<string>>) => {
+  setSelectedLogGroups = (selectedLogGroups: Array<SelectableValue<string>>) => {
     this.setState({
-      selectedLogGroups: v,
+      selectedLogGroups,
     });
 
     const { onChange, query } = this.props;
+    onChange?.({
+      ...(query as CloudWatchLogsQuery),
+      logGroupNames: selectedLogGroups.map(logGroupName => logGroupName.value!) ?? [],
+    });
+  };
 
-    if (onChange) {
-      const nextQuery = {
-        ...query,
-        logGroupNames: v.map(logGroupName => logGroupName.value!) ?? [],
-      };
-
-      onChange(nextQuery);
-    }
+  setCustomLogGroups = (v: string) => {
+    const customLogGroup: SelectableValue<string> = { value: v, label: v };
+    const selectedLogGroups = [...this.state.selectedLogGroups, customLogGroup];
+    this.setSelectedLogGroups(selectedLogGroups);
   };
 
   setSelectedRegion = async (v: SelectableValue<string>) => {
@@ -327,7 +337,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   }, 250);
 
   render() {
-    const { ExtraFieldElement, data, query, syntaxLoaded, datasource } = this.props;
+    const { ExtraFieldElement, data, query, syntaxLoaded, datasource, allowCustomValue } = this.props;
     const {
       selectedLogGroups,
       availableLogGroups,
@@ -368,10 +378,14 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             className="flex-grow-1"
             inputEl={
               <MultiSelect
-                options={availableLogGroups}
+                allowCustomValue={allowCustomValue}
+                options={unionBy(availableLogGroups, selectedLogGroups, 'value')}
                 value={selectedLogGroups}
                 onChange={v => {
                   this.setSelectedLogGroups(v);
+                }}
+                onCreateOption={v => {
+                  this.setCustomLogGroups(v);
                 }}
                 className={containerClass}
                 closeMenuOnSelect={false}

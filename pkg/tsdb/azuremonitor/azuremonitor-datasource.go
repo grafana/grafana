@@ -221,7 +221,10 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -265,6 +268,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		return nil
 	}
 
+	frames := data.Frames{}
 	for _, series := range amr.Value[0].Timeseries {
 		metadataName := ""
 		metadataValue := ""
@@ -303,13 +307,10 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		encodedFrame, err := frame.MarshalArrow()
-		if err != nil {
-			queryRes.Error = fmt.Errorf("failed to encode dataframe response into arrow: %w", err)
-		}
-
-		queryRes.Dataframes = append(queryRes.Dataframes, encodedFrame)
+		frames = append(frames, frame)
 	}
+
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
 	return nil
 }
