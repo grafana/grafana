@@ -81,15 +81,11 @@ func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	}, nil
 }
 
-var (
-	plog        log.Logger
-	aliasFormat *regexp.Regexp
-)
+var plog = log.New("tsdb.cloudwatch")
+var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
-	plog = log.New("tsdb.cloudwatch")
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
-	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwatchlogs.CloudWatchLogs, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -112,11 +108,14 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwa
 
 	attemptCount := 1
 	for range ticker.C {
-		if res, err := e.executeGetQueryResults(ctx, logsClient, requestParams); err != nil {
+		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
+		if err != nil {
 			return nil, err
-		} else if isTerminated(*res.Status) {
+		}
+		if isTerminated(*res.Status) {
 			return res, err
-		} else if attemptCount >= maxAttempts {
+		}
+		if attemptCount >= maxAttempts {
 			return res, fmt.Errorf("fetching of query results exceeded max number of attempts")
 		}
 

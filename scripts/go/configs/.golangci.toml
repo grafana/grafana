@@ -11,7 +11,7 @@ min-occurrences = 5
 [linters]
 disable-all = true
 enable = [
-  # "bodyclose",
+  "bodyclose",
   "deadcode",
   "depguard",
   "dogsled",
@@ -19,7 +19,7 @@ enable = [
   # "gochecknoinits",
   "goconst",
   # "gocritic",
-  # "goimports",
+  "goimports",
   "golint",
   # "goprintffuncname",
   "gosec",

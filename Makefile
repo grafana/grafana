@@ -99,7 +99,7 @@ scripts/go/bin/golangci-lint: scripts/go/go.mod
 golangci-lint: scripts/go/bin/golangci-lint
 	@echo "lint via golangci-lint"
 	@scripts/go/bin/golangci-lint run \
-		--config ./scripts/go/configs/.golangci.yml \
+		--config ./scripts/go/configs/.golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint revive revive-strict # Run all code checks for backend.

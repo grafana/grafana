@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 type timeSeriesQuery struct {

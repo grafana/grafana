@@ -224,13 +224,10 @@ func TestDataSourceProxyCache(t *testing.T) {
 			// 3. Send test request which should have the Authorization header set
 			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
 			res, err := transport.RoundTrip(req)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			So(err, ShouldBeNil)
+			t.Cleanup(func() { res.Body.Close() })
 			body, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			So(err, ShouldBeNil)
 			bodyStr := string(body)
 			So(bodyStr, ShouldEqual, "Ok")
 		})
