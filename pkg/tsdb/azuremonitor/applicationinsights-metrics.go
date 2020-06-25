@@ -73,22 +73,37 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 			}
 			continue
 		}
-		var traverse func(segments *[]MetricsSegmentInfo, depth int)
-		traverse = func(segments *[]MetricsSegmentInfo, depth int) {
+		var traverse func(segments *[]MetricsSegmentInfo, depth int) error
+		traverse = func(segments *[]MetricsSegmentInfo, depth int) error {
 			if segments == nil {
-				return
+				return nil
 			}
 			for _, seg := range *segments {
 				if seg.Segments == nil {
-					handleInnerSegment(seg)
+					if err := handleInnerSegment(seg); err != nil {
+						return err
+					}
 					continue
 				}
 				segStr := dimensions[depth]
-				labels[segStr] = seg.AdditionalProperties[segStr].(string)
-				traverse(seg.Segments, depth+1)
+				rawLabelValue, ok := seg.AdditionalProperties[segStr]
+				if !ok {
+					return fmt.Errorf("expected label key %v not found", segStr)
+				}
+				labelValue, ok := rawLabelValue.(string)
+				if !ok {
+					return fmt.Errorf("unexpected non string value for the label value for key %v, got type %T with a value of %v", segStr, rawLabelValue, rawLabelValue)
+				}
+				labels[segStr] = labelValue
+				if err := traverse(seg.Segments, depth+1); err != nil {
+					return err
+				}
 			}
+			return nil
 		}
-		traverse(seg.Segments, 0)
+		if err := traverse(seg.Segments, 0); err != nil {
+			return nil, err
+		}
 		rowCounter++
 	}
 	return frame, nil
