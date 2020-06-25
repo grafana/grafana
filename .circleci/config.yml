@@ -625,11 +625,12 @@ jobs:
       - run:
           name: Install gcloud SDK
           command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
-              sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-              sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
+            VERSION=298.0.0
+            curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            echo 0d58f451331abf43d080fa997c8e580d64897627e30be74f6d8f983ccfabef1e \
+              google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --strict --status
+            tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            ./google-cloud-sdk/install.sh -q
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
@@ -639,6 +640,7 @@ jobs:
       - run:
           name: Build Docker images
           command: |
+            source google-cloud-sdk/path.bash.inc
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
