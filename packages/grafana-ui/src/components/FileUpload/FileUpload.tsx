@@ -1,6 +1,6 @@
 import React, { FC, FormEvent } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { getFormStyles } from '../index';
 import { stylesFactory, useTheme } from '../../themes';
 
@@ -8,14 +8,15 @@ export interface Props {
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
   label?: string;
   accept?: string;
+  className?: string;
 }
 
-export const FileUpload: FC<Props> = ({ onFileUpload, label = 'Upload file', accept = '*' }) => {
+export const FileUpload: FC<Props> = ({ onFileUpload, className, label = 'Upload file', accept = '*' }) => {
   const theme = useTheme();
   const style = getStyles(theme);
 
   return (
-    <label className={style.button}>
+    <label className={cx(style.button, className)}>
       {label}
       <input
         type="file"
