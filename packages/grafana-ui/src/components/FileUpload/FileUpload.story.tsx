@@ -1,6 +1,6 @@
 import React from 'react';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { FileUpload } from './FileUpload';
-import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
 import mdx from './FileUpload.mdx';
 
 export default {
