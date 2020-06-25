@@ -110,6 +110,7 @@ Mention Channel | Optionally mention either all channel members or just active o
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
+To use `chat.postMessage` API to post message, you have to set `Url` as `https://slack.com/api/chat.postMessage`, and `Recipient` and `Token`.
 
 ### PagerDuty
 
