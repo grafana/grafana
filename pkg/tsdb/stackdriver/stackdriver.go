@@ -123,9 +123,7 @@ func buildDeepLink(query *stackdriverQuery) string {
 	q.Set("project", query.ProjectName)
 
 	groupBys := make([]string, 0)
-	for _, groupBy := range query.Params["aggregation.groupByFields"] {
-		groupBys = append(groupBys, groupBy)
-	}
+	groupBys = append(groupBys, query.Params["aggregation.groupByFields"]...)
 
 	pageState := map[string]interface{}{
 		"xyChart": map[string]interface{}{
