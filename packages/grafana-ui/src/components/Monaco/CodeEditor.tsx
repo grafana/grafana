@@ -2,9 +2,30 @@ import React from 'react';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { MonacoEditorProps } from 'react-monaco-editor';
-import { KeyCode, editor, KeyMod } from 'monaco-editor/esm/vs/editor/editor.api';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack, LoadingPlaceholder } from '..';
+
+import * as monaco from 'monaco-editor';
+
+// @ts-ignore
+self.MonacoEnvironment = {
+  getWorkerUrl: (moduleId: string, label: string) => {
+    console.log('MonacoEnvironment GET WORKER URL', moduleId, label);
+    if (label === 'json') {
+      return './monaco.json.worker.bundle.js';
+    }
+    if (label === 'css') {
+      return './monaco.css.worker.bundle.js';
+    }
+    if (label === 'html') {
+      return './monaco.html.worker.bundle.js';
+    }
+    if (label === 'typescript' || label === 'javascript') {
+      return './monaco.ts.worker.bundle.js';
+    }
+    return './monaco.editor.worker.bundle.js';
+  },
+};
 
 export type CodeEditorChangeHandler = (value: string) => void;
 
@@ -45,7 +66,8 @@ interface CodeEditorProps extends Themeable {
    *
    * @experimental
    */
-  onEditorDidMount?: (editor: editor.IStandaloneCodeEditor) => void;
+  onEditorDidMount?: (editor: any) => void;
+  //onEditorDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
 
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
@@ -68,13 +90,13 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
     }
   };
 
-  editorDidMount = (editor: editor.IStandaloneCodeEditor) => {
+  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
     const { onSave, onEditorDidMount } = this.props;
 
     this.getEditorValue = () => editor.getValue();
 
     if (onSave) {
-      editor.addCommand(KeyMod.CtrlCmd | KeyCode.KEY_S, () => {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
         onSave(this.getEditorValue());
       });
     }
