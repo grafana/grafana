@@ -35,10 +35,10 @@ export enum BigValueJustifyMode {
 /**
  * Options for how the value & title are to be displayed
  */
-export enum BigValueNameAndValueOption {
+export enum BigValueTextMode {
   Auto = 'auto',
   Value = 'value',
-  ValueAndName = 'value_and_value',
+  ValueAndName = 'value_and_name',
   Name = 'name',
   None = 'none',
 }
@@ -54,7 +54,7 @@ export interface Props extends Themeable {
   graphMode: BigValueGraphMode;
   justifyMode?: BigValueJustifyMode;
   alignmentFactors?: DisplayValueAlignmentFactors;
-  nameAndValue?: BigValueNameAndValueOption;
+  textMode?: BigValueTextMode;
 }
 
 export class BigValue extends PureComponent<Props> {

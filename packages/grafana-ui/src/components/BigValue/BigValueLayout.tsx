@@ -8,7 +8,7 @@ import { getColorFromHexRgbOrName, formattedValueToString, DisplayValue } from '
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueNameAndValueOption } from './BigValue';
+import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -462,13 +462,13 @@ export interface BigValueDisplayValue extends DisplayValue {
 }
 
 function getDisplayValue(props: Props): BigValueDisplayValue {
-  const { nameAndValue, value, alignmentFactors } = props;
+  const { textMode: nameAndValue, value, alignmentFactors } = props;
 
   const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
   const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
 
   switch (nameAndValue) {
-    case BigValueNameAndValueOption.Name:
+    case BigValueTextMode.Name:
       return {
         ...value,
         title: undefined,
@@ -478,7 +478,7 @@ function getDisplayValue(props: Props): BigValueDisplayValue {
         titleToAlignTo: undefined,
         valueToAlignTo: titleToAlignTo ?? '',
       };
-    case BigValueNameAndValueOption.Value:
+    case BigValueTextMode.Value:
       return {
         ...value,
         title: undefined,

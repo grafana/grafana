@@ -1,5 +1,5 @@
 import { text, select, number, color } from '@storybook/addon-knobs';
-import { BigValue, BigValueColorMode, BigValueGraphMode, BigValueNameAndValueOption } from './BigValue';
+import { BigValue, BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -12,11 +12,7 @@ const getKnobs = () => {
     width: number('Width', 400, { range: true, max: 800, min: 200 }),
     height: number('Height', 300, { range: true, max: 800, min: 200 }),
     color: color('Value color', 'red'),
-    nameAndValue: select(
-      'Name and value',
-      [BigValueNameAndValueOption.Auto, BigValueNameAndValueOption.Name],
-      BigValueNameAndValueOption.Auto
-    ),
+    nameAndValue: select('Name and value', [BigValueTextMode.Auto, BigValueTextMode.Name], BigValueTextMode.Auto),
   };
 };
 

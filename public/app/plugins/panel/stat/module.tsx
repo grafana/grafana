@@ -10,8 +10,8 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
     addStandardDataReduceOptions(builder);
 
     builder.addSelect({
-      path: 'nameAndValue',
-      name: 'Name and value',
+      path: 'textMode',
+      name: 'Text mode',
       description: 'Control if name and value is displayed or just name',
       settings: {
         options: [

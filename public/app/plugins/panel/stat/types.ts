@@ -3,7 +3,7 @@ import {
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
-  BigValueNameAndValueOption,
+  BigValueNameAndValueOption as BigValueTextMode,
 } from '@grafana/ui';
 import {
   ReducerID,
@@ -19,7 +19,7 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
   graphMode: BigValueGraphMode;
   colorMode: BigValueColorMode;
   justifyMode: BigValueJustifyMode;
-  nameAndValue: BigValueNameAndValueOption;
+  textMode: BigValueTextMode;
 }
 
 export function addStandardDataReduceOptions(
