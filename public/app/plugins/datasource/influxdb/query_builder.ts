@@ -28,7 +28,11 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
 export class InfluxQueryBuilder {
   constructor(private target: { measurement: any; tags: any; policy?: any }, private database?: string) {}
 
-  buildExploreQuery(type: string, withKey?: string, withMeasurementFilter?: string) {
+  buildExploreQuery(
+    type: string,
+    options: { withKey?: string; withMeasurementFilter?: string; withLimit?: number } = {}
+  ): string {
+    const { withKey, withMeasurementFilter, withLimit } = options;
     let query;
     let measurement;
     let policy;
@@ -106,11 +110,8 @@ export class InfluxQueryBuilder {
         query += ' WHERE ' + whereConditions.join(' ');
       }
     }
-    if (type === 'MEASUREMENTS') {
-      query += ' LIMIT 100';
-      //Solve issue #2524 by limiting the number of measurements returned
-      //LIMIT must be after WITH MEASUREMENT and WHERE clauses
-      //This also could be used for TAG KEYS and TAG VALUES, if desired
+    if (withLimit) {
+      query += ' LIMIT ' + withLimit;
     }
     return query;
   }

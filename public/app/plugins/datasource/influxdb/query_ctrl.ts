@@ -268,7 +268,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getMeasurements(measurementFilter: any) {
-    const query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
+    const query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', {
+      withMeasurementFilter: measurementFilter,
+      withLimit: 100,
+    });
     return this.datasource
       .metricFindQuery(query)
       .then(this.transformToSegments(true))
@@ -324,7 +327,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
       addTemplateVars = false;
     } else if (segment.type === 'value') {
-      query = this.queryBuilder.buildExploreQuery('TAG_VALUES', this.tagSegments[index - 2].value);
+      query = this.queryBuilder.buildExploreQuery('TAG_VALUES', { withKey: this.tagSegments[index - 2].value });
       addTemplateVars = true;
     }
 

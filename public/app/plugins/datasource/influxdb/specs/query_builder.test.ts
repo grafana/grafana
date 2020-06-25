@@ -41,27 +41,33 @@ describe('InfluxQueryBuilder', () => {
       expect(query).toBe('SHOW TAG KEYS');
     });
 
-    it('should have no conditions in measurement query for query with no tags', () => {
+    it('should have no conditions in measurement query for query with no tags and no limit set', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
       const query = builder.buildExploreQuery('MEASUREMENTS');
+      expect(query).toBe('SHOW MEASUREMENTS');
+    });
+
+    it('should have no conditions in measurement query for query with no tags', () => {
+      const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
+      const query = builder.buildExploreQuery('MEASUREMENTS', { withLimit: 100 });
       expect(query).toBe('SHOW MEASUREMENTS LIMIT 100');
     });
 
     it('should have no conditions in measurement query for query with no tags and empty query', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
-      const query = builder.buildExploreQuery('MEASUREMENTS', undefined, '');
+      const query = builder.buildExploreQuery('MEASUREMENTS', { withMeasurementFilter: '', withLimit: 100 });
       expect(query).toBe('SHOW MEASUREMENTS LIMIT 100');
     });
 
     it('should have WITH MEASUREMENT in measurement query for non-empty query with no tags', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
-      const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
+      const query = builder.buildExploreQuery('MEASUREMENTS', { withMeasurementFilter: 'something', withLimit: 100 });
       expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ LIMIT 100');
     });
 
     it('should escape the regex value in measurement query', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
-      const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'abc/edf/');
+      const query = builder.buildExploreQuery('MEASUREMENTS', { withMeasurementFilter: 'abc/edf/', withLimit: 100 });
       expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /abc\\/edf\\// LIMIT 100');
     });
 
@@ -70,7 +76,7 @@ describe('InfluxQueryBuilder', () => {
         measurement: '',
         tags: [{ key: 'app', value: 'email' }],
       });
-      const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
+      const query = builder.buildExploreQuery('MEASUREMENTS', { withMeasurementFilter: 'something', withLimit: 100 });
       expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ WHERE "app" = \'email\' LIMIT 100');
     });
 
@@ -79,7 +85,7 @@ describe('InfluxQueryBuilder', () => {
         measurement: '',
         tags: [{ key: 'app', value: 'email' }],
       });
-      const query = builder.buildExploreQuery('MEASUREMENTS');
+      const query = builder.buildExploreQuery('MEASUREMENTS', { withLimit: 100 });
       expect(query).toBe('SHOW MEASUREMENTS WHERE "app" = \'email\' LIMIT 100');
     });
 
@@ -88,7 +94,7 @@ describe('InfluxQueryBuilder', () => {
         measurement: '',
         tags: [{ key: 'app', value: 'asdsadsad' }],
       });
-      const query = builder.buildExploreQuery('TAG_VALUES', 'app');
+      const query = builder.buildExploreQuery('TAG_VALUES', { withKey: 'app' });
       expect(query).toBe('SHOW TAG VALUES WITH KEY = "app"');
     });
 
@@ -100,7 +106,7 @@ describe('InfluxQueryBuilder', () => {
           { key: 'host', value: 'server1' },
         ],
       });
-      const query = builder.buildExploreQuery('TAG_VALUES', 'app');
+      const query = builder.buildExploreQuery('TAG_VALUES', { withKey: 'app' });
       expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" = \'server1\'');
     });
 
@@ -113,7 +119,7 @@ describe('InfluxQueryBuilder', () => {
           { key: 'host', value: 'server1' },
         ],
       });
-      const query = builder.buildExploreQuery('TAG_VALUES', 'app');
+      const query = builder.buildExploreQuery('TAG_VALUES', { withKey: 'app' });
       expect(query).toBe('SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE "host" = \'server1\'');
     });
 
@@ -123,7 +129,7 @@ describe('InfluxQueryBuilder', () => {
         policy: 'default',
         tags: [],
       });
-      const query = builder.buildExploreQuery('TAG_VALUES', 'app');
+      const query = builder.buildExploreQuery('TAG_VALUES', { withKey: 'app' });
       expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app"');
     });
 
@@ -132,7 +138,7 @@ describe('InfluxQueryBuilder', () => {
         measurement: 'cpu',
         tags: [{ key: 'host', value: '/server.*/' }],
       });
-      const query = builder.buildExploreQuery('TAG_VALUES', 'app');
+      const query = builder.buildExploreQuery('TAG_VALUES', { withKey: 'app' });
       expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" =~ /server.*/');
     });
 
