@@ -23,15 +23,13 @@ export function togglePauseAlertRule(id: number, options: { paused: boolean }): 
 
 export function createNotificationChannel(data: any): ThunkResult<void> {
   return async dispatch => {
-    await getBackendSrv()
-      .post(`/api/alert-notifications`, data)
-      .then(() => {
-        appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
-        dispatch(updateLocation({ path: 'alerting/notifications' }));
-      })
-      .catch(error => {
-        appEvents.emit(AppEvents.alertError, [error.data.error]);
-      });
+    try {
+      await getBackendSrv().post(`/api/alert-notifications`, data);
+      appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
+      dispatch(updateLocation({ path: 'alerting/notifications' }));
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [error.data.error]);
+    }
   };
 }
 
