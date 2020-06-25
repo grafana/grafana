@@ -25,17 +25,17 @@ export abstract class BigValueLayout {
   valueToAlignTo: string;
   maxTextWidth: number;
   maxTextHeight: number;
-  displayValue: BigValueDisplayValue;
+  textValues: BigValueTextValues;
 
   constructor(private props: Props) {
     const { width, height, value, theme } = props;
 
     this.valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
     this.panelPadding = height > 100 ? 12 : 8;
-    this.displayValue = getDisplayValue(props);
-    this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.displayValue.title);
-    this.valueToAlignTo = this.displayValue.valueToAlignTo;
-    this.titleToAlignTo = this.displayValue.titleToAlignTo;
+    this.textValues = getTextValues(props);
+    this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);
+    this.valueToAlignTo = this.textValues.valueToAlignTo;
+    this.titleToAlignTo = this.textValues.titleToAlignTo;
     this.titleFontSize = 14;
     this.valueFontSize = 14;
     this.chartHeight = 0;
@@ -456,12 +456,13 @@ export function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: s
   return (title ?? '').length === 0;
 }
 
-export interface BigValueDisplayValue extends DisplayValue {
+export interface BigValueTextValues extends DisplayValue {
   valueToAlignTo: string;
   titleToAlignTo?: string;
+  tooltip?: string;
 }
 
-function getDisplayValue(props: Props): BigValueDisplayValue {
+function getTextValues(props: Props): BigValueTextValues {
   const { textMode: nameAndValue, value, alignmentFactors } = props;
 
   const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
@@ -477,6 +478,7 @@ function getDisplayValue(props: Props): BigValueDisplayValue {
         text: value.title || '',
         titleToAlignTo: undefined,
         valueToAlignTo: titleToAlignTo ?? '',
+        tooltip: formattedValueToString(value),
       };
     case BigValueTextMode.Value:
       return {
@@ -484,6 +486,17 @@ function getDisplayValue(props: Props): BigValueDisplayValue {
         title: undefined,
         titleToAlignTo: undefined,
         valueToAlignTo,
+        tooltip: value.title,
+      };
+    case BigValueTextMode.None:
+      return {
+        numeric: value.numeric,
+        color: value.color,
+        title: undefined,
+        text: '',
+        titleToAlignTo: undefined,
+        valueToAlignTo: '1',
+        tooltip: `${value.title} ${formattedValueToString(value)}`,
       };
     default:
       return {

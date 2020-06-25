@@ -12,7 +12,11 @@ const getKnobs = () => {
     width: number('Width', 400, { range: true, max: 800, min: 200 }),
     height: number('Height', 300, { range: true, max: 800, min: 200 }),
     color: color('Value color', 'red'),
-    nameAndValue: select('Name and value', [BigValueTextMode.Auto, BigValueTextMode.Name], BigValueTextMode.Auto),
+    textMode: select(
+      'Text mode',
+      [BigValueTextMode.Auto, BigValueTextMode.Name, BigValueTextMode.ValueAndName, BigValueTextMode.None],
+      BigValueTextMode.Auto
+    ),
   };
 };
 
@@ -23,14 +27,14 @@ export default {
 };
 
 export const basic = () => {
-  const { value, title, colorMode, graphMode, height, width, color, nameAndValue } = getKnobs();
+  const { value, title, colorMode, graphMode, height, width, color, textMode } = getKnobs();
 
   return renderComponentWithTheme(BigValue, {
     width: width,
     height: height,
     colorMode: colorMode,
     graphMode: graphMode,
-    nameAndValue,
+    textMode,
     value: {
       text: value,
       numeric: 5022,

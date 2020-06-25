@@ -70,13 +70,13 @@ export class BigValue extends PureComponent<Props> {
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
     const valueStyles = layout.getValueStyles();
     const titleStyles = layout.getTitleStyles();
-    const displayValue = layout.displayValue;
+    const textValues = layout.textValues;
 
     return (
-      <div className={className} style={panelStyles} onClick={onClick}>
+      <div className={className} style={panelStyles} onClick={onClick} title={textValues.tooltip}>
         <div style={valueAndTitleContainerStyles}>
-          {displayValue.title && <div style={titleStyles}>{displayValue.title}</div>}
-          <FormattedValueDisplay value={displayValue} style={valueStyles} />
+          {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
+          <FormattedValueDisplay value={textValues} style={valueStyles} />
         </div>
         {layout.renderChart()}
       </div>

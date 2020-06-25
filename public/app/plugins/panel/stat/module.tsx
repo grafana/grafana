@@ -1,4 +1,4 @@
-import { sharedSingleStatMigrationHandler, BigValueNameAndValueOption } from '@grafana/ui';
+import { sharedSingleStatMigrationHandler, BigValueTextMode } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
 import { StatPanelOptions, addStandardDataReduceOptions } from './types';
 import { StatPanel } from './StatPanel';
@@ -15,10 +15,11 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
       description: 'Control if name and value is displayed or just name',
       settings: {
         options: [
-          { value: BigValueNameAndValueOption.Auto, label: 'Auto' },
-          { value: BigValueNameAndValueOption.Value, label: 'Value' },
-          { value: BigValueNameAndValueOption.ValueAndName, label: 'Value and name' },
-          { value: BigValueNameAndValueOption.Name, label: 'Name' },
+          { value: BigValueTextMode.Auto, label: 'Auto' },
+          { value: BigValueTextMode.Value, label: 'Value' },
+          { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
+          { value: BigValueTextMode.Name, label: 'Name' },
+          { value: BigValueTextMode.None, label: 'None' },
         ],
       },
       defaultValue: 'auto',

@@ -60,7 +60,7 @@ export {
   BigValueSparkline,
   BigValueGraphMode,
   BigValueJustifyMode,
-  BigValueTextMode as BigValueNameAndValueOption,
+  BigValueTextMode,
 } from './BigValue/BigValue';
 
 export { Gauge } from './Gauge/Gauge';

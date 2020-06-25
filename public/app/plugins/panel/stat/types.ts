@@ -3,7 +3,7 @@ import {
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
-  BigValueNameAndValueOption as BigValueTextMode,
+  BigValueTextMode,
 } from '@grafana/ui';
 import {
   ReducerID,
