@@ -289,11 +289,11 @@ func TestValues_expanderError(t *testing.T) {
 	data := &Data{}
 	err := yaml.Unmarshal([]byte("top:\n  val: $__fail{val}"), data)
 	require.Error(t, err)
-	require.Truef(t, errors.Is(err, expandErr), "expected error to wrap: %v\ngot: %v", expandErr, err)
+	require.Truef(t, errors.Is(err, errExpand), "expected error to wrap: %v\ngot: %v", errExpand, err)
 	assert.Empty(t, data)
 }
 
-var expandErr = errors.New("test error: bad expander")
+var errExpand = errors.New("test error: bad expander")
 
 type failExpander struct{}
 
@@ -302,5 +302,5 @@ func (f failExpander) SetupExpander(file *ini.File) error {
 }
 
 func (f failExpander) Expand(s string) (string, error) {
-	return "", expandErr
+	return "", errExpand
 }
