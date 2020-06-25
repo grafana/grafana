@@ -316,6 +316,11 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	cmd := &models.SendWebhookSync{Url: sn.URL, Body: string(data)}
+	if sn.Token != "" {
+		cmd.HttpHeader = map[string]string{
+			"Authorization": "Bearer " + sn.Token,
+		}
+	}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
 		return err
