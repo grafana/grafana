@@ -39,6 +39,8 @@ export interface FeatureToggles {
    * Available only in Grafana Enterprise
    */
   meta: boolean;
+  datasourceInsights: boolean;
+  reportGrid: boolean;
 }
 
 /**

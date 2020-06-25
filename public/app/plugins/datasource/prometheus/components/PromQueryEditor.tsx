@@ -155,6 +155,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <div className="gf-form-label">Resolution</div>
             <Select
               isSearchable={false}
+              menuPlacement="bottom"
               options={INTERVAL_FACTOR_OPTIONS}
               onChange={this.onIntervalFactorChange}
               value={intervalFactorOption}
