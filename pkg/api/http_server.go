@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/unrolled/secure"
 	macaron "gopkg.in/macaron.v1"
 )
 
@@ -88,9 +89,13 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.applyRoutes()
 	hs.streamManager.Run(ctx)
 
+	secureMiddleware := secure.New(hs.createSecureHeadersConfig())
+
+	app := secureMiddleware.Handler(hs.macaron)
+
 	hs.httpSrv = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
-		Handler: hs.macaron,
+		Handler: app,
 	}
 	switch setting.Protocol {
 	case setting.HTTP2:
@@ -401,4 +406,56 @@ func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, 
 
 func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
 	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
+}
+
+func (hs *HTTPServer) createSecureHeadersConfig() secure.Options {
+	secureOptions := secure.Options{
+		ContentTypeNosniff:      setting.ContentTypeProtectionHeader,
+		BrowserXssFilter:        setting.XSSProtectionHeader,
+		CustomFrameOptionsValue: setting.AllowEmbedding,
+	}
+
+	if (setting.Protocol == setting.HTTPS || setting.Protocol == setting.HTTP2) && setting.StrictTransportSecurity {
+		secureOptions.STSSeconds = int64(setting.StrictTransportSecurityMaxAge)
+		secureOptions.STSPreload = setting.StrictTransportSecurityPreload
+		secureOptions.STSIncludeSubdomains = setting.StrictTransportSecuritySubDomains
+	}
+
+	if setting.ContentSecurityPolicy {
+		cspConfig := ""
+		if setting.ScriptSrc != "" {
+			cspConfig += "script-src " + setting.ScriptSrc + ";"
+		}
+		if setting.ObjectSrc != "" {
+			cspConfig += "object-src " + setting.ObjectSrc + ";"
+		}
+		if setting.FontSrc != "" {
+			cspConfig += "font-src " + setting.FontSrc + ";"
+		}
+		if setting.StyleSrc != "" {
+			cspConfig += "style-src " + setting.StyleSrc + ";"
+		}
+		if setting.ImgSrc != "" {
+			cspConfig += "img-src " + setting.ImgSrc + ";"
+		}
+		if setting.BaseUri != "" {
+			cspConfig += "base-uri " + setting.BaseUri + ";"
+		}
+		if setting.ConnectSrc != "" {
+			cspConfig += "connect-src " + setting.ConnectSrc + ";"
+		}
+		if setting.ManifestSrc != "" {
+			cspConfig += "manifest-src " + setting.ManifestSrc + ";"
+		}
+		if setting.MediaSrc != "" {
+			cspConfig += "media-src " + setting.MediaSrc + ";"
+		}
+		if setting.BlockAllMixedContent {
+			cspConfig += "block-all-mixed-content;"
+		}
+
+		secureOptions.ContentSecurityPolicy = cspConfig
+	}
+
+	return secureOptions
 }

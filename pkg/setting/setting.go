@@ -101,13 +101,25 @@ var (
 	CookieSecure                      bool
 	CookieSameSiteDisabled            bool
 	CookieSameSiteMode                http.SameSite
-	AllowEmbedding                    bool
+	AllowEmbedding                    string
 	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
 	StrictTransportSecurity           bool
 	StrictTransportSecurityMaxAge     int
 	StrictTransportSecurityPreload    bool
 	StrictTransportSecuritySubDomains bool
+
+	ContentSecurityPolicy bool
+	ScriptSrc             string
+	ObjectSrc             string
+	FontSrc               string
+	StyleSrc              string
+	ImgSrc                string
+	BaseUri               string
+	ConnectSrc            string
+	ManifestSrc           string
+	MediaSrc              string
+	BlockAllMixedContent  bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -752,7 +764,19 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		}
 	}
 
-	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+	AllowEmbedding = security.Key("allow_embedding").MustString("")
+
+	ContentSecurityPolicy = security.Key("content_security_policy").MustBool(false)
+	ScriptSrc = security.Key("script_src").MustString("")
+	ObjectSrc = security.Key("object_src").MustString("")
+	FontSrc = security.Key("font_src").MustString("")
+	StyleSrc = security.Key("style_src").MustString("")
+	ImgSrc = security.Key("img_src").MustString("")
+	BaseUri = security.Key("base_uri").MustString("")
+	BlockAllMixedContent = security.Key("block_all_mixed_content").MustBool(true)
+	ConnectSrc = security.Key("connect_src").MustString("")
+	ManifestSrc = security.Key("manifest_src").MustString("")
+	MediaSrc = security.Key("media_src").MustString("")
 
 	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)

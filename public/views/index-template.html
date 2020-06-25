@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script>
+    <script nonce="[[.Nonce]]">
       // https://github.com/GoogleChromeLabs/tti-polyfill
       !(function() {
         if ('PerformanceLongTaskTiming' in window) {
@@ -36,7 +36,7 @@
 
     <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
-    <script>
+    <script nonce="[[.Nonce]]">
       performance.mark('css done blocking');
     </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -219,7 +219,7 @@
       </div>
     </grafana-app>
 
-    <script>
+    <script nonce="[[.Nonce]]">
         window.grafanaBootData = {
           user: [[.User]],
           settings: [[.Settings]],
@@ -237,7 +237,7 @@
 
     [[if .GoogleTagManagerId]]
     <!-- Google Tag Manager -->
-    <script>
+    <script nonce="[[.Nonce]]">
       dataLayer = [
         {
           IsSignedIn: '[[.User.IsSignedIn]]',
@@ -257,7 +257,7 @@
         style="display:none;visibility:hidden"
       ></iframe>
     </noscript>
-    <script>
+    <script nonce="[[.Nonce]]">
       (function(w, d, s, l, i) {
         w[l] = w[l] || [];
         w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
@@ -275,16 +275,16 @@
     <%
     for (key in htmlWebpackPlugin.files.chunks) { %><%
       if (htmlWebpackPlugin.files.jsIntegrity) { %>
-    <script
+    <script nonce="[[.Nonce]]"
       src="<%= htmlWebpackPlugin.files.chunks[key].entry %>"
       type="text/javascript"
       integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
       crossorigin="<%= webpackConfig.output.crossOriginLoading %>"></script><%
       } else { %>
-    <script src="<%= htmlWebpackPlugin.files.chunks[key].entry %>" type="text/javascript"></script><%
+    <script nonce="[[.Nonce]]" src="<%= htmlWebpackPlugin.files.chunks[key].entry %>" type="text/javascript"></script><%
       } %><%
     } %>
-    <script>
+    <script nonce="[[.Nonce]]">
       performance.mark('js done blocking');
     </script>
   </body>

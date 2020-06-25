@@ -18,6 +18,7 @@ type IndexViewData struct {
 	FavIcon                 string
 	AppleTouchIcon          string
 	AppTitle                string
+	Nonce                   string
 }
 
 type PluginCss struct {
