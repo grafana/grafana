@@ -14,7 +14,7 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container } from '@grafana/ui';
+import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container, HorizontalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -220,28 +220,30 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 />
               </Field>
             )}
-            {showPanelTransformationsOption && (
-              <Field
-                label="Apply panel transformations"
-                description="Table data is displayed with transformations defined in the panel Transform tab."
-              >
-                <Switch
-                  checked={!!options.withTransforms}
-                  onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
-                />
-              </Field>
-            )}
-            {showFieldConfigsOption && (
-              <Field
-                label="Apply field configuration"
-                description="Table data is displayed with options defined in the Field and Override tabs."
-              >
-                <Switch
-                  checked={!!options.withFieldConfig}
-                  onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
-                />
-              </Field>
-            )}
+            <HorizontalGroup>
+              {showPanelTransformationsOption && (
+                <Field
+                  label="Apply panel transformations"
+                  description="Table data is displayed with transformations defined in the panel Transform tab."
+                >
+                  <Switch
+                    checked={!!options.withTransforms}
+                    onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+                  />
+                </Field>
+              )}
+              {showFieldConfigsOption && (
+                <Field
+                  label="Apply field configuration"
+                  description="Table data is displayed with options defined in the Field and Override tabs."
+                >
+                  <Switch
+                    checked={!!options.withFieldConfig}
+                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
+                  />
+                </Field>
+              )}
+            </HorizontalGroup>
           </VerticalGroup>
         </div>
       </QueryOperationRow>

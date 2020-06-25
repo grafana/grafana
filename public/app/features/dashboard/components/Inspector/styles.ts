@@ -54,7 +54,6 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     `,
     actionsWrapper: css`
       display: flex;
-      flex-wrap: wrap;
     `,
     leftActions: css`
       display: flex;
