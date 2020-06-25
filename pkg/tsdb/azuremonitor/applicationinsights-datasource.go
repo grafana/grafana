@@ -194,7 +194,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		return nil, err
 	}
 
-	frame, err := mr.ToFrame(query.metricName, query.aggregation, query.dimensions)
+	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, nil

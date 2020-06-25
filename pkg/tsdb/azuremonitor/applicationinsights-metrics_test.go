@@ -13,7 +13,7 @@ import (
 	"github.com/xorcare/pointer"
 )
 
-func TestInsightsMetricsToFrame(t *testing.T) {
+func TestInsightsMetricsResultToFrame(t *testing.T) {
 	tests := []struct {
 		name          string
 		testFile      string
@@ -108,7 +108,7 @@ func TestInsightsMetricsToFrame(t *testing.T) {
 			res, err := loadInsightsMetricsResponse(tt.testFile)
 			require.NoError(t, err)
 
-			frame, err := res.ToFrame(tt.metric, tt.agg, tt.dimensions)
+			frame, err := InsightsMetricsResultToFrame(res, tt.metric, tt.agg, tt.dimensions)
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

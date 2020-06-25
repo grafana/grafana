@@ -8,11 +8,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// ToFrame converts a MetricsResult (a Application Insights metrics query) to a dataframe.
+// InsightsMetricsResultToFrame converts a MetricsResult (a Application Insights metrics query response) to a dataframe.
 // Due to the dynamic nature of the MetricsResult object, the name of the metric, aggregation, and
 // and requested dimensions are used to determine the expected shape of the object.
 // This builds all series into a single data.Frame with one time index (a wide formatted time series frame).
-func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data.Frame, error) {
+func InsightsMetricsResultToFrame(mr MetricsResult, metric, agg string, dimensions []string) (*data.Frame, error) {
 	dimLen := len(dimensions)
 
 	// The Response has both Start and End times, so we name the column "StartTime".
@@ -22,7 +22,7 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 
 	rowCounter := 0 // row in the resulting frame
 
-	if mr == nil || mr.Value == nil { // never seen this response, but to ensure there is no panic
+	if mr.Value == nil { // never seen this response, but to ensure there is no panic
 		return nil, fmt.Errorf("unexpected nil response or response value in metrics result")
 	}
 
@@ -34,34 +34,20 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 		// handleLeafSegment is for the leaf MetricsSegmentInfo nodes in the response.
 		// A leaf node contains an aggregated value, and when there are multiple dimensions, a label key/value pair.
 		handleLeafSegment := func(s MetricsSegmentInfo) error {
-
 			// since this is a dynamic response, everything we are interested in here from JSON
 			// is Marshalled (mapped) into the AdditionalProperties property.
-			met, ok := s.AdditionalProperties[metric]
-			if !ok {
-				return fmt.Errorf("expected additional properties for metric %v not found in inner segment", metric)
-			}
-			metMap, ok := met.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("unexpected type for additional properties not found in inner segment, want map[string]interface{}, but got %T", met)
-
-			}
-			metVal, ok := metMap[agg]
-			if !ok {
-				return fmt.Errorf("expected value for aggregation %v not found in inner segment", agg)
+			v, err := valFromLeafAP(s.AdditionalProperties, metric, agg)
+			if err != nil {
+				return err
 			}
 
 			if dimLen != 0 { // when there are dimensions, the final dimension is in this inner segment.
-				key := dimensions[dimLen-1]
-				val, ok := s.AdditionalProperties[key]
-				if !ok {
-					return fmt.Errorf("unexpected dimension/segment key %v not found in response", key)
+				dimension := dimensions[dimLen-1]
+				dimVal, err := dimValueFromAP(s.AdditionalProperties, dimension)
+				if err != nil {
+					return err
 				}
-				sVal, ok := val.(string)
-				if !ok {
-					return fmt.Errorf("unexpected dimension/segment value for key %v in response", key)
-				}
-				labels[key] = sVal
+				labels[dimension] = dimVal
 			}
 
 			if _, ok := fieldIdxMap[labels.String()]; !ok {
@@ -70,17 +56,12 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 				fieldIdxMap[labels.String()] = len(frame.Fields) - 1
 			}
 
-			var v *float64
-			if val, ok := metVal.(float64); ok {
-				v = &val
-			}
-
 			frame.Set(fieldIdxMap[labels.String()], rowCounter, v)
 
 			return nil
 		}
 
-		// Simple case with no Segments/Dimensions
+		// Simple case with no segments/dimensions
 		if dimLen == 0 {
 			if err := handleLeafSegment(seg); err != nil {
 				return nil, err
@@ -92,7 +73,7 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 		// Multiple dimension case
 		var traverse func(segments *[]MetricsSegmentInfo, depth int) error
 
-		// traverse walks segments collecting dimensions as labels until leaf segments are
+		// traverse walks segments collecting dimensions into labels until leaf segments are
 		// reached, and then handleInnerSegment is called. The final k/v label pair is
 		// in the leaf segment.
 		// A non-recursive implementation would probably be better.
@@ -108,15 +89,11 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 					continue
 				}
 				dimension := dimensions[depth]
-				rawLabelValue, ok := seg.AdditionalProperties[dimension]
-				if !ok {
-					return fmt.Errorf("expected label key %v not found at expected depth %v in response", dimension, depth)
+				dimVal, err := dimValueFromAP(seg.AdditionalProperties, dimension)
+				if err != nil {
+					return err
 				}
-				labelValue, ok := rawLabelValue.(string)
-				if !ok {
-					return fmt.Errorf("unexpected non string value for the label value for key %v, got type %T with a value of %v", dimension, rawLabelValue, rawLabelValue)
-				}
-				labels[dimension] = labelValue
+				labels[dimension] = dimVal
 				if err := traverse(seg.Segments, depth+1); err != nil {
 					return err
 				}
@@ -130,6 +107,49 @@ func (mr *MetricsResult) ToFrame(metric, agg string, dimensions []string) (*data
 		rowCounter++
 	}
 	return frame, nil
+}
+
+// valFromLeafAP extracts value for the given metric and aggregation (agg)
+// from the dynamic AdditionalProperties properties of a leaf node. It is for use in the InsightsMetricsResultToFrame
+// function.
+func valFromLeafAP(ap map[string]interface{}, metric, agg string) (*float64, error) {
+	if ap == nil {
+		return nil, fmt.Errorf("expected additional properties for metric %v not found in leaf segment", metric)
+	}
+	met, ok := ap[metric]
+	if !ok {
+		return nil, fmt.Errorf("expected additional properties for metric %v not found in leaf segment", metric)
+	}
+
+	metMap, ok := met.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected type for additional properties not found in leaf segment, want map[string]interface{}, but got %T", met)
+
+	}
+	metVal, ok := metMap[agg]
+	if !ok {
+		return nil, fmt.Errorf("expected value for aggregation %v not found in leaf segment", agg)
+	}
+	var v *float64
+	if val, ok := metVal.(float64); ok {
+		v = &val
+	}
+
+	return v, nil
+}
+
+// dimValueFromAP fetches the value as a string for the corresponding dimension from the dynamic AdditionalProperties properties of a leaf node. It is for use in the InsightsMetricsResultToFrame
+// function.
+func dimValueFromAP(ap map[string]interface{}, dimension string) (string, error) {
+	rawDimValue, ok := ap[dimension]
+	if !ok {
+		return "", fmt.Errorf("expected dimension key %v not found in response", dimension)
+	}
+	dimValue, ok := rawDimValue.(string)
+	if !ok {
+		return "", fmt.Errorf("unexpected non-string value for the value for dimension %v, got type %T with a value of %v", dimension, rawDimValue, dimValue)
+	}
+	return dimValue, nil
 }
 
 // MetricsResult a metric result.
