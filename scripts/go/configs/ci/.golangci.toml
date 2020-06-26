@@ -10,40 +10,6 @@ min-occurrences = 5
 
 [linters]
 disable-all = true
-enable = [
-  # "bodyclose",
-  "deadcode",
-  "depguard",
-  "dogsled",
-  "errcheck",
-  # "gochecknoinits",
-  "goconst",
-  # "gocritic",
-  # "goimports",
-  "golint",
-  # "goprintffuncname",
-  "gosec",
-  "gosimple",
-  "govet",
-  "ineffassign",
-  # "interfacer",
-  # "misspell",
-  "nakedret",
-  "rowserrcheck",
-  # "scopelint",
-  "staticcheck",
-  "structcheck",
-  # "stylecheck",
-  "typecheck",
-  "unconvert",
-  "unused",
-  "varcheck",
-  # "whitespace",
-]
-
-# Disabled linters (might want them later)
-# "gocyclo",
-# "unparam"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
