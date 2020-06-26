@@ -96,6 +96,10 @@ e2e.scenario({
 
     e2e().wait('@apiPostQuery');
 
+    // Avoid flaky tests
+    // Maybe the virtual dom performs optimzations such as node position swapping, meaning 1 becomes 0 and it gets that element before the change because and never finds title 'A'
+    e2e().wait(250);
+
     // Check the order of the rows after change
     e2e.components.QueryEditorRows.rows()
       .eq(0)
