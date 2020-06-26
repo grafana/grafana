@@ -64,7 +64,7 @@ func NewAlertNotification(notification *models.AlertNotification) *AlertNotifica
 	}
 
 	if notification.SecureSettings != nil {
-		for k := range notification.SecureSettings.Decrypt() {
+		for k := range notification.SecureSettings {
 			dto.SecureFields[k] = true
 		}
 	}
