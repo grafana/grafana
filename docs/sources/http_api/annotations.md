@@ -204,7 +204,7 @@ Content-Type: application/json
 
 Updates one or more properties of an annotation that matches the specified id.
 
-This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
+This operation currently supports updating of the `text`, `tags`, `time`, `timeEnd`, and `data` properties.
 
 **Example Request**:
 

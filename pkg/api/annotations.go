@@ -214,7 +214,9 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) Respons
 		existing.EpochEnd = cmd.TimeEnd
 	}
 
-	existing.Data = cmd.Data
+	if cmd.Data != nil {
+		existing.Data = cmd.Data
+	}
 
 	if err := repo.Update(&existing); err != nil {
 		return Error(500, "Failed to update annotation", err)
