@@ -142,7 +142,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 
 	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
-		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+		customData += fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}
 
 	bodyJSON := simplejson.New()

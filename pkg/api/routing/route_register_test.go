@@ -51,9 +51,7 @@ func TestRouteSimpleRegister(t *testing.T) {
 	}
 
 	// Setup
-	rr := NewRouteRegister(func(name string) macaron.Handler {
-		return emptyHandler(name)
-	})
+	rr := NewRouteRegister(emptyHandler)
 
 	rr.Delete("/admin", emptyHandler("1"))
 	rr.Get("/down", emptyHandler("1"), emptyHandler("2"))
@@ -199,10 +197,7 @@ func TestDuplicateRoutShouldPanic(t *testing.T) {
 		}
 	}()
 
-	rr := NewRouteRegister(func(name string) macaron.Handler {
-		return emptyHandler(name)
-	})
-
+	rr := NewRouteRegister(emptyHandler)
 	rr.Get("/api", emptyHandler("1"))
 	rr.Get("/api", emptyHandler("1"))
 
@@ -220,9 +215,7 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 	}
 
 	// Setup
-	rr := NewRouteRegister(func(name string) macaron.Handler {
-		return emptyHandler(name)
-	})
+	rr := NewRouteRegister(emptyHandler)
 
 	rr.Delete("/admin", emptyHandler("1"))
 	rr.Get("/down", emptyHandler("1"), emptyHandler("2"))

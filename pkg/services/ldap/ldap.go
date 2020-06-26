@@ -173,11 +173,12 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	var authAndBind bool
 
 	// Check if we can use a search user
-	if server.shouldAdminBind() {
+	switch {
+	case server.shouldAdminBind():
 		if err := server.AdminBind(); err != nil {
 			return nil, err
 		}
-	} else if server.shouldSingleBind() {
+	case server.shouldSingleBind():
 		authAndBind = true
 		err = server.UserBind(
 			server.singleBindDN(query.Username),
@@ -186,7 +187,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	default:
 		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
 		if err != nil {
 			return nil, err
@@ -368,7 +369,7 @@ func (server *Server) getSearchRequest(
 			-1,
 		)
 
-		search = search + query
+		search += query
 	}
 
 	filter := fmt.Sprintf("(|%s)", search)

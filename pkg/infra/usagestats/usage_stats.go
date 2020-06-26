@@ -70,7 +70,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
 	if userCount != 0 {
-		avgAuthTokensPerUser = avgAuthTokensPerUser / userCount
+		avgAuthTokensPerUser /= userCount
 	}
 
 	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser

@@ -246,11 +246,12 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					bucket := simplejson.NewFromAny(v)
 					key := castToNullFloat(bucket.Get("key"))
 					var value null.Float
-					if statName == "std_deviation_bounds_upper" {
+					switch statName {
+					case "std_deviation_bounds_upper":
 						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
-					} else if statName == "std_deviation_bounds_lower" {
+					case "std_deviation_bounds_lower":
 						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
-					} else {
+					default:
 						value = castToNullFloat(bucket.GetPath(metric.ID, statName))
 					}
 					newSeries.Points = append(newSeries.Points, tsdb.TimePoint{value, key})
@@ -349,11 +350,12 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 					}
 
 					var value null.Float
-					if statName == "std_deviation_bounds_upper" {
+					switch statName {
+					case "std_deviation_bounds_upper":
 						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
-					} else if statName == "std_deviation_bounds_lower" {
+					case "std_deviation_bounds_lower":
 						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
-					} else {
+					default:
 						value = castToNullFloat(bucket.GetPath(metric.ID, statName))
 					}
 
@@ -564,11 +566,12 @@ func getErrorFromElasticResponse(response *es.SearchResponse) *tsdb.QueryResult 
 	reason := json.Get("reason").MustString()
 	rootCauseReason := json.Get("root_cause").GetIndex(0).Get("reason").MustString()
 
-	if rootCauseReason != "" {
+	switch {
+	case rootCauseReason != "":
 		result.ErrorString = rootCauseReason
-	} else if reason != "" {
+	case reason != "":
 		result.ErrorString = reason
-	} else {
+	default:
 		result.ErrorString = "Unknown elasticsearch error response"
 	}
 

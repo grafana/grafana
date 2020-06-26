@@ -114,29 +114,22 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "predictable_pulse",
-		Name: "Predictable Pulse",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getPredictablePulse(query, context)
-		},
+		Id:          "predictable_pulse",
+		Name:        "Predictable Pulse",
+		Handler:     getPredictablePulse,
 		Description: PredictablePulseDesc,
 	})
 
 	registerScenario(&Scenario{
-		Id:   "predictable_csv_wave",
-		Name: "Predictable CSV Wave",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getPredictableCSVWave(query, context)
-		},
+		Id:      "predictable_csv_wave",
+		Name:    "Predictable CSV Wave",
+		Handler: getPredictableCSVWave,
 	})
 
 	registerScenario(&Scenario{
-		Id:   "random_walk_table",
-		Name: "Random Walk Table",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getRandomWalkTable(query, context)
-		},
+		Id:      "random_walk_table",
+		Name:    "Random Walk Table",
+		Handler: getRandomWalkTable,
 	})
 
 	registerScenario(&Scenario{
@@ -455,7 +448,7 @@ func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Query
 		return queryRes
 	}
 
-	timeStep = timeStep * 1000                     // Seconds to Milliseconds
+	timeStep *= 1000                               // Seconds to Milliseconds
 	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
 		var i int64
 		for i = 0; i < onCount; i++ {
@@ -505,7 +498,7 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 		values[i] = val
 	}
 
-	timeStep = timeStep * 1000 // Seconds to Milliseconds
+	timeStep *= 1000 // Seconds to Milliseconds
 	valuesLen := int64(len(values))
 	getValue := func(mod int64) (null.Float, error) {
 		var i int64

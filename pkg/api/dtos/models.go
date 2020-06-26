@@ -73,12 +73,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 		return GetGravatarUrl(text)
 	}
 
-	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-
-	if err != nil {
-		return ""
-	}
-
+	reg := regexp.MustCompile("[^a-zA-Z0-9]+")
 	text = reg.ReplaceAllString(defaultText, "") + "@localhost"
 
 	return GetGravatarUrl(text)

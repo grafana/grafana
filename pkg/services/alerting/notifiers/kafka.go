@@ -85,7 +85,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
-		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+		customData += fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}
 
 	kn.log.Info("Notifying Kafka", "alert_state", state)

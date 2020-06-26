@@ -125,7 +125,7 @@ func (this *DashTemplateEvaluator) findInput(varName string, varType string) *Im
 func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 	this.result = simplejson.New()
 	this.variables = make(map[string]string)
-	this.varRegex, _ = regexp.Compile(`(\$\{.+\})`)
+	this.varRegex = regexp.MustCompile(`(\$\{.+\})`)
 
 	// check that we have all inputs we need
 	for _, inputDef := range this.template.Get("__inputs").MustArray() {

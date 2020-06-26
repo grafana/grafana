@@ -395,11 +395,12 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
-	if query.UserId > 0 {
+	switch {
+	case query.UserId > 0:
 		sess.SQL(rawSql+"WHERE u.id=?", query.UserId)
-	} else if query.Login != "" {
+	case query.Login != "":
 		sess.SQL(rawSql+"WHERE u.login=?", query.Login)
-	} else if query.Email != "" {
+	case query.Email != "":
 		sess.SQL(rawSql+"WHERE u.email=?", query.Email)
 	}
 

@@ -8,12 +8,15 @@ func EnsureTagsExist(sess *DBSession, tags []*models.Tag) ([]*models.Tag, error)
 		var existingTag models.Tag
 
 		// check if it exists
-		if exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
+		exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag)
+		if err != nil {
 			return nil, err
-		} else if exists {
+		}
+		if exists {
 			tag.Id = existingTag.Id
 		} else {
-			if _, err := sess.Table("tag").Insert(tag); err != nil {
+			_, err := sess.Table("tag").Insert(tag)
+			if err != nil {
 				return nil, err
 			}
 		}
