@@ -9,6 +9,7 @@ import { openDashboard } from './openDashboard';
 import { saveDashboard } from './saveDashboard';
 import { openPanelMenuItem, PanelMenuItems } from './openPanelMenuItem';
 import { revertAllChanges } from './revertAllChanges';
+import { selectOption } from './selectOption';
 
 export const Flows = {
   addDashboard,
@@ -23,4 +24,5 @@ export const Flows = {
   openPanelMenuItem,
   PanelMenuItems,
   revertAllChanges,
+  selectOption,
 };
