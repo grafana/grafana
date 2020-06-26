@@ -10,7 +10,7 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
@@ -95,6 +95,10 @@ e2e.scenario({
       .click();
 
     e2e().wait('@apiPostQuery');
+
+    // Avoid flaky tests
+    // Maybe the virtual dom performs optimzations such as node position swapping, meaning 1 becomes 0 and it gets that element before the change because and never finds title 'A'
+    e2e().wait(250);
 
     // Check the order of the rows after change
     e2e.components.QueryEditorRows.rows()

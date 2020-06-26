@@ -200,7 +200,11 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
 
   return (
     <>
-      <div className={styles.header} onClick={() => setCollapsed(!collapsed)}>
+      <div
+        aria-label="TimePicker absolute time range"
+        className={styles.header}
+        onClick={() => setCollapsed(!collapsed)}
+      >
         <TimePickerTitle>Absolute time range</TimePickerTitle>
         {<Icon name={collapsed ? 'angle-up' : 'angle-down'} />}
       </div>
@@ -239,7 +243,7 @@ const FullScreenForm: React.FC<FormProps> = props => {
   return (
     <>
       <div className={styles.container}>
-        <div className={styles.title}>
+        <div aria-label="TimePicker absolute time range" className={styles.title}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
         </div>
         <TimeRangeForm value={props.value} timeZone={props.timeZone} onApply={props.onChange} isFullscreen={true} />
