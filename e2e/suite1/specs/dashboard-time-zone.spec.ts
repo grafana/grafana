@@ -9,7 +9,7 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.openDashboard('5SdHCasdf');
 
-    const fromTimeZone = 'UTC';
+    const fromTimeZone = 'Coordinated Universal Time';
     const toTimeZone = 'America/Chicago';
     const offset = -5;
 
