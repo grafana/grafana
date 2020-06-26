@@ -4,13 +4,12 @@ import {
   DataFrame,
   FieldType,
   TimeZone,
-  toDataFrame,
   getDisplayProcessor,
   ExploreMode,
   PreferredVisualisationType,
+  standardTransformers,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
-import TableModel, { mergeTablesIntoModel, MutableColumn } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
@@ -50,42 +49,27 @@ export class ResultProcessor {
       return null;
     }
 
-    const onlyTables = this.dataFrames.filter(frame => shouldShowInVisualisationType(frame, 'table'));
+    const onlyTables = this.dataFrames
+      .filter((frame: DataFrame) => shouldShowInVisualisationType(frame, 'table'))
+      .sort((frameA: DataFrame, frameB: DataFrame) => {
+        const frameARefId = frameA.refId!;
+        const frameBRefId = frameB.refId!;
+
+        if (frameARefId > frameBRefId) {
+          return 1;
+        }
+        if (frameARefId < frameBRefId) {
+          return -1;
+        }
+        return 0;
+      });
 
     if (onlyTables.length === 0) {
       return null;
     }
 
-    const tables = onlyTables.map(frame => {
-      const { fields } = frame;
-      const fieldCount = fields.length;
-      const rowCount = frame.length;
-
-      const columns: MutableColumn[] = fields.map(field => ({
-        text: field.name,
-        type: field.type,
-        filterable: field.config.filterable,
-        custom: field.config.custom,
-      }));
-
-      const rows: any[][] = [];
-      for (let i = 0; i < rowCount; i++) {
-        const row: any[] = [];
-        for (let j = 0; j < fieldCount; j++) {
-          row.push(frame.fields[j].values.get(i));
-        }
-        rows.push(row);
-      }
-
-      return new TableModel({
-        columns,
-        rows,
-        meta: frame.meta,
-      });
-    });
-
-    const mergedTable = mergeTablesIntoModel(new TableModel(), ...tables);
-    const data = toDataFrame(mergedTable);
+    const mergeTransformer = standardTransformers.mergeTransformer.transformer({});
+    const data = mergeTransformer(onlyTables)[0];
 
     // set display processor
     for (const field of data.fields) {
@@ -104,7 +88,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;

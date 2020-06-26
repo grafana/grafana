@@ -107,7 +107,7 @@ export const sections = [
     id: 2,
     uid: 'JB_zdOUWk',
     title: 'gdev dashboards',
-    expanded: false,
+    expanded: true,
     url: '/dashboards/f/JB_zdOUWk/gdev-dashboards',
     icon: 'folder',
     score: 2,

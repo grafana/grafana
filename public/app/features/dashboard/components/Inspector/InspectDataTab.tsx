@@ -14,7 +14,17 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
+import {
+  Button,
+  Container,
+  Field,
+  HorizontalGroup,
+  Icon,
+  LegacyForms,
+  Select,
+  Table,
+  VerticalGroup,
+} from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -23,15 +33,13 @@ import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { css, cx } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
-import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-
+import { QueryOperationRow } from '../../../../core/components/QueryOperationRow/QueryOperationRow';
+import { PanelModel } from '../../state';
 const { Switch } = LegacyForms;
 
 interface Props {
-  dashboard: DashboardModel;
   panel: PanelModel;
-  data: DataFrame[];
+  data?: DataFrame[];
   isLoading: boolean;
   options: GetDataOptions;
   onOptionsChange: (options: GetDataOptions) => void;
@@ -187,7 +195,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   render() {
-    const { isLoading, data } = this.props;
+    const { isLoading, data, options, onOptionsChange } = this.props;
     const { dataFrameIndex, transformId, transformationOptions } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -212,48 +220,77 @@ export class InspectDataTab extends PureComponent<Props, State> {
       };
     });
 
+    const panelTransformations = this.props.panel.getTransformations();
+
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <div className={styles.actionsWrapper}>
-          <div className={styles.leftActions}>
-            <div className={styles.selects}>
-              {data.length > 1 && (
-                <Field
-                  label="Transformer"
-                  className={css`
-                    margin-bottom: 0;
-                  `}
-                >
-                  <Select
-                    options={transformationOptions}
-                    value={transformId}
-                    onChange={this.onTransformationChange}
-                    width={15}
+        <Container>
+          <VerticalGroup spacing={'md'}>
+            <HorizontalGroup justify={'space-between'} align={'flex-end'} wrap>
+              <HorizontalGroup>
+                {data.length > 1 && (
+                  <Container grow={1}>
+                    <Field
+                      label="Transformer"
+                      className={css`
+                        margin-bottom: 0;
+                      `}
+                    >
+                      <Select
+                        options={transformationOptions}
+                        value={transformId}
+                        onChange={this.onTransformationChange}
+                        width={15}
+                      />
+                    </Field>
+                  </Container>
+                )}
+                {choices.length > 1 && (
+                  <Container grow={1}>
+                    <Field
+                      label="Select result"
+                      className={css`
+                        margin-bottom: 0;
+                      `}
+                    >
+                      <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} />
+                    </Field>
+                  </Container>
+                )}
+              </HorizontalGroup>
+
+              <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
+                Download CSV
+              </Button>
+            </HorizontalGroup>
+            <Container grow={1}>
+              <QueryOperationRow title={'Data display options'} isOpen={false}>
+                {panelTransformations && panelTransformations.length > 0 && (
+                  <div className="gf-form-inline">
+                    <Switch
+                      tooltip="Data shown in the table will be transformed using transformations defined in the panel"
+                      label="Apply panel transformations"
+                      labelClass="width-12"
+                      checked={!!options.withTransforms}
+                      onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+                    />
+                  </div>
+                )}
+                <div className="gf-form-inline">
+                  <Switch
+                    tooltip="Data shown in the table will have panel field configuration applied, for example units or title"
+                    label="Apply field configuration"
+                    labelClass="width-12"
+                    checked={!!options.withFieldConfig}
+                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
                   />
-                </Field>
-              )}
-              {choices.length > 1 && (
-                <Field
-                  label="Select result"
-                  className={css`
-                    margin-bottom: 0;
-                  `}
-                >
-                  <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} width={30} />
-                </Field>
-              )}
-            </div>
-            {this.renderDataOptions()}
-          </div>
+                </div>
+              </QueryOperationRow>
+            </Container>
+          </VerticalGroup>
+        </Container>
 
-          <div className={styles.options}>
-            <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
-              Download CSV
-            </Button>
-          </div>
-        </div>
-
-        <div style={{ flexGrow: 1 }}>
+        <Container grow={1}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -267,7 +304,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               );
             }}
           </AutoSizer>
-        </div>
+        </Container>
       </div>
     );
   }

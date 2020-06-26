@@ -21,7 +21,14 @@ import {
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
-import { NumberValueEditor, RadioButtonGroup, StringValueEditor, Select, TimeZoneValueEditor } from '../components';
+import {
+  NumberValueEditor,
+  RadioButtonGroup,
+  StringValueEditor,
+  StringArrayEditor,
+  SelectValueEditor,
+  TimeZoneValueEditor,
+} from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
@@ -228,6 +235,13 @@ export const getStandardOptionEditors = () => {
     editor: StringValueEditor as any,
   };
 
+  const strings: StandardEditorsRegistryItem<string[]> = {
+    id: 'strings',
+    name: 'String array',
+    description: 'An array of strings',
+    editor: StringArrayEditor as any,
+  };
+
   const boolean: StandardEditorsRegistryItem<boolean> = {
     id: 'boolean',
     name: 'Boolean',
@@ -239,9 +253,7 @@ export const getStandardOptionEditors = () => {
     id: 'select',
     name: 'Select',
     description: 'Allows option selection',
-    editor: props => (
-      <Select value={props.value} onChange={e => props.onChange(e.value)} options={props.item.settings?.options} />
-    ),
+    editor: SelectValueEditor as any,
   };
 
   const radio: StandardEditorsRegistryItem<any> = {
@@ -300,5 +312,19 @@ export const getStandardOptionEditors = () => {
     editor: TimeZoneValueEditor as any,
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker, timeZone];
+  return [
+    text,
+    number,
+    boolean,
+    radio,
+    select,
+    unit,
+    mappings,
+    thresholds,
+    links,
+    color,
+    statsPicker,
+    strings,
+    timeZone,
+  ];
 };

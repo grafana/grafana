@@ -35,13 +35,13 @@ executors:
       - image: cimg/base:stable
   node:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:12.18
   go:
     docker:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.16
+      - image: grafana/build-container:1.2.20
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.9
+            VERSION=0.4.14
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -74,7 +74,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -88,15 +88,15 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> v7.0.0-test
             else
               # A master or PR build
-              /tmp/grabpl build-backend --edition << parameters.edition >> \
+              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
@@ -126,7 +126,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -158,13 +158,13 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl build-frontend --edition << parameters.edition >> $CIRCLE_TAG
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl build-frontend --edition << parameters.edition >> 7.0.0-test
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> 7.0.0-test
             else
               # A master or PR build
-              /tmp/grabpl build-frontend --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
           name: Move artifacts
@@ -192,7 +192,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -414,20 +414,20 @@ jobs:
             export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition oss --sign $CIRCLE_TAG
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition oss --sign v7.0.0-test
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
               # A forked PR build, don't sign as it requires an API secret
-              /tmp/grabpl package --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
               # A non-forked PR build
-              /tmp/grabpl package --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -476,20 +476,20 @@ jobs:
 
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign $CIRCLE_TAG
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign v7.0.0-test
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign v7.0.0-test
             elif [[ $CIRCLE_BRANCH == "master" ]]; then
               # A master build
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
             elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
               # A forked PR build, don't sign as it requires an API secret
-              /tmp/grabpl package --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             else
               # A PR build
-              /tmp/grabpl package --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
+              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
                 linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
@@ -608,7 +608,7 @@ jobs:
       - run:
           name: Exit if enterprise and forked PR
           command: |
-            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
               echo "Nothing to do for forked PRs, so marking this step successful"
               circleci step halt
             fi
@@ -625,11 +625,12 @@ jobs:
       - run:
           name: Install gcloud SDK
           command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
-              sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-              sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
+            VERSION=298.0.0
+            curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            echo 0d58f451331abf43d080fa997c8e580d64897627e30be74f6d8f983ccfabef1e \
+              google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --strict --status
+            tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            ./google-cloud-sdk/install.sh -q
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
@@ -639,6 +640,7 @@ jobs:
       - run:
           name: Build Docker images
           command: |
+            source google-cloud-sdk/path.bash.inc
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
@@ -811,29 +813,29 @@ jobs:
           name: Install Go linters
           command: |
             pushd /tmp
-            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
-            echo 241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179 \
-              golangci-lint-1.24.0-linux-amd64.tar.gz | sha256sum --check --strict --status
-            tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
-            sudo mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            VERSION=1.27.0
+            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${VERSION}/golangci-lint-${VERSION}-linux-amd64.tar.gz
+            echo 8d345e4e88520e21c113d81978e89ad77fc5b13bfdf20e5bca86b83fc4261272 \
+              golangci-lint-${VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
+            tar -xf golangci-lint-${VERSION}-linux-amd64.tar.gz
+            sudo mv golangci-lint-${VERSION}-linux-amd64/golangci-lint /usr/local/bin/
             popd
-            make scripts/go/bin/revive scripts/go/bin/gosec
+            make scripts/go/bin/revive
       - run:
           name: Lint Go
           command: |
-            go vet ./pkg/...
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
+            # To save memory, run in two batches
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E vet -E deadcode -E gofmt \
               -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
               -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
+              -exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
               ./pkg/services/alerting/... \
               ./pkg/services/provisioning/datasources/... \
-              ./pkg/services/provisioning/dashboards/...
-
-            ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
-              -conf=./scripts/go/configs/gosec.json ./pkg/...
+              ./pkg/services/provisioning/dashboards/... \
+              ./pkg/plugins/backendplugin/...
 
   test-frontend:
     executor: node
@@ -889,18 +891,13 @@ jobs:
           when: on_success
 
   build-docs-website:
-    executor: grafana-build
+    executor: base
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
-      - run:
-          name: Install docker
-          command: |
-            apt-get update
-            apt-get install -y docker.io
       - run:
           name: Build Grafana docs website
           command: |

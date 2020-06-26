@@ -161,6 +161,18 @@ describe('FieldDisplay', () => {
     expect(display[0].display.numeric).toEqual(0);
   });
 
+  it('Should always return defaults with min/max 0 when there is no data', () => {
+    const options = createEmptyDisplayOptions({
+      fieldConfig: {
+        defaults: {},
+      },
+    });
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toEqual(0);
+    expect(display[0].field.max).toEqual(0);
+  });
+
   describe('Value mapping', () => {
     it('should apply value mapping', () => {
       const mappingConfig = [

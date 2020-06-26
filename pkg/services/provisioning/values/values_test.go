@@ -1,8 +1,17 @@
 package values
 
 import (
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ini.v1"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/yaml.v2"
@@ -244,4 +253,54 @@ func TestValues(t *testing.T) {
 func unmarshalingTest(document string, out interface{}) {
 	err := yaml.Unmarshal([]byte(document), out)
 	So(err, ShouldBeNil)
+}
+
+func TestValues_readFile(t *testing.T) {
+	type Data struct {
+		Val StringValue `yaml:"val"`
+	}
+
+	f, err := ioutil.TempFile(os.TempDir(), "file expansion *")
+	require.NoError(t, err)
+	file := f.Name()
+
+	defer func() {
+		require.NoError(t, os.Remove(file))
+	}()
+
+	const expected = "hello, world"
+	_, err = f.WriteString(expected)
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	data := &Data{}
+	err = yaml.Unmarshal([]byte(fmt.Sprintf("val: $__file{%s}", file)), data)
+	require.NoError(t, err)
+	assert.Equal(t, expected, data.Val.Value())
+}
+
+func TestValues_expanderError(t *testing.T) {
+	type Data struct {
+		Top JSONValue `yaml:"top"`
+	}
+
+	setting.AddExpander("fail", 0, failExpander{})
+
+	data := &Data{}
+	err := yaml.Unmarshal([]byte("top:\n  val: $__fail{val}"), data)
+	require.Error(t, err)
+	require.Truef(t, errors.Is(err, errExpand), "expected error to wrap: %v\ngot: %v", errExpand, err)
+	assert.Empty(t, data)
+}
+
+var errExpand = errors.New("test error: bad expander")
+
+type failExpander struct{}
+
+func (f failExpander) SetupExpander(file *ini.File) error {
+	return nil
+}
+
+func (f failExpander) Expand(s string) (string, error) {
+	return "", errExpand
 }

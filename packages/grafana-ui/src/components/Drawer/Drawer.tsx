@@ -29,7 +29,7 @@ export interface Props {
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, scrollableContent: boolean) => {
   return {
     drawer: css`
       .drawer-content {
@@ -61,7 +61,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
     content: css`
       padding: ${theme.spacing.md};
       flex-grow: 1;
-      overflow: ${!scollableContent ? 'hidden' : 'auto'};
+      overflow: ${!scrollableContent ? 'hidden' : 'auto'};
       z-index: 0;
       height: 100%;
     `,

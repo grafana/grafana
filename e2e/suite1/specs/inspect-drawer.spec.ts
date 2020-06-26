@@ -4,13 +4,13 @@ const PANEL_UNDER_TEST = '2 yaxis and axis labels';
 
 e2e.scenario({
   describeName: 'Inspect drawer tests',
-  itName: 'Testes various Inpect Drawer scenarios',
+  itName: 'Tests various Inspect Drawer scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
     const viewPortWidth = e2e.config().viewportWidth;
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);

@@ -78,19 +78,6 @@ type AzureLogAnalyticsTable struct {
 	Rows [][]interface{} `json:"rows"`
 }
 
-type metadata struct {
-	Columns      []column `json:"columns"`
-	Subscription string   `json:"subscription"`
-	Workspace    string   `json:"workspace"`
-	Query        string   `json:"query"`
-	EncodedQuery string   `json:"encodedQuery"`
-}
-
-type column struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-}
-
 // azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type azureMonitorJSONQuery struct {
 	AzureMonitor struct {
@@ -120,14 +107,16 @@ type insightsJSONQuery struct {
 		Dimension           string  `json:"dimension"`
 		DimensionFilter     string  `json:"dimensionFilter"`
 		MetricName          string  `json:"metricName"`
-		RawQuery            *bool   `json:"rawQuery"`
-		RawQueryString      string  `json:"rawQueryString"`
 		TimeGrain           string  `json:"timeGrain"`
-		TimeColumn          string  `json:"timeColumn"`
-		ValueColumn         string  `json:"valueColumn"`
-		SegmentColumn       string  `json:"segmentColumn"`
 	} `json:"appInsights"`
 	Raw *bool `json:"raw"`
+}
+
+type insightsAnalyticsJSONQuery struct {
+	InsightsAnalytics struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+	} `json:"insightsAnalytics"`
 }
 
 // logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.

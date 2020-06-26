@@ -25,6 +25,7 @@ export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
+export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
@@ -119,6 +120,7 @@ export { Slider } from './Slider/Slider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';
+export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SelectValueEditor } from './OptionsUI/select';
 export { TimeZoneValueEditor } from './OptionsUI/timezone';
@@ -135,6 +137,7 @@ export { getFormStyles } from './Forms/getFormStyles';
 export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';
 export { Legend } from './Forms/Legend';
+export { FieldSet } from './Forms/FieldSet';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
