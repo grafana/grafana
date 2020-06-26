@@ -4,4 +4,4 @@ Grafana ships with built-in support for Google Cloud Monitoring. You just have t
 
 Read more about it here:
 
-[http://docs.grafana.org/datasources/cloudmonitoring/](http://docs.grafana.org/datasources/cloudmonitoring/)
+[https://grafana.com/docs/grafana/latest/features/datasources/cloudmonitoring/](https://grafana.com/docs/grafana/latest/features/datasources/cloudmonitoring/)
