@@ -19,11 +19,6 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         },
         defaultValue: 'markdown',
       })
-      .addTimeZonePicker({
-        path: 'timezone',
-        name: 'Timezone',
-        description: 'timezone stuff',
-      })
       .addTextInput({
         path: 'content',
         name: 'Content',
