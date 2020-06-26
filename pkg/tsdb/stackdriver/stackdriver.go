@@ -112,7 +112,15 @@ func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuer
 	return result, nil
 }
 
+func (query *stackdriverQuery) isSLO() bool {
+	return query.Slo != ""
+}
+
 func buildDeepLink(query *stackdriverQuery) string {
+	if query.isSLO() {
+		return ""
+	}
+
 	// TODO only for metric query
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {

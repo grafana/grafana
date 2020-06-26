@@ -58,13 +58,15 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           const df = toDataFrame(timeSerie);
 
           for (const field of df.fields) {
-            field.config.links = [
-              {
-                url: queryRes.meta?.deepLink,
-                title: 'View in Metrics Explorer',
-                targetBlank: true,
-              },
-            ];
+            if (queryRes.meta?.deepLink && queryRes.meta?.deepLink.length > 0) {
+              field.config.links = [
+                {
+                  url: queryRes.meta?.deepLink,
+                  title: 'View in Metrics Explorer',
+                  targetBlank: true,
+                },
+              ];
+            }
           }
           result.push(df);
         });
