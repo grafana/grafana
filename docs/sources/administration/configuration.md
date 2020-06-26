@@ -82,6 +82,44 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 ```
 
+## Variable expansion
+
+> Only available in Grafana 7.1+.
+
+If any of your options contains the expression `$__<provider>{<argument>}`
+or `${<environment variable>}`, then they will be processed by Grafana's
+variable expander. The expander runs the provider with the provided argument
+to get the final value of the option.
+
+There are two providers: `env` and `file`.
+
+### Env provider
+
+The `env` provider can be used to expand an environment variable. If you
+set an option to `$__env{PORT}` the `PORT` environment variable will be
+used in its place. For environment variables you can also use the
+short-hand syntax `${PORT}`.
+Grafana's log directory would be set to the `grafana` directory in the
+directory behind the `LOGDIR` environment variable in the following
+example.
+
+```
+[paths]
+logs = $__env{LOGDIR}/grafana
+```
+
+### File provider
+
+`file` reads a file from the filesystem. It trims whitespace from the
+beginning and the end of files.
+The database password in the following example would be replaced by
+the content of the `/etc/secrets/gf_sql_password` file:
+
+```
+[database]
+password = $__file{/etc/secrets/gf_sql_password}
+```
+
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
 <hr />
