@@ -330,5 +330,7 @@ Only available in Grafana v7.1+.
 
 {{< docs-imagebox img="/img/docs/v71/cloud-moniitoring-deep-linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
 
+> Available only for Metric queries
+
 Click on a time series in the panel to see a context menu with a link to View in Monitoring Metrics explorer. Clicking that link opens the Metrics explorer in the Monitoring and runs the query from the Grafana panel there.
 If you're not currently logged in to the Google console, then the link opens the login page. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
