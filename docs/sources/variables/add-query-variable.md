@@ -39,7 +39,7 @@ Query expressions are different for each data source. For more information, refe
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}).
 1. In the **Refresh** list, select when the variable should update options.
    - **Never -** WHEN AND WHY WOULD THEY USE THIS?
-   - **On Dashboard Load -** Queries the data source every time the dashboard loads. Ths slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized. 
+   - **On Dashboard Load -** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized. 
    - **On Time Range Change -** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query. If you need more room, hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names return by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "filter-variables-with-regex.md" >}}).
