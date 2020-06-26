@@ -394,9 +394,12 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 //POST /api/alert-notifications/test
 func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
-		Name:     dto.Name,
-		Type:     dto.Type,
-		Settings: dto.Settings,
+		OrgID:          c.OrgId,
+		ID:             dto.ID,
+		Name:           dto.Name,
+		Type:           dto.Type,
+		Settings:       dto.Settings,
+		SecureSettings: dto.SecureSettings,
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {

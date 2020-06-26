@@ -132,12 +132,14 @@ type EvalMatch struct {
 }
 
 type NotificationTestCommand struct {
-	Name                  string           `json:"name"`
-	Type                  string           `json:"type"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
-	Settings              *simplejson.Json `json:"settings"`
+	ID                    int64             `json:"id,omitempty"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	SendReminder          bool              `json:"sendReminder"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Frequency             string            `json:"frequency"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string]string `json:"secureSettings"`
 }
 
 type PauseAlertCommand struct {

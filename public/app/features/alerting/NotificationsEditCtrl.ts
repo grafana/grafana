@@ -160,13 +160,17 @@ export class AlertNotificationEditCtrl {
       return;
     }
 
-    const payload = {
+    const payload: any = {
       name: this.model.name,
       type: this.model.type,
       frequency: this.model.frequency,
       settings: this.model.settings,
       secureSettings: this.model.secureSettings,
     };
+
+    if (this.model.id) {
+      payload.id = this.model.id;
+    }
 
     promiseToDigest(this.$scope)(getBackendSrv().post(`/api/alert-notifications/test`, payload));
   }
