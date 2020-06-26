@@ -69,6 +69,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			queries, err := datasource.buildQueries(tt.queryModel, tt.timeRange)
 			tt.Err(t, err)
@@ -141,6 +142,7 @@ func TestPluginRoutes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			route, proxypass, err := datasource.getPluginRoute(plugin, tt.cloudName)
 			tt.Err(t, err)
