@@ -924,6 +924,10 @@ Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
+### standalone_alerts_enabled
+
+Set to `true` to enable standalone alerts. Default is `false`.
+
 <hr>
 
 ## [explore]
