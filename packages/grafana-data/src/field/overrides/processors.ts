@@ -119,7 +119,3 @@ export interface ColorFieldConfigSettings {
   textWhenUndefined?: string; // Pick Color
   disableNamedColors?: boolean;
 }
-
-export interface TimeZoneFieldConfigSettings {
-  includeDefault?: boolean;
-}
