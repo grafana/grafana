@@ -264,6 +264,18 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		imageURL = evalContext.ImagePublicURL
 	}
 
+	var blocks []map[string]interface{}
+	if mentionsBuilder.Len() > 0 {
+		blocks = []map[string]interface{}{
+			{
+				"type": "section",
+				"text": map[string]interface{}{
+					"type": "mrkdwn",
+					"text": mentionsBuilder.String(),
+				},
+			},
+		}
+	}
 	attachment := map[string]interface{}{
 		"color":       evalContext.GetStateModel().Color,
 		"title":       evalContext.GetNotificationTitle(),
@@ -285,16 +297,8 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		},
 		"parse": "full", // to linkify urls, users and channels in alert message.
 	}
-	if mentionsBuilder.Len() > 0 {
-		body["blocks"] = []map[string]interface{}{
-			{
-				"type": "section",
-				"text": map[string]interface{}{
-					"type": "mrkdwn",
-					"text": mentionsBuilder.String(),
-				},
-			},
-		}
+	if len(blocks) > 0 {
+		body["blocks"] = blocks
 	}
 
 	//recipient override
@@ -318,7 +322,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	cmd := &models.SendWebhookSync{Url: sn.URL, Body: string(data)}
 	if sn.Token != "" {
 		cmd.HttpHeader = map[string]string{
-			"Authorization": "Bearer " + sn.Token,
+			"Authorization": fmt.Sprintf("Bearer %s", sn.Token),
 		}
 	}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
