@@ -107,7 +107,7 @@ Icon URL | Provide a URL to an image to use as the icon for the bot's message.
 Mention Users | Optionally mention one or more users in the Slack notification sent by Grafana. You have to refer to users, comma-separated, via their corresponding Slack IDs (which you can find by clicking the overflow button on each user's Slack profile).
 Mention Groups | Optionally mention one or more groups in the Slack notification sent by Grafana. You have to refer to groups, comma-separated, via their corresponding Slack IDs (which you can get from each group's Slack profile URL).
 Mention Channel | Optionally mention either all channel members or just active ones.
-Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination. If you use the `chat.postMessage` Slack API endpoint, this is also required.
+Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination. If you use the `chat.postMessage` Slack API endpoint, this is required.
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
 
