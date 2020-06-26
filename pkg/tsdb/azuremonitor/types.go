@@ -107,14 +107,16 @@ type insightsJSONQuery struct {
 		Dimension           string  `json:"dimension"`
 		DimensionFilter     string  `json:"dimensionFilter"`
 		MetricName          string  `json:"metricName"`
-		RawQuery            *bool   `json:"rawQuery"`
-		RawQueryString      string  `json:"rawQueryString"`
 		TimeGrain           string  `json:"timeGrain"`
-		TimeColumn          string  `json:"timeColumn"`
-		ValueColumn         string  `json:"valueColumn"`
-		SegmentColumn       string  `json:"segmentColumn"`
 	} `json:"appInsights"`
 	Raw *bool `json:"raw"`
+}
+
+type insightsAnalyticsJSONQuery struct {
+	InsightsAnalytics struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+	} `json:"insightsAnalytics"`
 }
 
 // logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
