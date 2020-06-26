@@ -91,7 +91,6 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 				return err
 			}
 			fb.value = converter
-		case col.Name() == "_measurement":
 			fb.isTimeSeries = true
 		case isTag(col.Name()):
 			fb.labels = append(fb.labels, col.Name())
@@ -129,19 +128,31 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 		}
 
 		if fb.isTimeSeries {
-			// Series Data
-			labels := make(map[string]string)
-			for _, name := range fb.labels {
-				labels[name] = record.ValueByKey(name).(string)
+			frameName, ok := record.ValueByKey("_measurement").(string)
+			if !ok {
+				frameName = "" // empty frame name
 			}
+
 			fb.active = data.NewFrame(
-				record.Measurement(),
+				frameName,
 				data.NewFieldFromFieldType(data.FieldTypeTime, 0),
 				data.NewFieldFromFieldType(fb.value.OutputFieldType, 0),
 			)
 
 			fb.active.Fields[0].Name = "Time"
-			fb.active.Fields[1].Name = record.Field()
+			name, ok := record.ValueByKey("_field").(string)
+			if ok {
+				fb.active.Fields[1].Name = name
+			}
+
+			// set the labels
+			labels := make(map[string]string)
+			for _, name := range fb.labels {
+				val, ok := record.ValueByKey(name).(string)
+				if ok {
+					labels[name] = val
+				}
+			}
 			fb.active.Fields[1].Labels = labels
 		} else {
 			fields := make([]*data.Field, len(fb.columns))
