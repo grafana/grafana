@@ -116,12 +116,11 @@ func (query *stackdriverQuery) isSLO() bool {
 	return query.Slo != ""
 }
 
-func buildDeepLink(query *stackdriverQuery) string {
+func (query *stackdriverQuery) buildDeepLink() string {
 	if query.isSLO() {
 		return ""
 	}
 
-	// TODO only for metric query
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
 		return ""
@@ -129,9 +128,6 @@ func buildDeepLink(query *stackdriverQuery) string {
 
 	q := u.Query()
 	q.Set("project", query.ProjectName)
-
-	groupBys := make([]string, 0)
-	groupBys = append(groupBys, query.Params["aggregation.groupByFields"]...)
 
 	pageState := map[string]interface{}{
 		"xyChart": map[string]interface{}{
@@ -142,7 +138,7 @@ func buildDeepLink(query *stackdriverQuery) string {
 						"aggregations":           []string{},
 						"crossSeriesReducer":     query.Params.Get("aggregation.crossSeriesReducer"),
 						"filter":                 query.Params.Get("filter"),
-						"groupByFields":          groupBys,
+						"groupByFields":          query.Params["aggregation.groupByFields"],
 						"minAlignmentPeriod":     strings.TrimPrefix(query.Params.Get("aggregation.alignmentPeriod"), "+"), // get rid off leading +,
 						"perSeriesAligner":       query.Params.Get("aggregation.perSeriesAligner"),
 						"secondaryGroupByFields": []string{},
@@ -194,7 +190,7 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 			queryRes.Error = err
 		}
 		result.Results[query.RefID] = queryRes
-		queryRes.Meta.Set("deepLink", buildDeepLink(query))
+		queryRes.Meta.Set("deepLink", query.buildDeepLink())
 	}
 
 	return result, nil

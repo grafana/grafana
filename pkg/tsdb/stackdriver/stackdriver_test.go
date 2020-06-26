@@ -57,7 +57,7 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].AliasBy, ShouldEqual, "testalias")
 
 				Convey("and generated deep link has correct parameters", func() {
-					dl := buildDeepLink(queries[0])
+					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
 						"timeRange": "custom",
@@ -84,7 +84,7 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["filter"][0], ShouldEqual, `metric.type="a/metric/type" key="value" key2="value2"`)
 
 				Convey("and generated deep link has correct parameters", func() {
-					dl := buildDeepLink(queries[0])
+					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
 						"timeRange": "custom",
@@ -111,7 +111,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+1000s`)
 
 					Convey("and generated deep link has correct parameters", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
 							"timeRange": "custom",
@@ -136,7 +136,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
 							"timeRange": "custom",
@@ -165,7 +165,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
 							"timeRange": "custom",
@@ -192,7 +192,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
 							"timeRange": "custom",
@@ -219,7 +219,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+300s`)
 
 					Convey("and generated deep link has correct parameters", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
 							"timeRange": "custom",
@@ -246,7 +246,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
 
 					Convey("and generated deep link has correct parameters", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
 							"timeRange": "custom",
@@ -273,7 +273,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+600s`)
 
 					Convey("and generated deep link has correct parameters", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
 							"timeRange": "custom",
@@ -311,7 +311,7 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 
 				Convey("and generated deep link has correct parameters", func() {
-					dl := buildDeepLink(queries[0])
+					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
 						"timeRange": "custom",
@@ -352,7 +352,7 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 
 				Convey("and generated deep link has correct parameters", func() {
-					dl := buildDeepLink(queries[0])
+					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
 						"timeRange": "custom",
@@ -414,7 +414,7 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].GroupBys, ShouldResemble, []string{"metric.label.group1", "metric.label.group2"})
 
 				Convey("and generated deep link has correct parameters", func() {
-					dl := buildDeepLink(queries[0])
+					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
 						"timeRange": "custom",
@@ -479,7 +479,7 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NEXT_OLDER")
 
 					Convey("and empty deep link", func() {
-						dl := buildDeepLink(queries[0])
+						dl := queries[0].buildDeepLink()
 						So(dl, ShouldBeEmpty)
 					})
 				})
