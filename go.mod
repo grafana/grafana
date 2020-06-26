@@ -80,7 +80,7 @@ require (
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/ldap.v3 v3.0.2
-	gopkg.in/macaron.v1 v1.3.4
+	gopkg.in/macaron.v1 v1.3.9
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/redis.v5 v5.2.9
 	gopkg.in/square/go-jose.v2 v2.4.1
