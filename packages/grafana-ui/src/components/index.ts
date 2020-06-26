@@ -122,7 +122,6 @@ export { StringValueEditor } from './OptionsUI/string';
 export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SelectValueEditor } from './OptionsUI/select';
-export { TimeZoneValueEditor } from './OptionsUI/timezone';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms

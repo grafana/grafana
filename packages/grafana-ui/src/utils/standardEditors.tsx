@@ -27,7 +27,7 @@ import {
   StringValueEditor,
   StringArrayEditor,
   SelectValueEditor,
-  TimeZoneValueEditor,
+  TimeZonePicker,
 } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
@@ -309,7 +309,7 @@ export const getStandardOptionEditors = () => {
     id: 'timezone',
     name: 'Time Zone',
     description: 'Time zone selection',
-    editor: TimeZoneValueEditor as any,
+    editor: TimeZonePicker as any,
   };
 
   return [
