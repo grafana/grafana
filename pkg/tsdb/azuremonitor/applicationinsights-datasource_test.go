@@ -2,7 +2,6 @@ package azuremonitor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"testing"
 	"time"
 
@@ -141,86 +140,6 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(queries[0].Target, ShouldEqual, "aggregation=Average&interval=PT1M&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-			})
-		})
-
-		Convey("Parse Application Insights metrics API", func() {
-			Convey("single value", func() {
-				data, err := ioutil.ReadFile("testdata/applicationinsights/3-application-insights-response-metrics-single-value.json")
-				So(err, ShouldBeNil)
-				query := &ApplicationInsightsQuery{
-					IsRaw: false,
-				}
-				series, err := datasource.parseTimeSeriesFromMetrics(data, query)
-				So(err, ShouldBeNil)
-
-				So(len(series), ShouldEqual, 1)
-				So(series[0].Name, ShouldEqual, "value")
-				So(len(series[0].Points), ShouldEqual, 1)
-
-				So(series[0].Points[0][0].Float64, ShouldEqual, 1.2)
-				So(series[0].Points[0][1].Float64, ShouldEqual, int64(1568340123000))
-			})
-
-			Convey("1H separation", func() {
-				data, err := ioutil.ReadFile("testdata/applicationinsights/4-application-insights-response-metrics-no-segment.json")
-				So(err, ShouldBeNil)
-				query := &ApplicationInsightsQuery{
-					IsRaw: false,
-				}
-				series, err := datasource.parseTimeSeriesFromMetrics(data, query)
-				So(err, ShouldBeNil)
-
-				So(len(series), ShouldEqual, 1)
-				So(series[0].Name, ShouldEqual, "value")
-				So(len(series[0].Points), ShouldEqual, 2)
-
-				So(series[0].Points[0][0].Float64, ShouldEqual, 1)
-				So(series[0].Points[0][1].Float64, ShouldEqual, int64(1568340123000))
-				So(series[0].Points[1][0].Float64, ShouldEqual, 2)
-				So(series[0].Points[1][1].Float64, ShouldEqual, int64(1568343723000))
-
-				Convey("with segmentation", func() {
-					data, err := ioutil.ReadFile("testdata/applicationinsights/4-application-insights-response-metrics-segmented.json")
-					So(err, ShouldBeNil)
-					query := &ApplicationInsightsQuery{
-						IsRaw: false,
-					}
-					series, err := datasource.parseTimeSeriesFromMetrics(data, query)
-					So(err, ShouldBeNil)
-
-					So(len(series), ShouldEqual, 2)
-					So(series[0].Name, ShouldEqual, "{blob=a}.value")
-					So(len(series[0].Points), ShouldEqual, 2)
-
-					So(series[0].Points[0][0].Float64, ShouldEqual, 1)
-					So(series[0].Points[0][1].Float64, ShouldEqual, int64(1568340123000))
-					So(series[0].Points[1][0].Float64, ShouldEqual, 2)
-					So(series[0].Points[1][1].Float64, ShouldEqual, int64(1568343723000))
-
-					So(series[1].Name, ShouldEqual, "{blob=b}.value")
-					So(len(series[1].Points), ShouldEqual, 2)
-
-					So(series[1].Points[0][0].Float64, ShouldEqual, 3)
-					So(series[1].Points[0][1].Float64, ShouldEqual, int64(1568340123000))
-					So(series[1].Points[1][0].Float64, ShouldEqual, 4)
-					So(series[1].Points[1][1].Float64, ShouldEqual, int64(1568343723000))
-
-					Convey("with alias", func() {
-						data, err := ioutil.ReadFile("testdata/applicationinsights/4-application-insights-response-metrics-segmented.json")
-						So(err, ShouldBeNil)
-						query := &ApplicationInsightsQuery{
-							IsRaw: false,
-							Alias: "{{metric}} {{dimensionname}} {{dimensionvalue}}",
-						}
-						series, err := datasource.parseTimeSeriesFromMetrics(data, query)
-						So(err, ShouldBeNil)
-
-						So(len(series), ShouldEqual, 2)
-						So(series[0].Name, ShouldEqual, "value blob a")
-						So(series[1].Name, ShouldEqual, "value blob b")
-					})
-				})
 			})
 		})
 	})
