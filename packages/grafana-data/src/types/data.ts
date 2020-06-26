@@ -44,7 +44,6 @@ export interface QueryResultMeta {
    * */
   gmdMeta?: any[]; // used by cloudwatch
   alignmentPeriod?: string; // used by stackdriver
-  query?: string; // used by azure log
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
