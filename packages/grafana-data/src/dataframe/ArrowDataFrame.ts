@@ -118,19 +118,18 @@ function toArrowVector(field: Field): ArrowVector {
   return builder.finish().toVector();
 }
 
-export function grafanaDataFrameToArrowTable(data: DataFrame, forReload?: boolean): Table {
+/**
+ * @param keepOriginalNames by default, the exported Table will get names that match the
+ * display within grafana.  This typically includes any labels defined in the metadata.
+ *
+ * When using this function to round-trip data, be sure to set `keepOriginalNames=true`
+ */
+export function grafanaDataFrameToArrowTable(data: DataFrame, keepOriginalNames?: boolean): Table {
   // Return the original table
   let table = (data as any).table;
   if (table instanceof Table && table.numCols === data.fields.length) {
-    if (!forReload) {
-      for (let i = 0; i < table.numCols; i++) {
-        const col = table.getColumnAt(i);
-        if (!col) {
-          table = undefined;
-          break;
-        }
-        col.name = getFieldDisplayName(data.fields[i], data);
-      }
+    if (!keepOriginalNames) {
+      table = updateArrowTableNames(table, data);
     }
     if (table) {
       return table as Table;
@@ -141,7 +140,7 @@ export function grafanaDataFrameToArrowTable(data: DataFrame, forReload?: boolea
     data.fields.map((field, index) => {
       let name = field.name;
       // when used directly as an arrow table the name should match the arrow schema
-      if (!forReload) {
+      if (!keepOriginalNames) {
         name = getFieldDisplayName(field, data);
       }
       const column = Column.new(name, toArrowVector(field));
@@ -165,6 +164,19 @@ export function grafanaDataFrameToArrowTable(data: DataFrame, forReload?: boolea
     metadata.set('meta', JSON.stringify(data.meta));
   }
   return table;
+}
+
+function updateArrowTableNames(table: Table, frame: DataFrame): Table | undefined {
+  const cols: Column[] = [];
+  for (let i = 0; i < table.numCols; i++) {
+    const col = table.getColumnAt(i);
+    if (!col) {
+      return undefined;
+    }
+    const name = getFieldDisplayName(frame.fields[i], frame);
+    cols.push(Column.new(col.field.clone({ name: name }), ...col.chunks));
+  }
+  return Table.new(cols);
 }
 
 class NumberColumn extends FunctionalVector<number> {
