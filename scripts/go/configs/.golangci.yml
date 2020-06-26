@@ -4,6 +4,8 @@ run:
 linters:
   disable-all: true
   enable:
+    - gosec
+    - vet
     - deadcode
     - gofmt
     - gosimple
@@ -23,3 +25,33 @@ linters-settings:
     min-len: 5
     # minimal occurrences count to trigger, 3 by default
     min-occurrences: 5
+
+issues:
+  exclude-rules:
+    - linters:
+        - gosec
+      text: G108
+    - linters:
+        - gosec
+      text: G110
+    - linters:
+        - gosec
+      text: G201
+    - linters:
+        - gosec
+      text: G202
+    - linters:
+        - gosec
+      text: G306
+    - linters:
+        - gosec
+      text: G401
+    - linters:
+        - gosec
+      text: G402
+    - linters:
+        - gosec
+      text: G501
+    - linters:
+        - gosec
+      text: G501
