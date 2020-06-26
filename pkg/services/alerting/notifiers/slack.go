@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -319,8 +320,13 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &models.SendWebhookSync{Url: sn.URL, Body: string(data)}
+	cmd := &models.SendWebhookSync{
+		Url:        sn.URL,
+		Body:       string(data),
+		HttpMethod: http.MethodPost,
+	}
 	if sn.Token != "" {
+		sn.log.Debug("Adding authorization header to HTTP request")
 		cmd.HttpHeader = map[string]string{
 			"Authorization": fmt.Sprintf("Bearer %s", sn.Token),
 		}
