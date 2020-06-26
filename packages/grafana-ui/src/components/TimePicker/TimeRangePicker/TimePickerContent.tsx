@@ -5,26 +5,26 @@ import { useMedia } from 'react-use';
 import { stylesFactory, useTheme } from '../../../themes';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
-import { getThemeColors } from './colors';
 import { mapRangeToTimeOption } from './mapper';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
+import { TimePickerFooter } from './TimePickerFooter';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = getThemeColors(theme);
+  const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
 
   return {
     container: css`
-      display: flex;
-      background: ${colors.background};
-      box-shadow: 0px 0px 20px ${colors.shadow};
+      background: ${theme.colors.bodyBg};
+      box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
       position: absolute;
       z-index: ${theme.zIndex.modal};
       width: 546px;
-      height: 381px;
       top: 116%;
       margin-left: -322px;
+      border-radius: 2px;
+      border: 1px solid ${containerBorder};
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 218px;
@@ -36,10 +36,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         margin-left: -100px;
       }
     `,
+    body: css`
+      display: flex;
+      height: 381px;
+    `,
     leftSide: css`
       display: flex;
       flex-direction: column;
-      border-right: 1px solid ${colors.border};
+      border-right: 1px solid ${theme.colors.border1};
       width: 60%;
       overflow: hidden;
 
@@ -61,7 +65,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = getThemeColors(theme);
+  const formBackground = theme.isDark ? theme.palette.gray15 : theme.palette.gray98;
 
   return {
     header: css`
@@ -69,13 +73,13 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid ${colors.border};
+      border-bottom: 1px solid ${theme.colors.border1};
       padding: 7px 9px 7px 9px;
     `,
     body: css`
-      border-bottom: 1px solid ${colors.border};
-      background: ${colors.formBackground};
-      box-shadow: inset 0px 2px 2px ${colors.shadow};
+      border-bottom: 1px solid ${theme.colors.border1};
+      background: ${formBackground};
+      box-shadow: inset 0px 2px 2px ${theme.colors.dropdownShadow};
     `,
     form: css`
       padding: 7px 9px 7px 9px;
@@ -103,11 +107,11 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = getThemeColors(theme);
+  const formBackground = theme.isDark ? theme.palette.gray15 : theme.palette.gray98;
 
   return {
     container: css`
-      background-color: ${colors.formBackground};
+      background-color: ${formBackground};
       padding: 12px;
       margin: 12px;
 
@@ -125,6 +129,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
 interface Props {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
   timeZone?: TimeZone;
   quickOptions?: TimeOption[];
   otherOptions?: TimeOption[];
@@ -148,27 +153,30 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
 
   return (
     <div className={styles.container}>
-      <div className={styles.leftSide}>
-        <FullScreenForm {...props} visible={isFullscreen} historyOptions={historyOptions} />
+      <div className={styles.body}>
+        <div className={styles.leftSide}>
+          <FullScreenForm {...props} visible={isFullscreen} historyOptions={historyOptions} />
+        </div>
+        <CustomScrollbar className={styles.rightSide}>
+          <NarrowScreenForm {...props} visible={!isFullscreen} historyOptions={historyOptions} />
+          <TimeRangeList
+            title="Relative time ranges"
+            options={quickOptions}
+            onSelect={props.onChange}
+            value={props.value}
+            timeZone={props.timeZone}
+          />
+          <div className={styles.spacing} />
+          <TimeRangeList
+            title="Other quick ranges"
+            options={otherOptions}
+            onSelect={props.onChange}
+            value={props.value}
+            timeZone={props.timeZone}
+          />
+        </CustomScrollbar>
       </div>
-      <CustomScrollbar className={styles.rightSide}>
-        <NarrowScreenForm {...props} visible={!isFullscreen} historyOptions={historyOptions} />
-        <TimeRangeList
-          title="Relative time ranges"
-          options={quickOptions}
-          onSelect={props.onChange}
-          value={props.value}
-          timeZone={props.timeZone}
-        />
-        <div className={styles.spacing} />
-        <TimeRangeList
-          title="Other quick ranges"
-          options={otherOptions}
-          onSelect={props.onChange}
-          value={props.value}
-          timeZone={props.timeZone}
-        />
-      </CustomScrollbar>
+      {isFullscreen && <TimePickerFooter timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />}
     </div>
   );
 };
