@@ -339,7 +339,9 @@ This enables data proxy logging, default is `false`.
 
 ### timeout
 
-How long the data proxy should wait before timing out. Default is `30` (seconds)
+How long the data proxy should wait before timing out. Default is `30` (seconds).
+
+> **Note:** This setting also applies to core backend HTTP data sources where queries are requested using an HTTP client with timeout set.
 
 ### send_user_header
 
@@ -537,7 +539,7 @@ Set the default UI theme: `dark` or `light`. Default is `dark`.
 
 ### External user management
 
-If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description. 
+If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description.
 
 ### viewers_can_edit
 
@@ -733,7 +735,7 @@ Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `e
 
 Default is `false`.
 
-### templates_pattern 
+### templates_pattern
 
 Default is `emails/*.html`.
 
@@ -1224,7 +1226,7 @@ Instruct headless browser instance whether to ignore HTTPS errors during navigat
 
 ### rendering_verbose_logging
 
-Instruct headless browser instance whether to capture and log verbose information when rendering an image. Default is `false` and will only capture and log error messages. 
+Instruct headless browser instance whether to capture and log verbose information when rendering an image. Default is `false` and will only capture and log error messages.
 
 When enabled, debug messages are captured and logged as well.
 
