@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net/url"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -53,6 +55,21 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 				So(queries[0].AliasBy, ShouldEqual, "testalias")
+
+				Convey("and generated deep link has correct parameters", func() {
+					dl := buildDeepLink(queries[0])
+
+					expectedTimeSelection := map[string]string{
+						"timeRange": "custom",
+						"start":     "2018-03-15T13:00:00Z",
+						"end":       "2018-03-15T13:34:00Z",
+					}
+					expectedTimeSeriesFilter := map[string]interface{}{
+						"perSeriesAligner": "ALIGN_MEAN",
+						"filter":           "metric.type=\"a/metric/type\"",
+					}
+					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+				})
 			})
 
 			Convey("and query has filters", func() {
@@ -65,6 +82,20 @@ func TestStackdriver(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].Params["filter"][0], ShouldEqual, `metric.type="a/metric/type" key="value" key2="value2"`)
+
+				Convey("and generated deep link has correct parameters", func() {
+					dl := buildDeepLink(queries[0])
+
+					expectedTimeSelection := map[string]string{
+						"timeRange": "custom",
+						"start":     "2018-03-15T13:00:00Z",
+						"end":       "2018-03-15T13:34:00Z",
+					}
+					expectedTimeSeriesFilter := map[string]interface{}{
+						"filter": `metric.type="a/metric/type" key="value" key2="value2"`,
+					}
+					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+				})
 			})
 
 			Convey("and alignmentPeriod is set to grafana-auto", func() {
@@ -78,6 +109,20 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+1000s`)
+
+					Convey("and generated deep link has correct parameters", func() {
+						dl := buildDeepLink(queries[0])
+
+						expectedTimeSelection := map[string]string{
+							"timeRange": "custom",
+							"start":     "2018-03-15T13:00:00Z",
+							"end":       "2018-03-15T13:34:00Z",
+						}
+						expectedTimeSeriesFilter := map[string]interface{}{
+							"minAlignmentPeriod": `1000s`,
+						}
+						verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					})
 				})
 				Convey("and IntervalMs is less than 60000", func() {
 					tsdbQuery.Queries[0].IntervalMs = 30000
@@ -89,6 +134,20 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+
+					Convey("and generated deep link has correct parameters", func() {
+						dl := buildDeepLink(queries[0])
+
+						expectedTimeSelection := map[string]string{
+							"timeRange": "custom",
+							"start":     "2018-03-15T13:00:00Z",
+							"end":       "2018-03-15T13:34:00Z",
+						}
+						expectedTimeSeriesFilter := map[string]interface{}{
+							"minAlignmentPeriod": `60s`,
+						}
+						verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					})
 				})
 			})
 
@@ -104,6 +163,20 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+
+					Convey("and generated deep link has correct parameters", func() {
+						dl := buildDeepLink(queries[0])
+
+						expectedTimeSelection := map[string]string{
+							"timeRange": "custom",
+							"start":     "2018-09-27T07:28:42Z",
+							"end":       "2018-09-27T09:28:42Z",
+						}
+						expectedTimeSeriesFilter := map[string]interface{}{
+							"minAlignmentPeriod": `60s`,
+						}
+						verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					})
 				})
 
 				Convey("and range is 22 hours", func() {
@@ -117,6 +190,20 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+
+					Convey("and generated deep link has correct parameters", func() {
+						dl := buildDeepLink(queries[0])
+
+						expectedTimeSelection := map[string]string{
+							"timeRange": "custom",
+							"start":     "2018-09-27T07:48:44Z",
+							"end":       "2018-09-28T05:48:44Z",
+						}
+						expectedTimeSeriesFilter := map[string]interface{}{
+							"minAlignmentPeriod": `60s`,
+						}
+						verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					})
 				})
 
 				Convey("and range is 23 hours", func() {
@@ -130,6 +217,20 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+300s`)
+
+					Convey("and generated deep link has correct parameters", func() {
+						dl := buildDeepLink(queries[0])
+
+						expectedTimeSelection := map[string]string{
+							"timeRange": "custom",
+							"start":     "2018-09-27T07:49:27Z",
+							"end":       "2018-09-28T06:49:27Z",
+						}
+						expectedTimeSeriesFilter := map[string]interface{}{
+							"minAlignmentPeriod": `300s`,
+						}
+						verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					})
 				})
 
 				Convey("and range is 7 days", func() {
@@ -143,6 +244,20 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
+
+					Convey("and generated deep link has correct parameters", func() {
+						dl := buildDeepLink(queries[0])
+
+						expectedTimeSelection := map[string]string{
+							"timeRange": "custom",
+							"start":     "2018-09-27T08:18:44Z",
+							"end":       "2018-10-04T08:18:44Z",
+						}
+						expectedTimeSeriesFilter := map[string]interface{}{
+							"minAlignmentPeriod": `3600s`,
+						}
+						verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					})
 				})
 			})
 
@@ -156,6 +271,20 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+600s`)
+
+					Convey("and generated deep link has correct parameters", func() {
+						dl := buildDeepLink(queries[0])
+
+						expectedTimeSelection := map[string]string{
+							"timeRange": "custom",
+							"start":     "2018-03-15T13:00:00Z",
+							"end":       "2018-03-15T13:34:00Z",
+						}
+						expectedTimeSeriesFilter := map[string]interface{}{
+							"minAlignmentPeriod": `600s`,
+						}
+						verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					})
 				})
 			})
 
@@ -180,6 +309,23 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, "+60s")
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
+
+				Convey("and generated deep link has correct parameters", func() {
+					dl := buildDeepLink(queries[0])
+
+					expectedTimeSelection := map[string]string{
+						"timeRange": "custom",
+						"start":     "2018-03-15T13:00:00Z",
+						"end":       "2018-03-15T13:34:00Z",
+					}
+					expectedTimeSeriesFilter := map[string]interface{}{
+						"minAlignmentPeriod": `60s`,
+						"crossSeriesReducer": "REDUCE_SUM",
+						"perSeriesAligner":   "ALIGN_MEAN",
+						"filter":             "metric.type=\"a/metric/type\"",
+					}
+					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+				})
 			})
 
 			Convey("and query has group bys", func() {
@@ -204,6 +350,23 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["aggregation.groupByFields"][1], ShouldEqual, "metric.label.group2")
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
+
+				Convey("and generated deep link has correct parameters", func() {
+					dl := buildDeepLink(queries[0])
+
+					expectedTimeSelection := map[string]string{
+						"timeRange": "custom",
+						"start":     "2018-03-15T13:00:00Z",
+						"end":       "2018-03-15T13:34:00Z",
+					}
+					expectedTimeSeriesFilter := map[string]interface{}{
+						"minAlignmentPeriod": `60s`,
+						"perSeriesAligner":   "ALIGN_MEAN",
+						"filter":             "metric.type=\"a/metric/type\"",
+						"groupByFields":      []interface{}{"metric.label.group1", "metric.label.group2"},
+					}
+					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+				})
 			})
 
 		})
@@ -249,6 +412,23 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 				So(queries[0].AliasBy, ShouldEqual, "testalias")
 				So(queries[0].GroupBys, ShouldResemble, []string{"metric.label.group1", "metric.label.group2"})
+
+				Convey("and generated deep link has correct parameters", func() {
+					dl := buildDeepLink(queries[0])
+
+					expectedTimeSelection := map[string]string{
+						"timeRange": "custom",
+						"start":     "2018-03-15T13:00:00Z",
+						"end":       "2018-03-15T13:34:00Z",
+					}
+					expectedTimeSeriesFilter := map[string]interface{}{
+						"minAlignmentPeriod": `60s`,
+						"perSeriesAligner":   "ALIGN_MEAN",
+						"filter":             "metric.type=\"a/metric/type\"",
+						"groupByFields":      []interface{}{"metric.label.group1", "metric.label.group2"},
+					}
+					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+				})
 			})
 
 			Convey("and query type is SLOs", func() {
@@ -297,6 +477,11 @@ func TestStackdriver(t *testing.T) {
 					queries, err := executor.buildQueries(tsdbQuery)
 					So(err, ShouldBeNil)
 					So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NEXT_OLDER")
+
+					Convey("and empty deep link", func() {
+						dl := buildDeepLink(queries[0])
+						So(dl, ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -719,4 +904,47 @@ func loadTestFile(path string) (stackdriverResponse, error) {
 	}
 	err = json.Unmarshal(jsonBody, &data)
 	return data, err
+}
+
+func verifyDeepLink(dl string, expectedTimeSelection map[string]string, expectedTimeSeriesFilter map[string]interface{}) {
+	u, err := url.Parse(dl)
+	So(err, ShouldBeNil)
+
+	params, err := url.ParseQuery(u.RawQuery)
+	So(err, ShouldBeNil)
+
+	pageStateStr := params.Get("pageState")
+	So(pageStateStr, ShouldNotBeEmpty)
+
+	var pageState map[string]map[string]interface{}
+	err = json.Unmarshal([]byte(pageStateStr), &pageState)
+	So(err, ShouldBeNil)
+
+	timeSelection, ok := pageState["timeSelection"]
+	So(ok, ShouldBeTrue)
+	for k, v := range expectedTimeSelection {
+		s, ok := timeSelection[k].(string)
+		So(ok, ShouldBeTrue)
+		So(s, ShouldEqual, v)
+	}
+
+	dataSets, ok := pageState["xyChart"]["dataSets"].([]interface{})
+	So(ok, ShouldBeTrue)
+	So(len(dataSets), ShouldEqual, 1)
+	dataSet, ok := dataSets[0].(map[string]interface{})
+	So(ok, ShouldBeTrue)
+	i, ok := dataSet["timeSeriesFilter"]
+	So(ok, ShouldBeTrue)
+	timeSeriesFilter := i.(map[string]interface{})
+	for k, v := range expectedTimeSeriesFilter {
+		s, ok := timeSeriesFilter[k]
+		So(ok, ShouldBeTrue)
+		rt := reflect.TypeOf(v)
+		switch rt.Kind() {
+		case reflect.Slice, reflect.Array:
+			So(s, ShouldResemble, v)
+		default:
+			So(s, ShouldEqual, v)
+		}
+	}
 }
