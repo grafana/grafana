@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -168,27 +169,23 @@ func (auth *AuthProxy) getKey() string {
 	return fmt.Sprintf(CachePrefix, hashedKey)
 }
 
-// Login logs in user id with whatever means possible
-func (auth *AuthProxy) Login() (int64, *Error) {
-
-	id, _ := auth.GetUserViaCache()
-	if id != 0 {
+// Login logs in user ID by whatever means possible.
+func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, *Error) {
+	if !ignoreCache {
 		// Error here means absent cache - we don't need to handle that
-		return id, nil
+		id, err := auth.GetUserViaCache(logger)
+		if err == nil && id != 0 {
+			return id, nil
+		}
 	}
 
 	if isLDAPEnabled() {
 		id, err := auth.LoginViaLDAP()
-
-		if err == ldap.ErrInvalidCredentials {
-			return 0, newError(
-				"Proxy authentication required",
-				ldap.ErrInvalidCredentials,
-			)
-		}
-
 		if err != nil {
-			return 0, newError("Failed to get the user", err)
+			if err == ldap.ErrInvalidCredentials {
+				return 0, newError("proxy authentication required", ldap.ErrInvalidCredentials)
+			}
+			return 0, newError("failed to get the user", err)
 		}
 
 		return id, nil
@@ -196,27 +193,36 @@ func (auth *AuthProxy) Login() (int64, *Error) {
 
 	id, err := auth.LoginViaHeader()
 	if err != nil {
-		return 0, newError(
-			"Failed to log in as user, specified in auth proxy header",
-			err,
-		)
+		return 0, newError("failed to log in as user, specified in auth proxy header", err)
 	}
 
 	return id, nil
 }
 
-// GetUserViaCache gets user id from cache
-func (auth *AuthProxy) GetUserViaCache() (int64, error) {
-	var (
-		cacheKey    = auth.getKey()
-		userID, err = auth.store.Get(cacheKey)
-	)
-
+// GetUserViaCache gets user ID from cache.
+func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
+	cacheKey := auth.getKey()
+	logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
+	userID, err := auth.store.Get(cacheKey)
 	if err != nil {
+		logger.Debug("Failed getting user ID via auth cache", "error", err)
 		return 0, err
 	}
 
+	logger.Debug("Successfully got user ID via auth cache", "id", userID)
 	return userID.(int64), nil
+}
+
+// RemoveUserFromCache removes user from cache.
+func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
+	cacheKey := auth.getKey()
+	logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
+	if err := auth.store.Delete(cacheKey); err != nil {
+		return err
+	}
+
+	logger.Debug("Successfully removed user from auth cache", "cacheKey", cacheKey)
+	return nil
 }
 
 // LoginViaLDAP logs in user via LDAP request
@@ -265,7 +271,6 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		extUser.Login = auth.header
 	default:
 		return 0, newError("Auth proxy header property invalid", nil)
-
 	}
 
 	auth.headersIterator(func(field string, header string) {
@@ -305,7 +310,7 @@ func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 	}
 }
 
-// GetSignedUser get full signed user info
+// GetSignedUser gets full signed user info.
 func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, *Error) {
 	query := &models.GetSignedInUserQuery{
 		OrgId:  auth.orgID,

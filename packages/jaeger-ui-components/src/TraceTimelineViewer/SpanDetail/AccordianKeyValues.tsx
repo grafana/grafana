@@ -21,7 +21,7 @@ import cx from 'classnames';
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
 import { TNil } from '../../types';
-import { KeyValuePair, Link } from '../../types/trace';
+import { TraceKeyValuePair, TraceLink } from '@grafana/data';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
@@ -84,17 +84,17 @@ export const getStyles = createStyle((theme: Theme) => {
 
 type AccordianKeyValuesProps = {
   className?: string | TNil;
-  data: KeyValuePair[];
+  data: TraceKeyValuePair[];
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
   label: string;
-  linksGetter: ((pairs: KeyValuePair[], index: number) => Link[]) | TNil;
+  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   onToggle?: null | (() => void);
 };
 
 // export for tests
-export function KeyValuesSummary(props: { data?: KeyValuePair[] }) {
+export function KeyValuesSummary(props: { data?: TraceKeyValuePair[] }) {
   const { data } = props;
   if (!Array.isArray(data) || !data.length) {
     return null;

@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 
-import { Table, Select } from '@grafana/ui';
-import { FieldMatcherID, PanelProps, DataFrame, SelectableValue, getFrameDisplayName } from '@grafana/data';
+import { Select, Table } from '@grafana/ui';
+import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { Options } from './types';
 import { css } from 'emotion';
 import { config } from 'app/core/config';
-import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { dispatch } from '../../../store/store';
+import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 interface Props extends PanelProps<Options> {}
 
@@ -62,6 +65,20 @@ export class TablePanel extends Component<Props> {
     this.forceUpdate();
   };
 
+  onCellFilterAdded = (filter: FilterItem) => {
+    const { key, value, operator } = filter;
+    const panelModel = getDashboardSrv()
+      .getCurrent()
+      .getPanelById(this.props.id);
+    const datasource = panelModel?.datasource;
+
+    if (!datasource) {
+      return;
+    }
+
+    dispatch(applyFilterFromTable({ datasource, key, operator, value }));
+  };
+
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
 
@@ -75,6 +92,7 @@ export class TablePanel extends Component<Props> {
         initialSortBy={options.sortBy}
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
+        onCellFilterAdded={this.onCellFilterAdded}
       />
     );
   }

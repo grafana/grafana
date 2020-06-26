@@ -154,7 +154,7 @@ A basic guide for data sources can be found [here](http://docs.grafana.org/plugi
 
 If possible, any passwords or secrets should be be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API, this will not be possible and sensitive data will not be encrypted.
 
-Read more here about how [authentication for data sources]({{< relref "../authentication.md" >}}) works.
+Read more here about how [authentication for data sources]({{< relref "../add-authentication-for-data-source-plugins.md" >}}) works.
 
 If using the proxy feature, the Config page should use the `secureJsonData` blob like this:
 
