@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -291,12 +292,14 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		attachment["image_url"] = imageURL
 	}
 	body := map[string]interface{}{
-		"text":   evalContext.GetNotificationTitle(),
-		"blocks": blocks,
+		"text": evalContext.GetNotificationTitle(),
 		"attachments": []map[string]interface{}{
 			attachment,
 		},
 		"parse": "full", // to linkify urls, users and channels in alert message.
+	}
+	if len(blocks) > 0 {
+		body["blocks"] = blocks
 	}
 
 	//recipient override
@@ -317,7 +320,17 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &models.SendWebhookSync{Url: sn.URL, Body: string(data)}
+	cmd := &models.SendWebhookSync{
+		Url:        sn.URL,
+		Body:       string(data),
+		HttpMethod: http.MethodPost,
+	}
+	if sn.Token != "" {
+		sn.log.Debug("Adding authorization header to HTTP request")
+		cmd.HttpHeader = map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %s", sn.Token),
+		}
+	}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
 		return err
