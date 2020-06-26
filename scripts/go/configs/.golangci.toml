@@ -21,7 +21,7 @@ enable = [
   "gocritic",
   "goimports",
   "golint",
-  # "goprintffuncname",
+  "goprintffuncname",
   "gosec",
   "gosimple",
   "govet",

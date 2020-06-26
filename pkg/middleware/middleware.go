@@ -94,7 +94,7 @@ func initContextWithAnonymousUser(ctx *models.ReqContext) bool {
 
 	orgQuery := models.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
 	if err := bus.Dispatch(&orgQuery); err != nil {
-		log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
+		log.Errorf(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
 		return false
 	}
 

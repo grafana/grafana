@@ -94,7 +94,7 @@ func (this *CacheServer) Handler(ctx *models.ReqContext) {
 	if avatar.Expired() {
 		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.Update(); err != nil {
-			log.Trace("avatar update error: %v", err)
+			log.Tracef("avatar update error: %v", err)
 			avatar = this.notFound
 		}
 	}
@@ -103,7 +103,7 @@ func (this *CacheServer) Handler(ctx *models.ReqContext) {
 		avatar = this.notFound
 	} else if !exists {
 		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
-			log.Trace("Error adding avatar to cache: %s", err)
+			log.Tracef("Error adding avatar to cache: %s", err)
 		}
 	}
 
@@ -116,7 +116,7 @@ func (this *CacheServer) Handler(ctx *models.ReqContext) {
 	ctx.Resp.Header().Add("Cache-Control", "private, max-age=3600")
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
-		log.Warn("avatar encode error: %v", err)
+		log.Warnf("avatar encode error: %v", err)
 		ctx.WriteHeader(500)
 	}
 }
@@ -135,7 +135,7 @@ func newNotFound() *Avatar {
 	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
 
 	if data, err := ioutil.ReadFile(path); err != nil {
-		log.Error(3, "Failed to read user_profile.png, %v", path)
+		log.Errorf(3, "Failed to read user_profile.png, %v", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)
 	}
@@ -208,7 +208,7 @@ var client = &http.Client{
 func (this *thunderTask) fetch() error {
 	this.Avatar.timestamp = time.Now()
 
-	log.Debug("avatar.fetch(fetch new avatar): %s", this.Url)
+	log.Debugf("avatar.fetch(fetch new avatar): %s", this.Url)
 	req, _ := http.NewRequest("GET", this.Url, nil)
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/jpeg,image/png,*/*;q=0.8")
 	req.Header.Set("Accept-Encoding", "deflate,sdch")

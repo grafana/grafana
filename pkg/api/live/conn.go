@@ -76,14 +76,14 @@ func (c *connection) readPump() {
 func (c *connection) handleMessage(message []byte) {
 	json, err := simplejson.NewJson(message)
 	if err != nil {
-		log.Error(3, "Unreadable message on websocket channel. error: %v", err)
+		log.Errorf(3, "Unreadable message on websocket channel. error: %v", err)
 	}
 
 	msgType := json.Get("action").MustString()
 	streamName := json.Get("stream").MustString()
 
 	if len(streamName) == 0 {
-		log.Error(3, "Not allowed to subscribe to empty stream name")
+		log.Errorf(3, "Not allowed to subscribe to empty stream name")
 		return
 	}
 

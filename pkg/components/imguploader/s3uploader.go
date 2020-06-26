@@ -73,7 +73,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		return "", err
 	}
 	key := u.path + rand + pngExt
-	log.Debug("Uploading image to s3. bucket = %s, path = %s", u.bucket, key)
+	log.Debugf("Uploading image to s3. bucket = %s, path = %s", u.bucket, key)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {

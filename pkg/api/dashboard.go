@@ -329,7 +329,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return JSON(200, &dashRedirect)
 		}
-		log.Warn("Failed to get slug from database, %s", err.Error())
+		log.Warnf("Failed to get slug from database, %s", err.Error())
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
