@@ -184,8 +184,9 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		resp, err := client.Post(usageStatsURL, "application/json", data)
 		if err != nil {
 			metricsLogger.Error("Failed to send usage stats", "err", err)
+			return
 		}
-		defer resp.Body.Close()
+		resp.Body.Close()
 	}()
 }
 
