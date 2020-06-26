@@ -2,6 +2,7 @@ import React from 'react';
 import { MappingType, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
 import { MappingRow } from './MappingRow';
+import { ValueMappingsEditor2 } from './ValueMappingsEditor2';
 
 export interface Props {
   valueMappings?: ValueMapping[];
@@ -51,6 +52,10 @@ export const ValueMappingsEditor: React.FC<Props> = ({ valueMappings, onChange, 
 
   return (
     <>
+      <ValueMappingsEditor2 valueMappings={valueMappings} onChange={onChange} />
+      <hr />
+      <hr />
+
       {valueMappings && valueMappings.length > 0 && (
         <>
           {valueMappings.length > 0 &&
