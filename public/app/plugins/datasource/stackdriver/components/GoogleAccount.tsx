@@ -7,7 +7,7 @@ export interface Props {
 }
 
 export const GoogleAccount: FunctionComponent<Props> = ({ value = '', onChange }) => {
-  const [_, setGoogleAccount] = useState(value);
+  const [googleAccount, setGoogleAccount] = useState(value);
 
   return (
     <QueryInlineField
@@ -18,6 +18,7 @@ export const GoogleAccount: FunctionComponent<Props> = ({ value = '', onChange }
         type="text"
         placeholder="foo@google.com"
         className="gf-form-input width-26"
+        defaultValue={googleAccount}
         onBlur={(e: any) => {
           setGoogleAccount(e.target.value);
           onChange(e.target.value);
