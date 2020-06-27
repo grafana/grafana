@@ -1,5 +1,4 @@
 import React, { FunctionComponent, useState } from 'react';
-import { debounce } from 'lodash';
 import { QueryInlineField } from '.';
 
 export interface Props {
@@ -8,14 +7,7 @@ export interface Props {
 }
 
 export const GoogleAccount: FunctionComponent<Props> = ({ value = '', onChange }) => {
-  const [googleAccount, setGoogleAccount] = useState(value);
-
-  const propagateOnChange = debounce(onChange, 1000);
-
-  onChange = (e: any) => {
-    setGoogleAccount(e.target.value);
-    propagateOnChange(e.target.value);
-  };
+  const [_, setGoogleAccount] = useState(value);
 
   return (
     <QueryInlineField
@@ -26,8 +18,10 @@ export const GoogleAccount: FunctionComponent<Props> = ({ value = '', onChange }
         type="text"
         placeholder="foo@google.com"
         className="gf-form-input width-26"
-        value={googleAccount}
-        onChange={onChange}
+        onBlur={(e: any) => {
+          setGoogleAccount(e.target.value);
+          onChange(e.target.value);
+        }}
       />
     </QueryInlineField>
   );
