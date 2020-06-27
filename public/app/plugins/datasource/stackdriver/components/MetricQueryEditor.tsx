@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Project, Aggregations, Metrics, LabelFilter, GroupBys, Alignments, AlignmentPeriods, AliasBy } from '.';
+import {
+  Project,
+  Aggregations,
+  Metrics,
+  LabelFilter,
+  GroupBys,
+  Alignments,
+  AlignmentPeriods,
+  AliasBy,
+  GoogleAccount,
+} from '.';
 import { MetricQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
@@ -36,6 +46,7 @@ export const defaultQuery: MetricQuery = {
   groupBys: [],
   filters: [],
   aliasBy: '',
+  googleAccount: '',
 };
 
 function Editor({
@@ -130,6 +141,10 @@ function Editor({
               onChange={alignmentPeriod => onChange({ ...query, alignmentPeriod })}
             />
             <AliasBy value={query.aliasBy || ''} onChange={aliasBy => onChange({ ...query, aliasBy })} />
+            <GoogleAccount
+              value={query.googleAccount || ''}
+              onChange={googleAccount => onChange({ ...query, googleAccount })}
+            />
           </>
         )}
       </Metrics>

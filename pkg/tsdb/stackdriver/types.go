@@ -7,15 +7,16 @@ import (
 
 type (
 	stackdriverQuery struct {
-		Target      string
-		Params      url.Values
-		RefID       string
-		GroupBys    []string
-		AliasBy     string
-		ProjectName string
-		Selector    string
-		Service     string
-		Slo         string
+		Target        string
+		Params        url.Values
+		RefID         string
+		GroupBys      []string
+		AliasBy       string
+		GoogleAccount string
+		ProjectName   string
+		Selector      string
+		Service       string
+		Slo           string
 	}
 
 	metricQuery struct {
@@ -28,6 +29,7 @@ type (
 		Filters            []string
 		AliasBy            string
 		View               string
+		GoogleAccount      string
 	}
 
 	sloQuery struct {

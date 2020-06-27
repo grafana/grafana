@@ -333,4 +333,7 @@ Only available in Grafana v7.1+.
 > **Note:** This feature is only available for Metric queries.
 
 Click on a time series in the panel to see a context menu with a link to View in Monitoring Metrics explorer. Clicking that link opens the Metrics explorer in the Monitoring and runs the query from the Grafana panel there.
-If you're not currently logged in to the Google console, then the link opens the login page. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+
+The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+
+If you're not currently logged in to the Google console, then the link opens the login page. If you are logged in in multiple google accounts you’ll directed to the first account you signed into. This behaviour can be ovewritten if you fill the Google Account input in the metric query editor.

@@ -7,6 +7,7 @@ export { AnnotationsHelp } from './AnnotationsHelp';
 export { Alignments } from './Alignments';
 export { AlignmentPeriods } from './AlignmentPeriods';
 export { AliasBy } from './AliasBy';
+export { GoogleAccount } from './GoogleAccount';
 export { Aggregations } from './Aggregations';
 export { SimpleSelect } from './SimpleSelect';
 export { MetricQueryEditor } from './MetricQueryEditor';

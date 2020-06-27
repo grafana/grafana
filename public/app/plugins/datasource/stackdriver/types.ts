@@ -62,6 +62,7 @@ export interface MetricQuery {
   groupBys?: string[];
   filters?: string[];
   aliasBy?: string;
+  googleAccount?: string;
   metricKind?: string;
   valueType?: string;
   view?: string;

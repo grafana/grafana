@@ -116,6 +116,15 @@ func (query *stackdriverQuery) isSLO() bool {
 	return query.Slo != ""
 }
 
+func isValidEmail(email string) bool {
+	if email == "" {
+		return true
+	}
+
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	return re.MatchString(email)
+}
+
 func (query *stackdriverQuery) buildDeepLink() string {
 	if query.isSLO() {
 		return ""
@@ -128,6 +137,13 @@ func (query *stackdriverQuery) buildDeepLink() string {
 
 	q := u.Query()
 	q.Set("project", query.ProjectName)
+	if query.GoogleAccount != "" {
+		if !isValidEmail(query.GoogleAccount) {
+			slog.Debug("Invalid google account is not added to the deep link", "account", query.GoogleAccount)
+		} else {
+			q.Set("authuser", query.GoogleAccount)
+		}
+	}
 
 	pageState := map[string]interface{}{
 		"xyChart": map[string]interface{}{
@@ -230,6 +246,7 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*stackd
 
 		if q.QueryType == metricQueryType {
 			sq.AliasBy = q.MetricQuery.AliasBy
+			sq.GoogleAccount = q.MetricQuery.GoogleAccount
 			sq.GroupBys = append(sq.GroupBys, q.MetricQuery.GroupBys...)
 			sq.ProjectName = q.MetricQuery.ProjectName
 			if q.MetricQuery.View == "" {

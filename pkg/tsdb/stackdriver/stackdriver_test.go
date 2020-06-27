@@ -68,8 +68,49 @@ func TestStackdriver(t *testing.T) {
 						"perSeriesAligner": "ALIGN_MEAN",
 						"filter":           "metric.type=\"a/metric/type\"",
 					}
-					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					params := verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+					So(params.Get("authuser"), ShouldBeEmpty)
 				})
+			})
+
+			Convey("and query has google account", func() {
+				tsdbQuery.Queries[0].Model.Set("googleAccount", "foo@google.com")
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+				So(len(queries), ShouldEqual, 1)
+
+				dl := queries[0].buildDeepLink()
+				expectedTimeSelection := map[string]string{
+					"timeRange": "custom",
+					"start":     "2018-03-15T13:00:00Z",
+					"end":       "2018-03-15T13:34:00Z",
+				}
+				expectedTimeSeriesFilter := map[string]interface{}{
+					"perSeriesAligner": "ALIGN_MEAN",
+					"filter":           "metric.type=\"a/metric/type\"",
+				}
+				params := verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+				So(params.Get("authuser"), ShouldEqual, "foo@google.com")
+			})
+
+			Convey("and query has invalid google account", func() {
+				tsdbQuery.Queries[0].Model.Set("googleAccount", "foo")
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+				So(len(queries), ShouldEqual, 1)
+
+				dl := queries[0].buildDeepLink()
+				expectedTimeSelection := map[string]string{
+					"timeRange": "custom",
+					"start":     "2018-03-15T13:00:00Z",
+					"end":       "2018-03-15T13:34:00Z",
+				}
+				expectedTimeSeriesFilter := map[string]interface{}{
+					"perSeriesAligner": "ALIGN_MEAN",
+					"filter":           "metric.type=\"a/metric/type\"",
+				}
+				params := verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
+				So(params.Get("authuser"), ShouldBeEmpty)
 			})
 
 			Convey("and query has filters", func() {
@@ -906,7 +947,7 @@ func loadTestFile(path string) (stackdriverResponse, error) {
 	return data, err
 }
 
-func verifyDeepLink(dl string, expectedTimeSelection map[string]string, expectedTimeSeriesFilter map[string]interface{}) {
+func verifyDeepLink(dl string, expectedTimeSelection map[string]string, expectedTimeSeriesFilter map[string]interface{}) url.Values {
 	u, err := url.Parse(dl)
 	So(err, ShouldBeNil)
 
@@ -947,4 +988,6 @@ func verifyDeepLink(dl string, expectedTimeSelection map[string]string, expected
 			So(s, ShouldEqual, v)
 		}
 	}
+
+	return params
 }
