@@ -70,7 +70,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload")
 			setting.StrictTransportSecuritySubDomains = true
 			sc.fakeReq("GET", "/api/").exec()
-			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload; includeSubDomains")
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; includeSubDomains; preload")
 		})
 	})
 }
@@ -121,7 +121,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/api/search").exec()
-			So(sc.resp.Header().Get("X-Frame-Options"), ShouldEqual, "deny")
+			So(sc.resp.Header().Get("X-Frame-Options"), ShouldEqual, "DENY")
 		})
 
 		middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(sc *scenarioContext) {

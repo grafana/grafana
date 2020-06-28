@@ -18,14 +18,29 @@ func HandleNoCacheHeader() macaron.Handler {
 }
 
 func AddSeceureResponseHeaders() macaron.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 
+		secureMiddleware := secure.New(createSecureOptions())
+
+		nonce, _ := secureMiddleware.ProcessAndReturnNonce(res, req)
+		ctx, ok := c.Data["ctx"].(*models.ReqContext)
+		if !ok {
+			return
+		}
+
+		ctx.RequestNonce = nonce
+	}
+}
+
+func createSecureOptions() secure.Options {
 	secureOptions := secure.Options{
 		ContentTypeNosniff: setting.ContentTypeProtectionHeader,
 		BrowserXssFilter:   setting.XSSProtectionHeader,
 		FrameDeny:          !setting.AllowEmbedding,
+		ForceSTSHeader:     (setting.Protocol == setting.HTTPS || setting.Protocol == setting.HTTP2) && setting.StrictTransportSecurity,
 	}
 
-	if (setting.Protocol == setting.HTTPS || setting.Protocol == setting.HTTP2) && setting.StrictTransportSecurity {
+	if secureOptions.ForceSTSHeader {
 		secureOptions.STSSeconds = int64(setting.StrictTransportSecurityMaxAge)
 		secureOptions.STSPreload = setting.StrictTransportSecurityPreload
 		secureOptions.STSIncludeSubdomains = setting.StrictTransportSecuritySubDomains
@@ -67,15 +82,5 @@ func AddSeceureResponseHeaders() macaron.Handler {
 		secureOptions.ContentSecurityPolicy = cspConfig
 	}
 
-	secureMiddleware := secure.New(secureOptions)
-
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
-		nonce, _ := secureMiddleware.ProcessAndReturnNonce(res, req)
-		ctx, ok := c.Data["ctx"].(*models.ReqContext)
-		if !ok {
-			return
-		}
-
-		ctx.RequestNonce = nonce
-	}
+	return secureOptions
 }
