@@ -139,7 +139,7 @@ func (query *stackdriverQuery) buildDeepLink() string {
 	q.Set("project", query.ProjectName)
 	if query.GoogleAccount != "" {
 		if !isValidEmail(query.GoogleAccount) {
-			slog.Debug("Invalid google account is not added to the deep link", "account", query.GoogleAccount)
+			slog.Debug("Invalid Google account is not added to the deep link", "account", query.GoogleAccount)
 		} else {
 			q.Set("authuser", query.GoogleAccount)
 		}

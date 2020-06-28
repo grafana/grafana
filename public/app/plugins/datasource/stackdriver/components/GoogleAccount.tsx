@@ -12,7 +12,7 @@ export const GoogleAccount: FunctionComponent<Props> = ({ value = '', onChange }
   return (
     <QueryInlineField
       label="Google Account"
-      tooltip="The google account passed to the deep link (useful if the user is signed in to multiple accounts)"
+      tooltip="The Google account passed to the deep link (useful if the user is signed in to multiple accounts)"
     >
       <input
         type="text"

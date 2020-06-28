@@ -73,7 +73,7 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
-			Convey("and query has google account", func() {
+			Convey("and query has Google account", func() {
 				tsdbQuery.Queries[0].Model.Set("googleAccount", "foo@google.com")
 				queries, err := executor.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
@@ -93,7 +93,7 @@ func TestStackdriver(t *testing.T) {
 				So(params.Get("authuser"), ShouldEqual, "foo@google.com")
 			})
 
-			Convey("and query has invalid google account", func() {
+			Convey("and query has invalid Google account", func() {
 				tsdbQuery.Queries[0].Model.Set("googleAccount", "foo")
 				queries, err := executor.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)

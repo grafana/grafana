@@ -336,4 +336,4 @@ Click on a time series in the panel to see a context menu with a link to View in
 
 The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
 
-If you're not currently logged in to the Google console, then the link opens the login page. If you are logged in in multiple google accounts you’ll directed to the first account you signed into. This behaviour can be ovewritten if you fill the Google Account input in the metric query editor.
+If you're not currently logged in to the Google console, the link opens the login page. If you are logged in to multiple Google accounts you’ll be directed to the first account you signed in to. This behaviour can be overridden if you fill the Google Account input into the metric query editor.
