@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/unrolled/secure"
 )
 
 const (
@@ -89,7 +88,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
-		Nonce:                   secure.CSPNonce(c.Context.Req.Context()),
+		Nonce:                   c.RequestNonce,
 	}
 
 	if setting.DisableGravatar {

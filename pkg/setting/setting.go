@@ -101,7 +101,7 @@ var (
 	CookieSecure                      bool
 	CookieSameSiteDisabled            bool
 	CookieSameSiteMode                http.SameSite
-	AllowEmbedding                    string
+	AllowEmbedding                    bool
 	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
 	StrictTransportSecurity           bool
@@ -764,7 +764,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		}
 	}
 
-	AllowEmbedding = security.Key("allow_embedding").MustString("")
+	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
 	ContentSecurityPolicy = security.Key("content_security_policy").MustBool(false)
 	ScriptSrc = security.Key("script_src").MustString("")

@@ -568,6 +568,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 		sc.m.Use(OrgRedirect())
 
+		sc.m.Use(AddSeceureResponseHeaders())
+
 		sc.defaultHandler = func(c *models.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
