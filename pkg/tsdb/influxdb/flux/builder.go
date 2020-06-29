@@ -102,21 +102,14 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	}
 
 	if fb.isTimeSeries {
-		// The first time column
-		found := false
-		for _, col := range columns {
-			if col.DataType() == timeDatatypeRFC || col.DataType() == timeDatatypeRFCNano {
-				found = true
-				fb.timeColumn = col.Name()
-				fb.timeDisplay = "Time"
-				if "_time" != fb.timeColumn {
-					fb.timeDisplay = col.Name()
-				}
-				break
-			}
+		col := getTimeSeriesTimeColumn(columns)
+		if col == nil {
+			return fmt.Errorf("no time column in timeSeries")
 		}
-		if !found {
-			return fmt.Errorf("no time column found")
+		fb.timeColumn = col.Name()
+		fb.timeDisplay = "Time"
+		if "_time" != fb.timeColumn {
+			fb.timeDisplay = col.Name()
 		}
 	} else {
 		fb.labels = make([]string, 0)
@@ -132,6 +125,23 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		}
 	}
 
+	return nil
+}
+
+func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
+	// First look for '_time' column
+	for _, col := range columns {
+		if col.Name() == "_time" && col.DataType() == timeDatatypeRFC || col.DataType() == timeDatatypeRFCNano {
+			return col
+		}
+	}
+
+	// Then any time column
+	for _, col := range columns {
+		if col.DataType() == timeDatatypeRFC || col.DataType() == timeDatatypeRFCNano {
+			return col
+		}
+	}
 	return nil
 }
 
