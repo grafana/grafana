@@ -48,3 +48,19 @@ Use the following options to refine your visualization:
 - **Alignment mode -** Choose an alignment mode.
   - **Auto -** If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.
   - **Center -** Stat value is centered.
+- **Text mode -** (Only available in Grafana 7.1+)
+  - **Auto -** Shows both name and value but only if the data contains multiple series or fields.
+  - **Value -** Show only value never name. Name will be shown in hover tooltip instead.
+  - **Value and name -** Always show value and name.
+  - **Name -** Show name in place of value. Will show value in a hover tooltip.
+  - **None -** Show nothing (empty). Will show both name and value in hover tooltip.
+
+## Text mode
+
+> Only available in Grafana 7.1+
+
+By default the stat will just value for a single series or field and both value and name for multiple series or fields. You can use the Text mode option to control what text the panel is to render. If the value is not that important, only name & color is, change the `Text mode` to **Name**. The value will still be used to determine color and is available via a tooltip.
+
+Example screenshot:
+
+{{< docs-imagebox img="/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat panel" >}}
