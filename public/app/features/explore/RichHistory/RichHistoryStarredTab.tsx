@@ -87,7 +87,7 @@ export function RichHistoryStarredTab(props: Props) {
   const [filteredQueries, setFilteredQueries] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [filterAndSortQueriesDebounced] = useDebouncedCallback((searchValue: string) => {
-    setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchValue));
+    setFilteredQueries(filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchValue));
   }, 300);
 
   const theme = useTheme();
