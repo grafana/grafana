@@ -8,14 +8,14 @@ interface WithContextMenuProps {
 
 export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getContextMenuItems }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [menuPosition, setMenuPositon] = useState({ x: 0, y: 0 });
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
   return (
     <>
       {children({
         openMenu: e => {
           setIsMenuOpen(true);
-          setMenuPositon({
+          setMenuPosition({
             x: e.pageX,
             y: e.pageY,
           });

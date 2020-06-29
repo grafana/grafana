@@ -8,6 +8,7 @@ import {
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
+  AzureQueryType,
 } from '../types';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { getBackendSrv, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
@@ -76,9 +77,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return {
       refId: target.refId,
       subscription: subscriptionId,
-      queryType: 'Azure Monitor',
+      queryType: AzureQueryType.AzureMonitor,
       type: 'timeSeriesQuery',
-      raw: false,
       azureMonitor: {
         resourceGroup,
         resourceName,

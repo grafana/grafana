@@ -11,10 +11,13 @@
 package values
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -117,7 +120,10 @@ func (val *JSONValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	interpolated := make(map[string]interface{})
 	raw := make(map[string]interface{})
 	for key, val := range unmarshaled {
-		interpolated[key], raw[key] = transformInterface(val)
+		interpolated[key], raw[key], err = transformInterface(val)
+		if err != nil {
+			return err
+		}
 	}
 
 	val.Raw = raw
@@ -143,7 +149,10 @@ func (val *StringMapValue) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	interpolated := make(map[string]string)
 	raw := make(map[string]string)
 	for key, val := range unmarshaled {
-		interpolated[key], raw[key] = interpolateValue(val)
+		interpolated[key], raw[key], err = interpolateValue(val)
+		if err != nil {
+			return err
+		}
 	}
 	val.Raw = raw
 	val.value = interpolated
@@ -158,11 +167,11 @@ func (val *StringMapValue) Value() map[string]string {
 // slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
 // map or slice value instead of modifying them in place and also return value without interpolation but with converted
 // type as a second value.
-func transformInterface(i interface{}) (interface{}, interface{}) {
+func transformInterface(i interface{}) (interface{}, interface{}, error) {
 	typeOf := reflect.TypeOf(i)
 
 	if typeOf == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	switch typeOf.Kind() {
@@ -174,43 +183,55 @@ func transformInterface(i interface{}) (interface{}, interface{}) {
 		return interpolateValue(i.(string))
 	default:
 		// Was int, float or some other value that we do not need to do any transform on.
-		return i, i
+		return i, i, nil
 	}
 }
 
-func transformSlice(i []interface{}) (interface{}, interface{}) {
+func transformSlice(i []interface{}) (interface{}, interface{}, error) {
 	var transformedSlice []interface{}
 	var rawSlice []interface{}
 	for _, val := range i {
-		transformed, raw := transformInterface(val)
+		transformed, raw, err := transformInterface(val)
+		if err != nil {
+			return nil, nil, err
+		}
 		transformedSlice = append(transformedSlice, transformed)
 		rawSlice = append(rawSlice, raw)
 	}
-	return transformedSlice, rawSlice
+	return transformedSlice, rawSlice, nil
 }
 
-func transformMap(i map[interface{}]interface{}) (interface{}, interface{}) {
+func transformMap(i map[interface{}]interface{}) (interface{}, interface{}, error) {
 	transformed := make(map[string]interface{})
 	raw := make(map[string]interface{})
 	for key, val := range i {
 		stringKey, ok := key.(string)
 		if ok {
-			transformed[stringKey], raw[stringKey] = transformInterface(val)
+			var err error
+			transformed[stringKey], raw[stringKey], err = transformInterface(val)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 	}
-	return transformed, raw
+	return transformed, raw, nil
 }
 
-// interpolateValue returns final value after interpolation. At the moment only env var interpolation is done
-// here but in the future something like interpolation from file could be also done here.
+// interpolateValue returns the final value after interpolation. In addition to environment variable interpolation,
+// expanders available for the settings file are expanded here.
 // For a literal '$', '$$' can be used to avoid interpolation.
-func interpolateValue(val string) (string, string) {
+func interpolateValue(val string) (string, string, error) {
 	parts := strings.Split(val, "$$")
 	interpolated := make([]string, len(parts))
 	for i, v := range parts {
+		expanded, err := setting.ExpandVar(v)
+		if err != nil {
+			return val, val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
+		}
+		v = expanded
 		interpolated[i] = os.ExpandEnv(v)
 	}
-	return strings.Join(interpolated, "$"), val
+	return strings.Join(interpolated, "$"), val, nil
 }
 
 type interpolated struct {
@@ -228,6 +249,9 @@ func getInterpolated(unmarshal func(interface{}) error) (*interpolated, error) {
 	}
 	// We get new raw value here which can have a bit different type, as yaml types nested maps as
 	// map[interface{}]interface and we want it to be map[string]interface{}
-	value, raw := interpolateValue(veryRaw)
+	value, raw, err := interpolateValue(veryRaw)
+	if err != nil {
+		return &interpolated{}, err
+	}
 	return &interpolated{raw: raw, value: value}, nil
 }
