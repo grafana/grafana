@@ -188,7 +188,7 @@
       name: Annotations
     - link: /dashboards/dashboard_folders/
       name: Folders
-    - link: /reference/playlist/
+    - link: /dashboards/playlist/
       name: Playlist
     - link: /reference/search/
       name: Search

@@ -2,6 +2,7 @@
 title = "Playlist"
 keywords = ["grafana", "dashboard", "documentation", "playlist"]
 type = "docs"
+aliases = ["/docs/grafana/latest/reference/playlist/"]
 [menu.docs]
 parent = "dashboard_features"
 identifier = "feature_playlist"
