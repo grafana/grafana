@@ -31,17 +31,18 @@ type ApplicationInsightsDatasource struct {
 }
 
 // ApplicationInsightsQuery is the model that holds the information
-// need to make a metrics query to Application Insights, and information
+// needed to make a metrics query to Application Insights, and the information
 // used to parse the response.
 type ApplicationInsightsQuery struct {
 	RefID string
 
-	// Text based raw query options
+	// Text based raw query options.
 	ApiURL string
 	Params url.Values
 	Alias  string
 	Target string
 
+	// These fields are used when parsing the response.
 	metricName  string
 	dimensions  []string
 	aggregation string

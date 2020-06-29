@@ -159,7 +159,7 @@ func (s *InsightsDimensions) UnmarshalJSON(data []byte) error {
 	var str string
 	err := json.Unmarshal(data, &str)
 	if err != nil {
-		return fmt.Errorf("could not parse as string or array: %v", s)
+		return fmt.Errorf("could not parse %q as string or array: %w", string(data), err)
 
 	}
 	if str != "" {

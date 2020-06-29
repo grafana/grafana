@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// InsightsMetricsResultToFrame converts a MetricsResult (a Application Insights metrics query response) to a dataframe.
-// Due to the dynamic nature of the MetricsResult object, the name of the metric, aggregation, and
+// InsightsMetricsResultToFrame converts a MetricsResult (an Application Insights metrics query response) to a dataframe.
+// Due to the dynamic nature of the MetricsResult object, the name of the metric, aggregation,
 // and requested dimensions are used to determine the expected shape of the object.
 // This builds all series into a single data.Frame with one time index (a wide formatted time series frame).
 func InsightsMetricsResultToFrame(mr MetricsResult, metric, agg string, dimensions []string) (*data.Frame, error) {
@@ -51,7 +51,7 @@ func InsightsMetricsResultToFrame(mr MetricsResult, metric, agg string, dimensio
 			}
 
 			if _, ok := fieldIdxMap[labels.String()]; !ok {
-				// When we find a new combintation of labels for the metric, a new Field is appended.
+				// When we find a new combination of labels for the metric, a new Field is appended.
 				frame.Fields = append(frame.Fields, data.NewField(metric, labels.Copy(), make([]*float64, rowCounter+1)))
 				fieldIdxMap[labels.String()] = len(frame.Fields) - 1
 			}
@@ -186,7 +186,7 @@ type MetricsSegmentInfo struct {
 	Segments *[]MetricsSegmentInfo `json:"segments,omitempty"`
 }
 
-// UnmarshalJSON is the custom unmarshaler for MetricsResultInfo struct.
+// UnmarshalJSON is the custom unmarshaler for MetricsSegmentInfo struct.
 // This is copied from azure-sdk-for-go/services/preview/appinsights/v1/insights (except time Type is changed).
 func (mri *MetricsSegmentInfo) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
