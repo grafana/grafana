@@ -162,10 +162,14 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResultError(err)
 	}
 
-	setAdditionalFrameMeta(frame,
+	err = setAdditionalFrameMeta(frame,
 		query.Params.Get("query"),
 		query.Model.Get("subscriptionId").MustString(),
 		query.Model.Get("azureLogAnalytics").Get("workspace").MustString())
+	if err != nil {
+		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not add custom metadata: " + err.Error()})
+		azlog.Warn("failed to add custom metadata to azure log analytics response", err)
+	}
 
 	if query.ResultFormat == "time_series" {
 		tsSchema := frame.TimeSeriesSchema()
@@ -273,16 +277,28 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) {
+// LogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
+type LogAnalyticsMeta struct {
+	ColumnTypes  []string `json:"azureColumnTypes"`
+	Subscription string   `json:"subscription"`
+	Workspace    string   `json:"workspace"`
+	EncodedQuery []byte   `json:"encodedQuery"` // EncodedQuery is used for deep links.
+}
+
+func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) error {
 	frame.Meta.ExecutedQueryString = query
-	frame.Meta.Custom["subscription"] = subscriptionID
-	frame.Meta.Custom["workspace"] = workspace
+	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
+	if !ok {
+		return fmt.Errorf("unexpected type found for frame's custom metadata")
+	}
+	la.Subscription = subscriptionID
+	la.Workspace = workspace
 	encodedQuery, err := encodeQuery(query)
 	if err == nil {
-		frame.Meta.Custom["encodedQuery"] = encodedQuery
-		return
+		la.EncodedQuery = encodedQuery
+		return nil
 	}
-	azlog.Error("failed to encode the query into the encodedQuery property")
+	return fmt.Errorf("failed to encode the query into the encodedQuery property")
 }
 
 // encodeQuery encodes the query in gzip so the frontend can build links.
