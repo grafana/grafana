@@ -375,7 +375,7 @@ describe('AppInsightsDatasource', () => {
             expect(options.url).toContain('/api/ds/query');
             expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
             expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
-            expect(options.data.queries[0].appInsights.dimension).toBe('client/city');
+            expect([...options.data.queries[0].appInsights.dimension]).toMatchObject(['client/city']);
             return Promise.resolve({ data: response, status: 200 });
           });
         });

@@ -20,6 +20,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   defaultDropdownValue = 'select';
 
+  dummyDiminsionString = '+';
+
   target: {
     // should be: AzureMonitorQuery
     refId: string;
@@ -104,7 +106,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     },
     appInsights: {
       metricName: this.defaultDropdownValue,
-      dimension: 'none',
+      // dimension: [],
       timeGrain: 'auto',
     },
     insightsAnalytics: {
@@ -134,6 +136,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.migrateToDefaultNamespace();
 
     this.migrateApplicationInsightsKeys();
+
+    this.migrateApplicationInsightsDimensions();
 
     this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
@@ -267,6 +271,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         appInsights[mappings[old]] = appInsights[old];
         delete appInsights[old];
       }
+    }
+  }
+
+  migrateApplicationInsightsDimensions() {
+    const { appInsights } = this.target;
+
+    if (!appInsights.dimension) {
+      appInsights.dimension = [];
+    }
+
+    if (_.isString(appInsights.dimension)) {
+      appInsights.dimension = [appInsights.dimension as string];
     }
   }
 
@@ -625,8 +641,27 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     return this.datasource.appInsightsDatasource.getQuerySchema().catch(this.handleQueryCtrlError.bind(this));
   };
 
+  removeGroupBy = (index: number) => {
+    const { appInsights } = this.target;
+    appInsights.dimension.splice(index, 1);
+    this.refresh();
+  };
+
   getAppInsightsGroupBySegments(query: any) {
-    return _.map(this.target.appInsights.dimensions, (option: string) => {
+    const { appInsights } = this.target;
+
+    // HACK alert... there must be a better way!
+    if (this.dummyDiminsionString && this.dummyDiminsionString.length && '+' !== this.dummyDiminsionString) {
+      if (!appInsights.dimension) {
+        appInsights.dimension = [];
+      }
+      appInsights.dimension.push(this.dummyDiminsionString);
+      this.dummyDiminsionString = '+';
+      this.refresh();
+    }
+
+    // Return the list of dimensions stored on the query object from the last request :(
+    return _.map(appInsights.dimensions, (option: string) => {
       return { text: option, value: option };
     });
   }

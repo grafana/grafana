@@ -73,7 +73,8 @@ export interface ApplicationInsightsQuery {
   timeGrain: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;
-  dimension: string;
+  dimension: string[]; // Was string before 7.1
+  // dimensions: string[]; why is this metadata stored on the object!
   dimensionFilter: string;
   alias: string;
 }

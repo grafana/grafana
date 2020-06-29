@@ -363,27 +363,30 @@
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">Group By</label>
+        </div>
+        <div ng-repeat="d in ctrl.target.appInsights.dimension track by $index" 
+          class="gf-form" 
+          ng-click="ctrl.removeGroupBy($index);"
+          onmouseover="this.style['text-decoration'] = 'line-through';"
+          onmouseout="this.style['text-decoration'] = '';">
+          <label class="gf-form-label" 
+          style="cursor: pointer;">{{d}} <icon name="'times'"></icon></label>
+        </div>
+        <div>
           <gf-form-dropdown
             allow-custom="true"
-            ng-hide="ctrl.target.appInsights.dimension !== 'none'"
-            model="ctrl.target.appInsights.dimension"
             lookup-text="true"
+            placeholder="Add"
+            model="ctrl.dummyDiminsionString"
             get-options="ctrl.getAppInsightsGroupBySegments($query)"
-            on-change="ctrl.refresh()"
-            css-class="min-width-20"
+            on-change="ctrl.getAppInsightsGroupBySegments"
+            css-class="min-width-5"
           >
           </gf-form-dropdown>
-          <label
-            class="gf-form-label min-width-20 pointer"
-            ng-hide="ctrl.target.appInsights.dimension === 'none'"
-            ng-click="ctrl.resetAppInsightsGroupBy()"
-            >{{ctrl.target.appInsights.dimension}}
-            <icon name="'times'"></icon>
-          </label>
         </div>
         <div class="gf-form-inline">
           <div class="gf-form">
-            <label class="gf-form-label query-keyword width-9">Filter</label>
+            <label class="gf-form-label query-keyword">Filter</label>
             <input
               type="text"
               class="gf-form-input width-17"
