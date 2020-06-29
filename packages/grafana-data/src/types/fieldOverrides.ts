@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
-import { DataFrame, Field, FieldConfig, GrafanaTheme, MatcherConfig, TimeZone } from '../types';
+import { MatcherConfig, FieldConfig, Field, DataFrame, GrafanaTheme, TimeZone } from '../types';
 import { InterpolateFunction } from './panel';
-import { FieldConfigOptionsRegistry, StandardEditorContext, StandardEditorProps } from '../field';
+import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {

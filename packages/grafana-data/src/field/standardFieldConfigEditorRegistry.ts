@@ -1,7 +1,7 @@
 import { Registry, RegistryItem } from '../utils/Registry';
 import { ComponentType } from 'react';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
-import { DataFrame, InterpolateFunction, VariableSuggestion, VariableSuggestionsScope } from '../types';
+import { DataFrame, InterpolateFunction, VariableSuggestionsScope, VariableSuggestion } from '../types';
 
 export interface StandardEditorContext<TOptions> {
   data?: DataFrame[]; // All results

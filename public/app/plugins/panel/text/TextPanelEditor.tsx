@@ -18,7 +18,17 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
             return null;
           }
 
-          return <CodeEditor value={value} onChange={onChange} language={language} width={width} height="150px" />;
+          return (
+            <CodeEditor
+              value={value}
+              onBlur={onChange}
+              onSave={onChange}
+              language={language}
+              width={width}
+              showMiniMap={false}
+              height="200px"
+            />
+          );
         }}
       </AutoSizer>
     </div>
