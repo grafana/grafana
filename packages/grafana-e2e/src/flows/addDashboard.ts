@@ -15,7 +15,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
   const fullConfig = {
     timeRange: {
       from: '2020-01-01 00:00:00',
-      to: '2020-01-01 01:00:00',
+      to: '2020-01-01 06:00:00',
     },
     timezone: 'Coordinated Universal Time',
     title: `e2e-${Date.now()}`,
