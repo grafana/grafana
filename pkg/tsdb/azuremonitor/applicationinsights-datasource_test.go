@@ -1,6 +1,7 @@
 package azuremonitor
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -208,4 +209,22 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 		})
 	}
 
+}
+
+func TestInsightsDimensionsUnmarshalJSON(t *testing.T) {
+	var err error
+	a := []byte(`"foo"`)
+	b := []byte(`["foo"]`)
+	_ = b
+	var as InsightsDimensions
+	var bs InsightsDimensions
+	err = json.Unmarshal(a, &as)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"foo"}, []string(as))
+
+	err = json.Unmarshal(b, &bs)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"foo"}, []string(bs))
 }

@@ -24,12 +24,15 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
-// ApplicationInsightsDatasource calls the application insights query API's
+// ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
 	httpClient *http.Client
 	dsInfo     *models.DataSource
 }
 
+// ApplicationInsightsQuery is the model that holds the information
+// need to make a metrics query to Application Insights, and information
+// used to parse the response.
 type ApplicationInsightsQuery struct {
 	RefID string
 
