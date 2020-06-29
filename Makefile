@@ -4,7 +4,7 @@
 
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go revive golangci-lint test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
@@ -102,23 +102,7 @@ golangci-lint: scripts/go/bin/golangci-lint
 		--config ./scripts/go/configs/.golangci.yml \
 		$(GO_FILES)
 
-scripts/go/bin/gosec: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/gosec github.com/securego/gosec/cmd/gosec
-
-# TODO recheck the rules and leave only necessary exclusions
-gosec: scripts/go/bin/gosec
-	@echo "lint via gosec"
-	@scripts/go/bin/gosec -quiet \
-		-exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
-		-conf=./scripts/go/configs/gosec.json \
-		$(GO_FILES)
-
-go-vet:
-	@echo "lint via go vet"
-	@$(GO) vet $(GO_FILES)
-
-lint-go: go-vet golangci-lint revive revive-strict gosec ## Run all code checks for backend.
+lint-go: golangci-lint revive revive-strict # Run all code checks for backend.
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.

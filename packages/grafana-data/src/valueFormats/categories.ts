@@ -6,6 +6,7 @@ import {
   toClockMilliseconds,
   toClockSeconds,
   toDays,
+  toDurationInDaysHoursMinutesSeconds,
   toDurationInHoursMinutesSeconds,
   toDurationInMilliseconds,
   toDurationInSeconds,
@@ -274,6 +275,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Millibars', id: 'pressurembar', fn: decimalSIPrefix('bar', -1) },
       { name: 'Bars', id: 'pressurebar', fn: decimalSIPrefix('bar') },
       { name: 'Kilobars', id: 'pressurekbar', fn: decimalSIPrefix('bar', 1) },
+      { name: 'Pascals', id: 'pressurepa', fn: decimalSIPrefix('Pa') },
       { name: 'Hectopascals', id: 'pressurehpa', fn: toFixedUnit('hPa') },
       { name: 'Kilopascals', id: 'pressurekpa', fn: toFixedUnit('kPa') },
       { name: 'Inches of mercury', id: 'pressurehg', fn: toFixedUnit('"Hg') },
@@ -299,6 +301,15 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
+    name: 'Rotational Speed',
+    formats: [
+      { name: 'Revolutions per minute (rpm)', id: 'rotrpm', fn: toFixedUnit('rpm') },
+      { name: 'Hertz (Hz)', id: 'rothz', fn: decimalSIPrefix('Hz') },
+      { name: 'Radians per second (rad/s)', id: 'rotrads', fn: toFixedUnit('rad/s') },
+      { name: 'Degrees per second (°/s)', id: 'rotdegs', fn: toFixedUnit('°/s') },
+    ],
+  },
+  {
     name: 'Temperature',
     formats: [
       { name: 'Celsius (°C)', id: 'celsius', fn: toFixedUnit('°C') },
@@ -320,6 +331,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'duration (ms)', id: 'dtdurationms', fn: toDurationInMilliseconds },
       { name: 'duration (s)', id: 'dtdurations', fn: toDurationInSeconds },
       { name: 'duration (hh:mm:ss)', id: 'dthms', fn: toDurationInHoursMinutesSeconds },
+      { name: 'duration (d hh:mm:ss)', id: 'dtdhms', fn: toDurationInDaysHoursMinutesSeconds },
       { name: 'Timeticks (s/100)', id: 'timeticks', fn: toTimeTicks },
       { name: 'clock (ms)', id: 'clockms', fn: toClockMilliseconds },
       { name: 'clock (s)', id: 'clocks', fn: toClockSeconds },
