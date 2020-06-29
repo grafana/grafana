@@ -54,8 +54,8 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			DurationSeconds: aws.Int64(900),
 		}
 
-		if dsInfo.ExternalId != "" {
-			params.ExternalId = aws.String(dsInfo.ExternalId)
+		if dsInfo.ExternalID != "" {
+			params.ExternalId = aws.String(dsInfo.ExternalID)
 		}
 
 		stsSess, err := session.NewSession()
@@ -171,7 +171,7 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 
 	authType := datasource.JsonData.Get("authType").MustString()
 	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
-	externalId := datasource.JsonData.Get("externalId").MustString()
+	externalID := datasource.JsonData.Get("externalId").MustString()
 	decrypted := datasource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
@@ -181,7 +181,7 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 		Profile:       datasource.Database,
 		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
-		ExternalId:    externalId,
+		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
 	}

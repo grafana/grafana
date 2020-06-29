@@ -243,7 +243,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <div className="gf-form">
                 <InlineFormLabel
                   className="width-14"
-                  tooltip="If you are assuming a role in another account and if role is created with External ID, then specify the External ID."
+                  tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
                 >
                   External ID
                 </InlineFormLabel>
