@@ -46,40 +46,8 @@ func createSecureOptions() secure.Options {
 		secureOptions.STSIncludeSubdomains = setting.StrictTransportSecuritySubDomains
 	}
 
-	if setting.ContentSecurityPolicy {
-		cspConfig := ""
-		if setting.ScriptSrc != "" {
-			cspConfig += "script-src " + setting.ScriptSrc + ";"
-		}
-		if setting.ObjectSrc != "" {
-			cspConfig += "object-src " + setting.ObjectSrc + ";"
-		}
-		if setting.FontSrc != "" {
-			cspConfig += "font-src " + setting.FontSrc + ";"
-		}
-		if setting.StyleSrc != "" {
-			cspConfig += "style-src " + setting.StyleSrc + ";"
-		}
-		if setting.ImgSrc != "" {
-			cspConfig += "img-src " + setting.ImgSrc + ";"
-		}
-		if setting.BaseUri != "" {
-			cspConfig += "base-uri " + setting.BaseUri + ";"
-		}
-		if setting.ConnectSrc != "" {
-			cspConfig += "connect-src " + setting.ConnectSrc + ";"
-		}
-		if setting.ManifestSrc != "" {
-			cspConfig += "manifest-src " + setting.ManifestSrc + ";"
-		}
-		if setting.MediaSrc != "" {
-			cspConfig += "media-src " + setting.MediaSrc + ";"
-		}
-		if setting.BlockAllMixedContent {
-			cspConfig += "block-all-mixed-content;"
-		}
-
-		secureOptions.ContentSecurityPolicy = cspConfig
+	if setting.ContentSecurityPolicy != "" {
+		secureOptions.ContentSecurityPolicy = setting.ContentSecurityPolicy
 	}
 
 	return secureOptions
