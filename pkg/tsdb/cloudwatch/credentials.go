@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
@@ -30,7 +31,19 @@ type cache struct {
 var awsCredentialCache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
-func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
+// Session factory.
+// Stubbable by tests.
+var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
+	return session.NewSession(cfgs...)
+}
+
+// STS service factory.
+// Stubbable by tests.
+var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) *sts.STS {
+	return sts.New(p, cfgs...)
+}
+
+func getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
@@ -53,12 +66,11 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			RoleSessionName: aws.String("GrafanaSession"),
 			DurationSeconds: aws.Int64(900),
 		}
-
 		if dsInfo.ExternalID != "" {
 			params.ExternalId = aws.String(dsInfo.ExternalID)
 		}
 
-		stsSess, err := session.NewSession()
+		stsSess, err := newSession()
 		if err != nil {
 			return nil, err
 		}
@@ -74,11 +86,11 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			Credentials: stsCreds,
 		}
 
-		sess, err := session.NewSession(stsConfig)
+		sess, err := newSession(stsConfig)
 		if err != nil {
 			return nil, err
 		}
-		svc := sts.New(sess, stsConfig)
+		svc := newSTSService(sess, stsConfig)
 		resp, err := svc.AssumeRole(params)
 		if err != nil {
 			return nil, err
@@ -95,7 +107,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 		expiration = &e
 	}
 
-	sess, err := session.NewSession()
+	sess, err := newSession()
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +139,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 }
 
 func webIdentityProvider(sess *session.Session) credentials.Provider {
-	svc := sts.New(sess)
+	svc := newSTSService(sess)
 
 	roleARN := os.Getenv("AWS_ROLE_ARN")
 	tokenFilepath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
@@ -190,7 +202,7 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 }
 
 func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
-	creds, err := GetCredentials(dsInfo)
+	creds, err := getCredentials(dsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +222,7 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 		return nil, err
 	}
 
-	sess, err := session.NewSession(cfg)
+	sess, err := newSession(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +242,7 @@ func retrieveLogsClient(datasourceInfo *DatasourceInfo) (*cloudwatchlogs.CloudWa
 		return nil, err
 	}
 
-	sess, err := session.NewSession(cfg)
+	sess, err := newSession(cfg)
 	if err != nil {
 		return nil, err
 	}
