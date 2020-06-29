@@ -59,7 +59,11 @@ Use the following options to refine your visualization:
 
 > Only available in Grafana 7.1+
 
-By default the stat will just value for a single series or field and both value and name for multiple series or fields. You can use the Text mode option to control what text the panel is to render. If the value is not that important, only name & color is, change the `Text mode` to **Name**. The value will still be used to determine color and is available via a tooltip.
+By default, the Stat panel displays: 
+- Just the value for a single series or field.
+- Both the value and name for multiple series or fields.
+
+You can use the Text mode option to control what text the panel renders. If the value is not important, only name and color is, then change the `Text mode` to **Name**. The value will still be used to determine color and is displayed om a tooltip.
 
 Example screenshot:
 
