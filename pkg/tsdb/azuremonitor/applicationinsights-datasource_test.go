@@ -208,7 +208,6 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 		})
 	}
 }
-
 func TestInsightsDimensionsUnmarshalJSON(t *testing.T) {
 	a := []byte(`"foo"`)
 	b := []byte(`["foo"]`)
