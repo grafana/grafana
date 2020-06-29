@@ -1,7 +1,6 @@
 import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
-import { DataLink } from './dataLink';
 
 export type KeyValue<T = any> = { [s: string]: T };
 
@@ -102,8 +101,6 @@ export interface Column {
   filterable?: boolean;
   unit?: string;
   custom?: Record<string, any>;
-  // To transfer data from dataFrame column
-  links?: DataLink[];
 }
 
 export interface TableData extends QueryResultBase {
