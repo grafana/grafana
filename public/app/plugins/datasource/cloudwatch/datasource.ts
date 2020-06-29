@@ -936,10 +936,11 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     const metricsQueries: CloudWatchMetricsQuery[] = [];
 
     targets.forEach(query => {
-      if (query.queryMode === 'Logs') {
-        logQueries.push(query);
+      const mode = query.apiMode ?? query.queryMode ?? 'Metrics';
+      if (mode === 'Logs') {
+        logQueries.push(query as CloudWatchLogsQuery);
       } else {
-        metricsQueries.push(query);
+        metricsQueries.push(query as CloudWatchMetricsQuery);
       }
     });
 

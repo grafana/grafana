@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
 import { Segment } from '@grafana/ui';
-import { CloudWatchQuery } from '../types';
+import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchLogsQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { QueryInlineField } from './';
 import { MetricsQueryEditor } from './MetricsQueryEditor';
@@ -25,9 +25,22 @@ export class PanelQueryEditor extends PureComponent<Props> {
           <Segment
             value={apiModes[apiMode]}
             options={Object.values(apiModes)}
-            onChange={({ value }) =>
-              this.props.onChange({ ...query, apiMode: (value as 'Metrics' | 'Logs') ?? 'Metrics' })
-            }
+            onChange={({ value }) => {
+              const newMode = (value as 'Metrics' | 'Logs') ?? 'Metrics';
+              if (newMode === 'Metrics') {
+                this.props.onChange({
+                  ...(query as CloudWatchMetricsQuery),
+                  apiMode: newMode,
+                  queryMode: newMode,
+                });
+              } else {
+                this.props.onChange({
+                  ...(query as CloudWatchLogsQuery),
+                  apiMode: newMode,
+                  queryMode: newMode,
+                });
+              }
+            }}
           />
         </QueryInlineField>
         {apiMode === ExploreMode.Logs ? (
