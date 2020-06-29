@@ -276,6 +276,7 @@
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
+    "use-debounce": "^3.4.2",
     "whatwg-fetch": "3.0.0"
   },
   "resolutions": {

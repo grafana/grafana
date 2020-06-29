@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { css } from 'emotion';
-import { uniqBy, debounce } from 'lodash';
+import { uniqBy } from 'lodash';
+import { useDebouncedCallback } from 'use-debounce';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -85,6 +86,9 @@ export function RichHistoryStarredTab(props: Props) {
 
   const [filteredQueries, setFilteredQueries] = useState([]);
   const [searchInput, setSearchInput] = useState('');
+  const [filterAndSortQueriesDebounced] = useDebouncedCallback((searchValue: string) => {
+    setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchValue));
+  }, 300);
 
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -97,10 +101,6 @@ export function RichHistoryStarredTab(props: Props) {
   useEffect(() => {
     setFilteredQueries(filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchInput));
   }, [queries, sortOrder, datasourceFilters]);
-
-  const filterAndSortQueriesDebounced = debounce(searchValue => {
-    setFilteredQueries(filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchValue));
-  }, 300);
 
   return (
     <div className={styles.container}>
