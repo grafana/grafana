@@ -50,7 +50,7 @@ Use the following options to refine your visualization:
   - **Center -** Stat value is centered.
 - **Text mode** (Only available in Grafana 7.1+.)
   - **Auto -** If the data contains multiple series or fields, show both name and value..
-  - **Value -** Show only value never name. Name will be shown in hover tooltip instead.
+  - **Value -** Show only value, never name. Name is displayed in the hover tooltip instead.
   - **Value and name -** Always show value and name.
   - **Name -** Show name in place of value. Will show value in a hover tooltip.
   - **None -** Show nothing (empty). Will show both name and value in hover tooltip.
