@@ -4,7 +4,7 @@ import { Themeable } from '../../types';
 import { KeyCode, editor, KeyMod } from 'monaco-editor/esm/vs/editor/editor.api';
 import ReactMonaco from 'react-monaco-editor';
 
-export interface CodeEditorProps extends Themeable {
+export interface CodeEditorProps {
   value: string;
   language: string;
   width?: number | string;
@@ -27,11 +27,9 @@ export interface CodeEditorProps extends Themeable {
   onSave?: CodeEditorChangeHandler;
 }
 
-class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
-  constructor(props: CodeEditorProps) {
-    super(props);
-  }
+type Props = CodeEditorProps & Themeable;
 
+class UnthemedCodeEditor extends React.PureComponent<Props> {
   getEditorValue = () => '';
 
   onBlur = () => {
