@@ -57,7 +57,7 @@ Use the following options to refine your visualization:
 
 ## Text mode
 
-> Only available in Grafana 7.1+
+> Only available in Grafana 7.1+.
 
 By default, the Stat panel displays: 
 - Just the value for a single series or field.
