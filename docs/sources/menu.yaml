@@ -200,7 +200,7 @@
       name: Time range controls
     - link: /reference/export_import/
       name: Export and import
-    - link: /reference/dashboard_history/
+    - link: /dashboards/dashboard_history/
       name: Dashboard version history
     - name: Keyboard Shortcuts
       link: /features/shortcuts/
