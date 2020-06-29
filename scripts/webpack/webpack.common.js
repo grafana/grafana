@@ -17,7 +17,6 @@ function shouldExclude(filename) {
     'react-hook-form',
     'rc-trigger',
     '@iconscout/react-unicons',
-    'monaco-editor',
   ];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
@@ -27,11 +26,11 @@ function shouldExclude(filename) {
   return true;
 }
 
-console.log(path.resolve());
 module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+    monacoEditorBundled: 'monaco-editor/esm/vs/editor/editor.api',
   },
   output: {
     path: path.resolve(__dirname, '../../public/build'),
@@ -191,10 +190,6 @@ module.exports = {
           chunks: 'initial',
           priority: 50,
           enforce: true,
-        },
-        vendor: {
-          test: /[\\/](monaco-editor)[\\/]/,
-          name: 'monaco-editor',
         },
         vendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
