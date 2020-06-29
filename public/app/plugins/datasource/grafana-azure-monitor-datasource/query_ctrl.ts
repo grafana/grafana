@@ -8,6 +8,7 @@ import kbn from 'app/core/utils/kbn';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto, IPromise } from 'angular';
 import { DataFrame, PanelEvents } from '@grafana/data';
+import { AzureQueryType } from './types';
 
 export interface ResultFormat {
   text: string;
@@ -20,8 +21,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   defaultDropdownValue = 'select';
 
   target: {
+    // should be: AzureMonitorQuery
     refId: string;
-    queryType: string;
+    queryType: AzureQueryType;
     subscription: string;
     azureMonitor: {
       resourceGroup: string;
@@ -46,7 +48,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       workspace: string;
     };
     appInsights: {
-      rawQuery: boolean;
       // metric style query when rawQuery == false
       metricName: string;
       dimension: any;
@@ -62,12 +63,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       timeGrain: string;
       timeGrains: Array<{ text: string; value: string }>;
       allowedTimeGrainsMs: number[];
-
-      // query style query when rawQuery == true
-      rawQueryString: string;
-      timeColumn: string;
-      valueColumn: string;
-      segmentColumn: string;
+    };
+    insightsAnalytics: {
+      query: any;
+      resultFormat: string;
     };
   };
 
@@ -105,12 +104,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     },
     appInsights: {
       metricName: this.defaultDropdownValue,
-      rawQuery: false,
-      rawQueryString: '',
       dimension: 'none',
       timeGrain: 'auto',
-      timeColumn: 'timestamp',
-      valueColumn: '',
+    },
+    insightsAnalytics: {
+      query: '',
+      resultFormat: 'time_series',
     },
   };
 
@@ -614,11 +613,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  onAppInsightsQueryChange = (nextQuery: string) => {
-    this.target.appInsights.rawQueryString = nextQuery;
+  onInsightsAnalyticsQueryChange = (nextQuery: string) => {
+    this.target.insightsAnalytics.query = nextQuery;
   };
 
-  onAppInsightsQueryExecute = () => {
+  onQueryExecute = () => {
     return this.refresh();
   };
 
@@ -635,10 +634,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   resetAppInsightsGroupBy() {
     this.target.appInsights.dimension = 'none';
     this.refresh();
-  }
-
-  toggleEditorMode() {
-    this.target.appInsights.rawQuery = !this.target.appInsights.rawQuery;
   }
 
   updateTimeGrainType() {

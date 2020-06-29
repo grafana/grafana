@@ -287,8 +287,11 @@ export class EventMarkers {
     // var o = this._plot.getPlotOffset();
 
     $.each(this._events, (index, event) => {
+      const options = event.getOptions();
+      const insidePlot = this._insidePlot(options.min) || this._insidePlot(options.timeEnd);
+      const overlapPlot = this._overlapPlot(options.min, options.timeEnd);
       // check event is inside the graph range
-      if (this._insidePlot(event.getOptions().min) && !event.isHidden()) {
+      if ((insidePlot || overlapPlot) && !event.isHidden()) {
         event.visual().draw();
       } else {
         event
@@ -525,30 +528,38 @@ export class EventMarkers {
     const timeTo = Math.max(event.min, event.timeEnd);
     left = xaxis.p2c(timeFrom) + o.left;
     const right = xaxis.p2c(timeTo) + o.left;
-    regionWidth = right - left;
+
+    const [xmin, xmax] = [o.left, o.left + this._plot.width()];
+    const regionStart = Math.max(left, xmin);
+    const regionEnd = Math.min(right, xmax);
+    const regionOffset = right > xmax ? 0 : lineWidth; // only include lineWidth when right line is visible
+    regionWidth = regionEnd - regionStart + regionOffset;
 
     _.each([left, right], position => {
-      const line = $('<div class="events_line flot-temp-elem"></div>').css({
-        position: 'absolute',
-        opacity: 0.8,
-        left: position + 'px',
-        top: 8,
-        width: lineWidth + 'px',
-        height: this._plot.height() + topOffset,
-        'border-left-width': lineWidth + 'px',
-        'border-left-style': lineStyle,
-        'border-left-color': color,
-        color: color,
-      });
-      line.appendTo(container);
+      // only draw visible region lines
+      if (xmin <= position && position < xmax) {
+        const line = $('<div class="events_line flot-temp-elem"></div>').css({
+          position: 'absolute',
+          opacity: 0.8,
+          left: position + 'px',
+          top: 8,
+          width: lineWidth + 'px',
+          height: this._plot.height() + topOffset,
+          'border-left-width': lineWidth + 'px',
+          'border-left-style': lineStyle,
+          'border-left-color': color,
+          color: color,
+        });
+        line.appendTo(container);
+      }
     });
 
     const region = $('<div class="events_marker region_marker flot-temp-elem"></div>').css({
       position: 'absolute',
       opacity: 0.5,
-      left: left + 'px',
+      left: regionStart + 'px',
       top: top,
-      width: Math.round(regionWidth + lineWidth) + 'px',
+      width: regionWidth + 'px',
       height: '0.5rem',
       'border-left-color': color,
       color: color,
@@ -607,6 +618,16 @@ export class EventMarkers {
     const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
     const xc = xaxis.p2c(x);
     return xc > 0 && xc < xaxis.p2c(xaxis.max);
+  }
+
+  /**
+   * check if the event overlaps the visible range
+   */
+  _overlapPlot(point0: number, point1: number) {
+    const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
+    const [coord0, coord1] = [xaxis.p2c(point0), xaxis.p2c(point1)];
+    const [coordMin, coordMax] = [0, xaxis.p2c(xaxis.max)];
+    return coordMin < coord0 && coord1 < coordMax;
   }
 }
 

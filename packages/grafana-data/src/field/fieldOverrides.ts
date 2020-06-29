@@ -367,7 +367,7 @@ export const getLinksSupplier = (
     const info: LinkModel<Field> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: link.title || '',
-      target: link.targetBlank ? '_blank' : '_self',
+      target: link.targetBlank ? '_blank' : undefined,
       origin: field,
     };
 

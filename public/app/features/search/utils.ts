@@ -1,5 +1,6 @@
 import { parse, SearchParserResult } from 'search-query-parser';
 import { IconName } from '@grafana/ui';
+import { UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
@@ -187,9 +188,13 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
   let folderIds: number[] = [];
 
   if (parseQuery(query.query).folder === 'current') {
-    const { folderId } = getDashboardSrv().getCurrent().meta;
-    if (folderId) {
-      folderIds = [folderId];
+    try {
+      const { folderId } = getDashboardSrv().getCurrent()?.meta;
+      if (folderId) {
+        folderIds = [folderId];
+      }
+    } catch (e) {
+      console.error(e);
     }
   }
   return { ...parsedQuery, query: parseQuery(query.query).text as string, folderIds };
@@ -227,4 +232,30 @@ export const getSectionStorageKey = (title: string) => {
     return '';
   }
   return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
+};
+
+/**
+ * Remove undefined keys from url params object and format non-primitive values
+ * @param params
+ * @param folder
+ */
+export const parseRouteParams = (params: UrlQueryMap, folder?: UrlQueryValue) => {
+  const cleanedParams = Object.entries(params).reduce((obj, [key, val]) => {
+    if (!val) {
+      return obj;
+    } else if (key === 'tag' && !Array.isArray(val)) {
+      return { ...obj, tag: [val] as string[] };
+    } else if (key === 'sort') {
+      return { ...obj, sort: { value: val } };
+    }
+    return { ...obj, [key]: val };
+  }, {} as Partial<DashboardQuery>);
+
+  if (folder) {
+    const folderStr = `folder:${folder}`;
+    return {
+      params: { ...cleanedParams, query: `${folderStr} ${(cleanedParams.query ?? '').replace(folderStr, '')}` },
+    };
+  }
+  return { params: cleanedParams };
 };

@@ -80,7 +80,7 @@ to use the full panel height in case there is no panel title.
 This release contains a lot of small features and fixes:
 
 - Explore - Adds user time zone support, reconnect for failing data sources and a fix that prevents killing Prometheus instances when Histogram metrics are loaded.
-- Alerting - Adds support for configuring timeout durations and retries, see [configuration](/installation/configuration/#evaluation-timeout-seconds) for more information.
+- Alerting - Adds support for configuring timeout durations and retries, see [configuration](/administration/configuration/#evaluation-timeout-seconds) for more information.
 - Azure Monitor - Adds support for multiple subscriptions per data source.
 - Elasticsearch - A small bug fix to properly display percentiles metrics in table panel.
 - InfluxDB - Support for POST HTTP verb.

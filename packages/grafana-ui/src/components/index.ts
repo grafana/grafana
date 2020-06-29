@@ -24,6 +24,7 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
+export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
@@ -33,7 +34,7 @@ export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
-export { CodeEditor } from './Monaco/CodeEditor';
+export { CodeEditor } from './Monaco/CodeEditorLazy';
 
 // TODO: namespace
 export { Modal } from './Modal/Modal';
