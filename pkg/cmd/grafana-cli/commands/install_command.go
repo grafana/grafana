@@ -163,7 +163,8 @@ func supportsCurrentArch(version *models.Version) bool {
 }
 
 func latestSupportedVersion(plugin *models.Plugin) *models.Version {
-	for _, ver := range plugin.Versions {
+	for _, v := range plugin.Versions {
+		ver := v
 		if supportsCurrentArch(&ver) {
 			return &ver
 		}

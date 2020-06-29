@@ -84,6 +84,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
           onFocus={onFocus}
           onChange={event => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
+          aria-label="TimePicker from field"
           value={from.value}
         />
       </Field>
@@ -93,10 +94,13 @@ export const TimeRangeForm: React.FC<Props> = props => {
           onFocus={onFocus}
           onChange={event => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}
+          aria-label="TimePicker to field"
           value={to.value}
         />
       </Field>
-      <Button onClick={onApply}>Apply time range</Button>
+      <Button aria-label="TimePicker submit button" onClick={onApply}>
+        Apply time range
+      </Button>
 
       <TimePickerCalendar
         isFullscreen={isFullscreen}
