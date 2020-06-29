@@ -71,7 +71,9 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, updateLocation } = this.props;
+    // force lazy loading off
+    const isInView = true;
 
     return (
       <AutoSizer>
@@ -115,7 +117,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 
   render() {
     const { isViewing, plugin } = this.props;
-    const { isLazy } = this.state;
+    // force lazy loading off
+    const isLazy = false;
 
     // if we have not loaded plugin exports yet, wait
     if (!plugin) {
