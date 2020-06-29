@@ -10,7 +10,7 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     const viewPortWidth = e2e.config().viewportWidth;
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);

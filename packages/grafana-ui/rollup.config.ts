@@ -46,6 +46,9 @@ const buildCjsPackage = ({ env }) => {
             'uniqueId',
             'zip',
             'omit',
+            'isString',
+            'isEmpty',
+            'toLower',
           ],
           '../../node_modules/react-color/lib/components/common': ['Saturation', 'Hue', 'Alpha'],
           '../../node_modules/immutable/dist/immutable.js': [

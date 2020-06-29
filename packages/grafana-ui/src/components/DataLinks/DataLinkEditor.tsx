@@ -53,7 +53,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
         </Field>
 
         <Field label="Open in new tab">
-          <Switch checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+          <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
         </Field>
 
         {isLast && (
