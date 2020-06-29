@@ -53,7 +53,7 @@ Use the following options to refine your visualization:
   - **Value -** Show only value, never name. Name is displayed in the hover tooltip instead.
   - **Value and name -** Always show value and name.
   - **Name -** Show name instead of value. Value is displayed in the hover tooltip.
-  - **None -** Show nothing (empty). Will show both name and value in hover tooltip.
+  - **None -** Show nothing (empty). Name and value are displayed in the hover tooltip.
 
 ## Text mode
 
