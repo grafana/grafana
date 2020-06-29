@@ -20,7 +20,7 @@ export const controlled = () => {
   const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
   const BEHAVIOUR_GROUP = 'Behaviour props';
   const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
-  return <Switch checked={checked} disabled={disabled} onChange={onChange} />;
+  return <Switch value={checked} disabled={disabled} onChange={onChange} />;
 };
 
 export const uncontrolled = () => {

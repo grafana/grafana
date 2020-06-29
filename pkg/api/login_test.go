@@ -252,6 +252,7 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
+		c := c
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
@@ -420,6 +421,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
+		c := c
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {

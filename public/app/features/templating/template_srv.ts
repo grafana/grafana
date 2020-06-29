@@ -240,7 +240,13 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.grafanaVariables[name] = value;
   }
 
+  /**
+   * @deprecated: setGlobalVariable function should not be used and will be removed in future releases
+   *
+   * Use addVariable action to add variables to Redux instead
+   */
   setGlobalVariable(name: string, variable: any) {
+    deprecationWarning('template_srv.ts', 'setGlobalVariable', '');
     this.index = {
       ...this.index,
       [name]: {

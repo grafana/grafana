@@ -52,7 +52,13 @@ export const updateQueryVariableOptions = (
         await dispatch(updateVariableTags(toVariablePayload(variableInState, tagResults)));
       }
 
-      await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
+      // If we are searching options there is no need to validate selection state
+      // This condition was added to as validateVariableSelectionState will update the current value of the variable
+      // So after search and selection the current value is already update so no setValue, refresh & url update is performed
+      // The if statement below fixes https://github.com/grafana/grafana/issues/25671
+      if (!searchFilter) {
+        await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
+      }
     } catch (err) {
       console.error(err);
       if (err.data && err.data.message) {

@@ -15,6 +15,7 @@ awsconfig
 .yarnrc
 .yarn/
 vendor/
+.eslintcache
 
 # Enterprise emails
 /emails/templates/enterprise_*
@@ -46,6 +47,7 @@ public/css/*.min.css
 .DS_Store
 .vscode/
 .vs/
+.eslintcache
 
 /data/*
 /bin/*

@@ -1,9 +1,10 @@
 package sqlstore
 
 import (
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
