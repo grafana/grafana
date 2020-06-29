@@ -92,7 +92,11 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
 
     // Migrate single dimension string to array
     if (isString(item.dimension)) {
-      item.dimension = [item.dimension as string];
+      if (item.dimension === 'None') {
+        item.dimension = [];
+      } else {
+        item.dimension = [item.dimension as string];
+      }
     }
     if (!item.dimension) {
       item.dimension = [];
