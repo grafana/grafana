@@ -583,7 +583,7 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
 				} else if attr, ok := v.Interface().(*time.Time); ok {
-					data = (*attr).String()
+					data = attr.String()
 				} else {
 					return nil, errors.New("invalid attribute path")
 				}

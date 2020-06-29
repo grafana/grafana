@@ -18,6 +18,7 @@ func init() {
 		Type:        "prometheus-alertmanager",
 		Name:        "Prometheus Alertmanager",
 		Description: "Sends alert to Prometheus Alertmanager",
+		Heading:     "Alertmanager settings",
 		Factory:     NewAlertmanagerNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Alertmanager settings</h3>
@@ -38,6 +39,29 @@ func init() {
 		</div>
       </div>
     `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "As specified in Alertmanager documentation, do not specify a load balancer here. Enter all your Alertmanager URLs comma-separated.",
+				Placeholder:  "http://localhost:9093",
+				PropertyName: "url",
+				Required:     true,
+			},
+			{
+				Label:        "Basic Auth User",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				PropertyName: "basicAuthUser",
+			},
+			{
+				Label:        "Basic Auth Password",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypePassword,
+				PropertyName: "basicAuthPassword",
+			},
+		},
 	})
 }
 

@@ -89,6 +89,7 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	if err != nil {
 		return err
 	}
+	resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("GCS response status code %d", resp.StatusCode)
