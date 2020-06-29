@@ -617,6 +617,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 		},
 	}
 	for _, tc := range tcs {
+		tc := tc
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := setting.Cfg{}
 			plugin := plugins.DataSourcePlugin{}

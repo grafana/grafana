@@ -29,7 +29,7 @@ enable = [
   # "interfacer",
   # "misspell",
   "rowserrcheck",
-  # "scopelint",
+  "scopelint",
   "staticcheck",
   "structcheck",
   # "stylecheck",

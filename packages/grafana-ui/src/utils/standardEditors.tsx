@@ -17,6 +17,7 @@ import {
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
   ThresholdsMode,
+  TimeZone,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -26,6 +27,7 @@ import {
   StringValueEditor,
   StringArrayEditor,
   SelectValueEditor,
+  TimeZonePicker,
 } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
@@ -303,5 +305,26 @@ export const getStandardOptionEditors = () => {
     description: '',
   };
 
-  return [text, number, boolean, radio, select, unit, mappings, thresholds, links, color, statsPicker, strings];
+  const timeZone: StandardEditorsRegistryItem<TimeZone> = {
+    id: 'timezone',
+    name: 'Time Zone',
+    description: 'Time zone selection',
+    editor: TimeZonePicker as any,
+  };
+
+  return [
+    text,
+    number,
+    boolean,
+    radio,
+    select,
+    unit,
+    mappings,
+    thresholds,
+    links,
+    color,
+    statsPicker,
+    strings,
+    timeZone,
+  ];
 };
