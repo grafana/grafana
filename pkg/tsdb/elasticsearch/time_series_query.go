@@ -89,6 +89,7 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		}
 
 		for _, m := range q.Metrics {
+			m := m
 			if m.Type == countType {
 				continue
 			}

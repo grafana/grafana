@@ -21,9 +21,10 @@ func TestVersionComparison(t *testing.T) {
 		}
 
 		for k, v := range upgradeablePlugins {
+			key := k
 			val := v
 			t.Run(fmt.Sprintf("for %s should be true", k), func(t *testing.T) {
-				assert.True(t, shouldUpgrade(k, &val))
+				assert.True(t, shouldUpgrade(key, &val))
 			})
 		}
 	})
@@ -40,9 +41,10 @@ func TestVersionComparison(t *testing.T) {
 		}
 
 		for k, v := range shouldNotUpgrade {
+			key := k
 			val := v
 			t.Run(fmt.Sprintf("for %s should be false", k), func(t *testing.T) {
-				assert.False(t, shouldUpgrade(k, &val))
+				assert.False(t, shouldUpgrade(key, &val))
 			})
 		}
 	})
