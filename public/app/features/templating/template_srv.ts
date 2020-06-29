@@ -152,7 +152,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  formatValue(value: any, format: any, variable: any) {
+  formatValue(value: any, format: any, variable: any): string {
     // for some scopedVars there is no variable
     variable = variable || {};
 
@@ -166,7 +166,7 @@ export class TemplateSrv implements BaseTemplateSrv {
           return kbn.regexEscape(value);
         }
 
-        const escapedValues = _.map(value, kbn.regexEscape);
+        const escapedValues = _.map(value, kbn.regexEscape) as string[];
         if (escapedValues.length === 1) {
           return escapedValues[0];
         }
