@@ -30,6 +30,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
 
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
 
+  // @todo use the time range picker's time zone control
   selectOption(e2e.pages.Dashboard.Settings.General.timezone(), timezone);
 
   e2e.components.BackButton.backArrow().click();
