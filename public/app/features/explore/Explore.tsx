@@ -59,7 +59,7 @@ import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 //TODO:unification
-//import { TraceView } from './TraceView/TraceView';
+import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 
@@ -125,6 +125,7 @@ export interface ExploreProps {
   showMetrics: boolean;
   showTable: boolean;
   showLogs: boolean;
+  showTrace: boolean;
 }
 
 interface ExploreState {
@@ -316,6 +317,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showMetrics,
       showTable,
       showLogs,
+      showTrace,
     } = this.props;
     const { showRichHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
@@ -404,12 +406,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             />
                           )}
                           {/* TODO:unification */}
-                          {/* {mode === ExploreMode.Tracing &&
+                          {showTrace &&
                             // We expect only one trace at the moment to be in the dataframe
                             // If there is not data (like 404) we show a separate error so no need to show anything here
                             queryResponse.series[0] && (
                               <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
-                            )} */}
+                            )}
                         </>
                       )}
                       {showRichHistory && (
@@ -452,6 +454,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showLogs,
     showMetrics,
     showTable,
+    showTrace,
     loading,
     showingGraph,
     showingTable,
@@ -493,6 +496,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showLogs,
     showMetrics,
     showTable,
+    showTrace,
   };
 }
 
