@@ -1,37 +1,10 @@
 import React from 'react';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
-import { MonacoEditorProps } from 'react-monaco-editor';
 import { KeyCode, editor, KeyMod } from 'monaco-editor/esm/vs/editor/editor.api';
-import { useAsyncDependency } from '../../utils/useAsyncDependency';
-import { ErrorWithStack, LoadingPlaceholder } from '..';
+import ReactMonaco from 'react-monaco-editor';
 
-export type CodeEditorChangeHandler = (value: string) => void;
-
-const MonacoEditor: React.FC<MonacoEditorProps> = props => {
-  const { loading, error, dependency } = useAsyncDependency(
-    import(/* webpackChunkName: "react-monaco-editor" */ 'react-monaco-editor')
-  );
-
-  if (loading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
-  }
-
-  if (error) {
-    return (
-      <ErrorWithStack
-        title="Code editor failed to load"
-        error={error}
-        errorInfo={{ componentStack: error?.stack || '' }}
-      />
-    );
-  }
-
-  const ReactMonaco = dependency.default;
-  return <ReactMonaco {...props} />;
-};
-
-interface CodeEditorProps extends Themeable {
+export interface CodeEditorProps extends Themeable {
   value: string;
   language: string;
   width?: number | string;
@@ -91,7 +64,7 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
 
     return (
       <div onBlur={this.onBlur}>
-        <MonacoEditor
+        <ReactMonaco
           width={width}
           height={height}
           language={language}
@@ -117,4 +90,5 @@ class UnthemedCodeEditor extends React.PureComponent<CodeEditorProps> {
   }
 }
 
-export const CodeEditor = withTheme(UnthemedCodeEditor);
+export type CodeEditorChangeHandler = (value: string) => void;
+export default withTheme(UnthemedCodeEditor);

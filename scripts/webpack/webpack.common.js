@@ -192,10 +192,6 @@ module.exports = {
           priority: 50,
           enforce: true,
         },
-        vendor: {
-          test: /[\\/](monaco-editor)[\\/]/,
-          name: 'monaco-editor',
-        },
         vendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
