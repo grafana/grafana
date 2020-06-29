@@ -1,3 +1,8 @@
+# 7.0.4 (2020-06-25)
+
+### Features / Enhancements
+* **Slider**: Update rc-slider dependency to 9.3.1. [#25617](https://github.com/grafana/grafana/pull/25617), [@torkelo](https://github.com/torkelo)
+
 # 7.0.0 (2020-05-18)
 
 ### Bug Fixes

@@ -1,9 +1,12 @@
 import { Props } from '@storybook/addon-docs/blocks';
-import { TabsBar } from './TabsBar'
+import { TabsBar } from './TabsBar';
 
 # TabBar
 
-A composition component for rendering a TabBar with Tabs for navigation
+A composition component for rendering a TabBar with Tabs for navigation.
 
+It has two modes - navigation and onClick. Navigation renders it as a simple `<a>` element. To enable it, use the `href` prop. The onClick mode uses an onClick handler instead. To enable it, use the `onChangeTab` prop.
+
+**Warning!** Using `href` and `onChangeTab` at the same time may have unintended consequences.
 
 <Props of={TabsBar} />

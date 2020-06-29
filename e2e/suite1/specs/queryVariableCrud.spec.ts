@@ -35,7 +35,7 @@ describe.skip('Variables', () => {
     }
 
     e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
-      e2e.flows.openDashboard(lastAddedDashboardUid);
+      e2e.flows.openDashboard({ uid: lastAddedDashboardUid });
       lastUid = lastAddedDashboardUid;
       lastData = lastAddedDataSource;
     });

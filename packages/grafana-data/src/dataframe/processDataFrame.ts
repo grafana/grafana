@@ -69,7 +69,9 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const times: number[] = [];
   const values: TimeSeriesValue[] = [];
 
-  for (const point of timeSeries.datapoints) {
+  // Sometimes the points are sent as datapoints
+  const points = timeSeries.datapoints || (timeSeries as any).points;
+  for (const point of points) {
     values.push(point[0]);
     times.push(point[1] as number);
   }
@@ -97,7 +99,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   }
 
   return {
-    name: timeSeries.target,
+    name: timeSeries.target || (timeSeries as any).name,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
@@ -294,7 +296,7 @@ export function toDataFrame(data: any): DataFrame {
     return convertJSONDocumentDataToDataFrame(data);
   }
 
-  if (data.hasOwnProperty('datapoints')) {
+  if (data.hasOwnProperty('datapoints') || data.hasOwnProperty('points')) {
     return convertTimeSeriesToDataFrame(data);
   }
 
