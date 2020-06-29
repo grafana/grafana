@@ -252,7 +252,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-
 			}
 
 			token := &oauth2.Token{}

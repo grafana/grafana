@@ -121,7 +121,6 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 
 				So(queries[0].Target, ShouldEqual, "aggregation=Average&filter=blob+eq+%27%2A%27&interval=PT1M&segment=blob&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 				So(queries[0].Params["filter"][0], ShouldEqual, "blob eq '*'")
-
 			})
 
 			Convey("and has a dimension filter set to None", func() {
@@ -289,5 +288,4 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 			}
 		})
 	}
-
 }

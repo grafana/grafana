@@ -128,7 +128,6 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			Alias:  insightsJSONModel.Alias,
 			Target: params.Encode(),
 		})
-
 	}
 
 	return applicationInsightsQueries, nil
@@ -360,7 +359,6 @@ func processSegment(slice *tsdb.TimeSeriesSlice, segment map[string]interface{},
 			}
 		}
 	} else {
-
 		aliased := formatApplicationInsightsLegendKey(query.Alias, valueName, segmentName, segmentValue)
 
 		if segmentValue == "" {
@@ -408,7 +406,6 @@ func parseSingleValueTimeSeries(query *ApplicationInsightsQuery, metricName stri
 }
 
 func getAggregatedValue(valueMap map[string]interface{}, valueName string) (float64, error) {
-
 	aggValue := ""
 	var metricValue float64
 	var err error

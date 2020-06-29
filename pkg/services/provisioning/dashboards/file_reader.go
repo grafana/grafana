@@ -58,7 +58,6 @@ func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
 func (fr *FileReader) pollChanges(ctx context.Context) {
-
 	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {

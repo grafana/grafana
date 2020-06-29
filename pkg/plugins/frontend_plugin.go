@@ -52,7 +52,6 @@ func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
 }
 
 func (fp *FrontendPluginBase) handleModuleDefaults() {
-
 	if isExternalPlugin(fp.PluginDir) {
 		fp.Module = path.Join("plugins", fp.Id, "module")
 		fp.BaseUrl = path.Join("public/plugins", fp.Id)

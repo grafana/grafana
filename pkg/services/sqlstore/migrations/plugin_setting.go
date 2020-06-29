@@ -3,7 +3,6 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addAppSettingsMigration(mg *Migrator) {
-
 	pluginSettingTable := Table{
 		Name: "plugin_setting",
 		Columns: []*Column{

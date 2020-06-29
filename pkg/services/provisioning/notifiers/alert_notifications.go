@@ -74,7 +74,6 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 
 func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*notificationFromConfig) error {
 	for _, notification := range notificationToMerge {
-
 		if notification.OrgId == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
 			if err := bus.Dispatch(getOrg); err != nil {

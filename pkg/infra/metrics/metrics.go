@@ -551,7 +551,6 @@ func initMetricVars() {
 		grafanaBuildVersion,
 		grafanaPluginBuildInfoDesc,
 	)
-
 }
 
 func newCounterVecStartingAtZero(opts prometheus.CounterOpts, labels []string, labelValues ...string) *prometheus.CounterVec {

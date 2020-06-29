@@ -114,7 +114,6 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(orgUsersQuery.Result[1].Role, ShouldEqual, models.ROLE_ADMIN)
-
 				})
 
 				Convey("Can get logged in user projection", func() {
@@ -282,7 +281,6 @@ func TestAccountDataAccess(t *testing.T) {
 							So(permQuery.Result[0].OrgId, ShouldEqual, ac3.OrgId)
 							So(permQuery.Result[0].UserId, ShouldEqual, ac3.Id)
 						})
-
 					})
 				})
 			})

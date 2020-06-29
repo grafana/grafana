@@ -205,7 +205,6 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 			})
-
 		})
 
 		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
@@ -396,7 +395,6 @@ func TestStackdriver(t *testing.T) {
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 
 				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
-
 					query := &stackdriverQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
@@ -410,7 +408,6 @@ func TestStackdriver(t *testing.T) {
 				})
 
 				Convey("and the alias pattern is for metric name", func() {
-
 					query := &stackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
