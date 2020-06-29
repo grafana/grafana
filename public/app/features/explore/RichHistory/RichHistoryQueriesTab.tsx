@@ -149,7 +149,6 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   useEffect(() => {
-    console.log('tata');
     setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchInput, timeFilter));
   }, [queries, sortOrder, datasourceFilters]);
 
