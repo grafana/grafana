@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from 'emotion';
-import { uniqBy } from 'lodash';
+import { uniqBy, debounce } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -31,10 +31,8 @@ export interface Props {
   retentionPeriod: number;
   exploreId: ExploreId;
   height: number;
-  searchFilter: string;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
-  onSearchFilterChange: (value: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
@@ -135,13 +133,13 @@ export function RichHistoryQueriesTab(props: Props) {
     sortOrder,
     activeDatasourceOnly,
     retentionPeriod,
-    searchFilter,
-    onSearchFilterChange,
     exploreId,
     height,
   } = props;
 
   const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
+  const [filteredQueries, setFilteredQueries] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
@@ -150,12 +148,19 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
-  const filteredQueries = filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchFilter, timeFilter);
+  useEffect(() => {
+    console.log('tata');
+    setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchInput, timeFilter));
+  }, [queries, sortOrder, datasourceFilters]);
+
+  const filterAndSortQueriesDebounced = debounce(searchValue => {
+    setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchValue, timeFilter));
+  }, 300);
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
    */
-  let mappedQueriesToHeadings = mapQueriesToHeadings(filteredQueries, sortOrder);
+  const mappedQueriesToHeadings = mapQueriesToHeadings(filteredQueries, sortOrder);
 
   return (
     <div className={styles.container}>
@@ -197,8 +202,11 @@ export function RichHistoryQueriesTab(props: Props) {
               labelClassName="gf-form--has-input-icon gf-form--grow"
               inputClassName="gf-form-input"
               placeholder="Search queries"
-              value={searchFilter}
-              onChange={onSearchFilterChange}
+              value={searchInput}
+              onChange={(value: string) => {
+                setSearchInput(value);
+                filterAndSortQueriesDebounced(value);
+              }}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>

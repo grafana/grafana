@@ -43,7 +43,6 @@ export interface RichHistoryProps extends Themeable {
 interface RichHistoryState {
   activeTab: Tabs;
   sortOrder: SortOrder;
-  searchFilter: string;
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
@@ -86,7 +85,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     this.state = {
       activeTab: this.props.firstTab,
       sortOrder: SortOrder.Descending,
-      searchFilter: '',
       datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, null),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
@@ -115,12 +113,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       activeDatasourceOnly,
     });
     store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, activeDatasourceOnly);
-  };
-
-  onSearchFilterChange = (value: string) => {
-    this.setState({
-      searchFilter: value,
-    });
   };
 
   onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
@@ -166,7 +158,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   }
 
   render() {
-    const { datasourceFilters, sortOrder, activeTab, activeDatasourceOnly, retentionPeriod, searchFilter } = this.state;
+    const { datasourceFilters, sortOrder, activeTab, activeDatasourceOnly, retentionPeriod } = this.state;
     const { theme, richHistory, height, exploreId, deleteRichHistory, onClose } = this.props;
     const styles = getStyles(theme);
 
@@ -180,10 +172,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
           retentionPeriod={retentionPeriod}
-          searchFilter={searchFilter}
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
-          onSearchFilterChange={this.onSearchFilterChange}
           exploreId={exploreId}
           height={height}
         />
@@ -200,8 +190,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           sortOrder={sortOrder}
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
-          searchFilter={searchFilter}
-          onSearchFilterChange={this.onSearchFilterChange}
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           exploreId={exploreId}

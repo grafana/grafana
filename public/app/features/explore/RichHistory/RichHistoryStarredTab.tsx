@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from 'emotion';
-import { uniqBy } from 'lodash';
+import { uniqBy, debounce } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -24,10 +24,8 @@ export interface Props {
   activeDatasourceOnly: boolean;
   datasourceFilters: SelectableValue[] | null;
   exploreId: ExploreId;
-  searchFilter: string;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
-  onSearchFilterChange: (value: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -83,9 +81,10 @@ export function RichHistoryStarredTab(props: Props) {
     sortOrder,
     activeDatasourceOnly,
     exploreId,
-    searchFilter,
-    onSearchFilterChange,
   } = props;
+
+  const [filteredQueries, setFilteredQueries] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -95,7 +94,13 @@ export function RichHistoryStarredTab(props: Props) {
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   const starredQueries = queries.filter(q => q.starred === true);
-  const filteredQueries = filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchFilter);
+  useEffect(() => {
+    setFilteredQueries(filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchInput));
+  }, [queries, sortOrder, datasourceFilters]);
+
+  const filterAndSortQueriesDebounced = debounce(searchValue => {
+    setFilteredQueries(filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchValue));
+  }, 300);
 
   return (
     <div className={styles.container}>
@@ -117,8 +122,11 @@ export function RichHistoryStarredTab(props: Props) {
               labelClassName="gf-form--has-input-icon gf-form--grow"
               inputClassName="gf-form-input"
               placeholder="Search queries"
-              value={searchFilter}
-              onChange={onSearchFilterChange}
+              value={searchInput}
+              onChange={(value: string) => {
+                setSearchInput(value);
+                filterAndSortQueriesDebounced(value);
+              }}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
