@@ -1,25 +1,32 @@
 import { DeleteDashboardConfig } from './deleteDashboard';
 import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
+import { selectOption } from './selectOption';
 
 export interface AddDashboardConfig {
+  timezone: string;
   title: string;
 }
 
 // @todo this actually returns type `Cypress.Chainable`
 export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
   const fullConfig = {
+    timezone: 'Coordinated Universal Time',
     title: `e2e-${Date.now()}`,
     ...config,
   } as AddDashboardConfig;
 
-  const { title } = fullConfig;
+  const { timezone, title } = fullConfig;
 
   e2e().logToConsole('Adding dashboard with title:', title);
 
   e2e.pages.AddDashboard.visit();
 
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').click();
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+
+  selectOption(e2e.pages.Dashboard.Settings.General.timezone(), timezone);
+
+  e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
 
   e2e.pages.SaveDashboardAsModal.newName()
     .clear()

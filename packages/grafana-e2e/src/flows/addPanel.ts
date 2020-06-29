@@ -1,6 +1,7 @@
 import { e2e } from '../index';
 import { getLocalStorage, requireLocalStorage } from '../support/localStorage';
 import { getScenarioContext } from '../support/scenarioContext';
+import { selectOption } from './selectOption';
 
 export interface AddPanelConfig {
   dashboardUid: string;
@@ -26,7 +27,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
 
     const { dashboardUid, dataSourceName, panelTitle, queriesForm, visualizationName } = fullConfig;
 
-    e2e.pages.Dashboard.visit(dashboardUid);
+    e2e.flows.openDashboard({ uid: dashboardUid });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.addNewPanel().click();
 
@@ -38,18 +39,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .route('POST', '/api/ds/query')
       .as('chartData');
 
-    e2e.components.DataSourcePicker.container().within(() => {
-      e2e()
-        .get('[class$="-input-suffix"]')
-        .click();
-      e2e.components.Select.option()
-        .filter(`:contains("${dataSourceName}")`)
-        .scrollIntoView()
-        .click();
-      e2e()
-        .root()
-        .scrollIntoView();
-    });
+    selectOption(e2e.components.DataSourcePicker.container(), dataSourceName);
 
     // @todo instead wait for '@pluginModule'
     e2e().wait(2000);
