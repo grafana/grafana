@@ -623,7 +623,9 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
 
 	foundLoginCookie := false
-	for _, c := range rr.Result().Cookies() {
+	resp := rr.Result()
+	defer resp.Body.Close()
+	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
 
