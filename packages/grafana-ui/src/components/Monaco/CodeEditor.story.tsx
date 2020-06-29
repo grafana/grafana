@@ -3,7 +3,7 @@ import { text } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './CodeEditor.mdx';
-import { CodeEditor } from './CodeEditor';
+import CodeEditor from './CodeEditor';
 
 const getKnobs = () => {
   return {
