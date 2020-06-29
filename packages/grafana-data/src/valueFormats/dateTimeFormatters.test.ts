@@ -8,6 +8,7 @@ import {
   toDurationInMilliseconds,
   toDurationInSeconds,
   toDurationInHoursMinutesSeconds,
+  toDurationInDaysHoursMinutesSeconds,
 } from './dateTimeFormatters';
 import { formattedValueToString } from './valueFormats';
 import { toUtc, dateTime } from '../datetime/moment_wrapper';
@@ -178,6 +179,42 @@ describe('duration', () => {
   it('0 dthms', () => {
     const str = toDurationInHoursMinutesSeconds(0);
     expect(formattedValueToString(str)).toBe('00:00:00');
+  });
+  it('1 dtdhms', () => {
+    const str = toDurationInHoursMinutesSeconds(1);
+    expect(formattedValueToString(str)).toBe('00:00:01');
+  });
+  it('-1 dtdhms', () => {
+    const str = toDurationInHoursMinutesSeconds(-1);
+    expect(formattedValueToString(str)).toBe('00:00:01 ago');
+  });
+  it('0 dtdhms', () => {
+    const str = toDurationInHoursMinutesSeconds(0);
+    expect(formattedValueToString(str)).toBe('00:00:00');
+  });
+  it('86399 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(86399);
+    expect(formattedValueToString(str)).toBe('23:59:59');
+  });
+  it('86400 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(86400);
+    expect(formattedValueToString(str)).toBe('1 d 00:00:00');
+  });
+  it('360000 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(360000);
+    expect(formattedValueToString(str)).toBe('4 d 04:00:00');
+  });
+  it('1179811 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(1179811);
+    expect(formattedValueToString(str)).toBe('13 d 15:43:31');
+  });
+  it('-1179811 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(-1179811);
+    expect(formattedValueToString(str)).toBe('13 d 15:43:31 ago');
+  });
+  it('116876364 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(116876364);
+    expect(formattedValueToString(str)).toBe('1352 d 17:39:24');
   });
 });
 

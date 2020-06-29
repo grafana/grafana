@@ -62,6 +62,7 @@ func TestFoldersApiEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
+				tc := tc
 				mock := &fakeFolderService{
 					CreateFolderError: tc.Error,
 				}
@@ -119,6 +120,7 @@ func TestFoldersApiEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
+				tc := tc
 				mock := &fakeFolderService{
 					UpdateFolderError: tc.Error,
 				}

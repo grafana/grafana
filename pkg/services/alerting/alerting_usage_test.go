@@ -107,6 +107,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 	require.NoError(t, err, "Init should not return an error")
 
 	for _, tc := range tcs {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			content, err := ioutil.ReadFile(tc.file)
 			require.NoError(t, err, "expected to be able to read file")
