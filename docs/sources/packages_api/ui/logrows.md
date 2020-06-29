@@ -5,7 +5,6 @@
 title = "LogRows"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## LogRows variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-LogRows: React.FunctionComponent<Pick<Props, "timeZone" | "getRowContext" | "onClickFilterLabel" | "onClickFilterOutLabel" | "getFieldLinks" | "highlighterExpressions" | "wrapLogMessage" | "showLabels" | "showTime" | "allowDetails" | "logRows" | "deduplicatedRows" | "dedupStrategy" | "rowLimit" | "previewLimit">>
+LogRows: React.FunctionComponent<Pick<Props, "timeZone" | "getRowContext" | "onClickFilterLabel" | "onClickFilterOutLabel" | "getFieldLinks" | "highlighterExpressions" | "wrapLogMessage" | "showContextToggle" | "showLabels" | "showTime" | "allowDetails" | "logRows" | "deduplicatedRows" | "dedupStrategy" | "rowLimit" | "previewLimit">>
 ```
 <b>Import</b>
 

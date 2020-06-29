@@ -61,13 +61,11 @@ export class UserPermissions extends PureComponent<Props, State> {
                   <td className="width-16">Grafana Admin</td>
                   {isEditing ? (
                     <td colSpan={2}>
-                      <div className="gf-form-select-wrapper width-8">
-                        <RadioButtonGroup
-                          options={adminOptions}
-                          value={currentAdminOption}
-                          onChange={this.onAdminOptionSelect}
-                        />
-                      </div>
+                      <RadioButtonGroup
+                        options={adminOptions}
+                        value={currentAdminOption}
+                        onChange={this.onAdminOptionSelect}
+                      />
                     </td>
                   ) : (
                     <td colSpan={2}>

@@ -1,13 +1,12 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { escapeHtml } from 'app/core/utils/text';
-import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
+import { deprecationWarning, ScopedVars, textUtil, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
-import { getConfig } from 'app/core/config';
-import { variableRegex } from './utils';
+import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
-import { VariableModel } from './types';
+import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import { variableAdapters } from '../variables/adapters';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -65,11 +64,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   getVariables(): VariableModel[] {
-    if (getConfig().featureToggles.newVariables) {
-      return this.dependencies.getVariables();
-    }
-
-    return this._variables;
+    return this.dependencies.getVariables();
   }
 
   updateIndex() {
@@ -194,9 +189,9 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
       case 'html': {
         if (_.isArray(value)) {
-          return escapeHtml(value.join(', '));
+          return textUtil.escapeHtml(value.join(', '));
         }
-        return escapeHtml(value);
+        return textUtil.escapeHtml(value);
       }
       case 'json': {
         return JSON.stringify(value);
@@ -245,7 +240,13 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.grafanaVariables[name] = value;
   }
 
+  /**
+   * @deprecated: setGlobalVariable function should not be used and will be removed in future releases
+   *
+   * Use addVariable action to add variables to Redux instead
+   */
   setGlobalVariable(name: string, variable: any) {
+    deprecationWarning('template_srv.ts', 'setGlobalVariable', '');
     this.index = {
       ...this.index,
       [name]: {
@@ -317,7 +318,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): any {
+  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string {
     if (!target) {
       return target;
     }
@@ -399,8 +400,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  fillVariableValuesForUrl(params: any, scopedVars?: ScopedVars) {
-    _.each(this._variables, variable => {
+  fillVariableValuesForUrl = (params: any, scopedVars?: ScopedVars) => {
+    _.each(this.getVariables(), variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -410,10 +411,10 @@ export class TemplateSrv implements BaseTemplateSrv {
         if (variable.skipUrlSync) {
           return;
         }
-        params['var-' + variable.name] = variable.getValueForUrl();
+        params['var-' + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable);
       }
     });
-  }
+  };
 
   distributeVariable(value: any, variable: any) {
     value = _.map(value, (val: any, index: number) => {
@@ -431,7 +432,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return;
     }
 
-    if (getConfig().featureToggles.newVariables && !this.index[name]) {
+    if (!this.index[name]) {
       return this.dependencies.getVariableWithName(name);
     }
 
@@ -439,13 +440,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   };
 
   private getAdHocVariables = (): any[] => {
-    if (getConfig().featureToggles.newVariables) {
-      return this.dependencies.getFilteredVariables(isAdHoc);
-    }
-    if (Array.isArray(this._variables)) {
-      return this._variables.filter(isAdHoc);
-    }
-    return [];
+    return this.dependencies.getFilteredVariables(isAdHoc);
   };
 }
 

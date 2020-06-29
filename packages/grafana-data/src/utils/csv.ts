@@ -7,6 +7,7 @@ import isNumber from 'lodash/isNumber';
 import { DataFrame, Field, FieldType, FieldConfig } from '../types';
 import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { getFieldDisplayName } from '../field';
 
 export enum CSVHeaderStyle {
   full,
@@ -149,7 +150,7 @@ export class CSVReader {
 
       this.state = ParseState.ReadingRows;
 
-      // Make sure colum structure is valid
+      // Make sure column structure is valid
       if (line.length > this.current.fields.length) {
         const { fields } = this.current;
         for (let f = fields.length; f < line.length; f++) {
@@ -289,7 +290,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
         if (i > 0) {
           csv += config.delimiter;
         }
-        csv += fields[i].name;
+        csv += `"${getFieldDisplayName(fields[i], series).replace(/"/g, '""')}"`;
       }
       csv += config.newline;
     }

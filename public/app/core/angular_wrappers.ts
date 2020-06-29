@@ -10,16 +10,16 @@ import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
-  DataLinksEditor,
   DataSourceHttpSettings,
   GraphContextMenu,
-  SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
   Icon,
+  LegacyForms,
+  DataLinksInlineEditor,
 } from '@grafana/ui';
+const { SecretFormField } = LegacyForms;
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
-import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
@@ -30,6 +30,7 @@ import {
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
 import { SearchField, SearchResults, SearchWrapper, SearchResultsFilter } from '../features/search';
+import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -150,18 +151,17 @@ export function registerAngularDirectives() {
     'items',
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
-    ['formatSourceDate', { watchDepth: 'reference', wrapApply: true }],
+    ['timeZone', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
   // We keep the drilldown terminology here because of as using data-* directive
   // being in conflict with HTML data attributes
-  react2AngularDirective('drilldownLinksEditor', DataLinksEditor, [
+  react2AngularDirective('drilldownLinksEditor', DataLinksInlineEditor, [
     'value',
+    'links',
     'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-
-  react2AngularDirective('reactProfileWrapper', ReactProfileWrapper, []);
 
   react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
     'expr',
@@ -199,4 +199,11 @@ export function registerAngularDirectives() {
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
+  react2AngularDirective('timePickerSettings', TimePickerSettings, [
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onTimeZoneChange', { watchDepth: 'reference', wrapApply: true }],
+    ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
+    ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
+    ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
 }

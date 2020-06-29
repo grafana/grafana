@@ -12,7 +12,7 @@ export interface Props {
   tooltip?: string;
   tooltipPlacement?: PopperJS.Placement;
   transparent?: boolean;
-  onChange: (event?: React.SyntheticEvent<HTMLInputElement>) => void;
+  onChange: (event: React.SyntheticEvent<HTMLInputElement>) => void;
 }
 
 export interface State {

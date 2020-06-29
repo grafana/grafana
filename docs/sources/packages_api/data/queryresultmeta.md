@@ -5,7 +5,6 @@
 title = "QueryResultMeta"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## QueryResultMeta interface
@@ -24,17 +23,53 @@ import { QueryResultMeta } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> |  |
+|  [alignmentPeriod](#alignmentperiod-property) | <code>string</code> |  |
+|  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> | DatasSource Specific Values |
+|  [gmdMeta](#gmdmeta-property) | <code>any[]</code> | Legacy data source specific, should be moved to custom |
+|  [json](#json-property) | <code>boolean</code> |  |
 |  [limit](#limit-property) | <code>number</code> |  |
-|  [requestId](#requestid-property) | <code>string</code> |  |
+|  [notices](#notices-property) | <code>QueryResultMetaNotice[]</code> | Meta Notices |
+|  [preferredVisualisationType](#preferredvisualisationtype-property) | <code>PreferredVisualisationType</code> | Currently used to show results in Explore only in preferred visualisation option |
+|  [query](#query-property) | <code>string</code> |  |
+|  [rawQuery](#rawquery-property) | <code>string</code> |  |
 |  [searchWords](#searchwords-property) | <code>string[]</code> |  |
+|  [stats](#stats-property) | <code>QueryResultMetaStat[]</code> | Stats |
+|  [transformations](#transformations-property) | <code>string[]</code> | Used to track transformation ids that where part of the processing |
+
+### alignmentPeriod property
+
+<b>Signature</b>
+
+```typescript
+alignmentPeriod?: string;
+```
 
 ### custom property
+
+DatasSource Specific Values
 
 <b>Signature</b>
 
 ```typescript
 custom?: Record<string, any>;
+```
+
+### gmdMeta property
+
+Legacy data source specific, should be moved to custom
+
+<b>Signature</b>
+
+```typescript
+gmdMeta?: any[];
+```
+
+### json property
+
+<b>Signature</b>
+
+```typescript
+json?: boolean;
 ```
 
 ### limit property
@@ -45,12 +80,40 @@ custom?: Record<string, any>;
 limit?: number;
 ```
 
-### requestId property
+### notices property
+
+Meta Notices
 
 <b>Signature</b>
 
 ```typescript
-requestId?: string;
+notices?: QueryResultMetaNotice[];
+```
+
+### preferredVisualisationType property
+
+Currently used to show results in Explore only in preferred visualisation option
+
+<b>Signature</b>
+
+```typescript
+preferredVisualisationType?: PreferredVisualisationType;
+```
+
+### query property
+
+<b>Signature</b>
+
+```typescript
+query?: string;
+```
+
+### rawQuery property
+
+<b>Signature</b>
+
+```typescript
+rawQuery?: string;
 ```
 
 ### searchWords property
@@ -59,4 +122,24 @@ requestId?: string;
 
 ```typescript
 searchWords?: string[];
+```
+
+### stats property
+
+Stats
+
+<b>Signature</b>
+
+```typescript
+stats?: QueryResultMetaStat[];
+```
+
+### transformations property
+
+Used to track transformation ids that where part of the processing
+
+<b>Signature</b>
+
+```typescript
+transformations?: string[];
 ```

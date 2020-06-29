@@ -13,6 +13,7 @@ import {
   getColorFromHexRgbOrName,
   getValueFormat,
   formattedValueToString,
+  dateTimeFormat,
 } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
@@ -154,19 +155,14 @@ export class HeatmapRenderer {
       .range([0, this.chartWidth]);
 
     const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
-    const grafanaTimeFormatter = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
-    let timeFormat;
-    const dashboardTimeZone = this.ctrl.dashboard.getTimezone();
-    if (dashboardTimeZone === 'utc') {
-      timeFormat = d3.utcFormat(grafanaTimeFormatter);
-    } else {
-      timeFormat = d3.timeFormat(grafanaTimeFormatter);
-    }
+    const format = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
+    const timeZone = this.ctrl.dashboard.getTimezone();
+    const formatter = (date: Date) => dateTimeFormat(date, { format, timeZone });
 
     const xAxis = d3
       .axisBottom(this.xScale)
       .ticks(ticks)
-      .tickFormat(timeFormat)
+      .tickFormat(formatter)
       .tickPadding(X_AXIS_TICK_PADDING)
       .tickSize(this.chartHeight);
 
@@ -344,6 +340,7 @@ export class HeatmapRenderer {
 
   addYAxisFromBuckets() {
     const tsBuckets = this.data.tsBuckets;
+    let ticks = Math.ceil(this.chartHeight / DEFAULT_Y_TICK_SIZE_PX);
 
     this.scope.yScale = this.yScale = d3
       .scaleLinear()
@@ -370,11 +367,15 @@ export class HeatmapRenderer {
 
     const yAxis = d3
       .axisLeft(this.yScale)
-      .tickValues(tickValues)
       .tickFormat(tickFormatter)
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
+    if (tickValues && tickValues.length <= ticks) {
+      yAxis.tickValues(tickValues);
+    } else {
+      yAxis.ticks(ticks);
+    }
 
     this.heatmap
       .append('g')

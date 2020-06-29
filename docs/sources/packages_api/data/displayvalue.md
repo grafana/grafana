@@ -5,7 +5,6 @@
 title = "DisplayValue"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DisplayValue interface
@@ -24,12 +23,14 @@ import { DisplayValue } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [color](#color-property) | <code>string</code> |  |
-|  [numeric](#numeric-property) | <code>number</code> |  |
-|  [percent](#percent-property) | <code>number</code> |  |
+|  [color](#color-property) | <code>string</code> | Color based on configs or Threshold |
+|  [numeric](#numeric-property) | <code>number</code> | Use isNaN to check if it is a real number |
+|  [percent](#percent-property) | <code>number</code> | 0-1 between min &amp; max |
 |  [title](#title-property) | <code>string</code> |  |
 
 ### color property
+
+Color based on configs or Threshold
 
 <b>Signature</b>
 
@@ -39,6 +40,8 @@ color?: string;
 
 ### numeric property
 
+Use isNaN to check if it is a real number
+
 <b>Signature</b>
 
 ```typescript
@@ -46,6 +49,8 @@ numeric: number;
 ```
 
 ### percent property
+
+0-1 between min &amp; max
 
 <b>Signature</b>
 

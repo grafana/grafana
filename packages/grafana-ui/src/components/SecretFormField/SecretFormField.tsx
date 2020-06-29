@@ -4,7 +4,7 @@ import { FormField } from '../FormField/FormField';
 import { Button } from '../Button/Button';
 import { css, cx } from 'emotion';
 
-interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
+export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
   // component (or do something else if required).
   onReset: (event: React.SyntheticEvent<HTMLButtonElement>) => void;
@@ -57,7 +57,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
           <>
             <input
               type="text"
-              className={cx(`gf-form-input width-${inputWidth! - 2}`, styles.noRadiusInput)}
+              className={cx(`gf-form-input width-${inputWidth}`, styles.noRadiusInput)}
               disabled={true}
               value="configured"
               {...omit(inputProps, 'value')}

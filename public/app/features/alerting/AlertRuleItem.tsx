@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { AlertRule } from '../../types';
-import { Icon, IconName } from '@grafana/ui';
+import { Icon, IconName, Button, Tooltip, LinkButton, HorizontalGroup } from '@grafana/ui';
 
 export interface Props {
   rule: AlertRule;
@@ -43,16 +43,19 @@ class AlertRuleItem extends PureComponent<Props> {
         </div>
 
         <div className="alert-rule-item__actions">
-          <button
-            className="btn btn-small btn-inverse alert-list__btn width-2"
-            title="Pausing an alert rule prevents it from executing"
-            onClick={onTogglePause}
-          >
-            <Icon name={rule.state === 'paused' ? 'play' : 'pause'} />
-          </button>
-          <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <Icon name="cog" />
-          </a>
+          <HorizontalGroup spacing="sm">
+            <Tooltip placement="bottom" content="Pausing an alert rule prevents it from executing">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={rule.state === 'paused' ? 'play' : 'pause'}
+                onClick={onTogglePause}
+              />
+            </Tooltip>
+            <Tooltip placement="right" content="Edit alert rule">
+              <LinkButton size="sm" variant="secondary" href={ruleUrl} icon="cog" />
+            </Tooltip>
+          </HorizontalGroup>
         </div>
       </li>
     );

@@ -148,6 +148,13 @@ func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_DUP_ENTRY)
 }
 
+func (db *Mysql) ErrorMessage(err error) string {
+	if driverErr, ok := err.(*mysql.MySQLError); ok {
+		return driverErr.Message
+	}
+	return ""
+}
+
 func (db *Mysql) IsDeadlock(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
 }

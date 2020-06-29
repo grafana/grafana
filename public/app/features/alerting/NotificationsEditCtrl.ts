@@ -4,6 +4,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { IScope } from 'angular';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
+import config from 'app/core/config';
+import { CoreEvents } from 'app/types';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -27,6 +29,7 @@ export class AlertNotificationEditCtrl {
     isDefault: false,
   };
   getFrequencySuggestion: any;
+  rendererAvailable: boolean;
 
   /** @ngInject */
   constructor(
@@ -42,6 +45,9 @@ export class AlertNotificationEditCtrl {
     this.getFrequencySuggestion = () => {
       return ['1m', '5m', '10m', '15m', '30m', '1h'];
     };
+
+    this.defaults.settings.uploadImage = config.rendererAvailable;
+    this.rendererAvailable = config.rendererAvailable;
 
     promiseToDigest(this.$scope)(
       getBackendSrv()
@@ -113,6 +119,20 @@ export class AlertNotificationEditCtrl {
   }
 
   deleteNotification() {
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Delete',
+      text: 'Do you want to delete this notification channel?',
+      text2: `Deleting this notification channel will not delete from alerts any references to it`,
+      icon: 'trash-alt',
+      confirmText: 'Delete',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.deleteNotificationConfirmed();
+      },
+    });
+  }
+
+  deleteNotificationConfirmed() {
     promiseToDigest(this.$scope)(
       getBackendSrv()
         .delete(`/api/alert-notifications/${this.model.id}`)

@@ -55,7 +55,7 @@ const gitUrlParse = (url: string): { owner: string; name: string } => {
     };
   }
 
-  throw `Coult not find a suitable git repository. Received [${url}]`;
+  throw `Could not find a suitable git repository. Received [${url}]`;
 };
 
 const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, verbose }) => {
@@ -102,6 +102,7 @@ const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, ver
           line[1].push('--dry-run');
         }
 
+        // Exit if the plugin is NOT an enterprise plugin
         if (pluginJson.enterprise && !opts['enterprise']) {
           continue;
         }

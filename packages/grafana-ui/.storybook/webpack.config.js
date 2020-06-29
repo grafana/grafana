@@ -78,12 +78,36 @@ module.exports = ({ config, mode }) => {
 
   config.optimization = {
     nodeEnv: 'production',
+    moduleIds: 'hashed',
+    runtimeChunk: 'single',
+    splitChunks: {
+      chunks: 'all',
+      minChunks: 1,
+      cacheGroups: {
+        monaco: {
+          test: /[\\/]node_modules[\\/](monaco-editor)[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 20,
+          enforce: true,
+        },
+        vendors: {
+          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: -10,
+          reuseExistingChunk: true,
+          enforce: true,
+        },
+        default: {
+          priority: -20,
+          chunks: 'all',
+          test: /.*[jt]sx?$/,
+          reuseExistingChunk: true,
+        },
+      },
+    },
+    minimize: true,
     minimizer: [
-      new TerserPlugin({
-        cache: false,
-        parallel: false,
-        sourceMap: false,
-      }),
+      new TerserPlugin({ cache: false, parallel: false, sourceMap: false, exclude: /monaco/ }),
       new OptimizeCSSAssetsPlugin({}),
     ],
   };

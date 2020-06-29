@@ -22,7 +22,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Group users into teams]({{< relref "#teams" >}}) and use them in the new permission system.
 - [Data source provisioning]({{< relref "#data-sources" >}}) makes it possible to setup data sources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
-- [Persistent dashboard url's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
+- [Persistent dashboard URL's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
 - [Graphite Tags and Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
 
 ### Video showing new features
@@ -115,7 +115,7 @@ We also deprecated the `[dashboard.json]` in favor of our new dashboard provisio
 in sync with dashboards in Grafana's database. The dashboard provisioner has multiple advantages over the old
 `[dashboard.json]` feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
-expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
+expects the dashboards to exist in the database. More info in the [dashboard provisioning docs]({{< relref "../administration/provisioning.md" >}})
 
 
 ## Graphite Tags and Integrated Function Docs
@@ -129,7 +129,7 @@ Read more on [Graphite Tag Support](http://graphite.readthedocs.io/en/latest/tag
 
 <div class="clearfix"></div>
 
-## Dashboard model, persistent url's and API changes
+## Dashboard model, persistent URLs and API changes
 
 We are introducing a new unique identifier (`uid`) in the dashboard JSON model. It's automatically
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.

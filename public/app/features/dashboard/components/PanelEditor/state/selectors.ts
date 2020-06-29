@@ -2,6 +2,7 @@ import memoizeOne from 'memoize-one';
 import { LocationState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from '../types';
+import { getConfig } from 'app/core/config';
 
 export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: PanelPlugin) => {
   const tabs: PanelEditorTab[] = [];
@@ -11,6 +12,10 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
   }
 
   let defaultTab = PanelEditorTabId.Visualize;
+
+  if (plugin.meta.skipDataQuery) {
+    return [];
+  }
 
   if (!plugin.meta.skipDataQuery) {
     defaultTab = PanelEditorTabId.Query;
@@ -30,14 +35,7 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     });
   }
 
-  tabs.push({
-    id: PanelEditorTabId.Visualize,
-    text: 'Visualize',
-    icon: 'chart-bar',
-    active: false,
-  });
-
-  if (plugin.meta.id === 'graph') {
+  if (getConfig().alertingEnabled && plugin.meta.id === 'graph') {
     tabs.push({
       id: PanelEditorTabId.Alert,
       text: 'Alert',
@@ -46,7 +44,7 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     });
   }
 
-  const activeTab = tabs.find(item => item.id === (location.query.tab || defaultTab));
+  const activeTab = tabs.find(item => item.id === (location.query.tab || defaultTab)) ?? tabs[0];
   activeTab.active = true;
 
   return tabs;

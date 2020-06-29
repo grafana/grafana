@@ -4,7 +4,7 @@ import { Icon } from '@grafana/ui';
 
 export interface Props {
   rawQuery: string;
-  lastQueryError: string;
+  lastQueryError?: string;
   metricDescriptor?: MetricDescriptor;
 }
 
@@ -47,7 +47,12 @@ export class Help extends React.Component<Props, State> {
           {rawQuery && (
             <div className="gf-form" onClick={this.onRawQueryClicked}>
               <label className="gf-form-label query-keyword">
-                Raw Query <Icon name={displaRawQuery ? 'angle-down' : 'angle-right'} ng-show="ctrl.showHelp" />
+                Raw query
+                <Icon
+                  name={displaRawQuery ? 'angle-down' : 'angle-right'}
+                  ng-show="ctrl.showHelp"
+                  style={{ marginTop: '3px' }}
+                />
               </label>
             </div>
           )}

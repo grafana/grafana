@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormLabel, Button, LegacyForms } from '@grafana/ui';
+import { InlineFormLabel, Button, LegacyForms } from '@grafana/ui';
 const { Input } = LegacyForms;
 import { AzureDataSourceSettings, AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../types';
 
@@ -27,7 +27,7 @@ export class InsightsConfig extends PureComponent<Props> {
           {options.secureJsonFields.appInsightsApiKey ? (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-12">API Key</FormLabel>
+                <InlineFormLabel className="width-12">API Key</InlineFormLabel>
                 <Input className="width-25" placeholder="configured" disabled={true} />
               </div>
               <div className="gf-form">
@@ -41,7 +41,7 @@ export class InsightsConfig extends PureComponent<Props> {
           ) : (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-12">API Key</FormLabel>
+                <InlineFormLabel className="width-12">API Key</InlineFormLabel>
                 <div className="width-15">
                   <Input
                     className="width-30"
@@ -55,7 +55,7 @@ export class InsightsConfig extends PureComponent<Props> {
           )}
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-12">Application ID</FormLabel>
+              <InlineFormLabel className="width-12">Application ID</InlineFormLabel>
               <div className="width-15">
                 <Input
                   className="width-30"

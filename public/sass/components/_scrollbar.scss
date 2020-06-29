@@ -275,11 +275,6 @@
   opacity: 0.9;
 }
 
-// fix for phantomjs
-.body--phantomjs .baron__track .baron__bar {
-  opacity: 0 !important;
-}
-
 .baron__control {
   display: none;
 }

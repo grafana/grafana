@@ -17,6 +17,50 @@ import hoistNonReactStatics from 'hoist-non-react-statics';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
+const COLORS_HEX = [
+  '#17B8BE',
+  '#F8DCA1',
+  '#B7885E',
+  '#FFCB99',
+  '#F89570',
+  '#829AE3',
+  '#E79FD5',
+  '#1E96BE',
+  '#89DAC1',
+  '#B3AD9E',
+  '#12939A',
+  '#DDB27C',
+  '#88572C',
+  '#FF9833',
+  '#EF5D28',
+  '#162A65',
+  '#DA70BF',
+  '#125C77',
+  '#4DC19C',
+  '#776E57',
+];
+
+const COLORS_HEX_DARK = [
+  '#17B8BE',
+  '#F8DCA1',
+  '#B7885E',
+  '#FFCB99',
+  '#F89570',
+  '#829AE3',
+  '#E79FD5',
+  '#1E96BE',
+  '#89DAC1',
+  '#B3AD9E',
+  '#12939A',
+  '#DDB27C',
+  '#88572C',
+  '#FF9833',
+  '#EF5D28',
+  '#DA70BF',
+  '#4DC19C',
+  '#776E57',
+];
+
 export type ThemeOptions = Partial<Theme>;
 
 export enum ThemeType {
@@ -26,16 +70,24 @@ export enum ThemeType {
 
 export type Theme = {
   type: ThemeType;
+  servicesColorPalette: string[];
   borderStyle: string;
+  components?: {
+    TraceName?: {
+      fontSize?: number | string;
+    };
+  };
 };
 
 export const defaultTheme: Theme = {
   type: ThemeType.Light,
   borderStyle: '1px solid #bbb',
+  servicesColorPalette: COLORS_HEX,
 };
 
-export function isLight(theme: Theme) {
-  return theme.type === ThemeType.Light;
+export function isLight(theme?: Theme | ThemeOptions) {
+  // Light theme is default type not set which only happens if called for ThemeOptions.
+  return theme && theme.type ? theme.type === ThemeType.Light : false;
 }
 
 const ThemeContext = React.createContext<ThemeOptions | undefined>(undefined);
@@ -57,10 +109,15 @@ export function ThemeConsumer(props: ThemeConsumerProps) {
   );
 }
 
-const memoizedThemeMerge = memoizeOne(value => {
+const memoizedThemeMerge = memoizeOne((value?: ThemeOptions) => {
+  const darkOverrides: Partial<Theme> = {};
+  if (!isLight(value)) {
+    darkOverrides.servicesColorPalette = COLORS_HEX_DARK;
+  }
   return value
     ? {
         ...defaultTheme,
+        ...darkOverrides,
         ...value,
       }
     : defaultTheme;
@@ -145,5 +202,21 @@ export function autoColor(theme: Theme, hex: string, base?: string) {
     color.l = 1 - color.l;
     const newColor = tinycolor(color);
     return newColor.isLight() ? newColor.darken(5).toHex8String() : newColor.lighten(5).toHex8String();
+  }
+}
+
+/**
+ * With theme overrides you can use both number or string (for things like rem units) so this makes sure we convert
+ * the value accordingly or use fallback if not set
+ */
+export function safeSize(size: number | string | undefined, fallback: string): string {
+  if (!size) {
+    return fallback;
+  }
+
+  if (typeof size === 'string') {
+    return size;
+  } else {
+    return `${size}px`;
   }
 }

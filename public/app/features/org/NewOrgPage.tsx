@@ -55,7 +55,6 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
               <>
                 <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
                   <Input
-                    size="md"
                     placeholder="Org. name"
                     name="name"
                     ref={register({

@@ -1,4 +1,5 @@
-import { e2e } from '../index';
+import { e2e } from '../';
+import { Flows } from '../flows';
 
 export interface ScenarioArguments {
   describeName: string;
@@ -21,31 +22,26 @@ export const e2eScenario = ({
     if (skipScenario) {
       it.skip(itName, () => scenario());
     } else {
+      before(() => Flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD')));
+
       beforeEach(() => {
-        e2e.flows.login('admin', 'admin');
+        Cypress.Cookies.preserveOnce('grafana_session');
+
         if (addScenarioDataSource) {
-          e2e.flows.addDataSource();
+          Flows.addDataSource();
         }
         if (addScenarioDashBoard) {
-          e2e.flows.addDashboard();
+          Flows.addDashboard();
         }
       });
 
-      afterEach(() => {
-        // @todo remove `@ts-ignore` when possible
-        // @ts-ignore
-        e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }) => {
-          if (lastAddedDataSource) {
-            e2e.flows.deleteDataSource(lastAddedDataSource);
-          }
-
-          if (lastAddedDashboardUid) {
-            e2e.flows.deleteDashboard(lastAddedDashboardUid);
-          }
-        });
-      });
+      afterEach(() => Flows.revertAllChanges());
+      after(() => e2e().clearCookies());
 
       it(itName, () => scenario());
+
+      // @todo remove when possible: https://github.com/cypress-io/cypress/issues/2831
+      it('temporary', () => {});
     }
   });
 };

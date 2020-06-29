@@ -5,7 +5,6 @@
 title = "TimeZone"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## TimeZone type

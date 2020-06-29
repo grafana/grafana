@@ -127,7 +127,7 @@ describe('Functions', () => {
   describe('State filter changed', () => {
     it('should update location', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'alerting' } } as React.ChangeEvent<HTMLSelectElement>;
+      const mockEvent = { value: 'alerting' };
 
       instance.onStateFilterChanged(mockEvent);
 

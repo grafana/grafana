@@ -15,6 +15,8 @@ const influxdbPlugin = async () =>
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
 const jaegerPlugin = async () =>
   await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
+const zipkinPlugin = async () =>
+  await import(/* webpackChunkName: "zipkinPlugin" */ 'app/plugins/datasource/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>
@@ -35,7 +37,6 @@ const azureMonitorPlugin = async () =>
   );
 
 import * as textPanel from 'app/plugins/panel/text/module';
-import * as text2Panel from 'app/plugins/panel/text2/module';
 import * as graph2Panel from 'app/plugins/panel/graph2/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -54,6 +55,7 @@ import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
+import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -65,6 +67,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/influxdb/module': influxdbPlugin,
   'app/plugins/datasource/loki/module': lokiPlugin,
   'app/plugins/datasource/jaeger/module': jaegerPlugin,
+  'app/plugins/datasource/zipkin/module': zipkinPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
@@ -75,7 +78,6 @@ const builtInPlugins: any = {
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
 
   'app/plugins/panel/text/module': textPanel,
-  'app/plugins/panel/text2/module': text2Panel,
   'app/plugins/panel/graph2/module': graph2Panel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
@@ -94,6 +96,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/homelinks/module': homeLinksPanel,
+  'app/plugins/panel/welcome/module': welcomeBanner,
 };
 
 export default builtInPlugins;

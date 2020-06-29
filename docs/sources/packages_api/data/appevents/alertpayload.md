@@ -5,7 +5,6 @@
 title = "AlertPayload"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AppEvents.AlertPayload type
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-type AlertPayload = [string, string?];
+export declare type AlertPayload = [string, string?];
 ```
 <b>Import</b>
 

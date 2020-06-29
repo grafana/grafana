@@ -2,12 +2,11 @@
 import _ from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
-import { appendQueryToUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink } from '@grafana/data';
+import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -17,9 +16,9 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from '@grafana/ui';
-import { isMulti } from 'app/features/variables/guard';
+import { isMulti, isQuery } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
+import { VariableTag } from '../../variables/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -32,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 24;
+    this.dashboard.schemaVersion = 26;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -241,7 +240,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.getVariables(), templateVariable => {
+      _.each(this.dashboard.getVariables(), (templateVariable: any) => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }
@@ -524,6 +523,59 @@ export class DashboardMigrator {
       });
     }
 
+    if (oldVersion < 25) {
+      for (const variable of this.dashboard.templating.list) {
+        if (!isQuery(variable)) {
+          continue;
+        }
+
+        const { tags, current } = variable;
+        if (!Array.isArray(tags)) {
+          variable.tags = [];
+          continue;
+        }
+
+        const currentTags = current?.tags ?? [];
+        const currents = currentTags.reduce((all, tag) => {
+          if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
+            all[tag.text] = tag;
+          }
+          return all;
+        }, {} as Record<string, VariableTag>);
+
+        const newTags: VariableTag[] = [];
+
+        for (const tag of tags) {
+          if (typeof tag === 'object') {
+            // new format let's assume it's correct
+            newTags.push(tag);
+            continue;
+          }
+
+          if (typeof tag !== 'string') {
+            // something that we do not support
+            continue;
+          }
+
+          const currentValue = currents[tag];
+          newTags.push({ text: tag, selected: false, ...currentValue });
+        }
+        variable.tags = newTags;
+      }
+    }
+
+    if (oldVersion < 26) {
+      panelUpgrades.push((panel: any) => {
+        const wasReactText = panel.type === 'text2';
+        if (!wasReactText) {
+          return;
+        }
+
+        panel.type = 'text';
+        delete panel.options.angular;
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -737,15 +789,15 @@ function upgradePanelLink(link: any): DataLink {
   }
 
   if (link.keepTime) {
-    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
+    url = urlUtil.appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
   }
 
   if (link.includeVars) {
-    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.includeVars}`);
+    url = urlUtil.appendQueryToUrl(url, `$${DataLinkBuiltInVars.includeVars}`);
   }
 
   if (link.params) {
-    url = appendQueryToUrl(url, link.params);
+    url = urlUtil.appendQueryToUrl(url, link.params);
   }
 
   return {

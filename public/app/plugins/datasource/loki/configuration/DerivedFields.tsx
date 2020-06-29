@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import { Button, DataLinkBuiltInVars, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, VariableOrigin } from '@grafana/data';
+import { Button, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 import { DerivedFieldConfig } from '../types';
 import { DerivedField } from './DerivedField';
 import { DebugSection } from './DebugSection';

@@ -1,8 +1,7 @@
 import { config } from '@grafana/runtime';
-import { appendQueryToUrl, toUrlParams, getUrlSearchParams } from 'app/core/utils/url';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv from 'app/features/templating/template_srv';
-import { PanelModel, dateTime } from '@grafana/data';
+import { PanelModel, dateTime, urlUtil } from '@grafana/data';
 
 export function buildParams(
   useCurrentTimeRange: boolean,
@@ -10,7 +9,7 @@ export function buildParams(
   selectedTheme?: string,
   panel?: PanelModel
 ) {
-  const params = getUrlSearchParams();
+  const params = urlUtil.getUrlSearchParams();
 
   const range = getTimeSrv().timeRange();
   params.from = range.from.valueOf();
@@ -30,12 +29,10 @@ export function buildParams(
     params.theme = selectedTheme;
   }
 
-  if (panel) {
-    params.panelId = panel.id;
-    params.fullscreen = true;
+  if (panel && !params.editPanel) {
+    params.viewPanel = panel.id;
   } else {
-    delete params.panelId;
-    delete params.fullscreen;
+    delete params.viewPanel;
   }
 
   return params;
@@ -61,7 +58,7 @@ export function buildShareUrl(
   const baseUrl = buildBaseUrl();
   const params = buildParams(useCurrentTimeRange, includeTemplateVars, selectedTheme, panel);
 
-  return appendQueryToUrl(baseUrl, toUrlParams(params));
+  return urlUtil.appendQueryToUrl(baseUrl, urlUtil.toUrlParams(params));
 }
 
 export function buildSoloUrl(
@@ -75,9 +72,12 @@ export function buildSoloUrl(
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
-  delete params.fullscreen;
-  delete params.edit;
-  return appendQueryToUrl(soloUrl, toUrlParams(params));
+
+  params.panelId = params.editPanel ?? params.viewPanel;
+  delete params.editPanel;
+  delete params.viewPanel;
+
+  return urlUtil.appendQueryToUrl(soloUrl, urlUtil.toUrlParams(params));
 }
 
 export function buildImageUrl(

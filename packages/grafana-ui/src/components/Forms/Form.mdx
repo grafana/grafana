@@ -29,8 +29,8 @@ const defaultUser: Partial<UserDTO> = {
 >{({register, errors}) => {
   return (
     <Field>
-      <Forms.Input name="name" ref={register}/>
-      <Forms.Input type="email" name="email" ref={register({required: true})}/>
+      <Input name="name" ref={register}/>
+      <Input type="email" name="email" ref={register({required: true})}/>
       <Button type="submit">Create User</Button>
     </Field>
   )
@@ -46,13 +46,13 @@ const defaultUser: Partial<UserDTO> = {
 `register` allows to register form elements(inputs, selects, radios, etc) in the form. In order to do that you need to pass `register` as a `ref` property to the form input. For example:
 
 ```jsx
-<Forms.Input name="inputName" ref={register} />
+<Input name="inputName" ref={register} />
 ```
 
 Register accepts an object which describes validation rules for a given input:
 
 ```jsx
-<Forms.Input
+<Input
   name="inputName"
   ref={register({
     required: true,
@@ -70,7 +70,7 @@ See [Validation](#validation) for examples on validation and validation rules.
 
 ```jsx
 <Field label="Name" invalid={!!errors.name} error="Name is required">
-  <Forms.Input name="name" ref={register({ required: true })} />
+  <Input name="name" ref={register({ required: true })} />
 </Field>
 ```
 
@@ -179,7 +179,7 @@ const defaultValues: FormDto {
 <Form ...>{
   ({register}) => (
     <>
-      <Forms.Input defaultValue={default.name} name="name" ref={register} />
+      <Input defaultValue={default.name} name="name" ref={register} />
     </>
   )}
 </Form>
@@ -196,7 +196,7 @@ Validation can be performed either synchronously or asynchronously. What's impor
   ({register, errors}) => (
     <>
       <Field invalid={!!errors.name} error={errors.name && 'Name is required'}
-      <Forms.Input
+      <Input
         defaultValue={default.name}
         name="name"
         ref={register({ required: true })}
@@ -215,7 +215,7 @@ One important thing to note is that if you want to provide different error messa
   ({register, errors}) => (
     <>
       <Field invalid={!!errors.name} error={errors.name?.message }
-      <Forms.Input
+      <Input
         defaultValue={default.name}
         name="name"
         ref={register({
@@ -256,7 +256,7 @@ validateAsync = (newValue: string) => {
   ({register, errors}) => (
     <>
       <Field invalid={!!errors.name} error={errors.name?.message}
-      <Forms.Input
+      <Input
         defaultValue={default.name}
         name="name"
         ref={register({

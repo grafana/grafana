@@ -2,9 +2,9 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { LegacyForms } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
-const { Select } = LegacyForms;
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
@@ -16,6 +16,7 @@ export interface Props {
   openMenuOnFocus?: boolean;
   showLoading?: boolean;
   placeholder?: string;
+  invalid?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
@@ -49,6 +50,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       openMenuOnFocus,
       showLoading,
       placeholder,
+      invalid,
     } = this.props;
 
     const options = datasources.map(ds => ({
@@ -66,9 +68,9 @@ export class DataSourcePicker extends PureComponent<Props> {
     };
 
     return (
-      <div className="gf-form-inline">
+      <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
-          className="ds-picker"
+          className="ds-picker select-container"
           isMulti={false}
           isClearable={false}
           backspaceRemovesValue={false}
@@ -78,9 +80,11 @@ export class DataSourcePicker extends PureComponent<Props> {
           onBlur={onBlur}
           openMenuOnFocus={openMenuOnFocus}
           maxMenuHeight={500}
+          menuPlacement="bottom"
           placeholder={placeholder}
-          noOptionsMessage={() => 'No datasources found'}
+          noOptionsMessage="No datasources found"
           value={value}
+          invalid={invalid}
         />
       </div>
     );

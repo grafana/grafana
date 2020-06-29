@@ -7,7 +7,7 @@ import { ArrayVector } from '../vector/ArrayVector';
 // This matches:
 // first a label from start of the string or first white space, then any word chars until "="
 // second either an empty quotes, or anything that starts with quote and ends with unescaped quote,
-// or any non whitespace chars that do not start with qoute
+// or any non whitespace chars that do not start with quote
 const LOGFMT_REGEXP = /(?:^|\s)([\w\(\)\[\]\{\}]+)=(""|(?:".*?[^\\]"|[^"\s]\S*))/;
 
 /**
@@ -37,8 +37,8 @@ export function getLogLevel(line: string): LogLevel {
   return level;
 }
 
-export function getLogLevelFromKey(key: string): LogLevel {
-  const level = (LogLevel as any)[key.toLowerCase()];
+export function getLogLevelFromKey(key: string | number): LogLevel {
+  const level = (LogLevel as any)[key.toString().toLowerCase()];
   if (level) {
     return level;
   }

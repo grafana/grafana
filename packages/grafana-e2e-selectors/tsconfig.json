@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "declarationDir": "dist",
+    "outDir": "compiled",
+    "rootDirs": ["."],
+    "typeRoots": ["node_modules/@types"]
+  },
+  "exclude": ["dist", "node_modules"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts"]
+}

@@ -38,7 +38,7 @@ exports[`QueryRowActions should render component 1`] = `
       title="Disable query"
     >
       <Icon
-        name="eye-slash"
+        name="eye"
       />
     </button>
   </div>

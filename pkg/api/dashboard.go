@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -107,7 +106,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -225,7 +224,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -315,15 +314,16 @@ func dashboardSaveErrorToApiResponse(err error) Response {
 	return Error(500, "Failed to save dashboard", err)
 }
 
-func GetHomeDashboard(c *models.ReqContext) Response {
+// GetHomeDashboard returns the home dashboard.
+func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := bus.Dispatch(&prefsQuery); err != nil {
+	if err := hs.Bus.Dispatch(&prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
-		err := bus.Dispatch(&slugQuery)
+		err := hs.Bus.Dispatch(&slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -332,7 +332,11 @@ func GetHomeDashboard(c *models.ReqContext) Response {
 		log.Warn("Failed to get slug from database, %s", err.Error())
 	}
 
-	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
+	filePath := hs.Cfg.DefaultHomeDashboardPath
+	if filePath == "" {
+		filePath = path.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
@@ -366,7 +370,7 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 			"x": 0,
 			"y": 3,
 			"w": 24,
-			"h": 4,
+			"h": 9,
 		},
 	})
 

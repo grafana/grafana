@@ -39,7 +39,7 @@
         <button class="btn btn-primary width-10" ng-click="ctrl.panelCtrl.refresh()">Run</button>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label">(Run Query: Shift+Enter, Trigger Suggestion: Ctrl+Space)</label>
+        <label class="gf-form-label">(New Line: Shift+Enter, Run Query: Enter, Trigger Suggestion: Ctrl+Space)</label>
       </div>
     </div>
     <kusto-editor
@@ -61,8 +61,8 @@
     <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
-        <icon name="'angle-down'" ng-show="ctrl.showHelp"></icon>
-        <icon name="'angle-right'" ng-hide="ctrl.showHelp"></icon>
+        <icon name="'angle-down'" ng-show="ctrl.showHelp" style="margin-top: 3px;"></icon>
+        <icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px;"></icon>
       </label>
     </div>
   </div>

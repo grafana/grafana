@@ -118,8 +118,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     };
 
     if (options.navigateToPanel) {
-      params.panelId = anno.panelId;
-      params.fullscreen = true;
+      params.viewPanel = anno.panelId;
     }
 
     if (current.id === anno.dashboardId) {
@@ -189,7 +188,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   };
 
-  renderTags = (tags: string[], remove: boolean): JSX.Element => {
+  renderTags = (tags: string[], remove: boolean): JSX.Element | null => {
     if (!tags || !tags.length) {
       return null;
     }

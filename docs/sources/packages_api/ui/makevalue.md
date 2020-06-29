@@ -5,7 +5,6 @@
 title = "makeValue"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## makeValue variable

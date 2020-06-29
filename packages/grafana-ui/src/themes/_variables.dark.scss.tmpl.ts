@@ -2,6 +2,7 @@
 
 import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+import { styleMixins } from '.';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
@@ -87,8 +88,9 @@ $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.bodyBg};
 $dashboard-bg: ${theme.colors.dashboardBg};
 
-$text-color: ${theme.colors.text};
 $text-color-strong: ${theme.colors.textStrong};
+$text-color: ${theme.colors.text};
+$text-color-semi-weak: ${theme.colors.textSemiWeak};
 $text-color-weak: ${theme.colors.textWeak};
 $text-color-faint: ${theme.colors.textFaint};
 $text-color-emphasis: ${theme.colors.textStrong};
@@ -131,17 +133,17 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: $dark-9;
-$tight-form-func-highlight-bg: $dark-10;
+$tight-form-func-bg: ${theme.colors.bg2};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
 
-$modal-backdrop-bg: #343b40;
+$modal-backdrop-bg: ${theme.colors.bg3};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: linear-gradient(135deg, $dark-4, $dark-3);
-$card-background-hover: linear-gradient(135deg, $dark-5, $dark-6);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
+$card-background: ${theme.colors.bg2};
+$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-shadow: none;
 
 // Lists
 $list-item-bg: $card-background;
@@ -157,7 +159,7 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: $dark-6; // for striping
+$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)}; // for striping
 $table-border: $dark-6; // table and cell border
 
 $table-bg-odd: $dark-3;
@@ -382,12 +384,12 @@ $panel-grid-placeholder-bg: darken(${theme.palette.blue77}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue80};
 
 // logs
-$logs-color-unkown: $gray-2;
+$logs-color-unknown: $gray-2;
 
 // toggle-group
 $button-toggle-group-btn-active-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $black;
-$button-toggle-group-btn-seperator-border: 1px solid $dark-2;
+$button-toggle-group-btn-separator-border: 1px solid $dark-2;
 
 $vertical-resize-handle-bg: $dark-10;
 $vertical-resize-handle-dots: $gray-1;

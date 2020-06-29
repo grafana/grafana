@@ -1,33 +1,30 @@
-import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
-import { PanelModel } from '@grafana/data';
-import { GaugeOptions } from './types';
+import { PanelModel, FieldConfigSource, DataLink } from '@grafana/data';
 
 /**
  * Called when upgrading from a previously saved versoin
  */
 export const graphPanelMigrationHandler = (panel: PanelModel<any>): Partial<any> => {
-  const fieldConfig: FieldConfig = {
+  const fieldOptions: FieldConfigSource = {
     defaults: {},
     overrides: [],
   };
 
-  console.log('GRAPH migration', panel);
+  const options = panel.options || {};
 
-  const y0 = panel.yaxes[0];
-  if (y0) {
-    if (y0.format !== undefined) {
-      fieldConfig.unit = y0.format;
-    }
-    if (y0.decimals !== undefined) {
-      fieldConfig.decimals = y0.decimals;
-    }
+  // Move <7.1 dataLinks to the field section
+  if (options.dataLinks) {
+    fieldOptions.defaults.links = options.dataLinks as DataLink[];
+    delete options.dataLinks;
   }
 
-  const y1 = panel.yaxes[0];
+  // const fieldConfig = fieldOptions.defaults;
+  // fieldConfig.
+
+  console.log('GRAPH migration', panel);
 
   // HACK: Mutates the panel state directly
-  panel.fieldConfig;
-  return panel.options;
+  panel.fieldConfig = fieldOptions;
+  return options;
 };
 
 // This is called when the panel changes from another panel

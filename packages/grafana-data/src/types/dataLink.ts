@@ -29,15 +29,17 @@ export interface DataLink {
   onClick?: (event: DataLinkClickEvent) => void;
 
   // At the moment this is used for derived fields for metadata about internal linking.
-  meta?: any;
+  meta?: {
+    datasourceUid?: string;
+  };
 }
 
-export type LinkTarget = '_blank' | '_self';
+export type LinkTarget = '_blank' | '_self' | undefined;
 
 /**
  * Processed Link Model.  The values are ready to use
  */
-export interface LinkModel<T> {
+export interface LinkModel<T = any> {
   href: string;
   title: string;
   target: LinkTarget;

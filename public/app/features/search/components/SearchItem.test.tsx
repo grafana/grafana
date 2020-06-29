@@ -1,5 +1,5 @@
 import React from 'react';
-import { shallow, mount } from 'enzyme';
+import { mount } from 'enzyme';
 import { Tag } from '@grafana/ui';
 import { SearchItem, Props } from './SearchItem';
 import { DashboardSearchItemType } from '../types';
@@ -17,17 +17,18 @@ const data = {
   checked: false,
 };
 
-const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
+const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     item: data,
-    onToggleSelection: jest.fn(),
     onTagSelected: jest.fn(),
     editable: false,
+    //@ts-ignore
+    onToggleAllChecked: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = renderMethod(<SearchItem {...props} />);
+  const wrapper = mount(<SearchItem {...props} />);
   const instance = wrapper.instance();
 
   return {
@@ -38,14 +39,14 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
 
 describe('SearchItem', () => {
   it('should render the item', () => {
-    const { wrapper } = setup();
+    const { wrapper } = setup({});
     expect(wrapper.find({ 'aria-label': 'Dashboard search item Test 1' })).toHaveLength(1);
     expect(wrapper.findWhere(comp => comp.type() === 'div' && comp.text() === 'Test 1')).toHaveLength(1);
   });
 
   it("should render item's tags", () => {
     // @ts-ignore
-    const { wrapper } = setup({}, mount);
+    const { wrapper } = setup({});
     expect(wrapper.find(Tag)).toHaveLength(2);
   });
 });

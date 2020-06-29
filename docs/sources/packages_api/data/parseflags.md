@@ -5,7 +5,6 @@
 title = "parseFlags"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## parseFlags() function

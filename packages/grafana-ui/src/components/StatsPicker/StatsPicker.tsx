@@ -13,11 +13,12 @@ interface Props {
   stats: string[];
   allowMultiple?: boolean;
   defaultStat?: string;
+  className?: string;
+  menuPlacement?: 'auto' | 'bottom' | 'top';
 }
 
 export class StatsPicker extends PureComponent<Props> {
-  static defaultProps = {
-    width: 12,
+  static defaultProps: Partial<Props> = {
     allowMultiple: false,
   };
 
@@ -62,18 +63,20 @@ export class StatsPicker extends PureComponent<Props> {
   };
 
   render() {
-    const { stats, allowMultiple, defaultStat, placeholder } = this.props;
+    const { stats, allowMultiple, defaultStat, placeholder, className, menuPlacement } = this.props;
 
     const select = fieldReducers.selectOptions(stats);
     return (
       <Select
         value={select.current}
+        className={className}
         isClearable={!defaultStat}
         isMulti={allowMultiple}
         isSearchable={true}
         options={select.options}
         placeholder={placeholder}
         onChange={this.onSelectionChange}
+        menuPlacement={menuPlacement}
       />
     );
   }

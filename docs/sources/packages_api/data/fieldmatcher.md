@@ -5,7 +5,6 @@
 title = "FieldMatcher"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldMatcher type
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare type FieldMatcher = (field: Field) => boolean;
+export declare type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 ```
 <b>Import</b>
 

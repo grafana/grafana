@@ -10,6 +10,8 @@ import (
 	"path"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/search"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana/pkg/api/live"
@@ -67,6 +69,7 @@ type HTTPServer struct {
 	License              models.Licensing                 `inject:""`
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
+	SearchService        *search.SearchService            `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -349,8 +352,10 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 
 	data := simplejson.New()
 	data.Set("database", "ok")
-	data.Set("version", setting.BuildVersion)
-	data.Set("commit", setting.BuildCommit)
+	if !hs.Cfg.AnonymousHideVersion {
+		data.Set("version", setting.BuildVersion)
+		data.Set("commit", setting.BuildCommit)
+	}
 
 	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")

@@ -7,7 +7,6 @@ import (
 
 	gocontext "context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -52,7 +51,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 		return nil, err
 	}
 
-	emptySerieCount := 0
+	emptySeriesCount := 0
 	evalMatchCount := 0
 	var matches []*alerting.EvalMatch
 
@@ -61,7 +60,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 		evalMatch := c.Evaluator.Eval(reducedValue)
 
 		if !reducedValue.Valid {
-			emptySerieCount++
+			emptySeriesCount++
 		}
 
 		if context.IsTestRun {
@@ -100,7 +99,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 
 	return &alerting.ConditionResult{
 		Firing:      evalMatchCount > 0,
-		NoDataFound: emptySerieCount == len(seriesList),
+		NoDataFound: emptySeriesCount == len(seriesList),
 		Operator:    c.Operator,
 		EvalMatches: matches,
 	}, nil
@@ -127,7 +126,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		}
 
 		type queryDto struct {
-			RefId         string           `json:"refId"`
+			RefID         string           `json:"refId"`
 			Model         *simplejson.Json `json:"model"`
 			Datasource    *simplejson.Json `json:"datasource"`
 			MaxDataPoints int64            `json:"maxDataPoints"`
@@ -137,7 +136,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		queries := []*queryDto{}
 		for _, q := range req.Queries {
 			queries = append(queries, &queryDto{
-				RefId: q.RefId,
+				RefID: q.RefId,
 				Model: q.Model,
 				Datasource: simplejson.NewFromAny(map[string]interface{}{
 					"id":   q.DataSource.Id,
@@ -174,7 +173,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		useDataframes := v.Dataframes != nil && (v.Series == nil || len(v.Series) == 0)
 
 		if useDataframes { // convert the dataframes to tsdb.TimeSeries
-			frames, err := data.UnmarshalArrowFrames(v.Dataframes)
+			frames, err := v.Dataframes.Decoded()
 			if err != nil {
 				return nil, errutil.Wrap("tsdb.HandleRequest() failed to unmarshal arrow dataframes from bytes", err)
 			}
@@ -223,6 +222,9 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 				Model:      c.Query.Model,
 				DataSource: datasource,
 			},
+		},
+		Headers: map[string]string{
+			"FromAlert": "true",
 		},
 		Debug: debug,
 	}

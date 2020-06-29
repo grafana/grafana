@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { PanelPlugin } from '@grafana/data';
 import { NewsPanel } from './NewsPanel';
 import { NewsOptions } from './types';
@@ -17,8 +18,8 @@ export const plugin = new PanelPlugin<NewsOptions>(NewsPanel).setPanelOptions(bu
       path: 'useProxy',
       name: 'Use Proxy',
       description: 'If the feed is unable to connect, consider a CORS proxy',
-      showIf: currentConfig => {
-        return currentConfig.feedUrl && !currentConfig.feedUrl.startsWith(PROXY_PREFIX);
+      showIf: (currentConfig: NewsOptions) => {
+        return isString(currentConfig.feedUrl) && !currentConfig.feedUrl.startsWith(PROXY_PREFIX);
       },
     });
 });

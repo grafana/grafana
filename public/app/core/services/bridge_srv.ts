@@ -1,14 +1,13 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { store } from 'app/store/store';
-import locationUtil from 'app/core/utils/location_util';
+import { dispatch, store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-import { ITimeoutService, ILocationService, IWindowService } from 'angular';
+import { ILocationService, ITimeoutService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { UrlQueryMap } from '@grafana/runtime';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { VariableSrv } from 'app/features/templating/all';
+import { templateVarsChangedInUrl } from 'app/features/variables/state/actions';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
@@ -23,8 +22,7 @@ export class BridgeSrv {
     private $timeout: ITimeoutService,
     private $window: IWindowService,
     private $rootScope: GrafanaRootScope,
-    private $route: any,
-    private variableSrv: VariableSrv
+    private $route: any
   ) {
     this.fullPageReloadRoutes = ['/logout'];
     this.angularUrl = $location.url();
@@ -85,7 +83,7 @@ export class BridgeSrv {
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
           if (dash) {
-            this.variableSrv.templateVarsChangedInUrl(changes);
+            dispatch(templateVarsChangedInUrl(changes));
           }
         }
         this.lastQuery = state.location.query;
@@ -126,7 +124,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ur
     if (!key.startsWith('var-')) {
       continue;
     }
-    if (!query[key]) {
+    if (!query.hasOwnProperty(key)) {
       changes[key] = ''; // removed
       count++;
     }

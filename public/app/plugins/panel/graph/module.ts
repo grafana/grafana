@@ -12,26 +12,21 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import {
-  getColorFromHexRgbOrName,
-  PanelEvents,
-  DataFrame,
-  DataLink,
-  DateTimeInput,
-  VariableSuggestion,
-  PanelPlugin,
-} from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, PanelPlugin, DataFrame, FieldConfigProperty } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
-import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { graphPanelMigrationHandler, graphPanelChangedHandler } from './GraphMigrations';
-import { GraphPanelOptions, GraphFieldConfig } from './types';
+import { DataWarning, GraphPanelOptions, GraphFieldConfig } from './types';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
 import { CoreEvents } from 'app/types';
+import { getLocationSrv } from '@grafana/runtime';
+import { getDataTimeRange } from './utils';
+import { changePanelPlugin } from 'app/features/dashboard/state/actions';
+import { dispatch } from 'app/store/store';
 
-class GraphCtrl extends MetricsPanelCtrl {
+export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   renderError: boolean;
@@ -43,12 +38,11 @@ class GraphCtrl extends MetricsPanelCtrl {
   alertState: any;
 
   annotationsPromise: any;
-  dataWarning: any;
+  dataWarning?: DataWarning;
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
-  linkVariableSuggestions: VariableSuggestion[] = [];
 
   panelDefaults: any = {
     // datasource name, null = default datasource
@@ -141,9 +135,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     seriesOverrides: [],
     thresholds: [],
     timeRegions: [],
-    options: {
-      dataLinks: [],
-    },
+    options: {},
   };
 
   /** @ngInject */
@@ -161,21 +153,21 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
-    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
-    this.onDataLinksChange = this.onDataLinksChange.bind(this);
     this.annotationsPromise = Promise.resolve({ annotations: [] });
   }
 
   onInitEditMode() {
-    this.addEditorTab('Display options', 'public/app/plugins/panel/graph/tab_display.html');
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html');
+    this.addEditorTab('Series overrides', 'public/app/plugins/panel/graph/tab_series_overrides.html');
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
-    this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
-    this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
+    this.addEditorTab('Thresholds', 'public/app/plugins/panel/graph/tab_thresholds.html');
+    this.addEditorTab('Time regions', 'public/app/plugins/panel/graph/tab_time_regions.html');
     this.subTabIndex = 0;
     this.hiddenSeriesTainted = false;
   }
@@ -224,29 +216,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       range: this.range,
     });
 
-    this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
-
-    this.dataWarning = null;
-    const datapointsCount = this.seriesList.reduce((prev, series) => {
-      return prev + series.datapoints.length;
-    }, 0);
-
-    if (datapointsCount === 0) {
-      this.dataWarning = {
-        title: 'No data',
-        tip: 'No data returned from query',
-      };
-    } else {
-      for (const series of this.seriesList) {
-        if (series.isOutsideRange) {
-          this.dataWarning = {
-            title: 'Data outside time range',
-            tip: 'Can be caused by timezone mismatch or missing time filter in query',
-          };
-          break;
-        }
-      }
-    }
+    this.dataWarning = this.getDataWarning();
 
     this.annotationsPromise.then(
       (result: { alertState: any; annotations: any }) => {
@@ -267,6 +237,65 @@ class GraphCtrl extends MetricsPanelCtrl {
         this.render(this.seriesList);
       }
     );
+  }
+
+  getDataWarning(): DataWarning | undefined {
+    const datapointsCount = this.seriesList.reduce((prev, series) => {
+      return prev + series.datapoints.length;
+    }, 0);
+
+    if (datapointsCount === 0) {
+      if (this.dataList) {
+        for (const frame of this.dataList) {
+          if (frame.length && frame.fields?.length) {
+            return {
+              title: 'Unable to graph data',
+              tip: 'Data exists, but is not timeseries',
+              actionText: 'Switch to table view',
+              action: () => {
+                console.log('Change from graph to table');
+                dispatch(changePanelPlugin(this.panel, 'table'));
+              },
+            };
+          }
+        }
+      }
+
+      return {
+        title: 'No data',
+        tip: 'No data returned from query',
+      };
+    }
+
+    // Look for data points outside time range
+    for (const series of this.seriesList) {
+      if (!series.isOutsideRange) {
+        continue;
+      }
+
+      const dataWarning: DataWarning = {
+        title: 'Data outside time range',
+        tip: 'Can be caused by timezone mismatch or missing time filter in query',
+      };
+
+      const range = getDataTimeRange(this.dataList);
+
+      if (range) {
+        dataWarning.actionText = 'Zoom to data';
+        dataWarning.action = () => {
+          getLocationSrv().update({
+            partial: true,
+            query: {
+              from: range.from,
+              to: range.to,
+            },
+          });
+        };
+      }
+
+      return dataWarning;
+    }
+    return undefined;
   }
 
   onRender() {
@@ -314,13 +343,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
-  onDataLinksChange(dataLinks: DataLink[]) {
-    this.panel.updateOptions({
-      ...this.panel.options,
-      dataLinks,
-    });
-  }
-
   addSeriesOverride(override: any) {
     this.panel.seriesOverrides.push(override || {});
   }
@@ -345,9 +367,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl.toggleMenu();
   };
 
-  formatDate = (date: DateTimeInput, format?: string) => {
-    return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
-  };
+  getTimeZone = () => this.dashboard.getTimezone();
 
   getDataFrameByRefId = (refId: string) => {
     return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
@@ -356,79 +376,38 @@ class GraphCtrl extends MetricsPanelCtrl {
 
 // Use new react style configuration
 export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
-  .useFieldConfig({})
-  .setPanelOptions(builder => {
-    builder
-      .addBooleanSwitch({
-        category: ['Draw Mode'],
-        path: 'bars',
-        name: 'Bars',
-        description: 'show bars',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        category: ['Draw Mode'],
-        path: 'lines',
-        name: 'Lines',
-        description: 'show bars',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category: ['Draw Mode'],
-        path: 'points',
-        name: 'Points',
-        description: 'show bars',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.isVisible',
-        name: 'Show',
-        description: 'Display the Y axis',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.asTable',
-        name: 'As Table',
-        description: 'Show the legend as a table',
-        defaultValue: false,
-      });
+  .useFieldConfig({
+    standardOptions: [
+      FieldConfigProperty.DisplayName,
+      FieldConfigProperty.Links, // was saved on options
+    ],
   })
+  // .setPanelOptions(builder => {
+  //   builder
+  //     .addBooleanSwitch({
+  //       category: ['Draw Mode'],
+  //       path: 'bars',
+  //       name: 'Bars',
+  //       description: 'show bars',
+  //       defaultValue: false,
+  //     })
+  //     .addBooleanSwitch({
+  //       category: ['Draw Mode'],
+  //       path: 'lines',
+  //       name: 'Lines',
+  //       description: 'show bars',
+  //       defaultValue: true,
+  //     })
+  //     .addBooleanSwitch({
+  //       category: ['Draw Mode'],
+  //       path: 'points',
+  //       name: 'Points',
+  //       description: 'show bars',
+  //       defaultValue: false,
+  //     });
+  // })
   .setPanelChangeHandler(graphPanelChangedHandler)
   .setMigrationHandler(graphPanelMigrationHandler);
 
 // Use the angular ctrt rather than a react one
 plugin.angularPanelCtrl = GraphCtrl;
-
-// useCustomConfig: builder => {
-//   builder
-//     .addBooleanSwitch({
-//       path: 'showAxis',
-//       name: 'Show Axis',
-//       description: "Display the Y axis",
-//       defaultValue: true,
-//     })
-//     .addSelect({
-//       path: 'logBase',
-//       name: 'Scale',
-//       description: 'y axis display scaling',
-//       settings: {
-//         options: [
-//           { value: 1, label: 'linear' },
-//           { value: 2, label: 'log (base 2)' },
-//           { value: 3, label: 'log (base 10)' },
-//           { value: 4, label: 'log (base 32)' },
-//           { value: 5, label: 'log (base 1024)' },
-//         ],
-//       },
-//       defaultValue: 1,
-//     })
-//     .addTextInput({
-//       path: 'axisLabel',
-//       name: 'Axis Label',
-//       description: 'the Y axis label',
-//       settings: { },
-//     });
-//   },
-// })

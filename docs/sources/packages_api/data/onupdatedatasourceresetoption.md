@@ -5,7 +5,6 @@
 title = "onUpdateDatasourceResetOption"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## onUpdateDatasourceResetOption variable

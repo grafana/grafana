@@ -1,19 +1,20 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
+  DataLink,
+  DisplayValue,
+  Field,
   FieldDisplay,
-  LinkModelSupplier,
+  formattedValueToString,
+  getFieldDisplayValuesProxy,
   getTimeField,
   Labels,
-  ScopedVars,
-  ScopedVar,
-  Field,
   LinkModel,
-  formattedValueToString,
-  DisplayValue,
-  DataLink,
+  LinkModelSupplier,
+  ScopedVar,
+  ScopedVars,
 } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
-import { getFieldDisplayValuesProxy } from './fieldDisplayValuesProxy';
+import { config } from 'app/core/config';
 
 interface SeriesVars {
   name?: string;
@@ -100,7 +101,9 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               value: {
                 name: dataFrame.name,
                 refId: dataFrame.refId,
-                fields: getFieldDisplayValuesProxy(dataFrame, value.rowIndex!),
+                fields: getFieldDisplayValuesProxy(dataFrame, value.rowIndex!, {
+                  theme: config.theme,
+                }),
               },
               text: 'Data',
             };

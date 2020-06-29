@@ -10,10 +10,17 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
-import { UrlQueryValue } from '@grafana/runtime';
+import {
+  AppEvent,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
+  DateTimeInput,
+  PanelEvents,
+  TimeRange,
+  TimeZone,
+  UrlQueryValue,
+} from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
-import { getConfig } from '../../../core/config';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
@@ -23,6 +30,20 @@ export interface CloneOptions {
   saveVariables?: boolean;
   saveTimerange?: boolean;
   message?: string;
+}
+
+type DashboardLinkType = 'link' | 'dashboards';
+
+export interface DashboardLink {
+  icon: string;
+  title: string;
+  tooltip: string;
+  type: DashboardLinkType;
+  url: string;
+  asDropdown: boolean;
+  tags: any[];
+  searchHits?: any[];
+  targetBlank: boolean;
 }
 
 export class DashboardModel {
@@ -47,7 +68,7 @@ export class DashboardModel {
   schemaVersion: number;
   version: number;
   revision: number;
-  links: any;
+  links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
@@ -180,10 +201,20 @@ export class DashboardModel {
     }
 
     // get panel save models
-    copy.panels = _.chain(this.panels)
+    copy.panels = this.panels
       .filter((panel: PanelModel) => panel.type !== 'add-panel')
-      .map((panel: PanelModel) => panel.getSaveModel())
-      .value();
+      .map((panel: PanelModel) => {
+        // If we save while editing we should include the panel in edit mode instead of the
+        // unmodified source panel
+        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
+          const saveModel = this.panelInEdit.getSaveModel();
+          // while editing a panel we modify its id, need to restore it here
+          saveModel.id = this.panelInEdit.editSourceId;
+          return saveModel;
+        }
+
+        return panel.getSaveModel();
+      });
 
     //  sort by keys
     copy = sortByKeys(copy);
@@ -195,46 +226,6 @@ export class DashboardModel {
   }
 
   private updateTemplatingSaveModelClone(
-    copy: any,
-    defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
-  ) {
-    if (getConfig().featureToggles.newVariables) {
-      this.updateTemplatingSaveModel(copy, defaults);
-      return;
-    }
-    this.updateAngularTemplatingSaveModel(copy, defaults);
-  }
-
-  private updateAngularTemplatingSaveModel(
-    copy: any,
-    defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
-  ) {
-    // get variable save models
-    copy.templating = {
-      list: _.map(this.templating.list, (variable: any) =>
-        variable.getSaveModel ? variable.getSaveModel() : variable
-      ),
-    };
-
-    if (!defaults.saveVariables) {
-      for (let i = 0; i < copy.templating.list.length; i++) {
-        const current = copy.templating.list[i];
-        const original: any = _.find(this.originalTemplating, { name: current.name, type: current.type });
-
-        if (!original) {
-          continue;
-        }
-
-        if (current.type === 'adhoc') {
-          copy.templating.list[i].filters = original.filters;
-        } else {
-          copy.templating.list[i].current = original.current;
-        }
-      }
-    }
-  }
-
-  private updateTemplatingSaveModel(
     copy: any,
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
@@ -265,9 +256,7 @@ export class DashboardModel {
 
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
-    if (getConfig().featureToggles.newVariables) {
-      dispatch(onTimeRangeUpdated(timeRange));
-    }
+    dispatch(onTimeRangeUpdated(timeRange));
   }
 
   startRefresh() {
@@ -296,13 +285,9 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
-    // refresh new panels unless we are in fullscreen / edit mode
-    if (!this.otherPanelInFullscreen(panel)) {
-      panel.refresh();
-    }
+    const lastResult = panel.getQueryRunner().getLastResult();
 
-    // refresh if panel is in edit mode and there is no last result
-    if (this.panelInEdit === panel && !this.panelInEdit.getQueryRunner().getLastResult()) {
+    if (!this.otherPanelInFullscreen(panel) && !lastResult) {
       panel.refresh();
     }
   }
@@ -327,6 +312,7 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
+    this.panelInEdit.destroy();
     this.panelInEdit = undefined;
   }
 
@@ -791,11 +777,10 @@ export class DashboardModel {
   }
 
   formatDate(date: DateTimeInput, format?: string) {
-    date = isDateTime(date) ? date : dateTime(date);
-    format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = this.getTimezone();
-
-    return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
+    return dateTimeFormat(date, {
+      format,
+      timeZone: this.getTimezone(),
+    });
   }
 
   destroy() {
@@ -910,13 +895,9 @@ export class DashboardModel {
   }
 
   getRelativeTime(date: DateTimeInput) {
-    date = isDateTime(date) ? date : dateTime(date);
-
-    return this.timezone === 'browser' ? dateTime(date).fromNow() : toUtc(date).fromNow();
-  }
-
-  isTimezoneUtc() {
-    return this.getTimezone() === 'utc';
+    return dateTimeFormatTimeAgo(date, {
+      timeZone: this.getTimezone(),
+    });
   }
 
   isSnapshot() {
@@ -924,7 +905,7 @@ export class DashboardModel {
   }
 
   getTimezone(): TimeZone {
-    return (this.timezone ? this.timezone : contextSrv.user.timezone) as TimeZone;
+    return (this.timezone ? this.timezone : contextSrv?.user?.timezone) as TimeZone;
   }
 
   private updateSchema(old: any) {
@@ -941,7 +922,7 @@ export class DashboardModel {
   }
 
   resetOriginalVariables(initial = false) {
-    if (!getConfig().featureToggles.newVariables || initial) {
+    if (initial) {
       this.originalTemplating = this.cloneVariablesFrom(this.templating.list);
       return;
     }
@@ -950,11 +931,7 @@ export class DashboardModel {
   }
 
   hasVariableValuesChanged() {
-    if (getConfig().featureToggles.newVariables) {
-      return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState());
-    }
-
-    return this.hasVariablesChanged(this.originalTemplating, this.templating.list);
+    return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState());
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
@@ -1024,17 +1001,10 @@ export class DashboardModel {
   }
 
   getVariables = () => {
-    if (getConfig().featureToggles.newVariables) {
-      return this.getVariablesFromState();
-    }
-    return this.templating.list;
+    return this.getVariablesFromState();
   };
 
   private getPanelRepeatVariable(panel: PanelModel) {
-    if (!getConfig().featureToggles.newVariables) {
-      return _.find(this.templating.list, { name: panel.repeat } as any);
-    }
-
     return this.getVariablesFromState().find(variable => variable.name === panel.repeat);
   }
 
@@ -1043,10 +1013,7 @@ export class DashboardModel {
   }
 
   private hasVariables() {
-    if (getConfig().featureToggles.newVariables) {
-      return this.getVariablesFromState().length > 0;
-    }
-    return this.templating.list.length > 0;
+    return this.getVariablesFromState().length > 0;
   }
 
   private hasVariablesChanged(originalVariables: any[], currentVariables: any[]): boolean {

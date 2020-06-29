@@ -24,6 +24,7 @@ export * from './fieldColor';
 export * from './theme';
 export * from './orgs';
 export * from './flot';
+export * from './trace';
 
 import * as AppEvents from './appEvents';
 import { AppEvent } from './appEvents';
@@ -31,3 +32,4 @@ export { AppEvent, AppEvents };
 
 import * as PanelEvents from './panelEvents';
 export { PanelEvents };
+export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';

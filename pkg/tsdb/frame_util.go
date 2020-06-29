@@ -49,7 +49,7 @@ func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 	// If Long, make wide
 	if tsSchema.Type == data.TimeSeriesTypeLong {
 		var err error
-		frame, err = data.LongToWide(frame)
+		frame, err = data.LongToWide(frame, nil)
 		if err != nil {
 			return nil, errutil.Wrap("failed to convert long to wide series when converting from dataframe", err)
 		}

@@ -5,10 +5,11 @@
 title = "LocationSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## LocationSrv interface
+
+If you need to automatically navigate the user to a new place in the application this should be done via the LocationSrv and it will make sure to update the application state accordingly.
 
 <b>Signature</b>
 

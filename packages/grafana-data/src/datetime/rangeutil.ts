@@ -1,10 +1,12 @@
 import each from 'lodash/each';
 import groupBy from 'lodash/groupBy';
 
-import { RawTimeRange } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime, DateTime } from './moment_wrapper';
+import { isDateTime } from './moment_wrapper';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -61,10 +63,31 @@ const rangeOptions = [
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 0 },
 ];
 
-const absoluteFormat = 'YYYY-MM-DD HH:mm:ss';
+const hiddenRangeOptions = [
+  { from: 'now', to: 'now+1m', display: 'Next minute', section: 3 },
+  { from: 'now', to: 'now+5m', display: 'Next 5 minutes', section: 3 },
+  { from: 'now', to: 'now+15m', display: 'Next 15 minutes', section: 3 },
+  { from: 'now', to: 'now+30m', display: 'Next 30 minutes', section: 3 },
+  { from: 'now', to: 'now+1h', display: 'Next hour', section: 3 },
+  { from: 'now', to: 'now+3h', display: 'Next 3 hours', section: 3 },
+  { from: 'now', to: 'now+6h', display: 'Next 6 hours', section: 3 },
+  { from: 'now', to: 'now+12h', display: 'Next 12 hours', section: 3 },
+  { from: 'now', to: 'now+24h', display: 'Next 24 hours', section: 3 },
+  { from: 'now', to: 'now+2d', display: 'Next 2 days', section: 0 },
+  { from: 'now', to: 'now+7d', display: 'Next 7 days', section: 0 },
+  { from: 'now', to: 'now+30d', display: 'Next 30 days', section: 0 },
+  { from: 'now', to: 'now+90d', display: 'Next 90 days', section: 0 },
+  { from: 'now', to: 'now+6M', display: 'Next 6 months', section: 0 },
+  { from: 'now', to: 'now+1y', display: 'Next year', section: 0 },
+  { from: 'now', to: 'now+2y', display: 'Next 2 years', section: 0 },
+  { from: 'now', to: 'now+5y', display: 'Next 5 years', section: 0 },
+];
 
 const rangeIndex: any = {};
 each(rangeOptions, (frame: any) => {
+  rangeIndex[frame.from + ' to ' + frame.to] = frame;
+});
+each(hiddenRangeOptions, (frame: any) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
@@ -82,10 +105,6 @@ export function getRelativeTimesList(timepickerSettings: any, currentDisplay: an
   // });
 
   return groups;
-}
-
-function formatDate(date: DateTime) {
-  return date.format(absoluteFormat);
 }
 
 // handles expressions like
@@ -144,24 +163,27 @@ export function describeTextRange(expr: any) {
  * @param range - a time range (usually specified by the TimePicker)
  * @alpha
  */
-export function describeTimeRange(range: RawTimeRange): string {
+export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): string {
   const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+
   if (option) {
     return option.display;
   }
 
+  const options = { timeZone };
+
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    return formatDate(range.from) + ' to ' + formatDate(range.to);
+    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
   }
 
   if (isDateTime(range.from)) {
-    const toMoment = dateMath.parse(range.to, true);
-    return toMoment ? formatDate(range.from) + ' to ' + toMoment.fromNow() : '';
+    const parsed = dateMath.parse(range.to, true, 'utc');
+    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
   }
 
   if (isDateTime(range.to)) {
-    const from = dateMath.parse(range.from, false);
-    return from ? from.fromNow() + ' to ' + formatDate(range.to) : '';
+    const parsed = dateMath.parse(range.from, false, 'utc');
+    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
   }
 
   if (range.to.toString() === 'now') {
@@ -179,4 +201,23 @@ export const isValidTimeSpan = (value: string) => {
 
   const info = describeTextRange(value);
   return info.invalid !== true;
+};
+
+export const describeTimeRangeAbbrevation = (range: TimeRange, timeZone?: TimeZone) => {
+  if (isDateTime(range.from)) {
+    return timeZoneAbbrevation(range.from, { timeZone });
+  }
+  const parsed = dateMath.parse(range.from, true);
+  return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
+};
+
+export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
+  const from = dateTimeParse(raw.from, { roundUp: false, timeZone });
+  const to = dateTimeParse(raw.to, { roundUp: true, timeZone });
+
+  if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
+    return { from, to, raw };
+  }
+
+  return { from, to, raw: { from, to } };
 };

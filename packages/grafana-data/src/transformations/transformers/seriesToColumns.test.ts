@@ -2,6 +2,7 @@ import {
   ArrayVector,
   DataTransformerConfig,
   DataTransformerID,
+  Field,
   FieldType,
   toDataFrame,
   transformDataFrame,
@@ -13,6 +14,7 @@ describe('SeriesToColumns Transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([seriesToColumnsTransformer]);
   });
+
   const everySecondSeries = toDataFrame({
     name: 'even',
     fields: [
@@ -43,38 +45,53 @@ describe('SeriesToColumns Transformer', () => {
     expect(filtered.fields).toEqual([
       {
         name: 'time',
+        state: {
+          displayName: 'time',
+        },
         type: FieldType.time,
         values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
         config: {},
-        labels: { origin: 'even,odd' },
+        labels: undefined,
       },
       {
-        name: 'temperature {even}',
+        name: 'temperature',
+        state: {
+          displayName: 'temperature even',
+        },
         type: FieldType.number,
         values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
         config: {},
-        labels: { origin: 'even' },
+        labels: { name: 'even' },
       },
       {
-        name: 'humidity {even}',
+        name: 'humidity',
+        state: {
+          displayName: 'humidity even',
+        },
         type: FieldType.number,
         values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
         config: {},
-        labels: { origin: 'even' },
+        labels: { name: 'even' },
       },
       {
-        name: 'temperature {odd}',
+        name: 'temperature',
+        state: {
+          displayName: 'temperature odd',
+        },
         type: FieldType.number,
         values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
         config: {},
-        labels: { origin: 'odd' },
+        labels: { name: 'odd' },
       },
       {
-        name: 'humidity {odd}',
+        name: 'humidity',
+        state: {
+          displayName: 'humidity odd',
+        },
         type: FieldType.number,
         values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
         config: {},
-        labels: { origin: 'odd' },
+        labels: { name: 'odd' },
       },
     ]);
   });
@@ -91,38 +108,53 @@ describe('SeriesToColumns Transformer', () => {
     expect(filtered.fields).toEqual([
       {
         name: 'temperature',
+        state: {
+          displayName: 'temperature',
+        },
         type: FieldType.number,
         values: new ArrayVector([10.3, 10.4, 10.5, 10.6, 11.1, 11.3, 11.5, 11.7]),
         config: {},
-        labels: { origin: 'even,odd' },
+        labels: undefined,
       },
       {
-        name: 'time {even}',
+        name: 'time',
+        state: {
+          displayName: 'time even',
+        },
         type: FieldType.time,
         values: new ArrayVector([3000, 4000, 5000, 6000, null, null, null, null]),
         config: {},
-        labels: { origin: 'even' },
+        labels: { name: 'even' },
       },
       {
-        name: 'humidity {even}',
+        name: 'humidity',
+        state: {
+          displayName: 'humidity even',
+        },
         type: FieldType.number,
         values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6, null, null, null, null]),
         config: {},
-        labels: { origin: 'even' },
+        labels: { name: 'even' },
       },
       {
-        name: 'time {odd}',
+        name: 'time',
+        state: {
+          displayName: 'time odd',
+        },
         type: FieldType.time,
         values: new ArrayVector([null, null, null, null, 1000, 3000, 5000, 7000]),
         config: {},
-        labels: { origin: 'odd' },
+        labels: { name: 'odd' },
       },
       {
-        name: 'humidity {odd}',
+        name: 'humidity',
+        state: {
+          displayName: 'humidity odd',
+        },
         type: FieldType.number,
         values: new ArrayVector([null, null, null, null, 11000.1, 11000.3, 11000.5, 11000.7]),
         config: {},
-        labels: { origin: 'odd' },
+        labels: { name: 'odd' },
       },
     ]);
   });
@@ -143,39 +175,117 @@ describe('SeriesToColumns Transformer', () => {
     expect(filtered.fields).toEqual([
       {
         name: 'time',
+        state: {
+          displayName: 'time',
+        },
         type: FieldType.time,
         values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
         config: {},
-        labels: { origin: 'even,odd' },
+        labels: undefined,
       },
       {
-        name: 'temperature {even}',
+        name: 'temperature',
+        state: {
+          displayName: 'temperature even',
+        },
         type: FieldType.number,
         values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
         config: {},
-        labels: { origin: 'even' },
+        labels: { name: 'even' },
       },
       {
-        name: 'humidity {even}',
+        name: 'humidity',
+        state: {
+          displayName: 'humidity even',
+        },
         type: FieldType.number,
         values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
         config: {},
-        labels: { origin: 'even' },
+        labels: { name: 'even' },
       },
       {
-        name: 'temperature {odd}',
+        name: 'temperature',
+        state: {
+          displayName: 'temperature odd',
+        },
         type: FieldType.number,
         values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
         config: {},
-        labels: { origin: 'odd' },
+        labels: { name: 'odd' },
       },
       {
-        name: 'humidity {odd}',
+        name: 'humidity',
+        state: {
+          displayName: 'humidity odd',
+        },
         type: FieldType.number,
         values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
         config: {},
-        labels: { origin: 'odd' },
+        labels: { name: 'odd' },
       },
     ]);
+  });
+
+  describe('Field names', () => {
+    const seriesWithSameFieldAndDataFrameName = toDataFrame({
+      name: 'temperature',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+        { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+        { name: 'temperature', type: FieldType.number, values: [2, 4, 6, 8] },
+      ],
+    });
+
+    it('when dataframe and field share the same name then use the field name', () => {
+      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'time',
+        },
+      };
+
+      const filtered = transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])[0];
+      const expected: Field[] = [
+        {
+          name: 'time',
+          state: {
+            displayName: 'time',
+          },
+          type: FieldType.time,
+          values: new ArrayVector([1000, 2000, 3000, 4000]),
+          config: {},
+          labels: undefined,
+        },
+        {
+          name: 'temperature',
+          type: FieldType.number,
+          values: new ArrayVector([1, 3, 5, 7]),
+          config: {},
+          state: {
+            displayName: 'temperature temperature',
+          },
+          labels: { name: 'temperature' },
+        },
+        {
+          name: 'temperature',
+          state: {
+            displayName: 'temperature B',
+          },
+          type: FieldType.number,
+          values: new ArrayVector([2, 4, 6, 8]),
+          config: {},
+          labels: { name: 'B' },
+        },
+      ];
+
+      expect(filtered.fields).toEqual(expected);
+    });
   });
 });

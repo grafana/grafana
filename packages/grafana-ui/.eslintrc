@@ -1,6 +1,6 @@
 {
   "extends": ["@grafana/eslint-config"],
   "rules": {
-    "no-restricted-imports": [2, "^@grafana/runtime.*", "^@grafana/ui.*"]
+    "no-restricted-imports": [2, "^@grafana/runtime.*", "^@grafana/ui.*", "^@grafana/e2e.*"]
   }
 }

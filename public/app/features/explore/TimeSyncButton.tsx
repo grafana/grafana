@@ -47,7 +47,7 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
         onClick={() => onClick()}
       >
-        <Icon name="link" className={classNames(styles.topPadding, isSynced && 'icon-brand-gradient')} />
+        <Icon name="link" className={classNames(styles.topPadding, isSynced && 'icon-brand-gradient')} size="lg" />
       </button>
     </Tooltip>
   );

@@ -80,7 +80,6 @@ const basicSelectAsync = () => {
       onChange={v => {
         setValue(v);
       }}
-      size="md"
     />
   );
 };
@@ -91,7 +90,7 @@ Where the async function could look like this:
 
 ```tsx
 const loadAsyncOptions = () => {
-  return new Promise()<Array<SelectableValue<string>>>(resolve => {
+  return new Promise<Array<SelectableValue<string>>>(resolve => {
     setTimeout(() => {
       resolve(options);
     }, 2000);
@@ -117,7 +116,6 @@ const multiSelect = () => {
         onChange={v => {
           setValue(v);
         }}
-        size="md"
       />
     </>
   );

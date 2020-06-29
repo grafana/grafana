@@ -1,14 +1,16 @@
-import React from 'react';
 import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
-import { FieldConfigItemHeaderTitle, selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
+import React from 'react';
+import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
+import { css, cx } from 'emotion';
+import { OptionsGroup } from './OptionsGroup';
 
-import { css } from 'emotion';
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
   registry: FieldConfigOptionsRegistry;
   onChange: (value: DynamicConfigValue) => void;
   context: FieldOverrideContext;
   onRemove: () => void;
+  isCollapsible?: boolean;
 }
 
 export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> = ({
@@ -17,6 +19,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   registry,
   onChange,
   onRemove,
+  isCollapsible,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -25,11 +28,46 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   if (!item) {
     return null;
   }
+  let editor;
 
-  return (
-    <div className={styles.wrapper}>
-      <FieldConfigItemHeaderTitle onRemove={onRemove} title={item.name} description={item.description} transparent>
-        <div className={styles.property}>
+  const renderLabel = (includeDescription = true, includeCounter = false) => (isExpanded = false) => (
+    <HorizontalGroup justify="space-between">
+      <Label description={includeDescription ? item.description : undefined}>
+        {item.name}
+        {!isExpanded && includeCounter && item.getItemsCount && <Counter value={item.getItemsCount(property.value)} />}
+      </Label>
+      <div>
+        <IconButton name="times" onClick={onRemove} />
+      </div>
+    </HorizontalGroup>
+  );
+
+  if (isCollapsible) {
+    editor = (
+      <OptionsGroup
+        id={item.name}
+        renderTitle={renderLabel(false, true)}
+        className={css`
+          padding-left: 0;
+          padding-right: 0;
+        `}
+        nested
+        defaultToClosed={property.value !== undefined}
+      >
+        <item.override
+          value={property.value}
+          onChange={value => {
+            onChange(value);
+          }}
+          item={item}
+          context={context}
+        />
+      </OptionsGroup>
+    );
+  } else {
+    editor = (
+      <div>
+        <Field label={renderLabel()()} description={item.description}>
           <item.override
             value={property.value}
             onChange={value => {
@@ -38,51 +76,30 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
             item={item}
             context={context}
           />
-        </div>
-      </FieldConfigItemHeaderTitle>
+        </Field>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cx(
+        isCollapsible && styles.collapsibleOverrideEditor,
+        !isCollapsible && 'dynamicConfigValueEditor--nonCollapsible'
+      )}
+    >
+      {editor}
     </div>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.palette.gray85,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
-
-  const highlightColor = selectThemeVariant(
-    {
-      light: theme.palette.blue95,
-      dark: theme.palette.blue77,
-    },
-    theme.type
-  );
-
   return {
-    wrapper: css`
-      border-top: 1px dashed ${borderColor};
-      position: relative;
-      &:hover {
-        &:before {
-          background: ${highlightColor};
-        }
+    collapsibleOverrideEditor: css`
+      label: collapsibleOverrideEditor;
+      & + .dynamicConfigValueEditor--nonCollapsible {
+        margin-top: ${theme.spacing.formSpacingBase}px;
       }
-      &:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        z-index: 1;
-        left: -1px;
-        width: 2px;
-        height: 100%;
-        transition: background 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-      }
-    `,
-    property: css`
-      padding: ${theme.spacing.xs} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
     `,
   };
 });

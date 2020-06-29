@@ -8,9 +8,9 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 import * as DefaultIcon from '@iconscout/react-unicons';
 import * as MonoIcon from './assets';
 
-const alwaysMonoIcons = ['grafana', 'favorite'];
+const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
 
-interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
@@ -88,7 +88,7 @@ export const getSvgSize = (size: IconSize) => {
     case 'lg':
       return 18;
     case 'xl':
-      return 28;
+      return 24;
     case 'xxl':
       return 36;
     case 'xxxl':

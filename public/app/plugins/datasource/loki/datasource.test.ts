@@ -1,5 +1,5 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
-import { LokiLegacyStreamResponse, LokiQuery, LokiResponse, LokiResultType } from './types';
+import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import {
   AnnotationQueryRequest,
@@ -11,14 +11,15 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariable } from 'app/features/templating/custom_variable';
 import { makeMockLokiDatasource } from './mocks';
 import { of } from 'rxjs';
 import omit from 'lodash/omit';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { backendSrv } from 'app/core/services/backend_srv';
+import { CustomVariableModel } from '../../../features/variables/types';
+import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -27,18 +28,6 @@ const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 describe('LokiDatasource', () => {
   const instanceSettings: any = {
     url: 'myloggingurl',
-  };
-
-  const legacyTestResp: { data: LokiLegacyStreamResponse; status: number } = {
-    data: {
-      streams: [
-        {
-          entries: [{ ts: '2019-02-01T10:27:37.498180581Z', line: 'hello' }],
-          labels: '{}',
-        },
-      ],
-    },
-    status: 404, // for simulating legacy endpoint
   };
 
   const testResp: { data: LokiResponse } = {
@@ -106,33 +95,12 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('when running range query with fallback', () => {
-    let ds: LokiDatasource;
-    beforeEach(() => {
-      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
-      const customSettings = { ...instanceSettings, jsonData: customData };
-      ds = new LokiDatasource(customSettings, templateSrvMock);
-      datasourceRequestMock.mockImplementation(() => Promise.resolve(legacyTestResp));
-    });
-
-    test('should try latest endpoint but fall back to legacy endpoint if it cannot be reached', async () => {
-      const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{job="grafana"}', refId: 'B' }],
-        exploreMode: ExploreMode.Logs,
-      });
-
-      ds.runLegacyQuery = jest.fn();
-      await ds.runRangeQueryWithFallback(options.targets[0], options).toPromise();
-      expect(ds.runLegacyQuery).toBeCalled();
-    });
-  });
-
   describe('when querying', () => {
     let ds: LokiDatasource;
     let testLimit: any;
 
     beforeAll(() => {
-      testLimit = makeLimitTest(instanceSettings, datasourceRequestMock, templateSrvMock, legacyTestResp);
+      testLimit = makeLimitTest(instanceSettings, datasourceRequestMock, templateSrvMock, testResp);
     });
 
     beforeEach(() => {
@@ -149,13 +117,11 @@ describe('LokiDatasource', () => {
       });
 
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
-      ds.runLegacyQuery = jest.fn();
-      ds.runRangeQueryWithFallback = jest.fn(() => of({ data: [] }));
+      ds.runRangeQuery = jest.fn(() => of({ data: [] }));
       await ds.query(options).toPromise();
 
       expect(ds.runInstantQuery).toBeCalled();
-      expect(ds.runLegacyQuery).not.toBeCalled();
-      expect(ds.runRangeQueryWithFallback).toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
     });
 
     test('should just run range query when in logs mode', async () => {
@@ -165,11 +131,11 @@ describe('LokiDatasource', () => {
       });
 
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
-      ds.runRangeQueryWithFallback = jest.fn(() => of({ data: [] }));
+      ds.runRangeQuery = jest.fn(() => of({ data: [] }));
       await ds.query(options).toPromise();
 
       expect(ds.runInstantQuery).not.toBeCalled();
-      expect(ds.runRangeQueryWithFallback).toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
     });
 
     test('should use default max lines when no limit given', () => {
@@ -207,8 +173,8 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(
         jest
           .fn()
-          .mockReturnValueOnce(Promise.resolve(legacyTestResp))
-          .mockReturnValueOnce(Promise.resolve(omit(legacyTestResp, 'status')))
+          .mockReturnValueOnce(Promise.resolve(testResp))
+          .mockReturnValueOnce(Promise.resolve(omit(testResp, 'data.status')))
       );
 
       const options = getQueryOptions<LokiQuery>({
@@ -227,13 +193,13 @@ describe('LokiDatasource', () => {
 
   describe('When interpolating variables', () => {
     let ds: LokiDatasource;
-    let variable: CustomVariable;
+    let variable: CustomVariableModel;
 
     beforeEach(() => {
       const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
       const customSettings = { ...instanceSettings, jsonData: customData };
       ds = new LokiDatasource(customSettings, templateSrvMock);
-      variable = new CustomVariable({}, {} as any);
+      variable = { ...initialCustomVariableModelState };
     });
 
     it('should only escape single quotes', () => {
@@ -381,31 +347,33 @@ describe('LokiDatasource', () => {
     it('should transform the loki data to annotation response', async () => {
       const ds = new LokiDatasource(instanceSettings, templateSrvMock);
       datasourceRequestMock.mockImplementation(
-        jest
-          .fn()
-          .mockReturnValueOnce(
-            Promise.resolve({
-              data: [],
-              status: 404,
-            })
-          )
-          .mockReturnValueOnce(
-            Promise.resolve({
+        jest.fn().mockReturnValueOnce(
+          Promise.resolve({
+            data: {
               data: {
-                streams: [
+                resultType: LokiResultType.Stream,
+                result: [
                   {
-                    entries: [{ ts: '2019-02-01T10:27:37.498180581Z', line: 'hello' }],
-                    labels: '{label="value"}',
+                    stream: {
+                      label: 'value',
+                      label2: 'value ',
+                    },
+                    values: [['1549016857498000000', 'hello']],
                   },
                   {
-                    entries: [{ ts: '2019-02-01T12:27:37.498180581Z', line: 'hello 2' }],
-                    labels: '{label2="value2"}',
+                    stream: {
+                      label2: 'value2',
+                    },
+                    values: [['1549024057498000000', 'hello 2']],
                   },
                 ],
               },
-            })
-          )
+              status: 'success',
+            },
+          })
+        )
       );
+
       const query = makeAnnotationQueryRequest();
 
       const res = await ds.annotationQuery(query);

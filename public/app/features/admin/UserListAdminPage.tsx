@@ -43,7 +43,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
           <div>
             <HorizontalGroup justify="space-between">
               <Input
-                size="md"
+                width={40}
                 type="text"
                 placeholder="Search user by login,email or name"
                 tabIndex={1}

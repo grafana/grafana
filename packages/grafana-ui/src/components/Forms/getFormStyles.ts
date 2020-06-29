@@ -19,6 +19,8 @@ export const getFormStyles = stylesFactory(
         theme,
         variant: options.variant,
         size: options.size,
+        hasIcon: false,
+        hasText: true,
       }),
       input: getInputStyles({ theme, invalid: options.invalid }),
       switch: getSwitchStyles(theme),

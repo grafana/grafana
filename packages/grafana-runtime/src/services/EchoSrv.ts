@@ -27,7 +27,7 @@ export interface EchoMeta {
    */
   userLogin: string;
   /**
-   * The current users uniqe identifier.
+   * The current users unique identifier.
    */
   userId: number;
   /**

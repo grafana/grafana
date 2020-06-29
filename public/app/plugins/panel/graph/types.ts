@@ -1,11 +1,14 @@
-import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
-
 export interface GraphPanelOptions {
-  legend: LegendOptions; // & GraphLegendEditorLegendOptions;
-  tooltipOptions: GraphTooltipOption;
+  // Panel level options
 }
 
 export interface GraphFieldConfig {
-  showAxis: boolean;
+  // Custom field properties
 }
-  
+
+export interface DataWarning {
+  title: string;
+  tip: string;
+  action?: () => void;
+  actionText?: string;
+}
