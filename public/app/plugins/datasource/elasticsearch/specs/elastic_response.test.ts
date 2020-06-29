@@ -906,7 +906,7 @@ describe('ElasticResponse', () => {
       expect(result.data[0].datapoints[1][0]).toBe(3);
       expect(result.data[1].datapoints[1][0]).toBe(4);
       expect(result.data[2].datapoints[1][0]).toBe(12);
-      expect(result.data[3].datapoints[1][0]).toBe(47);
+      expect(result.data[3].datapoints[1][0]).toBe(48);
     });
   });
 
