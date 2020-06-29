@@ -184,7 +184,7 @@
   children:
     - link: /features/dashboard/dashboards/
       name: Overview
-    - link: /reference/annotations/
+    - link: /dashboards/annotations/
       name: Annotations
     - link: /reference/dashboard_folders/
       name: Folders
