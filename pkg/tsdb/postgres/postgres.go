@@ -57,8 +57,6 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	logger.Debug("Trying to generate Postgres connection string")
-
 	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
 
