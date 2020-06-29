@@ -33,8 +33,6 @@ type ApplicationInsightsDatasource struct {
 type ApplicationInsightsQuery struct {
 	RefID string
 
-	IsRaw bool
-
 	// Text based raw query options
 	ApiURL string
 	Params url.Values
@@ -110,30 +108,22 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 		}
 		params.Add("aggregation", insightsJSONModel.Aggregation)
 
-		dims := []string{}
-
-		dimension := strings.TrimSpace(insightsJSONModel.Dimension)
-		// Azure Monitor combines this and the following logic such that if dimensionFilter, must also Dimension, should that be done here as well?
-		if dimension != "" && !strings.EqualFold(dimension, "none") {
-			params.Add("segment", dimension)
-			dims = append(dims, dimension)
-		}
-
 		dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
 		if dimensionFilter != "" {
 			params.Add("filter", dimensionFilter)
 		}
 
+		params.Add("segment", strings.Join(insightsJSONModel.Dimensions, ","))
+
 		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
 			RefID:       query.RefId,
-			IsRaw:       false,
 			ApiURL:      azureURL,
 			Params:      params,
 			Alias:       insightsJSONModel.Alias,
 			Target:      params.Encode(),
 			metricName:  insightsJSONModel.MetricName,
 			aggregation: insightsJSONModel.Aggregation,
-			dimensions:  dims,
+			dimensions:  insightsJSONModel.Dimensions,
 		})
 
 	}

@@ -101,13 +101,13 @@ type azureMonitorJSONQuery struct {
 // insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
 type insightsJSONQuery struct {
 	AppInsights struct {
-		Aggregation         string  `json:"aggregation"`
-		Alias               string  `json:"alias"`
-		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
-		Dimension           string  `json:"dimension"`
-		DimensionFilter     string  `json:"dimensionFilter"`
-		MetricName          string  `json:"metricName"`
-		TimeGrain           string  `json:"timeGrain"`
+		Aggregation         string   `json:"aggregation"`
+		Alias               string   `json:"alias"`
+		AllowedTimeGrainsMs []int64  `json:"allowedTimeGrainsMs"`
+		Dimensions          []string `json:"dimension"`
+		DimensionFilter     string   `json:"dimensionFilter"`
+		MetricName          string   `json:"metricName"`
+		TimeGrain           string   `json:"timeGrain"`
 	} `json:"appInsights"`
 	Raw *bool `json:"raw"`
 }
