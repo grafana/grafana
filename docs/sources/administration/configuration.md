@@ -339,9 +339,9 @@ This enables data proxy logging, default is `false`.
 
 ### timeout
 
-How long the data proxy should wait before timing out. Default is `30` (seconds).
+How long the data proxy should wait before timing out. Default is 30 seconds.
 
-> **Note:** This setting also applies to core backend HTTP data sources where queries are requested using an HTTP client with timeout set.
+This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
 
 ### send_user_header
 
