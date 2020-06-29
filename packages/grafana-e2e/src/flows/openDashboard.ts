@@ -3,7 +3,7 @@ import { e2e } from '../index';
 import { getScenarioContext } from '../support/scenarioContext';
 
 export interface OpenDashboardConfig {
-  timeRange: DashboardTimeRangeConfig;
+  timeRange?: DashboardTimeRangeConfig;
   uid: string;
 }
 
