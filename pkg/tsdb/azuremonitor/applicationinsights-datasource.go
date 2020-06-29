@@ -116,8 +116,9 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			params.Add("filter", dimensionFilter)
 		}
 
-		params.Add("segment", strings.Join(insightsJSONModel.Dimensions, ","))
-
+		if len(insightsJSONModel.Dimensions) != 0 {
+			params.Add("segment", strings.Join(insightsJSONModel.Dimensions, ","))
+		}
 		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
 			RefID:       query.RefId,
 			ApiURL:      azureURL,

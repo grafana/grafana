@@ -143,7 +143,7 @@ func (s *InsightsDimensions) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" || string(data) == "" {
 		return nil
 	}
-	if strings.ToLower(string(data)) == "none" {
+	if strings.ToLower(string(data)) == `"none"` {
 		return nil
 	}
 	if data[0] == '[' {
