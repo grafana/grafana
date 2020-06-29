@@ -2,6 +2,7 @@ package flux
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/influxdata/influxdb-client-go/api/query"
@@ -38,6 +39,8 @@ type FrameBuilder struct {
 	maxSeries    int // max number of series
 	totalSeries  int
 	isTimeSeries bool
+	timeColumn   string // sometimes it is not `_time`
+	timeDisplay  string
 }
 
 func isTag(schk string) bool {
@@ -79,6 +82,7 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	fb.value = nil
 	fb.columns = make([]columnInfo, 0)
 	fb.isTimeSeries = false
+	fb.timeColumn = ""
 
 	for _, col := range columns {
 		switch {
@@ -97,7 +101,24 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		}
 	}
 
-	if !fb.isTimeSeries {
+	if fb.isTimeSeries {
+		// The first time column
+		found := false
+		for _, col := range columns {
+			if col.DataType() == timeDatatypeRFC || col.DataType() == timeDatatypeRFCNano {
+				found = true
+				fb.timeColumn = col.Name()
+				fb.timeDisplay = "Time"
+				if "_time" != fb.timeColumn {
+					fb.timeDisplay = col.Name()
+				}
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("no time column found")
+		}
+	} else {
 		fb.labels = make([]string, 0)
 		for _, col := range columns {
 			converter, err := getConverter(col.DataType())
@@ -139,7 +160,7 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 				data.NewFieldFromFieldType(fb.value.OutputFieldType, 0),
 			)
 
-			fb.active.Fields[0].Name = "Time"
+			fb.active.Fields[0].Name = fb.timeDisplay
 			name, ok := record.ValueByKey("_field").(string)
 			if ok {
 				fb.active.Fields[1].Name = name
@@ -168,11 +189,16 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 	}
 
 	if fb.isTimeSeries {
+		time, ok := record.ValueByKey(fb.timeColumn).(time.Time)
+		if !ok {
+			return fmt.Errorf("unable to get time colum: %s", fb.timeColumn)
+		}
+
 		val, err := fb.value.Converter(record.Value())
 		if err != nil {
 			return err
 		}
-		fb.active.Fields[0].Append(record.Time())
+		fb.active.Fields[0].Append(time)
 		fb.active.Fields[1].Append(val)
 	} else {
 		// Table view
