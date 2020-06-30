@@ -83,7 +83,7 @@ export function RichHistoryStarredTab(props: Props) {
     exploreId,
   } = props;
 
-  const [filteredQueries, setFilteredQueries] = useState([]);
+  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
   const [searchInput, setSearchInput] = useState('');
 
   const theme = useTheme();
@@ -99,7 +99,7 @@ export function RichHistoryStarredTab(props: Props) {
         filterAndSortQueries(
           starredQueries,
           sortOrder,
-          datasourceFilters?.map(d => d.value),
+          datasourceFilters?.map(d => d.value) as string[] | null,
           searchValue
         )
       );
@@ -112,7 +112,7 @@ export function RichHistoryStarredTab(props: Props) {
       filterAndSortQueries(
         starredQueries,
         sortOrder,
-        datasourceFilters?.map(d => d.value),
+        datasourceFilters?.map(d => d.value) as string[] | null,
         searchInput
       )
     );

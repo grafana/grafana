@@ -138,7 +138,7 @@ export function RichHistoryQueriesTab(props: Props) {
   } = props;
 
   const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
-  const [filteredQueries, setFilteredQueries] = useState([]);
+  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
   const [searchInput, setSearchInput] = useState('');
 
   const theme = useTheme();
@@ -153,7 +153,7 @@ export function RichHistoryQueriesTab(props: Props) {
         filterAndSortQueries(
           queries,
           sortOrder,
-          datasourceFilters?.map(d => d.value),
+          datasourceFilters?.map(d => d.value) as string[] | null,
           searchValue,
           timeFilter
         )
@@ -167,7 +167,7 @@ export function RichHistoryQueriesTab(props: Props) {
       filterAndSortQueries(
         queries,
         sortOrder,
-        datasourceFilters?.map(d => d.value),
+        datasourceFilters?.map(d => d.value) as string[] | null,
         searchInput,
         timeFilter
       )
