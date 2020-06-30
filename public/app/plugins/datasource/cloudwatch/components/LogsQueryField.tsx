@@ -275,16 +275,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   switchToMetrics = () => {
-    const { query, onChange, exploreId } = this.props;
-
-    if (onChange) {
-      const nextQuery: CloudWatchLogsQuery = {
-        ...(query as CloudWatchLogsQuery),
-        apiMode: 'Logs',
-      };
-      onChange(nextQuery);
-    }
-
+    const { exploreId } = this.props;
     dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
   };
 

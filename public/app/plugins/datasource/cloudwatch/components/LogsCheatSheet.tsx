@@ -220,14 +220,8 @@ export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps,
   switchToMetrics = (query: CloudWatchLogsQuery) => {
     const { onClickExample, exploreId } = this.props;
 
-    const nextQuery: CloudWatchLogsQuery = {
-      ...(query as CloudWatchLogsQuery),
-      apiMode: 'Logs',
-      queryMode: 'Logs',
-    };
-
     dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
-    onClickExample(nextQuery);
+    onClickExample(query);
   };
 
   onClickExample(query: CloudWatchLogsQuery) {

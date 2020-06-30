@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
+import pick from 'lodash/pick';
 import { ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
 import { Segment } from '@grafana/ui';
-import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchLogsQuery } from '../types';
+import { CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { QueryInlineField } from './';
 import { MetricsQueryEditor } from './MetricsQueryEditor';
@@ -17,7 +18,7 @@ const apiModes = {
 export class PanelQueryEditor extends PureComponent<Props> {
   render() {
     const { query } = this.props;
-    const apiMode = query.apiMode ?? query.queryMode ?? 'Metrics';
+    const apiMode = query.queryMode ?? 'Metrics';
 
     return (
       <>
@@ -27,18 +28,23 @@ export class PanelQueryEditor extends PureComponent<Props> {
             options={Object.values(apiModes)}
             onChange={({ value }) => {
               const newMode = (value as 'Metrics' | 'Logs') ?? 'Metrics';
-              if (newMode === 'Metrics') {
+              if (newMode !== apiModes[apiMode].value) {
+                const commonProps = pick(
+                  query,
+                  'id',
+                  'region',
+                  'namespace',
+                  'refId',
+                  'hide',
+                  'key',
+                  'queryType',
+                  'datasource'
+                );
+
                 this.props.onChange({
-                  ...(query as CloudWatchMetricsQuery),
-                  apiMode: newMode,
+                  ...commonProps,
                   queryMode: newMode,
-                });
-              } else {
-                this.props.onChange({
-                  ...(query as CloudWatchLogsQuery),
-                  apiMode: newMode,
-                  queryMode: newMode,
-                });
+                } as CloudWatchQuery);
               }
             }}
           />
