@@ -93,7 +93,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 
 ### Data links
 
-Data links create a link from specified field that can be accessed in logs view in Explore.
+Data links create a link from a specified field that can be accessed in logs view in Explore.
 
 Each data link configuration consists of: 
 - **Field**: Name of the field used by the data link
