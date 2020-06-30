@@ -14,6 +14,7 @@ import {
   DataLink,
   Field,
   QueryResultMetaStat,
+  QueryResultMeta,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -146,6 +147,8 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
     target: createMetricLabel(matrixResult.metric, options),
     datapoints: lokiPointsToTimeseriesPoints(matrixResult.values, options),
     tags: matrixResult.metric,
+    meta: options.meta,
+    refId: options.refId,
   };
 }
 
@@ -184,6 +187,7 @@ export function lokiResultsToTableModel(
   lokiResults: Array<LokiMatrixResult | LokiVectorResult>,
   resultCount: number,
   refId: string,
+  meta: QueryResultMeta,
   valueWithRefId?: boolean
 ): TableModel {
   if (!lokiResults || lokiResults.length === 0) {
@@ -198,10 +202,12 @@ export function lokiResultsToTableModel(
   // Sort metric labels, create columns for them and record their index
   const sortedLabels = [...metricLabels.values()].sort();
   const table = new TableModel();
+  table.refId = refId;
+  table.meta = meta;
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map(label => ({ text: label, filterable: true })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.time },
+    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
@@ -351,17 +357,24 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
-    if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
+    // Having field.datasourceUid means it is an internal link.
+    if (derivedFieldConfig.datasourceUid) {
+      acc.push({
+        // Will be filled out later
+        title: '',
+        url: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
+        internal: {
+          query: { query: derivedFieldConfig.url },
+          datasourceUid: derivedFieldConfig.datasourceUid,
+        },
+      });
+    } else if (derivedFieldConfig.url) {
       acc.push({
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
         title: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         url: derivedFieldConfig.url,
-        // Having field.datasourceUid means it is an internal link.
-        meta: derivedFieldConfig.datasourceUid
-          ? {
-              datasourceUid: derivedFieldConfig.datasourceUid,
-            }
-          : undefined,
       });
     }
     return acc;
@@ -384,6 +397,11 @@ export function rangeQueryResponseToTimeSeries(
   target: LokiQuery,
   responseListLength: number
 ): TimeSeries[] {
+  /** Show results of Loki metric queries only in graph */
+  const meta: QueryResultMeta = {
+    preferredVisualisationType: 'graph',
+  };
+
   const transformerOptions: TransformerOptions = {
     format: target.format,
     legendFormat: target.legendFormat,
@@ -393,6 +411,7 @@ export function rangeQueryResponseToTimeSeries(
     query: query.query,
     responseListLength,
     refId: target.refId,
+    meta,
     valueWithRefId: target.valueWithRefId,
   };
 

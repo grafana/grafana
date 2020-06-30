@@ -45,6 +45,12 @@ export interface AzureDataSourceSecureJsonData {
   appInsightsApiKey?: string;
 }
 
+export interface AzureMetricDimension {
+  dimension: string;
+  operator: 'eq'; // future proof
+  filter?: string; // *
+}
+
 export interface AzureMetricQuery {
   resourceGroup: string;
   resourceName: string;
@@ -55,8 +61,7 @@ export interface AzureMetricQuery {
   timeGrain: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;
-  dimension: string;
-  dimensionFilter: string;
+  dimensionFilters: AzureMetricDimension[];
   alias: string;
   top: string;
 }
