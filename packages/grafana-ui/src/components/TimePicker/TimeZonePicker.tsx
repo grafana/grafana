@@ -15,12 +15,12 @@ import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
 
 export interface Props {
+  onChange: (timeZone: TimeZone | undefined) => void;
   value?: TimeZone;
   width?: number;
   autoFocus?: boolean;
-  onChange: (timeZone: TimeZone | undefined) => void;
   onBlur?: () => void;
-  includeInternal: boolean;
+  includeInternal?: boolean;
 }
 
 export const TimeZonePicker: React.FC<Props> = props => {
