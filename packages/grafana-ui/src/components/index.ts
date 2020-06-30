@@ -153,6 +153,7 @@ export { Switch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
+export { FileUpload } from './FileUpload/FileUpload';
 
 // Legacy forms
 
