@@ -207,7 +207,7 @@ export function lokiResultsToTableModel(
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map(label => ({ text: label, filterable: true })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.time },
+    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
