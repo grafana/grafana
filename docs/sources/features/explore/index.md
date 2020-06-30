@@ -97,7 +97,7 @@ In **Query history** tab it is also possible to filter queries by date using the
 
 ### Search in query history
 
-You can search in your history across queries and your comments. Search is possible in Query history tab and Starred tab.
+You can search in your history across queries and your comments. Search is possible for queries in Query history tab and Starred tab.
 
 1. Click the **Search queries** field.
 2. Type the term you are searching for into search field.
