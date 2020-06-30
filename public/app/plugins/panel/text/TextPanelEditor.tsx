@@ -26,7 +26,7 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
               language={language}
               width={width}
               showMiniMap={false}
-              hideLineNumbers={true}
+              showLineNumbers={false}
               height="200px"
             />
           );

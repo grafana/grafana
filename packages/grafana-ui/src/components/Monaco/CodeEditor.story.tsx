@@ -9,7 +9,8 @@ const getKnobs = () => {
   return {
     text: text('Body', 'SELECT * FROM table LIMIT 10'),
     language: text('Language', 'sql'),
-    hideLineNumbers: boolean('Hide line numbers', false),
+    showLineNumbers: boolean('Show line numbers', false),
+    showMiniMap: boolean('Show mini map', false),
     readOnly: boolean('readonly', false),
   };
 };
@@ -26,7 +27,7 @@ export default {
 };
 
 export const basic = () => {
-  const { text, language, hideLineNumbers, readOnly } = getKnobs();
+  const { text, language, showLineNumbers, showMiniMap, readOnly } = getKnobs();
   return (
     <CodeEditor
       value={text}
@@ -39,7 +40,8 @@ export const basic = () => {
         console.log('Save: ', text);
         action('code saved')(text);
       }}
-      hideLineNumbers={hideLineNumbers}
+      showLineNumbers={showLineNumbers}
+      showMiniMap={showMiniMap}
       readOnly={readOnly}
     />
   );

@@ -12,7 +12,7 @@ export interface CodeEditorProps {
 
   readOnly?: boolean;
   showMiniMap?: boolean;
-  hideLineNumbers?: boolean;
+  showLineNumbers?: boolean;
 
   /**
    * Callback after the editor has mounted that gives you raw access to monaco
@@ -57,7 +57,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, language, width, height, showMiniMap, readOnly } = this.props;
+    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly } = this.props;
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
@@ -74,7 +74,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       overviewRulerBorder: false,
       automaticLayout: true,
     };
-    if (this.props.hideLineNumbers) {
+    if (!showLineNumbers) {
       options.glyphMargin = false;
       options.folding = false;
       options.lineNumbers = 'off';
