@@ -159,7 +159,7 @@ export const getStandardFieldConfigs = () => {
     process: valueMappingsOverrideProcessor,
     settings: {},
     defaultValue: [],
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: () => true,
     category: ['Value mappings'],
     getItemsCount: (value?) => (value ? value.length : 0),
   };
