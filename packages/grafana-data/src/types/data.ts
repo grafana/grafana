@@ -43,7 +43,7 @@ export interface QueryResultMeta {
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
-  alignmentPeriod?: string; // used by stackdriver
+  alignmentPeriod?: string; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
