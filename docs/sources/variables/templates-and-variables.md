@@ -202,7 +202,7 @@ Option | Description
 
 ### Formatting multiple values
 
-Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that
+Interpolating a variable with multiple values selected is tricky, as it is not straightforward how to format the multiple values into a string that
 is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
 inform the templating interpolation engine what format to use for multiple values.
 
@@ -220,7 +220,7 @@ needs to be escaped so that the value can contain lucene control words and quota
 
 #### Formatting troubles
 
-Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic is behind it.
+Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic behind it.
 Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
 If you do not want Grafana to do this automatic regex escaping and formatting your only option is to disable the *Multi-value* or *Include All option*
 options.

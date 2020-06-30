@@ -41,7 +41,7 @@ func TestLogTableToFrame(t *testing.T) {
 					}),
 				)
 				frame.Meta = &data.FrameMeta{
-					Custom: map[string]interface{}{"azureColumnTypes": []string{"datetime", "string", "real"}},
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"datetime", "string", "real"}},
 				}
 				return frame
 			},
@@ -91,7 +91,7 @@ func TestLogTableToFrame(t *testing.T) {
 					}),
 				)
 				frame.Meta = &data.FrameMeta{
-					Custom: map[string]interface{}{"azureColumnTypes": []string{"string", "string", "string",
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"string", "string", "string",
 						"string", "string", "real", "real", "int", "real", "datetime"}},
 				}
 				return frame
@@ -113,7 +113,7 @@ func TestLogTableToFrame(t *testing.T) {
 					data.NewField("XTimeSpan", nil, []*string{pointer.String("00:00:00.0000001")}),
 				)
 				frame.Meta = &data.FrameMeta{
-					Custom: map[string]interface{}{"azureColumnTypes": []string{"bool", "string", "datetime",
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"bool", "string", "datetime",
 						"dynamic", "guid", "int", "long", "real", "timespan"}},
 				}
 				return frame
@@ -122,6 +122,7 @@ func TestLogTableToFrame(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := loadLogAnalyticsTestFileWithNumber(tt.testFile)
 			require.NoError(t, err)
