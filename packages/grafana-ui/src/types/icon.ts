@@ -73,6 +73,7 @@ export type IconName =
   | 'calendar-alt'
   | 'play'
   | 'pause'
+  | 'stop-circle'
   | 'calculator-alt'
   | 'compass'
   | 'sliders-v-alt'
@@ -187,6 +188,7 @@ export const getAvailableIcons = (): IconName[] => [
   'calendar-alt',
   'play',
   'pause',
+  'stop-circle',
   'calculator-alt',
   'compass',
   'sliders-v-alt',
