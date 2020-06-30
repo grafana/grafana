@@ -269,6 +269,8 @@ providers:
     options:
       # <string, required> path to dashboard files on disk. Required when using the 'file' type
       path: /var/lib/grafana/dashboards
+      # <bool> use folder names from filesystem to create folders in Grafana
+      foldersFromFilesStructure: true
 ```
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
@@ -301,6 +303,35 @@ By default Grafana will delete dashboards in the database if the file is removed
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
 > or `uid` within the same installation as this will cause weird behaviors.
+
+### Provision folders structure from filesystem to Grafana
+If you already store your dashboards using folders in a git repo or on a filesystem, and also you want to have the same folder names in the Grafana menu, you can use `foldersFromFilesStructure` option.
+
+For example, to replicate these dashboards structure from the filesystem to Grafana, 
+```
+/etc/dashboards
+├── /server
+│   ├── /common_dashboard.json
+│   └── /network_dashboard.json
+└── /application
+    ├── /requests_dashboard.json
+    └── /resources_dashboard.json
+```
+you need to specify just this short provision configuration file.
+```yaml
+apiVersion: 1
+    
+providers:
+- name: dashboards
+  type: file
+  updateIntervalSeconds: 30
+  options:
+    path: /etc/dashboards
+    foldersFromFileStructure: true
+```
+`server` and `application` will become new folders in Grafana menu.
+
+> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFileStructure` works.
 
 ## Alert Notification Channels
 
