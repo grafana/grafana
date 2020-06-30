@@ -3,6 +3,7 @@ import {
   Field,
   formattedValueToString,
   getDisplayProcessor,
+  getFieldDisplayName,
   TimeZone,
   dateTimeFormat,
 } from '@grafana/data';
@@ -85,14 +86,13 @@ export const getMultiSeriesGraphHoverInfo = (
 
     const display = field.display ?? getDisplayProcessor({ field, timeZone });
     const disp = display(field.values.get(hoverIndex));
-    const labelName = field.config?.displayName || field.state?.displayName || field.name;
 
     results.push({
       value: formattedValueToString(disp),
       datapointIndex: hoverIndex,
       seriesIndex: i,
       color: disp.color,
-      label: labelName,
+      label: getFieldDisplayName(field),
       time: time.display ? formattedValueToString(time.display(pointTime)) : pointTime,
     });
   }
