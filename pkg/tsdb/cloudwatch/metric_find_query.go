@@ -740,7 +740,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	creds, err := GetCredentials(cwData)
+	creds, err := getCredentials(cwData)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}

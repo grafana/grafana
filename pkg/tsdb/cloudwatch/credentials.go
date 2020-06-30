@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -39,8 +40,14 @@ var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
 
 // STS service factory.
 // Stubbable by tests.
-var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) *sts.STS {
+var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) stsiface.STSAPI {
 	return sts.New(p, cfgs...)
+}
+
+// EC2Metadata service factory.
+// Stubbable by tests.
+var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
+	return ec2metadata.New(p, cfgs...)
 }
 
 func getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
@@ -168,7 +175,7 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 }
 
 func ec2RoleProvider(sess *session.Session) credentials.Provider {
-	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
+	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
 }
 
 func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
