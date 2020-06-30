@@ -835,6 +835,8 @@ jobs:
               ./pkg/services/alerting/... \
               ./pkg/services/provisioning/datasources/... \
               ./pkg/services/provisioning/dashboards/... \
+              ./pkg/services/provisioning/notifiers/... \
+              ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
 
   test-frontend:
