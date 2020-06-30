@@ -1,104 +1,86 @@
-import { PanelModel } from '@grafana/data';
+import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { graphPanelMigrationHandler } from './GraphMigrations';
 
 describe('Graph Panel Migrations', () => {
-  it('from 6.7.1', () => {
-    // Saved from play dashboard
+  it('from 7.0', () => {
     const panel = {
-      datasource: 'graphite',
-      aliasColors: {
-        cpu1: '#82b5d8',
-        cpu2: '#1f78c1',
-        upper_25: '#B7DBAB',
-        upper_50: '#7EB26D',
-        upper_75: '#629E51',
-        upper_90: '#629E51',
-        upper_95: '#508642',
-      },
-      annotate: {
-        enable: false,
-      },
+      aliasColors: {},
       bars: false,
       dashLength: 10,
       dashes: false,
-      editable: true,
-      fill: 3,
+      fill: 1,
       fillGradient: 0,
-      grid: {
-        max: null,
-        min: null,
-      },
       gridPos: {
-        h: 7,
-        w: 24,
-        x: 0,
-        y: 21,
+        h: 8,
+        w: 9,
+        x: 6,
+        y: 0,
       },
       hiddenSeries: false,
-      id: 11,
-      interactive: true,
+      id: 23763571993,
       legend: {
-        alignAsTable: true,
-        avg: true,
-        current: true,
-        legendSideLastValue: true,
+        avg: false,
+        current: false,
         max: false,
         min: false,
-        rightSide: true,
         show: true,
         total: false,
-        values: true,
+        values: false,
       },
-      legend_counts: true,
       lines: true,
-      linewidth: 2,
-      links: [],
-      nullPointMode: 'connected',
+      linewidth: 1,
+      nullPointMode: 'null',
       options: {
-        dataLinks: [],
+        dataLinks: [
+          {
+            targetBlank: false,
+            title: 'Drill it down',
+            url: 'THE DRILLDOWN URL',
+          },
+        ],
       },
-      paceLength: 10,
       percentage: false,
-      pointradius: 1,
+      pointradius: 2,
       points: false,
       renderer: 'flot',
-      resolution: 100,
-      scale: 1,
       seriesOverrides: [
         {
-          alias: 'this is  test of brekaing',
-          yaxis: 1,
+          alias: 'Bar datacenter {datacenter="baz", region="us-east-2"}',
+          yaxis: 2,
         },
       ],
       spaceLength: 10,
-      spyable: true,
       stack: false,
       steppedLine: false,
       targets: [
         {
+          alias: 'Foo datacenter',
+          labels: 'datacenter=foo,region=us-east-1',
           refId: 'A',
-          target: 'aliasByNode(statsd.fakesite.timers.ads_timer.*,4)',
+          scenarioId: 'random_walk',
         },
         {
+          alias: 'Bar datacenter',
+          labels: 'datacenter=bar,region=us-east-2',
           refId: 'B',
-          target: "alias(scale(statsd.fakesite.timers.ads_timer.upper_95,-1),'cpu1')",
+          scenarioId: 'random_walk',
         },
         {
+          alias: 'Bar datacenter',
+          labels: 'datacenter=baz,region=us-east-2',
           refId: 'C',
-          target: "alias(scale(statsd.fakesite.timers.ads_timer.upper_75,-1),'cpu2')",
+          scenarioId: 'random_walk',
         },
       ],
       thresholds: [],
       timeFrom: null,
       timeRegions: [],
       timeShift: null,
-      timezone: 'browser',
-      title: 'Traffic In/Out',
+      title: 'Multiple series',
       tooltip: {
-        query_as_alias: true,
         shared: true,
         sort: 0,
-        value_type: 'cumulative',
+        value_type: 'individual',
       },
       type: 'graph',
       xaxis: {
@@ -110,30 +92,38 @@ describe('Graph Panel Migrations', () => {
       },
       yaxes: [
         {
-          decimals: 2,
-          format: 'decbytes',
+          format: 'percent',
+          label: null,
           logBase: 1,
           max: null,
           min: null,
           show: true,
+          $$hashKey: 'object:122',
         },
         {
-          decimals: 4,
-          format: 'short',
+          format: 'gflops',
+          label: null,
           logBase: 1,
           max: null,
           min: null,
-          show: false,
+          show: true,
+          $$hashKey: 'object:123',
         },
       ],
       yaxis: {
         align: false,
         alignLevel: null,
       },
-      zerofill: true,
+      datasource: null,
     } as Omit<PanelModel, 'fieldConfig'>;
 
     const result = graphPanelMigrationHandler(panel as PanelModel);
-    console.log('RRRR', result);
+    const fieldSource = (panel as any).fieldConfig as FieldConfigSource;
+
+    expect(result.dataLinks).toBeUndefined();
+    expect(fieldSource.defaults.links).toHaveLength(1);
+
+    const link = fieldSource.defaults.links[0];
+    expect(link.url).toEqual('THE DRILLDOWN URL');
   });
 });

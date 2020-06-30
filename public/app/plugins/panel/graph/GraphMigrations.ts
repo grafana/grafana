@@ -23,6 +23,7 @@ export const graphPanelMigrationHandler = (panel: PanelModel<any>): Partial<any>
   console.log('GRAPH migration', panel);
 
   // HACK: Mutates the panel state directly
+  panel.options = options;
   panel.fieldConfig = fieldOptions;
   return options;
 };
