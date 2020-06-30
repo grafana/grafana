@@ -1,5 +1,5 @@
 import React from 'react';
-import { text } from '@storybook/addon-knobs';
+import { text, boolean } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './CodeEditor.mdx';
@@ -9,6 +9,8 @@ const getKnobs = () => {
   return {
     text: text('Body', 'SELECT * FROM table LIMIT 10'),
     language: text('Language', 'sql'),
+    hideLineNumbers: boolean('Hide line numbers', false),
+    readOnly: boolean('readonly', false),
   };
 };
 
@@ -24,7 +26,7 @@ export default {
 };
 
 export const basic = () => {
-  const { text, language } = getKnobs();
+  const { text, language, hideLineNumbers, readOnly } = getKnobs();
   return (
     <CodeEditor
       value={text}
@@ -37,6 +39,8 @@ export const basic = () => {
         console.log('Save: ', text);
         action('code saved')(text);
       }}
+      hideLineNumbers={hideLineNumbers}
+      readOnly={readOnly}
     />
   );
 };
