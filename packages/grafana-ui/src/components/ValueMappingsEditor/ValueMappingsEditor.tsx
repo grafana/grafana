@@ -1,14 +1,21 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useCallback, useMemo } from 'react';
 import { MappingType, ValueMapping, GrafanaTheme, ValueMap, RangeMap } from '@grafana/data';
-import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+import {
+  DragDropContext,
+  Draggable,
+  DraggableProvidedDragHandleProps,
+  Droppable,
+  DropResult,
+} from 'react-beautiful-dnd';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useStyles } from '../../themes';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
-import { Icon } from '../Icon/Icon';
 import { Button } from '../Button';
 import { ValueMapRow } from './ValueMappingRow';
 import { RangeMapRow } from './RangeMappingRow';
+import { VerticalGroup } from '../Layout/Layout';
+import { DraggableMappingRow } from './DraggableMappingRow';
 
 export interface Props {
   valueMappings?: ValueMapping[];
@@ -23,51 +30,72 @@ interface DraggableMappingProps {
 }
 
 const DraggableMapping: React.FC<DraggableMappingProps> = ({ mapping, index, onChange, onRemove }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-  const dragClass = cx('fa fa-ellipsis-v', styles.draggable);
+  const styles = useStyles(getStyles);
+
+  const displayInput = useMemo(
+    () => (
+      <Input
+        className={styles.displayInput}
+        defaultValue={mapping.text || ''}
+        onBlur={event => {
+          onChange(index, { ...mapping, text: event.currentTarget.value });
+        }}
+        prefix={'Display'}
+      />
+    ),
+    [onChange, mapping]
+  );
+
+  const removeButton = useMemo(
+    () => (
+      <IconButton
+        size="sm"
+        name="times"
+        surface="dashboard"
+        onClick={() => onRemove(index)}
+        className={styles.removeButton}
+      />
+    ),
+    [onRemove]
+  );
+
+  const renderMapping = useCallback(
+    (mappingRow: React.ReactNode, dragHandleProps: DraggableProvidedDragHandleProps, label: string) => (
+      <div className={styles.handleWrap}>
+        <DraggableMappingRow label={label} {...dragHandleProps} />
+        <VerticalGroup spacing={'xs'} width="100%">
+          {mappingRow}
+          {displayInput}
+        </VerticalGroup>
+      </div>
+    ),
+    []
+  );
 
   return (
     <Draggable draggableId={`mapping-${index}`} index={index}>
       {provided => (
         <div
-          className="gf-form-inline"
+          className={cx('gf-form-inline', styles.row)}
           ref={provided.innerRef}
           {...provided.draggableProps}
-          {...provided.dragHandleProps}
+          tabIndex={0}
         >
-          <div className="gf-form gf-form--grow">
-            {mapping.type === MappingType.ValueToText && (
-              <ValueMapRow
-                dragClass={dragClass}
-                mapping={(mapping as unknown) as ValueMap}
-                index={index}
-                onChange={onChange}
-              />
-            )}
-            {mapping.type === MappingType.RangeToText && (
-              <RangeMapRow
-                dragClass={dragClass}
-                mapping={(mapping as unknown) as RangeMap}
-                index={index}
-                onChange={onChange}
-              />
-            )}
+          <div className={styles.rowWrap}>
+            {mapping.type === MappingType.ValueToText &&
+              renderMapping(
+                <ValueMapRow mapping={(mapping as unknown) as ValueMap} index={index} onChange={onChange} />,
+                provided.dragHandleProps,
+                'Value'
+              )}
 
-            <div className="gf-form-label">
-              <Icon name="arrow-right" />
-            </div>
-            <Input
-              width={18}
-              defaultValue={mapping.text || ''}
-              placeholder={`Display`}
-              onBlur={event => {
-                onChange(index, { ...mapping, text: event.currentTarget.value });
-              }}
-            />
-            <div className="gf-form-label">
-              <IconButton size="sm" name="times" surface="dashboard" onClick={() => onRemove(index)} />
-            </div>
+            {mapping.type === MappingType.RangeToText &&
+              renderMapping(
+                <RangeMapRow mapping={(mapping as unknown) as RangeMap} index={index} onChange={onChange} />,
+                provided.dragHandleProps,
+                'Range'
+              )}
+            {removeButton}
           </div>
         </div>
       )}
@@ -206,12 +234,24 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  draggable: css`
-    padding: 0;
-    font-size: ${theme.typography.size.md};
-    opacity: 0.4;
-    &:hover {
-      color: ${theme.colors.textStrong};
-    }
+  row: css`
+    margin-bottom: ${theme.spacing.md};
+  `,
+  removeButton: css`
+    margin-top: 9px;
+  `,
+  displayInput: css`
+    width: 100%;
+    max-width: 200px;
+  `,
+  rowWrap: css`
+    display: flex;
+    justify-content: space-between;
+    flex-grow: 1;
+  `,
+  handleWrap: css`
+    display: flex;
+    flex-grow: 1;
+    width: 100%;
   `,
 }));

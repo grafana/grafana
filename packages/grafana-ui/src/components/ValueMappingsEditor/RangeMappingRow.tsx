@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import { ValueMapping, RangeMap } from '@grafana/data';
 import { Input } from '../Input/Input';
+import { HorizontalGroup } from '../Layout/Layout';
 
 interface RangeMapProps {
-  dragClass: string;
   mapping: RangeMap;
   index: number;
   onChange: (index: number, mapping: ValueMapping) => void;
@@ -45,29 +45,28 @@ export class RangeMapRow extends PureComponent<RangeMapProps> {
   };
 
   render() {
-    const { dragClass, mapping } = this.props;
+    const { mapping } = this.props;
     return (
-      <>
-        <div className="gf-form-label width-4">
-          <i className={dragClass} />
-          RANGE
-        </div>
+      <HorizontalGroup spacing="xs" wrap>
         <Input
-          width={9}
           type="number"
           defaultValue={mapping.from || ''}
-          placeholder={`From`}
+          placeholder="Value"
           onBlur={this.onFromChanged}
+          prefix="From"
+          tabIndex={0}
+          width={15}
         />
-        <div className="gf-form-label">TO</div>
         <Input
-          width={9}
           type="number"
           defaultValue={mapping.to || ''} // TO (comment for formatting)
-          placeholder={`To`}
+          placeholder="Value"
           onBlur={this.onToChanged}
+          prefix="To"
+          tabIndex={1}
+          width={15}
         />
-      </>
+      </HorizontalGroup>
     );
   }
 }

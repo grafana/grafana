@@ -119,6 +119,7 @@ const getStyles = stylesFactory(
 
     return {
       layout: css`
+        label: layout;
         display: flex;
         flex-direction: ${orientation === Orientation.Vertical ? 'column' : 'row'};
         flex-wrap: ${wrap ? 'wrap' : 'nowrap'};
@@ -130,6 +131,7 @@ const getStyles = stylesFactory(
         margin-bottom: ${marginCompensation};
       `,
       childWrapper: css`
+        label: layoutChildrenWrapper;
         margin-bottom: ${orientation === Orientation.Horizontal && !wrap ? 0 : finalSpacing};
         margin-right: ${orientation === Orientation.Horizontal ? finalSpacing : 0};
         display: flex;
@@ -149,6 +151,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, padding?: Spacing
   const marginSize = (margin && margin !== 'none' && theme.spacing[margin]) || 0;
   return {
     wrapper: css`
+      label: container;
       margin: ${marginSize};
       padding: ${paddingSize};
     `,

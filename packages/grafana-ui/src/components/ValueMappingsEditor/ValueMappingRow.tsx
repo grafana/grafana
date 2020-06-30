@@ -1,48 +1,18 @@
-import React, { PureComponent } from 'react';
-import { ValueMapping, ValueMap } from '@grafana/data';
+import React from 'react';
 import { Input } from '../Input/Input';
+import { ValueMap, ValueMapping } from '@grafana/data';
 
 interface ValueMapProps {
-  dragClass: string;
   mapping: ValueMap;
   index: number;
   onChange: (index: number, mapping: ValueMapping) => void;
 }
 
-export class ValueMapRow extends PureComponent<ValueMapProps> {
-  constructor(props: ValueMapProps) {
-    super(props);
-  }
-
-  onValueChanged = (event: React.FormEvent<HTMLInputElement>) => {
-    const { index, mapping, onChange } = this.props;
-    onChange(index, {
-      ...mapping,
-      value: event.currentTarget.value,
-    });
+export const ValueMapRow: React.FC<ValueMapProps> = ({ mapping, index, onChange }) => {
+  const onBlur = (event: React.FormEvent<HTMLInputElement>) => {
+    const txt = event.currentTarget.value;
+    onChange(index, { ...mapping, value: txt });
   };
 
-  render() {
-    const { mapping, dragClass } = this.props;
-
-    return (
-      <>
-        <div className="gf-form-label width-4">
-          <i className={dragClass} />
-          VALUE
-        </div>
-
-        <Input
-          width={21}
-          defaultValue={mapping.value || ''}
-          placeholder={`Value`}
-          onBlur={event => {
-            const { index, mapping, onChange } = this.props;
-            const txt = event.currentTarget.value;
-            onChange(index, { ...mapping, value: txt });
-          }}
-        />
-      </>
-    );
-  }
-}
+  return <Input width={15} defaultValue={mapping.value || ''} placeholder="Value" prefix="Map" onBlur={onBlur} />;
+};
