@@ -129,11 +129,13 @@ describe('enhanceDataFrame', () => {
         {
           matcherRegex: 'trace2=(\\w+)',
           name: 'trace2',
+          url: 'test',
           datasourceUid: 'uid',
         },
         {
           matcherRegex: 'trace2=(\\w+)',
           name: 'trace2',
+          url: 'test',
           datasourceUid: 'uid2',
         },
       ],
@@ -150,11 +152,13 @@ describe('enhanceDataFrame', () => {
     expect(fc.getFieldByName('trace2').config.links.length).toBe(2);
     expect(fc.getFieldByName('trace2').config.links[0]).toEqual({
       title: '',
-      meta: { datasourceUid: 'uid' },
+      internal: { datasourceUid: 'uid', query: { query: 'test' } },
+      url: '',
     });
     expect(fc.getFieldByName('trace2').config.links[1]).toEqual({
       title: '',
-      meta: { datasourceUid: 'uid2' },
+      internal: { datasourceUid: 'uid2', query: { query: 'test' } },
+      url: '',
     });
   });
 });

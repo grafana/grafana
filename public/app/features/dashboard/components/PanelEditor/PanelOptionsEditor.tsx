@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import {
+  DataFrame,
+  InterpolateFunction,
   PanelOptionsEditorItem,
   PanelPlugin,
-  DataFrame,
   StandardEditorContext,
-  InterpolateFunction,
 } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { Field, Label } from '@grafana/ui';
@@ -37,9 +37,10 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
     onChange(newOptions);
   };
 
-  const context: StandardEditorContext = {
+  const context: StandardEditorContext<any> = {
     data: data ?? [],
     replaceVariables,
+    options,
   };
 
   return (

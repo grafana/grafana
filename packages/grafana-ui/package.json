@@ -47,6 +47,8 @@
     "immutable": "3.8.2",
     "jquery": "3.5.1",
     "lodash": "4.17.15",
+    "monaco-editor": "0.20.0",
+    "react-monaco-editor": "0.36.0",
     "moment": "2.24.0",
     "papaparse": "4.6.3",
     "rc-cascader": "1.0.1",
