@@ -22,7 +22,10 @@ export const DraggableMappingRow = React.forwardRef<HTMLDivElement, DraggableMap
     );
   }
 );
-const getDraggableRowStyles = (theme: GrafanaTheme) => {
+const getDraggableRowStyles = (theme?: GrafanaTheme) => {
+  if (!theme) {
+    theme = {} as GrafanaTheme;
+  }
   return {
     draggable: css`
       padding: 0;

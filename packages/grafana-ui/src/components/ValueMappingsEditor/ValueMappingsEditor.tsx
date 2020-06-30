@@ -85,14 +85,14 @@ const DraggableMapping: React.FC<DraggableMappingProps> = ({ mapping, index, onC
             {mapping.type === MappingType.ValueToText &&
               renderMapping(
                 <ValueMapRow mapping={(mapping as unknown) as ValueMap} index={index} onChange={onChange} />,
-                provided.dragHandleProps,
+                provided.dragHandleProps!,
                 'Value'
               )}
 
             {mapping.type === MappingType.RangeToText &&
               renderMapping(
                 <RangeMapRow mapping={(mapping as unknown) as RangeMap} index={index} onChange={onChange} />,
-                provided.dragHandleProps,
+                provided.dragHandleProps!,
                 'Range'
               )}
             {removeButton}
@@ -233,9 +233,9 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme?: GrafanaTheme) => ({
   row: css`
-    margin-bottom: ${theme.spacing.md};
+    margin-bottom: ${theme?.spacing.md};
   `,
   removeButton: css`
     margin-top: 9px;
