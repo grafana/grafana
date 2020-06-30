@@ -133,6 +133,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		dimension := strings.TrimSpace(azJSONModel.Dimension)
 		dimensionFilter := strings.TrimSpace(azJSONModel.DimensionFilter)
 		if dimension != "" && dimensionFilter != "" && dimension != "None" {
+			// eg add `and Tier eq '*'`
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 			params.Add("top", azJSONModel.Top)
 		}
@@ -253,6 +254,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 		return AzureMonitorResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
+	azlog.Debug(string(body))
 	var data AzureMonitorResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
@@ -281,6 +283,9 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.RefID
 		frame.Fields[1].Name = metricName
+		if len(series.Metadatavalues) > 0 {
+			frame.Fields[1].Labels = data.Labels{metadataName: metadataValue}
+		}
 		frame.Fields[1].SetConfig(&data.FieldConfig{
 			Unit: amr.Value[0].Unit,
 		})

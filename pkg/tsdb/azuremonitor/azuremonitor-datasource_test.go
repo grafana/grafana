@@ -265,8 +265,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 		},
 		{
-			name:         "multi dimension time series response",
-			responseFile: "6-azure-monitor-response-multi-dimension.json",
+			name:         "single dimension time series response",
+			responseFile: "6-azure-monitor-response-single-dimension.json",
 			mockQuery: &AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
@@ -283,23 +283,20 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=PageBlob}.Blob Count", nil, []float64{
-						3, 3, 3, 3, 3, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("grafana{blobtype=PageBlob}.Blob Count", data.Labels{"blobtype": "PageBlob"},
+						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=BlockBlob}.Blob Count", nil, []float64{
-						1, 1, 1, 1, 1, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("grafana{blobtype=BlockBlob}.Blob Count", data.Labels{"blobtype": "BlockBlob"},
+						[]float64{1, 1, 1, 1, 1, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=Azure Data Lake Storage}.Blob Count", nil, []float64{
-						0, 0, 0, 0, 0, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("grafana{blobtype=Azure Data Lake Storage}.Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
+						[]float64{0, 0, 0, 0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 			},
 		},
 		{
@@ -324,8 +321,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 		},
 		{
-			name:         "multi dimension with alias",
-			responseFile: "6-azure-monitor-response-multi-dimension.json",
+			name:         "single dimension with alias",
+			responseFile: "6-azure-monitor-response-single-dimension.json",
 			mockQuery: &AzureMonitorQuery{
 				Alias: "{{dimensionname}}={{DimensionValue}}",
 				UrlComponents: map[string]string{
@@ -339,21 +336,20 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=PageBlob", nil, []float64{
-						3, 3, 3, 3, 3, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("blobtype=PageBlob", data.Labels{"blobtype": "PageBlob"},
+						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=BlockBlob", nil, []float64{
+					data.NewField("blobtype=BlockBlob", data.Labels{"blobtype": "BlockBlob"}, []float64{
 						1, 1, 1, 1, 1, 0,
 					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=Azure Data Lake Storage", nil, []float64{
+					data.NewField("blobtype=Azure Data Lake Storage", data.Labels{"blobtype": "Azure Data Lake Storage"}, []float64{
 						0, 0, 0, 0, 0, 0,
 					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 			},
