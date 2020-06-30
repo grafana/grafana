@@ -39,11 +39,16 @@ export class ResultProcessor {
           this.tableFrames.push(frame);
         }
       } else {
-        if (shouldShowInVisualisationType(frame, 'logs')) {
+        if (
+          shouldShowInVisualisationTypeStrict(frame, 'logs') ||
+          // Used by Loki
+          frame.meta?.responseType === 'Logs'
+        ) {
           this.logsFrames.push(frame);
-        } else if (shouldShowInVisualisationType(frame, 'trace')) {
+        } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
           this.traceFrames.push(frame);
-        } else if (shouldShowInVisualisationType(frame, 'table')) {
+        } else {
+          // We fallback to table if we do not have any better meta info about the dataframe.
           this.tableFrames.push(frame);
         }
       }
@@ -125,6 +130,11 @@ function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
     return isTimeSeriesCloudWatch(frame);
   }
 
+  // Used by Loki response
+  if (frame.meta?.responseType === 'Metrics') {
+    return true;
+  }
+
   if (frame.fields.length === 2) {
     if (frame.fields[0].type === FieldType.time) {
       return true;
@@ -140,6 +150,10 @@ function shouldShowInVisualisationType(frame: DataFrame, visualisation: Preferre
   }
 
   return true;
+}
+
+function shouldShowInVisualisationTypeStrict(frame: DataFrame, visualisation: PreferredVisualisationType) {
+  return frame.meta?.preferredVisualisationType === visualisation;
 }
 
 // TEMP: Temporary hack. Remove when logs/metrics unification is done
