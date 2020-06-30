@@ -74,13 +74,16 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const aggregation = templateSrv.replace(item.aggregation, scopedVars);
     const top = templateSrv.replace(item.top || '', scopedVars);
 
-    const dimensionsFilters = item.dimensionFilters.map(f => {
-      return {
-        dimension: templateSrv.replace(f.dimension, scopedVars),
-        operator: f.operator || 'eq',
-        filter: templateSrv.replace(f.filter, scopedVars),
-      };
-    });
+    const dimensionsFilters = item.dimensionFilters
+      .filter(f => f.dimension && f.dimension !== 'None')
+      .map(f => {
+        const filter = templateSrv.replace(f.filter, scopedVars);
+        return {
+          dimension: templateSrv.replace(f.dimension, scopedVars),
+          operator: f.operator || 'eq',
+          filter: filter || '*', // send * when empty
+        };
+      });
 
     return {
       refId: target.refId,
