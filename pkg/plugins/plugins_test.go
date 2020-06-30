@@ -177,7 +177,6 @@ func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
 		{name: "renderer", isBackendOnly: true},
 		{name: "app", isBackendOnly: false},
 	} {
-		c := c
 		t.Run(fmt.Sprintf("Plugin %s", c.name), func(t *testing.T) {
 			result := pluginScanner.IsBackendOnlyPlugin(c.name)
 

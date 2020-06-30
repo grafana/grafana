@@ -98,7 +98,6 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			for k, v := range commonAzureModelProps {
 				tt.azureMonitorVariedProperties[k] = v
@@ -364,7 +363,6 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	datasource := &AzureMonitorDatasource{}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			azData, err := loadTestFile("azuremonitor/" + tt.responseFile)
 			require.NoError(t, err)
@@ -422,7 +420,6 @@ func TestFindClosestAllowIntervalMS(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			interval := findClosestAllowedIntervalMS(tt.inputInterval, tt.allowedTimeGrains)
 			require.Equal(t, tt.expectedInterval, interval)

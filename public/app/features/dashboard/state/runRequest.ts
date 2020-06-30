@@ -156,7 +156,7 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
 }
 
 /**
- * All panels will be passed tables that have our best guess at colum type set
+ * All panels will be passed tables that have our best guess at column type set
  *
  * This is also used by PanelChrome for snapshot support
  */

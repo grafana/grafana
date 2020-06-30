@@ -157,7 +157,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
-                <TimeZonePicker value={timezone} onChange={this.onTimeZoneChanged} />
+                <TimeZonePicker includeInternal={true} value={timezone} onChange={this.onTimeZoneChanged} />
               </Field>
               <div className="gf-form-button-row">
                 <Button variant="primary">Save</Button>

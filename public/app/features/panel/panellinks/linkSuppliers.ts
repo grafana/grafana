@@ -2,13 +2,11 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   DataLink,
   DisplayValue,
-  Field,
   FieldDisplay,
   formattedValueToString,
   getFieldDisplayValuesProxy,
   getTimeField,
   Labels,
-  LinkModel,
   LinkModelSupplier,
   ScopedVar,
   ScopedVars,
@@ -50,7 +48,6 @@ interface DataLinkScopedVars extends ScopedVars {
 /**
  * Link suppliers creates link models based on a link origin
  */
-
 export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> | undefined => {
   const links = value.field.links;
   if (!links || links.length === 0) {
@@ -124,7 +121,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         console.log('VALUE', value);
       }
 
-      return links.map(link => {
+      return links.map((link: DataLink) => {
         return getLinkSrv().getDataLinkUIModel(link, scopedVars, value);
       });
     },
@@ -145,26 +142,4 @@ export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<Pane
       });
     },
   };
-};
-
-export const getLinksFromLogsField = (
-  field: Field,
-  rowIndex: number
-): Array<{ linkModel: LinkModel<Field>; link: DataLink }> => {
-  const scopedVars: any = {};
-  scopedVars['__value'] = {
-    value: {
-      raw: field.values.get(rowIndex),
-    },
-    text: 'Raw value',
-  };
-
-  return field.config.links
-    ? field.config.links.map(link => {
-        return {
-          link,
-          linkModel: getLinkSrv().getDataLinkUIModel(link, scopedVars, field),
-        };
-      })
-    : [];
 };

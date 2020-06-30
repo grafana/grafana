@@ -128,7 +128,6 @@ func TestFrameToSeriesSlice(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			seriesSlice, err := FrameToSeriesSlice(tt.frame)
 			tt.Err(t, err)

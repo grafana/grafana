@@ -8,12 +8,10 @@ import {
   hasNonEmptyQuery,
   parseUrlState,
   refreshIntervalToSortOrder,
-  serializeStateToUrlParam,
   sortLogsResult,
   SortOrder,
   updateHistory,
 } from './explore';
-import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
 import {
   DataQueryError,
@@ -24,8 +22,10 @@ import {
   LogsDedupStrategy,
   LogsModel,
   MutableDataFrame,
+  ExploreUrlState,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
