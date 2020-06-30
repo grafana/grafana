@@ -154,7 +154,7 @@ export function RichHistoryQueriesTab(props: Props) {
 
   useEffect(() => {
     setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchInput, timeFilter));
-  }, [queries, sortOrder, datasourceFilters]);
+  }, [queries, sortOrder, datasourceFilters, timeFilter]);
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
