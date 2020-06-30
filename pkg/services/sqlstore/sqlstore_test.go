@@ -71,7 +71,6 @@ func TestSqlConnectionString(t *testing.T) {
 		t.Helper()
 
 		for _, testCase := range sqlStoreTestCases {
-			testCase := testCase
 			Convey(testCase.name, func() {
 				sqlstore := &SqlStore{}
 				sqlstore.Cfg = makeSqlStoreTestConfig(testCase.dbType, testCase.dbHost)

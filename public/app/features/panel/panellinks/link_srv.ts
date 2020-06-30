@@ -5,7 +5,6 @@ import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
   DataFrame,
-  DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
   Field,
@@ -19,6 +18,7 @@ import {
   VariableSuggestionsScope,
   urlUtil,
   textUtil,
+  DataLink,
 } from '@grafana/data';
 
 const timeRangeVars = [
