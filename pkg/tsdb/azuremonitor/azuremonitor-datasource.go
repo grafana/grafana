@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -56,7 +57,6 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		if err != nil {
 			return nil, err
 		}
-		// azlog.Debug("AzureMonitor", "Response", resp)
 
 		err = e.parseResponse(queryRes, resp, query)
 		if err != nil {
@@ -283,21 +283,23 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 
 	frames := data.Frames{}
 	for _, series := range amr.Value[0].Timeseries {
-		//metadataName := ""
-		//metadataValue := ""
 		labels := data.Labels{}
 		for _, md := range series.Metadatavalues {
 			labels[md.Name.LocalizedValue] = md.Value
 		}
-		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID)
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.RefID
-		frame.Fields[1].Name = metricName
-		frame.Fields[1].Labels = labels
-		frame.Fields[1].SetConfig(&data.FieldConfig{
+		dataField := frame.Fields[1]
+		dataField.Name = amr.Value[0].Name.LocalizedValue
+		dataField.Labels = labels
+		dataField.SetConfig(&data.FieldConfig{
 			Unit: amr.Value[0].Unit,
 		})
+		if query.Alias != "" {
+			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+		}
 
 		requestedAgg := query.Params.Get("aggregation")
 
@@ -331,14 +333,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name
 // Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string) string {
-	if alias == "" {
-		if len(metadataName) > 0 {
-			return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
-		}
-		return fmt.Sprintf("%s.%s", resourceName, metricName)
-	}
-
+func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string, labels data.Labels) string {
 	startIndex := strings.Index(seriesID, "/resourceGroups/") + 16
 	endIndex := strings.Index(seriesID, "/providers")
 	resourceGroup := seriesID[startIndex:endIndex]
@@ -364,14 +359,25 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 			return []byte(metricName)
 		}
 
+		keys := make([]string, 0, len(labels))
+		if metaPartName == "dimensionname" || metaPartName == "dimensionvalue" {
+			for k := range labels {
+				keys = append(keys, k)
+			}
+			keys = sort.StringSlice(keys)
+		}
+
 		if metaPartName == "dimensionname" {
-			return []byte(metadataName)
+			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
-			return []byte(metadataValue)
+			return []byte(labels[keys[0]])
 		}
 
+		if v, ok := labels[metaPartName]; ok {
+			return []byte(v)
+		}
 		return in
 	})
 

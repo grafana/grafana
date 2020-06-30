@@ -199,7 +199,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
+					data.NewField("Percentage CPU", nil, []float64{
 						2.0875, 2.1525, 2.155, 3.6925, 2.44,
 					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
 			},
@@ -219,7 +219,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
+					data.NewField("Percentage CPU", nil, []float64{
 						8.26, 8.7, 14.82, 10.07, 8.52,
 					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
 			},
@@ -239,7 +239,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 26, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
+					data.NewField("Percentage CPU", nil, []float64{
 						3.07, 2.92, 2.87, 2.27, 2.52,
 					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
 			},
@@ -259,7 +259,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 43, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
+					data.NewField("Percentage CPU", nil, []float64{
 						1.51, 2.38, 1.69, 2.27, 1.96,
 					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
 			},
@@ -279,7 +279,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
+					data.NewField("Percentage CPU", nil, []float64{
 						4, 4, 4, 4, 4,
 					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
 			},
@@ -299,19 +299,19 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana.Blob Count", data.Labels{"blobtype": "PageBlob"},
+					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
 						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana.Blob Count", data.Labels{"blobtype": "BlockBlob"},
+					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
 						[]float64{1, 1, 1, 1, 1, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana.Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
+					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
 						[]float64{0, 0, 0, 0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 			},
 		},
@@ -331,9 +331,9 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU", nil, []float64{
+					data.NewField("Percentage CPU", nil, []float64{
 						8.26, 8.7, 14.82, 10.07, 8.52,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					}).SetConfig(&data.FieldConfig{Unit: "Percent", DisplayName: "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU"})),
 			},
 		},
 		{
@@ -352,29 +352,29 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					// TODO Set FieldConfig DisplayName when using Alias feature.
-					data.NewField("", data.Labels{"blobtype": "PageBlob"},
-						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
+						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count", DisplayName: "blobtype=PageBlob"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("", data.Labels{"blobtype": "BlockBlob"}, []float64{
+					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"}, []float64{
 						1, 1, 1, 1, 1, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					}).SetConfig(&data.FieldConfig{Unit: "Count", DisplayName: "blobtype=BlockBlob"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("", data.Labels{"blobtype": "Azure Data Lake Storage"}, []float64{
+					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"}, []float64{
 						0, 0, 0, 0, 0, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					}).SetConfig(&data.FieldConfig{Unit: "Count", DisplayName: "blobtype=Azure Data Lake Storage"})),
 			},
 		},
 		{
-			name:         "multiple dimension time series response",
+			name:         "multiple dimension time series response with label alias",
 			responseFile: "7-azure-monitor-response-multi-dimension.json",
 			mockQuery: &AzureMonitorQuery{
+				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{tier}}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -386,20 +386,23 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
-					data.NewField("grafana.Blob Capacity", data.Labels{"blobtype": "PageBlob", "tier": "Standard"},
-						[]float64{675530, 675530, 675530}).SetConfig(&data.FieldConfig{Unit: "Bytes"})),
+					data.NewField("Blob Capacity", data.Labels{"blobtype": "PageBlob", "tier": "Standard"},
+						[]float64{675530, 675530, 675530}).SetConfig(
+						&data.FieldConfig{Unit: "Bytes", DisplayName: "danieltest {Blob Type=PageBlob, Tier=Standard}"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
-					data.NewField("grafana.Blob Capacity", data.Labels{"blobtype": "BlockBlob", "tier": "Hot"},
-						[]float64{0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Bytes"})),
+					data.NewField("Blob Capacity", data.Labels{"blobtype": "BlockBlob", "tier": "Hot"},
+						[]float64{0, 0, 0}).SetConfig(
+						&data.FieldConfig{Unit: "Bytes", DisplayName: "danieltest {Blob Type=BlockBlob, Tier=Hot}"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
-					data.NewField("grafana.Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
-						[]float64{0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Bytes"})),
+					data.NewField("Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
+						[]float64{0, 0, 0}).SetConfig(
+						&data.FieldConfig{Unit: "Bytes", DisplayName: "danieltest {Blob Type=Azure Data Lake Storage, Tier=Cool}"})),
 			},
 		},
 	}
