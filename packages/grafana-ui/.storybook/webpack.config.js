@@ -85,12 +85,6 @@ module.exports = ({ config, mode }) => {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
-        monaco: {
-          test: /[\\/]node_modules[\\/](monaco-editor)[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
         vendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
