@@ -8,7 +8,7 @@ import kbn from 'app/core/utils/kbn';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto, IPromise } from 'angular';
 import { DataFrame, PanelEvents } from '@grafana/data';
-import { AzureQueryType } from './types';
+import { AzureQueryType, AzureMetricQuery } from './types';
 
 export interface ResultFormat {
   text: string;
@@ -27,23 +27,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     refId: string;
     queryType: AzureQueryType;
     subscription: string;
-    azureMonitor: {
-      resourceGroup: string;
-      resourceName: string;
-      metricDefinition: string;
-      metricNamespace: string;
-      metricName: string;
-      dimensionFilter: string;
-      timeGrain: string;
-      timeGrainUnit: string;
-      allowedTimeGrainsMs: number[];
-      dimensions: any[];
-      dimension: any;
-      top: string;
-      aggregation: string;
-      aggOptions: string[];
-      timeGrains: Array<{ text: string; value: string }>;
-    };
+    azureMonitor: AzureMetricQuery;
     azureLogAnalytics: {
       query: string;
       resultFormat: string;
@@ -139,6 +123,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     this.migrateApplicationInsightsDimensions();
 
+    migrateMetricsDimensionFilters(this.target.azureMonitor);
+
     this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
     this.resultFormats = [
@@ -219,12 +205,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       }
     }
 
+    const oldAzureTimeGrains = (this.target.azureMonitor as any).timeGrains;
     if (
-      this.target.azureMonitor.timeGrains &&
-      this.target.azureMonitor.timeGrains.length > 0 &&
+      oldAzureTimeGrains &&
+      oldAzureTimeGrains.length > 0 &&
       (!this.target.azureMonitor.allowedTimeGrainsMs || this.target.azureMonitor.allowedTimeGrainsMs.length === 0)
     ) {
-      this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(this.target.azureMonitor.timeGrains);
+      this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(oldAzureTimeGrains);
     }
 
     if (
@@ -328,10 +315,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.target.azureMonitor.resourceName = this.defaultDropdownValue;
       this.target.azureMonitor.metricName = this.defaultDropdownValue;
       this.target.azureMonitor.aggregation = '';
-      this.target.azureMonitor.timeGrains = [];
       this.target.azureMonitor.timeGrain = '';
-      this.target.azureMonitor.dimensions = [];
-      this.target.azureMonitor.dimension = '';
+      this.target.azureMonitor.dimensionFilters = [];
     }
   }
 
@@ -439,10 +424,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.metricNamespace = this.defaultDropdownValue;
     this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.aggregation = '';
-    this.target.azureMonitor.timeGrains = [];
     this.target.azureMonitor.timeGrain = '';
-    this.target.azureMonitor.dimensions = [];
-    this.target.azureMonitor.dimension = '';
+    this.target.azureMonitor.dimensionFilters = [];
     this.refresh();
   }
 
@@ -451,27 +434,22 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.metricNamespace = this.defaultDropdownValue;
     this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.aggregation = '';
-    this.target.azureMonitor.timeGrains = [];
     this.target.azureMonitor.timeGrain = '';
-    this.target.azureMonitor.dimensions = [];
-    this.target.azureMonitor.dimension = '';
+    this.target.azureMonitor.dimensionFilters = [];
   }
 
   onResourceNameChange() {
     this.target.azureMonitor.metricNamespace = this.defaultDropdownValue;
     this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.aggregation = '';
-    this.target.azureMonitor.timeGrains = [];
     this.target.azureMonitor.timeGrain = '';
-    this.target.azureMonitor.dimensions = [];
-    this.target.azureMonitor.dimension = '';
+    this.target.azureMonitor.dimensionFilters = [];
     this.refresh();
   }
 
   onMetricNamespacesChange() {
     this.target.azureMonitor.metricName = this.defaultDropdownValue;
-    this.target.azureMonitor.dimensions = [];
-    this.target.azureMonitor.dimension = '';
+    this.target.azureMonitor.dimensionFilters = [];
   }
 
   onMetricNameChange(): IPromise<void> {
@@ -489,16 +467,20 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.replace(this.target.azureMonitor.metricName)
       )
       .then((metadata: any) => {
-        this.target.azureMonitor.aggOptions = metadata.supportedAggTypes || [metadata.primaryAggType];
-        this.target.azureMonitor.aggregation = metadata.primaryAggType;
-        this.target.azureMonitor.timeGrains = [{ text: 'auto', value: 'auto' }].concat(metadata.supportedTimeGrains);
-        this.target.azureMonitor.timeGrain = 'auto';
+        console.log('Update metadata', metadata);
 
+        this.target.azureMonitor.aggregation = metadata.primaryAggType;
+        this.target.azureMonitor.timeGrain = 'auto';
         this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(metadata.supportedTimeGrains || []);
 
-        this.target.azureMonitor.dimensions = metadata.dimensions;
+        // HACK: this saves the last metadata values in the panel json ¯\_(ツ)_/¯
+        const hackState = this.target.azureMonitor as any;
+        hackState.aggOptions = metadata.supportedAggTypes || [metadata.primaryAggType];
+        hackState.timeGrains = [{ text: 'auto', value: 'auto' }].concat(metadata.supportedTimeGrains);
+        hackState.dimensions = metadata.dimensions;
+
         if (metadata.dimensions.length > 0) {
-          this.target.azureMonitor.dimension = metadata.dimensions[0].value;
+          //  this.target.azureMonitor.dimension = metadata.dimensions[0].value;
         }
 
         return this.refresh();
@@ -537,11 +519,27 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   getAzureMonitorAutoInterval() {
-    return this.generateAutoUnits(this.target.azureMonitor.timeGrain, this.target.azureMonitor.timeGrains);
+    return this.generateAutoUnits(this.target.azureMonitor.timeGrain, (this.target.azureMonitor as any).timeGrains);
   }
 
   getApplicationInsightAutoInterval() {
     return this.generateAutoUnits(this.target.appInsights.timeGrain, this.target.appInsights.timeGrains);
+  }
+
+  azureMonitorAddDimensionFilter() {
+    console.log('Add dimension', this.target.azureMonitor);
+    this.target.azureMonitor.dimensionFilters.push({
+      dimension: '',
+      operator: 'eq',
+      filter: '',
+    });
+    this.refresh();
+  }
+
+  azureMonitorRemoveDimensionFilter(index: number) {
+    this.target.azureMonitor.dimensionFilters.splice(index, 1);
+    this.refresh();
+    console.log('Remove dimension', index, this.target.azureMonitor);
   }
 
   /* Azure Log Analytics */
@@ -693,5 +691,22 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       );
     }
     this.refresh();
+  }
+}
+
+// Modifies the actual query object
+export function migrateMetricsDimensionFilters(item: AzureMetricQuery) {
+  if (!item.dimensionFilters) {
+    item.dimensionFilters = [];
+  }
+  const oldDimension = (item as any).dimension;
+  if (oldDimension && oldDimension !== 'None') {
+    item.dimensionFilters.push({
+      dimension: oldDimension,
+      operator: 'eq',
+      filter: (item as any).dimensionFilter,
+    });
+    delete (item as any).dimension;
+    delete (item as any).dimensionFilter;
   }
 }
