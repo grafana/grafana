@@ -34,7 +34,10 @@ export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
+
+// Code editor
 export { CodeEditor } from './Monaco/CodeEditorLazy';
+export { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
 
 // TODO: namespace
 export { Modal } from './Modal/Modal';

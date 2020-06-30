@@ -1,4 +1,5 @@
 export type CodeEditorChangeHandler = (value: string) => void;
+export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
 
 export interface CodeEditorProps {
   value: string;
@@ -25,17 +26,15 @@ export interface CodeEditorProps {
   /**
    * Language agnostic suggestion completions -- typically for template variables
    */
-  getSuggestions?: () => CodeEditorSuggestionItem[];
+  getSuggestions?: CodeEditorSuggestionProvider;
 }
 
 export enum CodeEditorSuggestionItemKind {
-  Method = 0,
-  Function = 1,
-  Field = 3,
-  Variable = 4,
-  Property = 9,
-  Constant = 14,
-  Keyword = 17,
+  Method = 'method',
+  Field = 'field',
+  Property = 'property',
+  Constant = 'constant',
+  Text = 'text',
 }
 
 export interface CodeEditorSuggestionItem {
@@ -57,6 +56,11 @@ export interface CodeEditorSuggestionItem {
    * about this item, like type or symbol information.
    */
   detail?: string;
+
+  /**
+   * A human-readable string that represents a doc-comment.
+   */
+  documentation?: string; // | IMarkdownString;
 
   /**
    * A string or snippet that should be inserted in a document when selecting
