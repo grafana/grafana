@@ -15,6 +15,8 @@ describe('TableContainer', () => {
       showingTable: true,
       tableResult: {} as DataFrame,
       toggleTable: {} as typeof toggleTable,
+      splitOpen: (() => {}) as any,
+      range: {} as any,
     };
 
     const wrapper = shallow(<TableContainer {...props} />);
@@ -34,6 +36,8 @@ describe('TableContainer', () => {
         length: 0,
       } as DataFrame,
       toggleTable: {} as typeof toggleTable,
+      splitOpen: (() => {}) as any,
+      range: {} as any,
     };
 
     const wrapper = render(<TableContainer {...props} />);
