@@ -148,7 +148,7 @@ export class BackendSrv implements BackendService {
       this.inFlightRequests.next(options.requestId);
     }
 
-    options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
+    options = this.parseRequestOptions(options);
 
     const fromFetchStream = this.getFromFetchStream(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
@@ -178,7 +178,7 @@ export class BackendSrv implements BackendService {
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
+    options = this.parseRequestOptions(options);
 
     const fromFetchStream = this.getFromFetchStream<T>(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
@@ -213,11 +213,7 @@ export class BackendSrv implements BackendService {
       this.inFlightRequests.next(options.requestId);
     }
 
-    options = this.parseDataSourceRequestOptions(
-      options,
-      this.dependencies.contextSrv.user?.orgId,
-      this.noBackendCache
-    );
+    options = this.parseRequestOptions(options);
 
     const fromFetchStream = this.getFromFetchStream(options);
     const failureStream = fromFetchStream.pipe(this.toDataSourceRequestFailureStream(options));
@@ -393,9 +389,12 @@ export class BackendSrv implements BackendService {
     }, []);
   }
 
-  private parseRequestOptions = (options: BackendSrvRequest, orgId?: number): BackendSrvRequest => {
-    options.retry = options.retry ?? 0;
+  private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
+    const orgId = this.dependencies.contextSrv.user?.orgId;
     const requestIsLocal = !options.url.match(/^http/);
+
+    // init retry counter
+    options.retry = options.retry ?? 0;
 
     if (requestIsLocal) {
       if (orgId) {
@@ -410,41 +409,19 @@ export class BackendSrv implements BackendService {
       if (options.url.endsWith('/')) {
         options.url = options.url.slice(0, -1);
       }
-    }
-
-    return options;
-  };
-
-  private parseDataSourceRequestOptions = (
-    options: BackendSrvRequest,
-    orgId?: number,
-    noBackendCache?: boolean
-  ): BackendSrvRequest => {
-    options.retry = options.retry ?? 0;
-    const requestIsLocal = !options.url.match(/^http/);
-
-    if (requestIsLocal) {
-      if (orgId) {
-        options.headers = options.headers || {};
-        options.headers['X-Grafana-Org-Id'] = orgId;
-      }
-
-      if (options.url.startsWith('/')) {
-        options.url = options.url.substring(1);
-      }
 
       if (options.headers?.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
         delete options.headers.Authorization;
       }
 
-      if (noBackendCache) {
+      if (this.noBackendCache) {
         options.headers['X-Grafana-NoCache'] = 'true';
       }
     }
 
     return options;
-  };
+  }
 
   private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     const url = parseUrlFromOptions(options);
