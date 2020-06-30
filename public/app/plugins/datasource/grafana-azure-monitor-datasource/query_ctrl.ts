@@ -8,6 +8,7 @@ import kbn from 'app/core/utils/kbn';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto, IPromise } from 'angular';
 import { DataFrame, PanelEvents } from '@grafana/data';
+import { AzureQueryType } from './types';
 
 export interface ResultFormat {
   text: string;
@@ -19,9 +20,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   defaultDropdownValue = 'select';
 
+  dummyDiminsionString = '+';
+
   target: {
+    // should be: AzureMonitorQuery
     refId: string;
-    queryType: string;
+    queryType: AzureQueryType;
     subscription: string;
     azureMonitor: {
       resourceGroup: string;
@@ -46,7 +50,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       workspace: string;
     };
     appInsights: {
-      rawQuery: boolean;
       // metric style query when rawQuery == false
       metricName: string;
       dimension: any;
@@ -62,12 +65,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       timeGrain: string;
       timeGrains: Array<{ text: string; value: string }>;
       allowedTimeGrainsMs: number[];
-
-      // query style query when rawQuery == true
-      rawQueryString: string;
-      timeColumn: string;
-      valueColumn: string;
-      segmentColumn: string;
+    };
+    insightsAnalytics: {
+      query: any;
+      resultFormat: string;
     };
   };
 
@@ -105,12 +106,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     },
     appInsights: {
       metricName: this.defaultDropdownValue,
-      rawQuery: false,
-      rawQueryString: '',
-      dimension: 'none',
+      // dimension: [],
       timeGrain: 'auto',
-      timeColumn: 'timestamp',
-      valueColumn: '',
+    },
+    insightsAnalytics: {
+      query: '',
+      resultFormat: 'time_series',
     },
   };
 
@@ -135,6 +136,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.migrateToDefaultNamespace();
 
     this.migrateApplicationInsightsKeys();
+
+    this.migrateApplicationInsightsDimensions();
 
     this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
@@ -268,6 +271,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         appInsights[mappings[old]] = appInsights[old];
         delete appInsights[old];
       }
+    }
+  }
+
+  migrateApplicationInsightsDimensions() {
+    const { appInsights } = this.target;
+
+    if (!appInsights.dimension) {
+      appInsights.dimension = [];
+    }
+
+    if (_.isString(appInsights.dimension)) {
+      appInsights.dimension = [appInsights.dimension as string];
     }
   }
 
@@ -614,11 +629,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  onAppInsightsQueryChange = (nextQuery: string) => {
-    this.target.appInsights.rawQueryString = nextQuery;
+  onInsightsAnalyticsQueryChange = (nextQuery: string) => {
+    this.target.insightsAnalytics.query = nextQuery;
   };
 
-  onAppInsightsQueryExecute = () => {
+  onQueryExecute = () => {
     return this.refresh();
   };
 
@@ -626,8 +641,27 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     return this.datasource.appInsightsDatasource.getQuerySchema().catch(this.handleQueryCtrlError.bind(this));
   };
 
+  removeGroupBy = (index: number) => {
+    const { appInsights } = this.target;
+    appInsights.dimension.splice(index, 1);
+    this.refresh();
+  };
+
   getAppInsightsGroupBySegments(query: any) {
-    return _.map(this.target.appInsights.dimensions, (option: string) => {
+    const { appInsights } = this.target;
+
+    // HACK alert... there must be a better way!
+    if (this.dummyDiminsionString && this.dummyDiminsionString.length && '+' !== this.dummyDiminsionString) {
+      if (!appInsights.dimension) {
+        appInsights.dimension = [];
+      }
+      appInsights.dimension.push(this.dummyDiminsionString);
+      this.dummyDiminsionString = '+';
+      this.refresh();
+    }
+
+    // Return the list of dimensions stored on the query object from the last request :(
+    return _.map(appInsights.dimensions, (option: string) => {
       return { text: option, value: option };
     });
   }
@@ -635,10 +669,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   resetAppInsightsGroupBy() {
     this.target.appInsights.dimension = 'none';
     this.refresh();
-  }
-
-  toggleEditorMode() {
-    this.target.appInsights.rawQuery = !this.target.appInsights.rawQuery;
   }
 
   updateTimeGrainType() {

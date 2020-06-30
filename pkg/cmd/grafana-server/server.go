@@ -157,7 +157,7 @@ func (s *Server) Run() (err error) {
 
 	s.notifySystemd("READY=1")
 
-	return
+	return err
 }
 
 func (s *Server) Shutdown(reason string) {

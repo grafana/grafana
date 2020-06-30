@@ -221,7 +221,10 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)

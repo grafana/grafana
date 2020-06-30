@@ -8,7 +8,7 @@ import { AzureDataSourceJsonData } from '../types';
 const templateSrv = new TemplateSrv();
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => templateSrv,
 }));
