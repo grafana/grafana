@@ -2,6 +2,7 @@ const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 module.exports = ({ config, mode }) => {
+  const isProductionBuild = mode === 'PRODUCTION';
   config.module.rules = [
     ...(config.module.rules || []),
     {
@@ -84,12 +85,6 @@ module.exports = ({ config, mode }) => {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
-        monaco: {
-          test: /[\\/]node_modules[\\/](monaco-editor)[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
         vendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
@@ -105,11 +100,13 @@ module.exports = ({ config, mode }) => {
         },
       },
     },
-    minimize: true,
-    minimizer: [
-      new TerserPlugin({ cache: false, parallel: false, sourceMap: false, exclude: /monaco/ }),
-      new OptimizeCSSAssetsPlugin({}),
-    ],
+    minimize: isProductionBuild,
+    minimizer: isProductionBuild
+      ? [
+          new TerserPlugin({ cache: false, parallel: false, sourceMap: false, exclude: /monaco/ }),
+          new OptimizeCSSAssetsPlugin({}),
+        ]
+      : [],
   };
 
   config.resolve.extensions.push('.ts', '.tsx', '.mdx');
