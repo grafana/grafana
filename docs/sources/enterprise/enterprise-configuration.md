@@ -195,7 +195,7 @@ Location of the Vault server.
 
 ### namespace
 
-Vault's namespace if using Vault with multi-tenancy.
+Vault namespace if using Vault with multi-tenancy.
 
 ### auth_method
 
@@ -203,16 +203,16 @@ Method for authenticating towards Vault. Vault is inactive if this option is not
 
 ### token
 
- Secret token to connect to Vault when auth_method is `token`.
+Secret token to connect to Vault when auth_method is `token`.
 
- ### lease_renewal_interval
+### lease_renewal_interval
 
- Time between checking if there are any secrets which needs to be renewed.
+Time between checking if there are any secrets which needs to be renewed.
 
- ### lease_renewal_expires_within
+### lease_renewal_expires_within
 
- Time until expiration for tokens which are renewed. Should have a value higher than lease_renewal_interval.
+Time until expiration for tokens which are renewed. Should have a value higher than lease_renewal_interval.
 
- ### lease_renewal_increment
+### lease_renewal_increment
 
- New duration for renewed tokens. Vault may be configured to ignore this value and impose a stricter limit.
+New duration for renewed tokens. Vault may be configured to ignore this value and impose a stricter limit.

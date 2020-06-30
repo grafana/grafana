@@ -12,27 +12,26 @@ weight = 700
 
 > Only available in Grafana Enterprise v7.1+.
 
-For organizations managing their secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault),
-Grafana integrates with Vault for [Configuration]({{< relref "../administration/configuration.md" >}})
+If you are managing your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../administration/configuration.md" >}})
 and [Provisioning]({{< relref "../administration/provisioning.md" >}}).
 
-> Note: If you have Grafana set up for [high availability]({{< relref "../tutorials/ha_setup.md" >}}) we advise not to use dynamic secrets for provisioning files.
+> **Note:** If you have Grafana set up for [high availability]({{< relref "../tutorials/ha_setup.md" >}}), then we advise not to use dynamic secrets for provisioning files.
 > Each Grafana instance is responsible for renewing its own leases. Your data sources' leases might expire when one of your Grafana servers shuts down.
 
 ## Configuration
 
-Before using Vault you need to activate it by providing a URL, authentication method (currently only token),
-and a token for your Vault service. Grafana will automatically renew the service token if it is renewable and
+Before using Vault, you need to activate it by providing a URL, authentication method (currently only token),
+and a token for your Vault service. Grafana automatically renews the service token if it is renewable and
 set up with a limited lifetime.
 
-If you're using short-lived leases, you can also configure how often Grafana should renew the lease and for
-how long. We recommend keeping the defaults here unless you run into problems.
+If you're using short-lived leases, then you can also configure how often Grafana should renew the lease and for
+how long. We recommend keeping the defaults unless you run into problems.
 
 ```ini
 [keystore.vault]
 # Location of the Vault server
 ;url =
-# Vault's namespace if using Vault with multi-tenancy
+# Vault namespace if using Vault with multi-tenancy
 ;namespace =
 # Method for authenticating towards Vault. Vault is inactive if this option is not set
 # Possible values: token
@@ -56,16 +55,18 @@ auth_method = token
 token = s.sAZLyI0r7sFLMPq6MWtoOhAN # replace with your key
 ```
 
-
 ## Using the Vault expander
 
-When you've configured Vault you'll need to set the configuration or provisioning files you wish to
+After you configure Vault, you must set the configuration or provisioning files you wish to
 use Vault. Vault configuration is an extension of configuration's [variable expansion]({{< relref "../administration/configuration.md#variable-expansion" >}}) and follows the
 `$__vault{<argument>}` syntax.
 
-The argument to Vault consists of three parts separated by a colon: the first part specifies which secrets engine
-should be used, the second part which secret should be accessed, and the third part which field of that secret
-should be used. For example, if you place a Key/Value secret for the Grafana admin user in _secret/grafana/admin_defaults_
+The argument to Vault consists of three parts separated by a colon:
+* The first part specifies which secrets engine should be used.
+* The second part specifies which secret should be accessed.
+* The third part specifies which field of that secret should be used.
+
+For example, if you place a Key/Value secret for the Grafana admin user in _secret/grafana/admin_defaults_
 the syntax for accessing it's _password_ field would be `$__vault{kv:secret/grafana/admin_defaults:password}`.
 
 ### Secrets engines
@@ -84,7 +85,7 @@ $__vault{kv:secret/grafana/smtp:username}
 
 #### Databases
 
-Vault's [Databases secrets engines](https://www.vaultproject.io/docs/secrets/databases) is a family of
+The Vault [databases secrets engines](https://www.vaultproject.io/docs/secrets/databases) is a family of
 secret engines which shares a similar syntax and grants the user dynamic access to a database.
 You can use this both for setting up Grafana's own database access and for provisioning data sources.
 
@@ -94,10 +95,12 @@ $__vault{database:database/creds/grafana:username}
 
 ### Examples
 
+The following examples show you how to set your [configuration]({{< relref "../administration/configuration.md" >}}) or [provisioning]({{< relref "../administration/provisioning.md" >}}) files to use Vault to retrieve configuration values.
+
 #### Configuration
 
 The following is a partial example for using Vault to set up a Grafana configuration file's email and database credentials.
-Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) section for more information.
+Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
 
 ```ini
 [smtp]
@@ -118,7 +121,7 @@ password = $__vault{database:database/creds/grafana:password}
 
 The following is a full examples of a provisioning YAML file setting up a MySQL data source using Vault's
 database secrets engine.
-Refer to the [Provisioning]({{< relref "../administration/provisioning.md" >}}) section for more information.
+Refer to [Provisioning]({{< relref "../administration/provisioning.md" >}}) for more information.
 
 **provisioning/custom.yaml**
 

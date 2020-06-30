@@ -93,7 +93,7 @@ or `${<environment variable>}`, then they will be processed by Grafana's
 variable expander. The expander runs the provider with the provided argument
 to get the final value of the option.
 
-There are three providers: `env`, `file` and `vault`.
+There are three providers: `env`, `file`, and `vault`.
 
 ### Env provider
 
