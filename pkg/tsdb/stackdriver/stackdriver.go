@@ -121,6 +121,16 @@ func (query *stackdriverQuery) buildDeepLink() string {
 		return ""
 	}
 
+	filter := query.Params.Get("filter")
+	if !strings.Contains(filter, "resource.type=") {
+		resourceType := query.Params.Get("resourceType")
+		if resourceType == "" {
+			slog.Error("Failed to generate deep link: no resource type found", "ProjectName", query.ProjectName, "query", query.RefID)
+			return ""
+		}
+		filter = fmt.Sprintf(`resource.type="%s" %s`, resourceType, filter)
+	}
+
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
 		return ""
@@ -137,9 +147,9 @@ func (query *stackdriverQuery) buildDeepLink() string {
 					"timeSeriesFilter": map[string]interface{}{
 						"aggregations":           []string{},
 						"crossSeriesReducer":     query.Params.Get("aggregation.crossSeriesReducer"),
-						"filter":                 query.Params.Get("filter"),
+						"filter":                 filter,
 						"groupByFields":          query.Params["aggregation.groupByFields"],
-						"minAlignmentPeriod":     strings.TrimPrefix(query.Params.Get("aggregation.alignmentPeriod"), "+"), // get rid off leading +,
+						"minAlignmentPeriod":     strings.TrimPrefix(query.Params.Get("aggregation.alignmentPeriod"), "+"), // get rid of leading +
 						"perSeriesAligner":       query.Params.Get("aggregation.perSeriesAligner"),
 						"secondaryGroupByFields": []string{},
 						"unitOverride":           "1",
@@ -189,7 +199,16 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 		if err != nil {
 			queryRes.Error = err
 		}
+
 		result.Results[query.RefID] = queryRes
+
+		resourceType := ""
+		for _, s := range resp.TimeSeries {
+			resourceType = s.Resource.Type
+			// set the first resource type found
+			break
+		}
+		query.Params.Set("resourceType", resourceType)
 		queryRes.Meta.Set("deepLink", query.buildDeepLink())
 	}
 

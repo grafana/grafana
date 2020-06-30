@@ -58,6 +58,12 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and generated deep link has correct parameters", func() {
 					dl := queries[0].buildDeepLink()
+					So(dl, ShouldBeEmpty) // no resource type found
+
+					// assign resource type to query parameters to be included in the deep link filter
+					// in the actual workflow this information comes from the response of the Monitoring API
+					queries[0].Params.Set("resourceType", "a/resource/type")
+					dl = queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
 						"timeRange": "custom",
@@ -66,7 +72,7 @@ func TestStackdriver(t *testing.T) {
 					}
 					expectedTimeSeriesFilter := map[string]interface{}{
 						"perSeriesAligner": "ALIGN_MEAN",
-						"filter":           "metric.type=\"a/metric/type\"",
+						"filter":           "resource.type=\"a/resource/type\" metric.type=\"a/metric/type\"",
 					}
 					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
 				})
@@ -75,15 +81,19 @@ func TestStackdriver(t *testing.T) {
 			Convey("and query has filters", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"metricType": "a/metric/type",
-					"filters":    []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
+					"filters":    []interface{}{"key", "=", "value", "AND", "key2", "=", "value2", "AND", "resource.type", "=", "another/resource/type"},
 				})
 
 				queries, err := executor.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
 				So(len(queries), ShouldEqual, 1)
-				So(queries[0].Params["filter"][0], ShouldEqual, `metric.type="a/metric/type" key="value" key2="value2"`)
+				So(queries[0].Params["filter"][0], ShouldEqual, `metric.type="a/metric/type" key="value" key2="value2" resource.type="another/resource/type"`)
 
 				Convey("and generated deep link has correct parameters", func() {
+					// assign a resource type to query parameters
+					// in the actual workflow this information comes from the response of the Monitoring API
+					// the deep link should not contain this resource type since another resource type is included in the query filters
+					queries[0].Params.Set("resourceType", "a/resource/type")
 					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
@@ -92,7 +102,7 @@ func TestStackdriver(t *testing.T) {
 						"end":       "2018-03-15T13:34:00Z",
 					}
 					expectedTimeSeriesFilter := map[string]interface{}{
-						"filter": `metric.type="a/metric/type" key="value" key2="value2"`,
+						"filter": `metric.type="a/metric/type" key="value" key2="value2" resource.type="another/resource/type"`,
 					}
 					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
 				})
@@ -111,6 +121,9 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+1000s`)
 
 					Convey("and generated deep link has correct parameters", func() {
+						// assign resource type to query parameters to be included in the deep link filter
+						// in the actual workflow this information comes from the response of the Monitoring API
+						queries[0].Params.Set("resourceType", "a/resource/type")
 						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
@@ -136,6 +149,9 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
+						// assign resource type to query parameters to be included in the deep link filter
+						// in the actual workflow this information comes from the response of the Monitoring API
+						queries[0].Params.Set("resourceType", "a/resource/type")
 						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
@@ -165,6 +181,9 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
+						// assign resource type to query parameters to be included in the deep link filter
+						// in the actual workflow this information comes from the response of the Monitoring API
+						queries[0].Params.Set("resourceType", "a/resource/type")
 						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
@@ -192,6 +211,9 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
+						// assign resource type to query parameters to be included in the deep link filter
+						// in the actual workflow this information comes from the response of the Monitoring API
+						queries[0].Params.Set("resourceType", "a/resource/type")
 						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
@@ -219,6 +241,9 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+300s`)
 
 					Convey("and generated deep link has correct parameters", func() {
+						// assign resource type to query parameters to be included in the deep link filter
+						// in the actual workflow this information comes from the response of the Monitoring API
+						queries[0].Params.Set("resourceType", "a/resource/type")
 						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
@@ -246,6 +271,9 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
 
 					Convey("and generated deep link has correct parameters", func() {
+						// assign resource type to query parameters to be included in the deep link filter
+						// in the actual workflow this information comes from the response of the Monitoring API
+						queries[0].Params.Set("resourceType", "a/resource/type")
 						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
@@ -273,6 +301,9 @@ func TestStackdriver(t *testing.T) {
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+600s`)
 
 					Convey("and generated deep link has correct parameters", func() {
+						// assign resource type to query parameters to be included in the deep link filter
+						// in the actual workflow this information comes from the response of the Monitoring API
+						queries[0].Params.Set("resourceType", "a/resource/type")
 						dl := queries[0].buildDeepLink()
 
 						expectedTimeSelection := map[string]string{
@@ -311,6 +342,9 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 
 				Convey("and generated deep link has correct parameters", func() {
+					// assign resource type to query parameters to be included in the deep link filter
+					// in the actual workflow this information comes from the response of the Monitoring API
+					queries[0].Params.Set("resourceType", "a/resource/type")
 					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
@@ -322,7 +356,7 @@ func TestStackdriver(t *testing.T) {
 						"minAlignmentPeriod": `60s`,
 						"crossSeriesReducer": "REDUCE_SUM",
 						"perSeriesAligner":   "ALIGN_MEAN",
-						"filter":             "metric.type=\"a/metric/type\"",
+						"filter":             "resource.type=\"a/resource/type\" metric.type=\"a/metric/type\"",
 					}
 					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
 				})
@@ -352,6 +386,9 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 
 				Convey("and generated deep link has correct parameters", func() {
+					// assign resource type to query parameters to be included in the deep link filter
+					// in the actual workflow this information comes from the response of the Monitoring API
+					queries[0].Params.Set("resourceType", "a/resource/type")
 					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
@@ -362,7 +399,7 @@ func TestStackdriver(t *testing.T) {
 					expectedTimeSeriesFilter := map[string]interface{}{
 						"minAlignmentPeriod": `60s`,
 						"perSeriesAligner":   "ALIGN_MEAN",
-						"filter":             "metric.type=\"a/metric/type\"",
+						"filter":             "resource.type=\"a/resource/type\" metric.type=\"a/metric/type\"",
 						"groupByFields":      []interface{}{"metric.label.group1", "metric.label.group2"},
 					}
 					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -414,6 +451,9 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].GroupBys, ShouldResemble, []string{"metric.label.group1", "metric.label.group2"})
 
 				Convey("and generated deep link has correct parameters", func() {
+					// assign resource type to query parameters to be included in the deep link filter
+					// in the actual workflow this information comes from the response of the Monitoring API
+					queries[0].Params.Set("resourceType", "a/resource/type")
 					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
@@ -424,7 +464,7 @@ func TestStackdriver(t *testing.T) {
 					expectedTimeSeriesFilter := map[string]interface{}{
 						"minAlignmentPeriod": `60s`,
 						"perSeriesAligner":   "ALIGN_MEAN",
-						"filter":             "metric.type=\"a/metric/type\"",
+						"filter":             "resource.type=\"a/resource/type\" metric.type=\"a/metric/type\"",
 						"groupByFields":      []interface{}{"metric.label.group1", "metric.label.group2"},
 					}
 					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
