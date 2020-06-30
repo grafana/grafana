@@ -18,7 +18,6 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
 
       input {
         opacity: 0;
-        left: -100vw;
         z-index: -1000;
         position: absolute;
 
@@ -81,6 +80,9 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
       deprecationWarning('Switch', 'checked prop', 'value');
     }
 
+    const ariaLabel = inputProps['aria-label'];
+    delete inputProps['aria-label'];
+
     const theme = useTheme();
     const styles = getSwitchStyles(theme);
     const switchIdRef = useRef(uniqueId('switch-'));
@@ -98,7 +100,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} />
+        <label aria-label={ariaLabel} htmlFor={switchIdRef.current} />
       </div>
     );
   }

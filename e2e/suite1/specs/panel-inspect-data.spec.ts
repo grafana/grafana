@@ -46,10 +46,22 @@ e2e.scenario({
           .should('be.visible')
           .eq(2)
           .click();
-        e2e.components.PanelInspector.Data.applyTransforms().click();
 
+        e2e.components.QueryOperationRow.title().scrollIntoView();
+        e2e.components.PanelInspector.Data.applyTransforms()
+          .should('be.visible')
+          .click();
+
+        // This is closed for some reason
+        e2e.components.QueryOperationRow.title()
+          .scrollIntoView()
+          .should('be.visible')
+          .click();
+        e2e.components.Select.input()
+          .should('be.visible')
+          .click();
         // Only two options should be vailable: Series and the transform data frame
-        e2e.components.Select.option().should('have.length', 4);
+        e2e.components.Select.option().should('have.length', 2);
       });
   },
 });

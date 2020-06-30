@@ -237,9 +237,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   description="Table data is displayed with transformations defined in the panel Transform tab."
                 >
                   <Switch
+                    aria-label={selectors.components.PanelInspector.Data.applyTransforms}
                     value={!!options.withTransforms}
                     onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
-                    aria-label={selectors.components.PanelInspector.Data.applyTransforms}
                   />
                 </Field>
               )}
@@ -249,9 +249,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   description="Table data is displayed with options defined in the Field and Override tabs."
                 >
                   <Switch
+                    aria-label={selectors.components.PanelInspector.Data.applyFieldOverrides}
                     value={!!options.withFieldConfig}
                     onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
-                    aria-label={selectors.components.PanelInspector.Data.applyFieldOverrides}
                   />
                 </Field>
               )}
