@@ -243,7 +243,7 @@ Shows list of spans within the trace. Each span row consists of these components
 - Operation name: Name of the operation that this span represents.
 - Span duration bar: Visual representation of the operation duration within the trace.
 
-Clicking anywhere on the span row will show span details.
+Clicking anywhere on the span row shows span details.
 
 ##### Span details
 
