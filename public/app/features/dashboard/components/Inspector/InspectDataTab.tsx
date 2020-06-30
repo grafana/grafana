@@ -26,6 +26,7 @@ import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   panel: PanelModel;
@@ -139,6 +140,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
+      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 
