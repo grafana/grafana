@@ -13,6 +13,7 @@ export interface ExploreUrlState {
   context?: string;
 }
 
+/** @internal */
 export interface ExploreUIState {
   showingTable: boolean;
   showingGraph: boolean;
