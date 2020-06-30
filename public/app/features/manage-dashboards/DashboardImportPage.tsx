@@ -77,7 +77,9 @@ class DashboardImportUnConnected extends PureComponent<Props> {
     return (
       <>
         <div className={styles.option}>
-          <FileUpload label="Upload .json file" accept="application/json" onFileUpload={this.onFileUpload} />
+          <FileUpload accept="application/json" onFileUpload={this.onFileUpload}>
+            Upload JSON file
+          </FileUpload>
         </div>
         <div className={styles.option}>
           <Legend>Import via grafana.com</Legend>

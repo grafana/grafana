@@ -6,8 +6,6 @@ import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props {
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
-  /** Custom upload label text */
-  label?: string;
   /** Accepted file extensions */
   accept?: string;
   className?: string;
@@ -20,13 +18,13 @@ function trimFileName(fileName: string) {
   const file = fileName.substring(0, delimiter);
 
   if (file.length < nameLength) {
-    return file;
+    return fileName;
   }
 
-  return file.substring(0, nameLength) + '...' + extension;
+  return `${file.substring(0, nameLength)}...${extension}`;
 }
 
-export const FileUpload: FC<Props> = ({ onFileUpload, className, label = 'Upload file', accept = '*' }) => {
+export const FileUpload: FC<Props> = ({ onFileUpload, className, children = 'Upload file', accept = '*' }) => {
   const theme = useTheme();
   const style = getStyles(theme);
   const [fileName, setFileName] = useState('');
@@ -43,7 +41,7 @@ export const FileUpload: FC<Props> = ({ onFileUpload, className, label = 'Upload
     <>
       <label className={cx(style.button, className)}>
         <Icon name="upload" className={style.icon} />
-        {label}
+        {children}
         <input
           type="file"
           id="fileUpload"
@@ -53,7 +51,11 @@ export const FileUpload: FC<Props> = ({ onFileUpload, className, label = 'Upload
           accept={accept}
         />
       </label>
-      <span className={style.fileName}>{fileName && trimFileName(fileName)}</span>
+      {fileName && (
+        <span aria-label="File name" className={style.fileName}>
+          {trimFileName(fileName)}
+        </span>
+      )}
     </>
   );
 };
