@@ -15,16 +15,17 @@ import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
 
 export interface Props {
+  onChange: (timeZone: TimeZone | undefined) => void;
   value?: TimeZone;
   width?: number;
   autoFocus?: boolean;
-  onChange: (timeZone: TimeZone | undefined) => void;
   onBlur?: () => void;
+  includeInternal?: boolean;
 }
 
 export const TimeZonePicker: React.FC<Props> = props => {
-  const { onChange, width, autoFocus = false, onBlur, value } = props;
-  const groupedTimeZones = useTimeZones();
+  const { onChange, width, autoFocus = false, onBlur, value, includeInternal = false } = props;
+  const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);
   const filterBySearchIndex = useFilterBySearchIndex();
   const TimeZoneOption = width && width <= 45 ? CompactTimeZoneOption : WideTimeZoneOption;
@@ -59,10 +60,10 @@ interface SelectableZoneGroup extends SelectableValue<string> {
   options: SelectableZone[];
 }
 
-const useTimeZones = (): SelectableZoneGroup[] => {
+const useTimeZones = (includeInternal: boolean): SelectableZoneGroup[] => {
   const now = Date.now();
 
-  return getTimeZoneGroups(true).map((group: GroupedTimeZones) => {
+  return getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {
     const options = group.zones.reduce((options: SelectableZone[], zone) => {
       const info = getTimeZoneInfo(zone, now);
 
@@ -95,18 +96,20 @@ const useSelectedTimeZone = (
       return undefined;
     }
 
+    const tz = toLower(timeZone);
+
     const group = groups.find(group => {
       if (!group.label) {
-        return isInternal(timeZone);
+        return isInternal(tz);
       }
-      return timeZone.startsWith(group.label);
+      return tz.startsWith(toLower(group.label));
     });
 
     return group?.options.find(option => {
-      if (isEmpty(timeZone)) {
+      if (isEmpty(tz)) {
         return option.value === InternalTimeZones.default;
       }
-      return toLower(option.value) === timeZone;
+      return toLower(option.value) === tz;
     });
   }, [groups, timeZone]);
 };
