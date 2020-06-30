@@ -34,20 +34,6 @@
           firing for more than For duration, it will change to Alerting and send alert notifications.
         </info-popover>
       </div>
-      <gf-form-switch
-        class="gf-form"
-        label="Fill"
-        checked="ctrl.alert.fill"
-        on-change="ctrl.evaluatorParamsChanged()"
-        ng-disabled="ctrl.disabled"
-      ></gf-form-switch>
-      <gf-form-switch
-        class="gf-form"
-        label="Line"
-        checked="ctrl.alert.line"
-        on-change="ctrl.evaluatorParamsChanged()"
-        ng-disabled="ctrl.disabled"
-      ></gf-form-switch>
     </div>
     <div class="gf-form" ng-if="ctrl.frequencyWarning">
       <label class="gf-form-label text-warning">

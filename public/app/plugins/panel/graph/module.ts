@@ -26,6 +26,8 @@ import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
 
+import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
+
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
@@ -99,6 +101,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     points: false,
     // point radius in pixels
     pointradius: 2,
+    // show/hide alert threshold lines and fill
+    alertThreshold: true,
     // show hide bars
     bars: false,
     // enable/disable stacking
@@ -309,6 +313,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     if (!this.seriesList) {
       return;
     }
+
+    ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);

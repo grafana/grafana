@@ -204,8 +204,6 @@ export class AlertTabCtrl {
     alert.notifications = alert.notifications || [];
     alert.for = alert.for || '0m';
     alert.alertRuleTags = alert.alertRuleTags || {};
-    alert.fill = alert.fill || true;
-    alert.line = alert.line || true;
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
