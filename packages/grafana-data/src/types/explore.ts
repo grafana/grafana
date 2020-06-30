@@ -2,6 +2,7 @@ import { ExploreMode } from './datasource';
 import { RawTimeRange } from './time';
 import { LogsDedupStrategy } from './logs';
 
+/** @internal */
 export interface ExploreUrlState {
   datasource: string;
   queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
