@@ -109,8 +109,8 @@
       name: Azure Monitor
     - link: /features/datasources/elasticsearch/
       name: Elasticsearch
-    - link: /features/datasources/stackdriver/
-      name: Google Stackdriver
+    - link: /features/datasources/cloudmonitoring/
+      name: Google Cloud Monitoring
     - link: /features/datasources/graphite/
       name: Graphite
     - link: /features/datasources/influxdb/
@@ -184,13 +184,13 @@
   children:
     - link: /features/dashboard/dashboards/
       name: Overview
-    - link: /reference/annotations/
+    - link: /dashboards/annotations/
       name: Annotations
-    - link: /reference/dashboard_folders/
+    - link: /dashboards/dashboard_folders/
       name: Folders
-    - link: /reference/playlist/
+    - link: /dashboards/playlist/
       name: Playlist
-    - link: /reference/search/
+    - link: /dashboards/search/
       name: Search
     - link: /reference/share_dashboard/
       name: Sharing a dashboard
@@ -200,7 +200,7 @@
       name: Time range controls
     - link: /reference/export_import/
       name: Export and import
-    - link: /reference/dashboard_history/
+    - link: /dashboards/dashboard_history/
       name: Dashboard version history
     - name: Keyboard Shortcuts
       link: /features/shortcuts/

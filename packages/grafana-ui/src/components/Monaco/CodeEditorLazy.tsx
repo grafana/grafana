@@ -9,7 +9,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = props => {
   );
 
   if (loading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
+    return <LoadingPlaceholder text={''} />;
   }
 
   if (error) {

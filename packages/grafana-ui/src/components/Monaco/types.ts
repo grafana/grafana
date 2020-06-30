@@ -9,6 +9,7 @@ export interface CodeEditorProps {
 
   readOnly?: boolean;
   showMiniMap?: boolean;
+  showLineNumbers?: boolean;
 
   /**
    * Callback after the editor has mounted that gives you raw access to monaco

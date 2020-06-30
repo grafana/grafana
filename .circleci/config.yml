@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.14
+            VERSION=0.4.16
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -835,6 +835,8 @@ jobs:
               ./pkg/services/alerting/... \
               ./pkg/services/provisioning/datasources/... \
               ./pkg/services/provisioning/dashboards/... \
+              ./pkg/services/provisioning/notifiers/... \
+              ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
 
   test-frontend:

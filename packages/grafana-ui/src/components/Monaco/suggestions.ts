@@ -17,7 +17,7 @@ function getCompletionItems(
       ...suggestion,
       kind: mapKinds(suggestion.kind),
       range,
-      insertText: suggestion.insertText ?? '',
+      insertText: suggestion.insertText ?? suggestion.label,
     });
   }
   return items;
@@ -46,7 +46,6 @@ export function registerSuggestions(
   if (!language || !getSuggestions) {
     return undefined;
   }
-
   return monaco.languages.registerCompletionItemProvider(language, {
     triggerCharacters: ['$'],
 
