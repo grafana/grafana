@@ -1,12 +1,27 @@
 import React from 'react';
-import { text } from '@storybook/addon-knobs';
+import { number, text } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './CodeEditor.mdx';
-import CodeEditor from './CodeEditor';
+import { CodeEditor } from './CodeEditorLazy';
 
 const getKnobs = () => {
+  const CONTAINER_GROUP = 'Container options';
+  // ---
+  const containerWidth = number(
+    'Container width',
+    300,
+    {
+      range: true,
+      min: 100,
+      max: 500,
+      step: 10,
+    },
+    CONTAINER_GROUP
+  );
+
   return {
+    containerWidth,
     text: text('Body', 'SELECT * FROM table LIMIT 10'),
     language: text('Language', 'sql'),
   };
@@ -24,17 +39,17 @@ export default {
 };
 
 export const basic = () => {
-  const { text, language } = getKnobs();
+  const { containerWidth, text, language } = getKnobs();
   return (
     <CodeEditor
+      width={containerWidth}
+      height={400}
       value={text}
       language={language}
       onBlur={(text: string) => {
-        console.log('Blur: ', text);
         action('code blur')(text);
       }}
       onSave={(text: string) => {
-        console.log('Save: ', text);
         action('code saved')(text);
       }}
     />
