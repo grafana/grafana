@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -8,22 +9,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	defaultDashboards = "testdata/test-dashboards/folder-one"
-	brokenDashboards  = "testdata/test-dashboards/broken-dashboards"
-	oneDashboard      = "testdata/test-dashboards/one-dashboard"
-	containingID      = "testdata/test-dashboards/containing-id"
-	unprovision       = "testdata/test-dashboards/unprovision"
+	defaultDashboards         = "testdata/test-dashboards/folder-one"
+	brokenDashboards          = "testdata/test-dashboards/broken-dashboards"
+	oneDashboard              = "testdata/test-dashboards/one-dashboard"
+	containingID              = "testdata/test-dashboards/containing-id"
+	unprovision               = "testdata/test-dashboards/unprovision"
+	foldersFromFilesStructure = "testdata/test-dashboards/folders-from-files-structure"
 
 	fakeService *fakeDashboardProvisioningService
 )
@@ -47,6 +48,14 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 
 		Convey("using folder as options", func() {
 			cfg.Options["folder"] = defaultDashboards
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+			So(reader.Path, ShouldNotEqual, "")
+		})
+
+		Convey("using foldersFromFilesStructure as options", func() {
+			cfg.Options["path"] = foldersFromFilesStructure
+			cfg.Options["foldersFromFilesStructure"] = true
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
 			So(err, ShouldBeNil)
 			So(reader.Path, ShouldNotEqual, "")
@@ -152,6 +161,46 @@ func TestDashboardFileReader(t *testing.T) {
 				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
 
+			Convey("Get folder from files structure", func() {
+				cfg.Options["path"] = foldersFromFilesStructure
+				cfg.Options["foldersFromFilesStructure"] = true
+
+				reader, err := NewDashboardFileReader(cfg, logger)
+				So(err, ShouldBeNil)
+
+				err = reader.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				So(len(fakeService.inserted), ShouldEqual, 5)
+
+				foldersCount := 0
+				for _, d := range fakeService.inserted {
+					if d.Dashboard.IsFolder {
+						foldersCount++
+					}
+				}
+				So(foldersCount, ShouldEqual, 2)
+
+				foldersAndDashboards := make(map[string]struct{}, 5)
+				for _, d := range fakeService.inserted {
+					title := d.Dashboard.Title
+					if _, ok := foldersAndDashboards[title]; ok {
+						So(fmt.Errorf("dashboard title %q already exists", title), ShouldBeNil)
+					}
+
+					switch title {
+					case "folderOne", "folderTwo":
+						So(d.Dashboard.IsFolder, ShouldBeTrue)
+					case "Grafana1", "Grafana2", "RootDashboard":
+						So(d.Dashboard.IsFolder, ShouldBeFalse)
+					default:
+						So(fmt.Errorf("unknown dashboard title %q", title), ShouldBeNil)
+					}
+
+					foldersAndDashboards[title] = struct{}{}
+				}
+			})
+
 			Convey("Invalid configuration should return error", func() {
 				cfg := &config{
 					Name:   "Default",
@@ -213,7 +262,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			_, err := getOrCreateFolderID(cfg, fakeService)
+			_, err := getOrCreateFolderID(cfg, fakeService, cfg.Folder)
 			So(err, ShouldEqual, ErrFolderNameMissing)
 		})
 
@@ -228,7 +277,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderID, err := getOrCreateFolderID(cfg, fakeService)
+			folderID, err := getOrCreateFolderID(cfg, fakeService, cfg.Folder)
 			So(err, ShouldBeNil)
 			inserted := false
 			for _, d := range fakeService.inserted {
