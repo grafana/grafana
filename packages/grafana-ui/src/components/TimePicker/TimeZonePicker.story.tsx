@@ -21,8 +21,12 @@ export const basic = () => {
       {(value, updateValue) => {
         return (
           <TimeZonePicker
+            includeInternal={true}
             value={value.value}
             onChange={newValue => {
+              if (!newValue) {
+                return;
+              }
               action('on selected')(newValue);
               updateValue({ value: newValue });
             }}
