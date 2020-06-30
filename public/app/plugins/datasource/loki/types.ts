@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, QueryResultMeta } from '@grafana/data';
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -123,5 +123,6 @@ export interface TransformerOptions {
   query: string;
   responseListLength: number;
   refId: string;
+  meta?: QueryResultMeta;
   valueWithRefId?: boolean;
 }
