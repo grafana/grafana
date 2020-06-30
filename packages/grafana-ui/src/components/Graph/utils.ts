@@ -85,13 +85,14 @@ export const getMultiSeriesGraphHoverInfo = (
 
     const display = field.display ?? getDisplayProcessor({ field, timeZone });
     const disp = display(field.values.get(hoverIndex));
+    const labelName = field.config?.displayName || field.state?.displayName || field.name;
 
     results.push({
       value: formattedValueToString(disp),
       datapointIndex: hoverIndex,
       seriesIndex: i,
       color: disp.color,
-      label: field.config.displayName,
+      label: labelName,
       time: time.display ? formattedValueToString(time.display(pointTime)) : pointTime,
     });
   }

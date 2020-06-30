@@ -30,13 +30,14 @@ export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({
   const value = getValueFromDimension(dimensions.yAxis, activeDimensions.yAxis[0], activeDimensions.yAxis[1]);
   const display = valueField.display ?? getDisplayProcessor({ field: valueField, timeZone });
   const disp = display(value);
+  const labelName = valueField.config?.displayName || valueField.state?.displayName || valueField.name;
 
   return (
     <SeriesTable
       series={[
         {
           color: disp.color,
-          label: valueField.config.displayName,
+          label: labelName,
           value: formattedValueToString(disp),
         },
       ]}
