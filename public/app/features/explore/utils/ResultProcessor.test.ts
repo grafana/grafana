@@ -155,6 +155,38 @@ describe('ResultProcessor', () => {
         expect(theResult.fields[1].display).not.toBeNull();
         expect(theResult.length).toBe(3);
       });
+
+      it('should do join transform if all series are timeseries', () => {
+        const { resultProcessor } = testContext({
+          dataFrames: [
+            toDataFrame({
+              name: 'A-series',
+              refId: 'A',
+              fields: [
+                { name: 'Time', type: FieldType.time, values: [100, 200, 300] },
+                { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },
+              ],
+            }),
+            toDataFrame({
+              name: 'B-series',
+              refId: 'B',
+              fields: [
+                { name: 'Time', type: FieldType.time, values: [100, 200, 300] },
+                { name: 'B-series', type: FieldType.number, values: [4, 5, 6] },
+              ],
+            }),
+          ],
+        });
+
+        let result = resultProcessor.getTableResult()!;
+
+        expect(result.fields[0].name).toBe('Time');
+        expect(result.fields[1].name).toBe('A-series');
+        expect(result.fields[2].name).toBe('B-series');
+        expect(result.fields[0].values.toArray()).toEqual([100, 200, 300]);
+        expect(result.fields[1].values.toArray()).toEqual([4, 5, 6]);
+        expect(result.fields[2].values.toArray()).toEqual([4, 5, 6]);
+      });
     });
 
     describe('when calling getLogsResult', () => {

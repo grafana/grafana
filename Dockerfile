@@ -1,4 +1,4 @@
-FROM node:12.16.3-alpine3.11 as js-builder
+FROM node:12.18.1-alpine3.12 as js-builder
 
 WORKDIR /usr/src/app/
 
@@ -16,7 +16,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM golang:1.14.2-alpine3.11 as go-builder
+FROM golang:1.14.4-alpine3.12 as go-builder
 
 RUN apk add --no-cache gcc g++
 
@@ -32,7 +32,7 @@ COPY build.go package.json ./
 RUN go run build.go build
 
 # Final stage
-FROM alpine:3.11
+FROM alpine:3.12
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 

@@ -1,0 +1,81 @@
+[run]
+timeout = "10m"
+
+[linters-settings.golint]
+min-confidence = 3
+
+[linters-settings.goconst]
+min-len = 5
+min-occurrences = 5
+
+[linters]
+disable-all = true
+enable = [
+  "bodyclose",
+  "deadcode",
+  "depguard",
+  "dogsled",
+  "errcheck",
+  # "gochecknoinits",
+  "goconst",
+  # "gocritic",
+  "goimports",
+  "golint",
+  # "goprintffuncname",
+  "gosec",
+  "gosimple",
+  "govet",
+  "ineffassign",
+  # "interfacer",
+  # "misspell",
+  "rowserrcheck",
+  "scopelint",
+  "staticcheck",
+  "structcheck",
+  # "stylecheck",
+  "typecheck",
+  "unconvert",
+  "unused",
+  "varcheck",
+  # "whitespace",
+]
+
+# Disabled linters (might want them later)
+# "gocyclo",
+# "unparam"
+
+[[issues.exclude-rules]]
+path = "_test\\.go"
+linters = ["scopelint"]
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G108"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G110"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G201"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G202"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G306"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "401"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "402"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "501"

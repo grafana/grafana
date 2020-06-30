@@ -60,7 +60,7 @@ docker_build () {
   if [ $UBUNTU_BASE = "0" ]; then
     libc="-musl"
     dockerfile="Dockerfile"
-    base_image="${base_arch}alpine:3.11"
+    base_image="${base_arch}alpine:3.12"
   else
     libc=""
     dockerfile="ubuntu.Dockerfile"
