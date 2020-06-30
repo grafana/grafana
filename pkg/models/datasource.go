@@ -22,6 +22,8 @@ const (
 	DS_MSSQL            = "mssql"
 	DS_ACCESS_DIRECT    = "direct"
 	DS_ACCESS_PROXY     = "proxy"
+      // Stackdriver was renamed Google Cloud monitoring 2020-05 but we keep
+      // "stackdriver" to avoid breaking changes in reporting.
 	DS_CLOUD_MONITORING = "stackdriver"
 	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
 	DS_LOKI             = "loki"
