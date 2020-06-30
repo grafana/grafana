@@ -42,7 +42,6 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			dash := dtos.DashboardFullWithMeta{}
 			dash.Meta.IsHome = true
@@ -802,7 +801,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
-				tc := tc
 				mock := &dashboards.FakeDashboardService{
 					SaveDashboardError: tc.SaveError,
 				}

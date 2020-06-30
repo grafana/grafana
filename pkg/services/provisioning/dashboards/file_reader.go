@@ -33,6 +33,7 @@ type FileReader struct {
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
+	FoldersFromFilesStructure    bool
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
@@ -48,11 +49,17 @@ func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
+	foldersFromFilesStructure, _ := cfg.Options["foldersFromFilesStructure"].(bool)
+	if foldersFromFilesStructure && cfg.Folder != "" && cfg.FolderUID != "" {
+		return nil, fmt.Errorf("'folder' and 'folderUID' should be empty using 'foldersFromFilesStructure' option")
+	}
+
 	return &FileReader{
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
 		dashboardProvisioningService: dashboards.NewProvisioningService(),
+		FoldersFromFilesStructure:    foldersFromFilesStructure,
 	}, nil
 }
 
@@ -81,11 +88,6 @@ func (fr *FileReader) startWalkingDisk() error {
 		return err
 	}
 
-	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService)
-	if err != nil && err != ErrFolderNameMissing {
-		return err
-	}
-
 	provisionedDashboardRefs, err := getProvisionedDashboardByPath(fr.dashboardProvisioningService, fr.Cfg.Name)
 	if err != nil {
 		return err
@@ -101,16 +103,61 @@ func (fr *FileReader) startWalkingDisk() error {
 
 	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
 
+	if fr.FoldersFromFilesStructure {
+		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, &sanityChecker)
+	} else {
+		err = fr.storeDashboardsInFolder(filesFoundOnDisk, provisionedDashboardRefs, &sanityChecker)
+	}
+	if err != nil {
+		return err
+	}
+
+	sanityChecker.logWarnings(fr.log)
+
+	return nil
+}
+
+// storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
+func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, sanityChecker *provisioningSanityChecker) error {
+	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
+
+	if err != nil && err != ErrFolderNameMissing {
+		return err
+	}
+
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
-		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, provisionedDashboardRefs)
+		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
 		sanityChecker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 		}
 	}
-	sanityChecker.logWarnings(fr.log)
+	return nil
+}
 
+// storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
+// in grafana as they are in on the filesystem
+func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, sanityChecker *provisioningSanityChecker) error {
+	for path, fileInfo := range filesFoundOnDisk {
+		folderName := ""
+
+		dashboardsFolder := filepath.Dir(path)
+		if dashboardsFolder != resolvedPath {
+			folderName = filepath.Base(dashboardsFolder)
+		}
+
+		folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, folderName)
+		if err != nil && err != ErrFolderNameMissing {
+			return err
+		}
+
+		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
+		sanityChecker.track(provisioningMetadata)
+		if err != nil {
+			fr.log.Error("failed to save dashboard", "error", err)
+		}
+	}
 	return nil
 }
 
@@ -171,7 +218,7 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 	// keeps track of what uid's and title's we have already provisioned
 	dash := jsonFile.dashboard
 	provisioningMetadata.uid = dash.Dashboard.Uid
-	provisioningMetadata.title = dash.Dashboard.Title
+	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderId}
 
 	if upToDate {
 		return provisioningMetadata, nil
@@ -212,12 +259,12 @@ func getProvisionedDashboardByPath(service dashboards.DashboardProvisioningServi
 	return byPath, nil
 }
 
-func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningService) (int64, error) {
-	if cfg.Folder == "" {
+func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, error) {
+	if folderName == "" {
 		return 0, ErrFolderNameMissing
 	}
 
-	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(cfg.Folder), OrgId: cfg.OrgID}
+	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
 	err := bus.Dispatch(cmd)
 
 	if err != nil && err != models.ErrDashboardNotFound {
@@ -227,7 +274,7 @@ func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningSe
 	// dashboard folder not found. create one.
 	if err == models.ErrDashboardNotFound {
 		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = models.NewDashboardFolder(cfg.Folder)
+		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
 		dash.OrgId = cfg.OrgID
@@ -356,29 +403,39 @@ func (fr *FileReader) resolvedPath() string {
 }
 
 type provisioningMetadata struct {
-	uid   string
-	title string
+	uid      string
+	identity dashboardIdentity
+}
+
+type dashboardIdentity struct {
+	folderID int64
+	title    string
+}
+
+func (d *dashboardIdentity) Exists() bool {
+	return len(d.title) > 0 && d.folderID > 0
 }
 
 func newProvisioningSanityChecker(provisioningProvider string) provisioningSanityChecker {
 	return provisioningSanityChecker{
 		provisioningProvider: provisioningProvider,
 		uidUsage:             map[string]uint8{},
-		titleUsage:           map[string]uint8{}}
+		titleUsage:           map[dashboardIdentity]uint8{},
+	}
 }
 
 type provisioningSanityChecker struct {
 	provisioningProvider string
 	uidUsage             map[string]uint8
-	titleUsage           map[string]uint8
+	titleUsage           map[dashboardIdentity]uint8
 }
 
 func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
 	if len(pm.uid) > 0 {
 		checker.uidUsage[pm.uid]++
 	}
-	if len(pm.title) > 0 {
-		checker.titleUsage[pm.title]++
+	if pm.identity.Exists() {
+		checker.titleUsage[pm.identity]++
 	}
 }
 
@@ -389,9 +446,9 @@ func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
 		}
 	}
 
-	for title, times := range checker.titleUsage {
+	for identity, times := range checker.titleUsage {
 		if times > 1 {
-			log.Error("the same 'title' is used more than once", "title", title, "provider", checker.provisioningProvider)
+			log.Error("the same 'title' is used more than once", "title", identity.title, "provider", checker.provisioningProvider)
 		}
 	}
 }

@@ -73,11 +73,11 @@ $panel-header-no-title-zindex: 1;
 
 .panel-loading {
   position: absolute;
-  top: 4px;
-  right: 8px;
+  top: 0px;
+  right: 4px;
   z-index: $panel-header-z-index + 1;
   font-size: $font-size-lg;
-  color: $text-blue;
+  color: $text-color-weak;
 }
 
 .panel-empty {
