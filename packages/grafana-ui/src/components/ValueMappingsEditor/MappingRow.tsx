@@ -52,6 +52,7 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
           <HorizontalGroup>
             <Field label="From">
               <Input
+                type="number"
                 defaultValue={(valueMapping as RangeMap).from!}
                 onBlur={e => onMappingFromChange(e.currentTarget.value)}
                 onKeyDown={onKeyDown(onMappingFromChange)}
@@ -59,6 +60,7 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
             </Field>
             <Field label="To">
               <Input
+                type="number"
                 defaultValue={(valueMapping as RangeMap).to}
                 onBlur={e => onMappingToChange(e.currentTarget.value)}
                 onKeyDown={onKeyDown(onMappingToChange)}
