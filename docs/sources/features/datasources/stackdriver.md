@@ -328,7 +328,7 @@ datasources:
 
 Only available in Grafana v7.1+.
 
-{{< docs-imagebox img="/img/docs/v71/cloud-moniitoring-deep-linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
 
 > **Note:** This feature is only available for Metric queries.
 
