@@ -41,6 +41,7 @@ func TestNewPostgresQueryEndpoint(t *testing.T) {
 		desc       string
 		host       string
 		user       string
+		password   string
 		database   string
 		expConnStr string
 		expErr     string
@@ -49,22 +50,25 @@ func TestNewPostgresQueryEndpoint(t *testing.T) {
 			desc:       "Unix socket host",
 			host:       "/var/run/postgresql",
 			user:       "user",
+			password:   "password",
 			database:   "database",
-			expConnStr: "user='user' password='' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+			expConnStr: "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
 		},
 		{
 			desc:       "TCP host",
 			host:       "host",
 			user:       "user",
+			password:   "password",
 			database:   "database",
-			expConnStr: "user='user' password='' host='host' dbname='database' sslmode='verify-full'",
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
 		},
 		{
 			desc:       "TCP/port host",
 			host:       "host:1234",
 			user:       "user",
+			password:   "password",
 			database:   "database",
-			expConnStr: "user='user' password='' host='host' dbname='database' sslmode='verify-full' port=1234",
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' port=1234",
 		},
 		{
 			desc:     "Invalid port",
@@ -73,11 +77,20 @@ func TestNewPostgresQueryEndpoint(t *testing.T) {
 			database: "database",
 			expErr:   "invalid port in host specifier",
 		},
+		{
+			desc:       "Password with single quote and backslash",
+			host:       "host",
+			user:       "user",
+			password:   `p'\assword`,
+			database:   "database",
+			expConnStr: `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+		},
 	}
 	for _, tt := range testCases {
 		ds := &models.DataSource{
 			Url:      tt.host,
 			User:     tt.user,
+			Password: tt.password,
 			Database: tt.database,
 			JsonData: simplejson.New(),
 		}

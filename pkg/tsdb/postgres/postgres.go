@@ -56,6 +56,11 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	return endpoint, err
 }
 
+// escape single quotes and backslashes in Postgres connection string parameters.
+func escape(input string) string {
+	return strings.Replace(strings.Replace(input, `\`, `\\`, -1), "'", `\'`, -1)
+}
+
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
 	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
@@ -82,7 +87,8 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	}
 
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s' sslmode='%s'",
-		datasource.User, datasource.DecryptedPassword(), host, datasource.Database, sslMode)
+		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database),
+		escape(sslMode))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
