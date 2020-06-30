@@ -1,8 +1,8 @@
-import React, { FC, FormEvent, useState } from 'react';
+import React, { FC, FormEvent, useCallback, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFormStyles, Icon } from '../index';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useStyles } from '../../themes';
 
 export interface Props {
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
@@ -25,17 +25,16 @@ function trimFileName(fileName: string) {
 }
 
 export const FileUpload: FC<Props> = ({ onFileUpload, className, children = 'Upload file', accept = '*' }) => {
-  const theme = useTheme();
-  const style = getStyles(theme);
+  const style = useStyles(getStyles);
   const [fileName, setFileName] = useState('');
 
-  const onChange = (event: FormEvent<HTMLInputElement>) => {
+  const onChange = useCallback((event: FormEvent<HTMLInputElement>) => {
     const file = event.currentTarget?.files?.[0];
     if (file) {
       setFileName(file.name ?? '');
     }
     onFileUpload(event);
-  };
+  }, []);
 
   return (
     <>

@@ -20,7 +20,8 @@ describe('FileUpload', () => {
     expect(wrapper.find({ 'aria-label': 'File name' }).exists()).toBeTruthy();
     // Trim file name longer than 16 chars
     expect(wrapper.find({ 'aria-label': 'File name' }).text()).toEqual('longFileName.som....png');
-    // Keep the name below the limit intact
+
+    // Keep the name below the length limit intact
     wrapper.find('input').simulate('change', {
       currentTarget: {
         files: [{ name: 'longFileName.png' }],
