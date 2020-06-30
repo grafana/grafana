@@ -270,7 +270,7 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi) {
+export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi | undefined) {
   /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
    * to format query text
    */
@@ -336,6 +336,53 @@ export function notEmptyQuery(query: DataQuery) {
   }
 
   return false;
+}
+
+export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
+  return queries.filter(query => {
+    if (query.comment.includes(searchFilter)) {
+      return true;
+    }
+
+    const listOfMatchingQueries = query.queries.filter(query =>
+      // Remove fields in which we don't want to be searching
+      Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some(value =>
+        value.toString().includes(searchFilter)
+      )
+    );
+
+    return listOfMatchingQueries.length > 0;
+  });
+}
+
+export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[] | null) {
+  return listOfDatasourceFilters?.length > 0
+    ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+    : queries;
+}
+
+export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
+  return queries.filter(
+    q =>
+      q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
+      q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
+  );
+}
+
+export function filterAndSortQueries(
+  queries: RichHistoryQuery[],
+  sortOrder: SortOrder,
+  listOfDatasourceFilters: string[] | null,
+  searchFilter: string,
+  timeFilter?: [number, number]
+) {
+  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
+  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
+  const filteredQueriesToBeSorted = timeFilter
+    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
+    : filteredQueriesByDsAndSearchFilter;
+
+  return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
 /* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
