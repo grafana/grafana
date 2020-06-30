@@ -406,9 +406,9 @@ export class BackendSrv implements BackendService {
         options.url = options.url.substring(1);
       }
 
-      if (options.url.endsWith('/')) {
-        options.url = options.url.slice(0, -1);
-      }
+      // if (options.url.endsWith('/')) {
+      //   options.url = options.url.slice(0, -1);
+      // }
 
       if (options.headers?.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
