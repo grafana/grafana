@@ -892,21 +892,17 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 3 series', () => {
-      expect(result.data.length).toBe(4);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('Sum @value');
-      expect(result.data[1].target).toBe('Max @value');
-      expect(result.data[2].target).toBe('Sum @value * Max @value');
-      expect(result.data[3].target).toBe('Sum @value * Max @value * 4');
-      expect(result.data[0].datapoints[0][0]).toBe(2);
-      expect(result.data[1].datapoints[0][0]).toBe(3);
-      expect(result.data[2].datapoints[0][0]).toBe(6);
-      expect(result.data[3].datapoints[0][0]).toBe(24);
-      expect(result.data[0].datapoints[1][0]).toBe(3);
-      expect(result.data[1].datapoints[1][0]).toBe(4);
-      expect(result.data[2].datapoints[1][0]).toBe(12);
-      expect(result.data[3].datapoints[1][0]).toBe(48);
+    it('should return 2 rows with 5 columns', () => {
+      expect(result.data[0].columns.length).toBe(5);
+      expect(result.data[0].rows.length).toBe(2);
+      expect(result.data[0].rows[0][1]).toBe(2);
+      expect(result.data[0].rows[0][2]).toBe(3);
+      expect(result.data[0].rows[0][3]).toBe(6);
+      expect(result.data[0].rows[0][4]).toBe(24);
+      expect(result.data[0].rows[1][1]).toBe(3);
+      expect(result.data[0].rows[1][2]).toBe(4);
+      expect(result.data[0].rows[1][3]).toBe(12);
+      expect(result.data[0].rows[1][4]).toBe(48);
     });
   });
 
