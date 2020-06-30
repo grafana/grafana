@@ -8,6 +8,7 @@ import {
   DataQueryResponse,
   dateTime,
   LoadingState,
+  QueryResultMeta,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
@@ -135,9 +136,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           alias = templateSrv.replace(target.alias, options.scopedVars);
         }
 
+        const meta: QueryResultMeta = {
+          executedQueryString: data.executedQueryString,
+        };
+
         const influxSeries = new InfluxSeries({
+          refId: target.refId,
           series: data.results[i].series,
           alias: alias,
+          meta,
         });
 
         switch (target.resultFormat) {
@@ -309,16 +316,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super
         .query(request)
         .toPromise()
-        .then((res: any) => {
-          const data: DataQueryResponse = res.data;
-          if (data && data.state === LoadingState.Done) {
-            const buckets = data.data[0].length;
-            return { status: 'success', message: `Data source is working (${buckets} buckets)` };
+        .then((res: DataQueryResponse) => {
+          if (!res || !res.data || res.state !== LoadingState.Done) {
+            console.log('InfluxDB Error', res);
+            return { status: 'error', message: 'Error reading InfluxDB' };
           }
-          console.log('InfluxDB Error', data);
+          const first = res.data[0];
+          if (first && first.length) {
+            return { status: 'success', message: `${first.length} buckets found` };
+          }
+          console.log('InfluxDB Error', res);
           return { status: 'error', message: 'Error reading buckets' };
         })
         .catch((err: any) => {
+          console.log('InfluxDB Error', err);
           return { status: 'error', message: err.message };
         });
     }
@@ -356,6 +367,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = this.database;
     }
 
+    const { q } = data;
+
     if (method === 'POST' && _.has(data, 'q')) {
       // verb is POST and 'q' param is defined
       _.extend(params, _.omit(data, ['q']));
@@ -392,16 +405,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       .datasourceRequest(req)
       .then(
         (result: any) => {
-          if (result.data && result.data.results) {
-            const errors = result.data.results.filter((elem: any) => elem.error);
-            if (errors.length > 0) {
-              throw {
-                message: 'InfluxDB Error: ' + errors[0].error,
-                data: result.data,
-              };
+          const { data } = result;
+          if (data) {
+            data.executedQueryString = q;
+            if (data.results) {
+              const errors = result.data.results.filter((elem: any) => elem.error);
+              if (errors.length > 0) {
+                throw {
+                  message: 'InfluxDB Error: ' + errors[0].error,
+                  data,
+                };
+              }
             }
           }
-          return result.data;
+          return data;
         },
         (err: any) => {
           if ((Number.isInteger(err.status) && err.status !== 0) || err.status >= 300) {

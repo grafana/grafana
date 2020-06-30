@@ -18,6 +18,7 @@ func init() {
 		Type:        "hipchat",
 		Name:        "HipChat",
 		Description: "Sends notifications uto a HipChat Room",
+		Heading:     "HipChat settings",
 		Factory:     NewHipChatNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">HipChat settings</h3>
@@ -38,6 +39,30 @@ func init() {
         </input>
       </div>
     `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Hip Chat Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "HipChat URL (ex https://grafana.hipchat.com)",
+				PropertyName: "url",
+				Required:     true,
+			},
+			{
+				Label:        "API Key",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "HipChat API Key",
+				PropertyName: "apiKey",
+				Required:     true,
+			},
+			{
+				Label:        "Room ID",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				PropertyName: "roomid",
+			},
+		},
 	})
 
 }

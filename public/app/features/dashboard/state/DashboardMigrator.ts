@@ -6,7 +6,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
+import { DataLinkBuiltInVars, DataLink, urlUtil } from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,

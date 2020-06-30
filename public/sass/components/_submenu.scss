@@ -24,7 +24,6 @@
 .submenu-item {
   display: inline-block;
   margin-right: 15px;
-  float: left;
 
   .fa-caret-down {
     font-size: 75%;
@@ -37,6 +36,7 @@
 }
 
 .variable-value-link {
+  max-width: 500px;
   padding-right: 10px;
   padding: 0 $space-sm;
   background-color: $input-bg;

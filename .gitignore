@@ -47,6 +47,7 @@ public/css/*.min.css
 .DS_Store
 .vscode/
 .vs/
+.eslintcache
 
 /data/*
 /bin/*

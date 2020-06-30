@@ -292,7 +292,8 @@ func TestAccountDataAccess(t *testing.T) {
 
 func testHelperUpdateDashboardAcl(dashboardId int64, items ...models.DashboardAcl) error {
 	cmd := models.UpdateDashboardAclCommand{DashboardId: dashboardId}
-	for _, item := range items {
+	for _, i := range items {
+		item := i
 		item.Created = time.Now()
 		item.Updated = time.Now()
 		cmd.Items = append(cmd.Items, &item)

@@ -4,8 +4,8 @@ import cx from 'classnames';
 import { LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 import { DerivedFieldConfig } from '../types';
-import { getLinksFromLogsField } from '../../../../features/panel/panellinks/linkSuppliers';
 import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
+import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
 
 type Props = {
   derivedFields: DerivedFieldConfig[];
@@ -94,7 +94,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
         let link: LinkModel<Field>;
 
         if (field.url && value) {
-          link = getLinksFromLogsField(
+          link = getFieldLinksForExplore(
             {
               name: '',
               type: FieldType.string,
@@ -103,8 +103,10 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
                 links: [{ title: '', url: field.url }],
               },
             },
-            0
-          )[0].linkModel;
+            0,
+            (() => {}) as any,
+            {} as any
+          )[0];
         }
 
         return {
@@ -113,6 +115,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
           href: link && link.href,
         } as DebugField;
       } catch (error) {
+        console.error(error);
         return {
           name: field.name,
           error,
