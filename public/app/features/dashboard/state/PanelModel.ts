@@ -111,6 +111,7 @@ export class PanelModel implements DataConfigSource {
   repeatedByRow?: boolean;
   maxPerRow?: number;
   collapsed?: boolean;
+
   panels?: any;
   soloMode?: boolean;
   targets: DataQuery[];

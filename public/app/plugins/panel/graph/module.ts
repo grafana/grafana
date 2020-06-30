@@ -101,8 +101,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     points: false,
     // point radius in pixels
     pointradius: 2,
-    // show/hide alert threshold lines and fill
-    alertThreshold: true,
     // show hide bars
     bars: false,
     // enable/disable stacking
@@ -142,6 +140,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     timeRegions: [],
     options: {
       dataLinks: [],
+      // show/hide alert threshold lines and fill
+      alertThreshold: true,
     },
   };
 
