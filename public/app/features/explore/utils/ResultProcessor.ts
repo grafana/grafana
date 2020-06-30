@@ -39,11 +39,7 @@ export class ResultProcessor {
           this.tableFrames.push(frame);
         }
       } else {
-        if (
-          shouldShowInVisualisationTypeStrict(frame, 'logs') ||
-          // Used by Loki
-          frame.meta?.responseType === 'Logs'
-        ) {
+        if (shouldShowInVisualisationTypeStrict(frame, 'logs')) {
           this.logsFrames.push(frame);
         } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
           this.traceFrames.push(frame);
@@ -128,11 +124,6 @@ function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   // TEMP: Temporary hack. Remove when logs/metrics unification is done
   if (datasource && datasource === 'cloudwatch') {
     return isTimeSeriesCloudWatch(frame);
-  }
-
-  // Used by Loki response
-  if (frame.meta?.responseType === 'Metrics') {
-    return true;
   }
 
   if (frame.fields.length === 2) {
