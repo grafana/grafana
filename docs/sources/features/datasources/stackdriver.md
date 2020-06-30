@@ -133,7 +133,7 @@ The option is called `Stackdriver auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/reference/templating/#the-interval-variable).
+The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -227,11 +227,11 @@ SLO queries use the same [alignment period functionality as metric queries]({{< 
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable
@@ -243,9 +243,9 @@ Variable of the type _Query_ allows you to query Stackdriver for various types o
 | _Metric Types_                   | Returns a list of metric type names that are available for the specified service.                 |
 | _Labels Keys_                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.           |
 | _Labels Values_                  | Returns a list of values for the label in the specified metric.                                   |
-| _Resource Types_                 | Returns a list of resource types for the the specified metric.                                    |
-| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the the specified metric.              |
-| _Aligners_                       | Returns a list of aligners (per series aligners) for the the specified metric.                    |
+| _Resource Types_                 | Returns a list of resource types for the specified metric.                                    |
+| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the specified metric.              |
+| _Aligners_                       | Returns a list of aligners (per series aligners) for the specified metric.                    |
 | _Alignment periods_              | Returns a list of all alignment periods that are available in Stackdriver query editor in Grafana |
 | _Selectors_                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries            |
 | _SLO Services_                   | Returns a list of Service Monitoring services that can be used in SLO queries                     |

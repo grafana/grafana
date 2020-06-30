@@ -10,7 +10,7 @@ import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '..
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
-import { graphTimeFormat, graphTimeFormatter } from './utils';
+import { graphTimeFormat, graphTickFormatter } from './utils';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -70,7 +70,9 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   componentWillUnmount() {
-    this.$element.unbind('plotselected', this.onPlotSelected);
+    if (this.$element) {
+      this.$element.unbind('plotselected', this.onPlotSelected);
+    }
   }
 
   onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
@@ -314,6 +316,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         shadowSize: 0,
       },
       xaxis: {
+        timezone: timeZone,
         show: true,
         mode: 'time',
         min: min,
@@ -321,7 +324,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         label: 'Datetime',
         ticks: ticks,
         timeformat: graphTimeFormat(ticks, min, max),
-        timeFormatter: graphTimeFormatter(timeZone),
+        tickFormatter: graphTickFormatter,
       },
       yaxes,
       grid: {

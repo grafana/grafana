@@ -4,6 +4,7 @@ import React, { PureComponent } from 'react';
 // Components
 import { Select } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
@@ -15,6 +16,7 @@ export interface Props {
   openMenuOnFocus?: boolean;
   showLoading?: boolean;
   placeholder?: string;
+  invalid?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
@@ -48,6 +50,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       openMenuOnFocus,
       showLoading,
       placeholder,
+      invalid,
     } = this.props;
 
     const options = datasources.map(ds => ({
@@ -65,22 +68,25 @@ export class DataSourcePicker extends PureComponent<Props> {
     };
 
     return (
-      <Select
-        className="ds-picker select-container"
-        isMulti={false}
-        isClearable={false}
-        backspaceRemovesValue={false}
-        onChange={this.onChange}
-        options={options}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={500}
-        menuPlacement="bottom"
-        placeholder={placeholder}
-        noOptionsMessage="No datasources found"
-        value={value}
-      />
+      <div aria-label={selectors.components.DataSourcePicker.container}>
+        <Select
+          className="ds-picker select-container"
+          isMulti={false}
+          isClearable={false}
+          backspaceRemovesValue={false}
+          onChange={this.onChange}
+          options={options}
+          autoFocus={autoFocus}
+          onBlur={onBlur}
+          openMenuOnFocus={openMenuOnFocus}
+          maxMenuHeight={500}
+          menuPlacement="bottom"
+          placeholder={placeholder}
+          noOptionsMessage="No datasources found"
+          value={value}
+          invalid={invalid}
+        />
+      </div>
     );
   }
 }

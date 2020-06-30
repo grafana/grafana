@@ -1,13 +1,13 @@
-import React, { FC, useMemo, useRef } from 'react';
+import React, { FC, useCallback, useMemo, useRef } from 'react';
 import { DashboardModel, PanelModel } from '../../state';
-import { FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { PanelData, PanelPlugin } from '@grafana/data';
 import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
-import { getVariables } from '../../../variables/state/selectors';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
+import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 interface Props {
   panel: PanelModel;
@@ -16,7 +16,6 @@ interface Props {
   dashboard: DashboardModel;
   onPanelConfigChange: (configKey: string, value: any) => void;
   onPanelOptionsChanged: (options: any) => void;
-  onFieldConfigsChange: (config: FieldConfigSource) => void;
 }
 
 export const PanelOptionsTab: FC<Props> = ({
@@ -26,14 +25,15 @@ export const PanelOptionsTab: FC<Props> = ({
   dashboard,
   onPanelConfigChange,
   onPanelOptionsChanged,
-  onFieldConfigsChange,
 }) => {
   const visTabInputRef = useRef<HTMLInputElement>();
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
+  const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
+    onPanelConfigChange,
+  ]);
   const elements: JSX.Element[] = [];
   const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
-  const variableOptions = getVariableOptions();
   const directionOptions = [
     { label: 'Horizontal', value: 'h' },
     { label: 'Vertical', value: 'v' },
@@ -65,8 +65,8 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   elements.push(
-    <OptionsGroup title="Visualisation" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
-      <VisualizationTab panel={panel} ref={visTabInputRef} />
+    <OptionsGroup title="Visualization" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
+      {toggleExpand => <VisualizationTab panel={panel} ref={visTabInputRef} onToggleOptionGroup={toggleExpand} />}
     </OptionsGroup>
   );
 
@@ -85,7 +85,9 @@ export const PanelOptionsTab: FC<Props> = ({
         key="panel options"
         options={panel.getOptions()}
         onChange={onPanelOptionsChanged}
+        replaceVariables={panel.replaceVariables}
         plugin={plugin}
+        data={data?.series}
       />
     );
   }
@@ -120,11 +122,7 @@ export const PanelOptionsTab: FC<Props> = ({
           This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
           reload the dashboard."
       >
-        <Select
-          value={panel.repeat}
-          onChange={value => onPanelConfigChange('repeat', value.value)}
-          options={variableOptions}
-        />
+        <RepeatRowSelect repeat={panel.repeat} onChange={onRepeatRowSelectChange} />
       </Field>
       {panel.repeat && (
         <Field label="Repeat direction">
@@ -150,23 +148,3 @@ export const PanelOptionsTab: FC<Props> = ({
 
   return <>{elements}</>;
 };
-
-function getVariableOptions(): Array<SelectableValue<string>> {
-  const options = getVariables().map((item: any) => {
-    return { label: item.name, value: item.name };
-  });
-
-  if (options.length === 0) {
-    options.unshift({
-      label: 'No template variables found',
-      value: null,
-    });
-  }
-
-  options.unshift({
-    label: 'Disable repeating',
-    value: null,
-  });
-
-  return options;
-}

@@ -144,7 +144,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -162,7 +162,7 @@ You can also create nested variables. For example if you had another variable, f
 the hosts variable only show hosts from the current selected region with a query like this:
 
 ```sql
-SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
+SHOW TAG VALUES WITH KEY = "hostname"  WHERE region = '$region'
 ```
 
 You can fetch key names for a given measurement.

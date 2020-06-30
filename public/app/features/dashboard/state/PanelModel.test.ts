@@ -6,8 +6,12 @@ import {
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  PanelData,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
+import { PanelQueryRunner } from './PanelQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 class TablePanelCtrl {}
 
@@ -84,6 +88,8 @@ describe('PanelModel', () => {
 
       modelJson = {
         type: 'table',
+        maxDataPoints: 100,
+        interval: '5m',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: persistedOptionsMock,
@@ -145,6 +151,11 @@ describe('PanelModel', () => {
     });
 
     it('should apply field config defaults', () => {
+      setDataSourceSrv({
+        getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+          return undefined;
+        },
+      } as any);
       // default unit is overriden by model
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied
@@ -221,6 +232,14 @@ describe('PanelModel', () => {
 
       it('should keep editSourceId', () => {
         expect(model.editSourceId).toBe(1001);
+      });
+
+      it('should keep maxDataPoints', () => {
+        expect(model.maxDataPoints).toBe(100);
+      });
+
+      it('should keep interval', () => {
+        expect(model.interval).toBe('5m');
       });
 
       it('should apply next panel option defaults', () => {
@@ -311,18 +330,6 @@ describe('PanelModel', () => {
         expect(model.someProperty).toBeUndefined();
       });
 
-      it('Should preserve must keep properties', () => {
-        model.id = 10;
-        model.gridPos = { x: 0, y: 0, h: 10, w: 10 };
-        model.restoreModel({
-          title: 'New title',
-          options: {},
-        });
-
-        expect(model.id).toBe(10);
-        expect(model.gridPos.h).toBe(10);
-      });
-
       it('Should remove old angular panel specfic props', () => {
         model.axes = [{ prop: 1 }];
         model.thresholds = [];
@@ -334,6 +341,24 @@ describe('PanelModel', () => {
 
         expect(model.axes).toBeUndefined();
         expect(model.thresholds).toBeUndefined();
+      });
+
+      it('Should be able to set defaults back to default', () => {
+        model.transparent = true;
+
+        model.restoreModel({});
+        expect(model.transparent).toBe(false);
+      });
+    });
+
+    describe('destroy', () => {
+      it('Should still preserve last query result', () => {
+        model.getQueryRunner().useLastResultFrom({
+          getLastResult: () => ({} as PanelData),
+        } as PanelQueryRunner);
+
+        model.destroy();
+        expect(model.getQueryRunner().getLastResult()).toBeDefined();
       });
     });
   });

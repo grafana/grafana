@@ -6,7 +6,6 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEventConsumer, CoreEvents } from 'app/types';
 import { appEvents } from 'app/core/app_events';
 import { UnsavedChangesModal } from '../components/SaveDashboard/UnsavedChangesModal';
-import { getLocationSrv } from '@grafana/runtime';
 
 export class ChangeTracker {
   current: any;
@@ -113,6 +112,7 @@ export class ChangeTracker {
     dash.time = 0;
     dash.refresh = 0;
     dash.schemaVersion = 0;
+    dash.timezone = 0;
 
     // ignore iteration property
     delete dash.iteration;
@@ -135,7 +135,7 @@ export class ChangeTracker {
     });
 
     // ignore template variable values
-    _.each(dash.getVariables(), variable => {
+    _.each(dash.getVariables(), (variable: any) => {
       variable.current = null;
       variable.options = null;
       variable.filters = null;
@@ -188,8 +188,9 @@ export class ChangeTracker {
   gotoNext = () => {
     const baseLen = this.$location.absUrl().length - this.$location.url().length;
     const nextUrl = this.next.substring(baseLen);
-    getLocationSrv().update({
-      path: nextUrl,
+
+    this.$timeout(() => {
+      this.$location.url(nextUrl);
     });
   };
 }

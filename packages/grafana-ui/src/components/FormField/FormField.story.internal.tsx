@@ -1,5 +1,4 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { number, text } from '@storybook/addon-knobs';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -14,16 +13,18 @@ const getKnobs = () => {
   };
 };
 
-const FormFieldStories = storiesOf('Forms/Legacy/FormField', module);
+export default {
+  title: 'Forms/Legacy/FormField',
+  component: FormField,
+  decorators: [withCenteredStory],
+};
 
-FormFieldStories.addDecorator(withCenteredStory);
-
-FormFieldStories.add('default', () => {
+export const basic = () => {
   const { inputWidth, label, labelWidth } = getKnobs();
   return <FormField label={label} labelWidth={labelWidth} inputWidth={inputWidth} />;
-});
+};
 
-FormFieldStories.add('with tooltip', () => {
+export const withTooltip = () => {
   const { inputWidth, label, labelWidth, tooltip } = getKnobs();
   return <FormField label={label} labelWidth={labelWidth} inputWidth={inputWidth} tooltip={tooltip} />;
-});
+};

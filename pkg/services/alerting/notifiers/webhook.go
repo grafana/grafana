@@ -13,6 +13,7 @@ func init() {
 		Type:        "webhook",
 		Name:        "webhook",
 		Description: "Sends HTTP POST request to a URL",
+		Heading:     "Webhook settings",
 		Factory:     NewWebHookNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Webhook settings</h3>
@@ -36,6 +37,42 @@ func init() {
         <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
       </div>
     `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				PropertyName: "url",
+				Required:     true,
+			},
+			{
+				Label:   "Http Method",
+				Element: alerting.ElementTypeSelect,
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "POST",
+						Label: "POST",
+					},
+					{
+						Value: "PUT",
+						Label: "PUT",
+					},
+				},
+				PropertyName: "httpMethod",
+			},
+			{
+				Label:        "Username",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				PropertyName: "username",
+			},
+			{
+				Label:        "Password",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypePassword,
+				PropertyName: "password",
+			},
+		},
 	})
 
 }

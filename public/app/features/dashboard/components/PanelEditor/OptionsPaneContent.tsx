@@ -35,7 +35,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
-  const [currentData, hasSeries] = usePanelLatestData(panel);
+  const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
@@ -50,11 +50,12 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          /* hasSeries makes sure current data is there */
+          data={data!.series}
         />
       );
     },
-    [currentData, plugin, panel, onFieldConfigsChange]
+    [data, plugin, panel, onFieldConfigsChange]
   );
 
   const renderFieldOverrideOptions = useCallback(
@@ -70,11 +71,12 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          /* hasSeries makes sure current data is there */
+          data={data!.series}
         />
       );
     },
-    [currentData, plugin, panel, onFieldConfigsChange]
+    [data, plugin, panel, onFieldConfigsChange]
   );
 
   // When the panel has no query only show the main tab
@@ -98,15 +100,14 @@ export const OptionsPaneContent: React.FC<Props> = ({
             />
           </TabsBar>
           <TabContent className={styles.tabContent}>
-            <CustomScrollbar>
+            <CustomScrollbar autoHeightMin="100%">
               {showMainTab ? (
                 <PanelOptionsTab
                   panel={panel}
                   plugin={plugin}
                   dashboard={dashboard}
-                  data={currentData}
+                  data={data}
                   onPanelConfigChange={onPanelConfigChange}
-                  onFieldConfigsChange={onFieldConfigsChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
                 />
               ) : (
@@ -204,6 +205,7 @@ export const TabsBarContent: React.FC<{
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
               title={item.tooltip}
+              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label)}
             />
           ))}
           <div className="flex-grow-1" />

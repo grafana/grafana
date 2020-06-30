@@ -13,7 +13,7 @@ describe('getFieldDisplayValuesProxy', () => {
             name: 'power',
             values: [100, 200, 300],
             config: {
-              title: 'The Power',
+              displayName: 'The Power',
             },
           },
           {
@@ -28,6 +28,7 @@ describe('getFieldDisplayValuesProxy', () => {
       overrides: [],
     },
     replaceVariables: (val: string) => val,
+    getDataSourceSettingsByUid: (val: string) => ({} as any),
     timeZone: 'utc',
     theme: {} as GrafanaTheme,
     autoMinMax: true,
@@ -54,7 +55,7 @@ describe('getFieldDisplayValuesProxy', () => {
     expect(time2.toString()).toEqual(time.toString());
   });
 
-  it('Lookup by name, index, or title', () => {
+  it('Lookup by name, index, or displayName', () => {
     const p = getFieldDisplayValuesProxy(data, 2, {
       theme: {} as GrafanaTheme,
     });

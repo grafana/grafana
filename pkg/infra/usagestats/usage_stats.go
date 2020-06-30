@@ -181,9 +181,12 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	client := http.Client{Timeout: 5 * time.Second}
 	go func() {
-		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
+		resp, err := client.Post(usageStatsURL, "application/json", data)
+		if err != nil {
 			metricsLogger.Error("Failed to send usage stats", "err", err)
+			return
 		}
+		resp.Body.Close()
 	}()
 }
 
@@ -209,6 +212,16 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveEditors.Set(float64(statsQuery.Result.ActiveEditors))
 	metrics.StatsTotalAdmins.Set(float64(statsQuery.Result.Admins))
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
+
+	dsStats := models.GetDataSourceStatsQuery{}
+	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+		metricsLogger.Error("Failed to get datasource stats", "error", err)
+		return
+	}
+
+	for _, dsStat := range dsStats.Result {
+		metrics.StatsTotalDataSources.WithLabelValues(dsStat.Type).Set(float64(dsStat.Count))
+	}
 }
 
 func getEdition() string {

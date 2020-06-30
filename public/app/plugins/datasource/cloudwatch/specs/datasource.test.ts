@@ -1,17 +1,24 @@
 import '../datasource';
-import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataSourceInstanceSettings, dateMath } from '@grafana/data';
+import { DataFrame, DataQueryResponse, DataSourceInstanceSettings, dateMath, getFrameDisplayName } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariable } from 'app/features/templating/all';
-import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, CloudWatchQuery, LogAction } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
+import { of } from 'rxjs';
+import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
+
+jest.mock('rxjs/operators', () => {
+  const operators = jest.requireActual('rxjs/operators');
+  operators.delay = jest.fn(() => (s: any) => s);
+  return operators;
+});
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -28,7 +35,7 @@ describe('CloudWatchDatasource', () => {
   const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
   const timeSrv = {
-    time: { from: 'now-1h', to: 'now' },
+    time: { from: '2016-12-31 15:00:00Z', to: '2016-12-31 16:00:00Z' },
     timeRange: () => {
       return {
         from: dateMath.parse(timeSrv.time.from, false),
@@ -44,6 +51,214 @@ describe('CloudWatchDatasource', () => {
   beforeEach(() => {
     ctx.ds = new CloudWatchDatasource(instanceSettings, templateSrv, timeSrv);
     jest.clearAllMocks();
+  });
+
+  describe('When getting log groups', () => {
+    beforeEach(() => {
+      datasourceRequestMock.mockImplementation(() =>
+        Promise.resolve({
+          data: {
+            results: {
+              A: {
+                dataframes: [
+                  'QVJST1cxAAD/////GAEAABAAAAAAAAoADgAMAAsABAAKAAAAFAAAAAAAAAEDAAoADAAAAAgABAAKAAAACAAAAFgAAAACAAAAKAAAAAQAAAB8////CAAAAAwAAAAAAAAAAAAAAAUAAAByZWZJZAAAAJz///8IAAAAFAAAAAkAAABsb2dHcm91cHMAAAAEAAAAbmFtZQAAAAABAAAAGAAAAAAAEgAYABQAEwASAAwAAAAIAAQAEgAAABQAAABMAAAAUAAAAAAABQFMAAAAAQAAAAwAAAAIAAwACAAEAAgAAAAIAAAAGAAAAAwAAABsb2dHcm91cE5hbWUAAAAABAAAAG5hbWUAAAAAAAAAAAQABAAEAAAADAAAAGxvZ0dyb3VwTmFtZQAAAAD/////mAAAABQAAAAAAAAADAAWABQAEwAMAAQADAAAAGAGAAAAAAAAFAAAAAAAAAMDAAoAGAAMAAgABAAKAAAAFAAAAEgAAAAhAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAiAAAAAAAAACIAAAAAAAAANgFAAAAAAAAAAAAAAEAAAAhAAAAAAAAAAAAAAAAAAAAAAAAADIAAABiAAAAkQAAALwAAADuAAAAHwEAAFQBAACHAQAAtQEAAOoBAAAbAgAASgIAAHQCAAClAgAA1QIAABADAABEAwAAdgMAAKMDAADXAwAACQQAAEAEAAB3BAAAlwQAAK0EAAC8BAAA+wQAAEIFAABhBQAAeAUAAJIFAAC0BQAA1gUAAC9hd3MvY29udGFpbmVyaW5zaWdodHMvZGV2MzAzLXdvcmtzaG9wL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvZGF0YXBsYW5lL2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvZmxvd2xvZ3MvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2RldjMwMy13b3Jrc2hvcC9ob3N0L2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2RldjMwMy13b3Jrc2hvcC9wcm9tZXRoZXVzL2F3cy9jb250YWluZXJpbnNpZ2h0cy9lY29tbWVyY2Utc29ja3Nob3AvYXBwbGljYXRpb24vYXdzL2NvbnRhaW5lcmluc2lnaHRzL2Vjb21tZXJjZS1zb2Nrc2hvcC9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2Vjb21tZXJjZS1zb2Nrc2hvcC9ob3N0L2F3cy9jb250YWluZXJpbnNpZ2h0cy9lY29tbWVyY2Utc29ja3Nob3AvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcGVyZi9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL2hvc3QvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL3BlcmZvcm1hbmNlL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcGVyZi9wcm9tZXRoZXVzL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcHJvZC11cy1lYXN0LTEvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tc3RhZ2luZy9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL2hvc3QvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL3BlcmZvcm1hbmNlL2F3cy9lY3MvY29udGFpbmVyaW5zaWdodHMvYnVnYmFzaC1lYzIvcGVyZm9ybWFuY2UvYXdzL2Vjcy9jb250YWluZXJpbnNpZ2h0cy9lY3MtZGVtb3dvcmtzaG9wL3BlcmZvcm1hbmNlL2F3cy9lY3MvY29udGFpbmVyaW5zaWdodHMvZWNzLXdvcmtzaG9wLWRldi9wZXJmb3JtYW5jZS9hd3MvZWtzL2RldjMwMy13b3Jrc2hvcC9jbHVzdGVyL2F3cy9ldmVudHMvY2xvdWR0cmFpbC9hd3MvZXZlbnRzL2Vjcy9hd3MvbGFtYmRhL2N3c3luLW15Y2FuYXJ5LWZhYzk3ZGVkLWYxMzQtNDk5YS05ZDcxLTRjM2JlMWY2MzE4Mi9hd3MvbGFtYmRhL2N3c3luLXdhdGNoLWxpbmtjaGVja3MtZWY3ZWYyNzMtNWRhMi00NjYzLWFmNTQtZDJmNTJkNTViMDYwL2Vjcy9lY3MtY3dhZ2VudC1kYWVtb24tc2VydmljZS9lY3MvZWNzLWRlbW8tbGltaXRUYXNrQ2xvdWRUcmFpbC9EZWZhdWx0TG9nR3JvdXBjb250YWluZXItaW5zaWdodHMtcHJvbWV0aGV1cy1iZXRhY29udGFpbmVyLWluc2lnaHRzLXByb21ldGhldXMtZGVtbwAAEAAAAAwAFAASAAwACAAEAAwAAAAQAAAALAAAADwAAAAAAAMAAQAAACgBAAAAAAAAoAAAAAAAAABgBgAAAAAAAAAAAAAAAAAAAAAAAAAACgAMAAAACAAEAAoAAAAIAAAAWAAAAAIAAAAoAAAABAAAAHz///8IAAAADAAAAAAAAAAAAAAABQAAAHJlZklkAAAAnP///wgAAAAUAAAACQAAAGxvZ0dyb3VwcwAAAAQAAABuYW1lAAAAAAEAAAAYAAAAAAASABgAFAATABIADAAAAAgABAASAAAAFAAAAEwAAABQAAAAAAAFAUwAAAABAAAADAAAAAgADAAIAAQACAAAAAgAAAAYAAAADAAAAGxvZ0dyb3VwTmFtZQAAAAAEAAAAbmFtZQAAAAAAAAAABAAEAAQAAAAMAAAAbG9nR3JvdXBOYW1lAAAAAEgBAABBUlJPVzE=',
+                ],
+                refId: 'A',
+              },
+            },
+          },
+        })
+      );
+    });
+
+    it('should return log groups as an array of strings', async () => {
+      const logGroups = await ctx.ds.describeLogGroups();
+      const expectedLogGroups = [
+        '/aws/containerinsights/dev303-workshop/application',
+        '/aws/containerinsights/dev303-workshop/dataplane',
+        '/aws/containerinsights/dev303-workshop/flowlogs',
+        '/aws/containerinsights/dev303-workshop/host',
+        '/aws/containerinsights/dev303-workshop/performance',
+        '/aws/containerinsights/dev303-workshop/prometheus',
+        '/aws/containerinsights/ecommerce-sockshop/application',
+        '/aws/containerinsights/ecommerce-sockshop/dataplane',
+        '/aws/containerinsights/ecommerce-sockshop/host',
+        '/aws/containerinsights/ecommerce-sockshop/performance',
+        '/aws/containerinsights/watchdemo-perf/application',
+        '/aws/containerinsights/watchdemo-perf/dataplane',
+        '/aws/containerinsights/watchdemo-perf/host',
+        '/aws/containerinsights/watchdemo-perf/performance',
+        '/aws/containerinsights/watchdemo-perf/prometheus',
+        '/aws/containerinsights/watchdemo-prod-us-east-1/performance',
+        '/aws/containerinsights/watchdemo-staging/application',
+        '/aws/containerinsights/watchdemo-staging/dataplane',
+        '/aws/containerinsights/watchdemo-staging/host',
+        '/aws/containerinsights/watchdemo-staging/performance',
+        '/aws/ecs/containerinsights/bugbash-ec2/performance',
+        '/aws/ecs/containerinsights/ecs-demoworkshop/performance',
+        '/aws/ecs/containerinsights/ecs-workshop-dev/performance',
+        '/aws/eks/dev303-workshop/cluster',
+        '/aws/events/cloudtrail',
+        '/aws/events/ecs',
+        '/aws/lambda/cwsyn-mycanary-fac97ded-f134-499a-9d71-4c3be1f63182',
+        '/aws/lambda/cwsyn-watch-linkchecks-ef7ef273-5da2-4663-af54-d2f52d55b060',
+        '/ecs/ecs-cwagent-daemon-service',
+        '/ecs/ecs-demo-limitTask',
+        'CloudTrail/DefaultLogGroup',
+        'container-insights-prometheus-beta',
+        'container-insights-prometheus-demo',
+      ];
+      expect(logGroups).toEqual(expectedLogGroups);
+    });
+  });
+
+  describe('When performing CloudWatch logs query', () => {
+    it('should add data links to response', () => {
+      const mockResponse: DataQueryResponse = {
+        data: [
+          {
+            fields: [
+              {
+                config: {
+                  links: [],
+                },
+              },
+            ],
+            refId: 'A',
+          },
+        ],
+      };
+
+      const mockOptions = {
+        targets: [
+          {
+            refId: 'A',
+            expression: 'stats count(@message) by bin(1h)',
+            logGroupNames: ['fake-log-group-one', 'fake-log-group-two'],
+            region: 'default',
+          },
+        ],
+      };
+
+      const saturatedResponse = ctx.ds.addDataLinksToLogsResponse(mockResponse, mockOptions);
+      expect(saturatedResponse).toMatchObject({
+        data: [
+          {
+            fields: [
+              {
+                config: {
+                  links: [
+                    {
+                      url:
+                        "https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'stats*20count*28*40message*29*20by*20bin*281h*29~isLiveTail~false~source~(~'fake-log-group-one~'fake-log-group-two))",
+                      title: 'View in CloudWatch console',
+                      targetBlank: true,
+                    },
+                  ],
+                },
+              },
+            ],
+            refId: 'A',
+          },
+        ],
+      });
+    });
+
+    it('should stop querying when no more data retrieved past max attempts', async () => {
+      const fakeFrames = genMockFrames(10);
+      for (let i = 7; i < fakeFrames.length; i++) {
+        fakeFrames[i].meta!.custom!['Statistics']['RecordsMatched'] = fakeFrames[6].meta!.custom!['Statistics'][
+          'RecordsMatched'
+        ];
+      }
+
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+
+      const expectedData = [
+        {
+          ...fakeFrames[MAX_ATTEMPTS - 1],
+          meta: { custom: { ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom, Status: 'Complete' } },
+        },
+      ];
+      expect(myResponse).toEqual({
+        data: expectedData,
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(MAX_ATTEMPTS);
+    });
+
+    it('should continue querying as long as new data is being received', async () => {
+      const fakeFrames = genMockFrames(15);
+
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+      expect(myResponse).toEqual({
+        data: [fakeFrames[fakeFrames.length - 1]],
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(15);
+    });
+
+    it('should stop querying when results come back with status "Complete"', async () => {
+      const fakeFrames = genMockFrames(3);
+      let i = 0;
+      jest.spyOn(ctx.ds, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
+        if (subtype === 'GetQueryResults') {
+          const mockObservable = of([fakeFrames[i]]);
+          i++;
+          return mockObservable;
+        } else {
+          return of([]);
+        }
+      });
+
+      const myResponse = await ctx.ds.logsQuery([{ queryId: 'fake-query-id', region: 'default' }]).toPromise();
+
+      expect(myResponse).toEqual({
+        data: [fakeFrames[2]],
+        key: 'test-key',
+        state: 'Done',
+      });
+      expect(i).toBe(3);
+    });
+
+    it('should call the replace method on provided log groups', () => {
+      const replaceSpy = jest.spyOn(ctx.ds, 'replace').mockImplementation((target: string) => target);
+      ctx.ds.makeLogActionRequest('StartQuery', [
+        {
+          queryString: 'test query string',
+          region: 'default',
+          logGroupNames: ['log-group', '${my_var}Variable', 'Cool${other_var}'],
+        },
+      ]);
+
+      expect(replaceSpy).toBeCalledWith('log-group', undefined, true, 'log groups');
+      expect(replaceSpy).toBeCalledWith('${my_var}Variable', undefined, true, 'log groups');
+      expect(replaceSpy).toBeCalledWith('Cool${other_var}', undefined, true, 'log groups');
+    });
   });
 
   describe('When performing CloudWatch metrics query', () => {
@@ -114,18 +329,22 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should generate the correct query with interval variable', async () => {
-      templateSrv.init([
-        new CustomVariable(
-          {
-            name: 'period',
-            current: {
-              value: '10m',
-            },
-            multi: false,
-          },
-          {} as any
-        ),
-      ]);
+      const period: CustomVariableModel = {
+        id: 'period',
+        name: 'period',
+        index: 0,
+        current: { value: '10m', text: '10m', selected: true },
+        options: [{ value: '10m', text: '10m', selected: true }],
+        multi: false,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      templateSrv.init([period]);
 
       const query = {
         range: defaultTimeRange,
@@ -174,7 +393,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
@@ -190,7 +409,7 @@ describe('CloudWatchDatasource', () => {
       it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
         response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
@@ -205,7 +424,7 @@ describe('CloudWatchDatasource', () => {
           { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
         ];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
@@ -217,7 +436,7 @@ describe('CloudWatchDatasource', () => {
       it('should be built correctly if the query is a metric stat query', done => {
         response.results['A'].meta.gmdMeta = [{ Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
           expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
             `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
@@ -458,7 +677,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
@@ -468,58 +687,75 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
-      const variables = [
-        new CustomVariable(
-          {
-            name: 'var1',
-            current: {
-              value: 'var1-foo',
-            },
-            multi: false,
-          },
-          {} as any
-        ),
-        new CustomVariable(
-          {
-            name: 'var2',
-            current: {
-              value: 'var2-foo',
-            },
-            multi: false,
-          },
-          {} as any
-        ),
-        new CustomVariable(
-          {
-            name: 'var3',
-            options: [
-              { selected: true, value: 'var3-foo' },
-              { selected: false, value: 'var3-bar' },
-              { selected: true, value: 'var3-baz' },
-            ],
-            current: {
-              value: ['var3-foo', 'var3-baz'],
-            },
-            multi: true,
-          },
-          {} as any
-        ),
-        new CustomVariable(
-          {
-            name: 'var4',
-            options: [
-              { selected: true, value: 'var4-foo' },
-              { selected: false, value: 'var4-bar' },
-              { selected: true, value: 'var4-baz' },
-            ],
-            current: {
-              value: ['var4-foo', 'var4-baz'],
-            },
-            multi: true,
-          },
-          {} as any
-        ),
-      ];
+      const var1: CustomVariableModel = {
+        id: 'var1',
+        name: 'var1',
+        index: 0,
+        current: { value: 'var1-foo', text: 'var1-foo', selected: true },
+        options: [{ value: 'var1-foo', text: 'var1-foo', selected: true }],
+        multi: false,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const var2: CustomVariableModel = {
+        id: 'var2',
+        name: 'var2',
+        index: 1,
+        current: { value: 'var2-foo', text: 'var2-foo', selected: true },
+        options: [{ value: 'var2-foo', text: 'var2-foo', selected: true }],
+        multi: false,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const var3: CustomVariableModel = {
+        id: 'var3',
+        name: 'var3',
+        index: 2,
+        current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
+        options: [
+          { selected: true, value: 'var3-foo', text: 'var3-foo' },
+          { selected: false, value: 'var3-bar', text: 'var3-bar' },
+          { selected: true, value: 'var3-baz', text: 'var3-baz' },
+        ],
+        multi: true,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const var4: CustomVariableModel = {
+        id: 'var4',
+        name: 'var4',
+        index: 3,
+        options: [
+          { selected: true, value: 'var4-foo', text: 'var4-foo' },
+          { selected: false, value: 'var4-bar', text: 'var4-bar' },
+          { selected: true, value: 'var4-baz', text: 'var4-baz' },
+        ],
+        current: { value: ['var4-foo', 'var4-baz'], text: 'var4-foo + var4-baz', selected: true },
+        multi: true,
+        includeAll: false,
+        query: '',
+        hide: VariableHide.dontHide,
+        type: 'custom',
+        label: null,
+        skipUrlSync: false,
+        global: false,
+      };
+      const variables = [var1, var2, var3, var4];
       const state = convertToStoreState(variables);
       const _templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
       _templateSrv.init(variables);
@@ -741,7 +977,6 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should call __GetDimensions and return result', () => {
-      console.log({ a: scenario.requestResponse.results });
       expect(scenario.result[0].text).toBe('InstanceId');
       expect(scenario.request.queries[0].type).toBe('metricFindQuery');
       expect(scenario.request.queries[0].subtype).toBe('dimension_keys');
@@ -814,3 +1049,25 @@ describe('CloudWatchDatasource', () => {
     }
   );
 });
+
+function genMockFrames(numResponses: number): DataFrame[] {
+  const recordIncrement = 50;
+  const mockFrames: DataFrame[] = [];
+
+  for (let i = 0; i < numResponses; i++) {
+    mockFrames.push({
+      fields: [],
+      meta: {
+        custom: {
+          Status: i === numResponses - 1 ? CloudWatchLogsQueryStatus.Complete : CloudWatchLogsQueryStatus.Running,
+          Statistics: {
+            RecordsMatched: (i + 1) * recordIncrement,
+          },
+        },
+      },
+      length: 0,
+    });
+  }
+
+  return mockFrames;
+}

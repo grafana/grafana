@@ -1,6 +1,6 @@
 // Libaries
 import React, { PureComponent, FC, ReactNode } from 'react';
-import { connect } from 'react-redux';
+import { connect, MapDispatchToProps } from 'react-redux';
 import { css } from 'emotion';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
@@ -13,6 +13,7 @@ import { textUtil } from '@grafana/data';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
@@ -23,8 +24,12 @@ export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
   $injector: any;
-  updateLocation: typeof updateLocation;
   onAddPanel: () => void;
+}
+
+interface DispatchProps {
+  updateTimeZoneForSession: typeof updateTimeZoneForSession;
+  updateLocation: typeof updateLocation;
 }
 
 interface DashNavButtonModel {
@@ -48,7 +53,7 @@ export interface StateProps {
   location: any;
 }
 
-type Props = StateProps & OwnProps;
+type Props = StateProps & OwnProps & DispatchProps;
 
 class DashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
@@ -67,7 +72,7 @@ class DashNav extends PureComponent<Props> {
 
   onClose = () => {
     this.props.updateLocation({
-      query: { edit: null, viewPanel: null },
+      query: { viewPanel: null },
       partial: true,
     });
   };
@@ -104,6 +109,13 @@ class DashNav extends PureComponent<Props> {
   onPlaylistStop = () => {
     this.playlistSrv.stop();
     this.forceUpdate();
+  };
+
+  onDashboardNameClick = () => {
+    this.props.updateLocation({
+      query: { search: 'open' },
+      partial: true,
+    });
   };
 
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
@@ -186,7 +198,7 @@ class DashNav extends PureComponent<Props> {
                 </a>
               </>
             )}
-            <span>{dashboard.title}</span>
+            <a onClick={this.onDashboardNameClick}>{dashboard.title}</a>
           </div>
         </div>
         <div className="navbar-buttons navbar-buttons--actions">{this.renderLeftActionsButton()}</div>
@@ -270,7 +282,7 @@ class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, location, isFullscreen } = this.props;
+    const { dashboard, location, isFullscreen, updateTimeZoneForSession } = this.props;
 
     return (
       <div className="navbar">
@@ -308,7 +320,11 @@ class DashNav extends PureComponent<Props> {
 
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <DashNavTimeControls
+              dashboard={dashboard}
+              location={location}
+              onChangeTimeZone={updateTimeZoneForSession}
+            />
           </div>
         )}
       </div>
@@ -320,8 +336,9 @@ const mapStateToProps = (state: StoreState) => ({
   location: state.location,
 });
 
-const mapDispatchToProps = {
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateLocation,
+  updateTimeZoneForSession,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DashNav);

@@ -1,6 +1,7 @@
 import { eventFactory } from './utils';
 import { DataQueryError, DataQueryResponseData } from './datasource';
 import { AngularPanelMenuItem } from './panel';
+import { DataFrame } from './dataFrame';
 
 /** Payloads */
 export interface PanelChangeViewPayload {
@@ -15,6 +16,7 @@ export const refresh = eventFactory('refresh');
 export const componentDidMount = eventFactory('component-did-mount');
 export const dataError = eventFactory<DataQueryError>('data-error');
 export const dataReceived = eventFactory<DataQueryResponseData[]>('data-received');
+export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
 export const dataSnapshotLoad = eventFactory<DataQueryResponseData[]>('data-snapshot-load');
 export const editModeInitialized = eventFactory('init-edit-mode');
 export const initPanelActions = eventFactory<AngularPanelMenuItem[]>('init-panel-actions');

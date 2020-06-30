@@ -4,17 +4,26 @@ const {
 } = require('fs');
 const { resolve } = require('path');
 
+// @todo use https://github.com/bahmutov/cypress-extends when possible
 module.exports = async baseConfig => {
   // From CLI
   const {
-    env: { CWD },
+    env: { CWD, UPDATE_SCREENSHOTS },
   } = baseConfig;
 
   if (CWD) {
+    // @todo: https://github.com/cypress-io/cypress/issues/6406
+    const jsonReporter = require.resolve('@mochajs/json-file-reporter');
+
+    // @todo `baseUrl: env.CYPRESS_BASEURL`
     const projectConfig = {
       fixturesFolder: `${CWD}/cypress/fixtures`,
       integrationFolder: `${CWD}/cypress/integration`,
-      screenshotsFolder: `${CWD}/cypress/screenshots`,
+      reporter: jsonReporter,
+      reporterOptions: {
+        output: `${CWD}/cypress/report.json`,
+      },
+      screenshotsFolder: `${CWD}/cypress/screenshots/${UPDATE_SCREENSHOTS ? 'expected' : 'actual'}`,
       videosFolder: `${CWD}/cypress/videos`,
     };
 
@@ -46,14 +55,23 @@ module.exports = async baseConfig => {
       .catch(error => {
         if (error.code === 'ENOENT') {
           // File is optional
-          return null;
+          return {};
         } else {
           // Unexpected error
           throw error;
         }
       });
 
-    return { ...baseConfig, ...projectConfig, ...customProjectConfig };
+    return {
+      ...baseConfig,
+      ...projectConfig,
+      ...customProjectConfig,
+      reporterOptions: {
+        ...baseConfig.reporterOptions,
+        ...projectConfig.reporterOptions,
+        ...customProjectConfig.reporterOptions,
+      },
+    };
   } else {
     // Temporary legacy support for Grafana core (using `yarn start`)
     return baseConfig;

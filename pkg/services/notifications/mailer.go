@@ -73,11 +73,12 @@ func (ns *NotificationService) setFiles(
 	m *gomail.Message,
 	msg *Message,
 ) {
-	for _, file := range msg.EmbededFiles {
+	for _, file := range msg.EmbeddedFiles {
 		m.Embed(file)
 	}
 
 	for _, file := range msg.AttachedFiles {
+		file := file
 		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
 			_, err := writer.Write(file.Content)
 			return err
@@ -111,6 +112,7 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 
 	d := gomail.NewDialer(host, iPort, ns.Cfg.Smtp.User, ns.Cfg.Smtp.Password)
 	d.TLSConfig = tlsconfig
+	d.StartTLSPolicy = getStartTLSPolicy(ns.Cfg.Smtp.StartTLSPolicy)
 
 	if ns.Cfg.Smtp.EhloIdentity != "" {
 		d.LocalName = ns.Cfg.Smtp.EhloIdentity
@@ -118,6 +120,17 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 		d.LocalName = setting.InstanceName
 	}
 	return d, nil
+}
+
+func getStartTLSPolicy(policy string) gomail.StartTLSPolicy {
+	switch policy {
+	case "NoStartTLS":
+		return -1
+	case "MandatoryStartTLS":
+		return 1
+	default:
+		return 0
+	}
 }
 
 func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
@@ -169,8 +182,9 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
 		Subject:       subject,
 		Body:          buffer.String(),
-		EmbededFiles:  cmd.EmbededFiles,
+		EmbeddedFiles: cmd.EmbeddedFiles,
 		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
+		ReplyTo:       cmd.ReplyTo,
 	}, nil
 }
 

@@ -1,0 +1,7 @@
+#datatype,string,long,string,string,string,string,long
+#group,false,false,false,false,true,false,false
+#default,_result,,,,,,
+,result,table,name,id,organizationID,retentionPolicy,retentionPeriod
+,,0,grafana,059b46a59abab001,059b46a59abab000,,604800000000000
+,,0,_tasks,059b46a59abab002,059b46a59abab000,,259200000000000
+,,0,_monitoring,059b46a59abab003,059b46a59abab000,,604800000000000

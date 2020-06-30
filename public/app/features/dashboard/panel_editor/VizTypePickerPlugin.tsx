@@ -1,9 +1,8 @@
 import React from 'react';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
-import { styleMixins, stylesFactory, useTheme } from '@grafana/ui';
+import { Badge, BadgeProps, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelPluginBadge } from '../../plugins/PluginSignatureBadge';
 
 interface Props {
   isCurrent: boolean;
@@ -23,7 +22,11 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PluginVisualization.item(plugin.name)}>
-      <div className={cssClass} onClick={disabled ? () => {} : onClick} title={plugin.name}>
+      <div
+        className={cssClass}
+        onClick={disabled ? () => {} : onClick}
+        title={isCurrent ? 'Click again to close this section' : plugin.name}
+      >
         <div className={styles.bg} />
         <div className={styles.itemContent}>
           <div className={styles.name} title={plugin.name}>
@@ -88,7 +91,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     current: css`
       label: currentVisualizationItem;
-      pointer-events: none;
       > div:first-child {
         ${styleMixins.focusCss(theme)};
       }
@@ -126,3 +128,36 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export default VizTypePickerPlugin;
+
+interface PanelPluginBadgeProps {
+  plugin: PanelPluginMeta;
+}
+const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
+  const display = getPanelStateBadgeDisplayModel(plugin);
+
+  if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
+    return null;
+  }
+  return <Badge color={display.color} text={display.text} icon={display.icon} tooltip={display.tooltip} />;
+};
+
+function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps {
+  switch (panel.state) {
+    case PluginState.deprecated:
+      return {
+        text: 'Deprecated',
+        icon: 'exclamation-triangle',
+        color: 'red',
+        tooltip: `${panel.name} panel is deprecated`,
+      };
+  }
+
+  return {
+    text: 'Alpha',
+    icon: 'rocket',
+    color: 'blue',
+    tooltip: `${panel.name} panel is experimental`,
+  };
+}
+
+PanelPluginBadge.displayName = 'PanelPluginBadge';

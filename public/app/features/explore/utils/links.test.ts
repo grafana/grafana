@@ -39,8 +39,9 @@ describe('getFieldLinksForExplore', () => {
   it('returns correct link model for internal link', () => {
     const { field, range } = setup({
       title: '',
-      url: 'query_1',
-      meta: {
+      url: '',
+      internal: {
+        query: { query: 'query_1' },
         datasourceUid: 'uid_1',
       },
     });
@@ -51,8 +52,12 @@ describe('getFieldLinksForExplore', () => {
       '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"mode":"Metrics","ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
     );
     expect(links[0].title).toBe('test_ds');
-    links[0].onClick({});
-    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: 'query_1' });
+
+    if (links[0].onClick) {
+      links[0].onClick({});
+    }
+
+    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: { query: 'query_1' } });
   });
 });
 
@@ -65,6 +70,12 @@ function setup(link: DataLink) {
         target: '_blank',
         origin: origin,
       };
+    },
+    getAnchorInfo(link: any) {
+      return { ...link };
+    },
+    getLinkUrl(link: any) {
+      return link.url;
     },
   });
   setDataSourceSrv({

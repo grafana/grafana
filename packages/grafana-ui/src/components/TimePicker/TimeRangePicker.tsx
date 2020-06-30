@@ -5,7 +5,7 @@ import { css, cx } from 'emotion';
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { TimePickerContent } from './TimePickerContent/TimePickerContent';
+import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
@@ -13,7 +13,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormatWithAbbrevation } from '@grafana/data';
+import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormat, timeZoneFormatUserFriendly } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -98,6 +98,7 @@ export interface Props extends Themeable {
   timeSyncButton?: JSX.Element;
   isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
@@ -139,6 +140,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       isSynced,
       theme,
       history,
+      onChangeTimeZone,
     } = this.props;
 
     const { isOpen } = this.state;
@@ -168,7 +170,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
               </button>
             </Tooltip>
             {isOpen && (
-              <ClickOutsideWrapper onClick={this.onClose}>
+              <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
                 <TimePickerContent
                   timeZone={timeZone}
                   value={value}
@@ -176,6 +178,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
                   otherOptions={otherOptions}
                   quickOptions={quickOptions}
                   history={history}
+                  onChangeTimeZone={onChangeTimeZone}
                 />
               </ClickOutsideWrapper>
             )}
@@ -206,13 +209,21 @@ const ZoomOutTooltip = () => (
   </>
 );
 
-const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => (
-  <>
-    {dateTimeFormatWithAbbrevation(timeRange.from, { timeZone })}
-    <div className="text-center">to</div>
-    {dateTimeFormatWithAbbrevation(timeRange.to, { timeZone })}
-  </>
-);
+const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
+  const theme = useTheme();
+  const styles = getLabelStyles(theme);
+
+  return (
+    <>
+      {dateTimeFormat(timeRange.from, { timeZone })}
+      <div className="text-center">to</div>
+      {dateTimeFormat(timeRange.to, { timeZone })}
+      <div className="text-center">
+        <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>
+      </div>
+    </>
+  );
+};
 
 const TimePickerButtonLabel = memo<Props>(({ hideText, value, timeZone }) => {
   const theme = useTheme();

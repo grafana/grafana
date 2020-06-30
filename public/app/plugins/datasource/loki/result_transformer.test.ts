@@ -1,5 +1,5 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse } from './types';
+import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType } from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame } from './result_transformer';
 
@@ -17,6 +17,19 @@ const streamResult: LokiStreamResult[] = [
     values: [['1579857562031616000', "bar: 'foo'"]],
   },
 ];
+
+const lokiResponse: LokiStreamResponse = {
+  status: 'success',
+  data: {
+    result: streamResult,
+    resultType: LokiResultType.Stream,
+    stats: {
+      summary: {
+        bytesTotal: 900,
+      },
+    },
+  },
+};
 
 describe('loki result transformer', () => {
   afterAll(() => {
@@ -45,7 +58,7 @@ describe('loki result transformer', () => {
   describe('lokiStreamsToDataframes', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      const dataFrames = ResultTransformer.lokiStreamsToDataframes(streamResult, { refId: 'B' }, 500, {
+      const dataFrames = ResultTransformer.lokiStreamsToDataframes(lokiResponse, { refId: 'B' }, 500, {
         derivedFields: [
           {
             matcherRegex: 'trace=(w+)',
@@ -84,8 +97,8 @@ describe('loki result transformer', () => {
       };
 
       const data = new CircularDataFrame({ capacity: 1 });
-      data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
-      data.addField({ name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' } });
+      data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
+      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'id', type: FieldType.string });
@@ -116,7 +129,14 @@ describe('enhanceDataFrame', () => {
         {
           matcherRegex: 'trace2=(\\w+)',
           name: 'trace2',
+          url: 'test',
           datasourceUid: 'uid',
+        },
+        {
+          matcherRegex: 'trace2=(\\w+)',
+          name: 'trace2',
+          url: 'test',
+          datasourceUid: 'uid2',
         },
       ],
     });
@@ -129,9 +149,16 @@ describe('enhanceDataFrame', () => {
     });
 
     expect(fc.getFieldByName('trace2').values.toArray()).toEqual([null, null, 'foo']);
+    expect(fc.getFieldByName('trace2').config.links.length).toBe(2);
     expect(fc.getFieldByName('trace2').config.links[0]).toEqual({
       title: '',
-      meta: { datasourceUid: 'uid' },
+      internal: { datasourceUid: 'uid', query: { query: 'test' } },
+      url: '',
+    });
+    expect(fc.getFieldByName('trace2').config.links[1]).toEqual({
+      title: '',
+      internal: { datasourceUid: 'uid2', query: { query: 'test' } },
+      url: '',
     });
   });
 });

@@ -23,7 +23,7 @@ import (
 // Use the docker/blocks/mssql_tests/docker-compose.yaml to spin up a
 // preconfigured MSSQL server suitable for running these tests.
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
-// use to verify that the generated data are vizualized as expected, see
+// use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 // If needed, change the variable below to the IP address of the database.
 var serverIP = "localhost"
@@ -90,7 +90,9 @@ func TestMSSQL(t *testing.T) {
 						c_smalldatetime smalldatetime,
 						c_date date,
 						c_time time,
-						c_datetimeoffset datetimeoffset
+						c_datetimeoffset datetimeoffset,
+
+						c_uuid uniqueidentifier
 					)
 				`
 
@@ -103,6 +105,7 @@ func TestMSSQL(t *testing.T) {
 			dt2 := time.Date(2018, 3, 14, 21, 20, 6, 8896406e2, time.UTC)
 			dt2Format := "2006-01-02 15:04:05.999999999 -07:00"
 			d2 := dt2.Format(dt2Format)
+			uuid := "B33D42A3-AC5A-4D4C-81DD-72F3D5C49025"
 
 			sql = fmt.Sprintf(`
 				INSERT INTO [mssql_types]
@@ -111,8 +114,9 @@ func TestMSSQL(t *testing.T) {
 		    1.11, 2.22, 3.33,
 					'char10', 'varchar10', 'text',
 					N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
-					CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00')
-		`, d, d2, d, d, d, d2)
+					CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00'),
+					CONVERT(uniqueidentifier, '%s')
+		`, d, d2, d, d, d, d2, uuid)
 
 			_, err = sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -164,6 +168,8 @@ func TestMSSQL(t *testing.T) {
 				So(column[20].(time.Time), ShouldEqual, dt.Truncate(24*time.Hour))
 				So(column[21].(time.Time), ShouldEqual, time.Date(1, 1, 1, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond(), time.UTC))
 				So(column[22].(time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC-7", int(-7*60*60))))
+
+				So(column[23].(string), ShouldEqual, uuid)
 			})
 		})
 
@@ -333,7 +339,7 @@ func TestMSSQL(t *testing.T) {
 					So(err, ShouldBeNil)
 					queryResult := resp.Results["A"]
 					So(queryResult.Error, ShouldBeNil)
-					So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 ORDER BY 1")
+					So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 ORDER BY 1")
 				})
 			})
 
@@ -698,7 +704,7 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+				So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
 
 			})
 
