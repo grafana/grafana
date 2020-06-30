@@ -84,22 +84,35 @@ type AzureLogAnalyticsTable struct {
 // azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type azureMonitorJSONQuery struct {
 	AzureMonitor struct {
-		Aggregation         string   `json:"aggregation"`
-		Alias               string   `json:"alias"`
-		AllowedTimeGrainsMs []int64  `json:"allowedTimeGrainsMs"`
-		Dimension           string   `json:"dimension"`       // old model
-		DimensionFilter     string   `json:"dimensionFilter"` // old model
-		DimensionFilters    []string `json:"dimensions"`
-		Format              string   `json:"format"`
-		MetricDefinition    string   `json:"metricDefinition"`
-		MetricName          string   `json:"metricName"`
-		MetricNamespace     string   `json:"metricNamespace"`
-		ResourceGroup       string   `json:"resourceGroup"`
-		ResourceName        string   `json:"resourceName"`
-		TimeGrain           string   `json:"timeGrain"`
-		Top                 string   `json:"top"`
+		Aggregation         string  `json:"aggregation"`
+		Alias               string  `json:"alias"`
+		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+		Dimension           string  `json:"dimension"`       // old model
+		DimensionFilter     string  `json:"dimensionFilter"` // old model
+		Format              string  `json:"format"`
+		MetricDefinition    string  `json:"metricDefinition"`
+		MetricName          string  `json:"metricName"`
+		MetricNamespace     string  `json:"metricNamespace"`
+		ResourceGroup       string  `json:"resourceGroup"`
+		ResourceName        string  `json:"resourceName"`
+		TimeGrain           string  `json:"timeGrain"`
+		Top                 string  `json:"top"`
+
+		DimensionsFilters []azureMonitorDimensionFilter `json:"dimensionsFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
+}
+
+// azureMonitorDimensionFilter is the model for the frontend sent for azureMonitor metric
+// queries like "BlobType", "eq", "*"
+type azureMonitorDimensionFilter struct {
+	Dimension string `json:"dimension"`
+	Operator  string `json:"operator"`
+	Filter    string `json:"filter"`
+}
+
+func (a azureMonitorDimensionFilter) String() string {
+	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, a.Filter)
 }
 
 // insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.

@@ -135,12 +135,12 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		dimSB := strings.Builder{}
 
-		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionsFilters) == 0 {
 			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		} else {
-			for i, filter := range azJSONModel.DimensionFilters {
-				dimSB.WriteString(fmt.Sprintf(filter))
-				if i != len(azJSONModel.DimensionFilters)-1 {
+			for i, filter := range azJSONModel.DimensionsFilters {
+				dimSB.WriteString(filter.String())
+				if i != len(azJSONModel.DimensionsFilters)-1 {
 					dimSB.WriteString(" and ")
 				}
 			}
@@ -181,7 +181,6 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
-	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
 	span.SetTag("target", query.Target)
@@ -267,7 +266,6 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 		return AzureMonitorResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
-	azlog.Debug(string(body))
 	var data AzureMonitorResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
