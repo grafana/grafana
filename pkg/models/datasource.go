@@ -9,21 +9,21 @@ import (
 )
 
 const (
-	DS_GRAPHITE         = "graphite"
-	DS_INFLUXDB         = "influxdb"
-	DS_INFLUXDB_08      = "influxdb_08"
-	DS_ES               = "elasticsearch"
-	DS_OPENTSDB         = "opentsdb"
-	DS_CLOUDWATCH       = "cloudwatch"
-	DS_KAIROSDB         = "kairosdb"
-	DS_PROMETHEUS       = "prometheus"
-	DS_POSTGRES         = "postgres"
-	DS_MYSQL            = "mysql"
-	DS_MSSQL            = "mssql"
-	DS_ACCESS_DIRECT    = "direct"
-	DS_ACCESS_PROXY     = "proxy"
-      // Stackdriver was renamed Google Cloud monitoring 2020-05 but we keep
-      // "stackdriver" to avoid breaking changes in reporting.
+	DS_GRAPHITE      = "graphite"
+	DS_INFLUXDB      = "influxdb"
+	DS_INFLUXDB_08   = "influxdb_08"
+	DS_ES            = "elasticsearch"
+	DS_OPENTSDB      = "opentsdb"
+	DS_CLOUDWATCH    = "cloudwatch"
+	DS_KAIROSDB      = "kairosdb"
+	DS_PROMETHEUS    = "prometheus"
+	DS_POSTGRES      = "postgres"
+	DS_MYSQL         = "mysql"
+	DS_MSSQL         = "mssql"
+	DS_ACCESS_DIRECT = "direct"
+	DS_ACCESS_PROXY  = "proxy"
+	// Stackdriver was renamed Google Cloud monitoring 2020-05 but we keep
+	// "stackdriver" to avoid breaking changes in reporting.
 	DS_CLOUD_MONITORING = "stackdriver"
 	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
 	DS_LOKI             = "loki"
