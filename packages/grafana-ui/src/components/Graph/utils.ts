@@ -91,7 +91,7 @@ export const getMultiSeriesGraphHoverInfo = (
       datapointIndex: hoverIndex,
       seriesIndex: i,
       color: disp.color,
-      label: field.name,
+      label: field.config.displayName,
       time: time.display ? formattedValueToString(time.display(pointTime)) : pointTime,
     });
   }

@@ -36,7 +36,7 @@ export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({
       series={[
         {
           color: disp.color,
-          label: valueField.name,
+          label: valueField.config.displayName,
           value: formattedValueToString(disp),
         },
       ]}
