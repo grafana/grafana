@@ -372,7 +372,6 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldBeAllowed(pt pe
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		p := p
 		tc := fmt.Sprintf("When updating dashboard permissions with %s permissions should be allowed", p.String())
 
 		Convey(tc, func() {
@@ -421,7 +420,6 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldNotBeAllowed(pt
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		p := p
 		tc := fmt.Sprintf("When updating dashboard permissions with %s permissions should NOT be allowed", p.String())
 
 		Convey(tc, func() {
@@ -462,7 +460,6 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldBeAllowed(
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		p := p
 		tc := fmt.Sprintf("When updating child dashboard permissions with %s permissions should be allowed", p.String())
 
 		Convey(tc, func() {
@@ -526,7 +523,6 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldNotBeAllow
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		p := p
 		tc := fmt.Sprintf("When updating child dashboard permissions with %s permissions should NOT be allowed", p.String())
 
 		Convey(tc, func() {
@@ -590,7 +586,6 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		p := p
 		// permission to update is higher than parent folder permission
 		if p > parentFolderPermission {
 			continue
@@ -636,7 +631,6 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 	}
 
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
-		p := p
 		// permission to update is lower than or equal to parent folder permission
 		if p <= parentFolderPermission {
 			continue

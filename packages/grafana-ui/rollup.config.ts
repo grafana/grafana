@@ -13,12 +13,13 @@ const buildCjsPackage = ({ env }) => {
     input: `compiled/index.js`,
     output: [
       {
-        file: `dist/index.${env}.js`,
+        dir: 'dist',
         name: libraryName,
         format: 'cjs',
         sourcemap: true,
         strict: false,
         exports: 'named',
+        chunkFileNames: `[name].${env}.js`,
         globals: {
           react: 'React',
           'prop-types': 'PropTypes',
