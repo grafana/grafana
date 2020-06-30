@@ -825,7 +825,7 @@ describe('ElasticResponse', () => {
       expect(result.data[2].datapoints[1][0]).toBe(12);
     });
   });
-/*
+
   describe('terms with bucket_script and two scripts', () => {
       let result: any;
   
@@ -909,7 +909,7 @@ describe('ElasticResponse', () => {
       expect(result.data[3].datapoints[1][0]).toBe(48);
     });
   });
-*/
+
   describe('simple logs query and count', () => {
     const targets: any = [
       {
