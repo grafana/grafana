@@ -289,7 +289,7 @@ describe('SearchSrv', () => {
 
       searchSrv['getStarred'] = () => {
         getStarredCalled = true;
-        return Promise.resolve();
+        return Promise.resolve({});
       };
 
       return searchSrv.search({ skipStarred: true }).then(() => {});

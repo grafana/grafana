@@ -5,7 +5,6 @@
 title = "ModalTabContent"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ModalTabContent variable

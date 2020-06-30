@@ -2,23 +2,21 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
-
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { getAngularLoader, AngularComponent } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { setPanelAngularComponent } from '../state/reducers';
 import config from 'app/core/config';
-
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin, PanelEvents } from '@grafana/data';
+import { DefaultTimeRange, LoadingState, PanelData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
 import { PANEL_BORDER } from 'app/core/constants';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface OwnProps {
   panel: PanelModel;
@@ -80,7 +78,9 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     // subscribe to data events
     const queryRunner = panel.getQueryRunner();
-    this.querySubscription = queryRunner.getData(false).subscribe({
+
+    // we are not displaying any of this data so no need for transforms or field config
+    this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
   }
@@ -95,8 +95,12 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   onPanelRenderEvent = (payload?: any) => {
     const { alertState } = this.state;
 
-    if (payload && payload.alertState) {
+    if (payload && payload.alertState && this.props.panel.alert) {
       this.setState({ alertState: payload.alertState });
+    } else if (payload && payload.alertState && !this.props.panel.alert) {
+      // when user deletes alert in panel editor the source panel needs to refresh as this is in the mutable state and
+      // will not automatically re render
+      this.setState({ alertState: undefined });
     } else if (payload && alertState) {
       this.setState({ alertState: undefined });
     } else {
@@ -237,7 +241,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}

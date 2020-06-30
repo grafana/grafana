@@ -16,6 +16,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/bus"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -30,20 +31,6 @@ var (
 	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
 )
-
-type URLValidationError struct {
-	error
-
-	url string
-}
-
-func (e URLValidationError) Error() string {
-	return fmt.Sprintf("Validation of URL %q failed: %s", e.url, e.error.Error())
-}
-
-func (e URLValidationError) Unwrap() error {
-	return e.error
-}
 
 type DataSourceProxy struct {
 	ds        *models.DataSource
@@ -86,9 +73,9 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
-	targetURL, err := url.Parse(ds.Url)
+	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
-		return nil, URLValidationError{error: err, url: ds.Url}
+		return nil, err
 	}
 
 	return &DataSourceProxy{
@@ -200,9 +187,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", dsAuth)
 		}
 
-		if proxy.cfg.SendUserHeader && !proxy.ctx.SignedInUser.IsAnonymous {
-			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
-		}
+		applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
 		keepCookieNames := []string{}
 		if proxy.ds.JsonData != nil {

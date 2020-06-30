@@ -5,7 +5,6 @@
 title = "ButtonProps"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ButtonProps type

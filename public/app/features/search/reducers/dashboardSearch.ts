@@ -7,17 +7,21 @@ import {
   MOVE_SELECTION_DOWN,
   MOVE_SELECTION_UP,
   SEARCH_START,
+  FETCH_ITEMS_START,
 } from './actionTypes';
 
 export interface DashboardsSearchState {
   results: DashboardSection[];
   loading: boolean;
   selectedIndex: number;
+  /** Used for first time page load */
+  initialLoading: boolean;
 }
 
 export const dashboardsSearchState: DashboardsSearchState = {
   results: [],
   loading: true,
+  initialLoading: true,
   selectedIndex: 0,
 };
 
@@ -31,10 +35,10 @@ export const searchReducer = (state: DashboardsSearchState, action: SearchAction
     case FETCH_RESULTS: {
       const results = action.payload;
       // Highlight the first item ('Starred' folder)
-      if (results.length) {
+      if (results.length > 0) {
         results[0].selected = true;
       }
-      return { ...state, results, loading: false };
+      return { ...state, results, loading: false, initialLoading: false };
     }
     case TOGGLE_SECTION: {
       const section = action.payload;
@@ -53,13 +57,24 @@ export const searchReducer = (state: DashboardsSearchState, action: SearchAction
       const { section, items } = action.payload;
       return {
         ...state,
+        itemsFetching: false,
         results: state.results.map((result: DashboardSection) => {
           if (section.id === result.id) {
-            return { ...result, items };
+            return { ...result, items, itemsFetching: false };
           }
           return result;
         }),
       };
+    }
+    case FETCH_ITEMS_START: {
+      const id = action.payload;
+      if (id) {
+        return {
+          ...state,
+          results: state.results.map(result => (result.id === id ? { ...result, itemsFetching: true } : result)),
+        };
+      }
+      return state;
     }
     case MOVE_SELECTION_DOWN: {
       const flatIds = getFlattenedSections(state.results);

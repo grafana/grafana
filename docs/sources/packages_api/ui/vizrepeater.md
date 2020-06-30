@@ -5,7 +5,6 @@
 title = "VizRepeater"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## VizRepeater class

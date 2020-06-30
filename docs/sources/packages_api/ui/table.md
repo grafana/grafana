@@ -5,7 +5,6 @@
 title = "Table"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Table variable

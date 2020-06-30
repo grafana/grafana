@@ -5,7 +5,6 @@
 title = "displayName"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## RadioButtonGroup.displayName variable

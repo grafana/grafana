@@ -1,5 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import image from '@rollup/plugin-image';
 // import sourceMaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
 
@@ -24,7 +25,16 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom', '@grafana/data', 'moment'],
+    external: [
+      'react',
+      'react-dom',
+      '@grafana/data',
+      '@grafana/e2e-selectors',
+      'moment',
+      'monaco-editor', // Monaco should not be used directly
+      'monaco-editor/esm/vs/editor/editor.api', // Monaco should not be used directly
+      'react-monaco-editor',
+    ],
     plugins: [
       commonjs({
         include: /node_modules/,
@@ -45,6 +55,9 @@ const buildCjsPackage = ({ env }) => {
             'uniqueId',
             'zip',
             'omit',
+            'isString',
+            'isEmpty',
+            'toLower',
           ],
           '../../node_modules/react-color/lib/components/common': ['Saturation', 'Hue', 'Alpha'],
           '../../node_modules/immutable/dist/immutable.js': [
@@ -71,6 +84,7 @@ const buildCjsPackage = ({ env }) => {
       }),
       resolve(),
       // sourceMaps(),
+      image(),
       env === 'production' && terser(),
     ],
   };

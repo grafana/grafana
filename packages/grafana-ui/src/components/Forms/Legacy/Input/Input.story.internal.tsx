@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { zip, fromPairs } from 'lodash';
 
-import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
 import { Input } from './Input';
 import { text, select } from '@storybook/addon-knobs';
@@ -35,6 +34,10 @@ const Wrapper = () => {
   return <Input value={value} onChange={e => setValue(e.currentTarget.value)} validationEvents={validations} />;
 };
 
-const story = storiesOf('General/Input', module);
-story.addDecorator(withCenteredStory);
-story.add('input', () => <Wrapper />);
+export default {
+  title: 'Forms/Legacy/Input',
+  component: Input,
+  decorators: [withCenteredStory],
+};
+
+export const basic = () => <Wrapper />;

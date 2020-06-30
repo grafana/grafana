@@ -1,5 +1,5 @@
 import React, { HTMLProps } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 
@@ -24,6 +24,8 @@ export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | '
 export interface ContainerProps {
   padding?: Spacing;
   margin?: Spacing;
+  grow?: number;
+  shrink?: number;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -76,23 +78,44 @@ export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> 
   children,
   spacing,
   justify,
+  align,
   width,
 }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} width={width}>
+  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} align={align} width={width}>
     {children}
   </Layout>
 );
 
-export const Container: React.FC<ContainerProps> = ({ children, padding, margin }) => {
+export const Container: React.FC<ContainerProps> = ({ children, padding, margin, grow, shrink }) => {
   const theme = useTheme();
   const styles = getContainerStyles(theme, padding, margin);
-  return <div className={styles.wrapper}>{children}</div>;
+  return (
+    <div
+      className={cx(
+        styles.wrapper,
+        grow !== undefined &&
+          css`
+            flex-grow: ${grow};
+          `,
+        shrink !== undefined &&
+          css`
+            flex-shrink: ${shrink};
+          `
+      )}
+    >
+      {children}
+    </div>
+  );
 };
 
 const getStyles = stylesFactory(
   (theme: GrafanaTheme, orientation: Orientation, spacing: Spacing, justify: Justify, align, wrap) => {
     const finalSpacing = spacing !== 'none' ? theme.spacing[spacing] : 0;
-    const marginCompensation = orientation === Orientation.Horizontal && !wrap ? 0 : `-${finalSpacing}`;
+    // compensate for last row margin when wrapped, horizontal layout
+    const marginCompensation =
+      (orientation === Orientation.Horizontal && !wrap) || orientation === Orientation.Vertical
+        ? 0
+        : `-${finalSpacing}`;
 
     return {
       layout: css`
@@ -113,8 +136,8 @@ const getStyles = stylesFactory(
         align-items: ${align};
 
         &:last-child {
-          margin-bottom: 0;
-          margin-right: 0;
+          margin-bottom: ${orientation === Orientation.Vertical && 0};
+          margin-right: ${orientation === Orientation.Horizontal && 0};
         }
       `,
     };

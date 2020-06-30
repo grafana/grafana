@@ -5,7 +5,6 @@
 title = "PluginMeta"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PluginMeta interface
@@ -39,6 +38,7 @@ import { PluginMeta } from '@grafana/data';
 |  [name](#name-property) | <code>string</code> |  |
 |  [pinned](#pinned-property) | <code>boolean</code> |  |
 |  [secureJsonData](#securejsondata-property) | <code>KeyValue</code> |  |
+|  [signature](#signature-property) | <code>PluginSignatureStatus</code> |  |
 |  [state](#state-property) | <code>PluginState</code> |  |
 |  [type](#type-property) | <code>PluginType</code> |  |
 
@@ -160,6 +160,14 @@ pinned?: boolean;
 
 ```typescript
 secureJsonData?: KeyValue;
+```
+
+### signature property
+
+<b>Signature</b>
+
+```typescript
+signature?: PluginSignatureStatus;
 ```
 
 ### state property

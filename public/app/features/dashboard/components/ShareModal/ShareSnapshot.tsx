@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, LinkButton, LegacyForms, Icon } from '@grafana/ui';
-const { Select, Input } = LegacyForms;
+import { Button, ClipboardButton, Icon, LegacyForms, LinkButton } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
+import { VariableRefresh } from '../../../variables/types';
+
+const { Select, Input } = LegacyForms;
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -140,10 +142,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     });
 
     // remove template queries
-    dash.getVariables().forEach(variable => {
+    dash.getVariables().forEach((variable: any) => {
       variable.query = '';
-      variable.options = variable.current;
-      variable.refresh = false;
+      variable.options = variable.current ? [variable.current] : [];
+      variable.refresh = VariableRefresh.never;
     });
 
     // snapshot single panel

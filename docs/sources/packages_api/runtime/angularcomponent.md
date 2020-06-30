@@ -5,7 +5,6 @@
 title = "AngularComponent"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## AngularComponent interface

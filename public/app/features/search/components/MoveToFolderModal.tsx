@@ -36,15 +36,16 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
 
         if (result.totalCount === result.alreadyInFolderCount) {
           appEvents.emit(AppEvents.alertError, ['Error', `Dashboard already belongs to folder ${folderTitle}`]);
+        } else {
+          onMoveItems(selectedDashboards, folder);
         }
 
-        onMoveItems(selectedDashboards, folder);
         onDismiss();
       });
     }
   };
 
-  return (
+  return isOpen ? (
     <Modal
       className={styles.modal}
       title="Choose Dashboard Folder"
@@ -71,7 +72,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
         </HorizontalGroup>
       </>
     </Modal>
-  );
+  ) : null;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

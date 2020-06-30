@@ -6,42 +6,35 @@ import { CloudWatchDatasource } from '../datasource';
 import { QueryInlineField } from './';
 import { MetricsQueryEditor } from './MetricsQueryEditor';
 import LogsQueryEditor from './LogsQueryEditor';
-import { config } from '@grafana/runtime';
 
 export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
-interface State {
-  queryMode: ExploreMode;
-}
+const apiModes = {
+  Metrics: { label: 'CloudWatch Metrics', value: 'Metrics' },
+  Logs: { label: 'CloudWatch Logs', value: 'Logs' },
+};
 
-export class PanelQueryEditor extends PureComponent<Props, State> {
-  state: State = { queryMode: (this.props.query.queryMode as ExploreMode) ?? ExploreMode.Metrics };
-
-  onQueryModeChange(mode: ExploreMode) {
-    this.setState({
-      queryMode: mode,
-    });
-  }
-
+export class PanelQueryEditor extends PureComponent<Props> {
   render() {
-    const { queryMode } = this.state;
-    const cloudwatchLogsDisabled = !config.featureToggles.cloudwatchLogs;
+    const { query } = this.props;
+    const apiMode = query.apiMode ?? query.queryMode ?? 'Metrics';
 
     return (
       <>
-        {!cloudwatchLogsDisabled && (
-          <QueryInlineField label="Query Mode">
-            <Segment
-              value={queryMode}
-              options={[
-                { label: 'Metrics', value: ExploreMode.Metrics },
-                { label: 'Logs', value: ExploreMode.Logs },
-              ]}
-              onChange={({ value }) => this.onQueryModeChange(value ?? ExploreMode.Metrics)}
-            />
-          </QueryInlineField>
+        <QueryInlineField label="Query Mode">
+          <Segment
+            value={apiModes[apiMode]}
+            options={Object.values(apiModes)}
+            onChange={({ value }) =>
+              this.props.onChange({ ...query, apiMode: (value as 'Metrics' | 'Logs') ?? 'Metrics' })
+            }
+          />
+        </QueryInlineField>
+        {apiMode === ExploreMode.Logs ? (
+          <LogsQueryEditor {...this.props} allowCustomValue />
+        ) : (
+          <MetricsQueryEditor {...this.props} />
         )}
-        {queryMode === ExploreMode.Logs ? <LogsQueryEditor {...this.props} /> : <MetricsQueryEditor {...this.props} />}
       </>
     );
   }

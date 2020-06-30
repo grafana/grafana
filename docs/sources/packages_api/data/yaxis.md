@@ -5,7 +5,6 @@
 title = "YAxis"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## YAxis interface

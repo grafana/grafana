@@ -5,7 +5,6 @@
 title = "DataTransformerInfo"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataTransformerInfo interface

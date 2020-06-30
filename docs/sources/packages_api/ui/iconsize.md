@@ -5,7 +5,6 @@
 title = "IconSize"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## IconSize type

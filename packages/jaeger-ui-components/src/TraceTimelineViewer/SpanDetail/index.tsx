@@ -25,7 +25,7 @@ import CopyIcon from '../../common/CopyIcon';
 import LabeledList from '../../common/LabeledList';
 
 import { TNil } from '../../types';
-import { KeyValuePair, Link, Log, Span } from '../../types/trace';
+import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '@grafana/data';
 import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
@@ -99,11 +99,11 @@ const getStyles = createStyle((theme: Theme) => {
 
 type SpanDetailProps = {
   detailState: DetailState;
-  linksGetter: ((links: KeyValuePair[], index: number) => Link[]) | TNil;
-  logItemToggle: (spanID: string, log: Log) => void;
+  linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
-  span: Span;
+  span: TraceSpan;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
   warningsToggle: (spanID: string) => void;

@@ -5,7 +5,6 @@
 title = "rangeUtil"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## rangeUtil namespace
@@ -32,5 +31,7 @@ import { rangeUtil } from '@grafana/data';
 
 |  Variable | Description |
 |  --- | --- |
+|  [convertRawToRange](./convertrawtorange/) |  |
+|  [describeTimeRangeAbbrevation](./describetimerangeabbrevation/) |  |
 |  [isValidTimeSpan](./isvalidtimespan/) |  |
 

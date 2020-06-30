@@ -2,8 +2,8 @@ import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { List, LinkButton, Button } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { Button, LinkButton, List } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import Page from 'app/core/components/Page/Page';
 import { DataSourcePluginCategory, StoreState } from 'app/types';
@@ -126,7 +126,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
     <Card
       title={plugin.name}
       description={plugin.info.description}
-      ariaLabel={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
+      ariaLabel={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
       logoUrl={plugin.info.logos.small}
       actions={
         <>
@@ -152,16 +152,16 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
           </div>
         )
       }
-      className={isPhantom && 'add-data-source-item--phantom'}
+      className={isPhantom ? 'add-data-source-item--phantom' : ''}
       onClick={onClick}
-      aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
+      aria-label={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
     />
   );
 };
 
 export function getNavModel(): NavModel {
   const main = {
-    icon: 'gicon gicon-add-datasources',
+    icon: 'database',
     id: 'datasource-new',
     text: 'Add data source',
     href: 'datasources/new',

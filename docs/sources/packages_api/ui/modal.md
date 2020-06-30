@@ -5,7 +5,6 @@
 title = "Modal"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Modal variable

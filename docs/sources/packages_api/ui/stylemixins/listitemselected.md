@@ -5,7 +5,6 @@
 title = "listItemSelected"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## styleMixins.listItemSelected() function

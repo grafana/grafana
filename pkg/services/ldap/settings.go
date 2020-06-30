@@ -125,7 +125,10 @@ func readConfig(configFile string) (*Config, error) {
 	}
 
 	// interpolate full toml string (it can contain ENV variables)
-	stringContent := setting.EvalEnvVarExpression(string(fileBytes))
+	stringContent, err := setting.ExpandVar(string(fileBytes))
+	if err != nil {
+		return nil, errutil.Wrap("Failed to expand variables", err)
+	}
 
 	_, err = toml.Decode(stringContent, result)
 	if err != nil {

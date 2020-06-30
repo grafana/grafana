@@ -15,7 +15,7 @@ import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 
-interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState'> {
+interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState' | 'watch'> {
   uidReset: boolean;
   inputs: DashboardInputs;
   initialFolderId: number;
@@ -63,7 +63,14 @@ export const ImportDashboardForm: FC<Props> = ({
         />
       </Field>
       <Field label="Folder">
-        <InputControl as={FolderPicker} name="folder" useNewForms initialFolderId={initialFolderId} control={control} />
+        <InputControl
+          as={FolderPicker}
+          name="folder"
+          useNewForms
+          enableCreateNew
+          initialFolderId={initialFolderId}
+          control={control}
+        />
       </Field>
       <Field
         label="Unique identifier (uid)"

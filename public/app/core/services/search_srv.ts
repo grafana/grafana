@@ -4,7 +4,8 @@ import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { hasFilters } from 'app/features/search/utils';
-import { DashboardSection, DashboardSearchItemType, DashboardSearchHit } from 'app/features/search/types';
+import { SECTION_STORAGE_KEY } from 'app/features/search/constants';
+import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
 import { backendSrv } from './backend_srv';
 
 interface Sections {
@@ -12,14 +13,6 @@ interface Sections {
 }
 
 export class SearchSrv {
-  recentIsOpen: boolean;
-  starredIsOpen: boolean;
-
-  constructor() {
-    this.recentIsOpen = store.getBool('search.sections.recent', true);
-    this.starredIsOpen = store.getBool('search.sections.starred', true);
-  }
-
   private getRecentDashboards(sections: DashboardSection[] | any) {
     return this.queryForRecentDashboards().then((result: any[]) => {
       if (result.length > 0) {
@@ -27,7 +20,7 @@ export class SearchSrv {
           title: 'Recent',
           icon: 'clock-nine',
           score: -1,
-          expanded: this.recentIsOpen,
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.recent`, true),
           items: result,
           type: DashboardSearchItemType.DashFolder,
         };
@@ -43,14 +36,12 @@ export class SearchSrv {
 
     return backendSrv.search({ dashboardIds: dashIds }).then(result => {
       return dashIds
-        .map(orderId => {
-          return _.find(result, { id: orderId });
-        })
+        .map(orderId => result.find(result => result.id === orderId))
         .filter(hit => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
 
-  private getStarred(sections: DashboardSection) {
+  private getStarred(sections: DashboardSection): Promise<any> {
     if (!contextSrv.isSignedIn) {
       return Promise.resolve();
     }
@@ -61,7 +52,7 @@ export class SearchSrv {
           title: 'Starred',
           icon: 'star',
           score: -2,
-          expanded: this.starredIsOpen,
+          expanded: store.getBool(`${SECTION_STORAGE_KEY}.starred`, true),
           items: result,
           type: DashboardSearchItemType.DashFolder,
         };
@@ -75,17 +66,24 @@ export class SearchSrv {
     const query = _.clone(options);
     const filters = hasFilters(options) || query.folderIds?.length > 0;
 
+    query.folderIds = query.folderIds || [];
+
+    if (query.layout === SearchLayout.List) {
+      return backendSrv
+        .search({ ...query, type: DashboardSearchItemType.DashDB })
+        .then(results => (results.length ? [{ title: '', items: results }] : []));
+    }
+
+    if (!filters) {
+      query.folderIds = [0];
+    }
+
     if (!options.skipRecent && !filters) {
       promises.push(this.getRecentDashboards(sections));
     }
 
     if (!options.skipStarred && !filters) {
       promises.push(this.getStarred(sections));
-    }
-
-    query.folderIds = query.folderIds || [];
-    if (!filters) {
-      query.folderIds = [0];
     }
 
     promises.push(

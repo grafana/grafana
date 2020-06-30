@@ -5,7 +5,6 @@
 title = "renderOrCallToRender"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## renderOrCallToRender() function

@@ -1,8 +1,8 @@
 // Libraries
-import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react';
+import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
-import { rangeUtil, DataSourceSelectItem, PanelData } from '@grafana/data';
+import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 
 // Components
 import {
@@ -13,8 +13,7 @@ import {
   InlineFormLabel,
   stylesFactory,
 } from '@grafana/ui';
-import { DataSourceOption } from './DataSourceOption';
-const { Input, Switch } = LegacyForms;
+const { Switch, Input } = LegacyForms;
 
 // Types
 import { PanelModel } from '../state';
@@ -42,7 +41,7 @@ const emptyToNull = (value: string) => {
 
 interface Props {
   panel: PanelModel;
-  datasource: DataSourceSelectItem;
+  dataSource: DataSourceApi;
   data: PanelData;
 }
 
@@ -50,53 +49,13 @@ interface State {
   relativeTime: string;
   timeShift: string;
   cacheTimeout: string;
-  maxDataPoints: string | ReactText;
+  maxDataPoints: number | string;
   interval: string;
   hideTimeOverride: boolean;
   isOpen: boolean;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
-  allOptions: any = {
-    cacheTimeout: {
-      label: 'Cache timeout',
-      placeholder: '60',
-      name: 'cacheTimeout',
-      tooltipInfo: (
-        <>
-          If your time series store has a query cache this option can override the default cache timeout. Specify a
-          numeric value in seconds.
-        </>
-      ),
-    },
-    maxDataPoints: {
-      label: 'Max data points',
-      placeholder: 'auto',
-      name: 'maxDataPoints',
-      tooltipInfo: (
-        <>
-          The maximum data points the query should return. For graphs this is automatically set to one data point per
-          pixel. For some data sources this can also be capped in the datasource settings page. With streaming data,
-          this value is used for the rolling buffer.
-        </>
-      ),
-    },
-    minInterval: {
-      label: 'Min time interval',
-      placeholder: '0',
-      name: 'minInterval',
-      panelKey: 'interval',
-      tooltipInfo: (
-        <>
-          A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
-          <code>1m</code> if your data is written every minute. Access auto interval via variable{' '}
-          <code>$__interval</code> for time range string and <code>$__interval_ms</code> for numeric variable that can
-          be used in math expressions.
-        </>
-      ),
-    },
-  };
-
   constructor(props: Props) {
     super(props);
 
@@ -104,7 +63,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       relativeTime: props.panel.timeFrom || '',
       timeShift: props.panel.timeShift || '',
       cacheTimeout: props.panel.cacheTimeout || '',
-      maxDataPoints: props.panel.maxDataPoints || '',
+      maxDataPoints: props.panel.maxDataPoints ?? '',
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
       isOpen: false,
@@ -127,6 +86,7 @@ export class QueryOptions extends PureComponent<Props, State> {
     const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
+
     if (status === LegacyInputStatus.Valid && panel.timeFrom !== emptyToNullValue) {
       panel.timeFrom = emptyToNullValue;
       panel.refresh();
@@ -137,6 +97,7 @@ export class QueryOptions extends PureComponent<Props, State> {
     const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
+
     if (status === LegacyInputStatus.Valid && panel.timeShift !== emptyToNullValue) {
       panel.timeShift = emptyToNullValue;
       panel.refresh();
@@ -163,35 +124,147 @@ export class QueryOptions extends PureComponent<Props, State> {
     this.setState({ ...this.state, [panelKey]: event.target.value });
   };
 
-  /**
-   * Show options for any value that is set, or values that the
-   * current datasource says it will use
-   */
-  renderOptions = () => {
-    const { datasource } = this.props;
-    const queryOptions: any = datasource.meta.queryOptions || {};
+  onMaxDataPointsBlur = () => {
+    const { panel } = this.props;
 
-    return Object.keys(this.allOptions).map(key => {
-      const options = this.allOptions[key];
-      const panelKey = options.panelKey || key;
+    const maxDataPoints = parseInt(this.state.maxDataPoints as string, 10);
 
-      // @ts-ignore
-      const value = this.state[panelKey];
+    if (isNaN(maxDataPoints)) {
+      delete panel.maxDataPoints;
+    } else {
+      panel.maxDataPoints = maxDataPoints;
+    }
 
-      if (queryOptions[key]) {
-        return (
-          <DataSourceOption
-            key={key}
-            {...options}
-            onChange={this.onDataSourceOptionChange(panelKey)}
-            onBlur={this.onDataSourceOptionBlur(panelKey)}
-            value={value}
-          />
-        );
-      }
-      return null; // nothing to render
-    });
+    panel.refresh();
   };
+
+  renderCacheTimeoutOption() {
+    const { dataSource } = this.props;
+    const { cacheTimeout } = this.state;
+    const tooltip = `If your time series store has a query cache this option can override the default cache timeout. Specify a
+    numeric value in seconds.`;
+
+    if (!dataSource.meta.queryOptions?.cacheTimeout) {
+      return null;
+    }
+
+    return (
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <InlineFormLabel width={9} tooltip={tooltip}>
+            Cache timeout
+          </InlineFormLabel>
+          <Input
+            type="text"
+            className="width-6"
+            placeholder="60"
+            name={name}
+            spellCheck={false}
+            onBlur={this.onDataSourceOptionBlur('maxDataPoints')}
+            onChange={this.onDataSourceOptionChange('maxDataPoints')}
+            value={cacheTimeout}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  renderMaxDataPointsOption() {
+    const { data } = this.props;
+    const { maxDataPoints } = this.state;
+    const realMd = data.request?.maxDataPoints;
+    const isAuto = maxDataPoints === '';
+
+    return (
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <InlineFormLabel
+            width={9}
+            tooltip={
+              <>
+                The maximum data points per series. Used directly by some data sources and used in calculation of auto
+                interval. With streaming data this value is used for the rolling buffer.
+              </>
+            }
+          >
+            Max data points
+          </InlineFormLabel>
+          <Input
+            type="number"
+            className="width-6"
+            placeholder={`${realMd}`}
+            name={name}
+            spellCheck={false}
+            onBlur={this.onMaxDataPointsBlur}
+            onChange={this.onDataSourceOptionChange('maxDataPoints')}
+            value={maxDataPoints}
+          />
+          {isAuto && (
+            <>
+              <div className="gf-form-label query-segment-operator">=</div>
+              <div className="gf-form-label">Width of panel</div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  renderIntervalOption() {
+    const { data, dataSource } = this.props;
+    const { interval } = this.state;
+    const realInterval = data.request?.interval;
+    const minIntervalOnDs = dataSource.interval ?? 'No limit';
+
+    return (
+      <>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              width={9}
+              tooltip={
+                <>
+                  A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code>{' '}
+                  if your data is written every minute. Default value can be set in data source settings for most data
+                  sources.
+                </>
+              }
+            >
+              Min interval
+            </InlineFormLabel>
+            <Input
+              type="text"
+              className="width-6"
+              placeholder={`${minIntervalOnDs}`}
+              name={name}
+              spellCheck={false}
+              onBlur={this.onDataSourceOptionBlur('interval')}
+              onChange={this.onDataSourceOptionChange('interval')}
+              value={interval}
+            />
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              width={9}
+              tooltip={
+                <>
+                  The evaluated Interval that is sent to data source and is used in <code>$__interval</code> and{' '}
+                  <code>$__interval_ms</code>
+                </>
+              }
+            >
+              Interval
+            </InlineFormLabel>
+            <InlineFormLabel width={6}>{realInterval}</InlineFormLabel>
+            <div className="gf-form-label query-segment-operator">=</div>
+            <div className="gf-form-label">Max data points / time range</div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   onOpenOptions = () => {
     this.setState({ isOpen: true });
@@ -215,8 +288,8 @@ export class QueryOptions extends PureComponent<Props, State> {
     }
 
     let intervalDesc = interval;
-    if (intervalDesc === '' && data.request) {
-      intervalDesc = `auto = ${data.request.interval}`;
+    if (data.request) {
+      intervalDesc = `${data.request.interval}`;
     }
 
     return (
@@ -234,13 +307,15 @@ export class QueryOptions extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
-        title="Options"
+        title="Query options"
         headerElement={this.renderCollapsedText(styles)}
         isOpen={isOpen}
         onOpen={this.onOpenOptions}
         onClose={this.onCloseOptions}
       >
-        {this.renderOptions()}
+        {this.renderMaxDataPointsOption()}
+        {this.renderIntervalOption()}
+        {this.renderCacheTimeoutOption()}
 
         <div className="gf-form">
           <InlineFormLabel width={9}>Relative time</InlineFormLabel>

@@ -1,12 +1,14 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { number, select } from '@storybook/addon-knobs';
 import { List } from './List';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { InlineList } from './InlineList';
 
-const ListStories = storiesOf('General/List', module);
+export default {
+  title: 'Layout/List',
+  component: List,
+};
 
 const generateListItems = (numberOfItems: number) => {
   return [...new Array(numberOfItems)].map((item, i) => {
@@ -57,12 +59,12 @@ const getStoriesKnobs = (inline = false) => {
   };
 };
 
-ListStories.add('default', () => {
+export const basic = () => {
   const { numberOfItems, renderItem } = getStoriesKnobs();
   return <List items={generateListItems(numberOfItems)} renderItem={renderItem} />;
-});
+};
 
-ListStories.add('inline', () => {
+export const inline = () => {
   const { numberOfItems, renderItem } = getStoriesKnobs(true);
   return <InlineList items={generateListItems(numberOfItems)} renderItem={renderItem} />;
-});
+};

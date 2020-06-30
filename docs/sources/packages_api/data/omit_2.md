@@ -5,7 +5,6 @@
 title = "Omit_2"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## Omit\_2 type

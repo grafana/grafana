@@ -1,108 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`GEL Utils should parse output with dataframe 1`] = `
-Array [
-  Object {
-    "fields": Array [
-      Object {
-        "config": Object {},
-        "labels": undefined,
-        "name": "Time",
-        "type": "time",
-        "values": Array [
-          1569334575000,
-          1569334580000,
-          1569334585000,
-          1569334590000,
-          1569334595000,
-          1569334600000,
-          1569334605000,
-          1569334610000,
-          1569334615000,
-          1569334620000,
-          1569334625000,
-          1569334630000,
-          1569334635000,
-        ],
-      },
-      Object {
-        "config": Object {},
-        "labels": undefined,
-        "name": "",
-        "type": "number",
-        "values": Array [
-          3,
-          3,
-          3,
-          5,
-          5,
-          5,
-          3,
-          3,
-          3,
-          5,
-          5,
-          5,
-          3,
-        ],
-      },
-    ],
-    "meta": undefined,
-    "name": undefined,
-    "refId": "GC",
-  },
-  Object {
-    "fields": Array [
-      Object {
-        "config": Object {},
-        "labels": undefined,
-        "name": "Time",
-        "type": "time",
-        "values": Array [
-          1569334575000,
-          1569334580000,
-          1569334585000,
-          1569334590000,
-          1569334595000,
-          1569334600000,
-          1569334605000,
-          1569334610000,
-          1569334615000,
-          1569334620000,
-          1569334625000,
-          1569334630000,
-          1569334635000,
-        ],
-      },
-      Object {
-        "config": Object {},
-        "labels": undefined,
-        "name": "GB-series",
-        "type": "number",
-        "values": Array [
-          0,
-          0,
-          0,
-          2,
-          2,
-          2,
-          0,
-          0,
-          0,
-          2,
-          2,
-          2,
-          0,
-        ],
-      },
-    ],
-    "meta": undefined,
-    "name": undefined,
-    "refId": "GB",
-  },
-]
-`;
-
 exports[`Read/Write arrow Table to DataFrame should read all types 1`] = `
 Object {
   "fields": Array [
@@ -124,6 +21,7 @@ Object {
     Object {
       "config": Object {
         "decimals": 2,
+        "displayName": "Grafana ❤️ (Previous should be heart emoji) 🦥 (Previous should be sloth emoji)",
         "filterable": false,
         "links": Array [
           Object {
@@ -136,7 +34,6 @@ Object {
         "min": null,
         "noValue": "😤",
         "nullValueMode": "null",
-        "title": "Grafana ❤️ (Previous should be heart emoji) 🦥 (Previous should be sloth emoji)",
       },
       "labels": Object {
         "aLabelKey": "aLabelValue",
@@ -239,11 +136,11 @@ Object {
       "name": "int64_values",
       "type": "number",
       "values": Array [
-        "\\"-9223372036854775808\\"",
-        "\\"-9007199254740991\\"",
-        "\\"1\\"",
-        "\\"9007199254740991\\"",
-        "\\"9223372036854775807\\"",
+        -9223372036854776000,
+        -9007199254740991,
+        1,
+        9007199254740991,
+        9223372036854776000,
       ],
     },
     Object {
@@ -252,11 +149,11 @@ Object {
       "name": "nullable_int64_values",
       "type": "number",
       "values": Array [
-        "\\"-9223372036854775808\\"",
-        "\\"-9007199254740991\\"",
+        -9223372036854776000,
+        -9007199254740991,
         null,
-        "\\"9007199254740991\\"",
-        "\\"9223372036854775807\\"",
+        9007199254740991,
+        9223372036854776000,
       ],
     },
     Object {
@@ -343,11 +240,11 @@ Object {
       "name": "uint64_values",
       "type": "number",
       "values": Array [
-        "\\"0\\"",
-        "\\"0\\"",
-        "\\"1\\"",
-        "\\"9007199254740991\\"",
-        "\\"18446744073709551615\\"",
+        0,
+        0,
+        1,
+        9007199254740991,
+        18446744073709552000,
       ],
     },
     Object {
@@ -356,11 +253,11 @@ Object {
       "name": "nullable_uint64_values",
       "type": "number",
       "values": Array [
-        "\\"0\\"",
-        "\\"0\\"",
+        0,
+        0,
         null,
-        "\\"9007199254740991\\"",
-        "\\"18446744073709551615\\"",
+        9007199254740991,
+        18446744073709552000,
       ],
     },
     Object {
@@ -457,6 +354,19 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
+      "name": "timestamps",
+      "type": "time",
+      "values": Array [
+        0,
+        1568039445000,
+        1568039450000,
+        9007199254.740992,
+        9223372036854.775,
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
       "name": "nullable_timestamps",
       "type": "time",
       "values": Array [
@@ -469,13 +379,9 @@ Object {
     },
   ],
   "meta": Object {
-    "limit": 4242,
-    "searchWords": Array [
-      "Grafana",
-      "❤️",
-      " 🦥 ",
-      "test",
-    ],
+    "custom": Object {
+      "Hi": "there",
+    },
   },
   "name": "many_types",
   "refId": "A",

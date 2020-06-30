@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { renderOrCallToRender, Icon, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
@@ -82,11 +82,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: ${theme.spacing.md};
     `,
     header: css`
-      padding: 0 ${theme.spacing.sm};
+      padding: ${theme.spacing.xs} ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
-      height: ${theme.spacing.formInputHeight}px;
-      line-height: ${theme.spacing.formInputHeight}px;
+      min-height: ${theme.spacing.formInputHeight}px;
+      line-height: ${theme.spacing.sm}px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -109,7 +109,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.xl};
+      margin-left: ${theme.spacing.lg};
     `,
   };
 });

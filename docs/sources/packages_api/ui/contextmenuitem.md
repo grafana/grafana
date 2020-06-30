@@ -5,7 +5,6 @@
 title = "ContextMenuItem"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ContextMenuItem interface

@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -47,7 +46,7 @@ var (
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
-// it is used for comparision and has to be kept in sync
+// it is used for comparison and has to be kept in sync
 const (
 	AUTH_PROXY_SYNC_TTL = 60
 )
@@ -228,21 +227,32 @@ type Cfg struct {
 	AppUrl           string
 	AppSubUrl        string
 	ServeFromSubPath bool
+	StaticRootPath   string
+
+	// build
+	BuildVersion string
+	BuildCommit  string
+	BuildBranch  string
+	BuildStamp   int64
+	IsEnterprise bool
+
+	// packaging
+	Packaging string
 
 	// Paths
-	ProvisioningPath string
-	DataPath         string
-	LogsPath         string
+	ProvisioningPath   string
+	DataPath           string
+	LogsPath           string
+	BundledPluginsPath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir             string
-	RendererUrl           string
-	RendererCallbackUrl   string
-	RendererLimit         int
-	RendererLimitAlerting int
+	ImagesDir                      string
+	RendererUrl                    string
+	RendererCallbackUrl            string
+	RendererConcurrentRequestLimit int
 
 	// Security
 	DisableInitAdminCreation         bool
@@ -259,8 +269,12 @@ type Cfg struct {
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	PluginSettings                   PluginSettings
+	PluginsAllowUnsigned             []string
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
+
+	// Dashboards
+	DefaultHomeDashboardPath string
 
 	// Auth
 	LoginCookieName              string
@@ -286,6 +300,13 @@ type Cfg struct {
 
 	// Use to enable new features which may still be in alpha/beta stage.
 	FeatureToggles map[string]bool
+
+	AnonymousHideVersion bool
+}
+
+// IsExpressionsEnabled returns whether the expressions feature is enabled.
+func (c Cfg) IsExpressionsEnabled() bool {
+	return c.FeatureToggles["expressions"]
 }
 
 type CommandLineArgs struct {
@@ -367,6 +388,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 
 func envKey(sectionName string, keyName string) string {
 	sN := strings.ToUpper(strings.Replace(sectionName, ".", "_", -1))
+	sN = strings.Replace(sN, "-", "_", -1)
 	kN := strings.ToUpper(strings.Replace(keyName, ".", "_", -1))
 	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
 	return envKey
@@ -431,30 +453,6 @@ func makeAbsolute(path string, root string) string {
 		return path
 	}
 	return filepath.Join(root, path)
-}
-
-func EvalEnvVarExpression(value string) string {
-	regex := regexp.MustCompile(`\${(\w+)}`)
-	return regex.ReplaceAllStringFunc(value, func(envVar string) string {
-		envVar = strings.TrimPrefix(envVar, "${")
-		envVar = strings.TrimSuffix(envVar, "}")
-		envValue := os.Getenv(envVar)
-
-		// if env variable is hostname and it is empty use os.Hostname as default
-		if envVar == "HOSTNAME" && envValue == "" {
-			envValue, _ = os.Hostname()
-		}
-
-		return envValue
-	})
-}
-
-func evalConfigValues(file *ini.File) {
-	for _, section := range file.Sections() {
-		for _, key := range section.Keys() {
-			key.SetValue(EvalEnvVarExpression(key.Value()))
-		}
-	}
 }
 
 func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
@@ -543,7 +541,10 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineProperties(commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
-	evalConfigValues(parsedFile)
+	err = expandConfig(parsedFile)
+	if err != nil {
+		return nil, err
+	}
 
 	// update data path and logging config
 	dataPath, err := valueAsString(parsedFile.Section("paths"), "data", "")
@@ -622,6 +623,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Temporary keep global, to make refactor in steps
 	Raw = cfg.Raw
 
+	cfg.BuildVersion = BuildVersion
+	cfg.BuildCommit = BuildCommit
+	cfg.BuildStamp = BuildStamp
+	cfg.BuildBranch = BuildBranch
+	cfg.IsEnterprise = IsEnterprise
+	cfg.Packaging = Packaging
+
 	ApplicationName = APP_NAME
 
 	Env, err = valueAsString(iniFile.Section(""), "app_mode", "development")
@@ -637,6 +645,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
+	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
 	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err
@@ -694,6 +703,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
+	cfg.StaticRootPath = StaticRootPath
 
 	if err := cfg.validateStaticRootPath(); err != nil {
 		return err
@@ -744,8 +754,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
-	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(false)
-	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(false)
+	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
 	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
@@ -768,10 +778,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
-	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "")
+	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "5s")
 	if err != nil {
 		return err
 	}
+
+	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -870,6 +882,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")
@@ -938,6 +951,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
 		}
 	}
+	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
@@ -987,6 +1002,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
 	cfg.PluginSettings = extractPluginSettings(iniFile.Sections())
+	pluginsAllowUnsigned := pluginsSection.Key("allow_loading_unsigned_plugins").MustString("")
+	for _, plug := range strings.Split(pluginsAllowUnsigned, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
+	}
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

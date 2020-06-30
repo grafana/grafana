@@ -5,7 +5,6 @@
 title = "toPascalCase"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## toPascalCase variable

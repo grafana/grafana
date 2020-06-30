@@ -1,13 +1,12 @@
 export const FETCH_RESULTS = 'FETCH_RESULTS';
 export const TOGGLE_SECTION = 'TOGGLE_SECTION';
 export const FETCH_ITEMS = 'FETCH_ITEMS';
+export const FETCH_ITEMS_START = 'FETCH_ITEMS_START';
 export const MOVE_SELECTION_UP = 'MOVE_SELECTION_UP';
 export const MOVE_SELECTION_DOWN = 'MOVE_SELECTION_DOWN';
 export const SEARCH_START = 'SEARCH_START';
 
 // Manage dashboards
-export const TOGGLE_CAN_SAVE = 'TOGGLE_CAN_SAVE';
-export const TOGGLE_EDIT_PERMISSIONS = 'TOGGLE_EDIT_PERMISSIONS';
 export const TOGGLE_ALL_CHECKED = 'TOGGLE_ALL_CHECKED';
 export const TOGGLE_CHECKED = 'TOGGLE_SECTION_CHECKED';
 export const MOVE_ITEMS = 'MOVE_ITEMS';
@@ -22,3 +21,4 @@ export const CLEAR_FILTERS = 'CLEAR_FILTERS';
 export const SET_TAGS = 'SET_TAGS';
 export const ADD_TAG = 'ADD_TAG';
 export const TOGGLE_SORT = 'TOGGLE_SORT';
+export const LAYOUT_CHANGE = 'LAYOUT_CHANGE';

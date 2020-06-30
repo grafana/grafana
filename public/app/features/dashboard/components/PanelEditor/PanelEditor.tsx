@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
@@ -24,14 +24,15 @@ import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-import { VariableModel } from 'app/features/templating/types';
+import { VariableModel } from 'app/features/variables/types';
 import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -42,7 +43,6 @@ interface ConnectedProps {
   location: LocationState;
   plugin?: PanelPlugin;
   panel: PanelModel;
-  data: PanelData;
   initDone: boolean;
   tabs: PanelEditorTab[];
   uiState: PanelEditorUIState;
@@ -55,6 +55,7 @@ interface DispatchProps {
   panelEditorCleanUp: typeof panelEditorCleanUp;
   setDiscardChanges: typeof setDiscardChanges;
   updatePanelEditorUIState: typeof updatePanelEditorUIState;
+  updateTimeZoneForSession: typeof updateTimeZoneForSession;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -183,11 +184,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   };
   renderHorizontalSplit(styles: EditorStyles) {
-    const { dashboard, panel, tabs, data, uiState } = this.props;
+    const { dashboard, panel, tabs, uiState } = this.props;
     return tabs.length > 0 ? (
       <SplitPane
         split="horizontal"
-        minSize={50}
+        minSize={200}
         primary="first"
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}
@@ -197,8 +198,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
         {this.renderPanel(styles)}
-        <div className={styles.tabsWrapper} aria-label={e2e.components.PanelEditor.DataPane.selectors.content}>
-          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
+        <div className={styles.tabsWrapper} aria-label={selectors.components.PanelEditor.DataPane.content}>
+          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
         </div>
       </SplitPane>
     ) : (
@@ -221,7 +222,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState, variables } = this.props;
+    const { dashboard, location, uiState, variables, updateTimeZoneForSession } = this.props;
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
@@ -229,7 +230,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
           <HorizontalGroup>
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <DashNavTimeControls
+              dashboard={dashboard}
+              location={location}
+              onChangeTimeZone={updateTimeZoneForSession}
+            />
             {!uiState.isPanelOptionsVisible && (
               <DashNavButton
                 onClick={this.onTogglePanelOptions}
@@ -264,7 +269,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 icon="cog"
                 onClick={this.onOpenDashboardSettings}
                 variant="secondary"
-                title="Open dashboad settings"
+                title="Open dashboard settings"
               />
               <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
                 Discard
@@ -332,7 +337,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <div className={styles.wrapper} aria-label={e2e.components.PanelEditor.General.selectors.content}>
+      <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
         {this.editorToolbar(styles)}
         <div className={styles.verticalSplitPanesWrapper}>
           {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
@@ -349,8 +354,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   return {
     location: state.location,
     plugin: plugin,
-    panel: state.panelEditor.getPanel(),
-    data: state.panelEditor.getData(),
+    panel,
     initDone: state.panelEditor.initDone,
     tabs: getPanelEditorTabs(state.location, plugin),
     uiState: state.panelEditor.ui,
@@ -364,6 +368,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   panelEditorCleanUp,
   setDiscardChanges,
   updatePanelEditorUIState,
+  updateTimeZoneForSession,
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);

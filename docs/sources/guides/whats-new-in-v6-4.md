@@ -90,7 +90,7 @@ Grafana 6.4 continues the work started in 6.3 of creating a data model and query
 
 The first new feature all these changes have enabled is the ability to share query results between panels. So for example if you have an expensive query you can visualize the same results in a graph, table and singlestat panel. To reuse another panel’s query result select the data source named `-- Dashboard --` and then select the panel.
 
-To make the sharing of query results even more powerful we are introducing a transformation step as well that allows you to select specific parts of the query result and transform it. This new transformation feature is in [alpha](https://grafana.com/docs/installation/configuration/#enable-alpha) state and has to be enabled in the config file.
+To make the sharing of query results even more powerful we are introducing a transformation step as well that allows you to select specific parts of the query result and transform it. This new transformation feature is in [alpha](https://grafana.com/docs/administration/configuration/#enable-alpha) state and has to be enabled in the config file.
 
 DataFrame, our primary data model, has now a [columnar](https://en.wikipedia.org/wiki/Column-oriented_DBMS) layout. This
 will support easier frontend processing. The DataSource query interface has been updated to better support streaming.

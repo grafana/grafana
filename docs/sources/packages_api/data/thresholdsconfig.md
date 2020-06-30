@@ -5,7 +5,6 @@
 title = "ThresholdsConfig"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ThresholdsConfig interface

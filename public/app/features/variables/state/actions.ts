@@ -3,18 +3,22 @@ import { AppEvents, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data'
 import angular from 'angular';
 
 import {
+  DashboardVariableModel,
+  OrgVariableModel,
   QueryVariableModel,
+  UserVariableModel,
+  VariableHide,
   VariableModel,
   VariableOption,
   VariableRefresh,
   VariableWithMultiSupport,
   VariableWithOptions,
-} from '../../templating/types';
+} from '../types';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
-import { updateLocation } from 'app/core/actions';
+import { notifyApp, updateLocation } from 'app/core/actions';
 import {
   addInitLock,
   addVariable,
@@ -31,6 +35,16 @@ import { alignCurrentWithMulti } from '../shared/multiOptions';
 import { isMulti } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { createErrorNotification } from '../../../core/copy/appNotification';
+import {
+  TransactionStatus,
+  variablesClearTransaction,
+  variablesCompleteTransaction,
+  variablesInitTransaction,
+} from './transactionReducer';
+import { getBackendSrv } from '../../../core/services/backend_srv';
+import { cleanVariables } from './variablesReducer';
+import isEqual from 'lodash/isEqual';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -84,30 +98,83 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 
 export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
-    templateSrv.setGlobalVariable('__dashboard', {
-      value: {
-        name: dashboard.title,
-        uid: dashboard.uid,
-        toString: function() {
-          return this.uid;
+    const dashboardModel: DashboardVariableModel = {
+      id: '__dashboard',
+      name: '__dashboard',
+      label: null,
+      type: 'system',
+      index: -3,
+      skipUrlSync: true,
+      hide: VariableHide.hideVariable,
+      global: false,
+      current: {
+        value: {
+          name: dashboard.title,
+          uid: dashboard.uid,
+          toString: () => dashboard.title,
         },
       },
-    });
-    templateSrv.setGlobalVariable('__org', {
-      value: {
-        name: contextSrv.user.orgName,
-        id: contextSrv.user.orgId,
-        toString: function() {
-          return this.id;
+    };
+
+    dispatch(
+      addVariable(
+        toVariablePayload(dashboardModel, {
+          global: dashboardModel.global,
+          index: dashboardModel.index,
+          model: dashboardModel,
+        })
+      )
+    );
+
+    const orgModel: OrgVariableModel = {
+      id: '__org',
+      name: '__org',
+      label: null,
+      type: 'system',
+      index: -2,
+      skipUrlSync: true,
+      hide: VariableHide.hideVariable,
+      global: false,
+      current: {
+        value: {
+          name: contextSrv.user.orgName,
+          id: contextSrv.user.orgId,
+          toString: () => contextSrv.user.orgId.toString(),
         },
       },
-    });
+    };
+
+    dispatch(
+      addVariable(toVariablePayload(orgModel, { global: orgModel.global, index: orgModel.index, model: orgModel }))
+    );
+
+    const userModel: UserVariableModel = {
+      id: '__user',
+      name: '__user',
+      label: null,
+      type: 'system',
+      index: -1,
+      skipUrlSync: true,
+      hide: VariableHide.hideVariable,
+      global: false,
+      current: {
+        value: {
+          login: contextSrv.user.login,
+          id: contextSrv.user.id,
+          toString: () => contextSrv.user.id.toString(),
+        },
+      },
+    };
+
+    dispatch(
+      addVariable(toVariablePayload(userModel, { global: userModel.global, index: userModel.index, model: userModel }))
+    );
   };
 };
 
 export const changeVariableMultiValue = (identifier: VariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variable = getVariable<VariableWithMultiSupport>(identifier.id!, getState());
+    const variable = getVariable<VariableWithMultiSupport>(identifier.id, getState());
     const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })));
@@ -138,7 +205,7 @@ export const processVariable = (
   queryParams: UrlQueryMap
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.id!, getState());
+    const variable = getVariable(identifier.id, getState());
     await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams['var-' + variable.name];
@@ -184,14 +251,14 @@ export const setOptionFromUrl = (
   urlValue: UrlQueryValue
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.id!, getState());
+    const variable = getVariable(identifier.id, getState());
     if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
       // updates options
       await variableAdapters.get(variable.type).updateOptions(variable);
     }
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(variable.id!, getState());
+    const variableFromState = getVariable<VariableWithOptions>(variable.id, getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -268,7 +335,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier.id!, getState());
+    const variableInState = getVariable<VariableWithOptions>(identifier.id, getState());
     const current = variableInState.current || (({} as unknown) as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -308,7 +375,9 @@ export const validateVariableSelectionState = (
     // 3. use the first value
     if (variableInState.options) {
       const option = variableInState.options[0];
-      return setValue(variableInState, option);
+      if (option) {
+        return setValue(variableInState, option);
+      }
     }
 
     // 4... give up
@@ -355,7 +424,7 @@ export const variableUpdated = (
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    const variable = getVariable(identifier.id!, getState());
+    const variable = getVariable(identifier.id, getState());
     if (variable.initLock) {
       return Promise.resolve();
     }
@@ -408,7 +477,7 @@ export const onTimeRangeUpdated = (
   const promises = variablesThatNeedRefresh.map(async (variable: VariableWithOptions) => {
     const previousOptions = variable.options.slice();
     await variableAdapters.get(variable.type).updateOptions(variable);
-    const updatedVariable = getVariable<VariableWithOptions>(variable.id!, getState());
+    const updatedVariable = getVariable<VariableWithOptions>(variable.id, getState());
     if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
       const dashboard = getState().dashboard.getModel();
       dashboard?.templateVariableValueUpdated();
@@ -423,6 +492,31 @@ export const onTimeRangeUpdated = (
     console.error(error);
     dependencies.appEvents.emit(AppEvents.alertError, ['Template variable service failed', error.message]);
   }
+};
+
+export const templateVarsChangedInUrl = (vars: UrlQueryMap): ThunkResult<void> => async (dispatch, getState) => {
+  const update: Array<Promise<any>> = [];
+  for (const variable of getVariables(getState())) {
+    const key = `var-${variable.name}`;
+    if (vars.hasOwnProperty(key)) {
+      if (isVariableUrlValueDifferentFromCurrent(variable, vars[key])) {
+        const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, vars[key]);
+        update.push(promise);
+      }
+    }
+  }
+
+  if (update.length) {
+    await Promise.all(update);
+    const dashboard = getState().dashboard.getModel();
+    dashboard?.templateVariableValueUpdated();
+    dashboard?.startRefresh();
+  }
+};
+
+const isVariableUrlValueDifferentFromCurrent = (variable: VariableModel, urlValue: any): boolean => {
+  // lodash isEqual handles array of value equality checks as well
+  return !isEqual(variableAdapters.get(variable.type).getValueForUrl(variable), urlValue);
 };
 
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
@@ -445,4 +539,41 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   }
 
   return queryParamsNew;
+};
+
+export const initVariablesTransaction = (dashboardUid: string, dashboard: DashboardModel): ThunkResult<void> => async (
+  dispatch,
+  getState
+) => {
+  try {
+    const transactionState = getState().templating.transaction;
+    if (transactionState.status === TransactionStatus.Fetching) {
+      // previous dashboard is still fetching variables, cancel all requests
+      dispatch(cancelVariables());
+    }
+
+    dispatch(variablesInitTransaction({ uid: dashboardUid }));
+
+    dispatch(initDashboardTemplating(dashboard.templating.list));
+    await dispatch(processVariables());
+    dispatch(completeDashboardTemplating(dashboard));
+
+    dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
+  } catch (err) {
+    dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
+    console.log(err);
+  }
+};
+
+export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
+  dispatch(cleanVariables());
+  dispatch(variablesClearTransaction());
+};
+
+type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
+export const cancelVariables = (
+  dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }
+): ThunkResult<void> => dispatch => {
+  dependencies.getBackendSrv().cancelAllInFlightRequests();
+  dispatch(cleanUpVariables());
 };

@@ -5,7 +5,6 @@
 title = "ValueLinkConfig"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ValueLinkConfig interface

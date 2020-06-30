@@ -87,7 +87,19 @@ $input-border: 1px solid $input-border-color;
     flex-wrap: nowrap;
   }
 
+  &--xs-view-flex-column {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    @include media-breakpoint-down(xs) {
+      flex-direction: column;
+    }
+  }
+
   .select-container {
+    margin-right: $space-xs;
+  }
+
+  .gf-form-spacing {
     margin-right: $space-xs;
   }
 }
@@ -160,7 +172,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-pre {
-  display: block;
+  display: block !important;
   flex-grow: 1;
   margin: 0;
   margin-right: $space-xs;
@@ -233,6 +245,9 @@ $input-border: 1px solid $input-border-color;
 
   &--dropdown {
     padding-right: $space-lg;
+    position: relative;
+    display: flex;
+    align-items: center;
 
     &::after {
       position: absolute;

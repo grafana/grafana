@@ -1,10 +1,11 @@
-import React, { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
+import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface OptionsGroupProps {
   id: string;
@@ -15,6 +16,7 @@ export interface OptionsGroupProps {
   nested?: boolean;
   persistMe?: boolean;
   onToggle?: (isExpanded: boolean) => void;
+  children: ((toggleExpand: (expanded: boolean) => void) => ReactNode) | ReactNode;
 }
 
 export const OptionsGroup: FC<OptionsGroupProps> = ({
@@ -87,7 +89,7 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
   nested = false,
   onToggle,
 }) => {
-  const [isExpanded, toggleExpand] = useState(defaultToClosed ? false : true);
+  const [isExpanded, toggleExpand] = useState(!defaultToClosed);
   const theme = useTheme();
   const styles = getStyles(theme, isExpanded, nested);
   useEffect(() => {
@@ -101,14 +103,14 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
       <div
         className={styles.header}
         onClick={() => toggleExpand(!isExpanded)}
-        aria-label={e2e.components.OptionsGroup.selectors.toggle(id)}
+        aria-label={selectors.components.OptionsGroup.toggle(id)}
       >
         <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
           <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
         </div>
         <div style={{ width: '100%' }}>{renderTitle ? renderTitle(isExpanded) : title}</div>
       </div>
-      {isExpanded && <div className={styles.body}>{children}</div>}
+      {isExpanded && <div className={styles.body}>{_.isFunction(children) ? children(toggleExpand) : children}</div>}
     </div>
   );
 };

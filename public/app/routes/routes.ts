@@ -36,6 +36,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d/:uid/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -45,6 +46,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d/:uid', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       reloadOnSearch: false,
       routeInfo: DashboardRouteInfo.Normal,
@@ -54,6 +56,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboard/:type/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -63,6 +66,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboard/new', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
@@ -72,6 +76,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d-solo/:uid/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -84,6 +89,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/d-solo/:uid', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -96,6 +102,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
@@ -108,6 +115,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboard/import', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -117,6 +125,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/datasources', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -138,6 +147,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/datasources/edit/:id/dashboards', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -147,6 +157,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/datasources/new', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -166,6 +177,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboards/folder/new', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -175,6 +187,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboards/f/:uid/:slug/permissions', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -184,6 +197,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/dashboards/f/:uid/:slug/settings', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -214,6 +228,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/explore', {
       template: '<react-container />',
       reloadOnSearch: false,
+      //@ts-ignore
       pageClass: 'page-explore',
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
@@ -231,6 +246,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/org', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')),
@@ -238,12 +254,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/org/new', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () => SafeDynamicImport(import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
       },
     })
     .when('/org/users', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')),
@@ -251,6 +269,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/org/users/invite', {
       template: '<react-container/>',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')),
@@ -258,6 +277,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/org/apikeys', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         roles: () => ['Editor', 'Admin'],
         component: () =>
@@ -266,6 +286,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/org/teams', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
         component: () => SafeDynamicImport(import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
@@ -273,6 +294,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/org/teams/new', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
         component: () =>
@@ -281,37 +303,48 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
         component: () => SafeDynamicImport(import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
       },
     })
     .when('/profile', {
-      templateUrl: 'public/app/features/profile/partials/profile.html',
-      controller: 'ProfileCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserProfileEdit" */ 'app/features/profile/UserProfileEdit')),
+      },
     })
     .when('/profile/password', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
+            import(/* webpackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
           ),
       },
     })
     .when('/profile/select-org', {
-      templateUrl: 'public/app/features/org/partials/select_org.html',
-      controller: 'SelectOrgCtrl',
+      template: '<react-container/>',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')),
+      },
     })
     // ADMIN
     .when('/admin', {
       templateUrl: 'public/app/features/admin/partials/admin_home.html',
       controller: 'AdminHomeCtrl',
       controllerAs: 'ctrl',
+      reloadOnSearch: false,
     })
     .when('/admin/settings', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')),
@@ -319,12 +352,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/admin/upgrading', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () => SafeDynamicImport(import('app/features/admin/UpgradePage')),
       },
     })
     .when('/admin/users', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')),
@@ -332,6 +367,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/admin/users/create', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')),
@@ -339,17 +375,22 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/admin/users/edit/:id', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () => UserAdminPage,
       },
     })
     .when('/admin/orgs', {
-      templateUrl: 'public/app/features/admin/partials/orgs.html',
-      controller: 'AdminListOrgsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')),
+      },
     })
     .when('/admin/orgs/edit/:id', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')),
@@ -357,6 +398,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/admin/stats', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')),
@@ -364,6 +406,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/admin/ldap', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () => LdapPage,
       },
@@ -371,13 +414,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     // LOGIN / SIGNUP
     .when('/login', {
       template: '<react-container/>',
+      //@ts-ignore
+      pageClass: 'login-page sidemenu-hidden',
       resolve: {
         component: () => LoginPage,
       },
-      pageClass: 'login-page sidemenu-hidden',
     })
     .when('/invite/:code', {
       template: '<react-container/>',
+      //@ts-ignore
       pageClass: 'sidemenu-hidden',
       resolve: {
         component: () =>
@@ -386,28 +431,51 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/signup', {
       template: '<react-container/>',
+      //@ts-ignore
+      pageClass: 'sidemenu-hidden',
       resolve: {
         component: () => SignupPage,
       },
-      pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
-      templateUrl: 'public/app/partials/reset_password.html',
-      controller: 'ResetPasswordCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(
+              /* webpackChunkName: "SendResetMailPage" */ 'app/core/components/ForgottenPassword/SendResetMailPage'
+            )
+          ),
+      },
+      // @ts-ignore
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/reset', {
-      templateUrl: 'public/app/partials/reset_password.html',
-      controller: 'ResetPasswordCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(
+              /* webpackChunkName: "ChangePasswordPage" */ 'app/core/components/ForgottenPassword/ChangePasswordPage'
+            )
+          ),
+      },
+      //@ts-ignore
       pageClass: 'sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
-      templateUrl: 'public/app/features/manage-dashboards/partials/snapshot_list.html',
-      controller: 'SnapshotListCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
+          ),
+      },
     })
     .when('/plugins', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
@@ -415,7 +483,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/plugins/:pluginId/', {
       template: '<react-container />',
-      reloadOnSearch: false, // tabs from query parameters
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(import(/* webpackChunkName: "PluginPage" */ '../features/plugins/PluginPage')),
@@ -425,6 +493,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
       controller: 'AppPageCtrl',
       controllerAs: 'ctrl',
+      reloadOnSearch: false,
     })
     .when('/alerting', {
       redirectTo: '/alerting/list',
@@ -439,6 +508,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/alerting/notifications', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () =>
           SafeDynamicImport(
@@ -450,15 +520,27 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
       controller: 'AlertNotificationEditCtrl',
       controllerAs: 'ctrl',
+      reloadOnSearch: false,
+    })
+    .when('/alerting/notification/new2', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NewNotificationChannel" */ 'app/features/alerting/NewAlertNotificationPage')
+          ),
+      },
     })
     .when('/alerting/notification/:id/edit', {
       templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
       controller: 'AlertNotificationEditCtrl',
       controllerAs: 'ctrl',
+      reloadOnSearch: false,
     })
     .otherwise({
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
+      reloadOnSearch: false,
     });
 
   applyRouteRegistrationHandlers($routeProvider);

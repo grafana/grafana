@@ -119,13 +119,14 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 
 func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
 	message, err := ns.buildEmailMessage(&models.SendEmailCommand{
-		Data:         cmd.Data,
-		Info:         cmd.Info,
-		Template:     cmd.Template,
-		To:           cmd.To,
-		SingleEmail:  cmd.SingleEmail,
-		EmbededFiles: cmd.EmbededFiles,
-		Subject:      cmd.Subject,
+		Data:          cmd.Data,
+		Info:          cmd.Info,
+		Template:      cmd.Template,
+		To:            cmd.To,
+		SingleEmail:   cmd.SingleEmail,
+		EmbeddedFiles: cmd.EmbeddedFiles,
+		Subject:       cmd.Subject,
+		ReplyTo:       cmd.ReplyTo,
 	})
 
 	if err != nil {

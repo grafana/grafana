@@ -5,7 +5,6 @@
 title = "CircularVector"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## CircularVector class

@@ -3,6 +3,8 @@ set -eo pipefail
 
 . e2e/variables
 
+PORT=${PORT:-$DEFAULT_PORT}
+
 ./e2e/kill-server
 
 mkdir $RUNDIR

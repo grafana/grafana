@@ -5,7 +5,6 @@
 title = "LogLabelStatsModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogLabelStatsModel interface

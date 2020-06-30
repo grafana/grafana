@@ -5,7 +5,6 @@
 title = "SizeMeta"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## SizeMeta interface

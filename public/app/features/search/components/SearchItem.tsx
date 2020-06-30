@@ -1,7 +1,7 @@
 import React, { FC, useCallback, CSSProperties } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { e2e } from '@grafana/e2e';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -15,7 +15,7 @@ export interface Props {
   style?: CSSProperties;
 }
 
-const { selectors } = e2e.pages.Dashboards;
+const selectors = e2eSelectors.pages.Dashboards;
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, style }) => {
   const theme = useTheme();
@@ -63,6 +63,10 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-bottom: ${SEARCH_ITEM_MARGIN}px;
     padding: 0 ${theme.spacing.md};
 
+    &:last-child {
+      margin-bottom: ${SEARCH_ITEM_MARGIN * 2}px;
+    }
+
     :hover {
       cursor: pointer;
     }
@@ -99,5 +103,6 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     align-items: center;
     flex-shrink: 0;
     flex-grow: 1;
+    height: 100%;
   `,
 }));

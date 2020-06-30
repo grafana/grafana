@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //***
@@ -112,7 +113,7 @@ func TestExecuteStartQuery(t *testing.T) {
 	var expectedResponse *cloudwatchlogs.StartQueryOutput = nil
 
 	assert.Equal(t, expectedResponse, response)
-	assert.Equal(t, fmt.Errorf("invalid time range: Start time must be before end time"), err)
+	assert.Equal(t, fmt.Errorf("invalid time range: start time must be before end time"), err)
 
 }
 
@@ -187,12 +188,15 @@ func TestHandleGetQueryResults(t *testing.T) {
 	})
 
 	frame, err := executor.handleGetQueryResults(context.Background(), logsClient, params, "A")
-	timeA, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:37:23.000")
-	timeB, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:40:43.000")
+	require.NoError(t, err)
+	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:37:23.000")
+	require.NoError(t, err)
+	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:40:43.000")
+	require.NoError(t, err)
 	expectedTimeField := data.NewField("@timestamp", nil, []*time.Time{
 		aws.Time(timeA), aws.Time(timeB),
 	})
-	expectedTimeField.SetConfig(&data.FieldConfig{Title: "Time"})
+	expectedTimeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	expectedFieldB := data.NewField("field_b", nil, []*string{
 		aws.String("b_1"), aws.String("b_2"),

@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Icon } from '@grafana/ui';
+import { Icon, ConfirmButton, Button } from '@grafana/ui';
 
 import alertDef from './state/alertDef';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import appEvents from '../../core/app_events';
-import { CoreEvents } from 'app/types';
+import { css } from 'emotion';
 
 interface Props {
   dashboard: DashboardModel;
@@ -46,28 +45,16 @@ class StateHistory extends PureComponent<Props, State> {
       });
   }
 
-  clearHistory = () => {
-    const { dashboard, onRefresh, panelId } = this.props;
+  clearHistory = async () => {
+    const { dashboard, panelId, onRefresh } = this.props;
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Alert History',
-      text: 'Are you sure you want to remove all history & annotations for this alert?',
-      icon: 'trash-alt',
-      yesText: 'Yes',
-      onConfirm: () => {
-        getBackendSrv()
-          .post('/api/annotations/mass-delete', {
-            dashboardId: dashboard.id,
-            panelId: panelId,
-          })
-          .then(() => {
-            this.setState({
-              stateHistoryItems: [],
-            });
-            onRefresh();
-          });
-      },
+    await getBackendSrv().post('/api/annotations/mass-delete', {
+      dashboardId: dashboard.id,
+      panelId: panelId,
     });
+
+    this.setState({ stateHistoryItems: [] });
+    onRefresh();
   };
 
   render() {
@@ -78,9 +65,17 @@ class StateHistory extends PureComponent<Props, State> {
         {stateHistoryItems.length > 0 && (
           <div className="p-b-1">
             <span className="muted">Last 50 state changes</span>
-            <button className="btn btn-small btn-danger pull-right" onClick={this.clearHistory}>
-              <Icon name="trash-alt" style={{ marginRight: '4px' }} size="xs" /> {` Clear history`}
-            </button>
+            <ConfirmButton onConfirm={this.clearHistory} confirmVariant="destructive" confirmText="Clear">
+              <Button
+                className={css`
+                  direction: ltr;
+                `}
+                variant="destructive"
+                icon="trash-alt"
+              >
+                Clear history
+              </Button>
+            </ConfirmButton>
           </div>
         )}
         <ol className="alert-rule-list">

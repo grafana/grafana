@@ -12,7 +12,7 @@ weight = 650
 
 # Configure a Grafana Docker image
 
-If you are running Grafana in a Docker image, then you configure Grafana using [environment variables]({{< relref "configuration.md#configure-with-environment-variables" >}}) rather than directly editing the configuration file. If you want to save your data, then you also need to designate persistent storage or bind mounts for the Grafana container.
+If you are running Grafana in a Docker image, then you configure Grafana using [environment variables]({{< relref "../administration/configuration.md#configure-with-environment-variables" >}}) rather than directly editing the configuration file. If you want to save your data, then you also need to designate persistent storage or bind mounts for the Grafana container.
 
 ## Save your Grafana data
 

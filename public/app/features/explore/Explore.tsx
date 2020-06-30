@@ -1,23 +1,33 @@
-// Libraries
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
-
-// Services & Utils
-import store from 'app/core/store';
-import config from 'app/core/config';
-
-// Components
+import { selectors } from '@grafana/e2e-selectors';
 import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  DataSourceApi,
+  ExploreMode,
+  GrafanaTheme,
+  GraphSeriesXY,
+  LoadingState,
+  PanelData,
+  RawTimeRange,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
+
+import store from 'app/core/store';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
-// Actions
 import {
+  addQueryRow,
   changeSize,
   initializeExplore,
   modifyQueries,
@@ -25,23 +35,8 @@ import {
   scanStart,
   setQueries,
   toggleGraph,
-  addQueryRow,
   updateTimeRange,
 } from './state/actions';
-// Types
-import {
-  AbsoluteTimeRange,
-  DataQuery,
-  DataSourceApi,
-  GraphSeriesXY,
-  PanelData,
-  RawTimeRange,
-  TimeRange,
-  TimeZone,
-  LoadingState,
-  ExploreMode,
-  GrafanaTheme,
-} from '@grafana/data';
 
 import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -49,10 +44,10 @@ import {
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
   ensureQueries,
-  getTimeRangeFromUrl,
-  getTimeRange,
-  lastUsedDatasourceKeyForOrgId,
   getFirstNonQueryRowSpecificError,
+  getTimeRange,
+  getTimeRangeFromUrl,
+  lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -63,8 +58,7 @@ import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
-import { compose } from 'redux';
-import { e2e } from '@grafana/e2e';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -82,6 +76,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: queryContainer;
       // Need to override normal css class and don't want to count on ordering of the classes in html.
       height: auto !important;
+      flex: unset !important;
       padding: ${theme.panelPadding}px;
     `,
   };
@@ -217,6 +212,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.props.setQueries(this.props.exploreId, [query]);
   };
 
+  onCellFilterAdded = (filter: FilterItem) => {
+    const { value, key, operator } = filter;
+    if (operator === FILTER_FOR_OPERATOR) {
+      this.onClickFilterLabel(key, value);
+    }
+
+    if (operator === FILTER_OUT_OPERATOR) {
+      this.onClickFilterOutLabel(key, value);
+    }
+  };
+
   onClickFilterLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER', key, value });
   };
@@ -311,16 +317,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
-    // TEMP: Remove for 7.0
-    const cloudwatchLogsDisabled =
-      datasourceInstance?.meta?.id === 'cloudwatch' && !config.featureToggles.cloudwatchLogs;
-
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
-      <div className={exploreClass} ref={this.getRef} aria-label={e2e.pages.Explore.General.selectors.container}>
+      <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
@@ -352,6 +354,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             onClickExample={this.onClickExample}
                             datasource={datasourceInstance}
                             exploreMode={mode}
+                            exploreId={exploreId}
                           />
                         </div>
                       )}
@@ -375,9 +378,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             />
                           )}
                           {mode === ExploreMode.Metrics && (
-                            <TableContainer width={width} exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
+                            <TableContainer
+                              width={width}
+                              exploreId={exploreId}
+                              onCellFilterAdded={
+                                this.props.datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined
+                              }
+                            />
                           )}
-                          {mode === ExploreMode.Logs && !cloudwatchLogsDisabled && (
+                          {mode === ExploreMode.Logs && (
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}

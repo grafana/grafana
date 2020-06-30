@@ -5,7 +5,6 @@
 title = "MultiSelect"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## MultiSelect() function

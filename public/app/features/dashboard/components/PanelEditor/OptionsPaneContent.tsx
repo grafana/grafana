@@ -8,7 +8,7 @@ import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { usePanelLatestData } from './usePanelLatestData';
-import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   plugin: PanelPlugin;
@@ -35,7 +35,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
-  const [currentData, hasSeries] = usePanelLatestData(panel);
+  const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
@@ -50,11 +50,12 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          /* hasSeries makes sure current data is there */
+          data={data!.series}
         />
       );
     },
-    [currentData, plugin, panel, onFieldConfigsChange]
+    [data, plugin, panel, onFieldConfigsChange]
   );
 
   const renderFieldOverrideOptions = useCallback(
@@ -70,18 +71,19 @@ export const OptionsPaneContent: React.FC<Props> = ({
           config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
-          data={currentData.series}
+          /* hasSeries makes sure current data is there */
+          data={data!.series}
         />
       );
     },
-    [currentData, plugin, panel, onFieldConfigsChange]
+    [data, plugin, panel, onFieldConfigsChange]
   );
 
   // When the panel has no query only show the main tab
   const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
 
   return (
-    <div className={styles.panelOptionsPane} aria-label={e2e.components.PanelEditor.OptionsPane.selectors.content}>
+    <div className={styles.panelOptionsPane} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
       {plugin && (
         <div className={styles.wrapper}>
           <TabsBar className={styles.tabsBar}>
@@ -98,15 +100,14 @@ export const OptionsPaneContent: React.FC<Props> = ({
             />
           </TabsBar>
           <TabContent className={styles.tabContent}>
-            <CustomScrollbar>
+            <CustomScrollbar autoHeightMin="100%">
               {showMainTab ? (
                 <PanelOptionsTab
                   panel={panel}
                   plugin={plugin}
                   dashboard={dashboard}
-                  data={currentData}
+                  data={data}
                   onPanelConfigChange={onPanelConfigChange}
-                  onFieldConfigsChange={onFieldConfigsChange}
                   onPanelOptionsChanged={onPanelOptionsChanged}
                 />
               ) : (
@@ -185,7 +186,7 @@ export const TabsBarContent: React.FC<{
   return (
     <>
       {width < 352 ? (
-        <div className="flex-grow-1" aria-label={e2e.components.PanelEditor.OptionsPane.selectors.select}>
+        <div className="flex-grow-1" aria-label={selectors.components.PanelEditor.OptionsPane.select}>
           <Select
             options={tabs}
             value={active}
@@ -203,6 +204,8 @@ export const TabsBarContent: React.FC<{
               counter={item.value === 'overrides' ? overridesCount : undefined}
               active={active.value === item.value}
               onChangeTab={() => setActiveTab(item.value)}
+              title={item.tooltip}
+              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label)}
             />
           ))}
           <div className="flex-grow-1" />
@@ -225,14 +228,17 @@ const tabSelections: Array<SelectableValue<string>> = [
   {
     label: 'Panel',
     value: 'options',
+    tooltip: 'Configure panel display options',
   },
   {
-    label: 'Fields',
+    label: 'Field',
     value: 'defaults',
+    tooltip: 'Configure field options',
   },
   {
     label: 'Overrides',
     value: 'overrides',
+    tooltip: 'Configure field option overrides',
   },
 ];
 

@@ -5,7 +5,7 @@ import { css, cx } from 'emotion';
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { TimePickerContent } from './TimePickerContent/TimePickerContent';
+import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
@@ -13,7 +13,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, DateTime, rangeUtil, GrafanaTheme, TIME_FORMAT } from '@grafana/data';
+import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormat, timeZoneFormatUserFriendly } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -98,6 +98,7 @@ export interface Props extends Themeable {
   timeSyncButton?: JSX.Element;
   isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
@@ -139,6 +140,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       isSynced,
       theme,
       history,
+      onChangeTimeZone,
     } = this.props;
 
     const { isOpen } = this.state;
@@ -160,7 +162,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
             </button>
           )}
           <div>
-            <Tooltip content={<TimePickerTooltip timeRange={value} />} placement="bottom">
+            <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
               <button aria-label="TimePicker Open Button" className={timePickerButtonClass} onClick={this.onOpen}>
                 <Icon name="clock-nine" className={cx(styles.clockIcon, timePickerIconClass)} size="lg" />
                 <TimePickerButtonLabel {...this.props} />
@@ -168,7 +170,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
               </button>
             </Tooltip>
             {isOpen && (
-              <ClickOutsideWrapper onClick={this.onClose}>
+              <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
                 <TimePickerContent
                   timeZone={timeZone}
                   value={value}
@@ -176,6 +178,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
                   otherOptions={otherOptions}
                   quickOptions={quickOptions}
                   history={history}
+                  onChangeTimeZone={onChangeTimeZone}
                 />
               </ClickOutsideWrapper>
             )}
@@ -206,44 +209,44 @@ const ZoomOutTooltip = () => (
   </>
 );
 
-const TimePickerTooltip = ({ timeRange }: { timeRange: TimeRange }) => (
-  <>
-    {timeRange.from.format(TIME_FORMAT)}
-    <div className="text-center">to</div>
-    {timeRange.to.format(TIME_FORMAT)}
-  </>
-);
-
-const TimePickerButtonLabel = memo<Props>(props => {
+const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const theme = useTheme();
   const styles = getLabelStyles(theme);
-  const isUTC = props.timeZone === 'utc';
 
-  if (props.hideText) {
+  return (
+    <>
+      {dateTimeFormat(timeRange.from, { timeZone })}
+      <div className="text-center">to</div>
+      {dateTimeFormat(timeRange.to, { timeZone })}
+      <div className="text-center">
+        <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>
+      </div>
+    </>
+  );
+};
+
+const TimePickerButtonLabel = memo<Props>(({ hideText, value, timeZone }) => {
+  const theme = useTheme();
+  const styles = getLabelStyles(theme);
+
+  if (hideText) {
     return null;
   }
 
   return (
     <span className={styles.container}>
-      <span>{formattedRange(props.value, isUTC)}</span>
-      {isUTC && <span className={styles.utc}>UTC</span>}
+      <span>{formattedRange(value, timeZone)}</span>
+      <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbrevation(value, timeZone)}</span>
     </span>
   );
 });
 
-const formattedRange = (value: TimeRange, isUTC: boolean) => {
+const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
   const adjustedTimeRange = {
-    to: dateMath.isMathString(value.raw.to) ? value.raw.to : adjustedTime(value.to, isUTC),
-    from: dateMath.isMathString(value.raw.from) ? value.raw.from : adjustedTime(value.from, isUTC),
+    to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
+    from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
-  return rangeUtil.describeTimeRange(adjustedTimeRange);
-};
-
-const adjustedTime = (time: DateTime, isUTC: boolean) => {
-  if (isUTC) {
-    return time.utc() || null;
-  }
-  return time.local() || null;
+  return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone);
 };
 
 export const TimeRangePicker = withTheme(UnthemedTimeRangePicker);

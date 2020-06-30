@@ -165,6 +165,7 @@ export function changeDatasource(exploreId: ExploreId, datasourceName: string): 
 export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
     dispatch(changeModeAction({ exploreId, mode }));
+    dispatch(stateSave());
   };
 }
 
@@ -468,8 +469,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
-
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
+    const timeZone = getTimeZone(getState().user);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 
     let firstResponse = true;
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
@@ -547,7 +548,7 @@ export const deleteRichHistory = (): ThunkResult<void> => {
   };
 };
 
-const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+export const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
   if (isDateTime(from)) {
     from = from.valueOf().toString(10);

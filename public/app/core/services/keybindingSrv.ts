@@ -1,20 +1,20 @@
 import _ from 'lodash';
+import Mousetrap from 'mousetrap';
+import 'mousetrap-global-bind';
+import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
+import { locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { store } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
-
-import Mousetrap from 'mousetrap';
-import 'mousetrap-global-bind';
-import { ContextSrv } from './context_srv';
-import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { DashboardModel } from '../../features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardModalProxy } from '../../features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { locationUtil } from '@grafana/data';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -87,6 +87,11 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
+  closeSearch() {
+    const search = _.extend(this.$location.search(), { search: null, ...defaultQueryParams });
+    this.$location.search(search);
+  }
+
   openAlerting() {
     this.$location.url('/alerting');
   }
@@ -147,6 +152,10 @@ export class KeybindingSrv {
 
     if (search.kiosk) {
       this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
+    }
+
+    if (search.search) {
+      this.closeSearch();
     }
   }
 

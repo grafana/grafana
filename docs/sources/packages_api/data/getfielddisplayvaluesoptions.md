@@ -5,7 +5,6 @@
 title = "GetFieldDisplayValuesOptions"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## GetFieldDisplayValuesOptions interface
@@ -31,6 +30,7 @@ import { GetFieldDisplayValuesOptions } from '@grafana/data';
 |  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> |  |
 |  [sparkline](#sparkline-property) | <code>boolean</code> |  |
 |  [theme](#theme-property) | <code>GrafanaTheme</code> |  |
+|  [timeZone](#timezone-property) | <code>TimeZone</code> |  |
 
 ### autoMinMax property
 
@@ -86,4 +86,12 @@ sparkline?: boolean;
 
 ```typescript
 theme: GrafanaTheme;
+```
+
+### timeZone property
+
+<b>Signature</b>
+
+```typescript
+timeZone?: TimeZone;
 ```
