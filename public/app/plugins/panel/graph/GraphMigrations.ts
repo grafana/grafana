@@ -17,19 +17,8 @@ export const graphPanelMigrationHandler = (panel: PanelModel<any>): Partial<any>
     delete options.dataLinks;
   }
 
-  // const fieldConfig = fieldOptions.defaults;
-  // fieldConfig.
-
-  console.log('GRAPH migration', panel);
-
-  // HACK: Mutates the panel state directly
+  // Mutate the original panel state (only necessary because it is angular)
   panel.options = options;
   panel.fieldConfig = fieldOptions;
   return options;
-};
-
-// This is called when the panel changes from another panel
-export const graphPanelChangedHandler = (panel: PanelModel<any> | any, prevPluginId: string, prevOptions: any) => {
-  console.log('GRAPH changed', panel, prevPluginId, prevOptions);
-  return {};
 };

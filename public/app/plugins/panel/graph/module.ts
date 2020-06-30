@@ -15,7 +15,7 @@ import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest'
 import { getColorFromHexRgbOrName, PanelEvents, PanelPlugin, DataFrame, FieldConfigProperty } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
-import { graphPanelMigrationHandler, graphPanelChangedHandler } from './GraphMigrations';
+import { graphPanelMigrationHandler } from './GraphMigrations';
 import { DataWarning, GraphPanelOptions, GraphFieldConfig } from './types';
 
 import { auto } from 'angular';
@@ -379,34 +379,9 @@ export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
   .useFieldConfig({
     standardOptions: [
       FieldConfigProperty.DisplayName,
-      FieldConfigProperty.Links, // was saved on options
+      FieldConfigProperty.Links, // previously saved as dataLinks on options
     ],
   })
-  // .setPanelOptions(builder => {
-  //   builder
-  //     .addBooleanSwitch({
-  //       category: ['Draw Mode'],
-  //       path: 'bars',
-  //       name: 'Bars',
-  //       description: 'show bars',
-  //       defaultValue: false,
-  //     })
-  //     .addBooleanSwitch({
-  //       category: ['Draw Mode'],
-  //       path: 'lines',
-  //       name: 'Lines',
-  //       description: 'show bars',
-  //       defaultValue: true,
-  //     })
-  //     .addBooleanSwitch({
-  //       category: ['Draw Mode'],
-  //       path: 'points',
-  //       name: 'Points',
-  //       description: 'show bars',
-  //       defaultValue: false,
-  //     });
-  // })
-  .setPanelChangeHandler(graphPanelChangedHandler)
   .setMigrationHandler(graphPanelMigrationHandler);
 
 // Use the angular ctrt rather than a react one
