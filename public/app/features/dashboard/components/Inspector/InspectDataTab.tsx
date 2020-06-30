@@ -239,6 +239,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   <Switch
                     value={!!options.withTransforms}
                     onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+                    aria-label={selectors.components.PanelInspector.Data.applyTransforms}
                   />
                 </Field>
               )}
@@ -250,6 +251,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   <Switch
                     value={!!options.withFieldConfig}
                     onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
+                    aria-label={selectors.components.PanelInspector.Data.applyFieldOverrides}
                   />
                 </Field>
               )}

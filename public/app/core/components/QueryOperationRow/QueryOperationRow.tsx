@@ -3,6 +3,7 @@ import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } 
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface QueryOperationRowProps {
   title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
@@ -62,7 +63,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
             onClick={() => {
               setIsContentVisible(!isContentVisible);
             }}
-            aria-label="Query operation row title"
+            aria-label={selectors.components.QueryOperationRow.title}
           >
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}

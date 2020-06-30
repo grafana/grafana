@@ -63,6 +63,8 @@ export const Components = {
   PanelInspector: {
     Data: {
       content: 'Panel inspector Data content',
+      applyTransforms: 'Apply transforms to data',
+      applyFieldOverrides: 'Apply field overrides to data',
     },
     Stats: {
       content: 'Panel inspector Stats content',
@@ -91,6 +93,9 @@ export const Components = {
   QueryEditorRow: {
     actionButton: (title: string) => `${title} query operation action`,
     title: (refId: string) => `Query editor row title ${refId}`,
+  },
+  QueryOperationRow: {
+    title: 'Query operation row title',
   },
   AlertTab: {
     content: 'Alert editor tab content',
