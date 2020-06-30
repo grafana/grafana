@@ -13,15 +13,15 @@ type notificationsAsConfig struct {
 }
 
 type deleteNotificationConfig struct {
-	Uid     string
+	UID     string
 	Name    string
-	OrgId   int64
+	OrgID   int64
 	OrgName string
 }
 
 type notificationFromConfig struct {
-	Uid                   string
-	OrgId                 int64
+	UID                   string
+	OrgID                 int64
 	OrgName               string
 	Name                  string
 	Type                  string
@@ -39,15 +39,15 @@ type notificationsAsConfigV0 struct {
 }
 
 type deleteNotificationConfigV0 struct {
-	Uid     values.StringValue `json:"uid" yaml:"uid"`
+	UID     values.StringValue `json:"uid" yaml:"uid"`
 	Name    values.StringValue `json:"name" yaml:"name"`
-	OrgId   values.Int64Value  `json:"org_id" yaml:"org_id"`
+	OrgID   values.Int64Value  `json:"org_id" yaml:"org_id"`
 	OrgName values.StringValue `json:"org_name" yaml:"org_name"`
 }
 
 type notificationFromConfigV0 struct {
-	Uid                   values.StringValue `json:"uid" yaml:"uid"`
-	OrgId                 values.Int64Value  `json:"org_id" yaml:"org_id"`
+	UID                   values.StringValue `json:"uid" yaml:"uid"`
+	OrgID                 values.Int64Value  `json:"org_id" yaml:"org_id"`
 	OrgName               values.StringValue `json:"org_name" yaml:"org_name"`
 	Name                  values.StringValue `json:"name" yaml:"name"`
 	Type                  values.StringValue `json:"type" yaml:"type"`
@@ -58,7 +58,7 @@ type notificationFromConfigV0 struct {
 	Settings              values.JSONValue   `json:"settings" yaml:"settings"`
 }
 
-func (notification notificationFromConfig) SettingsToJson() *simplejson.Json {
+func (notification notificationFromConfig) SettingsToJSON() *simplejson.Json {
 	settings := simplejson.New()
 	if len(notification.Settings) > 0 {
 		for k, v := range notification.Settings {
@@ -78,8 +78,8 @@ func (cfg *notificationsAsConfigV0) mapToNotificationFromConfig() *notifications
 
 	for _, notification := range cfg.Notifications {
 		r.Notifications = append(r.Notifications, &notificationFromConfig{
-			Uid:                   notification.Uid.Value(),
-			OrgId:                 notification.OrgId.Value(),
+			UID:                   notification.UID.Value(),
+			OrgID:                 notification.OrgID.Value(),
 			OrgName:               notification.OrgName.Value(),
 			Name:                  notification.Name.Value(),
 			Type:                  notification.Type.Value(),
@@ -93,8 +93,8 @@ func (cfg *notificationsAsConfigV0) mapToNotificationFromConfig() *notifications
 
 	for _, notification := range cfg.DeleteNotifications {
 		r.DeleteNotifications = append(r.DeleteNotifications, &deleteNotificationConfig{
-			Uid:     notification.Uid.Value(),
-			OrgId:   notification.OrgId.Value(),
+			UID:     notification.UID.Value(),
+			OrgID:   notification.OrgID.Value(),
 			OrgName: notification.OrgName.Value(),
 			Name:    notification.Name.Value(),
 		})
