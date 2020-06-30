@@ -132,44 +132,73 @@
         <div class="gf-form-label gf-form-label--grow"></div>
       </div>
     </div>
-    <div class="gf-form-inline" ng-show="ctrl.target.azureMonitor.dimensions.length > 0">
-      <div class="gf-form">
-        <label class="gf-form-label query-keyword width-9">Dimension</label>
-        <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-          <select
-            class="gf-form-input min-width-12"
-            ng-model="ctrl.target.azureMonitor.dimension"
-            ng-options="f.value as f.text for f in ctrl.target.azureMonitor.dimensions"
-            ng-change="ctrl.refresh()"
-          ></select>
+
+    <!-- NO Filters-->
+    <ng-container ng-if="ctrl.target.azureMonitor.dimensionFilters.length < 1">
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">Dimension</label>
+        </div>
+        <div class="gf-form">
+          <a ng-click="ctrl.azureMonitorAddDimensionFilter()" class="gf-form-label query-part"><icon name="'plus'"></icon></a>
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
         </div>
       </div>
-      <div class="gf-form">
-        <label class="gf-form-label query-keyword width-3">eq</label>
-        <input
-          type="text"
-          class="gf-form-input width-17"
-          ng-model="ctrl.target.azureMonitor.dimensionFilter"
-          spellcheck="false"
-          placeholder="auto"
-          ng-blur="ctrl.refresh()"
-        />
+    </ng-container>
+
+    <!-- YES Filters-->
+    <ng-container ng-if="ctrl.target.azureMonitor.dimensionFilters.length > 0">
+      <div ng-repeat="dim in ctrl.target.azureMonitor.dimensionFilters track by $index" class="gf-form-inline">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">Dimension</label>
+          <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
+            <select
+              class="gf-form-input min-width-12"
+              ng-model="dim.dimension"
+              ng-options="f.value as f.text for f in ctrl.target.azureMonitor.dimensions"
+              ng-change="ctrl.refresh()"
+            ></select>
+          </div>
+          <label class="gf-form-label query-keyword width-3">eq</label>
+          <input
+            type="text"
+            class="gf-form-input width-17"
+            ng-model="dim.filter"
+            spellcheck="false"
+            placeholder="Anything (*)"
+            ng-blur="ctrl.refresh()"
+          />
+        </div>
+        <div class="gf-form">
+          <a ng-click="ctrl.azureMonitorRemoveDimensionFilter($index)" class="gf-form-label query-part"><icon name="'minus'"></icon></a>
+        </div>
+        <div class="gf-form" ng-if="$last">
+          <a ng-click="ctrl.azureMonitorAddDimensionFilter()" class="gf-form-label query-part"><icon name="'plus'"></icon></a>
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
       </div>
-      <div class="gf-form">
-        <label class="gf-form-label query-keyword width-9">Top</label>
-        <input
-          type="text"
-          class="gf-form-input width-3"
-          ng-model="ctrl.target.azureMonitor.top"
-          spellcheck="false"
-          placeholder="10"
-          ng-blur="ctrl.refresh()"
-        />
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">Top</label>
+          <input
+            type="text"
+            class="gf-form-input width-3"
+            ng-model="ctrl.target.azureMonitor.top"
+            spellcheck="false"
+            placeholder="10"
+            ng-blur="ctrl.refresh()"
+          />
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
       </div>
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
+    </ng-container>
+
     <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Legend Format</label>
