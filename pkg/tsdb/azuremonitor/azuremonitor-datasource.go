@@ -21,7 +21,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -172,7 +171,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, AzureMonitorResponse, error) {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+	queryResult := &tsdb.QueryResult{RefId: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -286,20 +285,18 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 
 	frames := data.Frames{}
 	for _, series := range amr.Value[0].Timeseries {
-		metadataName := ""
-		metadataValue := ""
-		if len(series.Metadatavalues) > 0 {
-			metadataName = series.Metadatavalues[0].Name.LocalizedValue
-			metadataValue = series.Metadatavalues[0].Value
+		//metadataName := ""
+		//metadataValue := ""
+		labels := data.Labels{}
+		for _, md := range series.Metadatavalues {
+			labels[md.Name.LocalizedValue] = md.Value
 		}
-		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], amr.Value[0].Name.LocalizedValue, metadataName, metadataValue, amr.Namespace, amr.Value[0].ID)
+		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID)
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.RefID
 		frame.Fields[1].Name = metricName
-		if len(series.Metadatavalues) > 0 {
-			frame.Fields[1].Labels = data.Labels{metadataName: metadataValue}
-		}
+		frame.Fields[1].Labels = labels
 		frame.Fields[1].SetConfig(&data.FieldConfig{
 			Unit: amr.Value[0].Unit,
 		})

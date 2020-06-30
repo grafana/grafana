@@ -295,27 +295,23 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					"aggregation": {"Average"},
 				},
 			},
-			// Regarding multi-dimensional response:
-			// - It seems they all share the same time index, so maybe can be a wide frame.
-			// - Due to the type for the Azure monitor response, nulls currently become 0.
-			// - blogtype=X should maybe become labels.
 			expectedFrames: data.Frames{
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=PageBlob}.Blob Count", data.Labels{"blobtype": "PageBlob"},
+					data.NewField("grafana.Blob Count", data.Labels{"blobtype": "PageBlob"},
 						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=BlockBlob}.Blob Count", data.Labels{"blobtype": "BlockBlob"},
+					data.NewField("grafana.Blob Count", data.Labels{"blobtype": "BlockBlob"},
 						[]float64{1, 1, 1, 1, 1, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=Azure Data Lake Storage}.Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
+					data.NewField("grafana.Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
 						[]float64{0, 0, 0, 0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 			},
 		},
@@ -356,22 +352,54 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=PageBlob", data.Labels{"blobtype": "PageBlob"},
+					// TODO Set FieldConfig DisplayName when using Alias feature.
+					data.NewField("", data.Labels{"blobtype": "PageBlob"},
 						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=BlockBlob", data.Labels{"blobtype": "BlockBlob"}, []float64{
+					data.NewField("", data.Labels{"blobtype": "BlockBlob"}, []float64{
 						1, 1, 1, 1, 1, 0,
 					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=Azure Data Lake Storage", data.Labels{"blobtype": "Azure Data Lake Storage"}, []float64{
+					data.NewField("", data.Labels{"blobtype": "Azure Data Lake Storage"}, []float64{
 						0, 0, 0, 0, 0, 0,
 					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+			},
+		},
+		{
+			name:         "multiple dimension time series response",
+			responseFile: "7-azure-monitor-response-multi-dimension.json",
+			mockQuery: &AzureMonitorQuery{
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
+					data.NewField("grafana.Blob Capacity", data.Labels{"blobtype": "PageBlob", "tier": "Standard"},
+						[]float64{675530, 675530, 675530}).SetConfig(&data.FieldConfig{Unit: "Bytes"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
+					data.NewField("grafana.Blob Capacity", data.Labels{"blobtype": "BlockBlob", "tier": "Hot"},
+						[]float64{0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Bytes"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
+					data.NewField("grafana.Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
+						[]float64{0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Bytes"})),
 			},
 		},
 	}
