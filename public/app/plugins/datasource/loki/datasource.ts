@@ -4,7 +4,7 @@ import { Observable, from, merge, of } from 'rxjs';
 import { map, filter, catchError, switchMap } from 'rxjs/operators';
 
 // Services & Utils
-import { DataFrame, dateMath, FieldCache } from '@grafana/data';
+import { DataFrame, dateMath, FieldCache, QueryResultMeta } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
@@ -69,7 +69,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
-    this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
+    this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
   }
 
   _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
@@ -140,6 +140,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
       limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
     };
+    /** Show results of Loki instant queries only in table */
+    const meta: QueryResultMeta = {
+      preferredVisualisationType: 'table',
+    };
 
     return this._request(INSTANT_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.cancelled, target)),
@@ -150,7 +154,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         }
 
         return {
-          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, true)],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
           key: `${target.refId}_instant`,
         };
       })
@@ -347,17 +351,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
         break;
       }
       default:
         break;
     }
-
     return { ...query, expr: expression };
   }
 

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
@@ -567,7 +568,76 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	plugin := plugins.DataSourcePlugin{}
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 	require.Error(t, err)
-	assert.True(t, strings.HasPrefix(err.Error(), `Validation of URL "://host/root" failed`))
+	assert.True(t, strings.HasPrefix(err.Error(), `Validation of data source URL "://host/root" failed`))
+}
+
+func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
+	ctx := models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{},
+		},
+		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+	}
+	ds := models.DataSource{
+		Type: "test",
+		Url:  "127.0.01:5432",
+	}
+	cfg := setting.Cfg{}
+	plugin := plugins.DataSourcePlugin{}
+
+	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+
+	require.NoError(t, err)
+}
+
+// Test wth MSSQL type data sources.
+func TestNewDataSourceProxy_MSSQL(t *testing.T) {
+	ctx := models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{},
+		},
+		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+	}
+	tcs := []struct {
+		description string
+		url         string
+		err         error
+	}{
+		{
+			description: "Valid ODBC URL",
+			url:         `localhost\instance:1433`,
+		},
+		{
+			description: "Invalid ODBC URL",
+			url:         `localhost\instance::1433`,
+			err: datasource.URLValidationError{
+				Err: fmt.Errorf(`unrecognized MSSQL URL format: "localhost\\instance::1433"`),
+				URL: `localhost\instance::1433`,
+			},
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			cfg := setting.Cfg{}
+			plugin := plugins.DataSourcePlugin{}
+			ds := models.DataSource{
+				Type: "mssql",
+				Url:  tc.url,
+			}
+
+			p, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+			if tc.err == nil {
+				require.NoError(t, err)
+				assert.Equal(t, &url.URL{
+					Scheme: "sqlserver",
+					Host:   ds.Url,
+				}, p.targetUrl)
+			} else {
+				require.Error(t, err)
+				assert.Equal(t, tc.err, err)
+			}
+		})
+	}
 }
 
 type CloseNotifierResponseRecorder struct {

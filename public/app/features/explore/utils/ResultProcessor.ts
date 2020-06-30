@@ -4,12 +4,12 @@ import {
   DataFrame,
   FieldType,
   TimeZone,
-  toDataFrame,
   getDisplayProcessor,
   ExploreMode,
+  PreferredVisualisationType,
+  standardTransformers,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
@@ -29,13 +29,14 @@ export class ResultProcessor {
     }
 
     const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
+    const timeSeriesToShowInGraph = onlyTimeSeries.filter(frame => shouldShowInVisualisationType(frame, 'graph'));
 
-    if (onlyTimeSeries.length === 0) {
+    if (timeSeriesToShowInGraph.length === 0) {
       return null;
     }
 
     return getGraphSeriesModel(
-      onlyTimeSeries,
+      timeSeriesToShowInGraph,
       this.timeZone,
       {},
       { showBars: false, showLines: true, showPoints: false },
@@ -48,41 +49,35 @@ export class ResultProcessor {
       return null;
     }
 
-    const onlyTables = this.dataFrames.filter(frame => shouldShowInTable(frame));
+    const onlyTables = this.dataFrames
+      .filter((frame: DataFrame) => shouldShowInVisualisationType(frame, 'table'))
+      .sort((frameA: DataFrame, frameB: DataFrame) => {
+        const frameARefId = frameA.refId!;
+        const frameBRefId = frameB.refId!;
+
+        if (frameARefId > frameBRefId) {
+          return 1;
+        }
+        if (frameARefId < frameBRefId) {
+          return -1;
+        }
+        return 0;
+      });
 
     if (onlyTables.length === 0) {
       return null;
     }
 
-    const tables = onlyTables.map(frame => {
-      const { fields } = frame;
-      const fieldCount = fields.length;
-      const rowCount = frame.length;
+    const hasOnlyTimeseries = onlyTables.every(df => isTimeSeries(df));
 
-      const columns = fields.map(field => ({
-        text: field.name,
-        type: field.type,
-        filterable: field.config.filterable,
-      }));
+    // If we have only timeseries we do join on default time column which makes more sense. If we are showing
+    // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
+    // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
+    const transformer = hasOnlyTimeseries
+      ? standardTransformers.seriesToColumnsTransformer.transformer({})
+      : standardTransformers.mergeTransformer.transformer({});
 
-      const rows: any[][] = [];
-      for (let i = 0; i < rowCount; i++) {
-        const row: any[] = [];
-        for (let j = 0; j < fieldCount; j++) {
-          row.push(frame.fields[j].values.get(i));
-        }
-        rows.push(row);
-      }
-
-      return new TableModel({
-        columns,
-        rows,
-        meta: frame.meta,
-      });
-    });
-
-    const mergedTable = mergeTablesIntoModel(new TableModel(), ...tables);
-    const data = toDataFrame(mergedTable);
+    const data = transformer(onlyTables)[0];
 
     // set display processor
     for (const field of data.fields) {
@@ -101,7 +96,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
@@ -125,8 +120,8 @@ function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   return false;
 }
 
-function shouldShowInTable(frame: DataFrame) {
-  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== 'table') {
+function shouldShowInVisualisationType(frame: DataFrame, visualisation: PreferredVisualisationType) {
+  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== visualisation) {
     return false;
   }
 

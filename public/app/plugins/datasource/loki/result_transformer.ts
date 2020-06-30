@@ -10,11 +10,11 @@ import {
   ArrayVector,
   MutableDataFrame,
   findUniqueLabels,
-  FieldConfig,
   DataFrameView,
   DataLink,
   Field,
   QueryResultMetaStat,
+  QueryResultMeta,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -77,10 +77,10 @@ function constructDataFrame(
   const dataFrame = {
     refId,
     fields: [
-      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
+      { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
       { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
       { name: 'id', type: FieldType.string, config: {}, values: uids },
-      { name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' }, values: timesNs }, // Time
+      { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
     ],
     length: times.length,
   };
@@ -147,6 +147,8 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
     target: createMetricLabel(matrixResult.metric, options),
     datapoints: lokiPointsToTimeseriesPoints(matrixResult.values, options),
     tags: matrixResult.metric,
+    meta: options.meta,
+    refId: options.refId,
   };
 }
 
@@ -185,6 +187,7 @@ export function lokiResultsToTableModel(
   lokiResults: Array<LokiMatrixResult | LokiVectorResult>,
   resultCount: number,
   refId: string,
+  meta: QueryResultMeta,
   valueWithRefId?: boolean
 ): TableModel {
   if (!lokiResults || lokiResults.length === 0) {
@@ -199,10 +202,12 @@ export function lokiResultsToTableModel(
   // Sort metric labels, create columns for them and record their index
   const sortedLabels = [...metricLabels.values()].sort();
   const table = new TableModel();
+  table.refId = refId;
+  table.meta = meta;
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map(label => ({ text: label, filterable: true })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.time },
+    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
@@ -283,7 +288,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
         unit = 'decbytes';
       }
       const title = `${_.capitalize(section)}: ${decamelize(label)}`;
-      result.push({ title, value, unit });
+      result.push({ displayName: title, value, unit });
     }
   }
   return result;
@@ -332,14 +337,15 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-  const newFields = derivedFields.map(fieldFromDerivedFieldConfig);
-  const newFieldsMap = _.keyBy(newFields, 'name');
+  const derivedFieldsGrouped = _.groupBy(derivedFields, 'name');
+
+  const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
   const view = new DataFrameView(dataFrame);
   view.forEach((row: { line: string }) => {
-    for (const field of derivedFields) {
-      const logMatch = row.line.match(field.matcherRegex);
-      newFieldsMap[field.name].values.add(logMatch && logMatch[1]);
+    for (const field of newFields) {
+      const logMatch = row.line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
+      field.values.add(logMatch && logMatch[1]);
     }
   });
 
@@ -349,28 +355,37 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
 /**
  * Transform derivedField config into dataframe field with config that contains link.
  */
-function fieldFromDerivedFieldConfig(derivedFieldConfig: DerivedFieldConfig): Field<any, ArrayVector> {
-  const config: FieldConfig = {};
-  if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
-    const link: Partial<DataLink> = {
-      // We do not know what title to give here so we count on presentation layer to create a title from metadata.
-      title: '',
-      url: derivedFieldConfig.url,
-    };
-
+function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+  const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
-      link.meta = {
-        datasourceUid: derivedFieldConfig.datasourceUid,
-      };
+      acc.push({
+        // Will be filled out later
+        title: '',
+        url: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
+        internal: {
+          query: { query: derivedFieldConfig.url },
+          datasourceUid: derivedFieldConfig.datasourceUid,
+        },
+      });
+    } else if (derivedFieldConfig.url) {
+      acc.push({
+        // We do not know what title to give here so we count on presentation layer to create a title from metadata.
+        title: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
+        url: derivedFieldConfig.url,
+      });
     }
+    return acc;
+  }, [] as DataLink[]);
 
-    config.links = [link as DataLink];
-  }
   return {
-    name: derivedFieldConfig.name,
+    name: derivedFieldConfigs[0].name,
     type: FieldType.string,
-    config,
+    config: {
+      links: dataLinks,
+    },
     // We are adding values later on
     values: new ArrayVector<string>([]),
   };
@@ -382,6 +397,11 @@ export function rangeQueryResponseToTimeSeries(
   target: LokiQuery,
   responseListLength: number
 ): TimeSeries[] {
+  /** Show results of Loki metric queries only in graph */
+  const meta: QueryResultMeta = {
+    preferredVisualisationType: 'graph',
+  };
+
   const transformerOptions: TransformerOptions = {
     format: target.format,
     legendFormat: target.legendFormat,
@@ -391,6 +411,7 @@ export function rangeQueryResponseToTimeSeries(
     query: query.query,
     responseListLength,
     refId: target.refId,
+    meta,
     valueWithRefId: target.valueWithRefId,
   };
 

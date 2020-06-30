@@ -43,9 +43,9 @@ Panel titles and metric queries can refer to variables using two different synta
 - `$varname`
   This syntax is easy to read, but it does not allow you to use a variable in the middle of a word.
   **Example:** apps.frontend.$server.requests.count
-- `[[varname]]` 
-  **Note:** This syntax might be deprecated in the future.
-  Example: apps.frontend.[[server]].requests.count
+- `${var_name}` Use this syntax when you want to interpolate a variable in the middle of an expression. 
+- `${var_name:<format>}` This format gives you more control over how Grafana interpolates values. Refer to [Advanced variable format options]({{< relref "advanced-variable-format-options.md" >}}) for more detail on all the formatting types.
+- `[[varname]]` Do not use. Deprecated old syntax, will be removed in a future release. 
 
 Before queries are sent to your data source the query is _interpolated_, meaning the variable is replaced with its current value. During
 interpolation, the variable value might be _escaped_ in order to conform to the syntax of the query language and where it is used.
@@ -202,7 +202,7 @@ Option | Description
 
 ### Formatting multiple values
 
-Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that
+Interpolating a variable with multiple values selected is tricky, as it is not straightforward how to format the multiple values into a string that
 is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
 inform the templating interpolation engine what format to use for multiple values.
 
@@ -220,7 +220,7 @@ needs to be escaped so that the value can contain lucene control words and quota
 
 #### Formatting troubles
 
-Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic is behind it.
+Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic behind it.
 Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
 If you do not want Grafana to do this automatic regex escaping and formatting your only option is to disable the *Multi-value* or *Include All option*
 options.

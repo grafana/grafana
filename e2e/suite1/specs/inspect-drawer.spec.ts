@@ -4,13 +4,13 @@ const PANEL_UNDER_TEST = '2 yaxis and axis labels';
 
 e2e.scenario({
   describeName: 'Inspect drawer tests',
-  itName: 'Testes various Inpect Drawer scenarios',
+  itName: 'Tests various Inspect Drawer scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
     const viewPortWidth = e2e.config().viewportWidth;
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);
@@ -74,9 +74,24 @@ const expectDrawerTabsAndContent = () => {
       e2e.components.PanelInspector.Stats.content().should('not.be.visible');
       e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
+      e2e().wait(250);
+      /* Monaco Editor specific wait that fixes error below https://github.com/microsoft/monaco-editor/issues/354
+        TypeError: Cannot read property 'getText' of null
+          at Object.getFoldingRanges (http://localhost:3001/public/build/json.worker.js:18829:102)
+          at JSONWorker.getFoldingRanges (http://localhost:3001/public/build/json.worker.js:23818:40)
+          at EditorSimpleWorker.fmr (http://localhost:3001/public/build/json.worker.js:10407:58)
+          at SimpleWorkerServer._handleMessage (http://localhost:3001/public/build/json.worker.js:6939:59)
+          at Object.handleMessage (http://localhost:3001/public/build/json.worker.js:6920:22)
+          at SimpleWorkerProtocol._handleMessage (http://localhost:3001/public/build/json.worker.js:6757:32)
+          at SimpleWorkerProtocol.handleMessage (http://localhost:3001/public/build/json.worker.js:6719:10)
+          at SimpleWorkerServer.onmessage (http://localhost:3001/public/build/json.worker.js:6926:20)
+          at self.onmessage (http://localhost:3001/public/build/json.worker.js:12050:18)
+      */
+
       e2e.components.Tab.title('Query')
         .should('be.visible')
         .click();
+
       e2e.components.PanelInspector.Query.content().should('be.visible');
       e2e.components.PanelInspector.Data.content().should('not.be.visible');
       e2e.components.PanelInspector.Stats.content().should('not.be.visible');

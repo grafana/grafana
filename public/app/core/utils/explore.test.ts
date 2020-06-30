@@ -8,12 +8,12 @@ import {
   hasNonEmptyQuery,
   parseUrlState,
   refreshIntervalToSortOrder,
-  serializeStateToUrlParam,
   sortLogsResult,
   SortOrder,
   updateHistory,
+  getExploreUrl,
+  GetExploreUrlArguments,
 } from './explore';
-import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
 import {
   DataQueryError,
@@ -24,8 +24,10 @@ import {
   LogsDedupStrategy,
   LogsModel,
   MutableDataFrame,
+  ExploreUrlState,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
@@ -171,6 +173,32 @@ describe('state functions', () => {
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
+  });
+});
+
+describe('getExploreUrl', () => {
+  const args = ({
+    panel: {
+      getSavedId: () => 1,
+    },
+    panelTargets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
+    panelDatasource: {
+      name: 'testDataSource',
+      meta: {
+        id: '1',
+      },
+    },
+    datasourceSrv: {
+      get: jest.fn(),
+      getDataSourceById: jest.fn(),
+    },
+    timeSrv: {
+      timeRangeForUrl: () => '1',
+    },
+  } as unknown) as GetExploreUrlArguments;
+
+  it('should omit legendFormat in explore url', () => {
+    expect(getExploreUrl(args).then(data => expect(data).not.toMatch(/legendFormat1/g)));
   });
 });
 
@@ -391,6 +419,7 @@ describe('sortLogsResult', () => {
     logLevel: LogLevel.info,
     raw: '',
     timeEpochMs: 0,
+    timeEpochNs: '0',
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
@@ -407,6 +436,7 @@ describe('sortLogsResult', () => {
     logLevel: LogLevel.info,
     raw: '',
     timeEpochMs: 10,
+    timeEpochNs: '10000000',
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',

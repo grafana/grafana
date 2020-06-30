@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MysqlQueryForInterpolation } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/utils';
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class MysqlDatasource {
   id: any;
@@ -56,6 +56,7 @@ export class MysqlDatasource {
           ...query,
           datasource: this.name,
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
+          rawQuery: true,
         };
         return expandedQuery;
       });

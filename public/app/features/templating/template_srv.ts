@@ -2,10 +2,9 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { deprecationWarning, ScopedVars, textUtil, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
-import { getConfig } from 'app/core/config';
-import { variableRegex } from './utils';
+import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
-import { VariableModel } from './types';
+import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from '../variables/adapters';
 
@@ -65,11 +64,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   getVariables(): VariableModel[] {
-    if (getConfig().featureToggles.newVariables) {
-      return this.dependencies.getVariables();
-    }
-
-    return this._variables;
+    return this.dependencies.getVariables();
   }
 
   updateIndex() {
@@ -245,7 +240,13 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.grafanaVariables[name] = value;
   }
 
+  /**
+   * @deprecated: setGlobalVariable function should not be used and will be removed in future releases
+   *
+   * Use addVariable action to add variables to Redux instead
+   */
   setGlobalVariable(name: string, variable: any) {
+    deprecationWarning('template_srv.ts', 'setGlobalVariable', '');
     this.index = {
       ...this.index,
       [name]: {
@@ -431,7 +432,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return;
     }
 
-    if (getConfig().featureToggles.newVariables && !this.index[name]) {
+    if (!this.index[name]) {
       return this.dependencies.getVariableWithName(name);
     }
 
@@ -439,13 +440,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   };
 
   private getAdHocVariables = (): any[] => {
-    if (getConfig().featureToggles.newVariables) {
-      return this.dependencies.getFilteredVariables(isAdHoc);
-    }
-    if (Array.isArray(this._variables)) {
-      return this._variables.filter(isAdHoc);
-    }
-    return [];
+    return this.dependencies.getFilteredVariables(isAdHoc);
   };
 }
 

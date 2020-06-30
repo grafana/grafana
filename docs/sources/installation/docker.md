@@ -203,7 +203,7 @@ services:
 
 #### Modify permissions
 
-The commands below runs bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions.
+The commands below run bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions.
 
 ```bash
 $ docker run -ti --user root --volume "<your volume mapping here>" --entrypoint bash grafana/grafana:5.1.0
@@ -225,4 +225,4 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.

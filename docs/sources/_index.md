@@ -53,7 +53,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
     </a>
-    <a href="{{< relref "installation/configuration.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "administration/configuration.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
     </a>
@@ -65,8 +65,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "guides/whats-new-in-v6-6.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v6.6</h4>
+    <a href="{{< relref "guides/whats-new-in-v7-0.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v7.0</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
 
@@ -91,9 +91,9 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
       <img src="/img/docs/logos/icon_prometheus.svg" >
       <h5>Prometheus</h5>
     </a>
-    <a href="{{< relref "features/datasources/stackdriver.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_stackdriver.svg">
-      <h5>Google Stackdriver</h5>
+    <a href="{{< relref "features/datasources/cloudmonitoring.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/icon_cloudmonitoring.svg">
+      <h5>Google Cloud Monitoring</h5>
     </a>
     <a href="{{< relref "features/datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_cloudwatch.svg">

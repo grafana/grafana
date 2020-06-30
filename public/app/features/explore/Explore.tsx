@@ -19,6 +19,8 @@ import {
   RawTimeRange,
   TimeRange,
   TimeZone,
+  ExploreUIState,
+  ExploreUrlState,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -38,7 +40,7 @@ import {
   updateTimeRange,
 } from './state/actions';
 
-import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   DEFAULT_RANGE,
@@ -58,6 +60,7 @@ import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -211,6 +214,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.props.setQueries(this.props.exploreId, [query]);
   };
 
+  onCellFilterAdded = (filter: FilterItem) => {
+    const { value, key, operator } = filter;
+    if (operator === FILTER_FOR_OPERATOR) {
+      this.onClickFilterLabel(key, value);
+    }
+
+    if (operator === FILTER_OUT_OPERATOR) {
+      this.onClickFilterOutLabel(key, value);
+    }
+  };
+
   onClickFilterLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER', key, value });
   };
@@ -342,6 +356,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             onClickExample={this.onClickExample}
                             datasource={datasourceInstance}
                             exploreMode={mode}
+                            exploreId={exploreId}
                           />
                         </div>
                       )}
@@ -365,7 +380,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             />
                           )}
                           {mode === ExploreMode.Metrics && (
-                            <TableContainer width={width} exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
+                            <TableContainer
+                              width={width}
+                              exploreId={exploreId}
+                              onCellFilterAdded={
+                                this.props.datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined
+                              }
+                            />
                           )}
                           {mode === ExploreMode.Logs && (
                             <LogsContainer

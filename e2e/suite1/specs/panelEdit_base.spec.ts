@@ -4,12 +4,12 @@ const PANEL_UNDER_TEST = 'Random walk series';
 
 e2e.scenario({
   describeName: 'Panel edit tests',
-  itName: 'Testes various Panel edit scenarios',
+  itName: 'Tests various Panel edit scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
@@ -112,30 +112,17 @@ e2e.scenario({
     e2e.components.PanelEditor.DataPane.content().should('be.visible');
 
     // Field & Overrides tabs (need to switch to React based vis, i.e. Table)
-    e2e.components.PanelEditor.OptionsPane.select()
-      .should('be.visible')
-      .click()
-      .within(() => {
-        // Can change to Fields tab
-        e2e.components.Select.option()
-          .should('be.visible')
-          .eq(1)
-          .click();
-      });
+    e2e.components.PanelEditor.OptionsPane.tab('Field').should('be.visible');
+    e2e.components.PanelEditor.OptionsPane.tab('Overrides').should('be.visible');
+    e2e.components.PanelEditor.OptionsPane.tab('Field').click();
 
     e2e.components.FieldConfigEditor.content().should('be.visible');
     e2e.components.OverridesConfigEditor.content().should('not.be.visible');
 
-    e2e.components.PanelEditor.OptionsPane.select()
+    e2e.components.PanelEditor.OptionsPane.tab('Field').should('be.visible');
+    e2e.components.PanelEditor.OptionsPane.tab('Overrides')
       .should('be.visible')
-      .click()
-      .within(() => {
-        // Can change to Overrides tab
-        e2e.components.Select.option()
-          .should('be.visible')
-          .eq(2)
-          .click();
-      });
+      .click();
 
     e2e.components.OverridesConfigEditor.content().should('be.visible');
     e2e.components.FieldConfigEditor.content().should('not.be.visible');

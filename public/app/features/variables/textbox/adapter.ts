@@ -1,13 +1,13 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { TextBoxVariableModel } from '../../templating/types';
+import { TextBoxVariableModel } from '../types';
 import { initialTextBoxVariableModelState, textBoxVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
+import { setOptionAsCurrent } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { TextBoxVariablePicker } from './TextBoxVariablePicker';
 import { TextBoxVariableEditor } from './TextBoxVariableEditor';
-import { updateTextBoxVariableOptions } from './actions';
+import { setTextBoxVariableOptionsFromUrl, updateTextBoxVariableOptions } from './actions';
 import { toVariableIdentifier } from '../state/types';
 
 export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableModel> => {
@@ -26,7 +26,7 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
       await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
+      await dispatch(setTextBoxVariableOptionsFromUrl(toVariableIdentifier(variable), urlValue));
     },
     updateOptions: async variable => {
       await dispatch(updateTextBoxVariableOptions(toVariableIdentifier(variable)));

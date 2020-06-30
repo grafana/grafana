@@ -13,16 +13,16 @@ import (
 )
 
 var (
-	correct_properties              = "./testdata/test-configs/correct-properties"
-	incorrect_settings              = "./testdata/test-configs/incorrect-settings"
-	no_required_fields              = "./testdata/test-configs/no-required-fields"
-	correct_properties_with_orgName = "./testdata/test-configs/correct-properties-with-orgName"
-	brokenYaml                      = "./testdata/test-configs/broken-yaml"
-	doubleNotificationsConfig       = "./testdata/test-configs/double-default"
-	emptyFolder                     = "./testdata/test-configs/empty_folder"
-	emptyFile                       = "./testdata/test-configs/empty"
-	twoNotificationsConfig          = "./testdata/test-configs/two-notifications"
-	unknownNotifier                 = "./testdata/test-configs/unknown-notifier"
+	correctProperties            = "./testdata/test-configs/correct-properties"
+	incorrectSettings            = "./testdata/test-configs/incorrect-settings"
+	noRequiredFields             = "./testdata/test-configs/no-required-fields"
+	correctPropertiesWithOrgName = "./testdata/test-configs/correct-properties-with-orgName"
+	brokenYaml                   = "./testdata/test-configs/broken-yaml"
+	doubleNotificationsConfig    = "./testdata/test-configs/double-default"
+	emptyFolder                  = "./testdata/test-configs/empty_folder"
+	emptyFile                    = "./testdata/test-configs/empty"
+	twoNotificationsConfig       = "./testdata/test-configs/two-notifications"
+	unknownNotifier              = "./testdata/test-configs/unknown-notifier"
 )
 
 func TestNotificationAsConfig(t *testing.T) {
@@ -45,8 +45,8 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Can read correct properties", func() {
 			_ = os.Setenv("TEST_VAR", "default")
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(correct_properties)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(correctProperties)
 			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
@@ -60,8 +60,8 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt := nts[0]
 			So(nt.Name, ShouldEqual, "default-slack-notification")
 			So(nt.Type, ShouldEqual, "slack")
-			So(nt.OrgId, ShouldEqual, 2)
-			So(nt.Uid, ShouldEqual, "notifier1")
+			So(nt.OrgID, ShouldEqual, 2)
+			So(nt.UID, ShouldEqual, "notifier1")
 			So(nt.IsDefault, ShouldBeTrue)
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
@@ -72,45 +72,45 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt = nts[1]
 			So(nt.Name, ShouldEqual, "another-not-default-notification")
 			So(nt.Type, ShouldEqual, "email")
-			So(nt.OrgId, ShouldEqual, 3)
-			So(nt.Uid, ShouldEqual, "notifier2")
+			So(nt.OrgID, ShouldEqual, 3)
+			So(nt.UID, ShouldEqual, "notifier2")
 			So(nt.IsDefault, ShouldBeFalse)
 
 			nt = nts[2]
 			So(nt.Name, ShouldEqual, "check-unset-is_default-is-false")
 			So(nt.Type, ShouldEqual, "slack")
-			So(nt.OrgId, ShouldEqual, 3)
-			So(nt.Uid, ShouldEqual, "notifier3")
+			So(nt.OrgID, ShouldEqual, 3)
+			So(nt.UID, ShouldEqual, "notifier3")
 			So(nt.IsDefault, ShouldBeFalse)
 
 			nt = nts[3]
 			So(nt.Name, ShouldEqual, "Added notification with whitespaces in name")
 			So(nt.Type, ShouldEqual, "email")
-			So(nt.Uid, ShouldEqual, "notifier4")
-			So(nt.OrgId, ShouldEqual, 3)
+			So(nt.UID, ShouldEqual, "notifier4")
+			So(nt.OrgID, ShouldEqual, 3)
 
 			deleteNts := ntCfg.DeleteNotifications
 			So(len(deleteNts), ShouldEqual, 4)
 
 			deleteNt := deleteNts[0]
 			So(deleteNt.Name, ShouldEqual, "default-slack-notification")
-			So(deleteNt.Uid, ShouldEqual, "notifier1")
-			So(deleteNt.OrgId, ShouldEqual, 2)
+			So(deleteNt.UID, ShouldEqual, "notifier1")
+			So(deleteNt.OrgID, ShouldEqual, 2)
 
 			deleteNt = deleteNts[1]
 			So(deleteNt.Name, ShouldEqual, "deleted-notification-without-orgId")
-			So(deleteNt.OrgId, ShouldEqual, 1)
-			So(deleteNt.Uid, ShouldEqual, "notifier2")
+			So(deleteNt.OrgID, ShouldEqual, 1)
+			So(deleteNt.UID, ShouldEqual, "notifier2")
 
 			deleteNt = deleteNts[2]
 			So(deleteNt.Name, ShouldEqual, "deleted-notification-with-0-orgId")
-			So(deleteNt.OrgId, ShouldEqual, 1)
-			So(deleteNt.Uid, ShouldEqual, "notifier3")
+			So(deleteNt.OrgID, ShouldEqual, 1)
+			So(deleteNt.UID, ShouldEqual, "notifier3")
 
 			deleteNt = deleteNts[3]
 			So(deleteNt.Name, ShouldEqual, "Deleted notification with whitespaces in name")
-			So(deleteNt.OrgId, ShouldEqual, 1)
-			So(deleteNt.Uid, ShouldEqual, "notifier4")
+			So(deleteNt.OrgID, ShouldEqual, 1)
+			So(deleteNt.UID, ShouldEqual, "notifier4")
 		})
 
 		Convey("One configured notification", func() {
@@ -243,7 +243,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			dc := newNotificationProvisioner(logger)
-			err = dc.applyChanges(correct_properties_with_orgName)
+			err = dc.applyChanges(correctPropertiesWithOrgName)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
 			}
@@ -262,7 +262,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Config doesn't contain required field", func() {
 			dc := newNotificationProvisioner(logger)
-			err := dc.applyChanges(no_required_fields)
+			err := dc.applyChanges(noRequiredFields)
 			So(err, ShouldNotBeNil)
 
 			errString := err.Error()
@@ -293,8 +293,8 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Skip invalid directory", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(emptyFolder)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(emptyFolder)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -302,15 +302,15 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Unknown notifier should return error", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			_, err := cfgProvifer.readConfig(unknownNotifier)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			_, err := cfgProvider.readConfig(unknownNotifier)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "Unsupported notification type")
 		})
 
 		Convey("Read incorrect properties", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			_, err := cfgProvifer.readConfig(incorrect_settings)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			_, err := cfgProvider.readConfig(incorrectSettings)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "Alert validation error: Could not find url property in settings")
 		})

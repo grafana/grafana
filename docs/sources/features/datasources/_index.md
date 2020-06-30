@@ -24,17 +24,24 @@ The following data sources are officially supported:
 * [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
 * [Azure Monitor]({{< relref "azuremonitor.md" >}})
 * [Elasticsearch]({{< relref "elasticsearch.md" >}})
-* [Google Stackdriver]({{< relref "stackdriver.md" >}})
+* [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
 * [Graphite]({{< relref "graphite.md" >}})
 * [InfluxDB]({{< relref "influxdb.md" >}})
 * [Loki]({{< relref "loki.md" >}})
 * [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
-* [Mixed]({{< relref "mixed.md" >}})
 * [MySQL]({{< relref "mysql.md" >}})
 * [OpenTSDB]({{< relref "opentsdb.md" >}})
 * [PostgreSQL]({{< relref "postgres.md" >}})
 * [Prometheus]({{< relref "prometheus.md" >}})
 * [Testdata]({{< relref "testdata.md" >}})
+
+In addition to the data sources that you have configured in your Grafana, there are three special data sources available:
+
+- **Grafana -** A built-in data source that generates random walk data. Useful for testing visualizations and running experiments.
+- **Mixed -** Select this to query multiple data sources in the same panel. When this data source is selected, Grafana allows you to select a data source for every new query that you add.
+  * The first query will use the data source that was selected before you selected **Mixed**.
+  * You cannot change an existing query to use the Mixed Data Source.
+- **Dashboard -** Select this to use a result set from another panel in the same dashboard.
 
 ## Data source plugins
 

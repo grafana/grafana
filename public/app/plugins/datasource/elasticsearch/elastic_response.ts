@@ -368,7 +368,7 @@ export class ElasticResponse {
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elastic error response';
+      result.message = err.reason || 'Unknown elastic error response';
     }
 
     if (response.$$config) {

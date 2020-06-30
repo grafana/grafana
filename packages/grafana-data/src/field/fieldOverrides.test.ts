@@ -4,6 +4,7 @@ import {
   setFieldConfigDefaults,
   setDynamicConfigValue,
   applyFieldOverrides,
+  getLinksSupplier,
 } from './fieldOverrides';
 import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
@@ -19,14 +20,16 @@ import { Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getFieldDisplayName } from './fieldState';
+import { locationUtil } from '../utils';
 
-const property1 = {
+const property1: any = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
 
 const property2 = {
   id: 'custom.property2', // Match field properties
@@ -34,18 +37,26 @@ const property2 = {
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
 
-const property3 = {
+const property3: any = {
   id: 'custom.property3.nested', // Match field properties
   path: 'property3.nested', // Match field properties
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
+
+const shouldApplyFalse: any = {
+  id: 'custom.shouldApplyFalse', // Match field properties
+  path: 'shouldApplyFalse', // Match field properties
+  isCustom: true,
+  process: (value: any) => value,
+  shouldApply: () => false,
+};
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-  return [property1, property2, property3, ...mockStandardProperties()];
+  return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
 });
 
 describe('Global MinMax', () => {
@@ -83,7 +94,7 @@ describe('applyFieldOverrides', () => {
         matcher: { id: FieldMatcherID.numeric },
         properties: [
           { id: 'decimals', value: 1 }, // Numeric
-          { id: 'title', value: 'Kittens' }, // Text
+          { id: 'displayName', value: 'Kittens' }, // Text
         ],
       },
     ],
@@ -107,16 +118,19 @@ describe('applyFieldOverrides', () => {
           overrides: [],
         },
         replaceVariables: (value: any) => value,
+        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
-      expect(withOverrides[0].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+      expect(withOverrides[0].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
         Object {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "name": "message",
+              "formattedLabels": "",
+              "labels": undefined,
+              "name": "A message",
             },
           },
           "__series": Object {
@@ -128,12 +142,14 @@ describe('applyFieldOverrides', () => {
         }
       `);
 
-      expect(withOverrides[1].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+      expect(withOverrides[1].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
         Object {
           "__field": Object {
             "text": "Field",
             "value": Object {
-              "name": "info",
+              "formattedLabels": "",
+              "labels": undefined,
+              "name": "B info",
             },
           },
           "__series": Object {
@@ -152,16 +168,19 @@ describe('applyFieldOverrides', () => {
       min: 0,
       max: 100,
     };
+
     const f1 = {
       unit: 'ms',
       dateFormat: '', // should be ignored
       max: parseFloat('NOPE'), // should be ignored
       min: null, // should alo be ignored!
+      displayName: 'newTitle',
     };
 
     const f: DataFrame = toDataFrame({
       fields: [{ type: FieldType.number, name: 'x', config: field, values: [] }],
     });
+
     const processed = applyFieldOverrides({
       data: [f],
       fieldConfig: {
@@ -169,14 +188,17 @@ describe('applyFieldOverrides', () => {
         overrides: [],
       },
       fieldConfigRegistry: customFieldRegistry,
+      getDataSourceSettingsByUid: undefined as any,
       replaceVariables: v => v,
       theme: {} as GrafanaTheme,
     })[0];
-    const out = processed.fields[0].config;
 
-    expect(out.min).toEqual(0);
-    expect(out.max).toEqual(100);
-    expect(out.unit).toEqual('ms');
+    const outField = processed.fields[0];
+
+    expect(outField.config.min).toEqual(0);
+    expect(outField.config.max).toEqual(100);
+    expect(outField.config.unit).toEqual('ms');
+    expect(getFieldDisplayName(outField, f)).toEqual('newTitle');
   });
 
   it('will apply field overrides', () => {
@@ -184,6 +206,7 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
+      getDataSourceSettingsByUid: undefined as any,
       theme: (undefined as any) as GrafanaTheme,
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -200,7 +223,7 @@ describe('applyFieldOverrides', () => {
     expect(config.unit).toEqual('xyz');
 
     // The default value applied
-    expect(config.title).toEqual('Kittens');
+    expect(config.displayName).toEqual('Kittens');
 
     // The override applied
     expect(config.decimals).toEqual(1);
@@ -211,6 +234,7 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
+      getDataSourceSettingsByUid: undefined as any,
       theme: (undefined as any) as GrafanaTheme,
       autoMinMax: true,
     })[0];
@@ -299,15 +323,13 @@ describe('setFieldConfigDefaults', () => {
 describe('setDynamicConfigValue', () => {
   it('applies dynamic config values', () => {
     const config = {
-      title: 'test',
-      // custom: {
-      //   property1: 1,
-      // },
+      displayName: 'test',
     };
+
     setDynamicConfigValue(
       config,
       {
-        id: 'title',
+        id: 'displayName',
         value: 'applied',
       },
       {
@@ -318,7 +340,7 @@ describe('setDynamicConfigValue', () => {
       }
     );
 
-    expect(config.title).toEqual('applied');
+    expect(config.displayName).toEqual('applied');
   });
 
   it('applies custom dynamic config values', () => {
@@ -342,6 +364,27 @@ describe('setDynamicConfigValue', () => {
     );
 
     expect(config.custom.property1).toEqual('applied');
+  });
+
+  it('applies overrides even when shouldApply returns false', () => {
+    const config: FieldConfig = {
+      custom: {},
+    };
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'custom.shouldApplyFalse',
+        value: 'applied',
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.custom.shouldApplyFalse).toEqual('applied');
   });
 
   it('applies nested custom dynamic config values', () => {
@@ -371,7 +414,7 @@ describe('setDynamicConfigValue', () => {
 
   it('removes properties', () => {
     const config = {
-      title: 'title',
+      displayName: 'title',
       custom: {
         property3: {
           nested: 1,
@@ -395,7 +438,7 @@ describe('setDynamicConfigValue', () => {
     setDynamicConfigValue(
       config,
       {
-        id: 'title',
+        id: 'displayName',
         value: undefined,
       },
       {
@@ -407,6 +450,104 @@ describe('setDynamicConfigValue', () => {
     );
 
     expect(config.custom.property3).toEqual({});
-    expect(config.title).toBeUndefined();
+    expect(config.displayName).toBeUndefined();
+  });
+});
+
+describe('getLinksSupplier', () => {
+  it('will replace variables in url and title of the data link', () => {
+    locationUtil.initialize({
+      getConfig: () => ({} as any),
+      buildParamsFromVariables: (() => {}) as any,
+      getTimeRangeForUrl: (() => {}) as any,
+    });
+
+    const f0 = new MutableDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+          config: {
+            links: [
+              {
+                url: 'url to be interpolated',
+                title: 'title to be interpolated',
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const replaceSpy = jest.fn();
+    const supplier = getLinksSupplier(
+      f0,
+      f0.fields[0],
+      {},
+      replaceSpy,
+      // this is used only for internal links so isn't needed here
+      () => ({} as any),
+      {
+        theme: {} as GrafanaTheme,
+      }
+    );
+    supplier({});
+
+    expect(replaceSpy).toBeCalledTimes(2);
+    expect(replaceSpy.mock.calls[0][0]).toEqual('url to be interpolated');
+    expect(replaceSpy.mock.calls[1][0]).toEqual('title to be interpolated');
+  });
+
+  it('handles internal links', () => {
+    locationUtil.initialize({
+      getConfig: () => ({ appSubUrl: '' } as any),
+      buildParamsFromVariables: (() => {}) as any,
+      getTimeRangeForUrl: (() => {}) as any,
+    });
+
+    const f0 = new MutableDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+          config: {
+            links: [
+              {
+                url: '',
+                title: '',
+                internal: {
+                  datasourceUid: '0',
+                  query: '12345',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const supplier = getLinksSupplier(
+      f0,
+      f0.fields[0],
+      {},
+      // We do not need to interpolate anything for this test
+      (value, vars, format) => value,
+      uid => ({ name: 'testDS' } as any),
+      { theme: {} as GrafanaTheme }
+    );
+    const links = supplier({ valueRowIndex: 0 });
+    expect(links.length).toBe(1);
+    expect(links[0]).toEqual(
+      expect.objectContaining({
+        title: 'testDS',
+        href:
+          '/explore?left={"datasource":"testDS","queries":["12345"],"mode":"Metrics","ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+        onClick: undefined,
+      })
+    );
   });
 });

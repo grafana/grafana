@@ -3,6 +3,7 @@ package plugins
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"golang.org/x/crypto/openpgp"
@@ -18,7 +20,7 @@ import (
 
 // Soon we can fetch keys from:
 //  https://grafana.com/api/plugins/ci/keys
-var publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
@@ -80,8 +82,9 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
-// GetPluginSignatureState returns the signature state for a plugin
-func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
+// getPluginSignatureState returns the signature state for a plugin.
+func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature {
+	log.Debug("Getting signature state of plugin", "plugin", plugin.Id)
 	manifestPath := path.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	byteValue, err := ioutil.ReadFile(manifestPath)
@@ -100,9 +103,11 @@ func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 	}
 
 	// Verify the manifest contents
+	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
 	for p, hash := range manifest.Files {
 		// Open the file
-		f, err := os.Open(path.Join(plugin.PluginDir, p))
+		fp := path.Join(plugin.PluginDir, p)
+		f, err := os.Open(fp)
 		if err != nil {
 			return PluginSignatureModified
 		}
@@ -110,10 +115,12 @@ func GetPluginSignatureState(plugin *PluginBase) PluginSignature {
 
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
+			log.Warn("Couldn't read plugin file", "plugin", plugin.Id, "filename", fp)
 			return PluginSignatureModified
 		}
-		sum := string(h.Sum(nil))
+		sum := hex.EncodeToString(h.Sum(nil))
 		if sum != hash {
+			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.Id, "filename", fp)
 			return PluginSignatureModified
 		}
 	}

@@ -3,12 +3,14 @@ import _ from 'lodash';
 import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
-  DataQuery,
   CoreApp,
+  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataSourceApi,
   dateMath,
+  DefaultTimeZone,
+  ExploreMode,
   HistoryItem,
   IntervalValues,
   LogRowModel,
@@ -19,16 +21,15 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
-  ExploreMode,
   urlUtil,
-  DefaultTimeZone,
+  ExploreUrlState,
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -69,7 +70,11 @@ export interface GetExploreUrlArguments {
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
-  let exploreTargets: DataQuery[] = panelTargets;
+
+  /** In Explore, we don't have legend formatter and we don't want to keep
+   * legend formatting as we can't change it
+   */
+  let exploreTargets: DataQuery[] = panelTargets.map(t => _.omit(t, 'legendFormat'));
   let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
@@ -258,27 +263,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
   return { datasource, queries, range, ui, mode, originPanelId };
-}
-
-export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
-  if (compact) {
-    return JSON.stringify([
-      urlState.range.from,
-      urlState.range.to,
-      urlState.datasource,
-      ...urlState.queries,
-      { mode: urlState.mode },
-      {
-        ui: [
-          !!urlState.ui.showingGraph,
-          !!urlState.ui.showingLogs,
-          !!urlState.ui.showingTable,
-          urlState.ui.dedupStrategy,
-        ],
-      },
-    ]);
-  }
-  return JSON.stringify(urlState);
 }
 
 export function generateKey(index = 0): string {
@@ -482,6 +466,7 @@ export const getRefIds = (value: any): string[] => {
 };
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
   if (a.timeEpochMs < b.timeEpochMs) {
     return -1;
   }
@@ -490,15 +475,34 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
     return 1;
   }
 
+  // if milliseonds are equal, compare nanoseconds
+  if (a.timeEpochNs < b.timeEpochNs) {
+    return -1;
+  }
+
+  if (a.timeEpochNs > b.timeEpochNs) {
+    return 1;
+  }
+
   return 0;
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
   if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
   }
 
   if (a.timeEpochMs < b.timeEpochMs) {
+    return 1;
+  }
+
+  // if milliseonds are equal, compare nanoseconds
+  if (a.timeEpochNs > b.timeEpochNs) {
+    return -1;
+  }
+
+  if (a.timeEpochNs < b.timeEpochNs) {
     return 1;
   }
 

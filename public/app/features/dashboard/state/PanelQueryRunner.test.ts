@@ -1,9 +1,16 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
-import { DataConfigSource, DataQueryRequest, GrafanaTheme, PanelData, ScopedVars } from '@grafana/data';
+import {
+  DataConfigSource,
+  DataQueryRequest,
+  DataTransformerConfig,
+  GrafanaTheme,
+  PanelData,
+  ScopedVars,
+} from '@grafana/data';
 import { DashboardModel } from './index';
-import { setEchoSrv } from '@grafana/runtime';
+import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
@@ -73,6 +80,11 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         },
       ],
     };
+    setDataSourceSrv({
+      getDataSourceSettingsByUid() {
+        return {} as any;
+      },
+    } as any);
 
     beforeEach(async () => {
       setEchoSrv(new Echo());
@@ -103,7 +115,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       };
 
       ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
-      ctx.runner.getData().subscribe({
+      ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
         next: (data: PanelData) => {
           ctx.res = data;
           ctx.events?.push(data);
@@ -201,7 +213,7 @@ describe('PanelQueryRunner', () => {
       it('should apply when field override options are set', async () => {
         const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
 
-        ctx.runner.getData().subscribe({
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
@@ -219,6 +231,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: v => v,
+        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
       }),
       getTransformations: () => undefined,
@@ -230,8 +243,9 @@ describe('PanelQueryRunner', () => {
     ctx => {
       it('should apply when transformations are set', async () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
 
-        ctx.runner.getData().subscribe({
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
@@ -242,6 +256,96 @@ describe('PanelQueryRunner', () => {
     },
     {
       getFieldOverrideOptions: () => undefined,
+      // @ts-ignore
+      getTransformations: () => [({} as unknown) as DataTransformerConfig],
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'getData',
+    ctx => {
+      it('should not apply transformations when transform option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+
+      it('should not apply field config when applyFieldConfig option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+        spy.mockClear();
+        ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: v => v,
+        getDataSourceSettingsByUid: undefined as any,
+        theme: {} as GrafanaTheme,
+      }),
+      // @ts-ignore
+      getTransformations: () => [({} as unknown) as DataTransformerConfig],
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'getData',
+    ctx => {
+      it('should not apply transformations when transform option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        spy.mockClear();
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+
+      it('should not apply field config when applyFieldConfig option is false', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+        spy.mockClear();
+        ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
+          next: (data: PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).not.toBeCalled();
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: v => v,
+        getDataSourceSettingsByUid: undefined as any,
+        theme: {} as GrafanaTheme,
+      }),
       // @ts-ignore
       getTransformations: () => [{}],
     }

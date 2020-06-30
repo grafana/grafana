@@ -41,9 +41,6 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     dataFrameSelect: css`
       flex-grow: 2;
     `,
-    downloadCsv: css`
-      margin-left: 16px;
-    `,
     tabContent: css`
       height: 100%;
       display: flex;
@@ -54,6 +51,32 @@ export const getPanelInspectorStyles = stylesFactory(() => {
       flex-direction: column;
       height: 100%;
       width: 100%;
+    `,
+    actionsWrapper: css`
+      display: flex;
+    `,
+    leftActions: css`
+      display: flex;
+      flex-grow: 1;
+
+      max-width: 85%;
+      @media (max-width: 1345px) {
+        max-width: 75%;
+      }
+    `,
+    options: css`
+      padding-top: ${config.theme.spacing.sm};
+    `,
+    dataDisplayOptions: css`
+      flex-grow: 1;
+      min-width: 300px;
+      margin-right: ${config.theme.spacing.sm};
+    `,
+    selects: css`
+      display: flex;
+      > * {
+        margin-right: ${config.theme.spacing.sm};
+      }
     `,
   };
 });

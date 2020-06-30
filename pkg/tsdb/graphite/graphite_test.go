@@ -1,8 +1,9 @@
 package graphite
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGraphiteFunctions(t *testing.T) {

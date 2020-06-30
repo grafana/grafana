@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 type timeSeriesQuery struct {
@@ -89,6 +89,7 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		}
 
 		for _, m := range q.Metrics {
+			m := m
 			if m.Type == countType {
 				continue
 			}

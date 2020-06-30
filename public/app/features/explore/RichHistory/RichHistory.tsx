@@ -88,7 +88,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, null),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
-      activeDatasourceOnly: store.getBool(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
+      activeDatasourceOnly: store.getBool(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, true),
     };
   }
 

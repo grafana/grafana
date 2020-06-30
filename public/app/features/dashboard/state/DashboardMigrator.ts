@@ -6,7 +6,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
+import { DataLinkBuiltInVars, DataLink, urlUtil } from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -18,7 +18,7 @@ import {
 } from 'app/core/constants';
 import { isMulti, isQuery } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableTag } from '../../templating/types';
+import { VariableTag } from '../../variables/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -31,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 25;
+    this.dashboard.schemaVersion = 26;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -240,7 +240,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.getVariables(), templateVariable => {
+      _.each(this.dashboard.getVariables(), (templateVariable: any) => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }
@@ -562,6 +562,18 @@ export class DashboardMigrator {
         }
         variable.tags = newTags;
       }
+    }
+
+    if (oldVersion < 26) {
+      panelUpgrades.push((panel: any) => {
+        const wasReactText = panel.type === 'text2';
+        if (!wasReactText) {
+          return;
+        }
+
+        panel.type = 'text';
+        delete panel.options.angular;
+      });
     }
 
     if (panelUpgrades.length === 0) {

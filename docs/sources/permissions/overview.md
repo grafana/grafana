@@ -20,9 +20,7 @@ Grafana users have permissions that are determined by their:
 - Via permissions assigned directly to user (on folders, dashboards, data sources)
 - The Grafana Admin (i.e. Super Admin) user flag.
 
-## User
-
-A *user* is a named account in Grafana. A user can belong to one or more organizations and can be assigned different levels of privileges through roles.
+## Users
 
 Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
 
@@ -55,4 +53,4 @@ Dashboard and folder permissions allow you to remove the default role based perm
 Per default, a data source in an organization can be queried by any user in that organization. For example a user with `Viewer` role can still
 issue any possible query to a data source, not just those queries that exist on dashboards he/she has access to.
 
-Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. Read more about [data source permissions]({{< relref "datasource_permissions.md" >}}).
+Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. Read more about [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).

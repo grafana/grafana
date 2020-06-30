@@ -1,5 +1,5 @@
 import React from 'react';
-import { shallow, render } from 'enzyme';
+import { render, shallow } from 'enzyme';
 import { TableContainer } from './TableContainer';
 import { DataFrame } from '@grafana/data';
 import { toggleTable } from './state/actions';
@@ -11,10 +11,12 @@ describe('TableContainer', () => {
       exploreId: ExploreId.left as ExploreId,
       loading: false,
       width: 800,
-      onClickCell: jest.fn(),
+      onCellFilterAdded: jest.fn(),
       showingTable: true,
       tableResult: {} as DataFrame,
       toggleTable: {} as typeof toggleTable,
+      splitOpen: (() => {}) as any,
+      range: {} as any,
     };
 
     const wrapper = shallow(<TableContainer {...props} />);
@@ -26,7 +28,7 @@ describe('TableContainer', () => {
       exploreId: ExploreId.left as ExploreId,
       loading: false,
       width: 800,
-      onClickCell: jest.fn(),
+      onCellFilterAdded: jest.fn(),
       showingTable: true,
       tableResult: {
         name: 'TableResultName',
@@ -34,6 +36,8 @@ describe('TableContainer', () => {
         length: 0,
       } as DataFrame,
       toggleTable: {} as typeof toggleTable,
+      splitOpen: (() => {}) as any,
+      range: {} as any,
     };
 
     const wrapper = render(<TableContainer {...props} />);

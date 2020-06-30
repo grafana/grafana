@@ -6,6 +6,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
+import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -39,20 +40,12 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   };
 
-  onUpdate = () => {
+  onUpdate = (title: string | null, repeat: string | null) => {
+    this.props.panel['title'] = title;
+    this.props.panel['repeat'] = repeat;
+    this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
-  };
-
-  onOpenSettings = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
-      modalClass: 'modal--narrow',
-      model: {
-        row: this.props.panel,
-        onUpdated: this.onUpdate,
-      },
-    });
   };
 
   onDelete = () => {
@@ -92,9 +85,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         </a>
         {canEdit && (
           <div className="dashboard-row__actions">
-            <a className="pointer" onClick={this.onOpenSettings}>
-              <Icon name="cog" />
-            </a>
+            <RowOptionsButton
+              title={this.props.panel.title}
+              repeat={this.props.panel.repeat}
+              onUpdate={this.onUpdate}
+            />
             <a className="pointer" onClick={this.onDelete}>
               <Icon name="trash-alt" />
             </a>

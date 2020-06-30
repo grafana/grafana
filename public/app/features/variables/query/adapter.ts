@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { QueryVariableModel, VariableRefresh } from '../../templating/types';
+import { QueryVariableModel, VariableRefresh } from '../types';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
@@ -9,7 +9,7 @@ import { OptionsPicker } from '../pickers';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
-import { containsVariable } from '../../templating/utils';
+import { containsVariable } from '../utils';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
