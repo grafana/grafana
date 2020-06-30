@@ -116,7 +116,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   render() {
     const { dashboard } = this.props;
-    const { show } = this.state;
+    const { show, text } = this.state;
     const selected = options.find(v => v.value === show);
     const isPanelJSON = show === ShowContent.PanelJSON;
     const canEdit = dashboard.meta.canEdit;
@@ -141,7 +141,9 @@ export class InspectJSONTab extends PureComponent<Props, State> {
                 width="100%"
                 height={height}
                 language="json"
-                value={this.state.text}
+                showLineNumbers={true}
+                showMiniMap={text && text.length > 100}
+                value={text || ''}
                 readOnly={!isPanelJSON}
                 onBlur={this.onTextChanged}
               />

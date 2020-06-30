@@ -12,6 +12,7 @@ export interface CodeEditorProps {
 
   readOnly?: boolean;
   showMiniMap?: boolean;
+  showLineNumbers?: boolean;
 
   /**
    * Callback after the editor has mounted that gives you raw access to monaco
@@ -56,9 +57,30 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, language, width, height, showMiniMap, readOnly } = this.props;
+    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly } = this.props;
     const value = this.props.value ?? '';
     const longText = value.length > 100;
+
+    const options: editor.IEditorConstructionOptions = {
+      wordWrap: 'off',
+      codeLens: false, // not included in the bundle
+      minimap: {
+        enabled: longText && showMiniMap,
+        renderCharacters: false,
+      },
+      readOnly,
+      lineNumbersMinChars: 4,
+      lineDecorationsWidth: 0,
+      overviewRulerBorder: false,
+      automaticLayout: true,
+    };
+    if (!showLineNumbers) {
+      options.glyphMargin = false;
+      options.folding = false;
+      options.lineNumbers = 'off';
+      options.lineDecorationsWidth = 5; // left margin when not showing line numbers
+      options.lineNumbersMinChars = 0;
+    }
 
     return (
       <div onBlur={this.onBlur}>
@@ -68,19 +90,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
           language={language}
           theme={theme.isDark ? 'vs-dark' : 'vs-light'}
           value={value}
-          options={{
-            wordWrap: 'off',
-            codeLens: false, // not included in the bundle
-            minimap: {
-              enabled: longText && showMiniMap,
-              renderCharacters: false,
-            },
-            readOnly,
-            lineNumbersMinChars: 4,
-            lineDecorationsWidth: 0,
-            overviewRulerBorder: false,
-            automaticLayout: true,
-          }}
+          options={options}
           editorDidMount={this.editorDidMount}
         />
       </div>
