@@ -133,6 +133,7 @@ func (query *stackdriverQuery) buildDeepLink() string {
 
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
+		slog.Error("Failed to generate deep link: unable to parse metrics explorer URL", "ProjectName", query.ProjectName, "query", query.RefID)
 		return ""
 	}
 
@@ -177,7 +178,17 @@ func (query *stackdriverQuery) buildDeepLink() string {
 
 	q.Set("pageState", string(blob))
 	u.RawQuery = q.Encode()
-	return u.String()
+
+	accountChooserURL, err := url.Parse("https://accounts.google.com/AccountChooser")
+	if err != nil {
+		slog.Error("Failed to generate deep link: unable to parse account chooser URL", "ProjectName", query.ProjectName, "query", query.RefID)
+		return ""
+	}
+	accountChooserQuery := accountChooserURL.Query()
+	accountChooserQuery.Set("continue", u.String())
+	accountChooserURL.RawQuery = accountChooserQuery.Encode()
+
+	return accountChooserURL.String()
 }
 
 func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {

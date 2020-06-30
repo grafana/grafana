@@ -949,8 +949,20 @@ func loadTestFile(path string) (stackdriverResponse, error) {
 func verifyDeepLink(dl string, expectedTimeSelection map[string]string, expectedTimeSeriesFilter map[string]interface{}) {
 	u, err := url.Parse(dl)
 	So(err, ShouldBeNil)
+	So(u.Scheme, ShouldEqual, "https")
+	So(u.Host, ShouldEqual, "accounts.google.com")
+	So(u.Path, ShouldEqual, "/AccountChooser")
 
 	params, err := url.ParseQuery(u.RawQuery)
+	So(err, ShouldBeNil)
+
+	continueParam := params.Get("continue")
+	So(continueParam, ShouldNotBeEmpty)
+
+	u, err = url.Parse(continueParam)
+	So(err, ShouldBeNil)
+
+	params, err = url.ParseQuery(u.RawQuery)
 	So(err, ShouldBeNil)
 
 	pageStateStr := params.Get("pageState")
