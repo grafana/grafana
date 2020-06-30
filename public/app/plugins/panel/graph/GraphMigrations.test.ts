@@ -1,5 +1,5 @@
 import { PanelModel } from '@grafana/data';
-import { graphPanelMigrationHandler, graphPanelChangedHandler } from './GraphMigrations';
+import { graphPanelMigrationHandler } from './GraphMigrations';
 
 describe('Graph Panel Migrations', () => {
   it('from 6.7.1', () => {
