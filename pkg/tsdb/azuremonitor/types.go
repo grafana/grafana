@@ -84,19 +84,20 @@ type AzureLogAnalyticsTable struct {
 // azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type azureMonitorJSONQuery struct {
 	AzureMonitor struct {
-		Aggregation         string  `json:"aggregation"`
-		Alias               string  `json:"alias"`
-		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
-		Dimension           string  `json:"dimension"`
-		DimensionFilter     string  `json:"dimensionFilter"`
-		Format              string  `json:"format"`
-		MetricDefinition    string  `json:"metricDefinition"`
-		MetricName          string  `json:"metricName"`
-		MetricNamespace     string  `json:"metricNamespace"`
-		ResourceGroup       string  `json:"resourceGroup"`
-		ResourceName        string  `json:"resourceName"`
-		TimeGrain           string  `json:"timeGrain"`
-		Top                 string  `json:"top"`
+		Aggregation         string   `json:"aggregation"`
+		Alias               string   `json:"alias"`
+		AllowedTimeGrainsMs []int64  `json:"allowedTimeGrainsMs"`
+		Dimension           string   `json:"dimension"`       // old model
+		DimensionFilter     string   `json:"dimensionFilter"` // old model
+		DimensionFilters    []string `json:"dimensions"`
+		Format              string   `json:"format"`
+		MetricDefinition    string   `json:"metricDefinition"`
+		MetricName          string   `json:"metricName"`
+		MetricNamespace     string   `json:"metricNamespace"`
+		ResourceGroup       string   `json:"resourceGroup"`
+		ResourceName        string   `json:"resourceName"`
+		TimeGrain           string   `json:"timeGrain"`
+		Top                 string   `json:"top"`
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }

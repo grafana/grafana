@@ -130,11 +130,25 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
 		params.Add("metricnamespace", azJSONModel.MetricNamespace)
 
+		// old model
 		dimension := strings.TrimSpace(azJSONModel.Dimension)
 		dimensionFilter := strings.TrimSpace(azJSONModel.DimensionFilter)
-		if dimension != "" && dimensionFilter != "" && dimension != "None" {
-			// eg add `and Tier eq '*'`
-			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+
+		dimSB := strings.Builder{}
+
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
+			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+		} else {
+			for i, filter := range azJSONModel.DimensionFilters {
+				dimSB.WriteString(fmt.Sprintf(filter))
+				if i != len(azJSONModel.DimensionFilters)-1 {
+					dimSB.WriteString(" and ")
+				}
+			}
+		}
+
+		if dimSB.String() != "" {
+			params.Add("$filter", dimSB.String())
 			params.Add("top", azJSONModel.Top)
 		}
 
