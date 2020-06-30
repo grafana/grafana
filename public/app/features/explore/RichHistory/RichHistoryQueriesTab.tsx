@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { css } from 'emotion';
-import { uniqBy } from 'lodash';
-import { useDebouncedCallback } from 'use-debounce';
+import { uniqBy, debounce } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -141,20 +140,39 @@ export function RichHistoryQueriesTab(props: Props) {
   const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
   const [filteredQueries, setFilteredQueries] = useState([]);
   const [searchInput, setSearchInput] = useState('');
-  const [filterAndSortQueriesDebounced] = useDebouncedCallback((searchValue: string) => {
-    setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchValue, timeFilter));
-  }, 300);
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
 
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
-  const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
+
+  const filterAndSortQueriesDebounced = useCallback(
+    debounce((searchValue: string) => {
+      setFilteredQueries(
+        filterAndSortQueries(
+          queries,
+          sortOrder,
+          datasourceFilters?.map(d => d.value),
+          searchValue,
+          timeFilter
+        )
+      );
+    }, 300),
+    [timeFilter, queries, sortOrder, datasourceFilters]
+  );
 
   useEffect(() => {
-    setFilteredQueries(filterAndSortQueries(queries, sortOrder, listOfDatasourceFilters, searchInput, timeFilter));
-  }, [queries, sortOrder, datasourceFilters, timeFilter]);
+    setFilteredQueries(
+      filterAndSortQueries(
+        queries,
+        sortOrder,
+        datasourceFilters?.map(d => d.value),
+        searchInput,
+        timeFilter
+      )
+    );
+  }, [timeFilter, queries, sortOrder, datasourceFilters]);
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.

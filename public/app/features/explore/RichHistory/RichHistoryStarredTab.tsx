@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { css } from 'emotion';
-import { uniqBy } from 'lodash';
-import { useDebouncedCallback } from 'use-debounce';
+import { uniqBy, debounce } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -86,20 +85,37 @@ export function RichHistoryStarredTab(props: Props) {
 
   const [filteredQueries, setFilteredQueries] = useState([]);
   const [searchInput, setSearchInput] = useState('');
-  const [filterAndSortQueriesDebounced] = useDebouncedCallback((searchValue: string) => {
-    setFilteredQueries(filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchValue));
-  }, 300);
 
   const theme = useTheme();
   const styles = getStyles(theme);
 
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
-  const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
-
   const starredQueries = queries.filter(q => q.starred === true);
+
+  const filterAndSortQueriesDebounced = useCallback(
+    debounce((searchValue: string) => {
+      setFilteredQueries(
+        filterAndSortQueries(
+          starredQueries,
+          sortOrder,
+          datasourceFilters?.map(d => d.value),
+          searchValue
+        )
+      );
+    }, 300),
+    [queries, sortOrder, datasourceFilters]
+  );
+
   useEffect(() => {
-    setFilteredQueries(filterAndSortQueries(starredQueries, sortOrder, listOfDatasourceFilters, searchInput));
+    setFilteredQueries(
+      filterAndSortQueries(
+        starredQueries,
+        sortOrder,
+        datasourceFilters?.map(d => d.value),
+        searchInput
+      )
+    );
   }, [queries, sortOrder, datasourceFilters]);
 
   return (
