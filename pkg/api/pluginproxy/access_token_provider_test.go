@@ -189,7 +189,6 @@ func TestAccessToken(t *testing.T) {
 				},
 			}
 			for _, testCase := range testCases {
-				testCase := testCase
 				Convey(testCase.desc, func() {
 					clearTokenCache()
 					// reset the httphandler counter
