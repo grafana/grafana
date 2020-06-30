@@ -2,7 +2,7 @@ import React, { FC, FormEvent, useCallback, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFormStyles, Icon } from '../index';
-import { stylesFactory, useStyles } from '../../themes';
+import { useStyles } from '../../themes';
 
 export interface Props {
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
@@ -59,7 +59,7 @@ export const FileUpload: FC<Props> = ({ onFileUpload, className, children = 'Upl
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   const buttonFormStyle = getFormStyles(theme, { variant: 'primary', invalid: false, size: 'md' }).button.button;
   return {
     fileUpload: css`
@@ -75,4 +75,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-left: ${theme.spacing.xs};
     `,
   };
-});
+};
