@@ -334,4 +334,4 @@ Only available in Grafana v7.1+.
 > **Note:** This feature is only available for Metric queries.
 
 Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Google Cloud Console and runs the query from the Grafana panel there.
-The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redireceted to the metrics explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the metrics explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
