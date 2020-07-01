@@ -20,7 +20,7 @@ The main highlights are:
 - [**Provisioning of apps**]({{< relref "#provisioning-of-apps" >}})
 - [**Azure Monitor Datasource**]({{< relref "#azure-monitor-datasource" >}})
 - [**Influx Datasource**]({{< relref "#influx-datasource" >}})
-- [**Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) datasource**]({{< relref "#influx-datasource" >}})
+- [**Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) datasource**]({{< relref "#deep-linking-for-google-cloud-monitoring-formerly-named-google-stackdriver-datasource" >}})
 - [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
 - [**Support for HashiCorp Vault**]({{< relref "#support-for-hashicorp-vault" >}})
 - [**Internal links for Elastic**]({{< relref "#internal-links-for-elastic" >}})
