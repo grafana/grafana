@@ -16,7 +16,7 @@ If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/prod
 and [Provisioning]({{< relref "../administration/provisioning.md" >}}).
 
 > **Note:** If you have Grafana set up for [high availability]({{< relref "../tutorials/ha_setup.md" >}}), then we advise not to use dynamic secrets for provisioning files.
-> Each Grafana instance is responsible for renewing its own leases. Your data sources' leases might expire when one of your Grafana servers shuts down.
+> Each Grafana instance is responsible for renewing its own leases. Your data source leases might expire when one of your Grafana servers shuts down.
 
 ## Configuration
 
