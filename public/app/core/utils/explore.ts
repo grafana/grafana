@@ -70,7 +70,11 @@ export interface GetExploreUrlArguments {
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
-  let exploreTargets: DataQuery[] = panelTargets;
+
+  /** In Explore, we don't have legend formatter and we don't want to keep
+   * legend formatting as we can't change it
+   */
+  let exploreTargets: DataQuery[] = panelTargets.map(t => _.omit(t, 'legendFormat'));
   let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource

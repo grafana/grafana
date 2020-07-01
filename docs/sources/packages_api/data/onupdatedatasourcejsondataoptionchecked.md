@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceJsonDataOptionChecked: <J, S, K extends keyof J>(props: DataSourcePluginOptionsEditorProps<J, S>, key: K) => (event: import("react").SyntheticEvent<HTMLInputElement, Event>) => void
+onUpdateDatasourceJsonDataOptionChecked: <J, S, K extends keyof J>(props: DataSourcePluginOptionsEditorProps<J, S>, key: K) => (event: React.SyntheticEvent<HTMLInputElement>) => void
 ```
 <b>Import</b>
 

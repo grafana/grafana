@@ -203,7 +203,7 @@ be applied to all your InfluxDB queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 
