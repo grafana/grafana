@@ -24,49 +24,6 @@ func init() {
 		Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
 			"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
 		Factory: NewThreemaNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Threema Gateway settings</h3>
-      <p>
-        Notifications can be configured for any Threema Gateway ID of type
-        "Basic". End-to-End IDs are not currently supported.
-      </p>
-      <p>
-        The Threema Gateway ID can be set up at
-        <a href="https://gateway.threema.ch/" target="_blank" rel="noopener noreferrer">https://gateway.threema.ch/</a>.
-      </p>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Gateway ID</span>
-        <input type="text" required maxlength="8" pattern="\*[0-9A-Z]{7}"
-          class="gf-form-input max-width-14"
-          ng-model="ctrl.model.settings.gateway_id"
-          placeholder="*3MAGWID">
-        </input>
-        <info-popover mode="right-normal">
-          Your 8 character Threema Gateway ID (starting with a *)
-        </info-popover>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Recipient ID</span>
-        <input type="text" required maxlength="8" pattern="[0-9A-Z]{8}"
-          class="gf-form-input max-width-14"
-          ng-model="ctrl.model.settings.recipient_id"
-          placeholder="YOUR3MID">
-        </input>
-        <info-popover mode="right-normal">
-          The 8 character Threema ID that should receive the alerts
-        </info-popover>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">API Secret</span>
-        <input type="text" required
-          class="gf-form-input max-width-24"
-          ng-model="ctrl.model.settings.api_secret">
-        </input>
-        <info-popover mode="right-normal">
-          Your Threema Gateway API secret
-        </info-popover>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:          "Gateway ID",

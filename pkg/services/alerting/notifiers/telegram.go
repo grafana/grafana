@@ -28,27 +28,6 @@ func init() {
 		Description: "Sends notifications to Telegram",
 		Heading:     "Telegram API settings",
 		Factory:     NewTelegramNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Telegram API settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-9">BOT API Token</span>
-        <input type="text" required
-					class="gf-form-input"
-					ng-model="ctrl.model.settings.bottoken"
-					placeholder="Telegram BOT API Token"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-9">Chat ID</span>
-        <input type="text" required
-					class="gf-form-input"
-					ng-model="ctrl.model.settings.chatid"
-					data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-					Integer Telegram Chat Identifier
-        </info-popover>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "BOT API Token",

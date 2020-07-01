@@ -18,35 +18,6 @@ func init() {
 		Description: "Sends notifications to OpsGenie",
 		Heading:     "OpsGenie settings",
 		Factory:     NewOpsGenieNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">OpsGenie settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">API Key</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiKey" placeholder="OpsGenie API Key"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Alert API Url</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiUrl" placeholder="https://api.opsgenie.com/v2/alerts"></input>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Auto close incidents"
-           label-class="width-14"
-           checked="ctrl.model.settings.autoClose"
-           tooltip="Automatically close alerts in OpsGenie once the alert goes back to ok.">
-        </gf-form-switch>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Override priority"
-           label-class="width-14"
-           checked="ctrl.model.settings.overridePriority"
-           tooltip="Allow the alert priority to be set using the og_priority tag">
-        </gf-form-switch>
-  </div>
-`,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "API Key",
