@@ -23,13 +23,13 @@ import { TransformerUIProps } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [input](#input-property) | <code>DataFrame[]</code> | Pre-transform data rames |
+|  [input](#input-property) | <code>DataFrame[]</code> | Pre-transform data frames |
 |  [onChange](#onchange-property) | <code>(options: T) =&gt; void</code> |  |
 |  [options](#options-property) | <code>T</code> | Transformer configuration, persisted on panel's model |
 
 ### input property
 
-Pre-transform data rames
+Pre-transform data frames
 
 <b>Signature</b>
 

@@ -669,3 +669,6 @@ func (mw mockWriter) Status() int               { return 0 }
 func (mw mockWriter) Size() int                 { return 0 }
 func (mw mockWriter) Written() bool             { return false }
 func (mw mockWriter) Before(macaron.BeforeFunc) {}
+func (mw mockWriter) Push(target string, opts *http.PushOptions) error {
+	return nil
+}

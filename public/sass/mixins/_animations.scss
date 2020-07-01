@@ -34,3 +34,16 @@
     transition: max-height 250ms ease-in-out;
   }
 }
+
+@keyframes spin-counter-clock {
+  0% {
+    transform: rotate(359deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.spin-counter-clock {
+  animation: spin-counter-clock 3s infinite linear;
+}

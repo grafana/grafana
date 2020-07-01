@@ -7,26 +7,84 @@ keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
 +++
 
-## SelectValueEditor() function
-
-### SelectValueEditor() function
+## SelectValueEditor class
 
 <b>Signature</b>
 
 ```typescript
-export declare function SelectValueEditor<T>({ value, onChange, item, }: FieldConfigEditorProps<T, SelectFieldConfigSettings<T>>): JSX.Element;
+export declare class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>> 
 ```
 <b>Import</b>
 
 ```typescript
 import { SelectValueEditor } from '@grafana/ui';
 ```
+<b>Properties</b>
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [state](#state-property) |  | <code>State&lt;T&gt;</code> |  |
+|  [updateOptions](#updateoptions-property) |  | <code>() =&gt; Promise&lt;void&gt;</code> |  |
+
+<b>Methods</b>
+
+|  Method | Modifiers | Description |
+|  --- | --- | --- |
+|  [componentDidMount()](#componentdidmount-method) |  |  |
+|  [componentDidUpdate(oldProps)](#componentdidupdate-method) |  |  |
+|  [render()](#render-method) |  |  |
+
+### state property
+
+<b>Signature</b>
+
+```typescript
+state: State<T>;
+```
+
+### updateOptions property
+
+<b>Signature</b>
+
+```typescript
+updateOptions: () => Promise<void>;
+```
+
+### componentDidMount method
+
+<b>Signature</b>
+
+```typescript
+componentDidMount(): void;
+```
+<b>Returns:</b>
+
+`void`
+
+### componentDidUpdate method
+
+<b>Signature</b>
+
+```typescript
+componentDidUpdate(oldProps: Props<T>): void;
+```
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  { value, onChange, item, } | <code>FieldConfigEditorProps&lt;T, SelectFieldConfigSettings&lt;T&gt;&gt;</code> |  |
+|  oldProps | <code>Props&lt;T&gt;</code> |  |
 
+<b>Returns:</b>
+
+`void`
+
+### render method
+
+<b>Signature</b>
+
+```typescript
+render(): JSX.Element;
+```
 <b>Returns:</b>
 
 `JSX.Element`

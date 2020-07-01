@@ -26,6 +26,7 @@ import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   panel: PanelModel;
@@ -130,6 +131,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
       data = this.getTransformedData();
     }
 
+    // In case the transform removes the currently selected data frame
+    if (!data[this.state.dataFrameIndex]) {
+      this.setState({
+        dataFrameIndex: 0,
+        selectedDataFrame: 0,
+      });
+    }
+
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
@@ -139,12 +148,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
+      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 
   getActiveString = () => {
     const { selectedDataFrame } = this.state;
     const { options, data } = this.props;
+
     let activeString = '';
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
       activeString = 'series joined by time';
@@ -171,6 +182,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   renderDataOptions = (dataFrames: DataFrame[]) => {
     const { options, onOptionsChange, panel, data } = this.props;
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
+
     const styles = getPanelInspectorStyles();
 
     const panelTransformations = panel.getTransformations();
@@ -205,21 +217,21 @@ export class InspectDataTab extends PureComponent<Props, State> {
       >
         <div className={styles.options}>
           <VerticalGroup spacing="lg">
-            {data.length > 1 && (
-              <Field
-                label="Show data frame"
-                className={css`
-                  margin-bottom: 0;
-                `}
-              >
-                <Select
-                  options={selectableOptions}
-                  value={selectedDataFrame}
-                  onChange={this.onDataFrameChange}
-                  width={30}
-                />
-              </Field>
-            )}
+            <Field
+              label="Show data frame"
+              className={css`
+                margin-bottom: 0;
+              `}
+              disabled={!(data.length > 1)}
+            >
+              <Select
+                options={selectableOptions}
+                value={selectedDataFrame}
+                onChange={this.onDataFrameChange}
+                width={30}
+              />
+            </Field>
+
             <HorizontalGroup>
               {showPanelTransformationsOption && (
                 <Field
@@ -267,6 +279,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     if (!dataFrames || !dataFrames.length) {
       return <div>No Data</div>;
+    }
+
+    if (!dataFrames[dataFrameIndex]) {
+      return <div>Could not find the Data Frame</div>;
     }
 
     return (

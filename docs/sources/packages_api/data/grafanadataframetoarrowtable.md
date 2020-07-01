@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare function grafanaDataFrameToArrowTable(data: DataFrame): Table;
+export declare function grafanaDataFrameToArrowTable(data: DataFrame, keepOriginalNames?: boolean): Table;
 ```
 <b>Import</b>
 
@@ -26,6 +26,7 @@ import { grafanaDataFrameToArrowTable } from '@grafana/data';
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  data | <code>DataFrame</code> |  |
+|  keepOriginalNames | <code>boolean</code> | by default, the exported Table will get names that match the display within grafana. This typically includes any labels defined in the metadata.<!-- -->When using this function to round-trip data, be sure to set <code>keepOriginalNames=true</code> |
 
 <b>Returns:</b>
 

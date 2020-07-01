@@ -16,7 +16,6 @@ func TestMigrations(t *testing.T) {
 	}
 
 	for _, testDB := range testDBs {
-		testDB := testDB
 		sql := `select count(*) as count from migration_log`
 		r := struct {
 			Count int64

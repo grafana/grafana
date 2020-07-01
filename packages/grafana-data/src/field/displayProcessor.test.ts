@@ -152,8 +152,8 @@ describe('Format value', () => {
 
   it('should return formatted value if there are no matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
-      { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
+      { id: 0, text: 'elva', type: MappingType.ValueToText, value: '11' },
+      { id: 1, text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
     ];
     const value = '10';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
@@ -186,8 +186,8 @@ describe('Format value', () => {
 
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-      { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
+      { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
+      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
     const value = '11';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
@@ -196,9 +196,7 @@ describe('Format value', () => {
   });
 
   it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 1, operator: '', text: '', type: MappingType.ValueToText, value: '1' },
-    ];
+    const valueMappings: ValueMapping[] = [{ id: 1, text: '', type: MappingType.ValueToText, value: '1' }];
     const value = '1';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
 
