@@ -2,7 +2,7 @@
 
 echo -e "Typechecking with strict null checks enabled"
 
-ERROR_COUNT_LIMIT=700
+ERROR_COUNT_LIMIT=699
 
 ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --strictNullChecks true | grep -oP 'Found \K(\d+)')"
 
