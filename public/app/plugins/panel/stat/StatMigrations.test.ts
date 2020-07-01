@@ -1,7 +1,6 @@
 import { PanelModel } from '@grafana/data';
 import { statPanelChangedHandler } from './StatMigrations';
 import { BigValueGraphMode, BigValueColorMode } from '@grafana/ui';
-import { BigValueLayout } from '@grafana/ui/src/components/BigValue/BigValueLayout';
 import { BigValueTextMode } from '@grafana/ui/src/components/BigValue/BigValue';
 
 describe('Stat Panel Migrations', () => {
