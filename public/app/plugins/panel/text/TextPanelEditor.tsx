@@ -7,45 +7,35 @@ import {
   useTheme,
   CodeEditorSuggestionItem,
   CodeEditorSuggestionItemKind,
+  variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
-import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme, StandardEditorProps, VariableSuggestionsScope } from '@grafana/data';
 
 import { TextOptions } from './types';
-
-const currentTemplateValues = (): CodeEditorSuggestionItem[] => {
-  return [
-    {
-      label: '${__field.nameM}',
-      kind: CodeEditorSuggestionItemKind.Method,
-      detail: 'Method detail',
-    },
-    {
-      label: '${__field.nameF}',
-      kind: CodeEditorSuggestionItemKind.Field,
-      detail: 'Field detail',
-    },
-    {
-      label: '${__field.nameP}',
-      kind: CodeEditorSuggestionItemKind.Property,
-      detail: 'Property detail',
-    },
-    {
-      label: '${__field.nameC}',
-      kind: CodeEditorSuggestionItemKind.Constant,
-      detail: 'Constant detail',
-    },
-    {
-      label: '${__field.nameT}',
-      kind: CodeEditorSuggestionItemKind.Text,
-      detail: 'Text detail',
-    },
-  ];
-};
 
 export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> = ({ value, onChange, context }) => {
   const language = useMemo(() => context.options?.mode ?? 'markdown', [context]);
   const theme = useTheme();
   const styles = getStyles(theme);
+
+  const getSuggestions = (): CodeEditorSuggestionItem[] => {
+    const vars = context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [];
+    const items = vars.map(v => variableSuggestionToCodeEditorSuggestion(v, context.replaceVariables));
+    items.push({
+      label: '$__timeRange',
+      kind: CodeEditorSuggestionItemKind.Method,
+      detail: 'time range macro',
+      documentation: 'Expands to a full query...',
+    });
+    items.push({
+      label: '${__field.name}',
+      kind: CodeEditorSuggestionItemKind.Field,
+      detail: 'Field name',
+    });
+    console.log('SUGGESTIONSitem', context.getSuggestions);
+    return items;
+  };
+
   return (
     <div className={cx(styles.editorBox)}>
       <AutoSizer disableHeight>
@@ -63,7 +53,7 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
               showMiniMap={false}
               showLineNumbers={false}
               height="200px"
-              getSuggestions={currentTemplateValues}
+              getSuggestions={getSuggestions}
             />
           );
         }}
