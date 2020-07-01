@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
+import { AbsoluteTimeRange, QueryEditorProps, PanelData } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
@@ -18,8 +18,6 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
   // Query target to be modified and used for queries
   query: LokiQuery;
 
-  absolute: AbsoluteTimeRange;
-
   constructor(props: Props) {
     super(props);
     // Use default query to prevent undefined input values
@@ -31,22 +29,22 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
       // Fully controlled text inputs
       legendFormat: query.legendFormat,
     };
+  }
 
-    const { data } = this.props;
-
+  calcAbsoluteRange = (data: PanelData): AbsoluteTimeRange => {
     if (data && data.request) {
       const { range } = data.request;
-      this.absolute = {
+      return {
         from: range.from.valueOf(),
         to: range.to.valueOf(),
       };
-    } else {
-      this.absolute = {
-        from: Date.now() - 10000,
-        to: Date.now(),
-      };
     }
-  }
+
+    return {
+      from: Date.now() - 10000,
+      to: Date.now(),
+    };
+  };
 
   onFieldChange = (query: LokiQuery, override?: any) => {
     this.query.expr = query.expr;
@@ -77,7 +75,7 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
           onRunQuery={this.onRunQuery}
           history={[]}
           data={data}
-          absoluteRange={this.absolute}
+          absoluteRange={this.calcAbsoluteRange(data)}
         />
 
         <div className="gf-form-inline">
