@@ -4,7 +4,7 @@ about: Suggest a component for the @grafana/ui package
 labels: 'area/grafana/ui'
 ---
 
-<!-- Please only use this template for submitting feature requests 
+<!-- 
 By using this template you will make it easeier for us to make sure that documentation and implementation stays up to date for every component in @grafana/ui
 
 Thank you!
