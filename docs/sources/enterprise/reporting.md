@@ -80,6 +80,14 @@ Weekly reports are generated once per week. All fields are required.
 * **Time -** Time of day in 24 hours format when the report should be sent.
 * **Time zone -** Time zone for the **Time** field.
 
+#### Monthly
+
+Monthly reports are generated once per month. All fields are required.
+
+* **Day in month -** Day of the month the when report should be sent. (it's possible to select `last` for reports that should go out on the last day of the month).
+* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time zone -** Time zone for the **Time** field.
+
 #### Never
 
 > Only available in Grafana Enterprise v7.0+.
