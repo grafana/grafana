@@ -102,7 +102,6 @@ describe('Explore item reducer', () => {
             logsResult: null,
             tableResult: null,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
-            mode: ExploreMode.Metrics,
             latency: 0,
             loading: false,
             queryResponse: createEmptyQueryResponse(),
@@ -169,7 +168,7 @@ describe('Explore item reducer', () => {
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(({ showingGraph: true, graphResult: [] } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingGraph: false, graphResult: null } as unknown) as ExploreItemState);
+          .thenStateShouldEqual(({ showingGraph: false, graphResult: [] } as unknown) as ExploreItemState);
       });
     });
 
@@ -191,7 +190,7 @@ describe('Explore item reducer', () => {
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(({ showingTable: true, tableResult: table } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingTable: false, tableResult: null } as unknown) as ExploreItemState);
+          .thenStateShouldEqual(({ showingTable: false, tableResult: table } as unknown) as ExploreItemState);
       });
     });
   });

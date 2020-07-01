@@ -188,7 +188,13 @@ describe('CloudWatchDatasource', () => {
       const expectedData = [
         {
           ...fakeFrames[MAX_ATTEMPTS - 1],
-          meta: { custom: { ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom, Status: 'Complete' } },
+          meta: {
+            custom: {
+              ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom,
+              Status: 'Complete',
+            },
+            preferredVisualisationType: 'logs',
+          },
         },
       ];
       expect(myResponse).toEqual({

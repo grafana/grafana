@@ -1,22 +1,12 @@
 import React from 'react';
-import {
-  DataSourceApi,
-  LoadingState,
-  toUtc,
-  DataQueryError,
-  DataQueryRequest,
-  CoreApp,
-  MutableDataFrame,
-} from '@grafana/data';
+import { DataSourceApi, LoadingState, toUtc, DataQueryError, DataQueryRequest, CoreApp } from '@grafana/data';
 import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { Explore, ExploreProps } from './Explore';
 import { scanStopAction } from './state/actionTypes';
 import { toggleGraph } from './state/actions';
 import { SecondaryActions } from './SecondaryActions';
-import { TraceView } from './TraceView/TraceView';
 import { getTheme } from '@grafana/ui';
 
 const dummyProps: ExploreProps = {
@@ -120,6 +110,7 @@ const dummyProps: ExploreProps = {
   showMetrics: true,
   showLogs: true,
   showTable: true,
+  showTrace: true,
 };
 
 const setupErrors = (hasRefId?: boolean) => {
@@ -143,33 +134,6 @@ describe('Explore', () => {
     const wrapper = shallow(<Explore {...dummyProps} />);
     expect(wrapper.find(SecondaryActions)).toHaveLength(1);
     expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(false);
-  });
-
-  it('does not show add row button if mode is tracing', () => {
-    const wrapper = shallow(<Explore {...{ ...dummyProps }} />);
-    expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(true);
-  });
-
-  it('renders TraceView if tracing mode', () => {
-    const wrapper = shallow(
-      <Explore
-        {...{
-          ...dummyProps,
-          queryResponse: {
-            ...dummyProps.queryResponse,
-            state: LoadingState.Done,
-            series: [new MutableDataFrame({ fields: [{ name: 'trace', values: [{}] }] })],
-          },
-        }}
-      />
-    );
-    const autoSizer = shallow(
-      wrapper
-        .find(AutoSizer)
-        .props()
-        .children({ width: 100, height: 100 }) as React.ReactElement
-    );
-    expect(autoSizer.find(TraceView).length).toBe(1);
   });
 
   it('should filter out a query-row-specific error when looking for non-query-row-specific errors', async () => {
