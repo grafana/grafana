@@ -15,6 +15,13 @@ describe('Check suggestion index', () => {
     expect(prefix).toEqual('');
   });
 
+  it('insert new word', () => {
+    const line = 'this is a new ';
+    const { index, prefix } = findInsertIndex(line);
+    expect(index).toEqual(line.length);
+    expect(prefix).toEqual('');
+  });
+
   it('complte a simple word', () => {
     const line = 'SELECT * FROM tab';
     const { index, prefix } = findInsertIndex(line);
@@ -25,7 +32,7 @@ describe('Check suggestion index', () => {
   it('complete a quoted word', () => {
     const line = 'SELECT "hello", "wo';
     const { index, prefix } = findInsertIndex(line);
-    expect(index).toEqual(line.lastIndexOf('#') + 1);
+    expect(index).toEqual(line.lastIndexOf('"') + 1);
     expect(prefix).toEqual('wo');
   });
 });
