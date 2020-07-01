@@ -25,12 +25,11 @@ export interface Props {
 interface DraggableMappingProps {
   mapping: ValueMapping;
   index: number;
-  stacked: boolean;
   onChange: (index: number, mapping: ValueMapping) => void;
   onRemove: (index: number) => void;
 }
 
-const DraggableMapping: React.FC<DraggableMappingProps> = ({ mapping, index, stacked, onChange, onRemove }) => {
+const DraggableMapping: React.FC<DraggableMappingProps> = ({ mapping, index, onChange, onRemove }) => {
   const styles = useStyles(getStyles);
 
   const displayInput = useMemo(
@@ -65,23 +64,15 @@ const DraggableMapping: React.FC<DraggableMappingProps> = ({ mapping, index, sta
       <div className={styles.handleWrap}>
         <DraggableMappingRow label={label} {...dragHandleProps} />
 
-        {/* {stacked && (
-          <VerticalGroup spacing={'xs'} width="100%">
-            {mappingRow}
-            {displayInput}
-          </VerticalGroup>
-        )}
+        <VerticalGroup spacing={'xs'} width="100%">
+          {mappingRow}
+          {displayInput}
+        </VerticalGroup>
 
-        {!stacked && (
-          <>
-            {mappingRow}
-            {displayInput}
-          </>
-        )} */}
-        <div className={styles.splitWrap}>
+        {/* <div className={styles.splitWrap}>
           <div className={styles.splitLeft}>SOURCE</div>
           <div className={styles.splitRight}>DESTINAITON</div>
-        </div>
+        </div> */}
       </div>
     ),
     []
@@ -199,8 +190,6 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
     const { valueMappings } = this.props;
     const { ts } = this.state;
 
-    const stacked = false;
-
     return (
       <div>
         {valueMappings && (
@@ -216,7 +205,6 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
                         onChange={this.onChange}
                         onRemove={this.onRemove}
                         key={`${index}/${ts}`}
-                        stacked={stacked}
                       />
                     );
                   })}
@@ -272,6 +260,8 @@ const getStyles = stylesFactory((theme?: GrafanaTheme) => ({
     flex-grow: 1;
     width: 100%;
   `,
+
+  // trying to get a 50% split that stacks when not enough space
   splitWrap: css`
     border: 1px solid red;
     width: 100%;

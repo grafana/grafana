@@ -112,6 +112,85 @@ func (e *CloudMonitoringExecutor) getGCEDefaultProject(ctx context.Context, tsdb
 	return result, nil
 }
 
+func (query *cloudMonitoringQuery) isSLO() bool {
+	return query.Slo != ""
+}
+
+func (query *cloudMonitoringQuery) buildDeepLink() string {
+	if query.isSLO() {
+		return ""
+	}
+
+	filter := query.Params.Get("filter")
+	if !strings.Contains(filter, "resource.type=") {
+		resourceType := query.Params.Get("resourceType")
+		if resourceType == "" {
+			slog.Error("Failed to generate deep link: no resource type found", "ProjectName", query.ProjectName, "query", query.RefID)
+			return ""
+		}
+		filter = fmt.Sprintf(`resource.type="%s" %s`, resourceType, filter)
+	}
+
+	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
+	if err != nil {
+		slog.Error("Failed to generate deep link: unable to parse metrics explorer URL", "ProjectName", query.ProjectName, "query", query.RefID)
+		return ""
+	}
+
+	q := u.Query()
+	q.Set("project", query.ProjectName)
+
+	pageState := map[string]interface{}{
+		"xyChart": map[string]interface{}{
+			"constantLines": []string{},
+			"dataSets": []map[string]interface{}{
+				{
+					"timeSeriesFilter": map[string]interface{}{
+						"aggregations":           []string{},
+						"crossSeriesReducer":     query.Params.Get("aggregation.crossSeriesReducer"),
+						"filter":                 filter,
+						"groupByFields":          query.Params["aggregation.groupByFields"],
+						"minAlignmentPeriod":     strings.TrimPrefix(query.Params.Get("aggregation.alignmentPeriod"), "+"), // get rid of leading +
+						"perSeriesAligner":       query.Params.Get("aggregation.perSeriesAligner"),
+						"secondaryGroupByFields": []string{},
+						"unitOverride":           "1",
+					},
+				},
+			},
+			"timeshiftDuration": "0s",
+			"y1Axis": map[string]string{
+				"label": "y1Axis",
+				"scale": "LINEAR",
+			},
+		},
+		"timeSelection": map[string]string{
+			"timeRange": "custom",
+			"start":     query.Params.Get("interval.startTime"),
+			"end":       query.Params.Get("interval.endTime"),
+		},
+	}
+
+	blob, err := json.Marshal(pageState)
+	if err != nil {
+		slog.Error("Failed to generate deep link", "pageState", pageState, "ProjectName", query.ProjectName, "query", query.RefID)
+		return ""
+	}
+
+	q.Set("pageState", string(blob))
+	u.RawQuery = q.Encode()
+
+	accountChooserURL, err := url.Parse("https://accounts.google.com/AccountChooser")
+	if err != nil {
+		slog.Error("Failed to generate deep link: unable to parse account chooser URL", "ProjectName", query.ProjectName, "query", query.RefID)
+		return ""
+	}
+	accountChooserQuery := accountChooserURL.Query()
+	accountChooserQuery.Set("continue", u.String())
+	accountChooserURL.RawQuery = accountChooserQuery.Encode()
+
+	return accountChooserURL.String()
+}
+
 func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
@@ -131,7 +210,17 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 		if err != nil {
 			queryRes.Error = err
 		}
+
 		result.Results[query.RefID] = queryRes
+
+		resourceType := ""
+		for _, s := range resp.TimeSeries {
+			resourceType = s.Resource.Type
+			// set the first resource type found
+			break
+		}
+		query.Params.Set("resourceType", resourceType)
+		queryRes.Meta.Set("deepLink", query.buildDeepLink())
 	}
 
 	return result, nil

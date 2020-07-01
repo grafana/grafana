@@ -4,6 +4,7 @@ import {
   getColumnFromDimension,
   formattedValueToString,
   getDisplayProcessor,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { SeriesTable } from './SeriesTable';
 import { GraphTooltipContentProps } from './types';
@@ -36,7 +37,7 @@ export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({
       series={[
         {
           color: disp.color,
-          label: valueField.name,
+          label: getFieldDisplayName(valueField),
           value: formattedValueToString(disp),
         },
       ]}

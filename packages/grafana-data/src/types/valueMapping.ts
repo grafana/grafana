@@ -4,9 +4,8 @@ export enum MappingType {
 }
 
 interface BaseMap {
-  id: number; // Could/should be derived from the array index!!!
-  // operator: string; // ???????????????
-  text: string; // Result value
+  id: number; // this could/should just be the array index
+  text: string; // the final display value
   type: MappingType;
 }
 
