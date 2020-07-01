@@ -16,6 +16,7 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 import { selectableChannels, transformSubmitData, transformTestData } from './utils/notificationChannels';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+import LoadingIndicator from '@jaegertracing/jaeger-ui-components/src/common/LoadingIndicator';
 
 interface OwnProps {}
 
@@ -86,7 +87,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
               }}
             </Form>
           ) : (
-            <div>Loading..</div>
+            <LoadingIndicator />
           )}
         </Page.Contents>
       </Page>
