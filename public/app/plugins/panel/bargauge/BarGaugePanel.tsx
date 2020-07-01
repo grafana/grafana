@@ -5,6 +5,8 @@ import {
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
+  FieldConfig,
+  DisplayValue,
 } from '@grafana/data';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 
@@ -22,14 +24,9 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
 
-    // hide title if only 1 gauge is being displayed and no custom displayName set
-    if (count === 1 && !field.displayName) {
-      display.title = undefined;
-    }
-
     return (
       <BarGauge
-        value={display}
+        value={clearNameForSingleSeries(count, field, display)}
         width={width}
         height={height}
         orientation={orientation}
@@ -101,4 +98,15 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       />
     );
   }
+}
+
+export function clearNameForSingleSeries(count: number, field: FieldConfig<any>, display: DisplayValue): DisplayValue {
+  if (count === 1 && !field.displayName) {
+    return {
+      ...display,
+      title: undefined,
+    };
+  }
+
+  return display;
 }

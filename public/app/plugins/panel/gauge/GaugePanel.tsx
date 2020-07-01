@@ -5,6 +5,7 @@ import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/Da
 
 import { config } from 'app/core/config';
 import { GaugeOptions } from './types';
+import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderComponent = (
@@ -16,14 +17,9 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { field, display } = value;
     const { openMenu, targetClassName } = menuProps;
 
-    // hide title if only 1 gauge is being displayed and no custom displayName set
-    if (count === 1 && !field.displayName) {
-      display.title = undefined;
-    }
-
     return (
       <Gauge
-        value={display}
+        value={clearNameForSingleSeries(count, field, display)}
         width={width}
         height={height}
         field={field}

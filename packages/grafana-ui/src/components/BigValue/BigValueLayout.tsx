@@ -496,7 +496,7 @@ function getTextValues(props: Props): BigValueTextValues {
         text: '',
         titleToAlignTo: undefined,
         valueToAlignTo: '1',
-        tooltip: `${value.title} ${formattedValueToString(value)}`,
+        tooltip: `Name: ${value.title}\nValue: ${formattedValueToString(value)}`,
       };
     default:
       return {
