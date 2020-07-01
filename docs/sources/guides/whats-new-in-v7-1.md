@@ -28,6 +28,8 @@ The main highlights are:
 ## Query history search
 In Grafana v 7.1 we are introducing search functionality in Query history. You can search across queries and your comments. It is especially useful in combination with a time filter and data source filter. Read more about Query history [here]({{ < relref "../features/explore/index.md#query-history" >}}).
 
+{{< docs-imagebox img="/img/docs/v71/query_history_search.gif" max-width="800px" caption="Query history search" >}}
+
 ## Provisioning of apps
 
 Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. Read more about provisioning of app plugins [here]({{ < relref "../administration/provisioning.md#plugins" >}}).  
