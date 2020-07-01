@@ -53,51 +53,41 @@ export function registerSuggestions(
     triggerCharacters: ['$'],
 
     provideCompletionItems: (model, position, context) => {
+      const range = {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: position.column,
+        endColumn: position.column,
+      };
+
+      // Simple check if this was triggered by pressing `$`
       if (context.triggerCharacter === '$') {
-        const range = {
-          startLineNumber: position.lineNumber,
-          endLineNumber: position.lineNumber,
-          startColumn: position.column - 1,
-          endColumn: position.column,
-        };
+        range.startColumn = position.column - 1;
         return {
           suggestions: getCompletionItems('$', getSuggestions(), range),
         };
       }
 
-      // find out if we are completing a property in the 'dependencies' object.
-      const lineText = model.getValueInRange({
+      // Find the replacement region
+      const currentLine = model.getValueInRange({
         startLineNumber: position.lineNumber,
         startColumn: 1,
         endLineNumber: position.lineNumber,
         endColumn: position.column,
       });
 
-      const idx = lineText.lastIndexOf('$');
-      if (idx >= 0) {
-        const range = {
-          startLineNumber: position.lineNumber,
-          endLineNumber: position.lineNumber,
-          startColumn: idx, // the last $ we found
-          endColumn: position.column,
-        };
-        return {
-          suggestions: getCompletionItems(lineText.substr(idx), getSuggestions(), range),
-        };
+      const lastSep = currentLine.lastIndexOf(' ') + 1;
+      const lastVar = currentLine.lastIndexOf('$');
+      const wordStart = Math.max(lastSep, lastVar);
+      const currentWord = currentLine.substring(wordStart);
+      range.startColumn = wordStart;
+
+      const suggestions = getCompletionItems(currentWord, getSuggestions(), range);
+      if (suggestions.length) {
+        return { suggestions };
       }
 
-      // Empty line that asked for suggestion
-      if (lineText.trim().length < 1) {
-        return {
-          suggestions: getCompletionItems('', getSuggestions(), {
-            startLineNumber: position.lineNumber,
-            endLineNumber: position.lineNumber,
-            startColumn: position.column,
-            endColumn: position.column,
-          }),
-        };
-      }
-      // console.log('complete?', lineText, context);
+      // Default suggestions
       return undefined;
     },
   });
