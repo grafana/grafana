@@ -68,8 +68,16 @@ export class ResultProcessor {
       return null;
     }
 
-    const mergeTransformer = standardTransformers.mergeTransformer.transformer({});
-    const data = mergeTransformer(onlyTables)[0];
+    const hasOnlyTimeseries = onlyTables.every(df => isTimeSeries(df));
+
+    // If we have only timeseries we do join on default time column which makes more sense. If we are showing
+    // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
+    // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
+    const transformer = hasOnlyTimeseries
+      ? standardTransformers.seriesToColumnsTransformer.transformer({})
+      : standardTransformers.mergeTransformer.transformer({});
+
+    const data = transformer(onlyTables)[0];
 
     // set display processor
     for (const field of data.fields) {

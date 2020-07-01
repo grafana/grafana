@@ -9,11 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	macaron "gopkg.in/macaron.v1"
-	"net/http"
 )
 
 type testLogger struct {

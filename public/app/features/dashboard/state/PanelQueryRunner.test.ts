@@ -10,7 +10,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { DashboardModel } from './index';
-import { setEchoSrv } from '@grafana/runtime';
+import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
@@ -80,6 +80,11 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         },
       ],
     };
+    setDataSourceSrv({
+      getDataSourceSettingsByUid() {
+        return {} as any;
+      },
+    } as any);
 
     beforeEach(async () => {
       setEchoSrv(new Echo());
@@ -226,6 +231,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: v => v,
+        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
       }),
       getTransformations: () => undefined,
@@ -292,6 +298,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: v => v,
+        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
       }),
       // @ts-ignore
@@ -336,6 +343,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: v => v,
+        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
       }),
       // @ts-ignore

@@ -102,11 +102,6 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
 
-  const onClickLoadMore = (event: React.SyntheticEvent) => {
-    event.stopPropagation();
-    onLoadMoreContext();
-  };
-
   return (
     <div className={header}>
       <span
@@ -125,7 +120,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
               cursor: pointer;
             }
           `}
-          onClick={onClickLoadMore}
+          onClick={onLoadMoreContext}
         >
           Load 10 more
         </span>
@@ -217,7 +212,9 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
 
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
-      <div>
+      {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
+       * and/or when context log line is being highlighted */}
+      <div onClick={e => e.stopPropagation()}>
         {context.after && (
           <LogRowContextGroup
             rows={context.after}
