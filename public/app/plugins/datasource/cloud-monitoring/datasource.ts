@@ -2,11 +2,12 @@ import _ from 'lodash';
 
 import {
   DataQueryRequest,
-  DataQueryResponse,
+  DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
   ScopedVars,
   SelectableValue,
+  toDataFrame,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -42,8 +43,8 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
-  async query(options: DataQueryRequest<CloudMonitoringQuery>): Promise<DataQueryResponse> {
-    const result: DataQueryResponse[] = [];
+  async query(options: DataQueryRequest<CloudMonitoringQuery>): Promise<DataQueryResponseData> {
+    const result: DataQueryResponseData[] = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {
       Object.values(data.results).forEach((queryRes: any) => {
@@ -61,7 +62,20 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
           if (unit) {
             timeSerie = { ...timeSerie, unit };
           }
-          result.push(timeSerie);
+          const df = toDataFrame(timeSerie);
+
+          for (const field of df.fields) {
+            if (queryRes.meta?.deepLink && queryRes.meta?.deepLink.length > 0) {
+              field.config.links = [
+                {
+                  url: queryRes.meta?.deepLink,
+                  title: 'View in Metrics Explorer',
+                  targetBlank: true,
+                },
+              ];
+            }
+          }
+          result.push(df);
         });
       });
       return { data: result };
