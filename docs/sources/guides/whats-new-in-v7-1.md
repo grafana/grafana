@@ -56,7 +56,7 @@ A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics
 You can now create links in Elastic configuration that point to another datasource similar to existing feature in
 Loki. This allows you to link traceID from your logs to tracing data source in Grafana.
 
-## Tranformations
+## Transformations
 
 We have added a new **Merge on time** transform that can combine many time series or table results. Unlike the join transform this combines the result into one table even when the time values does not align / match.
 
