@@ -33,6 +33,13 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+
+    // When specified... these are loaded on starup? not asyn
+    'monaco.editor.worker': 'monaco-editor/esm/vs/editor/editor.worker.js',
+    'monaco.json.worker': 'monaco-editor/esm/vs/language/json/json.worker',
+    // 'monaco.html.worker': 'monaco-editor/esm/vs/language/html/html.worker',
+    // 'monaco.css.worker': 'monaco-editor/esm/vs/language/css/css.worker',
+    // 'monaco.ts.worker': 'monaco-editor/esm/vs/language/typescript/ts.worker',
   },
   output: {
     path: path.resolve(__dirname, '../../public/build'),
