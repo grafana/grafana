@@ -1,7 +1,13 @@
 import React, { FC, useMemo } from 'react';
 import { css, cx } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { CodeEditor, stylesFactory, useTheme } from '@grafana/ui';
+import {
+  CodeEditor,
+  stylesFactory,
+  useTheme,
+  CodeEditorSuggestionItem,
+  variableSuggestionToCodeEditorSuggestion,
+} from '@grafana/ui';
 import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
 
 import { TextOptions } from './types';
@@ -10,6 +16,14 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
   const language = useMemo(() => context.options?.mode ?? 'markdown', [context]);
   const theme = useTheme();
   const styles = getStyles(theme);
+
+  const getSuggestions = (): CodeEditorSuggestionItem[] => {
+    if (!context.getSuggestions) {
+      return [];
+    }
+    return context.getSuggestions().map(v => variableSuggestionToCodeEditorSuggestion(v));
+  };
+
   return (
     <div className={cx(styles.editorBox)}>
       <AutoSizer disableHeight>
@@ -17,7 +31,6 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
           if (width === 0) {
             return null;
           }
-
           return (
             <CodeEditor
               value={value}
@@ -28,6 +41,7 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
               showMiniMap={false}
               showLineNumbers={false}
               height="200px"
+              getSuggestions={getSuggestions}
             />
           );
         }}

@@ -1,36 +1,37 @@
 import React from 'react';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
-import { KeyCode, editor, KeyMod } from 'monaco-editor/esm/vs/editor/editor.api';
+import { CodeEditorProps } from './types';
+import { registerSuggestions } from './suggestions';
 import ReactMonaco from 'react-monaco-editor';
-
-export interface CodeEditorProps {
-  value: string;
-  language: string;
-  width?: number | string;
-  height?: number | string;
-
-  readOnly?: boolean;
-  showMiniMap?: boolean;
-  showLineNumbers?: boolean;
-
-  /**
-   * Callback after the editor has mounted that gives you raw access to monaco
-   *
-   * @experimental
-   */
-  onEditorDidMount?: (editor: editor.IStandaloneCodeEditor) => void;
-
-  /** Handler to be performed when editor is blurred */
-  onBlur?: CodeEditorChangeHandler;
-
-  /** Handler to be performed when Cmd/Ctrl+S is pressed */
-  onSave?: CodeEditorChangeHandler;
-}
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 type Props = CodeEditorProps & Themeable;
 
 class UnthemedCodeEditor extends React.PureComponent<Props> {
+  completionCancel?: monaco.IDisposable;
+
+  componentWillUnmount() {
+    if (this.completionCancel) {
+      console.log('dispose of the custom completion stuff');
+      this.completionCancel.dispose();
+    }
+  }
+
+  componentDidUpdate(oldProps: Props) {
+    const { getSuggestions, language } = this.props;
+    if (getSuggestions) {
+      // Language changed
+      if (language !== oldProps.language) {
+        if (this.completionCancel) {
+          this.completionCancel.dispose();
+        }
+        this.completionCancel = registerSuggestions(language, getSuggestions);
+      }
+    }
+  }
+
+  // This is replaced with a real function when the actual editor mounts
   getEditorValue = () => '';
 
   onBlur = () => {
@@ -40,13 +41,20 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
   };
 
-  editorDidMount = (editor: editor.IStandaloneCodeEditor) => {
+  editorWillMount = (m: typeof monaco) => {
+    const { language, getSuggestions } = this.props;
+    if (getSuggestions) {
+      this.completionCancel = registerSuggestions(language, getSuggestions);
+    }
+  };
+
+  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
     const { onSave, onEditorDidMount } = this.props;
 
     this.getEditorValue = () => editor.getValue();
 
     if (onSave) {
-      editor.addCommand(KeyMod.CtrlCmd | KeyCode.KEY_S, () => {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
         onSave(this.getEditorValue());
       });
     }
@@ -61,7 +69,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const options: editor.IEditorConstructionOptions = {
+    const options: monaco.editor.IEditorConstructionOptions = {
       wordWrap: 'off',
       codeLens: false, // not included in the bundle
       minimap: {
@@ -91,6 +99,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
           theme={theme.isDark ? 'vs-dark' : 'vs-light'}
           value={value}
           options={options}
+          editorWillMount={this.editorWillMount}
           editorDidMount={this.editorDidMount}
         />
       </div>
@@ -98,5 +107,4 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   }
 }
 
-export type CodeEditorChangeHandler = (value: string) => void;
 export default withTheme(UnthemedCodeEditor);
