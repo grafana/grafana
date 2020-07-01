@@ -1,5 +1,5 @@
 .query-part {
-  background-color: lighten($input-label-bg, 5%);
+  background-color: $tight-form-func-bg;
 
   &.show-function-controls {
     padding-top: 5px;
@@ -13,6 +13,10 @@
 
   &:hover .query-part__last {
     display: inline;
+  }
+
+  &:hover {
+    background: $tight-form-func-highlight-bg;
   }
 }
 

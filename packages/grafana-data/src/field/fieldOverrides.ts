@@ -16,6 +16,8 @@ import {
   ValueLinkConfig,
   GrafanaTheme,
   TimeZone,
+  DataLink,
+  DataSourceInstanceSettings,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -33,6 +35,7 @@ import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
 import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { mapInternalLinkToExplore } from '../utils/dataLinks';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -129,6 +132,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         data: options.data!,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
+        getDataSourceSettingsByUid: options.getDataSourceSettingsByUid,
         fieldConfigRegistry: fieldConfigRegistry,
       };
 
@@ -206,10 +210,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      f.getLinks = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
-        theme: options.theme,
-        timeZone: options.timeZone,
-      });
+      f.getLinks = getLinksSupplier(
+        frame,
+        f,
+        fieldScopedVars,
+        context.replaceVariables,
+        context.getDataSourceSettingsByUid,
+        {
+          theme: options.theme,
+          timeZone: options.timeZone,
+        }
+      );
 
       return f;
     });
@@ -348,6 +359,7 @@ export const getLinksSupplier = (
   field: Field,
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
+  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined,
   options: {
     theme: GrafanaTheme;
     timeZone?: TimeZone;
@@ -359,19 +371,10 @@ export const getLinksSupplier = (
   const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
   const { timeField } = getTimeField(frame);
 
-  return field.config.links.map(link => {
-    let href = link.url;
+  return field.config.links.map((link: DataLink) => {
+    const variablesQuery = locationUtil.getVariablesUrlParams();
     let dataFrameVars = {};
     let valueVars = {};
-
-    const info: LinkModel<Field> = {
-      href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
-      title: link.title || '',
-      target: link.targetBlank ? '_blank' : undefined,
-      origin: field,
-    };
-
-    const variablesQuery = locationUtil.getVariablesUrlParams();
 
     // We are not displaying reduction result
     if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
@@ -419,10 +422,25 @@ export const getLinksSupplier = (
       },
     };
 
-    info.href = replaceVariables(info.href, variables);
-    info.title = replaceVariables(info.title, variables);
-    info.href = locationUtil.processUrl(info.href);
+    if (link.internal) {
+      // For internal links at the moment only destination is Explore.
+      return mapInternalLinkToExplore(link, variables, {} as any, field, {
+        replaceVariables,
+        getDataSourceSettingsByUid,
+      });
+    } else {
+      let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
+      href = replaceVariables(href, variables);
+      href = locationUtil.processUrl(href);
 
-    return info;
+      const info: LinkModel<Field> = {
+        href,
+        title: replaceVariables(link.title || '', variables),
+        target: link.targetBlank ? '_blank' : undefined,
+        origin: field,
+      };
+
+      return info;
+    }
   });
 };

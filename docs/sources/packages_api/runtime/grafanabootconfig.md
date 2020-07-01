@@ -35,6 +35,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 |  [alertingNoDataOrNullValues](#alertingnodataornullvalues-property) |  | <code>string</code> |  |
 |  [allowOrgCreate](#alloworgcreate-property) |  | <code>boolean</code> |  |
 |  [appSubUrl](#appsuburl-property) |  | <code>string</code> |  |
+|  [appUrl](#appurl-property) |  | <code>string</code> |  |
 |  [authProxyEnabled](#authproxyenabled-property) |  | <code>boolean</code> |  |
 |  [autoAssignOrg](#autoassignorg-property) |  | <code>boolean</code> |  |
 |  [bootData](#bootdata-property) |  | <code>any</code> |  |
@@ -129,6 +130,14 @@ allowOrgCreate: boolean;
 
 ```typescript
 appSubUrl: string;
+```
+
+### appUrl property
+
+<b>Signature</b>
+
+```typescript
+appUrl: string;
 ```
 
 ### authProxyEnabled property

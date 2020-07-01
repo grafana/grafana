@@ -29,8 +29,33 @@ func init() {
 		Type:            "dingding",
 		Name:            "DingDing",
 		Description:     "Sends HTTP POST request to DingDing",
+		Heading:         "DingDing settings",
 		Factory:         newDingDingNotifier,
 		OptionsTemplate: dingdingOptionsTemplate,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx",
+				PropertyName: "url",
+				Required:     true,
+			},
+			{
+				Label:        "Message Type",
+				Element:      alerting.ElementTypeSelect,
+				PropertyName: "msgType",
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "link",
+						Label: "Link"},
+					{
+						Value: "actionCard",
+						Label: "ActionCard",
+					},
+				},
+			},
+		},
 	})
 
 }
