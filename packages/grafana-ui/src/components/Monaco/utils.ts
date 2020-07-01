@@ -8,10 +8,15 @@ export function variableSuggestionToCodeEditorSuggestion(
   sug: VariableSuggestion,
   replace: InterpolateFunction
 ): CodeEditorSuggestionItem {
-  const detail = sug.label + ' ' + replace(sug.value);
+  const label = '${' + sug.value + '}';
+  const escaped = replace(label);
+  let detail = sug.label;
+  if (label !== escaped) {
+    detail += ': ' + escaped;
+  }
 
   return {
-    label: sug.value,
+    label,
     kind: CodeEditorSuggestionItemKind.Property,
     detail,
     documentation: sug.documentation,

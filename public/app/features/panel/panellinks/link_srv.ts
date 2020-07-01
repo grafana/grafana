@@ -231,6 +231,17 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
 
+export const getPanelOptionsVariableSuggestions = (data?: DataFrame[]): VariableSuggestion[] => {
+  return [
+    ...getDataFrameVars(data || []), // field values
+    ...templateSrv.getVariables().map(variable => ({
+      value: variable.name as string,
+      label: variable.name,
+      origin: VariableOrigin.Template,
+    })),
+  ];
+};
+
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
   getAnchorInfo: (link: any) => any;
