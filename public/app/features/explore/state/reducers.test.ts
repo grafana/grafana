@@ -8,6 +8,7 @@ import {
   RawTimeRange,
   toDataFrame,
   UrlQueryMap,
+  ExploreUrlState,
 } from '@grafana/data';
 
 import {
@@ -18,7 +19,7 @@ import {
   makeExploreItemState,
   makeInitialUpdateState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   changeModeAction,
@@ -34,8 +35,8 @@ import {
   addQueryRowAction,
   removeQueryRowAction,
 } from './actionTypes';
-import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const QUERY_KEY_REGEX = /Q-([0-9]+)-([0-9.]+)-([0-9]+)/;
 
