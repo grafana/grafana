@@ -2,10 +2,10 @@ import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Field, FormAPI, InfoBox } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
-import { NotificationChannel, NotificationChannelDTO, Option } from '../../../types';
+import { NotificationChannelType, NotificationChannelDTO, Option } from '../../../types';
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'getValues' | 'watch'> {
-  selectedChannel: NotificationChannel;
+  selectedChannel: NotificationChannelType;
   currentFormValues: NotificationChannelDTO;
 }
 

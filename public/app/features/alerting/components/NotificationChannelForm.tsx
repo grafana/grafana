@@ -14,18 +14,18 @@ import {
   Switch,
   useTheme,
 } from '@grafana/ui';
-import { NotificationChannel, NotificationChannelDTO } from '../../../types';
+import { NotificationChannelType, NotificationChannelDTO } from '../../../types';
 import { NotificationChannelOptions } from './NotificationChannelOptions';
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
-  selectedChannel?: NotificationChannel;
+  selectedChannel?: NotificationChannelType;
   imageRendererAvailable: boolean;
 
   onTestChannel: (data: NotificationChannelDTO) => void;
 }
 
-export const NewNotificationChannelForm: FC<Props> = ({
+export const NotificationChannelForm: FC<Props> = ({
   control,
   errors,
   selectedChannel,

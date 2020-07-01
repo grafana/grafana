@@ -3,7 +3,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
-import { loadAlertRules, loadedAlertRules, setNotificationChannels } from './reducers';
+import { notificationChannelLoaded, loadAlertRules, loadedAlertRules, setNotificationChannels } from './reducers';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async dispatch => {
@@ -33,6 +33,18 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
   };
 }
 
+export function updateNotificationChannel(data: any): ThunkResult<void> {
+  return async dispatch => {
+    try {
+      await getBackendSrv().put(`/api/alert-notifications/${data.id}`, data);
+      appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
+      dispatch(updateLocation({ path: 'alerting/notifications' }));
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [error.data.error]);
+    }
+  };
+}
+
 export function testNotificationChannel(data: any): ThunkResult<void> {
   return async () => {
     await getBackendSrv().post('/api/alert-notifications/test', data);
@@ -44,12 +56,11 @@ export function loadNotificationTypes(): ThunkResult<void> {
     const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers`);
 
     const notificationTypes = alertNotifiers
-      .map((option: NotifierDTO) => {
+      .map((notifier: NotifierDTO) => {
         return {
-          value: option.type,
-          label: option.name,
-          ...option,
-          typeName: option.type,
+          value: notifier.type,
+          label: notifier.name,
+          ...notifier,
         };
       })
       .sort((o1, o2) => {
@@ -60,5 +71,13 @@ export function loadNotificationTypes(): ThunkResult<void> {
       });
 
     dispatch(setNotificationChannels(notificationTypes));
+  };
+}
+
+export function loadNotificationChannel(id: number): ThunkResult<void> {
+  return async dispatch => {
+    const notificationChannel = await getBackendSrv().get(`/api/alert-notifications/${id}`);
+    // const channel = { ...notificationChannel, type: { value: notificationChannel.type } };
+    dispatch(notificationChannelLoaded(notificationChannel));
   };
 }

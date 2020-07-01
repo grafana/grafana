@@ -65,7 +65,7 @@ export interface NotifierDTO {
   info?: string;
 }
 
-export interface NotificationChannel {
+export interface NotificationChannelType {
   value: string;
   label: string;
   description: string;
@@ -76,7 +76,8 @@ export interface NotificationChannel {
 }
 
 export interface NotificationChannelDTO {
-  [key: string]: string | boolean | SelectableValue<string>;
+  [key: string]: string | boolean | number | SelectableValue<string>;
+  id?: number;
   name: string;
   type: SelectableValue<string>;
   sendReminder: boolean;
@@ -111,7 +112,8 @@ export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
   isLoading: boolean;
-  notificationChannels: NotificationChannel[];
+  notificationChannelTypes: NotificationChannelType[];
+  notificationChannel: any;
 }
 
 export interface AlertNotification {
