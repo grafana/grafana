@@ -108,24 +108,38 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  requestErrorHandler = (err: ErrorResponse) => {
-    if (err.isHandled) {
-      return;
-    }
+  processRequestError(options: BackendSrvRequest, err: ErrorResponse): ErrorResponse {
+    // if (err.isHandled) {
+    //   return;
+    // }
 
     let data = err.data ?? { message: 'Unexpected error' };
+
     if (typeof data === 'string') {
       data = { message: data };
     }
 
     if (err.status === 422) {
       this.dependencies.appEvents.emit(AppEvents.alertWarning, ['Validation failed', data.message]);
-      throw data;
+      return err;
+    }
+
+    if (typeof err.data === 'string' && err.status === 500) {
+      err.data = {
+        error: err.statusText,
+        response: err.data,
+      };
+    }
+
+    // If no message but got error string, copy to message prop
+    if (err.data && !err.data.message && typeof err.data.error === 'string') {
+      err.data.message = err.data.error;
     }
 
     if (data.message) {
       let description = '';
       let message = data.message;
+
       if (message.length > 80) {
         description = message;
         message = 'Error';
@@ -137,43 +151,21 @@ export class BackendSrv implements BackendService {
       ]);
     }
 
-    throw data;
-  };
-
-  async request(options: BackendSrvRequest): Promise<any> {
-    // A requestId is a unique identifier for a particular query.
-    // Every observable below has a takeUntil that subscribes to this.inFlightRequests and
-    // will cancel/unsubscribe that observable when a new datasourceRequest with the same requestId is made
-    if (options.requestId) {
-      this.inFlightRequests.next(options.requestId);
+    // TODO only for data source requests
+    if (!options.silent) {
+      this.dependencies.appEvents.emit(CoreEvents.dsRequestError, err);
     }
 
-    options = this.parseRequestOptions(options);
+    return err;
+  }
 
-    const fromFetchStream = this.getFromFetchStream(options);
-    const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
-    const successStream = fromFetchStream.pipe(
-      filter(response => response.ok === true),
-      map(response => {
-        const fetchSuccessResponse: SuccessResponse = response.data;
-        return fetchSuccessResponse;
-      }),
-      tap(response => {
-        if (options.method !== 'GET' && response?.message && options.showSuccessAlert !== false) {
-          this.dependencies.appEvents.emit(AppEvents.alertSuccess, [response.message]);
-        }
-      })
-    );
+  // TODO
+  // Handle error handling & isHandled
+  // handle requestId cancellation
 
-    return merge(successStream, failureStream)
-      .pipe(
-        catchError((err: ErrorResponse) => {
-          // this setTimeout hack enables any caller catching this err to set isHandled to true
-          setTimeout(() => this.requestErrorHandler(err), 50);
-          return throwError(err);
-        }),
-        this.handleStreamCancellation(options, CancellationType.request)
-      )
+  async request<T = any>(options: BackendSrvRequest): Promise<T> {
+    return this.fetch<T>(options)
+      .pipe(map((response: FetchResponse<T>) => response.data))
       .toPromise();
   }
 
@@ -194,7 +186,9 @@ export class BackendSrv implements BackendService {
       })
     );
 
-    return merge(successStream, failureStream);
+    return merge(successStream, failureStream).pipe(
+      catchError((err: ErrorResponse) => throwError(this.processRequestError(options, err)))
+    );
   }
 
   resolveCancelerIfExists(requestId: string) {
@@ -205,56 +199,10 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
+  // TODO
+  // Options silent to not emit dsRequestResponse event
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
-    // A requestId is provided by the datasource as a unique identifier for a
-    // particular query. Every observable below has a takeUntil that subscribes to this.inFlightRequests and
-    // will cancel/unsubscribe that observable when a new datasourceRequest with the same requestId is made
-    if (options.requestId) {
-      this.inFlightRequests.next(options.requestId);
-    }
-
-    options = this.parseRequestOptions(options);
-
-    const fromFetchStream = this.getFromFetchStream(options);
-    const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
-    const successStream = fromFetchStream.pipe(
-      filter(response => response.ok === true),
-      map(response => {
-        const fetchSuccessResponse: FetchResponse<any> = { ...response };
-        return fetchSuccessResponse;
-      }),
-      tap(res => {
-        if (!options.silent) {
-          this.dependencies.appEvents.emit(CoreEvents.dsRequestResponse, res);
-        }
-      })
-    );
-
-    return merge(successStream, failureStream)
-      .pipe(
-        catchError((err: ErrorResponse) => {
-          // populate error obj on Internal Error
-          if (typeof err.data === 'string' && err.status === 500) {
-            err.data = {
-              error: err.statusText,
-              response: err.data,
-            };
-          }
-
-          // for Prometheus
-          if (err.data && !err.data.message && typeof err.data.error === 'string') {
-            err.data.message = err.data.error;
-          }
-
-          if (!options.silent) {
-            this.dependencies.appEvents.emit(CoreEvents.dsRequestError, err);
-          }
-
-          return throwError(err);
-        }),
-        this.handleStreamCancellation(options, CancellationType.dataSourceRequest)
-      )
-      .toPromise();
+    return this.fetch(options).toPromise();
   }
 
   loginPing() {
@@ -438,6 +386,7 @@ export class BackendSrv implements BackendService {
         } catch {
           data = textData as any;
         }
+
         const fetchResponse: FetchResponse<T> = {
           status,
           statusText,
@@ -491,53 +440,53 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  private handleStreamCancellation = (
-    options: BackendSrvRequest,
-    resultType: CancellationType
-  ): MonoTypeOperatorFunction<FetchResponse<any> | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
-    inputStream.pipe(
-      takeUntil(
-        this.inFlightRequests.pipe(
-          filter(requestId => {
-            let cancelRequest = false;
+  // private handleStreamCancellation = (
+  //   options: BackendSrvRequest,
+  //   resultType: CancellationType
+  // ): MonoTypeOperatorFunction<FetchResponse<any> | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
+  //   inputStream.pipe(
+  //     takeUntil(
+  //       this.inFlightRequests.pipe(
+  //         filter(requestId => {
+  //           let cancelRequest = false;
 
-            if (options && options.requestId && options.requestId === requestId) {
-              // when a new requestId is started it will be published to inFlightRequests
-              // if a previous long running request that hasn't finished yet has the same requestId
-              // we need to cancel that request
-              cancelRequest = true;
-            }
+  //           if (options && options.requestId && options.requestId === requestId) {
+  //             // when a new requestId is started it will be published to inFlightRequests
+  //             // if a previous long running request that hasn't finished yet has the same requestId
+  //             // we need to cancel that request
+  //             cancelRequest = true;
+  //           }
 
-            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
-              cancelRequest = true;
-            }
+  //           if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
+  //             cancelRequest = true;
+  //           }
 
-            return cancelRequest;
-          })
-        )
-      ),
-      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
-      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-      throwIfEmpty(() => ({
-        cancelled: true,
-      })),
-      catchError(err => {
-        if (!err.cancelled) {
-          return throwError(err);
-        }
+  //           return cancelRequest;
+  //         })
+  //       )
+  //     ),
+  //     // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
+  //     // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
+  //     throwIfEmpty(() => ({
+  //       cancelled: true,
+  //     })),
+  //     catchError(err => {
+  //       if (!err.cancelled) {
+  //         return throwError(err);
+  //       }
 
-        if (resultType === CancellationType.dataSourceRequest) {
-          return of({
-            data: [],
-            status: this.HTTP_REQUEST_CANCELED,
-            statusText: 'Request was aborted',
-            config: options,
-          });
-        }
+  //       if (resultType === CancellationType.dataSourceRequest) {
+  //         return of({
+  //           data: [],
+  //           status: this.HTTP_REQUEST_CANCELED,
+  //           statusText: 'Request was aborted',
+  //           config: options,
+  //         });
+  //       }
 
-        return of([]);
-      })
-    );
+  //       return of([]);
+  //     })
+  //   );
 }
 
 coreModule.factory('backendSrv', () => backendSrv);
