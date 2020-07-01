@@ -2,6 +2,33 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 import { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind, CodeEditorSuggestionProvider } from './types';
 
+/**
+ * @internal -- only exported for tests
+ */
+export function findInsertIndex(line: string): { index: number; prefix: string } {
+  for (let i = line.length - 1; i > 0; i--) {
+    const ch = line.charAt(i);
+    if (ch === '$') {
+      return {
+        index: i,
+        prefix: line.substring(i),
+      };
+    }
+
+    // Keep these seperators
+    if (ch === ' ' || ch === '\t' || ch === '"' || ch === "'") {
+      return {
+        index: i + 1,
+        prefix: line.substring(i + 1),
+      };
+    }
+  }
+  return {
+    index: 0,
+    prefix: line,
+  };
+}
+
 function getCompletionItems(
   prefix: string,
   suggestions: CodeEditorSuggestionItem[],
@@ -76,18 +103,16 @@ export function registerSuggestions(
         endColumn: position.column,
       });
 
-      const lastSep = currentLine.lastIndexOf(' ') + 1;
-      const lastVar = currentLine.lastIndexOf('$');
-      const wordStart = Math.max(lastSep, lastVar);
-      const currentWord = currentLine.substring(wordStart);
-      range.startColumn = wordStart + 1;
+      const { index, prefix } = findInsertIndex(currentLine);
+      range.startColumn = index + 1;
 
-      const suggestions = getCompletionItems(currentWord, getSuggestions(), range);
+      const suggestions = getCompletionItems(prefix, getSuggestions(), range);
       if (suggestions.length) {
+        // NOTE, this will replace any language provided suggestions
         return { suggestions };
       }
 
-      // Default suggestions
+      // Default language suggestions
       return undefined;
     },
   });
