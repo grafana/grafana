@@ -63,6 +63,10 @@ General features are included in the Grafana Enterprise edition software.
 
 You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. Learn more about this feature [here]({{< relref "../enterprise/vault.md" >}}). 
 
+### Support for monthly in reports
+
+With Grafana Enterprise 7.1 you can configure reports to be generated on a [monthly schedule]({{< relref "../enterprise/reporting.md#scheduling" >}}).
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
