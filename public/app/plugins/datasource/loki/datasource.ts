@@ -518,7 +518,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   showContextToggle = (row?: LogRowModel) => {
-    return row.searchWords && row.searchWords.length > 0;
+    return row && row.searchWords && row.searchWords.length > 0;
   };
 
   throwUnless = (err: any, condition: boolean, target: LokiQuery) => {
