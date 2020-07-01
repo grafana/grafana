@@ -82,6 +82,8 @@ Weekly reports are generated once per week. All fields are required.
 
 #### Monthly
 
+> Only available in Grafana Enterprise v7.1+.
+
 Monthly reports are generated once per month. All fields are required.
 
 * **Day in month -** Day of the month the when report should be sent. (it's possible to select `last` for reports that should go out on the last day of the month).
