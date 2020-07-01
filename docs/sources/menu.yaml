@@ -328,6 +328,8 @@
       link: /enterprise/white-labeling/
     - name: Usage insights
       link: /enterprise/usage-insights/
+    - name: Vault integration
+      link: /enterprise/vault/
     - name: License expiration
       link: /enterprise/license-expiration/
 - name: Plugins
