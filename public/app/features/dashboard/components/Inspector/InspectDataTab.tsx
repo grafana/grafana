@@ -150,7 +150,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   }
 
-  getActiveString = () => {
+  getActiveString() {
     const { selectedDataFrame } = this.state;
     const { options, data } = this.props;
 
@@ -175,9 +175,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
       }
     }
     return activeString;
-  };
+  }
 
-  renderDataOptions = (dataFrames: DataFrame[]) => {
+  renderDataOptions(dataFrames: DataFrame[]) {
     const { options, onOptionsChange, panel, data } = this.props;
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
 
@@ -260,7 +260,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
       </QueryOperationRow>
     );
-  };
+  }
 
   render() {
     const { isLoading } = this.props;
