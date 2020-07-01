@@ -75,3 +75,16 @@ export interface CodeEditorSuggestionItem {
    */
   insertText?: string;
 }
+
+// Actually monaco.languages.ILanguageExtensionPoint
+export interface CodeEditorLanguageLoader {
+  id: string; // JSON etc
+
+  // Called when first the language id is first requested
+  loader: () => Promise<CodeEditorLanguageConfig>;
+}
+
+export interface CodeEditorLanguageConfig {
+  conf: any; // monaco.languages.LanguageConfiguration;
+  language: any; // monaco.languages.IMonarchLanguage;
+}
