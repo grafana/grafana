@@ -44,7 +44,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
     replaceVariables,
     options,
     getSuggestions: (scope?: VariableSuggestionsScope) => {
-      return getPanelOptionsVariableSuggestions(data);
+      return getPanelOptionsVariableSuggestions(plugin, data);
     },
   };
 
