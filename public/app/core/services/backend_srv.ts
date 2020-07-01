@@ -24,18 +24,11 @@ export interface DatasourceRequestOptions {
   data?: Record<string, any>;
 }
 
-interface FetchResponseProps {
+interface ErrorResponseProps {
   message?: string;
-}
-
-interface ErrorResponseProps extends FetchResponseProps {
   status?: string;
   error?: string | any;
 }
-
-interface SuccessResponse extends FetchResponseProps, Record<any, any> {}
-
-interface DataSourceSuccessResponse<T extends {} = any> extends FetchResponse<T> {}
 
 interface ErrorResponse<T extends ErrorResponseProps = any> {
   status: number;
@@ -81,31 +74,158 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
-    return await this.request({ method: 'GET', url, params, requestId });
+  // TODO
+  // Handle error handling & isHandled
+  // handle requestId cancellation
+
+  async request<T = any>(options: BackendSrvRequest): Promise<T> {
+    return this.fetch<T>(options)
+      .pipe(map((response: FetchResponse<T>) => response.data))
+      .toPromise();
   }
 
-  async delete(url: string) {
-    return await this.request({ method: 'DELETE', url });
+  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
+    if (options.requestId) {
+      this.inFlightRequests.next(options.requestId);
+    }
+
+    options = this.parseRequestOptions(options);
+
+    const fromFetchStream = this.getFromFetchStream<T>(options);
+    const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
+    const successStream = fromFetchStream.pipe(
+      filter(response => response.ok === true),
+      tap(response => {
+        if (options.method !== 'GET' && options.showSuccessAlert !== false) {
+          const data: { message: string } = response.data as any;
+          if (data?.message) {
+            this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+          }
+        }
+      })
+    );
+
+    return merge(successStream, failureStream).pipe(
+      catchError((err: ErrorResponse) => throwError(this.processRequestError(options, err))),
+      this.handleStreamCancellation(options, CancellationType.request)
+    );
   }
 
-  async post(url: string, data?: any) {
-    return await this.request({ method: 'POST', url, data });
+  resolveCancelerIfExists(requestId: string) {
+    this.inFlightRequests.next(requestId);
   }
 
-  async patch(url: string, data: any) {
-    return await this.request({ method: 'PATCH', url, data });
+  cancelAllInFlightRequests() {
+    this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
-  async put(url: string, data: any) {
-    return await this.request({ method: 'PUT', url, data });
+  // TODO
+  // Options silent to not emit dsRequestResponse event
+  async datasourceRequest(options: BackendSrvRequest): Promise<any> {
+    return this.fetch(options).toPromise();
   }
 
-  withNoBackendCache(callback: any) {
-    this.noBackendCache = true;
-    return callback().finally(() => {
-      this.noBackendCache = false;
-    });
+  private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
+    const orgId = this.dependencies.contextSrv.user?.orgId;
+    const requestIsLocal = !options.url.match(/^http/);
+
+    // init retry counter
+    options.retry = options.retry ?? 0;
+
+    if (requestIsLocal) {
+      if (orgId) {
+        options.headers = options.headers ?? {};
+        options.headers['X-Grafana-Org-Id'] = orgId;
+      }
+
+      if (options.url.startsWith('/')) {
+        options.url = options.url.substring(1);
+      }
+
+      // if (options.url.endsWith('/')) {
+      //   options.url = options.url.slice(0, -1);
+      // }
+
+      if (options.headers?.Authorization) {
+        options.headers['X-DS-Authorization'] = options.headers.Authorization;
+        delete options.headers.Authorization;
+      }
+
+      if (this.noBackendCache) {
+        options.headers['X-Grafana-NoCache'] = 'true';
+      }
+    }
+
+    return options;
+  }
+
+  private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
+    const url = parseUrlFromOptions(options);
+    const init = parseInitFromOptions(options);
+
+    return this.dependencies.fromFetch(url, init).pipe(
+      mergeMap(async response => {
+        const { status, statusText, ok, headers, url, type, redirected } = response;
+        const textData = await response.text(); // this could be just a string, prometheus requests for instance
+        let data: T;
+
+        try {
+          data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
+        } catch {
+          data = textData as any;
+        }
+
+        const fetchResponse: FetchResponse<T> = {
+          status,
+          statusText,
+          ok,
+          data,
+          headers,
+          url,
+          type,
+          redirected,
+          config: options,
+        };
+        return fetchResponse;
+      }),
+      share() // sharing this so we can split into success and failure and then merge back
+    );
+  }
+
+  private toFailureStream<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
+    const { isSignedIn } = this.dependencies.contextSrv.user;
+
+    return inputStream =>
+      inputStream.pipe(
+        filter(response => response.ok === false),
+        mergeMap(response => {
+          const { status, statusText, data } = response;
+          const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+          return throwError(fetchErrorResponse);
+        }),
+        retryWhen((attempts: Observable<any>) =>
+          attempts.pipe(
+            mergeMap((error, i) => {
+              const requestIsLocal = !options.url.match(/^http/);
+              const firstAttempt = i === 0 && options.retry === 0;
+
+              if (error.status === 401 && requestIsLocal && firstAttempt && isSignedIn) {
+                return from(this.loginPing()).pipe(
+                  catchError(err => {
+                    if (err.status === 401) {
+                      this.dependencies.logout();
+                      return throwError(err);
+                    }
+                    return throwError(err);
+                  })
+                );
+              }
+
+              return throwError(error);
+            })
+          )
+        )
+      );
   }
 
   processRequestError(options: BackendSrvRequest, err: ErrorResponse): ErrorResponse {
@@ -159,50 +279,79 @@ export class BackendSrv implements BackendService {
     return err;
   }
 
-  // TODO
-  // Handle error handling & isHandled
-  // handle requestId cancellation
+  handleStreamCancellation = (
+    options: BackendSrvRequest,
+    resultType: CancellationType
+  ): MonoTypeOperatorFunction<FetchResponse<any>> => inputStream =>
+    inputStream.pipe(
+      takeUntil(
+        this.inFlightRequests.pipe(
+          filter(requestId => {
+            let cancelRequest = false;
 
-  async request<T = any>(options: BackendSrvRequest): Promise<T> {
-    return this.fetch<T>(options)
-      .pipe(map((response: FetchResponse<T>) => response.data))
-      .toPromise();
-  }
+            if (options && options.requestId && options.requestId === requestId) {
+              // when a new requestId is started it will be published to inFlightRequests
+              // if a previous long running request that hasn't finished yet has the same requestId
+              // we need to cancel that request
+              cancelRequest = true;
+            }
 
-  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    options = this.parseRequestOptions(options);
+            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
+              cancelRequest = true;
+            }
 
-    const fromFetchStream = this.getFromFetchStream<T>(options);
-    const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
-    const successStream = fromFetchStream.pipe(
-      filter(response => response.ok === true),
-      tap(response => {
-        if (options.method !== 'GET' && options.showSuccessAlert !== false) {
-          const data: { message: string } = response.data as any;
-          if (data?.message) {
-            this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
-          }
+            return cancelRequest;
+          })
+        )
+      ),
+      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
+      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
+      throwIfEmpty(() => ({
+        cancelled: true,
+      })),
+      catchError(err => {
+        if (!err.cancelled) {
+          return throwError(err);
         }
+
+        if (resultType === CancellationType.dataSourceRequest) {
+          return of({
+            data: [],
+            status: this.HTTP_REQUEST_CANCELED,
+            statusText: 'Request was aborted',
+            config: options,
+          });
+        }
+
+        return of(err);
       })
     );
 
-    return merge(successStream, failureStream).pipe(
-      catchError((err: ErrorResponse) => throwError(this.processRequestError(options, err)))
-    );
+  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
+    return await this.request({ method: 'GET', url, params, requestId });
   }
 
-  resolveCancelerIfExists(requestId: string) {
-    this.inFlightRequests.next(requestId);
+  async delete(url: string) {
+    return await this.request({ method: 'DELETE', url });
   }
 
-  cancelAllInFlightRequests() {
-    this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
+  async post(url: string, data?: any) {
+    return await this.request({ method: 'POST', url, data });
   }
 
-  // TODO
-  // Options silent to not emit dsRequestResponse event
-  async datasourceRequest(options: BackendSrvRequest): Promise<any> {
-    return this.fetch(options).toPromise();
+  async patch(url: string, data: any) {
+    return await this.request({ method: 'PATCH', url, data });
+  }
+
+  async put(url: string, data: any) {
+    return await this.request({ method: 'PUT', url, data });
+  }
+
+  withNoBackendCache(callback: any) {
+    this.noBackendCache = true;
+    return callback().finally(() => {
+      this.noBackendCache = false;
+    });
   }
 
   loginPing() {
@@ -336,157 +485,6 @@ export class BackendSrv implements BackendService {
       return Promise.resolve(acc).then(task);
     }, []);
   }
-
-  private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
-    const orgId = this.dependencies.contextSrv.user?.orgId;
-    const requestIsLocal = !options.url.match(/^http/);
-
-    // init retry counter
-    options.retry = options.retry ?? 0;
-
-    if (requestIsLocal) {
-      if (orgId) {
-        options.headers = options.headers ?? {};
-        options.headers['X-Grafana-Org-Id'] = orgId;
-      }
-
-      if (options.url.startsWith('/')) {
-        options.url = options.url.substring(1);
-      }
-
-      // if (options.url.endsWith('/')) {
-      //   options.url = options.url.slice(0, -1);
-      // }
-
-      if (options.headers?.Authorization) {
-        options.headers['X-DS-Authorization'] = options.headers.Authorization;
-        delete options.headers.Authorization;
-      }
-
-      if (this.noBackendCache) {
-        options.headers['X-Grafana-NoCache'] = 'true';
-      }
-    }
-
-    return options;
-  }
-
-  private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    const url = parseUrlFromOptions(options);
-    const init = parseInitFromOptions(options);
-
-    return this.dependencies.fromFetch(url, init).pipe(
-      mergeMap(async response => {
-        const { status, statusText, ok, headers, url, type, redirected } = response;
-        const textData = await response.text(); // this could be just a string, prometheus requests for instance
-        let data: T;
-
-        try {
-          data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
-        } catch {
-          data = textData as any;
-        }
-
-        const fetchResponse: FetchResponse<T> = {
-          status,
-          statusText,
-          ok,
-          data,
-          headers,
-          url,
-          type,
-          redirected,
-          config: options,
-        };
-        return fetchResponse;
-      }),
-      share() // sharing this so we can split into success and failure and then merge back
-    );
-  }
-
-  private toFailureStream<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
-    const { isSignedIn } = this.dependencies.contextSrv.user;
-
-    return inputStream =>
-      inputStream.pipe(
-        filter(response => response.ok === false),
-        mergeMap(response => {
-          const { status, statusText, data } = response;
-          const fetchErrorResponse: ErrorResponse = { status, statusText, data };
-          return throwError(fetchErrorResponse);
-        }),
-        retryWhen((attempts: Observable<any>) =>
-          attempts.pipe(
-            mergeMap((error, i) => {
-              const requestIsLocal = !options.url.match(/^http/);
-              const firstAttempt = i === 0 && options.retry === 0;
-
-              if (error.status === 401 && requestIsLocal && firstAttempt && isSignedIn) {
-                return from(this.loginPing()).pipe(
-                  catchError(err => {
-                    if (err.status === 401) {
-                      this.dependencies.logout();
-                      return throwError(err);
-                    }
-                    return throwError(err);
-                  })
-                );
-              }
-
-              return throwError(error);
-            })
-          )
-        )
-      );
-  }
-
-  handleStreamCancellation = (
-    options: BackendSrvRequest,
-    resultType: CancellationType
-  ): MonoTypeOperatorFunction<FetchResponse<any> | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
-    inputStream.pipe(
-      takeUntil(
-        this.inFlightRequests.pipe(
-          filter(requestId => {
-            let cancelRequest = false;
-
-            if (options && options.requestId && options.requestId === requestId) {
-              // when a new requestId is started it will be published to inFlightRequests
-              // if a previous long running request that hasn't finished yet has the same requestId
-              // we need to cancel that request
-              cancelRequest = true;
-            }
-
-            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
-              cancelRequest = true;
-            }
-
-            return cancelRequest;
-          })
-        )
-      ),
-      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
-      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-      throwIfEmpty(() => ({
-        cancelled: true,
-      })),
-      catchError(err => {
-        if (!err.cancelled) {
-          return throwError(err);
-        }
-
-        if (resultType === CancellationType.dataSourceRequest) {
-          return of({
-            data: [],
-            status: this.HTTP_REQUEST_CANCELED,
-            statusText: 'Request was aborted',
-            config: options,
-          });
-        }
-
-        return of([]);
-      })
-    );
 }
 
 coreModule.factory('backendSrv', () => backendSrv);
