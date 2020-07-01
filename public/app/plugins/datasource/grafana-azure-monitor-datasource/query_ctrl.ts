@@ -533,7 +533,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       operator: 'eq',
       filter: '',
     });
-    this.refresh();
   }
 
   azureMonitorRemoveDimensionFilter(index: number) {
