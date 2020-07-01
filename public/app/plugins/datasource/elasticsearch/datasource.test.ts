@@ -885,13 +885,13 @@ describe('enhanceDataFrame', () => {
       },
     ]);
 
-    expect(df.fields[0].config.links.length).toBe(1);
-    expect(df.fields[0].config.links[0]).toEqual({
+    expect(df.fields[0].config.links?.length).toBe(1);
+    expect(df.fields[0].config.links?.[0]).toEqual({
       title: '',
       url: 'someUrl',
     });
-    expect(df.fields[1].config.links.length).toBe(1);
-    expect(df.fields[1].config.links[0]).toEqual({
+    expect(df.fields[1].config.links?.length).toBe(1);
+    expect(df.fields[1].config.links?.[0]).toEqual({
       title: '',
       url: '',
       internal: {

@@ -142,19 +142,23 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     const fieldCache = new FieldCache(data);
 
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-    timeField.display = getDisplayProcessor({
-      field: timeField,
-      timeZone,
-    });
+    if (timeField) {
+      timeField.display = getDisplayProcessor({
+        field: timeField,
+        timeZone,
+      });
+    }
 
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
-    valueField.config = {
-      ...valueField.config,
-      color: series.color,
-    };
-    valueField.name = series.alias;
-    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
-    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
+    if (valueField) {
+      valueField.config = {
+        ...valueField.config,
+        color: series.color,
+      };
+      valueField.name = series.alias;
+      const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+      valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
+    }
 
     const points = getFlotPairs({
       xField: timeField,
@@ -416,8 +420,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     // Stats are per query, keeping track by refId
     const { refId } = series;
     if (refId && !queriesVisited[refId]) {
-      if (totalBytesKey && series.meta.stats) {
-        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+      if (totalBytesKey && series.meta?.stats) {
+        const byteStat = series.meta?.stats.find(stat => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }

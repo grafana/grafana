@@ -441,11 +441,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance.interval;
+    const minInterval = datasourceInstance?.interval;
 
     stopQueryState(querySubscription);
 
-    const datasourceId = datasourceInstance.meta.id;
+    const datasourceId = datasourceInstance?.meta.id;
 
     const queryOptions: QueryOptions = {
       minInterval,

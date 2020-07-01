@@ -46,7 +46,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
 
   checkUserLabels = async () => {
     // Set example from user labels
-    const provider: LokiLanguageProvider = this.props.datasource.languageProvider;
+    const provider: LokiLanguageProvider = this.props.datasource?.languageProvider;
     if (provider.started) {
       const labels = provider.getLabelKeys() || [];
       const preferredLabel = PREFERRED_LABELS.find(l => labels.includes(l));

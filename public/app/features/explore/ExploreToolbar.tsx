@@ -360,7 +360,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     originPanelId,
     queries,
     syncedTimes,
-    datasourceLoading,
+    datasourceLoading: datasourceLoading ?? undefined,
     containerWidth,
   };
 };
