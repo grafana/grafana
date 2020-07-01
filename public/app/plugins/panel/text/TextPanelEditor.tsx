@@ -6,10 +6,9 @@ import {
   stylesFactory,
   useTheme,
   CodeEditorSuggestionItem,
-  CodeEditorSuggestionItemKind,
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
-import { GrafanaTheme, StandardEditorProps, VariableSuggestionsScope } from '@grafana/data';
+import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
 
 import { TextOptions } from './types';
 
@@ -19,21 +18,10 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
   const styles = getStyles(theme);
 
   const getSuggestions = (): CodeEditorSuggestionItem[] => {
-    const vars = context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [];
-    const items = vars.map(v => variableSuggestionToCodeEditorSuggestion(v, context.replaceVariables));
-    items.push({
-      label: '$__timeRange',
-      kind: CodeEditorSuggestionItemKind.Method,
-      detail: 'time range macro',
-      documentation: 'Expands to a full query...',
-    });
-    items.push({
-      label: '${__field.name}',
-      kind: CodeEditorSuggestionItemKind.Field,
-      detail: 'Field name',
-    });
-    console.log('SUGGESTIONSitem', context.getSuggestions);
-    return items;
+    if (!context.getSuggestions) {
+      return [];
+    }
+    return context.getSuggestions().map(v => variableSuggestionToCodeEditorSuggestion(v));
   };
 
   return (

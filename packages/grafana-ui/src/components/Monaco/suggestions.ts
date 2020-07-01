@@ -90,11 +90,11 @@ export function registerSuggestions(
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
             startColumn: position.column,
-            endColumn: position.column + 1,
+            endColumn: position.column,
           }),
         };
       }
-      console.log('complete?', lineText, context);
+      // console.log('complete?', lineText, context);
       return undefined;
     },
   });

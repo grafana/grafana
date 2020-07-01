@@ -4,12 +4,12 @@ import { Themeable } from '../../types';
 import { CodeEditorProps } from './types';
 import { registerSuggestions } from './suggestions';
 import ReactMonaco from 'react-monaco-editor';
-import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 type Props = CodeEditorProps & Themeable;
 
 class UnthemedCodeEditor extends React.PureComponent<Props> {
-  completionCancel?: monacoEditor.IDisposable;
+  completionCancel?: monaco.IDisposable;
 
   componentWillUnmount() {
     if (this.completionCancel) {
@@ -31,6 +31,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
   }
 
+  // This is replaced with a real function when the actual editor mounts
   getEditorValue = () => '';
 
   onBlur = () => {
@@ -40,21 +41,20 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
   };
 
-  editorWillMount = (m: typeof monacoEditor) => {
-    console.log('editorWillMount');
+  editorWillMount = (m: typeof monaco) => {
     const { language, getSuggestions } = this.props;
     if (getSuggestions) {
       this.completionCancel = registerSuggestions(language, getSuggestions);
     }
   };
 
-  editorDidMount = (editor: monacoEditor.editor.IStandaloneCodeEditor) => {
+  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
     const { onSave, onEditorDidMount } = this.props;
 
     this.getEditorValue = () => editor.getValue();
 
     if (onSave) {
-      editor.addCommand(monacoEditor.KeyMod.CtrlCmd | monacoEditor.KeyCode.KEY_S, () => {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
         onSave(this.getEditorValue());
       });
     }
@@ -69,7 +69,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const options: monacoEditor.editor.IEditorConstructionOptions = {
+    const options: monaco.editor.IEditorConstructionOptions = {
       wordWrap: 'off',
       codeLens: false, // not included in the bundle
       minimap: {
