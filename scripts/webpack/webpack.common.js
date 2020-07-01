@@ -1,6 +1,7 @@
 const path = require('path');
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
@@ -62,10 +63,52 @@ module.exports = {
     fs: 'empty',
   },
   plugins: [
+    new CopyWebpackPlugin([
+      {
+        context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
+        from: 'min/vs/**',
+        to: '../lib/monaco/', // inside the public/build folder
+        globOptions: {
+          ignore: [
+            // Skip unnecessary languages
+            '**/basic-languages/abap/**',
+            '**/basic-languages/cameligo/**',
+            '**/basic-languages/apex/**',
+            '**/basic-languages/azcli/**',
+            '**/basic-languages/bat/**',
+            '**/basic-languages/solidity/**',
+            '**/basic-languages/fsharp/**',
+            '**/basic-languages/clojure/**',
+            '**/basic-languages/coffee/**',
+            '**/basic-languages/cpp/**',
+            '**/basic-languages/csharp/**',
+            '**/basic-languages/csp/**',
+            '**/basic-languages/java/**',
+            '**/basic-languages/kotlin/**',
+            '**/basic-languages/lua/**',
+            '**/basic-languages/objective-c/**',
+            '**/basic-languages/php/**',
+            '**/basic-languages/python/**',
+            '**/basic-languages/perl/**',
+            '**/basic-languages/r/**',
+            '**/basic-languages/razor/**',
+            '**/basic-languages/ruby/**',
+            '**/basic-languages/rust/**',
+            '**/basic-languages/vb/**',
+            '**/basic-languages/st/**',
+            '**/basic-languages/sb/**',
+            '**/basic-languages/scheme/**',
+            '**/basic-languages/sophia/**',
+            '**/basic-languages/swift/**',
+            '**/basic-languages/twig/**',
+          ],
+        },
+      },
+    ]),
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql'],
+      filename: 'monaco-[name].worker.js', // only json
+      languages: ['json', 'markdown', 'sql', 'mysql', 'pgsql'],
       features: [
         '!accessibilityHelp',
         'bracketMatching',

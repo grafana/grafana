@@ -8,6 +8,34 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 type Props = CodeEditorProps & Themeable;
 
+// @ts-ignore
+const originalEnvironment = self.MonacoEnvironment;
+console.log('MonacoEnvironment (original)', originalEnvironment);
+
+// @ts-ignore
+self.MonacoEnvironment = {
+  getWorkerUrl: (moduleId: string, label: string) => {
+    const orig = originalEnvironment.getWorkerUrl(moduleId, label);
+    console.log('MONACO getWorkerUrl', moduleId, label, orig);
+    if (label === 'json') {
+      //      return 'public/lib/monaco/min/vs/language/json/jsonWorker.js'; // standard distriution
+      return 'public/build/monaco-json.worker.js'; // Built by webpack
+    }
+    if (label === 'css') {
+      return 'CSS'; //'./css.worker.bundle.js';
+    }
+    if (label === 'html') {
+      const v = 'public/lib/monaco/min/vs/language/html/htmlWorker.js';
+      console.log('HTML', v);
+      return v;
+    }
+    if (label === 'typescript' || label === 'javascript') {
+      return 'TYPESCRIPT'; //./ts.worker.bundle.js';
+    }
+    return orig;
+  },
+};
+
 class UnthemedCodeEditor extends React.PureComponent<Props> {
   completionCancel?: monaco.IDisposable;
 
