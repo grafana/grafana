@@ -86,7 +86,7 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 > Only available in Grafana 7.1+.
 
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana.
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
