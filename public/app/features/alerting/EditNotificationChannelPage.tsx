@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Form } from '@grafana/ui';
@@ -15,6 +15,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { selectableChannels, transformSubmitData, transformTestData } from './utils/notificationChannels';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
+import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 
 interface OwnProps {}
 
@@ -109,4 +110,8 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateNotificationChannel,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(EditNotificationChannelPage);
+export default connectWithCleanUp(
+  mapStateToProps,
+  mapDispatchToProps,
+  state => state.alertRules
+)(EditNotificationChannelPage);
