@@ -50,16 +50,18 @@ Support for Flux and Influx v2 has been added.
 
 A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Gooogle Cloud Console]({{< relref "../features/datasources/cloudmonitoring.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-gooogle-cloud-console" >}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
 
+## Internal links for Elastic
+
+You can now create links in Elastic configuration that point to another datasource similar to existing feature in
+ Loki. This allows you to link traceID from your logs to tracing data source in Grafana.
+
 ## Grafana Enterprise features
 
 General features are included in the Grafana Enterprise edition software.
 
 ### Support for HashiCorp Vault
 
-### Internal links for Elastic
-You can now create links in Elastic configuration that point to another datasource similar to existing feature in
- Loki. This allows you to link traceID from your logs to tracing data source in Grafana.
-
+You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. Learn more about this feature [here]({{< relref "../enterprise/vault.md" >}}). 
 
 ## Upgrading
 
