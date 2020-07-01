@@ -923,7 +923,7 @@ jobs:
 
 
   typecheck-frontend-strict:
-    executor: base
+    executor: node
     steps:
       - checkout
       - run:
