@@ -39,6 +39,9 @@ function mapKinds(sug?: CodeEditorSuggestionItemKind): monaco.languages.Completi
   return monaco.languages.CompletionItemKind.Text;
 }
 
+/**
+ * @alpha
+ */
 export function registerSuggestions(
   language: string,
   getSuggestions: CodeEditorSuggestionProvider

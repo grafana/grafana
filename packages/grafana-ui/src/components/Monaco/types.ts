@@ -30,6 +30,9 @@ export interface CodeEditorProps {
   getSuggestions?: CodeEditorSuggestionProvider;
 }
 
+/**
+ * @alpha
+ */
 export enum CodeEditorSuggestionItemKind {
   Method = 'method',
   Field = 'field',
@@ -38,6 +41,9 @@ export enum CodeEditorSuggestionItemKind {
   Text = 'text',
 }
 
+/**
+ * @alpha
+ */
 export interface CodeEditorSuggestionItem {
   /**
    * The label of this completion item. By default

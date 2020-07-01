@@ -2,7 +2,7 @@ import { VariableSuggestion } from '@grafana/data';
 import { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './types';
 
 /**
- * @experimental
+ * @alpha
  */
 export function variableSuggestionToCodeEditorSuggestion(sug: VariableSuggestion): CodeEditorSuggestionItem {
   const label = '${' + sug.value + '}';
