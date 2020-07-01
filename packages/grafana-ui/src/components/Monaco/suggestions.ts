@@ -80,7 +80,7 @@ export function registerSuggestions(
       const lastVar = currentLine.lastIndexOf('$');
       const wordStart = Math.max(lastSep, lastVar);
       const currentWord = currentLine.substring(wordStart);
-      range.startColumn = wordStart;
+      range.startColumn = wordStart + 1;
 
       const suggestions = getCompletionItems(currentWord, getSuggestions(), range);
       if (suggestions.length) {
