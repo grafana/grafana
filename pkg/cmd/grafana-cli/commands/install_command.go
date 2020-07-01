@@ -308,7 +308,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 	}()
 
 	_, err = io.Copy(dst, src)
-	return
+	return err
 }
 
 // isPathSafe checks if the filePath does not resolve outside of destination. This is used to prevent

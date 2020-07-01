@@ -78,4 +78,15 @@ describe('Format value with value mappings', () => {
 
     expect(getMappedValue(valueMappings, value).text).toEqual('1-20');
   });
+
+  it('should map value text to mapping', () => {
+    const valueMappings: ValueMapping[] = [
+      { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
+      { id: 1, operator: '', text: 'ELVA', type: MappingType.ValueToText, value: 'elva' },
+    ];
+
+    const value = 'elva';
+
+    expect(getMappedValue(valueMappings, value).text).toEqual('ELVA');
+  });
 });

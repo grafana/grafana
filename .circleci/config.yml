@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.14
+            VERSION=0.4.16
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -825,16 +825,18 @@ jobs:
           name: Lint Go
           command: |
             # To save memory, run in two batches
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E vet -E deadcode -E gofmt \
-              -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
-              -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E deadcode -E depguard -E dogsled \
+              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E scopelint ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign \
+              -E rowserrcheck -E staticcheck -E structcheck -E typecheck -E unconvert -E unused -E varcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
               -exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
               ./pkg/services/alerting/... \
               ./pkg/services/provisioning/datasources/... \
               ./pkg/services/provisioning/dashboards/... \
+              ./pkg/services/provisioning/notifiers/... \
+              ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
 
   test-frontend:

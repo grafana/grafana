@@ -100,6 +100,7 @@ export class PanelQueryRunner {
                 timeZone: this.timeZone,
                 autoMinMax: true,
                 data: processedData.series,
+                getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
                 ...fieldConfig,
               }),
             };

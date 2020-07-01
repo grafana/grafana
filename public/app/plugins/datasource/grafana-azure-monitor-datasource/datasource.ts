@@ -13,6 +13,7 @@ import {
 import { Observable, of, from } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
+import { migrateMetricsDimensionFilters } from './query_ctrl';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -62,6 +63,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       }
       if (!target.queryType) {
         target.queryType = AzureQueryType.AzureMonitor;
+      }
+
+      if (target.queryType === AzureQueryType.AzureMonitor) {
+        migrateMetricsDimensionFilters(target.azureMonitor);
       }
 
       // Check that we have options

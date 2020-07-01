@@ -97,8 +97,9 @@ describe('MyComponent', () => {
     restoreThemeContext();
   });
 
-  it('renders correctyl', () => {
-    const wrapper = mount(<MyComponent />);
+
+  it('renders correctly', () => {
+    const wrapper = mount(<MyComponent />)
     expect(wrapper).toMatchSnapshot();
   });
 });
