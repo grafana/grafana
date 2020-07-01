@@ -922,38 +922,6 @@ jobs:
           when: on_success
 
 
-  typecheck-frontend-strict:
-    executor: node
-    steps:
-      - checkout
-      - run:
-          name: CI job started
-          command: "./scripts/ci-job-started.sh"
-      - restore_cache:
-          keys:
-            - v2-yarn-{{ checksum "yarn.lock" }}
-            # Used if checksum fails
-            - v2-yarn-
-      - run:
-          name: yarn install
-          command: "yarn install --frozen-lockfile --no-progress"
-          no_output_timeout: 15m
-      - save_cache:
-          key: v2-yarn-{{ checksum "yarn.lock" }}
-          paths:
-            - node_modules
-      - run:
-          name: Typecheck with strict null enabled
-          command: "./scripts/ci-frontend-typecheck-strict.sh"
-      - run:
-          name: CI job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
   deploy-to-kubernetes:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
@@ -1206,8 +1174,6 @@ workflows:
             - lint-go
       - test-frontend:
           filters: *filter-all
-      - typecheck-frontend-strict:
-          filters: *filter-not-release-or-master
       - mysql-integration-test:
           filters: *filter-all
           requires:
