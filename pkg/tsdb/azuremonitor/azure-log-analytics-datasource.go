@@ -110,16 +110,26 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) *tsdb.QueryResult {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+	queryResult := &tsdb.QueryResult{RefId: query.RefID}
 
-	queryResultError := func(err error) *tsdb.QueryResult {
+	queryResultErrorWithExecuted := func(err error) *tsdb.QueryResult {
 		queryResult.Error = err
+		frames := data.Frames{
+			&data.Frame{
+				RefID: query.RefID,
+				Meta: &data.FrameMeta{
+					ExecutedQueryString: query.Params.Get("query"),
+				},
+			},
+		}
+		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 		return queryResult
 	}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
-		return queryResultError(err)
+		queryResult.Error = err
+		return queryResult
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -138,28 +148,28 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	frame, err := LogTableToFrame(t)
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	err = setAdditionalFrameMeta(frame,
@@ -262,7 +272,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureLogAnalyticsResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
+		return AzureLogAnalyticsResponse{}, fmt.Errorf("Request failed status: %v: %w", res.Status, fmt.Errorf(string(body)))
 	}
 
 	var data AzureLogAnalyticsResponse

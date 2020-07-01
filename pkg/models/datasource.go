@@ -22,9 +22,11 @@ const (
 	DS_MSSQL         = "mssql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
-	DS_STACKDRIVER   = "stackdriver"
-	DS_AZURE_MONITOR = "grafana-azure-monitor-datasource"
-	DS_LOKI          = "loki"
+	// Stackdriver was renamed Google Cloud monitoring 2020-05 but we keep
+	// "stackdriver" to avoid breaking changes in reporting.
+	DS_CLOUD_MONITORING = "stackdriver"
+	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
+	DS_LOKI             = "loki"
 )
 
 var (
@@ -97,7 +99,7 @@ var knownDatasourcePlugins = map[string]bool{
 	DS_POSTGRES:                              true,
 	DS_MYSQL:                                 true,
 	DS_MSSQL:                                 true,
-	DS_STACKDRIVER:                           true,
+	DS_CLOUD_MONITORING:                      true,
 	DS_AZURE_MONITOR:                         true,
 	DS_LOKI:                                  true,
 	"opennms":                                true,

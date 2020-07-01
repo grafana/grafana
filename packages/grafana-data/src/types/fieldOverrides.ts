@@ -126,7 +126,7 @@ export enum FieldConfigProperty {
   Min = 'min',
   Max = 'max',
   Decimals = 'decimals',
-  Title = 'title',
+  DisplayName = 'displayName',
   NoValue = 'noValue',
   Thresholds = 'thresholds',
   Mappings = 'mappings',

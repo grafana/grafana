@@ -34,7 +34,11 @@ export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
+
+// Code editor
 export { CodeEditor } from './Monaco/CodeEditorLazy';
+export { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
 export { Modal } from './Modal/Modal';
@@ -61,6 +65,7 @@ export {
   BigValueSparkline,
   BigValueGraphMode,
   BigValueJustifyMode,
+  BigValueTextMode,
 } from './BigValue/BigValue';
 
 export { Gauge } from './Gauge/Gauge';

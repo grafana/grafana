@@ -346,7 +346,7 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
 
     const listOfMatchingQueries = query.queries.filter(query =>
       // Remove fields in which we don't want to be searching
-      Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some(value =>
+      Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
         value.toString().includes(searchFilter)
       )
     );
@@ -356,7 +356,7 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
 }
 
 export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[] | null) {
-  return listOfDatasourceFilters?.length > 0
+  return listOfDatasourceFilters && listOfDatasourceFilters.length > 0
     ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
     : queries;
 }
