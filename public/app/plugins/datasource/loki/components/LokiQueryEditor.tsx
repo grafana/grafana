@@ -85,7 +85,7 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
             <InlineFormLabel
               width={7}
               tooltip="Controls the name of the time series, using name or pattern. For example
-        {{hostname}} will be replaced with label value for the label hostname."
+        {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
             >
               Legend
             </InlineFormLabel>
