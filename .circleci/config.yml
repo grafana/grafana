@@ -921,7 +921,6 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-
   deploy-to-kubernetes:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
