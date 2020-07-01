@@ -30,7 +30,7 @@ func init() {
       <div class="gf-form max-width-30">
         <span class="gf-form-label width-8">Url</span>
         <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.url">
-          <input type="text" required class="gf-form-input max-width-30" ng-init="ctrl.model.secureSettings.url = ctrl.model.settings.url || ''; ctrl.model.settings.url = null;" ng-model="ctrl.model.secureSettings.url" placeholder="Slack incoming webhook url"></input>
+          <input type="text" required class="gf-form-input max-width-30" ng-init="ctrl.model.secureSettings.url = ctrl.model.settings.url || ''" ng-model="ctrl.model.secureSettings.url" placeholder="Slack incoming webhook url"></input>
         </div>
         <div class="gf-form" ng-if="ctrl.model.secureFields.url">
           <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
@@ -122,7 +122,7 @@ func init() {
         <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.token">
           <input type="text"
 						class="gf-form-input max-width-30"
-						ng-init="ctrl.model.secureSettings.token = ctrl.model.settings.token || ''; ctrl.model.settings.token = null;
+						ng-init="ctrl.model.secureSettings.token = ctrl.model.settings.token || '';"
             ng-model="ctrl.model.secureSettings.token"
             data-placement="right">
           </input>
