@@ -16,7 +16,6 @@ This topic includes the release notes for the Grafana v7.1, which is currently i
 
 The main highlights are:
 
-- [**Unified querying experience in Explore**]({{< relref "#unified-querying-experience-in-explore" >}})
 - [**Query history search**]({{< relref "#query-history-search" >}})
 - [**Provisioning of apps**]({{< relref "#provisioning-of-apps" >}})
 - [**Azure Monitor Datasource**]({{< relref "#azure-monitor-datasource" >}})
@@ -25,9 +24,6 @@ The main highlights are:
 - [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
 - [**Support for HashiCorp Vault**]({{< relref "#support-for-hashicorp-vault" >}})
 - [**Internal links for Elastic**]({{< relref "#internal-links-for-elastic" >}})
-
-## Unified querying experience in Explore
-TODO
 
 ## Query history search
 In Grafana v 7.1 we are introducing search functionality in Query history. You can search across queries and your comments. It is especially useful in combination with a time filter and data source filter. Read more about Query history [here]({{ < relref "../features/explore/index.md#query-history" >}}).
