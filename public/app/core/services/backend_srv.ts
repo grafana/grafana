@@ -440,7 +440,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  public handleStreamCancellation = (
+  handleStreamCancellation = (
     options: BackendSrvRequest,
     resultType: CancellationType
   ): MonoTypeOperatorFunction<FetchResponse<any> | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
