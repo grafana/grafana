@@ -16,7 +16,15 @@ This topic includes the release notes for the Grafana v7.1, which is currently i
 
 The main highlights are:
 
-- **
+- [**Unified querying experience in Explore**]({{< relref "#unified-querying-experience-in-explore" >}})
+- [**Query history search**]({{< relref "#query-history-search" >}})
+- [**Provisioning of apps**]({{< relref "#provisioning-of-apps" >}})
+- [**Azure Monitor Datasource**]({{< relref "#azure-monitor-datasource" >}})
+- [**Influx Datasource**]({{< relref "#influx-datasource" >}})
+- [**Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) datasource**]({{< relref "#influx-datasource" >}})
+- [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
+- [**Support for HashiCorp Vault**]({{< relref "#support-for-hashicorp-vault" >}})
+- [**Internal links for Elastic**]({{< relref "#internal-links-for-elastic" >}})
 
 ## Unified querying experience in Explore
 TODO
@@ -47,6 +55,10 @@ A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics
 General features are included in the Grafana Enterprise edition software.
 
 ### Support for HashiCorp Vault
+
+### Internal links for Elastic
+You can now create links in Elastic configuration that point to another datasource similar to existing feature in
+ Loki. This allows you to link traceID from your logs to tracing data source in Grafana.
 
 
 ## Upgrading
