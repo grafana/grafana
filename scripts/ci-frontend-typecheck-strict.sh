@@ -6,6 +6,8 @@ ERROR_COUNT_LIMIT=699
 
 ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --strictNullChecks true | grep -oP 'Found \K(\d+)')"
 
+echo  $ERROR_COUNT
+
 if [ "$ERROR_COUNT" -gt $ERROR_COUNT_LIMIT ]; then
   echo -e "Typescript strict errors $ERROR_COUNT exceeded $ERROR_COUNT_LIMIT so failing build"
 	exit 1
