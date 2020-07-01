@@ -440,53 +440,53 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  // private handleStreamCancellation = (
-  //   options: BackendSrvRequest,
-  //   resultType: CancellationType
-  // ): MonoTypeOperatorFunction<FetchResponse<any> | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
-  //   inputStream.pipe(
-  //     takeUntil(
-  //       this.inFlightRequests.pipe(
-  //         filter(requestId => {
-  //           let cancelRequest = false;
+  public handleStreamCancellation = (
+    options: BackendSrvRequest,
+    resultType: CancellationType
+  ): MonoTypeOperatorFunction<FetchResponse<any> | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
+    inputStream.pipe(
+      takeUntil(
+        this.inFlightRequests.pipe(
+          filter(requestId => {
+            let cancelRequest = false;
 
-  //           if (options && options.requestId && options.requestId === requestId) {
-  //             // when a new requestId is started it will be published to inFlightRequests
-  //             // if a previous long running request that hasn't finished yet has the same requestId
-  //             // we need to cancel that request
-  //             cancelRequest = true;
-  //           }
+            if (options && options.requestId && options.requestId === requestId) {
+              // when a new requestId is started it will be published to inFlightRequests
+              // if a previous long running request that hasn't finished yet has the same requestId
+              // we need to cancel that request
+              cancelRequest = true;
+            }
 
-  //           if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
-  //             cancelRequest = true;
-  //           }
+            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
+              cancelRequest = true;
+            }
 
-  //           return cancelRequest;
-  //         })
-  //       )
-  //     ),
-  //     // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
-  //     // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-  //     throwIfEmpty(() => ({
-  //       cancelled: true,
-  //     })),
-  //     catchError(err => {
-  //       if (!err.cancelled) {
-  //         return throwError(err);
-  //       }
+            return cancelRequest;
+          })
+        )
+      ),
+      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
+      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
+      throwIfEmpty(() => ({
+        cancelled: true,
+      })),
+      catchError(err => {
+        if (!err.cancelled) {
+          return throwError(err);
+        }
 
-  //       if (resultType === CancellationType.dataSourceRequest) {
-  //         return of({
-  //           data: [],
-  //           status: this.HTTP_REQUEST_CANCELED,
-  //           statusText: 'Request was aborted',
-  //           config: options,
-  //         });
-  //       }
+        if (resultType === CancellationType.dataSourceRequest) {
+          return of({
+            data: [],
+            status: this.HTTP_REQUEST_CANCELED,
+            statusText: 'Request was aborted',
+            config: options,
+          });
+        }
 
-  //       return of([]);
-  //     })
-  //   );
+        return of([]);
+      })
+    );
 }
 
 coreModule.factory('backendSrv', () => backendSrv);
