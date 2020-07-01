@@ -2,7 +2,7 @@
 
 Using the Regex Query option, you filter the list of options returned by the variable query or modify the options returned.
 
-This page shows #### Using regex to filter/modify values in the Variable dropdown
+This page shows how to use regex to filter/modify values in the variable dropdown
 
 Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned.
 

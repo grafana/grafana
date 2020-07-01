@@ -38,7 +38,7 @@ Query expressions are different for each data source. For more information, refe
 
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}).
 1. In the **Refresh** list, select when the variable should update options.
-   - **Never -** WHEN AND WHY WOULD THEY USE THIS?
+   - **Never -** Variables queries are cached and values are not updated. This is fine if the values never change, but problematic if they are dynamic and change a lot.
    - **On Dashboard Load -** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized. 
    - **On Time Range Change -** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query. If you need more room, hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
@@ -77,15 +77,21 @@ This feature is off by default. Click **Enabled** to turn on the feature.
 
 ### Tags query
 
-Enter a data source query that should return a list of tags.
+Enter a data source query that should return a list of tags. The tags query returns a list of tags that each represent a group, and the tag values query returns a list of group members. 
 
-NEED MORE DETAILS HERE
+For example, the tags query could be a list of regions (Europe, Asia, Americas), and then if the user selects the Europe tag, then the tag values query would return a list of countries -- Sweden, Germany, France, and so on.
+
+If you have a variable with a lot of values (say all the countries in the world), then this allows you to easily select a group of them. If the user selects the tag Europe, all the countries in Europe would be selected.
+
+In this [example dashboard](https://play.grafana.org/d/ZUPhFVGGk/graphite-with-experimental-tags?orgId=1), the server variable has tags enabled. 
 
 ### Tag values query
 
 Enter a data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer the currently selected tag.
 
-NEED MORE DETAILS HERE
+The `$tag` variable will have the value of the tag that the user chooses. 
+
+For example, if you have a Graphite query for tags, `regions.*`, that returns a list of regions. The the values query could be `regions.$tag.*`, which if the user chooses Europe would be interpolated to `regions.Europe.*`.
 
 ## Final steps
 
