@@ -20,7 +20,7 @@ Syntax: `${var_name:option}`
 
 Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
-If any invalid formatting option is specified, then `glob` is the default/fallback option.
+If any invalid formatting option is not specified, then `glob` is the default/fallback option.
 
 An alternative syntax (that might be deprecated in the future) is `[[var_name:option]]`.
 
