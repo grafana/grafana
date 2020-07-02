@@ -79,8 +79,8 @@ function constructDataFrame(
     fields: [
       { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
       { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
-      { name: 'id', type: FieldType.string, config: {}, values: uids },
       { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
+      { name: 'id', type: FieldType.string, config: {}, values: uids },
     ],
     length: times.length,
   };
