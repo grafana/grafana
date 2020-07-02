@@ -85,9 +85,9 @@ export class BackendSrv implements BackendService {
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    // if (options.requestId) {
-    //   this.inFlightRequests.next(options.requestId);
-    // }
+    if (options.requestId) {
+      this.inFlightRequests.next(options.requestId);
+    }
 
     options = this.parseRequestOptions(options);
 
@@ -107,7 +107,7 @@ export class BackendSrv implements BackendService {
 
     return merge(successStream, failureStream).pipe(
       catchError((err: ErrorResponse) => throwError(this.processRequestError(options, err))),
-      this.handleStreamCancellation(options, CancellationType.request)
+      this.handleStreamCancellation(options)
     );
   }
 
@@ -279,57 +279,40 @@ export class BackendSrv implements BackendService {
     return err;
   }
 
-  handleStreamCancellation = (
-    options: BackendSrvRequest,
-    resultType: CancellationType
-  ): MonoTypeOperatorFunction<FetchResponse<any>> => inputStream =>
-    inputStream.pipe(
-      takeUntil(
-        this.inFlightRequests.pipe(
-          filter(requestId => {
-            let cancelRequest = false;
+  handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
+    return inputStream =>
+      inputStream.pipe(
+        takeUntil(
+          this.inFlightRequests.pipe(
+            filter(requestId => {
+              let cancelRequest = false;
 
-            if (options && options.requestId && options.requestId === requestId) {
-              // when a new requestId is started it will be published to inFlightRequests
-              // if a previous long running request that hasn't finished yet has the same requestId
-              // we need to cancel that request
-              cancelRequest = true;
-            }
+              if (options && options.requestId && options.requestId === requestId) {
+                // when a new requestId is started it will be published to inFlightRequests
+                // if a previous long running request that hasn't finished yet has the same requestId
+                // we need to cancel that request
+                cancelRequest = true;
+              }
 
-            if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
-              cancelRequest = true;
-            }
+              if (requestId === CANCEL_ALL_REQUESTS_REQUEST_ID) {
+                cancelRequest = true;
+              }
 
-            return cancelRequest;
-          })
-        )
-      ),
-      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
-      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-      throwIfEmpty(() => ({
-        cancelled: true,
-        data: null,
-        status: this.HTTP_REQUEST_CANCELED,
-        statusText: 'Request was aborted',
-        config: options,
-      }))
-      // catchError(err => {
-      //   if (!err.cancelled) {
-      //     return throwError(err);
-      //   }
-
-      //   if (resultType === CancellationType.dataSourceRequest) {
-      //     return of({
-      //       data: [],
-      //       status: this.HTTP_REQUEST_CANCELED,
-      //       statusText: 'Request was aborted',
-      //       config: options,
-      //     });
-      //   }
-
-      //   return of(err);
-      // })
-    );
+              return cancelRequest;
+            })
+          )
+        ),
+        // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
+        // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
+        throwIfEmpty(() => ({
+          cancelled: true,
+          data: null,
+          status: this.HTTP_REQUEST_CANCELED,
+          statusText: 'Request was aborted',
+          config: options,
+        }))
+      );
+  }
 
   async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
     return await this.request({ method: 'GET', url, params, requestId });
