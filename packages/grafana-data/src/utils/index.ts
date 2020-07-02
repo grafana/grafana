@@ -16,4 +16,12 @@ export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 export { locationUtil } from './location';
 export { urlUtil, UrlQueryMap, UrlQueryValue } from './url';
 export { DataLinkBuiltInVars } from './dataLinks';
+export {
+  valueVars,
+  seriesVars,
+  timeRangeVars,
+  valueTimeVar,
+  getDataFrameVars,
+  getFieldVars,
+} from './variableSuggestions';
 export { DocsId } from './docs';

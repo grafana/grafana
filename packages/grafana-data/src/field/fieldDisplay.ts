@@ -149,7 +149,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                 };
               }
             }
-
             const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(displayName, {
               ...field.state?.scopedVars, // series and field scoped vars

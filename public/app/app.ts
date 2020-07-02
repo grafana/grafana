@@ -40,7 +40,7 @@ import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
 import { setupAngularRoutes } from 'app/routes/routes';
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { getTemplateSrv, registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -99,7 +99,11 @@ export class GrafanaApp {
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     standardEditorsRegistry.setInit(getStandardOptionEditors);
-    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+    standardFieldConfigEditorRegistry.setInit(
+      getStandardFieldConfigs({
+        getVariables: getTemplateSrv().getVariables.bind(getTemplateSrv()),
+      })
+    );
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
 

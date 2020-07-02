@@ -18,6 +18,10 @@ import {
   valueMappingsOverrideProcessor,
   ThresholdsMode,
   TimeZone,
+  VariableModel,
+  StringFieldWithSuggestionsConfigSettings,
+  VariableOrigin,
+  VariableSuggestion,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -35,19 +39,23 @@ import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { ColorValueEditor } from '../components/OptionsUI/color';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
+import { StringWithSuggestionsValueEditor } from '../components/OptionsUI/string';
 
+interface GetStandardFieldConfigDependencies {
+  getVariables: () => VariableModel[];
+}
 /**
  * Returns collection of common field config properties definitions
  */
-export const getStandardFieldConfigs = () => {
+export const getStandardFieldConfigs = (dependencies: GetStandardFieldConfigDependencies) => () => {
   const category = ['Standard options'];
-  const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+  const displayName: FieldConfigPropertyItem<any, string, StringFieldWithSuggestionsConfigSettings> = {
     id: 'displayName',
     path: 'displayName',
     name: 'Display name',
     description: 'Change the field or series name',
-    editor: standardEditorsRegistry.get('text').editor as any,
-    override: standardEditorsRegistry.get('text').editor as any,
+    editor: standardEditorsRegistry.get('textWithSuggestions').editor as any,
+    override: standardEditorsRegistry.get('textWithSuggestions').editor as any,
     process: stringOverrideProcessor,
     settings: {
       placeholder: 'none',
@@ -236,6 +244,13 @@ export const getStandardOptionEditors = () => {
     editor: StringValueEditor as any,
   };
 
+  const textWithSuggestions: StandardEditorsRegistryItem<string> = {
+    id: 'textWithSuggestions',
+    name: 'Text with suggestions',
+    description: 'Allows string values input and supports suggestions',
+    editor: StringWithSuggestionsValueEditor as any,
+  };
+
   const strings: StandardEditorsRegistryItem<string[]> = {
     id: 'strings',
     name: 'String array',
@@ -315,6 +330,7 @@ export const getStandardOptionEditors = () => {
 
   return [
     text,
+    textWithSuggestions,
     number,
     boolean,
     radio,

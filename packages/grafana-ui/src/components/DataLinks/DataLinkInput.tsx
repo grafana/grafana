@@ -30,7 +30,7 @@ interface DataLinkInputProps {
 const plugins = [
   SlatePrism({
     onlyIn: (node: any) => node.type === 'code_block',
-    getSyntax: () => 'links',
+    getSyntax: () => 'variables',
   }),
 ];
 
@@ -57,7 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 export const enableDatalinksPrismSyntax = () => {
-  Prism.languages['links'] = {
+  Prism.languages['variables'] = {
     builtInVariable: {
       pattern: /(\${\S+?})/,
     },

@@ -1,25 +1,26 @@
 import {
-  DynamicConfigValue,
-  FieldConfig,
-  DataFrame,
-  Field,
-  FieldType,
-  ThresholdsMode,
-  FieldColorMode,
-  ColorScheme,
-  FieldOverrideContext,
-  ScopedVars,
   ApplyFieldOverrideOptions,
-  FieldConfigPropertyItem,
-  LinkModel,
-  InterpolateFunction,
-  ValueLinkConfig,
-  GrafanaTheme,
-  TimeZone,
+  ColorScheme,
+  DataFrame,
   DataLink,
   DataSourceInstanceSettings,
+  DynamicConfigValue,
+  Field,
+  FieldColorMode,
+  FieldConfig,
+  FieldConfigPropertyItem,
+  FieldOverrideContext,
+  FieldType,
+  GrafanaTheme,
+  InterpolateFunction,
+  LinkModel,
+  ScopedVars,
+  ThresholdsMode,
+  TimeZone,
+  ValueLinkConfig,
+  VariableSuggestionsScope,
 } from '../types';
-import { fieldMatchers, ReducerID, reduceField } from '../transformations';
+import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import set from 'lodash/set';
@@ -33,7 +34,7 @@ import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
-import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 
@@ -111,6 +112,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const fieldScopedVars = { ...scopedVars };
       const displayName = getFieldDisplayName(field, frame, options.data);
 
+      console.log(displayName);
       fieldScopedVars['__field'] = {
         text: 'Field',
         value: {
@@ -127,7 +129,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       };
 
       const config: FieldConfig = { ...field.config };
-      const context = {
+      const context: FieldOverrideEnv = {
         field,
         data: options.data!,
         dataFrameIndex: index,

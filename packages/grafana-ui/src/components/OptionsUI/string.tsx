@@ -1,7 +1,13 @@
-import React, { useCallback } from 'react';
-import { FieldConfigEditorProps, StringFieldConfigSettings } from '@grafana/data';
+import React, { useCallback, useMemo } from 'react';
+import {
+  FieldConfigEditorProps,
+  StringFieldConfigSettings,
+  StringFieldWithSuggestionsConfigSettings,
+  VariableSuggestionsScope,
+} from '@grafana/data';
 import { Input } from '../Input/Input';
 import { TextArea } from '../TextArea/TextArea';
+import { DataLinkInput } from '..';
 
 export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
   value,
@@ -34,6 +40,26 @@ export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFi
       rows={item.settings?.useTextarea && item.settings.rows}
       onBlur={onValueChange}
       onKeyDown={onValueChange}
+    />
+  );
+};
+
+export const StringWithSuggestionsValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
+  value,
+  onChange,
+  item,
+  context,
+}) => {
+  const suggestions = useMemo(() => {
+    return context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [];
+  }, [context.getSuggestions]);
+
+  return (
+    <DataLinkInput
+      suggestions={suggestions}
+      placeholder={item.settings?.placeholder}
+      value={value || ''}
+      onChange={onChange}
     />
   );
 };
