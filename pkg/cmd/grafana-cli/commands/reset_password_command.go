@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,12 +23,14 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 	if c.Bool("password-from-stdin") {
 		logger.Infof("New Password: ")
 
-		reader := bufio.NewReader(os.Stdin)
-		line, err := reader.ReadString('\n')
-		if err != nil {
+		scanner := bufio.NewScanner(os.Stdin)
+		if ok := scanner.Scan(); !ok {
+			return fmt.Errorf("can't read password from stdin")
+		}
+		if err := scanner.Err(); err != nil {
 			return fmt.Errorf("can't read password from stdin: %w", err)
 		}
-		newPassword = strings.TrimSuffix(line, "\n")
+		newPassword = scanner.Text()
 	} else {
 		newPassword = c.Args().First()
 	}
