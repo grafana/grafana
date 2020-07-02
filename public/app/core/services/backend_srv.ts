@@ -7,7 +7,7 @@ import { AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents } from 'app/types';
+import { CoreEvents, FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
