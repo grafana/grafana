@@ -10,7 +10,7 @@ import {
   ImportDashboardDTO,
 } from './reducers';
 import { updateLocation } from 'app/core/actions';
-import { ThunkResult, FolderInfo, DashboardDTO } from 'app/types';
+import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
@@ -66,7 +66,7 @@ export function clearLoadedDashboard(): ThunkResult<void> {
   };
 }
 
-export function saveDashboard(importDashboardForm: ImportDashboardDTO): ThunkResult<void> {
+export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkResult<void> {
   return async (dispatch, getState) => {
     const dashboard = getState().importDashboard.dashboard;
     const inputs = getState().importDashboard.inputs;
@@ -142,14 +142,14 @@ async function moveDashboard(uid: string, toFolder: FolderInfo) {
     return { alreadyInFolder: true };
   }
 
-  const clone = fullDash.dashboard;
   const options = {
+    dashboard: fullDash.dashboard,
     folderId: toFolder.id,
     overwrite: false,
   };
 
   try {
-    await getBackendSrv().saveDashboard(clone, options);
+    await saveDashboard(options);
     return { succeeded: true };
   } catch (err) {
     if (err.data?.status !== 'plugin-dashboard') {
@@ -160,7 +160,7 @@ async function moveDashboard(uid: string, toFolder: FolderInfo) {
     options.overwrite = true;
 
     try {
-      await getBackendSrv().saveDashboard(clone, options);
+      await saveDashboard(options);
       return { succeeded: true };
     } catch (e) {
       return { succeeded: false };
@@ -197,7 +197,23 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export function deleteFolder(uid: string, showSuccessAlert: boolean) {
+export interface SaveDashboardOptions {
+  dashboard: DashboardDataDTO;
+  message?: string;
+  folderId?: number;
+  overwrite?: boolean;
+}
+
+export function saveDashboard(options: SaveDashboardOptions) {
+  return getBackendSrv().post('/api/dashboards/db/', {
+    dashboard: options.dashboard,
+    message: options.message ?? '',
+    overwrite: options.overwrite ?? false,
+    folderId: options.folderId,
+  });
+}
+
+function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
     url: `/api/folders/${uid}`,
