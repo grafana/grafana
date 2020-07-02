@@ -7,7 +7,7 @@ import { AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents, DashboardDataDTO, FolderDTO } from 'app/types';
+import { CoreEvents } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
@@ -230,28 +230,40 @@ export class BackendSrv implements BackendService {
       );
   }
 
+  showApplicationErrorAlert(err: ErrorResponse) {
+    let description = '';
+    let message = err.data.message;
+
+    if (message.length > 80) {
+      description = message;
+      message = 'Error';
+    }
+
+    this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
+      message,
+      description,
+    ]);
+  }
+
   processRequestError(options: BackendSrvRequest, err: ErrorResponse): ErrorResponse {
     console.log(err);
     // if (err.isHandled) {
     //   return;
     // }
 
-    let data = err.data ?? { message: 'Unexpected error' };
+    err.data = err.data ?? { message: 'Unexpected error' };
 
-    if (typeof data === 'string') {
-      data = { message: data };
-    }
-
-    if (err.status === 422) {
-      this.dependencies.appEvents.emit(AppEvents.alertWarning, ['Validation failed', data.message]);
-      return err;
-    }
-
-    if (typeof err.data === 'string' && err.status === 500) {
+    if (typeof err.data === 'string') {
       err.data = {
         error: err.statusText,
         response: err.data,
+        message: err.data,
       };
+    }
+
+    if (err.status === 422) {
+      this.dependencies.appEvents.emit(AppEvents.alertWarning, ['Validation failed', err.data.message]);
+      return err;
     }
 
     // If no message but got error string, copy to message prop
@@ -259,19 +271,9 @@ export class BackendSrv implements BackendService {
       err.data.message = err.data.error;
     }
 
-    if (data.message) {
-      let description = '';
-      let message = data.message;
-
-      if (message.length > 80) {
-        description = message;
-        message = 'Error';
-      }
-
-      this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
-        message,
-        description,
-      ]);
+    // check if we should show an error alert
+    if (err.data.message && !isDataQuery(options.url) && options.showErrorAlert !== false) {
+      this.showApplicationErrorAlert(err);
     }
 
     // TODO only for data source requests
@@ -363,18 +365,18 @@ export class BackendSrv implements BackendService {
   getFolderByUid(uid: string) {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
   }
+}
 
-  saveDashboard(
-    dashboard: DashboardDataDTO,
-    { message = '', folderId, overwrite = false }: { message?: string; folderId?: number; overwrite?: boolean } = {}
+function isDataQuery(url: string): boolean {
+  if (
+    url.indexOf('api/datasources/proxy') !== -1 ||
+    url.indexOf('api/tsdb/query') !== -1 ||
+    url.indexOf('api/ds/query') !== -1
   ) {
-    return this.post('/api/dashboards/db/', {
-      dashboard,
-      folderId,
-      overwrite,
-      message,
-    });
+    return true;
   }
+
+  return false;
 }
 
 coreModule.factory('backendSrv', () => backendSrv);

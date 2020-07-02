@@ -25,10 +25,14 @@ export type BackendSrvRequest = {
   method?: string;
 
   /**
-   * If set to true an alert with the response message will be displayed
-   * upon successful remote call
+   * Set to false an success application alert box will not be shown for successful PUT, DELETE, POST requests
    */
   showSuccessAlert?: boolean;
+
+  /**
+   * Set to false to not show an application alert box for query errors
+   */
+  showErrorAlert?: boolean;
 
   /**
    * Provided by the initiator to identify a particular remote call. An example
