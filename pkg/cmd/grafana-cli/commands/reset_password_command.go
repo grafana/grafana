@@ -27,7 +27,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 		reader := bufio.NewReader(os.Stdin)
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			return fmt.Errorf("can't read password from stdin: %v", err)
+			return fmt.Errorf("can't read password from stdin: %w", err)
 		}
 		newPassword = strings.TrimSuffix(line, "\n")
 	} else {
