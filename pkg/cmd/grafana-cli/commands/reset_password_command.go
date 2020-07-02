@@ -21,7 +21,7 @@ const AdminUserId = 1
 func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
 	newPassword := ""
 
-	if c.Bool("passwordFromStdin") {
+	if c.Bool("password-from-stdin") {
 		logger.Infof("\nNew Password: ")
 
 		reader := bufio.NewReader(os.Stdin)
