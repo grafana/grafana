@@ -30,7 +30,7 @@ export type BackendSrvRequest = {
   showSuccessAlert?: boolean;
 
   /**
-   * Set to false to not show an application alert box for query errors
+   * Set to false to not show an application alert box for request errors
    */
   showErrorAlert?: boolean;
 
