@@ -178,7 +178,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
       );
 
       // hide label if there is only one item and category name is same as item, name
-      if (categoryItemCount === 1 && item.category?.length && item.category[0] === item.name) {
+      if (categoryItemCount === 1 && item.category?.[0] === item.name) {
         label = undefined;
       }
 
