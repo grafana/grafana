@@ -7,7 +7,7 @@ import { AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents, DashboardDTO, FolderInfo, DashboardDataDTO, FolderDTO } from 'app/types';
+import { CoreEvents, DashboardDataDTO, FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
@@ -231,6 +231,7 @@ export class BackendSrv implements BackendService {
   }
 
   processRequestError(options: BackendSrvRequest, err: ErrorResponse): ErrorResponse {
+    console.log(err);
     // if (err.isHandled) {
     //   return;
     // }
@@ -373,106 +374,6 @@ export class BackendSrv implements BackendService {
       overwrite,
       message,
     });
-  }
-
-  createFolder(payload: any) {
-    return this.post('/api/folders', payload);
-  }
-
-  deleteFolder(uid: string, showSuccessAlert: boolean) {
-    return this.request({ method: 'DELETE', url: `/api/folders/${uid}`, showSuccessAlert: showSuccessAlert === true });
-  }
-
-  deleteDashboard(uid: string, showSuccessAlert: boolean) {
-    return this.request({
-      method: 'DELETE',
-      url: `/api/dashboards/uid/${uid}`,
-      showSuccessAlert: showSuccessAlert === true,
-    });
-  }
-
-  deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
-    const tasks = [];
-
-    for (const folderUid of folderUids) {
-      tasks.push(this.createTask(this.deleteFolder.bind(this), true, folderUid, true));
-    }
-
-    for (const dashboardUid of dashboardUids) {
-      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, dashboardUid, true));
-    }
-
-    return this.executeInOrder(tasks);
-  }
-
-  moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
-    const tasks = [];
-
-    for (const uid of dashboardUids) {
-      tasks.push(this.createTask(this.moveDashboard.bind(this), true, uid, toFolder));
-    }
-
-    return this.executeInOrder(tasks).then((result: any) => {
-      return {
-        totalCount: result.length,
-        successCount: result.filter((res: any) => res.succeeded).length,
-        alreadyInFolderCount: result.filter((res: any) => res.alreadyInFolder).length,
-      };
-    });
-  }
-
-  private async moveDashboard(uid: string, toFolder: FolderInfo) {
-    const fullDash: DashboardDTO = await this.getDashboardByUid(uid);
-
-    if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
-      return { alreadyInFolder: true };
-    }
-
-    const clone = fullDash.dashboard;
-    const options = {
-      folderId: toFolder.id,
-      overwrite: false,
-    };
-
-    try {
-      await this.saveDashboard(clone, options);
-      return { succeeded: true };
-    } catch (err) {
-      if (err.data?.status !== 'plugin-dashboard') {
-        return { succeeded: false };
-      }
-
-      err.isHandled = true;
-      options.overwrite = true;
-
-      try {
-        await this.saveDashboard(clone, options);
-        return { succeeded: true };
-      } catch (e) {
-        return { succeeded: false };
-      }
-    }
-  }
-
-  private createTask(fn: (...args: any[]) => Promise<any>, ignoreRejections: boolean, ...args: any[]) {
-    return async (result: any) => {
-      try {
-        const res = await fn(...args);
-        return Array.prototype.concat(result, [res]);
-      } catch (err) {
-        if (ignoreRejections) {
-          return result;
-        }
-
-        throw err;
-      }
-    };
-  }
-
-  private executeInOrder(tasks: any[]) {
-    return tasks.reduce((acc, task) => {
-      return Promise.resolve(acc).then(task);
-    }, []);
   }
 }
 
