@@ -19,7 +19,9 @@ const addValueToTextMappingText = (
   const valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
 
   if (isNaN(valueAsNumber) || isNaN(valueToTextMappingAsNumber)) {
-    return allValueMappings;
+    if (value === valueToTextMapping.value) {
+      return allValueMappings.concat(valueToTextMapping);
+    }
   }
 
   if (valueAsNumber !== valueToTextMappingAsNumber) {

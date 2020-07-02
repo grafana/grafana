@@ -35,7 +35,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
 		if awsCredentialCache[cacheKey].expiration != nil &&
-			(*awsCredentialCache[cacheKey].expiration).After(time.Now().UTC()) {
+			awsCredentialCache[cacheKey].expiration.After(time.Now().UTC()) {
 			result := awsCredentialCache[cacheKey].credential
 			credentialCacheLock.RUnlock()
 			return result, nil

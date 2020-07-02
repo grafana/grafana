@@ -76,7 +76,7 @@ Content-Type: application/json
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
-      "title":"my third dasboard"
+      "title":"my third dashboard"
     },
     {
       "id": 2,
@@ -84,7 +84,7 @@ Content-Type: application/json
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
-      "title":"my other dasboard"
+      "title":"my other dashboard"
     }
   ]
 }
@@ -114,7 +114,7 @@ Content-Type: application/json
     "type": "dashboard_by_id",
     "value": "3",
     "order": 1,
-    "title":"my third dasboard"
+    "title":"my third dashboard"
   },
   {
     "id": 2,
@@ -122,7 +122,7 @@ Content-Type: application/json
     "type": "dashboard_by_tag",
     "value": "myTag",
     "order": 2,
-    "title":"my other dasboard"
+    "title":"my other dashboard"
   }
 ]
 ```
@@ -147,12 +147,12 @@ Content-Type: application/json
 [
   {
     "id": 3,
-    "title": "my third dasboard",
+    "title": "my third dashboard",
     "order": 1,
   },
   {
     "id": 5,
-    "title":"my other dasboard"
+    "title":"my other dashboard"
     "order": 2,
 
   }
@@ -178,13 +178,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
         "type": "dashboard_by_id",
         "value": "3",
         "order": 1,
-        "title":"my third dasboard"
+        "title":"my third dashboard"
       },
       {
         "type": "dashboard_by_tag",
         "value": "myTag",
         "order": 2,
-        "title":"my other dasboard"
+        "title":"my other dashboard"
       }
     ]
   }
@@ -222,14 +222,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
         "type": "dashboard_by_id",
         "value": "3",
         "order": 1,
-        "title":"my third dasboard"
+        "title":"my third dashboard"
       },
       {
         "playlistId": 1,
         "type": "dashboard_by_tag",
         "value": "myTag",
         "order": 2,
-        "title":"my other dasboard"
+        "title":"my other dashboard"
       }
     ]
   }
@@ -252,7 +252,7 @@ Content-Type: application/json
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
-      "title":"my third dasboard"
+      "title":"my third dashboard"
     },
     {
       "id": 2,
@@ -260,7 +260,7 @@ Content-Type: application/json
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
-      "title":"my other dasboard"
+      "title":"my other dashboard"
     }
   ]
 }

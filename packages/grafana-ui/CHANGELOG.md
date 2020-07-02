@@ -1,3 +1,15 @@
+# 7.1.0-beta1 (2020-07-01)
+
+### Features / Enhancements
+* **Grafana-UI**: Add FileUpload. [#25835](https://github.com/grafana/grafana/pull/25835), [@Clarity-89](https://github.com/Clarity-89)
+* **Switch**: Deprecate checked prop in favor of value. [#25862](https://github.com/grafana/grafana/pull/25862), [@tskarhed](https://github.com/tskarhed)
+  
+
+# 7.0.4 (2020-06-25)
+
+### Features / Enhancements
+* **Slider**: Update rc-slider dependency to 9.3.1. [#25617](https://github.com/grafana/grafana/pull/25617), [@torkelo](https://github.com/torkelo)
+
 # 7.0.0 (2020-05-18)
 
 ### Bug Fixes
