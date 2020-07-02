@@ -85,9 +85,9 @@ export class BackendSrv implements BackendService {
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    if (options.requestId) {
-      this.inFlightRequests.next(options.requestId);
-    }
+    // if (options.requestId) {
+    //   this.inFlightRequests.next(options.requestId);
+    // }
 
     options = this.parseRequestOptions(options);
 
@@ -308,23 +308,27 @@ export class BackendSrv implements BackendService {
       // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
       throwIfEmpty(() => ({
         cancelled: true,
-      })),
-      catchError(err => {
-        if (!err.cancelled) {
-          return throwError(err);
-        }
+        data: null,
+        status: this.HTTP_REQUEST_CANCELED,
+        statusText: 'Request was aborted',
+        config: options,
+      }))
+      // catchError(err => {
+      //   if (!err.cancelled) {
+      //     return throwError(err);
+      //   }
 
-        if (resultType === CancellationType.dataSourceRequest) {
-          return of({
-            data: [],
-            status: this.HTTP_REQUEST_CANCELED,
-            statusText: 'Request was aborted',
-            config: options,
-          });
-        }
+      //   if (resultType === CancellationType.dataSourceRequest) {
+      //     return of({
+      //       data: [],
+      //       status: this.HTTP_REQUEST_CANCELED,
+      //       statusText: 'Request was aborted',
+      //       config: options,
+      //     });
+      //   }
 
-        return of(err);
-      })
+      //   return of(err);
+      // })
     );
 
   async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {

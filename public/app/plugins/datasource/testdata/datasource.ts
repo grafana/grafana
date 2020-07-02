@@ -70,6 +70,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         })
         .pipe(
           map(res => {
+            console.log('res', res);
             return this.processQueryResult(queries, res);
           })
         );
