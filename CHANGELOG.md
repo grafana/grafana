@@ -5,6 +5,7 @@
 
 ### Bug Fixes
 * **Explore**: Fix href when jumping from Explore to Add data source. [#25991](https://github.com/grafana/grafana/pull/25991), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Fix**: Build-in plugins failed to load in windows. [#25982](https://github.com/grafana/grafana/pull/25982), [@papagian](https://github.com/papagian)
 
 # 7.1.0-beta 1 (2020-07-01)
 
