@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
@@ -16,9 +17,29 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// Session factory.
+// Stubbable by tests.
+var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
+	return session.NewSession(cfgs...)
+}
+
+// STS service factory.
+// Stubbable by tests.
+var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) stsiface.STSAPI {
+	return sts.New(p, cfgs...)
+}
+
+// EC2Metadata service factory.
+// Stubbable by tests.
+var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
+	return ec2metadata.New(p, cfgs...)
+}
 
 func remoteCredProvider(sess *session.Session) credentials.Provider {
 	ecsCredURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
@@ -41,7 +62,7 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 }
 
 func ec2RoleProvider(sess *session.Session) credentials.Provider {
-	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
+	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
 }
 
 func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
@@ -56,6 +77,7 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 
 	authType := datasource.JsonData.Get("authType").MustString()
 	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
+	externalID := datasource.JsonData.Get("externalId").MustString()
 	decrypted := datasource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
@@ -65,6 +87,7 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 		Profile:       datasource.Database,
 		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
+		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
 	}
@@ -100,7 +123,7 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "credentials", "keys" or "sdk"`,
 			dsInfo.AuthType)
 	}
-	sess, err := session.NewSession(cfgs...)
+	sess, err := newSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +132,7 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 	if dsInfo.AssumeRoleArn != "" {
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleArn)
 
-		sess, err = session.NewSession(regionCfg, &aws.Config{
+		sess, err = newSession(regionCfg, &aws.Config{
 			Credentials: stscreds.NewCredentials(sess, dsInfo.AssumeRoleArn),
 		})
 		if err != nil {
