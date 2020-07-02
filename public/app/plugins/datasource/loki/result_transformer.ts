@@ -143,8 +143,10 @@ function createUid(ts: string, labelsString: string, line: string): string {
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
+  const name = createMetricLabel(matrixResult.metric, options);
   return {
-    target: createMetricLabel(matrixResult.metric, options),
+    target: name,
+    title: name,
     datapoints: lokiPointsToTimeseriesPoints(matrixResult.values, options),
     tags: matrixResult.metric,
     meta: options.meta,

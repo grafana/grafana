@@ -84,7 +84,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, fieldConfig, timeZone } = options;
+  const { replaceVariables, reduceOptions, timeZone } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -223,9 +223,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push(createNoValuesFieldDisplay(options));
-  } else if (values.length === 1 && !fieldConfig.defaults.displayName) {
-    // Don't show title for single item
-    values[0].display.title = undefined;
   }
 
   return values;

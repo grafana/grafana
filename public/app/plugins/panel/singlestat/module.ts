@@ -502,7 +502,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function addSparkline() {
       const data: ShowData = ctrl.data;
       const width = elem.width();
-      if (width < 30) {
+      if (width && width < 30) {
         // element has not gotten it's width yet
         // delay sparkline render
         setTimeout(addSparkline, 30);

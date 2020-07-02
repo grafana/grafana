@@ -256,6 +256,8 @@
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.1
+      link: /guides/whats-new-in-v7-1/
     - name: Version 7.0
       link: /guides/whats-new-in-v7-0/
     - name: Version 6.7
@@ -328,6 +330,8 @@
       link: /enterprise/white-labeling/
     - name: Usage insights
       link: /enterprise/usage-insights/
+    - name: Vault integration
+      link: /enterprise/vault/
     - name: License expiration
       link: /enterprise/license-expiration/
 - name: Plugins
