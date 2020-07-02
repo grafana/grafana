@@ -1,4 +1,4 @@
-import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
+import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse } from '@grafana/runtime';
@@ -36,11 +36,6 @@ interface ErrorResponse<T extends ErrorResponseProps = any> {
   isHandled?: boolean;
   data: T | string;
   cancelled?: boolean;
-}
-
-enum CancellationType {
-  request,
-  dataSourceRequest,
 }
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
@@ -95,20 +90,27 @@ export class BackendSrv implements BackendService {
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
-      tap(response => {
-        if (options.method !== 'GET' && options.showSuccessAlert !== false) {
-          const data: { message: string } = response.data as any;
-          if (data?.message) {
-            this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
-          }
-        }
-      })
+      tap(response => this.showSuccessAlert(response))
     );
 
     return merge(successStream, failureStream).pipe(
       catchError((err: ErrorResponse) => throwError(this.processRequestError(options, err))),
       this.handleStreamCancellation(options)
     );
+  }
+
+  showSuccessAlert<T>(response: FetchResponse<T>) {
+    const { config } = response;
+
+    if (config.method === 'GET' || config.showSuccessAlert === false) {
+      return;
+    }
+
+    const data: { message: string } = response.data as any;
+
+    if (data?.message) {
+      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+    }
   }
 
   resolveCancelerIfExists(requestId: string) {

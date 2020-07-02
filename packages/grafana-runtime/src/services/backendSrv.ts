@@ -49,7 +49,7 @@ export interface FetchResponse<T> {
   readonly redirected: boolean;
   readonly type: ResponseType;
   readonly url: string;
-  readonly config: any;
+  readonly config: BackendSrvRequest;
 }
 
 /**
