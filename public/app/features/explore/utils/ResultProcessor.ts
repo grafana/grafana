@@ -31,7 +31,15 @@ export class ResultProcessor {
 
   private classifyFrames() {
     for (const frame of this.dataFrames) {
-      if (isTimeSeries(frame, this.state.datasourceInstance?.meta.id)) {
+      if (shouldShowInVisualisationTypeStrict(frame, 'logs')) {
+        this.logsFrames.push(frame);
+      } else if (shouldShowInVisualisationTypeStrict(frame, 'graph')) {
+        this.graphFrames.push(frame);
+      } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
+        this.traceFrames.push(frame);
+      } else if (shouldShowInVisualisationTypeStrict(frame, 'table')) {
+        this.tableFrames.push(frame);
+      } else if (isTimeSeries(frame, this.state.datasourceInstance?.meta.id)) {
         if (shouldShowInVisualisationType(frame, 'graph')) {
           this.graphFrames.push(frame);
         }
@@ -39,14 +47,8 @@ export class ResultProcessor {
           this.tableFrames.push(frame);
         }
       } else {
-        if (shouldShowInVisualisationTypeStrict(frame, 'logs')) {
-          this.logsFrames.push(frame);
-        } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
-          this.traceFrames.push(frame);
-        } else {
-          // We fallback to table if we do not have any better meta info about the dataframe.
-          this.tableFrames.push(frame);
-        }
+        // We fallback to table if we do not have any better meta info about the dataframe.
+        this.tableFrames.push(frame);
       }
     }
   }
