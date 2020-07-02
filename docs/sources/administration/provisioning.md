@@ -331,7 +331,7 @@ providers:
 ```
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` works.
+> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
 
 ## Alert Notification Channels
 
