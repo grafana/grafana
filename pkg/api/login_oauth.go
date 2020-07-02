@@ -142,6 +142,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
+	oauthLogger.Debug("OAuthLogin Got token", "token", token)
+
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
 
