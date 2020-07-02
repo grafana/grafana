@@ -1,7 +1,10 @@
 package commands
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,7 +19,20 @@ import (
 const AdminUserId = 1
 
 func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
-	newPassword := c.Args().First()
+	newPassword := ""
+
+	if c.Bool("passwordFromStdin") {
+		logger.Infof("\nNew Password: ")
+
+		reader := bufio.NewReader(os.Stdin)
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("can't read password from stdin: %v", err)
+		}
+		newPassword = strings.TrimSuffix(line, "\n")
+	} else {
+		newPassword = c.Args().First()
+	}
 
 	password := models.Password(newPassword)
 	if password.IsWeak() {
