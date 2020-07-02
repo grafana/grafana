@@ -165,6 +165,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       return;
     }
 
+    backendSrv.visitDashboard(dashboard.id);
+
     // add missing orgId query param
     const storeState = getState();
     if (!storeState.location.query.orgId) {

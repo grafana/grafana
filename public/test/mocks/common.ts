@@ -5,6 +5,7 @@ export const backendSrv = {
   getDashboard: jest.fn(),
   getDashboardByUid: jest.fn(),
   getFolderByUid: jest.fn(),
+  visitDashboard: jest.fn(),
   post: jest.fn(),
 };
 

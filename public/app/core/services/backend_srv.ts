@@ -276,6 +276,10 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  visitDashboard(dashboardId: number) {
+    return this.request({ method: 'POST', url: `/api/dashboards/id/${dashboardId}/visit` });
+  }
+
   createFolder(payload: any) {
     return this.post('/api/folders', payload);
   }

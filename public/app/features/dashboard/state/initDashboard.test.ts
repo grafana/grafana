@@ -269,6 +269,10 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
   });
 
+  it('Should mark dashboard as visited', () => {
+    expect(ctx.backendSrv.visitDashboard).toBeCalled();
+  });
+
   it('Should initialize redux variables if newVariables is enabled', () => {
     expect(ctx.actions[3].type).toBe(variablesInitTransaction.type);
   });
