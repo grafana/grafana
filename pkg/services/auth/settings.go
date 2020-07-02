@@ -22,8 +22,8 @@ type AuthOrgConfig struct {
 	Groups []*GroupToOrgRole `toml:"group_mappings"`
 }
 
-// GroupToOrgRole is a struct representation of LDAP
-// config "group_mappings" setting
+// GroupToOrgRole is a struct representation, kept similar to LDAP to facilitate  LDAP->OIDC provider migrations.
+// config "group_mappings" setting:
 type GroupToOrgRole struct {
 	GroupDN string `toml:"group_dn"`
 	OrgID   int64  `toml:"org_id"`
@@ -34,43 +34,18 @@ type GroupToOrgRole struct {
 	OrgRole string `toml:"org_role"`
 }
 
-// logger for all LDAP stuff
+// logger for all auth settings
 var logger = log.New("auth.settings")
 
 // loadingMutex locks the reading of the config so multiple requests for reloading are sequential.
 var loadingMutex = &sync.Mutex{}
 
-// IsEnabled checks if ldap is enabled
-func IsEnabled() bool {
-	return true // TODO revisit if oauth has a setting
-	//return setting.LDAPEnabled
-}
-
-// ReloadConfig reads the config from the disc and caches it.
-func ReloadConfig(configFile string) error {
-	if !IsEnabled() {
-		return nil
-	}
-
-	loadingMutex.Lock()
-	defer loadingMutex.Unlock()
-
-	var err error
-	config, err = readConfig(configFile)
-	return err
-}
-
 // We need to define in this space so `GetConfig` fn
 // could be defined as singleton
 var config *AuthConfig
 
-// GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
-// the config or it reads it and caches it first.
+// GetConfig returns the auth config represented by the configFile.
 func GetConfig(configFile string) (*AuthConfig, error) {
-	if !IsEnabled() {
-		return nil, nil
-	}
-
 	// Make it a singleton
 	if config != nil {
 		return config, nil
@@ -103,16 +78,15 @@ func readConfig(configFile string) (*AuthConfig, error) {
 
 	_, err = toml.Decode(stringContent, result)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load LDAP config file", err)
+		return nil, errutil.Wrap("Failed to load Auth config file", err)
 	}
 
 	if len(result.AuthMappings) == 0 {
-		return nil, xerrors.New("LDAP enabled but no LDAP servers defined in config file")
+		return nil, xerrors.New("Auth Group mappings enabled, but none have loaded.")
 	}
 
 	// set default org id
 	for _, auth := range result.AuthMappings {
-
 		for _, groupMap := range auth.Groups {
 			if groupMap.OrgID == 0 {
 				groupMap.OrgID = 1
