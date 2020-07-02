@@ -22,7 +22,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 	newPassword := ""
 
 	if c.Bool("password-from-stdin") {
-		logger.Infof("\nNew Password: ")
+		logger.Infof("New Password: ")
 
 		reader := bufio.NewReader(os.Stdin)
 		line, err := reader.ReadString('\n')
