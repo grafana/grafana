@@ -1,3 +1,12 @@
+# 7.1.0-beta 2 (2020-07-02)
+
+### Features / Enhancements
+* **Loki**: Allow aliasing Loki queries in dashboard. [#25706](https://github.com/grafana/grafana/pull/25706), [@bastjan](https://github.com/bastjan)
+
+### Bug Fixes
+* **Explore**: Fix href when jumping from Explore to Add data source. [#25991](https://github.com/grafana/grafana/pull/25991), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Fix**: Build-in plugins failed to load in windows. [#25982](https://github.com/grafana/grafana/pull/25982), [@papagian](https://github.com/papagian)
+
 # 7.1.0-beta 1 (2020-07-01)
 
 ### Features / Enhancements
