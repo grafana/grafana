@@ -18,7 +18,6 @@ import {
   ThresholdsMode,
   TimeZone,
   ValueLinkConfig,
-  VariableSuggestionsScope,
 } from '../types';
 import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
