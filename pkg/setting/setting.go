@@ -198,11 +198,10 @@ var (
 	AlertingErrorOrTimeout     string
 	AlertingNoDataOrNullValues string
 
-	AlertingEvaluationTimeout       time.Duration
-	AlertingNotificationTimeout     time.Duration
-	AlertingMaxAttempts             int
-	AlertingMinInterval             int64
-	AlertingStandaloneAlertsEnabled bool
+	AlertingEvaluationTimeout   time.Duration
+	AlertingNotificationTimeout time.Duration
+	AlertingMaxAttempts         int
+	AlertingMinInterval         int64
 
 	// Explore UI
 	ExploreEnabled bool
@@ -992,7 +991,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
-	AlertingStandaloneAlertsEnabled = alerting.Key("standalone_alerts_enabled").MustBool()
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
