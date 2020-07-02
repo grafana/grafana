@@ -94,21 +94,7 @@ def pipeline_set(kind, name):
                       'install-deps',
                     ],
                     'commands': [
-                        'make scripts/go/bin/revive scripts/go/bin/gosec',
-                        'go vet ./pkg/...',
-                        'golangci-lint run -v --config scripts/go/configs/ci/.golangci.yml -E deadcode ' +
-                            '-E gofmt -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...',
-                        'golangci-lint run -v --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused ' +
-                            '-E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...',
-                        './scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...',
-                        './scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml ' +
-                            '-exclude ./pkg/plugins/backendplugin/pluginextensionv2/... ' +
-                            './pkg/services/alerting/... ' +
-                            './pkg/services/provisioning/datasources/... ' +
-                            './pkg/services/provisioning/dashboards/... ' +
-                            './pkg/plugins/backendplugin/...',
-                        './scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 ' +
-                            '-conf=./scripts/go/configs/gosec.json ./pkg/...',
+                        'make lint-go',
                     ],
                 },
                 {
