@@ -2,8 +2,9 @@ import React, { PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Form } from '@grafana/ui';
+import { Form, Spinner } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { NotificationChannelForm } from './components/NotificationChannelForm';
 import {
   loadNotificationChannel,
@@ -15,8 +16,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { selectableChannels, transformSubmitData, transformTestData } from './utils/notificationChannels';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
-import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
-import LoadingIndicator from '@jaegertracing/jaeger-ui-components/src/common/LoadingIndicator';
 
 interface OwnProps {}
 
@@ -87,7 +86,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
               }}
             </Form>
           ) : (
-            <LoadingIndicator />
+            <Spinner />
           )}
         </Page.Contents>
       </Page>
