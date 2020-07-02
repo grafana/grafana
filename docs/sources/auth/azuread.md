@@ -25,7 +25,8 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 1. Click **App Registrations** and add a new application registration:
    - Name: Grafana
    - Application type: Web app / API
-   - Sign-on URL: `https://<grafana domain>/login/azuread`
+   - Redirect URI (also known as Reply URL): `https://<grafana domain>/login/azuread`
+1. Under manifests find signInUrl and change to the same URL above
 
 1. Click the name of the new application to open the application details page.
 
