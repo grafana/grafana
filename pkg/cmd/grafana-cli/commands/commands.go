@@ -113,7 +113,7 @@ var adminCommands = []*cli.Command{
 		Action: runDbCommand(resetPasswordCommand),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:  "passwordFromStdin",
+				Name:  "password-from-stdin",
 				Usage: "Read the password from stdin",
 				Value: false,
 			},
