@@ -90,6 +90,8 @@ revive-strict: scripts/go/bin/revive
 		./pkg/services/alerting/... \
 		./pkg/services/provisioning/datasources/... \
 		./pkg/services/provisioning/dashboards/... \
+		./pkg/services/provisioning/notifiers/... \
+		./pkg/services/provisioning/values/... \
 		./pkg/plugins/backendplugin/...
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod

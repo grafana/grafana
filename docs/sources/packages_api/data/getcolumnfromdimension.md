@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-getColumnFromDimension: (dimension: Dimension<any>, column: number) => Field<any, import("..").Vector<any>>
+getColumnFromDimension: (dimension: Dimension, column: number) => Field<any, import("..").Vector<any>>
 ```
 <b>Import</b>
 

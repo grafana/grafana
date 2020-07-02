@@ -29,4 +29,5 @@ export interface ElasticsearchQuery extends DataQuery {
 export type DataLinkConfig = {
   field: string;
   url: string;
+  datasourceUid?: string;
 };
