@@ -38,6 +38,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
+	_ "github.com/grafana/grafana/pkg/services/usage"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/xerrors"

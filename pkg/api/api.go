@@ -306,6 +306,7 @@ func (hs *HTTPServer) registerRoutes() {
 				dashIdRoute.Get("/versions", Wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", Wrap(GetDashboardVersion))
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), Wrap(hs.RestoreDashboardVersion))
+				dashIdRoute.Post("/visit", Wrap(hs.VisitDashboard))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", Wrap(GetDashboardPermissionList))
