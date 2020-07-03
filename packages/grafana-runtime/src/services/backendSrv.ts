@@ -64,7 +64,12 @@ export type BackendSrvRequest = {
   withCredentials?: boolean;
 };
 
-export interface FetchResponse<T> {
+/**
+ * Response for fetch function in {@link BackendSrv}
+ *
+ * @public
+ */
+export interface FetchResponse<T = any> {
   data: T;
   readonly status: number;
   readonly statusText: string;
@@ -74,6 +79,30 @@ export interface FetchResponse<T> {
   readonly type: ResponseType;
   readonly url: string;
   readonly config: BackendSrvRequest;
+}
+
+/**
+ * Error type for fetch function in {@link BackendSrv}
+ *
+ * @public
+ */
+export interface FetchErrorDataProps {
+  message?: string;
+  status?: string;
+  error?: string | any;
+}
+
+/**
+ * Error type for fetch function in {@link BackendSrv}
+ *
+ * @public
+ */
+export interface FetchError<T extends FetchErrorDataProps = any> {
+  status: number;
+  statusText?: string;
+  data: T | string;
+  cancelled?: boolean;
+  config: BackendSrvRequest;
 }
 
 /**

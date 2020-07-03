@@ -1,31 +1,17 @@
 import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse, FetchError } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents, FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
-
-interface ErrorResponseProps {
-  message?: string;
-  status?: string;
-  error?: string | any;
-}
-
-interface ErrorResponse<T extends ErrorResponseProps = any> {
-  status: number;
-  statusText?: string;
-  isHandled?: boolean;
-  data: T | string;
-  cancelled?: boolean;
-}
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -40,6 +26,8 @@ export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
+  private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
+
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
     appEvents: appEvents,
@@ -79,11 +67,14 @@ export class BackendSrv implements BackendService {
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
-      tap(response => this.showSuccessAlert(response))
+      tap(response => {
+        this.showSuccessAlert(response);
+        this.inspectorStream.next(response);
+      })
     );
 
     return merge(successStream, failureStream).pipe(
-      catchError((err: ErrorResponse) => throwError(this.processRequestError(options, err))),
+      catchError((err: FetchError) => throwError(this.processRequestError(options, err))),
       this.handleStreamCancellation(options)
     );
   }
@@ -191,7 +182,7 @@ export class BackendSrv implements BackendService {
         filter(response => response.ok === false),
         mergeMap(response => {
           const { status, statusText, data } = response;
-          const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+          const fetchErrorResponse: FetchError = { status, statusText, data, config: options };
           return throwError(fetchErrorResponse);
         }),
         retryWhen((attempts: Observable<any>) =>
@@ -219,7 +210,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  showApplicationErrorAlert(err: ErrorResponse) {
+  showApplicationErrorAlert(err: FetchError) {
     let description = '';
     let message = err.data.message;
 
@@ -234,7 +225,7 @@ export class BackendSrv implements BackendService {
     ]);
   }
 
-  processRequestError(options: BackendSrvRequest, err: ErrorResponse): ErrorResponse {
+  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError {
     console.log(err);
     // if (err.isHandled) {
     //   return;
@@ -265,15 +256,16 @@ export class BackendSrv implements BackendService {
       this.showApplicationErrorAlert(err);
     }
 
-    // TODO only for data source requests
-    if (!options.silent) {
-      this.dependencies.appEvents.emit(CoreEvents.dsRequestError, err);
-    }
+    this.inspectorStream.next(err);
+    // // TODO only for data source requests
+    // if (!options.silent) {
+    //   this.dependencies.appEvents.emit(CoreEvents.dsRequestError, err);
+    // }
 
     return err;
   }
 
-  handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
+  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
     return inputStream =>
       inputStream.pipe(
         takeUntil(
@@ -306,6 +298,10 @@ export class BackendSrv implements BackendService {
           config: options,
         }))
       );
+  }
+
+  getInspectorStream(): Observable<FetchResponse<any> | FetchError> {
+    return this.inspectorStream;
   }
 
   async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
