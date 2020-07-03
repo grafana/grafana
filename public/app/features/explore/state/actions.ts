@@ -157,7 +157,6 @@ export function changeDatasource(exploreId: ExploreId, datasourceName: string): 
     }
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance, orgId));
-    dispatch(runQueries(exploreId));
   };
 }
 
@@ -265,11 +264,12 @@ export function loadExploreDatasourcesAndSetDatasource(
   exploreId: ExploreId,
   datasourceName: string
 ): ThunkResult<void> {
-  return dispatch => {
+  return async dispatch => {
     const exploreDatasources = getExploreDatasources();
 
     if (exploreDatasources.length >= 1) {
-      dispatch(changeDatasource(exploreId, datasourceName));
+      await dispatch(changeDatasource(exploreId, datasourceName));
+      dispatch(runQueries(exploreId));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
     }
