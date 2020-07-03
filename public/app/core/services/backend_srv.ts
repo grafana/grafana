@@ -217,6 +217,11 @@ export class BackendSrv implements BackendService {
       return;
     }
 
+    // Skip success alerts for data queries
+    if (isDataQuery(response.config.url)) {
+      return;
+    }
+
     const data: { message: string } = response.data as any;
 
     if (data?.message) {
