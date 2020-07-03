@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -376,10 +377,20 @@ func TestQuery_StopQuery(t *testing.T) {
 	}, resp)
 }
 
-/*
+func TestQuery_GetQueryResults(t *testing.T) {
+	origNewCWLogsClient := newCWLogsClient
+	t.Cleanup(func() {
+		newCWLogsClient = origNewCWLogsClient
+	})
 
-func TestHandleGetQueryResults(t *testing.T) {
-	logs := mockedLogs{
+	var logs mockedLogs
+
+	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return logs
+	}
+
+	const refID = "A"
+	logs = mockedLogs{
 		queryResults: cloudwatchlogs.GetQueryResultsOutput{
 			Results: [][]*cloudwatchlogs.ResultField{
 				{
@@ -396,7 +407,6 @@ func TestHandleGetQueryResults(t *testing.T) {
 						Value: aws.String("abcdefg"),
 					},
 				},
-
 				{
 					{
 						Field: aws.String("@timestamp"),
@@ -412,46 +422,44 @@ func TestHandleGetQueryResults(t *testing.T) {
 					},
 				},
 			},
-
 			Statistics: &cloudwatchlogs.QueryStatistics{
 				BytesScanned:   aws.Float64(512),
 				RecordsMatched: aws.Float64(256),
 				RecordsScanned: aws.Float64(1024),
 			},
-
 			Status: aws.String("Complete"),
 		},
 	}
-	executor := &CloudWatchExecutor{
-		DataSource: mockDatasource(),
-		clients: &mockClients{
-			logs: logs,
+
+	executor := &CloudWatchExecutor{}
+	resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+		Queries: []*tsdb.Query{
+			{
+				RefId: refID,
+				Model: simplejson.NewFromAny(map[string]interface{}{
+					"type":    "logAction",
+					"subtype": "GetQueryResults",
+					"queryId": "abcd-efgh-ijkl-mnop",
+				}),
+			},
 		},
-	}
-
-	params := simplejson.NewFromAny(map[string]interface{}{
-		"queryId": "abcd-efgh-ijkl-mnop",
 	})
+	require.NoError(t, err)
 
-	frame, err := executor.handleGetQueryResults(context.Background(), logs, params, "A")
+	time1, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:37:23.000")
 	require.NoError(t, err)
-	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:37:23.000")
+	time2, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:40:43.000")
 	require.NoError(t, err)
-	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-20 10:40:43.000")
-	require.NoError(t, err)
-	expectedTimeField := data.NewField("@timestamp", nil, []*time.Time{
-		aws.Time(timeA), aws.Time(timeB),
+	expField1 := data.NewField("@timestamp", nil, []*time.Time{
+		aws.Time(time1), aws.Time(time2),
 	})
-	expectedTimeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
-
-	expectedFieldB := data.NewField("field_b", nil, []*string{
+	expField1.SetConfig(&data.FieldConfig{DisplayName: "Time"})
+	expField2 := data.NewField("field_b", nil, []*string{
 		aws.String("b_1"), aws.String("b_2"),
 	})
-
-	expectedFrame := data.NewFrame("A", expectedTimeField, expectedFieldB)
-	expectedFrame.RefID = "A"
-
-	expectedFrame.Meta = &data.FrameMeta{
+	expFrame := data.NewFrame(refID, expField1, expField2)
+	expFrame.RefID = refID
+	expFrame.Meta = &data.FrameMeta{
 		Custom: map[string]interface{}{
 			"Status": "Complete",
 			"Statistics": cloudwatchlogs.QueryStatistics{
@@ -462,8 +470,12 @@ func TestHandleGetQueryResults(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, nil, err)
-	assert.ElementsMatch(t, expectedFrame.Fields, frame.Fields)
-	assert.Equal(t, expectedFrame.Meta, frame.Meta)
+	assert.Equal(t, &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			refID: {
+				RefId:      refID,
+				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
+			},
+		},
+	}, resp)
 }
-*/
