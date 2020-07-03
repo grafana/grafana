@@ -7,7 +7,8 @@ import {
   DataSourceJsonData,
   ScopedVars,
 } from '@grafana/data';
-import { Observable, from, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { config } from '..';
 import { getBackendSrv } from '../services';
 import { toDataQueryResponse } from './queryResponse';
@@ -101,36 +102,39 @@ export class DataSourceWithBackend<
       body.to = range.to.valueOf().toString();
     }
 
-    const req: Promise<DataQueryResponse> = getBackendSrv()
-      .datasourceRequest({
+    return getBackendSrv()
+      .fetch({
         url: '/api/ds/query',
         method: 'POST',
         data: body,
         requestId,
       })
-      .then((rsp: any) => {
-        const dqs = toDataQueryResponse(rsp);
-        if (this.processResponse) {
-          return this.processResponse(dqs);
-        }
-        return dqs;
-      })
-      .catch(err => {
-        err.isHandled = true; // Avoid extra popup warning
-        const dqs = toDataQueryResponse(err);
-        if (this.processResponse) {
-          return this.processResponse(dqs);
-        }
-        return dqs;
-      });
+      .pipe(
+        map((rsp: any) => {
+          const dqs = toDataQueryResponse(rsp);
 
-    return from(req);
+          if (this.processResponse) {
+            return this.processResponse(dqs);
+          }
+
+          return dqs;
+        }),
+        catchError(err => {
+          const dqs = toDataQueryResponse(err);
+
+          if (this.processResponse) {
+            return of(this.processResponse(dqs));
+          }
+
+          return of(dqs);
+        })
+      );
   }
 
   /**
    * Optionally augment the response before returning the results to the
    */
-  processResponse?(res: DataQueryResponse): Promise<DataQueryResponse>;
+  processResponse?(res: DataQueryResponse): DataQueryResponse;
 
   /**
    * Override to skip executing a query

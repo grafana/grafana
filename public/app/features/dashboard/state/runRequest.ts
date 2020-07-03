@@ -116,7 +116,6 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     }),
     // handle errors
     catchError(err => {
-      console.log('runRequest.catchError', err);
       return of({
         ...state.panelData,
         state: LoadingState.Error,
