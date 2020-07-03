@@ -302,6 +302,11 @@ type Cfg struct {
 	FeatureToggles map[string]bool
 
 	AnonymousHideVersion bool
+
+	// // Annotations
+	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
+	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
+	APIAnnotationCleanupSettings       AnnotationCleanupSettings
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -1072,7 +1077,27 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		ConnStr: connStr,
 	}
 
+	// Annotations
+	dashboardAnnotation := iniFile.Section("annotations.dashboard")
+	APIAnnotation := iniFile.Section("annotations.api")
+
+	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alerting)
+	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation)
+	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(APIAnnotation)
+
 	return nil
+}
+
+func newAnnotationCleanupSettings(section *ini.Section) AnnotationCleanupSettings {
+	return AnnotationCleanupSettings{
+		MaxAge:   section.Key("max_age").MustDuration(0),
+		MaxCount: section.Key("max_annotations_to_keep").MustInt64(0),
+	}
+}
+
+type AnnotationCleanupSettings struct {
+	MaxAge   time.Duration
+	MaxCount int64
 }
 
 func valueAsString(section *ini.Section, keyName string, defaultValue string) (value string, err error) {

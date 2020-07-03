@@ -95,6 +95,7 @@ func (ss *SqlStore) Init() error {
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
