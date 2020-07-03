@@ -52,16 +52,15 @@ e2e.scenario({
           .should('be.visible')
           .click();
 
-        // This is closed for some reason
+        // Force click because Cypress is weirding out
         e2e.components.QueryOperationRow.title()
-          .scrollIntoView()
-          .should('be.visible')
-          .click();
-        e2e.components.Select.input()
-          .should('be.visible')
-          .click();
+          .contains('Inside, Outhouse, F-series - applied panel transformations')
+          .click({ force: true });
+        e2e.components.Select.input().click({ force: true });
+
         // Only two options should be vailable: Series and the transform data frame
         e2e.components.Select.option().should('have.length', 2);
+        e2e.components.Select.option().should('length.not.be.above', 2);
       });
   },
 });
