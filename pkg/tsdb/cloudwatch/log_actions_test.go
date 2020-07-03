@@ -119,9 +119,19 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 	})
 }
 
-/*
-func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) {
-	logs := mockedLogs{
+func TestQuery_GetLogGroupFields(t *testing.T) {
+	origNewCWLogsClient := newCWLogsClient
+	t.Cleanup(func() {
+		newCWLogsClient = origNewCWLogsClient
+	})
+
+	var logs mockedLogs
+
+	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return logs
+	}
+
+	logs = mockedLogs{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -139,28 +149,47 @@ func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 			},
 		},
 	}
-	executor := &CloudWatchExecutor{
-		DataSource: mockDatasource(),
-		clients: &mockClients{
-			logs: logs,
+
+	const refID = "A"
+
+	executor := &CloudWatchExecutor{}
+	resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+		Queries: []*tsdb.Query{
+			{
+				RefId: refID,
+				Model: simplejson.NewFromAny(map[string]interface{}{
+					"type":         "logAction",
+					"subtype":      "GetLogGroupFields",
+					"logGroupName": "group_a",
+					"limit":        50,
+				}),
+			},
 		},
-	}
-
-	params := simplejson.NewFromAny(map[string]interface{}{
-		"logGroupName": "group_a",
-		"limit":        50,
 	})
+	require.NoError(t, err)
+	require.NotNil(t, resp)
 
-	frame, err := executor.handleGetLogGroupFields(context.Background(), logs, params, "A")
-
-	expectedNameField := data.NewField("name", nil, []*string{aws.String("field_a"), aws.String("field_b"), aws.String("field_c")})
-	expectedPercentField := data.NewField("percent", nil, []*int64{aws.Int64(100), aws.Int64(30), aws.Int64(55)})
-	expectedFrame := data.NewFrame("A", expectedNameField, expectedPercentField)
-	expectedFrame.RefID = "A"
-
-	assert.Equal(t, nil, err)
-	assert.Equal(t, expectedFrame, frame)
+	expFrame := data.NewFrame(
+		refID,
+		data.NewField("name", nil, []*string{
+			aws.String("field_a"), aws.String("field_b"), aws.String("field_c"),
+		}),
+		data.NewField("percent", nil, []*int64{
+			aws.Int64(100), aws.Int64(30), aws.Int64(55),
+		}),
+	)
+	expFrame.RefID = refID
+	assert.Equal(t, &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			refID: {
+				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
+				RefId:      refID,
+			},
+		},
+	}, resp)
 }
+
+/*
 
 func TestExecuteStartQuery(t *testing.T) {
 	logs := mockedLogs{}
