@@ -32,6 +32,17 @@ Use these settings to refine your visualization.
 - **Points -** Display points for values.
 - **Point radius -** Controls how large the points are.
 
+### Stacking and null value
+
+- **Stack -** Each series is stacked on top of another.
+- **Percent -** Available when **Stack** is selected. Each series is drawn as a percentage of the total of all series.
+- **Null value -** How null values are displayed. _This is a very important setting._ See note below.
+  - **connected -** If there is a gap in the series, meaning a null value or values, then the line will skip the gap and connect to the next non-null value.
+  - **null -** (default) If there is a gap in the series, meaning a null value, then the line in the graph will be broken and show the gap.
+  - **null as zero -** If there is a gap in the series, meaning  a null value, then it will be displayed as a zero value in the graph panel.
+
+> **Note:** If you are monitoring a server's CPU load and the load reaches 100%, then the server will lock up and the agent sending statistics will not be able to collect the load statistic. This leads to a gap in the metrics and having the default as _null_ means Grafana will show the gaps and indicate that something is wrong. If this is set to _connected_, then it would be easy to miss this signal.
+
 ### Hover tooltip
 
 Use these settings to change the appearance of the tooltip that appears when you hover your cursor over the graph visualization.
@@ -43,17 +54,6 @@ Use these settings to change the appearance of the tooltip that appears when you
   - **None -** The order of the series in the tooltip is determined by the sort order in your query. For example, they could be alphabetically sorted by series name.
   - **Increasing -** The series in the hover tooltip are sorted by value and in increasing order, with the lowest value at the top of the list.
   - **Decreasing -** The series in the hover tooltip are sorted by value and in decreasing order, with the highest value at the top of the list.
-
-### Stacking and null value
-
-- **Stack -** Each series is stacked on top of another.
-- **Percent -** Available when **Stack** is selected. Each series is drawn as a percentage of the total of all series.
-- **Null value -** How null values are displayed. _This is a very important setting._ See note below.
-  - **connected -** If there is a gap in the series, meaning a null value or values, then the line will skip the gap and connect to the next non-null value.
-  - **null -** (default) If there is a gap in the series, meaning a null value, then the line in the graph will be broken and show the gap.
-  - **null as zero -** If there is a gap in the series, meaning  a null value, then it will be displayed as a zero value in the graph panel.
-
-> **Note:** If you are monitoring a server's CPU load and the load reaches 100%, then the server will lock up and the agent sending statistics will not be able to collect the load statistic. This leads to a gap in the metrics and having the default as _null_ means Grafana will show the gaps and indicate that something is wrong. If this is set to _connected_, then it would be easy to miss this signal.
 
 ## Series overrides
 

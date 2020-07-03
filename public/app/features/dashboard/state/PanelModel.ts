@@ -335,7 +335,7 @@ export class PanelModel implements DataConfigSource {
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
-    if (plugin.panel && plugin.onPanelMigration) {
+    if (plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
 
       if (version !== this.pluginVersion) {

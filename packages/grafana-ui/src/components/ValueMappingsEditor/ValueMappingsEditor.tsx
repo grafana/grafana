@@ -15,7 +15,6 @@ export const ValueMappingsEditor: React.FC<Props> = ({ valueMappings, onChange, 
       type: MappingType.ValueToText,
       from: '',
       to: '',
-      operator: '',
       text: '',
     };
     const id = update && update.length > 0 ? Math.max(...update.map(v => v.id)) + 1 : 0;

@@ -92,10 +92,6 @@ export default class ResponseParser {
       return dimensions;
     }
 
-    if (!metricData.isDimensionRequired) {
-      dimensions.push({ text: 'None', value: 'None' });
-    }
-
     for (let i = 0; i < metricData.dimensions.length; i++) {
       const text = metricData.dimensions[i].localizedValue;
       const value = metricData.dimensions[i].value;
