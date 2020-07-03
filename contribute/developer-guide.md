@@ -225,7 +225,7 @@ For some people, typically using the bash shell, ulimit fails with an error simi
 ulimit: open files: cannot modify limit: Operation not permitted
 ```
 
-If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initalization files (~/.bashrc typically), if there's already a ulimit command that you can tweak.
+If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (~/.bashrc typically), if there's already a ulimit command that you can tweak.
 
 ## Next steps
 

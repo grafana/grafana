@@ -78,7 +78,7 @@ function constructDataFrame(
     refId,
     fields: [
       { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
+      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line - needs to be the first field with string type
       { name: 'id', type: FieldType.string, config: {}, values: uids },
       { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
     ],
@@ -143,8 +143,10 @@ function createUid(ts: string, labelsString: string, line: string): string {
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
+  const name = createMetricLabel(matrixResult.metric, options);
   return {
-    target: createMetricLabel(matrixResult.metric, options),
+    target: name,
+    title: name,
     datapoints: lokiPointsToTimeseriesPoints(matrixResult.values, options),
     tags: matrixResult.metric,
     meta: options.meta,

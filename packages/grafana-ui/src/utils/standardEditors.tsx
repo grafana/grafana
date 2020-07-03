@@ -155,13 +155,14 @@ export const getStandardFieldConfigs = () => {
     id: 'mappings',
     path: 'mappings',
     name: 'Value mappings',
+    description: 'Modify the display text based on input value',
 
     editor: standardEditorsRegistry.get('mappings').editor as any,
     override: standardEditorsRegistry.get('mappings').editor as any,
     process: valueMappingsOverrideProcessor,
     settings: {},
     defaultValue: [],
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: () => true,
     category: ['Value mappings'],
     getItemsCount: (value?) => (value ? value.length : 0),
   };

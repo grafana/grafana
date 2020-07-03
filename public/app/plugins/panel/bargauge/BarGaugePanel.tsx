@@ -5,6 +5,8 @@ import {
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
+  FieldConfig,
+  DisplayValue,
 } from '@grafana/data';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 
@@ -18,13 +20,13 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { options } = this.props;
-    const { value, alignmentFactors, orientation, width, height } = valueProps;
+    const { value, alignmentFactors, orientation, width, height, count } = valueProps;
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
 
     return (
       <BarGauge
-        value={display}
+        value={clearNameForSingleSeries(count, field, display)}
         width={width}
         height={height}
         orientation={orientation}
@@ -96,4 +98,15 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       />
     );
   }
+}
+
+export function clearNameForSingleSeries(count: number, field: FieldConfig<any>, display: DisplayValue): DisplayValue {
+  if (count === 1 && !field.displayName) {
+    return {
+      ...display,
+      title: undefined,
+    };
+  }
+
+  return display;
 }
