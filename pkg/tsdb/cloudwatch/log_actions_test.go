@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -189,14 +190,156 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 	}, resp)
 }
 
-/*
+func TestQuery_StartQuery(t *testing.T) {
+	origNewCWLogsClient := newCWLogsClient
+	t.Cleanup(func() {
+		newCWLogsClient = origNewCWLogsClient
+	})
 
-func TestExecuteStartQuery(t *testing.T) {
-	logs := mockedLogs{}
-	executor := &CloudWatchExecutor{
-		DataSource: mockDatasource(),
-		clients: &mockClients{
-			logs: logs,
+	var logs mockedLogs
+
+	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return logs
+	}
+
+	t.Run("invalid time range", func(t *testing.T) {
+		logs = mockedLogs{
+			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
+				LogGroupFields: []*cloudwatchlogs.LogGroupField{
+					{
+						Name:    aws.String("field_a"),
+						Percent: aws.Int64(100),
+					},
+					{
+						Name:    aws.String("field_b"),
+						Percent: aws.Int64(30),
+					},
+					{
+						Name:    aws.String("field_c"),
+						Percent: aws.Int64(55),
+					},
+				},
+			},
+		}
+
+		timeRange := &tsdb.TimeRange{
+			From: "1584873443000",
+			To:   "1584700643000",
+		}
+
+		executor := &CloudWatchExecutor{}
+		_, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+			TimeRange: timeRange,
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":        "logAction",
+						"subtype":     "StartQuery",
+						"limit":       50,
+						"region":      "default",
+						"queryString": "fields @message",
+					}),
+				},
+			},
+		})
+		require.Error(t, err)
+
+		assert.Equal(t, fmt.Errorf("invalid time range: start time must be before end time"), err)
+	})
+
+	t.Run("valid time range", func(t *testing.T) {
+		const refID = "A"
+		logs = mockedLogs{
+			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
+				LogGroupFields: []*cloudwatchlogs.LogGroupField{
+					{
+						Name:    aws.String("field_a"),
+						Percent: aws.Int64(100),
+					},
+					{
+						Name:    aws.String("field_b"),
+						Percent: aws.Int64(30),
+					},
+					{
+						Name:    aws.String("field_c"),
+						Percent: aws.Int64(55),
+					},
+				},
+			},
+		}
+
+		timeRange := &tsdb.TimeRange{
+			From: "1584700643000",
+			To:   "1584873443000",
+		}
+
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+			TimeRange: timeRange,
+			Queries: []*tsdb.Query{
+				{
+					RefId: refID,
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":        "logAction",
+						"subtype":     "StartQuery",
+						"limit":       50,
+						"region":      "default",
+						"queryString": "fields @message",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		expFrame := data.NewFrame(
+			refID,
+			data.NewField("queryId", nil, []string{"abcd-efgh-ijkl-mnop"}),
+		)
+		expFrame.RefID = refID
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"Region": "default",
+			},
+		}
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				refID: {
+					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
+					RefId:      refID,
+				},
+			},
+		}, resp)
+	})
+}
+
+func TestQuery_StopQuery(t *testing.T) {
+	origNewCWLogsClient := newCWLogsClient
+	t.Cleanup(func() {
+		newCWLogsClient = origNewCWLogsClient
+	})
+
+	var logs mockedLogs
+
+	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return logs
+	}
+
+	logs = mockedLogs{
+		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
+			LogGroupFields: []*cloudwatchlogs.LogGroupField{
+				{
+					Name:    aws.String("field_a"),
+					Percent: aws.Int64(100),
+				},
+				{
+					Name:    aws.String("field_b"),
+					Percent: aws.Int64(30),
+				},
+				{
+					Name:    aws.String("field_c"),
+					Percent: aws.Int64(55),
+				},
+			},
 		},
 	}
 
@@ -205,77 +348,35 @@ func TestExecuteStartQuery(t *testing.T) {
 		To:   "1584700643000",
 	}
 
-	params := simplejson.NewFromAny(map[string]interface{}{
-		"region":      "default",
-		"limit":       50,
-		"queryString": "fields @message",
+	executor := &CloudWatchExecutor{}
+	resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+		TimeRange: timeRange,
+		Queries: []*tsdb.Query{
+			{
+				Model: simplejson.NewFromAny(map[string]interface{}{
+					"type":    "logAction",
+					"subtype": "StopQuery",
+					"queryId": "abcd-efgh-ijkl-mnop",
+				}),
+			},
+		},
 	})
+	require.NoError(t, err)
 
-	response, err := executor.executeStartQuery(context.Background(), logs, params, timeRange)
-
-	var expectedResponse *cloudwatchlogs.StartQueryOutput = nil
-
-	assert.Equal(t, expectedResponse, response)
-	assert.Equal(t, fmt.Errorf("invalid time range: start time must be before end time"), err)
-
+	expFrame := data.NewFrame(
+		"StopQueryResponse",
+		data.NewField("success", nil, []bool{true}),
+	)
+	assert.Equal(t, &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			"": {
+				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
+			},
+		},
+	}, resp)
 }
 
-func TestHandleStartQuery(t *testing.T) {
-	logs := mockedLogs{}
-	executor := &CloudWatchExecutor{
-		DataSource: mockDatasource(),
-		clients: &mockClients{
-			logs: logs,
-		},
-	}
-
-	timeRange := &tsdb.TimeRange{
-		From: "1584700643000",
-		To:   "1584873443000",
-	}
-
-	params := simplejson.NewFromAny(map[string]interface{}{
-		"region":      "default",
-		"limit":       50,
-		"queryString": "fields @message",
-	})
-
-	frame, err := executor.handleStartQuery(context.Background(), logs, params, timeRange, "A")
-
-	expectedField := data.NewField("queryId", nil, []string{"abcd-efgh-ijkl-mnop"})
-	expectedFrame := data.NewFrame("A", expectedField)
-	expectedFrame.RefID = "A"
-	expectedFrame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{
-			"Region": "default",
-		},
-	}
-
-	assert.Equal(t, nil, err)
-	assert.Equal(t, expectedFrame, frame)
-}
-
-func TestHandleStopQuery(t *testing.T) {
-	logs := mockedLogs{}
-	executor := &CloudWatchExecutor{
-		DataSource: mockDatasource(),
-		clients: &mockClients{
-			logs: logs,
-		},
-	}
-
-	params := simplejson.NewFromAny(map[string]interface{}{
-		"queryId": "abcd-efgh-ijkl-mnop",
-	})
-
-	frame, err := executor.handleStopQuery(context.Background(), logs, params)
-
-	expectedField := data.NewField("success", nil, []bool{true})
-	expectedFrame := data.NewFrame("StopQueryResponse", expectedField)
-
-	assert.Equal(t, nil, err)
-	assert.Equal(t, expectedFrame, frame)
-}
+/*
 
 func TestHandleGetQueryResults(t *testing.T) {
 	logs := mockedLogs{
