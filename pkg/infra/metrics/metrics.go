@@ -159,6 +159,12 @@ var (
 	// StatsTotalDataSources is a metric total number of defined datasources, labeled by pluginId
 	StatsTotalDataSources *prometheus.GaugeVec
 
+	// StatsTotalAnnotations is a metric of total number of annotations stored in Grafana.
+	StatsTotalAnnotations prometheus.Gauge
+
+	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
+	StatsTotalDashboardVersions prometheus.Gauge
+
 	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
 
@@ -483,6 +489,18 @@ func init() {
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "plugin_type", "version"})
+
+	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_dashboard_versions",
+		Help:      "total amount of dashboard versions in the database",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalAnnotations = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_annotations",
+		Help:      "total amount of annotations in the database",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -550,6 +568,8 @@ func initMetricVars() {
 		StatsTotalDataSources,
 		grafanaBuildVersion,
 		grafanaPluginBuildInfoDesc,
+		StatsTotalDashboardVersions,
+		StatsTotalAnnotations,
 	)
 
 }
