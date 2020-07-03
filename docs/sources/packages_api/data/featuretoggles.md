@@ -30,6 +30,7 @@ import { FeatureToggles } from '@grafana/data';
 |  [meta](#meta-property) | <code>boolean</code> |  |
 |  [newEdit](#newedit-property) | <code>boolean</code> |  |
 |  [reportGrid](#reportgrid-property) | <code>boolean</code> |  |
+|  [standaloneAlerts](#standalonealerts-property) | <code>boolean</code> |  |
 |  [transformations](#transformations-property) | <code>boolean</code> |  |
 
 ### datasourceInsights property
@@ -74,6 +75,14 @@ newEdit: boolean;
 
 ```typescript
 reportGrid: boolean;
+```
+
+### standaloneAlerts property
+
+<b>Signature</b>
+
+```typescript
+standaloneAlerts: boolean;
 ```
 
 ### transformations property
