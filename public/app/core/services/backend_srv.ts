@@ -283,15 +283,13 @@ export class BackendSrv implements BackendService {
         ),
         // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
         // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-        throwIfEmpty(() => {
-          return {
-            cancelled: true,
-            data: null,
-            status: this.HTTP_REQUEST_CANCELED,
-            statusText: 'Request was aborted',
-            config: options,
-          };
-        })
+        throwIfEmpty(() => ({
+          cancelled: true,
+          data: null,
+          status: this.HTTP_REQUEST_CANCELED,
+          statusText: 'Request was aborted',
+          config: options,
+        }))
       );
   }
 

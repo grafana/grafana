@@ -1,12 +1,11 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of } from 'rxjs';
-import { delay, catchError } from 'rxjs/operators';
+import { delay } from 'rxjs/operators';
 import { AppEvents } from '@grafana/data';
 
 import { BackendSrv } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
-import { CoreEvents } from '../../types';
 import { describe, expect } from '../../../test/lib/common';
 
 const getTestContext = (overides?: object) => {
