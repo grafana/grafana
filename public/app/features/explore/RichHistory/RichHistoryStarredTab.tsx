@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { css } from 'emotion';
-import { uniqBy } from 'lodash';
+import { uniqBy, debounce } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -10,12 +10,13 @@ import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { SortOrder } from '../../../core/utils/explore';
-import { sortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
+import { filterAndSortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select } from '@grafana/ui';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -39,14 +40,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     selectors: css`
       display: flex;
       justify-content: space-between;
+      flex-wrap: wrap;
     `,
     multiselect: css`
-      width: 60%;
+      width: 100%;
+      margin-bottom: ${theme.spacing.sm};
       .gf-form-select-box__multi-value {
         background-color: ${bgColor};
         padding: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.sm};
         border-radius: ${theme.border.radius.sm};
       }
+    `,
+    filterInput: css`
+      margin-bottom: ${theme.spacing.sm};
     `,
     sort: css`
       width: 170px;
@@ -77,21 +83,40 @@ export function RichHistoryStarredTab(props: Props) {
     exploreId,
   } = props;
 
+  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
+  const [searchInput, setSearchInput] = useState('');
+
   const theme = useTheme();
   const styles = getStyles(theme);
 
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
-
-  const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
-
   const starredQueries = queries.filter(q => q.starred === true);
-  const starredQueriesFilteredByDatasource =
-    listOfDatasourceFilters && listOfDatasourceFilters?.length > 0
-      ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-      : starredQueries;
 
-  const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
+  const filterAndSortQueriesDebounced = useCallback(
+    debounce((searchValue: string) => {
+      setFilteredQueries(
+        filterAndSortQueries(
+          starredQueries,
+          sortOrder,
+          datasourceFilters?.map(d => d.value) as string[] | null,
+          searchValue
+        )
+      );
+    }, 300),
+    [queries, sortOrder, datasourceFilters]
+  );
+
+  useEffect(() => {
+    setFilteredQueries(
+      filterAndSortQueries(
+        starredQueries,
+        sortOrder,
+        datasourceFilters?.map(d => d.value) as string[] | null,
+        searchInput
+      )
+    );
+  }, [queries, sortOrder, datasourceFilters]);
 
   return (
     <div className={styles.container}>
@@ -108,6 +133,18 @@ export function RichHistoryStarredTab(props: Props) {
               />
             </div>
           )}
+          <div className={styles.filterInput}>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search queries"
+              value={searchInput}
+              onChange={(value: string) => {
+                setSearchInput(value);
+                filterAndSortQueriesDebounced(value);
+              }}
+            />
+          </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
               options={sortOrderOptions}
@@ -117,7 +154,7 @@ export function RichHistoryStarredTab(props: Props) {
             />
           </div>
         </div>
-        {sortedStarredQueries.map(q => {
+        {filteredQueries.map(q => {
           const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
           return (
             <RichHistoryCard

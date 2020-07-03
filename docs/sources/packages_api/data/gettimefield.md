@@ -15,8 +15,8 @@ type = "docs"
 
 ```typescript
 getTimeField: (series: DataFrame) => {
-    timeField?: Field<any, import("../types").Vector<any>> | undefined;
-    timeIndex?: number | undefined;
+    timeField?: Field;
+    timeIndex?: number;
 }
 ```
 <b>Import</b>

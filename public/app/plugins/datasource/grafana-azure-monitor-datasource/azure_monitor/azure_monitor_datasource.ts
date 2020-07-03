@@ -8,6 +8,7 @@ import {
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
+  AzureQueryType,
 } from '../types';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { getBackendSrv, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
@@ -73,12 +74,21 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const aggregation = templateSrv.replace(item.aggregation, scopedVars);
     const top = templateSrv.replace(item.top || '', scopedVars);
 
+    const dimensionsFilters = item.dimensionFilters
+      .filter(f => f.dimension && f.dimension !== 'None')
+      .map(f => {
+        const filter = templateSrv.replace(f.filter, scopedVars);
+        return {
+          dimension: templateSrv.replace(f.dimension, scopedVars),
+          operator: f.operator || 'eq',
+          filter: filter || '*', // send * when empty
+        };
+      });
+
     return {
       refId: target.refId,
       subscription: subscriptionId,
-      queryType: 'Azure Monitor',
-      type: 'timeSeriesQuery',
-      raw: false,
+      queryType: AzureQueryType.AzureMonitor,
       azureMonitor: {
         resourceGroup,
         resourceName,
@@ -89,9 +99,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         metricNamespace:
           metricNamespace && metricNamespace !== defaultDropdownValue ? metricNamespace : metricDefinition,
         aggregation: aggregation,
-        dimension: templateSrv.replace(item.dimension, scopedVars),
+        dimensionsFilters,
         top: top || '10',
-        dimensionFilter: templateSrv.replace(item.dimensionFilter, scopedVars),
         alias: item.alias,
         format: target.format,
       },

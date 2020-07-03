@@ -23,6 +23,7 @@ import {
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
+import { updateTimeZoneForSession } from '../profile/state/reducers';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import kbn from '../../core/utils/kbn';
 import { ExploreTimeControls } from './ExploreTimeControls';
@@ -83,6 +84,7 @@ interface DispatchProps {
   changeMode: typeof changeMode;
   updateLocation: typeof updateLocation;
   setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
+  onChangeTimeZone: typeof updateTimeZoneForSession;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -180,6 +182,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       originPanelId,
       datasourceLoading,
       containerWidth,
+      onChangeTimeZone,
     } = this.props;
 
     const styles = getStyles();
@@ -303,6 +306,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   syncedTimes={syncedTimes}
                   onChangeTimeSync={this.onChangeTimeSync}
                   hideText={showSmallTimePicker}
+                  onChangeTimeZone={onChangeTimeZone}
                 />
               </div>
             )}
@@ -410,6 +414,7 @@ const mapDispatchToProps: DispatchProps = {
   syncTimes,
   changeMode: changeMode,
   setDashboardQueriesToUpdateOnLoad,
+  onChangeTimeZone: updateTimeZoneForSession,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

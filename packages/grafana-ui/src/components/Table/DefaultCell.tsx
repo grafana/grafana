@@ -20,7 +20,23 @@ export const DefaultCell: FC<TableCellProps> = props => {
     <div className={tableStyles.tableCell}>
       {link ? (
         <Tooltip content={link.title}>
-          <a href={link.href} target={link.target} title={link.title} className={tableStyles.tableCellLink}>
+          <a
+            href={link.href}
+            onClick={
+              link.onClick
+                ? event => {
+                    // Allow opening in new tab
+                    if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
+                      event.preventDefault();
+                      link!.onClick(event);
+                    }
+                  }
+                : undefined
+            }
+            target={link.target}
+            title={link.title}
+            className={tableStyles.tableCellLink}
+          >
             {value}
           </a>
         </Tooltip>

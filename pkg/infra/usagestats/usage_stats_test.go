@@ -50,6 +50,8 @@ func TestMetrics(t *testing.T) {
 				Snapshots:             13,
 				Teams:                 14,
 				AuthTokens:            15,
+				DashboardVersions:     16,
+				Annotations:           17,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -238,6 +240,8 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.teams.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Teams)
 				So(metrics.Get("stats.total_auth_token.count").MustInt64(), ShouldEqual, 15)
 				So(metrics.Get("stats.avg_auth_token_per_user.count").MustInt64(), ShouldEqual, 5)
+				So(metrics.Get("stats.dashboard_versions.count").MustInt64(), ShouldEqual, 16)
+				So(metrics.Get("stats.annotations.count").MustInt64(), ShouldEqual, 17)
 
 				So(metrics.Get("stats.ds."+models.DS_ES+".count").MustInt(), ShouldEqual, 9)
 				So(metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt(), ShouldEqual, 10)

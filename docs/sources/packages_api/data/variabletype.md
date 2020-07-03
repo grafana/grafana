@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom';
+export declare type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system';
 ```
 <b>Import</b>
 

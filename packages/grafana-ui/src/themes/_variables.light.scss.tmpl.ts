@@ -126,8 +126,8 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: $gray-5;
-$tight-form-func-highlight-bg: $gray-6;
+$tight-form-func-bg: ${theme.colors.bg2};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
 
 $modal-backdrop-bg: ${theme.colors.bg1};
 $code-tag-bg: $gray-6;

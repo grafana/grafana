@@ -76,6 +76,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	defer resp.Body.Close()
 
 	if resp.StatusCode/100 == 2 {
+		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status)
 		// flushing the body enables the transport to reuse the same connection
 		if _, err := io.Copy(ioutil.Discard, resp.Body); err != nil {
 			ns.log.Error("Failed to copy resp.Body to ioutil.Discard", "err", err)
@@ -88,6 +89,6 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		return err
 	}
 
-	ns.log.Debug("Webhook failed", "statuscode", resp.Status, "body", string(body))
+	ns.log.Debug("Webhook failed", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
 	return fmt.Errorf("Webhook response status %v", resp.Status)
 }

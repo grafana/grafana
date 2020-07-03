@@ -4,8 +4,8 @@ import cx from 'classnames';
 import { LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 import { DerivedFieldConfig } from '../types';
-import { getLinksFromLogsField } from '../../../../features/panel/panellinks/linkSuppliers';
 import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
+import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
 
 type Props = {
   derivedFields: DerivedFieldConfig[];
@@ -84,6 +84,7 @@ type DebugField = {
   value?: string;
   href?: string;
 };
+
 function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string): DebugField[] {
   return derivedFields
     .filter(field => field.name && field.matcherRegex)
@@ -91,10 +92,10 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
       try {
         const testMatch = debugText.match(field.matcherRegex);
         const value = testMatch && testMatch[1];
-        let link: LinkModel<Field>;
+        let link: LinkModel<Field> = null;
 
         if (field.url && value) {
-          link = getLinksFromLogsField(
+          link = getFieldLinksForExplore(
             {
               name: '',
               type: FieldType.string,
@@ -103,8 +104,10 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
                 links: [{ title: '', url: field.url }],
               },
             },
-            0
-          )[0].linkModel;
+            0,
+            (() => {}) as any,
+            {} as any
+          )[0];
         }
 
         return {
@@ -113,6 +116,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
           href: link && link.href,
         } as DebugField;
       } catch (error) {
+        console.error(error);
         return {
           name: field.name,
           error,
