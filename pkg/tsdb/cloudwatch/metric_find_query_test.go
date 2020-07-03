@@ -17,7 +17,6 @@ import (
 )
 
 func TestCloudWatchMetrics(t *testing.T) {
-
 	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			DataSource: mockDatasource(),

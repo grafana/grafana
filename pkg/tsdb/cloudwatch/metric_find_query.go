@@ -301,7 +301,8 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	dsInfo := e.getDsInfo("default")
+	const region = "default"
+	dsInfo := e.getDsInfo(region)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -315,7 +316,7 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
 	}
 
-	client, err := e.getEC2Client(dsInfo)
+	client, err := e.getEC2Client(region)
 	if err != nil {
 		return nil, err
 	}
@@ -669,7 +670,7 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 			return !lastPage
 		})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:DescribeInstances, %w", err)
+		return nil, fmt.Errorf("failed to call ec2:DescribeInstances, %w", err)
 	}
 
 	return &resp, nil
@@ -703,19 +704,18 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
-	dsInfo := e.getDsInfo(region)
-
-	svc, err := e.getCWClient(dsInfo)
+	client, err := e.getCWClient(region)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
 
+	dsInfo := e.getDsInfo(region)
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(dsInfo.Namespace),
 	}
 
 	var resp cloudwatch.ListMetricsOutput
-	err = svc.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+	err = client.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		metrics.MAwsCloudWatchListMetrics.Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
 		if err != nil {

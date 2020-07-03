@@ -14,105 +14,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-// clientCache represents the interface a CloudWatchExecutor needs to access
-// AWS service-specific clients in order to perform API requests.
-type clientCache interface {
-	cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error)
-	ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error)
-	rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error)
-	logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error)
+type envelope struct {
+	credentials *credentials.Credentials
+	expiration  *time.Time
 }
 
-type sharedCache map[string]cache
-
-type cache struct {
-	credential *credentials.Credentials
-	expiration *time.Time
-}
-
-func (c sharedCache) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
-}
-
-func (c sharedCache) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-	}
-	return ec2.New(sess, cfg), nil
-}
-
-func (c sharedCache) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-	}
-	return resourcegroupstaggingapi.New(sess, cfg), nil
-}
-
-func (c sharedCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
-
-}
-
-var awsCredentialCache = make(sharedCache)
-var credentialCacheLock sync.RWMutex
+var awsCredentialCache = map[string]envelope{}
+var credsCacheLock sync.RWMutex
 
 // Session factory.
 // Stubbable by tests.
@@ -134,16 +48,15 @@ var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2meta
 
 func getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
-	credentialCacheLock.RLock()
-	if _, ok := awsCredentialCache[cacheKey]; ok {
-		if awsCredentialCache[cacheKey].expiration != nil &&
-			awsCredentialCache[cacheKey].expiration.After(time.Now().UTC()) {
-			result := awsCredentialCache[cacheKey].credential
-			credentialCacheLock.RUnlock()
+	credsCacheLock.RLock()
+	if env, ok := awsCredentialCache[cacheKey]; ok {
+		if env.expiration != nil && env.expiration.After(time.Now().UTC()) {
+			result := env.credentials
+			credsCacheLock.RUnlock()
 			return result, nil
 		}
 	}
-	credentialCacheLock.RUnlock()
+	credsCacheLock.RUnlock()
 
 	accessKeyID := ""
 	secretAccessKey := ""
@@ -217,12 +130,12 @@ func getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			remoteCredProvider(sess),
 		})
 
-	credentialCacheLock.Lock()
-	awsCredentialCache[cacheKey] = cache{
-		credential: creds,
-		expiration: expiration,
+	credsCacheLock.Lock()
+	awsCredentialCache[cacheKey] = envelope{
+		credentials: creds,
+		expiration:  expiration,
 	}
-	credentialCacheLock.Unlock()
+	credsCacheLock.Unlock()
 
 	return creds, nil
 }
@@ -288,18 +201,4 @@ func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInf
 	}
 
 	return datasourceInfo
-}
-
-func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
-	creds, err := getCredentials(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-
-	return cfg, nil
 }
