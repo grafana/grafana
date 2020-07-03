@@ -2,12 +2,12 @@ package cloudwatch
 
 import (
 	"context"
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -16,77 +16,110 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsEmpty(t *testing.T) {
-	logs := mockedLogs{
-		logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
-			LogGroups: []*cloudwatchlogs.LogGroup{
-				{
-					LogGroupName: aws.String("group_a"),
-				},
-				{
-					LogGroupName: aws.String("group_b"),
-				},
-				{
-					LogGroupName: aws.String("group_c"),
-				},
-			},
-		},
-	}
-	executor := &CloudWatchExecutor{
-		DataSource: mockDatasource(),
-		clients: &mockClients{
-			logs: logs,
-		},
-	}
-
-	params := simplejson.NewFromAny(map[string]interface{}{
-		"limit": 50,
+func TestQuery_DescribeLogGroups(t *testing.T) {
+	origNewCWLogsClient := newCWLogsClient
+	t.Cleanup(func() {
+		newCWLogsClient = origNewCWLogsClient
 	})
 
-	frame, err := executor.handleDescribeLogGroups(context.Background(), logs, params)
+	var logs mockedLogs
 
-	expectedField := data.NewField("logGroupName", nil, []*string{aws.String("group_a"), aws.String("group_b"), aws.String("group_c")})
-	expectedFrame := data.NewFrame("logGroups", expectedField)
+	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return logs
+	}
 
-	assert.Equal(t, nil, err)
-	assert.Equal(t, expectedFrame, frame)
-}
-
-func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) {
-	logs := mockedLogs{
-		logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
-			LogGroups: []*cloudwatchlogs.LogGroup{
-				{
-					LogGroupName: aws.String("group_a"),
-				},
-				{
-					LogGroupName: aws.String("group_b"),
-				},
-				{
-					LogGroupName: aws.String("group_c"),
+	t.Run("Empty log group name prefix", func(t *testing.T) {
+		logs = mockedLogs{
+			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
+				LogGroups: []*cloudwatchlogs.LogGroup{
+					{
+						LogGroupName: aws.String("group_a"),
+					},
+					{
+						LogGroupName: aws.String("group_b"),
+					},
+					{
+						LogGroupName: aws.String("group_c"),
+					},
 				},
 			},
-		},
-	}
-	executor := &CloudWatchExecutor{
-		DataSource: mockDatasource(),
-		clients: &mockClients{
-			logs: logs,
-		},
-	}
+		}
 
-	params := simplejson.NewFromAny(map[string]interface{}{
-		"logGroupNamePrefix": "g",
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":    "logAction",
+						"subtype": "DescribeLogGroups",
+						"limit":   50,
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
+						data.NewFrame("logGroups", data.NewField("logGroupName", nil, []*string{
+							aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+						})),
+					}),
+				},
+			},
+		}, resp)
 	})
 
-	frame, err := executor.handleDescribeLogGroups(context.Background(), logs, params)
+	t.Run("Non-empty log group name prefix", func(t *testing.T) {
+		logs = mockedLogs{
+			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
+				LogGroups: []*cloudwatchlogs.LogGroup{
+					{
+						LogGroupName: aws.String("group_a"),
+					},
+					{
+						LogGroupName: aws.String("group_b"),
+					},
+					{
+						LogGroupName: aws.String("group_c"),
+					},
+				},
+			},
+		}
 
-	expectedField := data.NewField("logGroupName", nil, []*string{aws.String("group_a"), aws.String("group_b"), aws.String("group_c")})
-	expectedFrame := data.NewFrame("logGroups", expectedField)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, expectedFrame, frame)
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":               "logAction",
+						"subtype":            "DescribeLogGroups",
+						"logGroupNamePrefix": "g",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
+						data.NewFrame("logGroups", data.NewField("logGroupName", nil, []*string{
+							aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+						})),
+					}),
+				},
+			},
+		}, resp)
+	})
 }
 
+/*
 func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) {
 	logs := mockedLogs{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
@@ -303,3 +336,4 @@ func TestHandleGetQueryResults(t *testing.T) {
 	assert.ElementsMatch(t, expectedFrame.Fields, frame.Fields)
 	assert.Equal(t, expectedFrame.Meta, frame.Meta)
 }
+*/

@@ -1,21 +1,6 @@
 package cloudwatch
 
-import (
-	"context"
-	"testing"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-)
-
+/*
 func TestCloudWatchMetrics(t *testing.T) {
 	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
@@ -256,3 +241,4 @@ func TestParseMultiSelectValue(t *testing.T) {
 	values = parseMultiSelectValue("i-{01}")
 	assert.Equal(t, []string{"i-{01}"}, values)
 }
+*/

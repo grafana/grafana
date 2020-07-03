@@ -92,7 +92,6 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	case "GetLogEvents":
 		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +150,8 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	return data.NewFrame("logEvents", timestampField, messageField), nil
 }
 
-func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
+func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
+	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix").MustString("")
 
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
