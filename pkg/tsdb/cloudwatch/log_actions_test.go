@@ -24,14 +24,14 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		newCWLogsClient = origNewCWLogsClient
 	})
 
-	var logs mockedLogs
+	var logs fakeLogsClient
 
 	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return logs
 	}
 
 	t.Run("Empty log group name prefix", func(t *testing.T) {
-		logs = mockedLogs{
+		logs = fakeLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -48,7 +48,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		}
 
 		executor := &CloudWatchExecutor{}
-		resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
@@ -76,7 +76,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 	})
 
 	t.Run("Non-empty log group name prefix", func(t *testing.T) {
-		logs = mockedLogs{
+		logs = fakeLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -93,7 +93,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		}
 
 		executor := &CloudWatchExecutor{}
-		resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
@@ -127,13 +127,13 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 		newCWLogsClient = origNewCWLogsClient
 	})
 
-	var logs mockedLogs
+	var logs fakeLogsClient
 
 	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return logs
 	}
 
-	logs = mockedLogs{
+	logs = fakeLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -155,7 +155,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 	const refID = "A"
 
 	executor := &CloudWatchExecutor{}
-	resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		Queries: []*tsdb.Query{
 			{
 				RefId: refID,
@@ -197,14 +197,14 @@ func TestQuery_StartQuery(t *testing.T) {
 		newCWLogsClient = origNewCWLogsClient
 	})
 
-	var logs mockedLogs
+	var logs fakeLogsClient
 
 	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return logs
 	}
 
 	t.Run("invalid time range", func(t *testing.T) {
-		logs = mockedLogs{
+		logs = fakeLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -229,7 +229,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		}
 
 		executor := &CloudWatchExecutor{}
-		_, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+		_, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			TimeRange: timeRange,
 			Queries: []*tsdb.Query{
 				{
@@ -250,7 +250,7 @@ func TestQuery_StartQuery(t *testing.T) {
 
 	t.Run("valid time range", func(t *testing.T) {
 		const refID = "A"
-		logs = mockedLogs{
+		logs = fakeLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -275,7 +275,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		}
 
 		executor := &CloudWatchExecutor{}
-		resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			TimeRange: timeRange,
 			Queries: []*tsdb.Query{
 				{
@@ -319,13 +319,13 @@ func TestQuery_StopQuery(t *testing.T) {
 		newCWLogsClient = origNewCWLogsClient
 	})
 
-	var logs mockedLogs
+	var logs fakeLogsClient
 
 	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return logs
 	}
 
-	logs = mockedLogs{
+	logs = fakeLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -350,7 +350,7 @@ func TestQuery_StopQuery(t *testing.T) {
 	}
 
 	executor := &CloudWatchExecutor{}
-	resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
@@ -383,14 +383,14 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		newCWLogsClient = origNewCWLogsClient
 	})
 
-	var logs mockedLogs
+	var logs fakeLogsClient
 
 	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return logs
 	}
 
 	const refID = "A"
-	logs = mockedLogs{
+	logs = fakeLogsClient{
 		queryResults: cloudwatchlogs.GetQueryResultsOutput{
 			Results: [][]*cloudwatchlogs.ResultField{
 				{
@@ -432,7 +432,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	}
 
 	executor := &CloudWatchExecutor{}
-	resp, err := executor.Query(context.Background(), mockDatasource(), &tsdb.TsdbQuery{
+	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		Queries: []*tsdb.Query{
 			{
 				RefId: refID,
