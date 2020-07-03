@@ -139,7 +139,7 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 		queryParams.Set("region", region)
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(region))
+	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
 		return nil, err
 	}

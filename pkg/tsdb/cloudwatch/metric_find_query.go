@@ -315,7 +315,7 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
 	}
 
-	client, err := e.clients.ec2Client(dsInfo)
+	client, err := e.getEC2Client(dsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -618,7 +618,7 @@ func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 }
 
 func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	svc, err := e.clients.cloudWatchClient(e.getDsInfo(region))
+	svc, err := e.getCWClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -654,7 +654,7 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.clients.ec2Client(e.getDsInfo(region))
+	client, err := e.getEC2Client(region)
 	if err != nil {
 		return nil, err
 	}
@@ -681,7 +681,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 		TagFilters:          filters,
 	}
 
-	client, err := e.clients.rgtaClient(e.getDsInfo(region))
+	client, err := e.getRGTAClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -705,7 +705,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
 	dsInfo := e.getDsInfo(region)
 
-	svc, err := e.clients.cloudWatchClient(dsInfo)
+	svc, err := e.getCWClient(dsInfo)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
