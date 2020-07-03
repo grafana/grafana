@@ -1,11 +1,5 @@
-import {
-  DataLink,
-  FieldOverrideContext,
-  SelectableValue,
-  ThresholdsConfig,
-  ValueMapping,
-  VariableSuggestion,
-} from '../../types';
+import { DataLink, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
+import { SuggestionsProvider } from '../../types/suggestions';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
   return value;
@@ -78,7 +72,7 @@ export interface StringFieldConfigSettings {
 }
 
 export interface StringFieldWithSuggestionsConfigSettings extends StringFieldConfigSettings {
-  getSuggestions: () => VariableSuggestion[];
+  getSuggestions: SuggestionsProvider;
 }
 
 export const stringOverrideProcessor = (

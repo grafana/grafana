@@ -23,5 +23,8 @@ export {
   valueTimeVar,
   getDataFrameVars,
   getFieldVars,
+  getDataLinksVariableSuggestions,
+  getPanelLinksVariableSuggestions,
+  getPanelOptionsVariableSuggestions,
 } from './variableSuggestions';
 export { DocsId } from './docs';

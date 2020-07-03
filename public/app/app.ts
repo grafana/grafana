@@ -99,11 +99,7 @@ export class GrafanaApp {
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     standardEditorsRegistry.setInit(getStandardOptionEditors);
-    standardFieldConfigEditorRegistry.setInit(
-      getStandardFieldConfigs({
-        getVariables: getTemplateSrv().getVariables.bind(getTemplateSrv()),
-      })
-    );
+    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
 

@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { getPanelOptionsVariableSuggestions, PanelPlugin, SuggestionsProvider } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
 import { TextOptions } from './types';
@@ -20,7 +20,7 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         },
         defaultValue: 'markdown',
       })
-      .addCustomEditor({
+      .addCustomEditor<{ getSuggestions: SuggestionsProvider }, string>({
         id: 'content',
         path: 'content',
         name: 'Content',
@@ -30,6 +30,9 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
          `,
         editor: TextPanelEditor,
+        settings: {
+          getSuggestions: getPanelOptionsVariableSuggestions,
+        },
       });
   })
   .setMigrationHandler(textPanelMigrationHandler);

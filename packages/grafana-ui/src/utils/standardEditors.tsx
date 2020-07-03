@@ -4,33 +4,31 @@ import {
   dataLinksOverrideProcessor,
   FieldConfigPropertyItem,
   FieldType,
+  getDataLinksVariableSuggestions,
   NumberFieldConfigSettings,
   numberOverrideProcessor,
   standardEditorsRegistry,
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
+  StringFieldWithSuggestionsConfigSettings,
   stringOverrideProcessor,
   ThresholdsConfig,
   ThresholdsFieldConfigSettings,
+  ThresholdsMode,
   thresholdsOverrideProcessor,
+  TimeZone,
   ValueMapping,
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
-  ThresholdsMode,
-  TimeZone,
-  VariableModel,
-  StringFieldWithSuggestionsConfigSettings,
-  VariableOrigin,
-  VariableSuggestion,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
 import {
   NumberValueEditor,
   RadioButtonGroup,
-  StringValueEditor,
-  StringArrayEditor,
   SelectValueEditor,
+  StringArrayEditor,
+  StringValueEditor,
   TimeZonePicker,
 } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
@@ -41,14 +39,12 @@ import { ColorValueEditor } from '../components/OptionsUI/color';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
 import { StringWithSuggestionsValueEditor } from '../components/OptionsUI/string';
 
-interface GetStandardFieldConfigDependencies {
-  getVariables: () => VariableModel[];
-}
 /**
  * Returns collection of common field config properties definitions
  */
-export const getStandardFieldConfigs = (dependencies: GetStandardFieldConfigDependencies) => () => {
+export const getStandardFieldConfigs = () => () => {
   const category = ['Standard options'];
+
   const displayName: FieldConfigPropertyItem<any, string, StringFieldWithSuggestionsConfigSettings> = {
     id: 'displayName',
     path: 'displayName',
@@ -60,6 +56,7 @@ export const getStandardFieldConfigs = (dependencies: GetStandardFieldConfigDepe
     settings: {
       placeholder: 'none',
       expandTemplateVars: true,
+      getSuggestions: getDataLinksVariableSuggestions,
     },
     shouldApply: () => true,
     category,
@@ -193,7 +190,7 @@ export const getStandardFieldConfigs = (dependencies: GetStandardFieldConfigDepe
     category,
   };
 
-  const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
+  const links: FieldConfigPropertyItem<any, DataLink[], StringFieldWithSuggestionsConfigSettings> = {
     id: 'links',
     path: 'links',
     name: 'Data links',
@@ -202,6 +199,7 @@ export const getStandardFieldConfigs = (dependencies: GetStandardFieldConfigDepe
     process: dataLinksOverrideProcessor,
     settings: {
       placeholder: '-',
+      getSuggestions: getDataLinksVariableSuggestions,
     },
     shouldApply: () => true,
     category: ['Data links'],

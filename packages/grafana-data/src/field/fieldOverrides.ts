@@ -111,7 +111,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const fieldScopedVars = { ...scopedVars };
       const displayName = getFieldDisplayName(field, frame, options.data);
 
-      console.log(displayName);
       fieldScopedVars['__field'] = {
         text: 'Field',
         value: {
@@ -128,7 +127,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       };
 
       const config: FieldConfig = { ...field.config };
-      const context: FieldOverrideEnv = {
+      const context = {
         field,
         data: options.data!,
         dataFrameIndex: index,

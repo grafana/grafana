@@ -3,82 +3,16 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
-  DataFrame,
+  DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
   KeyValue,
   LinkModel,
   locationUtil,
   ScopedVars,
-  VariableOrigin,
-  VariableSuggestion,
-  VariableSuggestionsScope,
-  urlUtil,
   textUtil,
-  DataLink,
-  PanelPlugin,
-  getFieldVars,
-  getDataFrameVars,
-  valueVars,
-  valueTimeVar,
-  timeRangeVars,
-  seriesVars,
+  urlUtil,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-
-export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...getTemplateSrv()
-    .getVariables()
-    .map(variable => ({
-      value: variable.name as string,
-      label: variable.name,
-      origin: VariableOrigin.Template,
-    })),
-  {
-    value: `${DataLinkBuiltInVars.includeVars}`,
-    label: 'All variables',
-    documentation: 'Adds current variables',
-    origin: VariableOrigin.Template,
-  },
-  ...timeRangeVars,
-];
-
-export const getDataLinksVariableSuggestions = (
-  dataFrames: DataFrame[],
-  scope?: VariableSuggestionsScope
-): VariableSuggestion[] => {
-  const includeValueVars = scope === VariableSuggestionsScope.Values;
-
-  return includeValueVars
-    ? [
-        ...seriesVars,
-        ...getFieldVars(dataFrames),
-        ...valueVars,
-        valueTimeVar,
-        ...getDataFrameVars(dataFrames),
-        ...getPanelLinksVariableSuggestions(),
-      ]
-    : [
-        ...seriesVars,
-        ...getFieldVars(dataFrames),
-        ...getDataFrameVars(dataFrames),
-        ...getPanelLinksVariableSuggestions(),
-      ];
-};
-
-export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: DataFrame[]): VariableSuggestion[] => {
-  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
-  return [
-    ...dataVariables, // field values
-    ...getTemplateSrv()
-      .getVariables()
-      .map(variable => ({
-        value: variable.name as string,
-        label: variable.name,
-        origin: VariableOrigin.Template,
-      })),
-  ];
-};
 
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;

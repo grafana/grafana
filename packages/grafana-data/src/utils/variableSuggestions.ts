@@ -1,15 +1,24 @@
 import _ from 'lodash';
-import { DataFrame, Field, FieldType, KeyValue, VariableOrigin, VariableSuggestion } from '../types';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  KeyValue,
+  VariableOrigin,
+  VariableSuggestion,
+  VariableSuggestionsScope,
+} from '../types';
 import { DataLinkBuiltInVars } from './dataLinks';
+import { SuggestionsProvider } from '../types/suggestions';
 
-export const valueTimeVar = {
+export const valueTimeVar: VariableSuggestion = {
   value: `${DataLinkBuiltInVars.valueTime}`,
   label: 'Time',
   documentation: 'Time value of the clicked datapoint (in ms epoch)',
   origin: VariableOrigin.Value,
 };
 
-export const timeRangeVars = [
+export const timeRangeVars: VariableSuggestion[] = [
   {
     value: `${DataLinkBuiltInVars.keepTime}`,
     label: 'Time range',
@@ -30,7 +39,7 @@ export const timeRangeVars = [
   },
 ];
 
-export const seriesVars = [
+export const seriesVars: VariableSuggestion[] = [
   {
     value: `${DataLinkBuiltInVars.seriesName}`,
     label: 'Name',
@@ -39,7 +48,7 @@ export const seriesVars = [
   },
 ];
 
-export const valueVars = [
+export const valueVars: VariableSuggestion[] = [
   {
     value: `${DataLinkBuiltInVars.valueNumeric}`,
     label: 'Numeric',
@@ -98,8 +107,8 @@ export const getFieldVars = (dataFrames: DataFrame[]): VariableSuggestion[] => {
 };
 
 export const getDataFrameVars = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  let numeric: Field = undefined;
-  let title: Field = undefined;
+  let numeric: Field | undefined = undefined;
+  let title: Field | undefined = undefined;
   const suggestions: VariableSuggestion[] = [];
   const keys: KeyValue<true> = {};
 
@@ -162,4 +171,65 @@ export const getDataFrameVars = (dataFrames: DataFrame[]): VariableSuggestion[] 
   }
 
   return suggestions;
+};
+
+export const getPanelLinksVariableSuggestions: SuggestionsProvider = (
+  plugin,
+  data,
+  getTemplateVariables,
+  _scope
+): VariableSuggestion[] => [
+  ...getTemplateVariables().map(variable => ({
+    value: variable.name as string,
+    label: variable.name,
+    origin: VariableOrigin.Template,
+  })),
+  {
+    value: `${DataLinkBuiltInVars.includeVars}`,
+    label: 'All variables',
+    documentation: 'Adds current variables',
+    origin: VariableOrigin.Template,
+  },
+  ...timeRangeVars,
+];
+
+export const getDataLinksVariableSuggestions: SuggestionsProvider = (
+  plugin,
+  data,
+  getTemplateVariables,
+  scope
+): VariableSuggestion[] => {
+  const includeValueVars = scope === VariableSuggestionsScope.Values;
+
+  return includeValueVars
+    ? [
+        ...seriesVars,
+        ...getFieldVars(data),
+        ...valueVars,
+        valueTimeVar,
+        ...getDataFrameVars(data),
+        ...getPanelLinksVariableSuggestions(plugin, data, getTemplateVariables, scope),
+      ]
+    : [
+        ...seriesVars,
+        ...getFieldVars(data),
+        ...getDataFrameVars(data),
+        ...getPanelLinksVariableSuggestions(plugin, data, getTemplateVariables, scope),
+      ];
+};
+
+export const getPanelOptionsVariableSuggestions: SuggestionsProvider = (
+  plugin,
+  data,
+  getTemplateVariables
+): VariableSuggestion[] => {
+  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
+  return [
+    ...dataVariables, // field values
+    ...getTemplateVariables().map(variable => ({
+      value: variable.name as string,
+      label: variable.name,
+      origin: VariableOrigin.Template,
+    })),
+  ];
 };

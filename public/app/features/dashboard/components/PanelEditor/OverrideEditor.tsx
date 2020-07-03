@@ -6,6 +6,7 @@ import {
   FieldConfigOptionsRegistry,
   FieldConfigProperty,
   GrafanaTheme,
+  PanelPlugin,
   VariableSuggestionsScope,
 } from '@grafana/data';
 import {
@@ -21,9 +22,9 @@ import {
 } from '@grafana/ui';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 
-import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { css } from 'emotion';
 import { OptionsGroup } from './OptionsGroup';
+import { getTemplateSrv } from '@grafana/runtime';
 
 interface OverrideEditorProps {
   name: string;
@@ -32,6 +33,7 @@ interface OverrideEditorProps {
   onChange: (config: ConfigOverrideRule) => void;
   onRemove: () => void;
   registry: FieldConfigOptionsRegistry;
+  plugin: PanelPlugin;
 }
 
 const COLLECTION_STANDARD_PROPERTIES = [
@@ -47,6 +49,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   onChange,
   onRemove,
   registry,
+  plugin,
 }) => {
   const theme = useTheme();
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
@@ -157,7 +160,18 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
               registry={registry}
               context={{
                 data,
-                getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+                getSuggestions: (scope?: VariableSuggestionsScope) => {
+                  if (item.settings?.getSuggestions) {
+                    return item.settings.getSuggestions(
+                      plugin,
+                      data,
+                      getTemplateSrv().getVariables.bind(getTemplateSrv()),
+                      scope
+                    );
+                  }
+
+                  return [];
+                },
               }}
             />
           );

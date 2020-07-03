@@ -11,7 +11,7 @@ import { get as lodashGet, set as lodashSet } from 'lodash';
 import { Field, Label } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
-import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
@@ -43,11 +43,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
     data: data || [],
     replaceVariables,
     options,
-    getSuggestions: (scope?: VariableSuggestionsScope) => {
-      return getPanelOptionsVariableSuggestions(plugin, data);
-    },
   };
-
   return (
     <>
       {Object.keys(optionEditors).map((c, i) => {
@@ -68,7 +64,21 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
                   value={lodashGet(options, e.path)}
                   onChange={value => onOptionChange(e.path, value)}
                   item={e}
-                  context={context}
+                  context={{
+                    ...context,
+                    getSuggestions: (scope?: VariableSuggestionsScope) => {
+                      if (e.settings?.getSuggestions) {
+                        return e.settings.getSuggestions(
+                          plugin,
+                          data,
+                          getTemplateSrv().getVariables.bind(getTemplateSrv()),
+                          scope
+                        );
+                      }
+
+                      return [];
+                    },
+                  }}
                 />
               </Field>
             );

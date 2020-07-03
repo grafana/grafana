@@ -26,6 +26,7 @@ export * from './orgs';
 export * from './flot';
 export * from './trace';
 export * from './explore';
+export { SuggestionsProvider } from './suggestions';
 
 import * as AppEvents from './appEvents';
 import { AppEvent } from './appEvents';

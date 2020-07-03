@@ -1,13 +1,13 @@
 import React, { FC, useCallback, useMemo, useRef } from 'react';
 import { DashboardModel, PanelModel } from '../../state';
-import { PanelData, PanelPlugin } from '@grafana/data';
+import { PanelData, PanelPlugin, getPanelLinksVariableSuggestions } from '@grafana/data';
 import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
-import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
+import { getTemplateSrv } from '@grafana/runtime';
 
 interface Props {
   panel: PanelModel;
@@ -27,7 +27,15 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelOptionsChanged,
 }) => {
   const visTabInputRef = useRef<HTMLInputElement>();
-  const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
+  const linkVariablesSuggestions = useMemo(
+    () =>
+      getPanelLinksVariableSuggestions(
+        plugin,
+        data?.series ? data.series : [],
+        getTemplateSrv().getVariables.bind(getTemplateSrv())
+      ),
+    [plugin, data]
+  );
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,
   ]);

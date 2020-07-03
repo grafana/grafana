@@ -10,12 +10,12 @@ import {
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { Container, Counter, FeatureInfoBox, Field, fieldMatchersUI, Label, useTheme, ValuePicker } from '@grafana/ui';
-import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
+import { getTemplateSrv } from '@grafana/runtime';
 
 interface Props {
   plugin: PanelPlugin;
@@ -82,6 +82,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
               onChange={value => onOverrideChange(i, value)}
               onRemove={() => onOverrideRemove(i)}
               registry={fieldConfigRegistry}
+              plugin={plugin}
             />
           );
         })}
@@ -190,7 +191,18 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
             onChange={v => setDefaultValue(item.path, v, item.isCustom)}
             context={{
               data,
-              getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+              getSuggestions: (scope?: VariableSuggestionsScope) => {
+                if (item.settings?.getSuggestions) {
+                  return item.settings.getSuggestions(
+                    plugin,
+                    data,
+                    getTemplateSrv().getVariables.bind(getTemplateSrv()),
+                    scope
+                  );
+                }
+
+                return [];
+              },
             }}
           />
         </Field>

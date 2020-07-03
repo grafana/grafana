@@ -44,12 +44,10 @@ export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFi
   );
 };
 
-export const StringWithSuggestionsValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
-  value,
-  onChange,
-  item,
-  context,
-}) => {
+export const StringWithSuggestionsValueEditor: React.FC<FieldConfigEditorProps<
+  string,
+  StringFieldWithSuggestionsConfigSettings
+>> = ({ value, onChange, item, context }) => {
   const suggestions = useMemo(() => {
     return context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [];
   }, [context.getSuggestions]);
