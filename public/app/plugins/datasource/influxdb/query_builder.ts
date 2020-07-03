@@ -90,6 +90,12 @@ export class InfluxQueryBuilder {
           if (tag.key === withKey) {
             return memo;
           }
+
+          // value operators not supported in these types of queries
+          if (tag.operator === '>' || tag.operator === '<') {
+            return memo;
+          }
+
           memo.push(renderTagCondition(tag, memo.length));
           return memo;
         },
