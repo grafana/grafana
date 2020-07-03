@@ -453,7 +453,6 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
-  type: string;
   label: string;
   action?: QueryFixAction;
 }

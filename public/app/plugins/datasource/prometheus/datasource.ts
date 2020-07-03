@@ -26,7 +26,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
@@ -83,7 +83,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
-  lookupsDisabled: boolean;
+  lookupsDisabled?: boolean;
   resultTransformer: ResultTransformer;
   customQueryParameters: any;
 
@@ -92,7 +92,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
-    this.url = instanceSettings.url;
+    this.url = instanceSettings.url!;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
@@ -123,8 +123,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
   }
 
-  _request(url: string, data: Record<string, string> = {}, options?: RequestOptions) {
-    options = defaults(options || {}, {
+  _request(url: string, data: Record<string, string> | null, overrides?: Partial<BackendSrvRequest>) {
+    const options: BackendSrvRequest = defaults(overrides || {}, {
       url: this.url + url,
       method: this.httpMethod,
       headers: {},
@@ -153,7 +153,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       options.headers.Authorization = this.basicAuth;
     }
 
-    return getBackendSrv().datasourceRequest(options as Required<RequestOptions>);
+    return getBackendSrv().datasourceRequest(options);
   }
 
   // Use this for tab completion features, wont publish response to other components
@@ -271,13 +271,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     let runningQueriesCount = queries.length;
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
-      let observable: Observable<any> = null;
 
-      if (query.instant) {
-        observable = from(this.performInstantQuery(query, end));
-      } else {
-        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
-      }
+      let observable = query.instant
+        ? from(this.performInstantQuery(query, end))
+        : from(this.performTimeSeriesQuery(query, query.start, query.end));
 
       return observable.pipe(
         // Decrease the counter here. We assume that each request returns only single value and then completes
@@ -301,13 +298,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   private panelsQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number, requestId: string) {
     const observables: Array<Observable<Array<TableModel | TimeSeries>>> = queries.map((query, index) => {
       const target = activeTargets[index];
-      let observable: Observable<any> = null;
 
-      if (query.instant) {
-        observable = from(this.performInstantQuery(query, end));
-      } else {
-        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
-      }
+      let observable = query.instant
+        ? from(this.performInstantQuery(query, end))
+        : from(this.performTimeSeriesQuery(query, query.start, query.end));
 
       return observable.pipe(
         filter((response: any) => (response.cancelled ? false : true)),
@@ -346,10 +340,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const range = Math.ceil(end - start);
 
     // options.interval is the dynamically calculated interval
-    let interval = kbn.interval_to_seconds(options.interval);
+    let interval: number = kbn.interval_to_seconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
-      templateSrv.replace(target.interval, options.scopedVars) || options.interval
+      templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
