@@ -6,14 +6,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/aws/aws-sdk-go/service/sts/stsiface"
-	"github.com/golang/mock/gomock"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mock_stsiface"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,77 +45,72 @@ func TestDefaultEC2RoleProvider(t *testing.T) {
 	require.True(t, ok)
 }
 
-func TestGetCredentials_ARNAuthType(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	var stsMock *mock_stsiface.MockSTSAPI
-
+// Test newAWSSession with assumption of IAM role.
+func TestNewAWSSession_AssumeRole(t *testing.T) {
 	origNewSession := newSession
-	origNewSTSService := newSTSService
+	origNewSTSCredentials := newSTSCredentials
 	origNewEC2Metadata := newEC2Metadata
 	t.Cleanup(func() {
 		newSession = origNewSession
-		newSTSService = origNewSTSService
+		newSTSCredentials = origNewSTSCredentials
 		newEC2Metadata = origNewEC2Metadata
 	})
 	newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
-		return &session.Session{}, nil
+		cfg := aws.Config{}
+		cfg.MergeIn(cfgs...)
+		return &session.Session{
+			Config: &cfg,
+		}, nil
 	}
-	newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) stsiface.STSAPI {
-		return stsMock
+	newSTSCredentials = func(c client.ConfigProvider, roleARN string,
+		options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+		p := &stscreds.AssumeRoleProvider{
+			RoleARN: roleARN,
+		}
+		for _, o := range options {
+			o(p)
+		}
+
+		return credentials.NewCredentials(p)
 	}
 	newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
 		return nil
 	}
 
 	t.Run("Without external ID", func(t *testing.T) {
-		stsMock = mock_stsiface.NewMockSTSAPI(ctrl)
-		stsMock.
-			EXPECT().
-			AssumeRole(gomock.Eq(&sts.AssumeRoleInput{
-				RoleArn:         aws.String(""),
-				DurationSeconds: aws.Int64(900),
-				RoleSessionName: aws.String("GrafanaSession"),
-			})).
-			Return(&sts.AssumeRoleOutput{
-				Credentials: &sts.Credentials{
-					AccessKeyId:     aws.String("id"),
-					SecretAccessKey: aws.String("secret"),
-					SessionToken:    aws.String("token"),
-				},
-			}, nil).
-			Times(1)
+		const roleARN = "test"
 
-		creds, err := getCredentials(&DatasourceInfo{
-			AuthType: "arn",
+		sess, err := newAWSSession(&DatasourceInfo{
+			AuthType:      "sdk",
+			AssumeRoleArn: roleARN,
 		})
 		require.NoError(t, err)
-		require.NotNil(t, creds)
+		require.NotNil(t, sess)
+
+		p := &stscreds.AssumeRoleProvider{
+			RoleARN: roleARN,
+		}
+		expCreds := credentials.NewCredentials(p)
+		assert.Equal(t, expCreds, sess.Config.Credentials)
 	})
 
 	t.Run("With external ID", func(t *testing.T) {
-		stsMock = mock_stsiface.NewMockSTSAPI(ctrl)
-		stsMock.
-			EXPECT().
-			AssumeRole(gomock.Eq(&sts.AssumeRoleInput{
-				RoleArn:         aws.String(""),
-				DurationSeconds: aws.Int64(900),
-				RoleSessionName: aws.String("GrafanaSession"),
-				ExternalId:      aws.String("external-id"),
-			})).
-			Return(&sts.AssumeRoleOutput{
-				Credentials: &sts.Credentials{
-					AccessKeyId:     aws.String("id"),
-					SecretAccessKey: aws.String("secret"),
-					SessionToken:    aws.String("token"),
-				},
-			}, nil).
-			Times(1)
+		const roleARN = "test"
+		const externalID = "external"
 
-		creds, err := getCredentials(&DatasourceInfo{
-			AuthType:   "arn",
-			ExternalID: "external-id",
+		sess, err := newAWSSession(&DatasourceInfo{
+			AuthType:      "sdk",
+			AssumeRoleArn: roleARN,
+			ExternalID:    externalID,
 		})
 		require.NoError(t, err)
-		require.NotNil(t, creds)
+		require.NotNil(t, sess)
+
+		p := &stscreds.AssumeRoleProvider{
+			RoleARN:    roleARN,
+			ExternalID: aws.String(externalID),
+		}
+		expCreds := credentials.NewCredentials(p)
+		assert.Equal(t, expCreds, sess.Config.Credentials)
 	})
 }

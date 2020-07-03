@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
@@ -17,29 +16,21 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Session factory.
 // Stubbable by tests.
-var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
-	return session.NewSession(cfgs...)
-}
+var newSession = session.NewSession
 
-// STS service factory.
+// STS credentials factory.
 // Stubbable by tests.
-var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) stsiface.STSAPI {
-	return sts.New(p, cfgs...)
-}
+var newSTSCredentials = stscreds.NewCredentials
 
 // EC2Metadata service factory.
 // Stubbable by tests.
-var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
-	return ec2metadata.New(p, cfgs...)
-}
+var newEC2Metadata = ec2metadata.New
 
 func remoteCredProvider(sess *session.Session) credentials.Provider {
 	ecsCredURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
@@ -133,7 +124,11 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleArn)
 
 		sess, err = newSession(regionCfg, &aws.Config{
-			Credentials: stscreds.NewCredentials(sess, dsInfo.AssumeRoleArn),
+			Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleArn, func(p *stscreds.AssumeRoleProvider) {
+				if dsInfo.ExternalID != "" {
+					p.ExternalID = aws.String(dsInfo.ExternalID)
+				}
+			}),
 		})
 		if err != nil {
 			return nil, err
