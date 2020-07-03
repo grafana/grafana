@@ -1349,4 +1349,4 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`
