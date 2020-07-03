@@ -42,7 +42,7 @@ import { StringWithSuggestionsValueEditor } from '../components/OptionsUI/string
 /**
  * Returns collection of common field config properties definitions
  */
-export const getStandardFieldConfigs = () => () => {
+export const getStandardFieldConfigs = () => {
   const category = ['Standard options'];
 
   const displayName: FieldConfigPropertyItem<any, string, StringFieldWithSuggestionsConfigSettings> = {

@@ -40,7 +40,7 @@ import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
 import { setupAngularRoutes } from 'app/routes/routes';
-import { getTemplateSrv, registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
