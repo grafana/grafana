@@ -104,9 +104,9 @@ export class BackendSrv implements BackendService {
         options.url = options.url.substring(1);
       }
 
-      if (options.url.endsWith('/')) {
-        options.url = options.url.slice(0, -1);
-      }
+      // if (options.url.endsWith('/')) {
+      //   options.url = options.url.slice(0, -1);
+      // }
 
       if (options.headers?.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
@@ -283,13 +283,15 @@ export class BackendSrv implements BackendService {
         ),
         // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
         // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-        throwIfEmpty(() => ({
-          cancelled: true,
-          data: null,
-          status: this.HTTP_REQUEST_CANCELED,
-          statusText: 'Request was aborted',
-          config: options,
-        }))
+        throwIfEmpty(() => {
+          return {
+            cancelled: true,
+            data: null,
+            status: this.HTTP_REQUEST_CANCELED,
+            statusText: 'Request was aborted',
+            config: options,
+          };
+        })
       );
   }
 
