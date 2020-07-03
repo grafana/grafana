@@ -1,9 +1,6 @@
 import { DataTransformerID } from '../ids';
 import { DataTransformerInfo } from '../../../types/transformations';
-import { DataFrame, FieldType, Field } from '../../../types/dataFrame';
-import { DataFrameBuilder } from './DataFrameBuilder';
-import { TimeFieldsByFrame } from './TimeFieldsByFrame';
-import { DataFramesStackedByTime } from './DataFramesStackedByTime';
+import { DataFrame, Field } from '../../../types/dataFrame';
 import { omit } from 'lodash';
 import { ArrayVector } from '../../../vector/ArrayVector';
 import { MutableDataFrame } from '../../../dataframe';
@@ -21,12 +18,8 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         return data;
       }
 
-      if (isTimeSeries(data)) {
-        return mergeSortedByTime(data);
-      }
-
-      const uniqueFields: Record<string, Field> = {};
-      const fieldPointers: Record<string, Record<number, number>> = {};
+      const fieldByName: Record<string, Field> = {};
+      const fieldPointerByName: Record<string, Record<number, number>> = {};
 
       for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
         const frame = data[frameIndex];
@@ -34,27 +27,27 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
           const field = frame.fields[fieldIndex];
 
-          if (!uniqueFields[field.name]) {
-            uniqueFields[field.name] = copyFieldStructure(field);
+          if (!fieldByName[field.name]) {
+            fieldByName[field.name] = copyFieldStructure(field);
           }
 
-          if (!fieldPointers[field.name]) {
-            fieldPointers[field.name] = {};
+          if (!fieldPointerByName[field.name]) {
+            fieldPointerByName[field.name] = {};
           }
 
-          fieldPointers[field.name][frameIndex] = fieldIndex;
+          fieldPointerByName[field.name][frameIndex] = fieldIndex;
         }
       }
 
-      const keyFieldPointers = Object.keys(fieldPointers).filter(
-        fieldName => Object.keys(fieldPointers[fieldName]).length === data.length
+      const keyFieldPointers = Object.keys(fieldPointerByName).filter(
+        fieldName => Object.keys(fieldPointerByName[fieldName]).length === data.length
       );
 
       const factoryIndex = keyFieldPointers.reduce((index: Record<number, number[]>, fieldName) => {
-        return Object.keys(fieldPointers[fieldName]).reduce((index: Record<number, number[]>, frameIndex) => {
+        return Object.keys(fieldPointerByName[fieldName]).reduce((index: Record<number, number[]>, frameIndex) => {
           const fi = parseInt(frameIndex, 10);
           index[fi] = index[fi] || [];
-          index[fi].push(fieldPointers[fieldName][fi]);
+          index[fi].push(fieldPointerByName[fieldName][fi]);
           return index;
         }, index);
       }, {});
@@ -103,7 +96,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
       console.log('order', sortedIndex);
       const dataFrame = new MutableDataFrame();
 
-      for (const field of Object.values(uniqueFields)) {
+      for (const field of Object.values(fieldByName)) {
         console.log('field', field);
         dataFrame.addField(field);
       }
@@ -123,53 +116,6 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
       return [dataFrame];
     };
   },
-};
-
-const mergeSortedByTime = (data: DataFrame[]): DataFrame[] => {
-  const timeFields = new TimeFieldsByFrame();
-  const framesStack = new DataFramesStackedByTime(timeFields);
-  const dataFrameBuilder = new DataFrameBuilder();
-
-  for (const frame of data) {
-    const frameIndex = framesStack.push(frame);
-    timeFields.add(frameIndex, frame);
-
-    const timeIndex = timeFields.getFieldIndex(frameIndex);
-    dataFrameBuilder.addFields(frame, timeIndex);
-  }
-
-  if (data.length !== timeFields.getLength()) {
-    return data;
-  }
-
-  const { dataFrame, valueMapper } = dataFrameBuilder.build();
-
-  for (let index = 0; index < framesStack.getLength(); index++) {
-    const { frame, valueIndex, timeIndex } = framesStack.pop();
-    dataFrame.add(valueMapper(frame, valueIndex, timeIndex));
-  }
-
-  return [dataFrame];
-};
-
-const isTimeSeries = (data: DataFrame[]): boolean => {
-  let isTimeSeries = true;
-
-  for (const frame of data) {
-    if (frame.fields.length > 2) {
-      isTimeSeries = false;
-      break;
-    }
-
-    const timeField = frame.fields.find(field => field.type === FieldType.time);
-
-    if (!timeField) {
-      isTimeSeries = false;
-      break;
-    }
-  }
-
-  return isTimeSeries;
 };
 
 const copyFieldStructure = (field: Field) => {
