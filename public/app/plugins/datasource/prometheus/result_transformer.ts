@@ -74,7 +74,6 @@ export class ResultTransformer {
 
     return {
       datapoints: dps,
-      query: options.query,
       refId: options.refId,
       target: name,
       tags: labels,

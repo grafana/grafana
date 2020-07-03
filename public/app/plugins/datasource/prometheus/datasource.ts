@@ -39,17 +39,6 @@ import TableModel from 'app/core/table_model';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
-interface RequestOptions {
-  method?: string;
-  url?: string;
-  headers?: Record<string, string>;
-  transformRequest?: (data: any) => string;
-  data?: any;
-  withCredentials?: boolean;
-  silent?: boolean;
-  requestId?: string;
-}
-
 export interface PromDataQueryResponse {
   data: {
     status: string;
