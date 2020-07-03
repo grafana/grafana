@@ -6,7 +6,11 @@ import { Observable } from 'rxjs';
  * @public
  */
 export type BackendSrvRequest = {
+  /**
+   * Request URL
+   */
   url: string;
+
   /**
    * Number of times to retry the remote call if it fails.
    */
@@ -17,7 +21,7 @@ export type BackendSrvRequest = {
    * Please have a look at {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | Fetch API}
    * for supported headers.
    */
-  headers?: any;
+  headers?: Record<string, any>;
 
   /**
    * HTTP verb to perform in the remote call GET, POST, PUT etc.
@@ -102,6 +106,7 @@ export interface FetchError<T extends FetchErrorDataProps = any> {
   statusText?: string;
   data: T | string;
   cancelled?: boolean;
+  isHandled?: boolean;
   config: BackendSrvRequest;
 }
 
@@ -117,7 +122,7 @@ export interface FetchError<T extends FetchErrorDataProps = any> {
  * @remarks
  * By default Grafana will display an error message alert if the remote call fails. If you want
  * to prevent this from happending you need to catch the error thrown by the BackendSrv and
- * set the `isHandled = true` on the incoming error.
+ * set the `showErrorAlert = true` on the options object.
  *
  * @public
  */
@@ -136,6 +141,10 @@ export interface BackendSrv {
    * when initializing the request.
    */
   datasourceRequest(options: BackendSrvRequest): Promise<any>;
+
+  /**
+   * Observable http request interface
+   */
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>>;
 }
 

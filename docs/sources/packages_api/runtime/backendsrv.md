@@ -26,7 +26,9 @@ import { BackendSrv } from '@grafana/runtime';
 
 ## Remarks
 
-By default Grafana will display an error message alert if the remote call fails. If you want to prevent this from happending you need to catch the error thrown by the BackendSrv and set the `isHandled = true` on the incoming error.
+By default Grafana will display an error message alert if the remote call fails. If you want to prevent this from happending you need to catch the error thrown by the BackendSrv and set the `showErrorAlert = true` on the request options object.
+
+> In versions prior to v7.2 you disable the notification alert by setting isHandled on the catched error 
 
 <b>Methods</b>
 

@@ -46,10 +46,6 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  // TODO
-  // Handle error handling & isHandled
-  // handle requestId cancellation
-
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
     return this.fetch<T>(options)
       .pipe(map((response: FetchResponse<T>) => response.data))
@@ -79,20 +75,6 @@ export class BackendSrv implements BackendService {
     );
   }
 
-  showSuccessAlert<T>(response: FetchResponse<T>) {
-    const { config } = response;
-
-    if (config.method === 'GET' || config.showSuccessAlert === false) {
-      return;
-    }
-
-    const data: { message: string } = response.data as any;
-
-    if (data?.message) {
-      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
-    }
-  }
-
   resolveCancelerIfExists(requestId: string) {
     this.inFlightRequests.next(requestId);
   }
@@ -101,8 +83,6 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
-  // TODO
-  // Options silent to not emit dsRequestResponse event
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
     return this.fetch(options).toPromise();
   }
@@ -124,9 +104,9 @@ export class BackendSrv implements BackendService {
         options.url = options.url.substring(1);
       }
 
-      // if (options.url.endsWith('/')) {
-      //   options.url = options.url.slice(0, -1);
-      // }
+      if (options.url.endsWith('/')) {
+        options.url = options.url.slice(0, -1);
+      }
 
       if (options.headers?.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
@@ -219,18 +199,32 @@ export class BackendSrv implements BackendService {
       message = 'Error';
     }
 
+    // Validation
+    if (err.status === 422) {
+      message = 'Validation failed';
+    }
+
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
       message,
       description,
     ]);
   }
 
-  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError {
-    console.log(err);
-    // if (err.isHandled) {
-    //   return;
-    // }
+  showSuccessAlert<T>(response: FetchResponse<T>) {
+    const { config } = response;
 
+    if (config.method === 'GET' || config.showSuccessAlert === false) {
+      return;
+    }
+
+    const data: { message: string } = response.data as any;
+
+    if (data?.message) {
+      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+    }
+  }
+
+  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
@@ -241,11 +235,6 @@ export class BackendSrv implements BackendService {
       };
     }
 
-    if (err.status === 422) {
-      this.dependencies.appEvents.emit(AppEvents.alertWarning, ['Validation failed', err.data.message]);
-      return err;
-    }
-
     // If no message but got error string, copy to message prop
     if (err.data && !err.data.message && typeof err.data.error === 'string') {
       err.data.message = err.data.error;
@@ -253,15 +242,14 @@ export class BackendSrv implements BackendService {
 
     // check if we should show an error alert
     if (err.data.message && !isDataQuery(options.url) && options.showErrorAlert !== false) {
-      this.showApplicationErrorAlert(err);
+      setTimeout(() => {
+        if (!err.isHandled) {
+          this.showApplicationErrorAlert(err);
+        }
+      }, 50);
     }
 
     this.inspectorStream.next(err);
-    // // TODO only for data source requests
-    // if (!options.silent) {
-    //   this.dependencies.appEvents.emit(CoreEvents.dsRequestError, err);
-    // }
-
     return err;
   }
 
