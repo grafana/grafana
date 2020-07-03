@@ -41,7 +41,27 @@ export type BackendSrvRequest = {
    * new one.
    */
   requestId?: string;
-  [key: string]: any;
+
+  /**
+   * Set to to true to not include call in query inspector
+   */
+  silent?: boolean;
+
+  /**
+   * The data to send
+   */
+  data?: any;
+
+  /**
+   * Query params
+   */
+  params?: Record<string, any>;
+
+  /**
+   * Indicates whether or not cross-site Access-Control requests should be made using credentials such as cookies, authorization headers or TLS client certificates. Setting withCredentials has no effect on same-site requests.
+   * In addition, this flag is also used to indicate when cookies are to be ignored in the response.
+   */
+  withCredentials?: boolean;
 };
 
 export interface FetchResponse<T> {

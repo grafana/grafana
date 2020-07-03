@@ -13,17 +13,6 @@ import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 
-export interface DatasourceRequestOptions {
-  retry?: number;
-  method?: string;
-  requestId?: string;
-  timeout?: Promise<any>;
-  url?: string;
-  headers?: Record<string, any>;
-  silent?: boolean;
-  data?: Record<string, any>;
-}
-
 interface ErrorResponseProps {
   message?: string;
   status?: string;
