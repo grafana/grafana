@@ -1,5 +1,5 @@
 +++
-title = "Build a plugin"
+title = "Build a plugin."
 type = "docs"
 +++
 
