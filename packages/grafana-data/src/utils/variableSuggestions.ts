@@ -11,14 +11,14 @@ import {
 import { DataLinkBuiltInVars } from './dataLinks';
 import { SuggestionsProvider } from '../types/suggestions';
 
-export const valueTimeVar: VariableSuggestion = {
+const valueTimeVar: VariableSuggestion = {
   value: `${DataLinkBuiltInVars.valueTime}`,
   label: 'Time',
   documentation: 'Time value of the clicked datapoint (in ms epoch)',
   origin: VariableOrigin.Value,
 };
 
-export const timeRangeVars: VariableSuggestion[] = [
+const timeRangeVars: VariableSuggestion[] = [
   {
     value: `${DataLinkBuiltInVars.keepTime}`,
     label: 'Time range',
@@ -39,7 +39,7 @@ export const timeRangeVars: VariableSuggestion[] = [
   },
 ];
 
-export const seriesVars: VariableSuggestion[] = [
+const seriesVars: VariableSuggestion[] = [
   {
     value: `${DataLinkBuiltInVars.seriesName}`,
     label: 'Name',
@@ -48,7 +48,7 @@ export const seriesVars: VariableSuggestion[] = [
   },
 ];
 
-export const valueVars: VariableSuggestion[] = [
+const valueVars: VariableSuggestion[] = [
   {
     value: `${DataLinkBuiltInVars.valueNumeric}`,
     label: 'Numeric',
@@ -73,7 +73,7 @@ const buildLabelPath = (label: string) => {
   return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
 };
 
-export const getFieldVars = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+export const getFieldVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
   const all = [];
   for (const df of dataFrames) {
     for (const f of df.fields) {
@@ -106,7 +106,7 @@ export const getFieldVars = (dataFrames: DataFrame[]): VariableSuggestion[] => {
   ];
 };
 
-export const getDataFrameVars = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+export const getDataFrameVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
   let numeric: Field | undefined = undefined;
   let title: Field | undefined = undefined;
   const suggestions: VariableSuggestion[] = [];
@@ -204,16 +204,16 @@ export const getDataLinksVariableSuggestions: SuggestionsProvider = (
   return includeValueVars
     ? [
         ...seriesVars,
-        ...getFieldVars(data),
+        ...getFieldVariableSuggestions(data),
         ...valueVars,
         valueTimeVar,
-        ...getDataFrameVars(data),
+        ...getDataFrameVariableSuggestions(data),
         ...getPanelLinksVariableSuggestions(plugin, data, getTemplateVariables, scope),
       ]
     : [
         ...seriesVars,
-        ...getFieldVars(data),
-        ...getDataFrameVars(data),
+        ...getFieldVariableSuggestions(data),
+        ...getDataFrameVariableSuggestions(data),
         ...getPanelLinksVariableSuggestions(plugin, data, getTemplateVariables, scope),
       ];
 };
@@ -223,7 +223,7 @@ export const getPanelOptionsVariableSuggestions: SuggestionsProvider = (
   data,
   getTemplateVariables
 ): VariableSuggestion[] => {
-  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
+  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVariableSuggestions(data || []);
   return [
     ...dataVariables, // field values
     ...getTemplateVariables().map(variable => ({
