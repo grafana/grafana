@@ -98,7 +98,7 @@ export function MetricsQueryFieldsEditor({
         />
       </QueryInlineField>
 
-      {query.expression.length === 0 && (
+      {query.expression?.length === 0 && (
         <>
           <QueryInlineField label="Namespace">
             <Segment

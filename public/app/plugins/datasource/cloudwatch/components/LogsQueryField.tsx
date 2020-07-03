@@ -400,7 +400,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
-              query={query.expression}
+              query={query.expression ?? ''}
               onChange={this.onChangeQuery}
               onBlur={this.props.onBlur}
               onClick={this.onQueryFieldClick}

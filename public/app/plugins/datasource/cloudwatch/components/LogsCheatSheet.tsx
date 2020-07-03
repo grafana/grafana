@@ -225,7 +225,7 @@ export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps,
   };
 
   onClickExample(query: CloudWatchLogsQuery) {
-    if (query.expression.includes('stats')) {
+    if (query.expression?.includes('stats')) {
       this.switchToMetrics(query);
     } else {
       this.props.onClickExample(query);
