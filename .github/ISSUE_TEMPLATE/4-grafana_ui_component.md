@@ -5,7 +5,7 @@ labels: 'area/grafana/ui'
 ---
 
 <!-- 
-By using this template you will make it easeier for us to make sure that documentation and implementation stays up to date for every component in @grafana/ui
+By using this template you will make it easier for us to make sure that documentation and implementation stays up to date for every component in @grafana/ui
 
 Thank you!
 -->
@@ -13,27 +13,27 @@ Thank you!
 **Why this component is needed**:
 <!-- Explain your use case -->
 ___
- - [ ] Is/could it be used enough to become a pattern?
+ - [ ] Is/could it be used in more than one place in Grafana?
 
  **Where is/could it be used?**:
- Post screenshots if you have any.
 
 ___
+- [ ] Post screenshots possible.
 - [ ] It has a single use case
 - [ ] It is/could be used in multiple places
 
-**Implementation** (Checklist meant for developer)
+**Implementation** (Checklist meant for the person implementing the component)
 
 - [ ] Component has a story in Storybook
-- [ ] Props and naming follows [our style guide]()
-- [ ] It is extendable (eg. rest props are spreaded, styles with className works)
+- [ ] Props and naming follows [our style guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/frontend.md)
+- [ ] It is extendable (rest rest props are spreaded, styles with className works, and so on)
+- [ ] Uses [theme for spacing, colors, and so on](https://github.com/grafana/grafana/blob/master/contribute/style-guides/themes.md)
 - [ ] Works with both light and dark theme
-- [ ] Uses theme for spacing, colors etc.
 
 **Documentation**
 
 - [ ] Properties are documented
 - [ ] Use cases are described
-- [ ] Code exmaples for the different use cases
+- [ ] Code examples for the different use cases
 - [ ] Dos and don'ts 
 - [ ] Styling guidelines, specific color usage (if applicable)
