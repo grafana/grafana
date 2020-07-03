@@ -6,7 +6,11 @@ import { Observable } from 'rxjs';
  * @public
  */
 export type BackendSrvRequest = {
+  /**
+   * Request URL
+   */
   url: string;
+
   /**
    * Number of times to retry the remote call if it fails.
    */
@@ -17,7 +21,7 @@ export type BackendSrvRequest = {
    * Please have a look at {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | Fetch API}
    * for supported headers.
    */
-  headers?: any;
+  headers?: Record<string, any>;
 
   /**
    * HTTP verb to perform in the remote call GET, POST, PUT etc.
@@ -41,10 +45,35 @@ export type BackendSrvRequest = {
    * new one.
    */
   requestId?: string;
-  [key: string]: any;
+
+  /**
+   * Set to to true to not include call in query inspector
+   */
+  silent?: boolean;
+
+  /**
+   * The data to send
+   */
+  data?: any;
+
+  /**
+   * Query params
+   */
+  params?: Record<string, any>;
+
+  /**
+   * Indicates whether or not cross-site Access-Control requests should be made using credentials such as cookies, authorization headers or TLS client certificates. Setting withCredentials has no effect on same-site requests.
+   * In addition, this flag is also used to indicate when cookies are to be ignored in the response.
+   */
+  withCredentials?: boolean;
 };
 
-export interface FetchResponse<T> {
+/**
+ * Response for fetch function in {@link BackendSrv}
+ *
+ * @public
+ */
+export interface FetchResponse<T = any> {
   data: T;
   readonly status: number;
   readonly statusText: string;
@@ -54,6 +83,31 @@ export interface FetchResponse<T> {
   readonly type: ResponseType;
   readonly url: string;
   readonly config: BackendSrvRequest;
+}
+
+/**
+ * Error type for fetch function in {@link BackendSrv}
+ *
+ * @public
+ */
+export interface FetchErrorDataProps {
+  message?: string;
+  status?: string;
+  error?: string | any;
+}
+
+/**
+ * Error type for fetch function in {@link BackendSrv}
+ *
+ * @public
+ */
+export interface FetchError<T extends FetchErrorDataProps = any> {
+  status: number;
+  statusText?: string;
+  data: T | string;
+  cancelled?: boolean;
+  isHandled?: boolean;
+  config: BackendSrvRequest;
 }
 
 /**
@@ -68,7 +122,7 @@ export interface FetchResponse<T> {
  * @remarks
  * By default Grafana will display an error message alert if the remote call fails. If you want
  * to prevent this from happending you need to catch the error thrown by the BackendSrv and
- * set the `isHandled = true` on the incoming error.
+ * set the `showErrorAlert = true` on the options object.
  *
  * @public
  */
@@ -87,6 +141,10 @@ export interface BackendSrv {
    * when initializing the request.
    */
   datasourceRequest(options: BackendSrvRequest): Promise<any>;
+
+  /**
+   * Observable http request interface
+   */
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>>;
 }
 

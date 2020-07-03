@@ -1,42 +1,17 @@
 import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse, FetchError } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { CoreEvents, FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
-
-export interface DatasourceRequestOptions {
-  retry?: number;
-  method?: string;
-  requestId?: string;
-  timeout?: Promise<any>;
-  url?: string;
-  headers?: Record<string, any>;
-  silent?: boolean;
-  data?: Record<string, any>;
-}
-
-interface ErrorResponseProps {
-  message?: string;
-  status?: string;
-  error?: string | any;
-}
-
-interface ErrorResponse<T extends ErrorResponseProps = any> {
-  status: number;
-  statusText?: string;
-  isHandled?: boolean;
-  data: T | string;
-  cancelled?: boolean;
-}
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -51,6 +26,8 @@ export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
+  private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
+
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
     appEvents: appEvents,
@@ -69,10 +46,6 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  // TODO
-  // Handle error handling & isHandled
-  // handle requestId cancellation
-
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
     return this.fetch<T>(options)
       .pipe(map((response: FetchResponse<T>) => response.data))
@@ -90,27 +63,16 @@ export class BackendSrv implements BackendService {
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
-      tap(response => this.showSuccessAlert(response))
+      tap(response => {
+        this.showSuccessAlert(response);
+        this.inspectorStream.next(response);
+      })
     );
 
     return merge(successStream, failureStream).pipe(
-      catchError((err: ErrorResponse) => throwError(this.processRequestError(options, err))),
+      catchError((err: FetchError) => throwError(this.processRequestError(options, err))),
       this.handleStreamCancellation(options)
     );
-  }
-
-  showSuccessAlert<T>(response: FetchResponse<T>) {
-    const { config } = response;
-
-    if (config.method === 'GET' || config.showSuccessAlert === false) {
-      return;
-    }
-
-    const data: { message: string } = response.data as any;
-
-    if (data?.message) {
-      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
-    }
   }
 
   resolveCancelerIfExists(requestId: string) {
@@ -121,8 +83,6 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
-  // TODO
-  // Options silent to not emit dsRequestResponse event
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
     return this.fetch(options).toPromise();
   }
@@ -202,7 +162,7 @@ export class BackendSrv implements BackendService {
         filter(response => response.ok === false),
         mergeMap(response => {
           const { status, statusText, data } = response;
-          const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+          const fetchErrorResponse: FetchError = { status, statusText, data, config: options };
           return throwError(fetchErrorResponse);
         }),
         retryWhen((attempts: Observable<any>) =>
@@ -230,7 +190,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  showApplicationErrorAlert(err: ErrorResponse) {
+  showApplicationErrorAlert(err: FetchError) {
     let description = '';
     let message = err.data.message;
 
@@ -239,18 +199,37 @@ export class BackendSrv implements BackendService {
       message = 'Error';
     }
 
+    // Validation
+    if (err.status === 422) {
+      message = 'Validation failed';
+    }
+
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
       message,
       description,
     ]);
   }
 
-  processRequestError(options: BackendSrvRequest, err: ErrorResponse): ErrorResponse {
-    console.log(err);
-    // if (err.isHandled) {
-    //   return;
-    // }
+  showSuccessAlert<T>(response: FetchResponse<T>) {
+    const { config } = response;
 
+    if (config.method === 'GET' || config.showSuccessAlert === false) {
+      return;
+    }
+
+    // Skip success alerts for data queries
+    if (isDataQuery(response.config.url)) {
+      return;
+    }
+
+    const data: { message: string } = response.data as any;
+
+    if (data?.message) {
+      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+    }
+  }
+
+  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
@@ -261,11 +240,6 @@ export class BackendSrv implements BackendService {
       };
     }
 
-    if (err.status === 422) {
-      this.dependencies.appEvents.emit(AppEvents.alertWarning, ['Validation failed', err.data.message]);
-      return err;
-    }
-
     // If no message but got error string, copy to message prop
     if (err.data && !err.data.message && typeof err.data.error === 'string') {
       err.data.message = err.data.error;
@@ -273,18 +247,18 @@ export class BackendSrv implements BackendService {
 
     // check if we should show an error alert
     if (err.data.message && !isDataQuery(options.url) && options.showErrorAlert !== false) {
-      this.showApplicationErrorAlert(err);
+      setTimeout(() => {
+        if (!err.isHandled) {
+          this.showApplicationErrorAlert(err);
+        }
+      }, 50);
     }
 
-    // TODO only for data source requests
-    if (!options.silent) {
-      this.dependencies.appEvents.emit(CoreEvents.dsRequestError, err);
-    }
-
+    this.inspectorStream.next(err);
     return err;
   }
 
-  handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
+  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
     return inputStream =>
       inputStream.pipe(
         takeUntil(
@@ -309,14 +283,20 @@ export class BackendSrv implements BackendService {
         ),
         // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
         // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-        throwIfEmpty(() => ({
-          cancelled: true,
-          data: null,
-          status: this.HTTP_REQUEST_CANCELED,
-          statusText: 'Request was aborted',
-          config: options,
-        }))
+        throwIfEmpty(() => {
+          return {
+            cancelled: true,
+            data: null,
+            status: this.HTTP_REQUEST_CANCELED,
+            statusText: 'Request was aborted',
+            config: options,
+          };
+        })
       );
+  }
+
+  getInspectorStream(): Observable<FetchResponse<any> | FetchError> {
+    return this.inspectorStream;
   }
 
   async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {

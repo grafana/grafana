@@ -5,9 +5,8 @@ import { map, filter, catchError, switchMap } from 'rxjs/operators';
 
 // Services & Utils
 import { DataFrame, dateMath, FieldCache, QueryResultMeta } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { lokiResultsToTableModel, processRangeQueryResponse, lokiStreamResultToDataFrame } from './result_transformer';
@@ -72,7 +71,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
   }
 
-  _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
+  _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
     const baseUrl = this.instanceSettings.url;
     const params = data ? serializeParams(data) : '';
     const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
