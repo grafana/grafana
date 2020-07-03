@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:3.11
+ARG BASE_IMAGE=alpine:3.12
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
@@ -49,6 +49,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
+             "$GF_PATHS_PROVISIONING/plugins" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

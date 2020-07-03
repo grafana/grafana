@@ -15,6 +15,7 @@ import {
   GraphSeriesXY,
   DataFrame,
   ExploreMode,
+  ExploreUrlState,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
@@ -66,7 +67,7 @@ export interface ExploreItemState {
   /**
    * True if the datasource is loading. `null` if the loading has not started yet.
    */
-  datasourceLoading?: boolean;
+  datasourceLoading: boolean | null;
   /**
    * True if there is no datasource to be selected.
    */
@@ -74,11 +75,11 @@ export interface ExploreItemState {
   /**
    * Emitter to send events to the rest of Grafana.
    */
-  eventBridge?: Emitter;
+  eventBridge: Emitter;
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult?: GraphSeriesXY[];
+  graphResult: GraphSeriesXY[] | null;
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
@@ -101,7 +102,7 @@ export interface ExploreItemState {
   /**
    * Log query result to be displayed in the logs result viewer.
    */
-  logsResult?: LogsModel;
+  logsResult: LogsModel | null;
 
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
@@ -112,7 +113,7 @@ export interface ExploreItemState {
   /**
    * True if scanning for more results is active.
    */
-  scanning?: boolean;
+  scanning: boolean;
   /**
    * Current scanning range to be shown to the user while scanning is active.
    */
@@ -130,7 +131,7 @@ export interface ExploreItemState {
   /**
    * Table model that combines all query table results into a single table.
    */
-  tableResult?: DataFrame;
+  tableResult: DataFrame | null;
 
   /**
    * React keys for rendering of QueryRows
@@ -140,7 +141,7 @@ export interface ExploreItemState {
   /**
    * Current logs deduplication strategy
    */
-  dedupStrategy?: LogsDedupStrategy;
+  dedupStrategy: LogsDedupStrategy;
 
   /**
    * Currently hidden log series
@@ -195,23 +196,6 @@ export interface ExploreUpdateState {
   range: boolean;
   mode: boolean;
   ui: boolean;
-}
-
-export interface ExploreUIState {
-  showingTable: boolean;
-  showingGraph: boolean;
-  showingLogs: boolean;
-  dedupStrategy?: LogsDedupStrategy;
-}
-
-export interface ExploreUrlState {
-  datasource: string;
-  queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
-  mode: ExploreMode;
-  range: RawTimeRange;
-  ui: ExploreUIState;
-  originPanelId?: number;
-  context?: string;
 }
 
 export interface QueryOptions {

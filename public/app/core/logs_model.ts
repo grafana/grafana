@@ -153,6 +153,9 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
       ...valueField.config,
       color: series.color,
     };
+    valueField.name = series.alias;
+    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
 
     const points = getFlotPairs({
       xField: timeField,
@@ -316,10 +319,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Find the fields we care about and collect all labels
   const allSeries: LogFields[] = logSeries.map(series => {
     const fieldCache = new FieldCache(series);
-
-    const stringField = fieldCache.hasFieldNamed('line')
-      ? fieldCache.getFieldByName('line')
-      : fieldCache.getFirstFieldOfType(FieldType.string);
+    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     if (stringField?.labels) {
       allLabels.push(stringField.labels);
     }

@@ -1,5 +1,5 @@
-import { Meta, Story, Preview, Props } from "@storybook/addon-docs/blocks";
-import { Switch } from "./Switch";
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Switch } from './Switch';
 
 <Meta title="MDX|Switch" component={Switch} />
 
@@ -11,13 +11,12 @@ import { Switch } from "./Switch";
 
 Switches trigger changes immediately. If your component should trigger a change only after sending a form, it's better to use either `RadioButtonGroup` or `Checkbox` instead. Furthermore, switches cannot be grouped – each `Switch` triggers an independent state. If you want multiple mutually exclusive choices, the `RadioButtonGroup` is the better option. To offer multiple choices within the same group or context which are not mutually exclusive, use `Checkbox` instead.
 
-
 ### Usage
 
 ```jsx
 import { Switch } from '@grafana/ui';
 
-<Switch disabled={...} checked={...} onChange={...} />
+<Switch disabled={...} value={...} onChange={...} />
 ```
 
 ### Props

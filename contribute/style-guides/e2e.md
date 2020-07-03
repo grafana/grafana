@@ -66,8 +66,8 @@ The next step is to create a `Page` representation in our e2e test framework to 
 
 ```typescript
 export const Login = {
-  url: "/login", // used when called from Login.visit()
-  username: "Username input field", // used when called from Login.username().type('Hello World')
+  url: '/login', // used when called from Login.visit()
+  username: 'Username input field', // used when called from Login.username().type('Hello World')
 };
 ```
 
@@ -186,24 +186,3 @@ describe('List test', () => {
   });
 });
 ```
-
-## Debugging PhantomJS image rendering
-
-### Common Error
-
-The most common error with PhantomJs image rendering is when a PR introduces an import that has functionality that's not supported by PhantomJs. To quickly identify which new import causes this you can use a tool like `es-check`.
-
-1. Run > `npx es-check es5 './public/build/*.js'`
-2. Check the output for files that break es5 compatibility.
-3. Lazy load the failing imports if possible.
-
-### Debugging
-
-There is no easy or comprehensive way to debug PhantomJS smoke test (image rendering) failures. However, PhantomJS exposes remote debugging interface which can give you a sense of what is going wrong in the smoke test. Before performing the steps described below make sure your local Grafana instance is running:
-
-1. Go to `tools/phantomjs` directory
-2. Execute `phantomjs` binary against `render.js` file: `./phantomjs --remote-debugger-port=9009 --remote-debugger-autorun=yes ./render.js url="http://localhost:3000"`
-3. In your browser navigate to `http://localhost:9009/`
-4. Select `http://localhost:3000/login` from the list. You will get access to Webkit's inspector to see the console's output from the smoke test.
-
-The method described above is not perfect, but is helpful to evaluate smoke tests breaking due to bundle errors.

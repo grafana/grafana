@@ -1,5 +1,13 @@
 import { ComponentType } from 'react';
-import { MatcherConfig, FieldConfig, Field, DataFrame, GrafanaTheme, TimeZone } from '../types';
+import {
+  MatcherConfig,
+  FieldConfig,
+  Field,
+  DataFrame,
+  GrafanaTheme,
+  TimeZone,
+  DataSourceInstanceSettings,
+} from '../types';
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
@@ -22,7 +30,7 @@ export interface FieldConfigSource<TOptions extends object = any> {
   overrides: ConfigOverrideRule[];
 }
 
-export interface FieldOverrideContext extends StandardEditorContext {
+export interface FieldOverrideContext extends StandardEditorContext<any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
   data: DataFrame[]; // All results
@@ -106,6 +114,7 @@ export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
+  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
   autoMinMax?: boolean;
@@ -117,7 +126,7 @@ export enum FieldConfigProperty {
   Min = 'min',
   Max = 'max',
   Decimals = 'decimals',
-  Title = 'title',
+  DisplayName = 'displayName',
   NoValue = 'noValue',
   Thresholds = 'thresholds',
   Mappings = 'mappings',

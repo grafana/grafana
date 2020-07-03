@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { css } from 'emotion';
-import { VariableSuggestion } from '@grafana/data';
+import { DataSourceSelectItem, VariableSuggestion } from '@grafana/data';
 import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
-const { FormField } = LegacyForms;
+const { FormField, Switch } = LegacyForms;
 import { DataLinkConfig } from '../types';
+import { usePrevious } from 'react-use';
+import { getDatasourceSrv } from '../../../../features/plugins/datasource_srv';
+import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`
@@ -14,6 +17,10 @@ const getStyles = stylesFactory(() => ({
   `,
   regexField: css`
     flex: 3;
+  `,
+  row: css`
+    display: flex;
+    align-items: baseline;
   `,
 }));
 
@@ -27,6 +34,7 @@ type Props = {
 export const DataLink = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
   const styles = getStyles();
+  const [showInternalLink, setShowInternalLink] = useInternalLink(value.datasourceUid);
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
@@ -61,11 +69,11 @@ export const DataLink = (props: Props) => {
       </div>
       <div className="gf-form">
         <FormField
-          label="URL"
+          label={showInternalLink ? 'Query' : 'URL'}
           labelWidth={6}
           inputEl={
             <DataLinkInput
-              placeholder={'http://example.com/${__value.raw}'}
+              placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
               value={value.url || ''}
               onChange={newValue =>
                 onChange({
@@ -81,6 +89,82 @@ export const DataLink = (props: Props) => {
           `}
         />
       </div>
+
+      <div className={styles.row}>
+        <Switch
+          label="Internal link"
+          checked={showInternalLink}
+          onChange={() => {
+            if (showInternalLink) {
+              onChange({
+                ...value,
+                datasourceUid: undefined,
+              });
+            }
+            setShowInternalLink(!showInternalLink);
+          }}
+        />
+
+        {showInternalLink && (
+          <DataSourceSection
+            onChange={datasourceUid => {
+              onChange({
+                ...value,
+                datasourceUid,
+              });
+            }}
+            datasourceUid={value.datasourceUid}
+          />
+        )}
+      </div>
     </div>
   );
 };
+
+type DataSourceSectionProps = {
+  datasourceUid?: string;
+  onChange: (uid: string) => void;
+};
+
+const DataSourceSection = (props: DataSourceSectionProps) => {
+  const { datasourceUid, onChange } = props;
+  const datasources: DataSourceSelectItem[] = getDatasourceSrv()
+    .getExternal()
+    // At this moment only Jaeger and Zipkin datasource is supported as the link target.
+    .filter(ds => ds.meta.tracing)
+    .map(
+      ds =>
+        ({
+          value: ds.uid,
+          name: ds.name,
+          meta: ds.meta,
+        } as DataSourceSelectItem)
+    );
+
+  let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
+  return (
+    <DataSourcePicker
+      // Uid and value should be always set in the db and so in the items.
+      onChange={ds => onChange(ds.value!)}
+      datasources={datasources}
+      current={selectedDatasource || undefined}
+    />
+  );
+};
+
+function useInternalLink(datasourceUid: string): [boolean, Dispatch<SetStateAction<boolean>>] {
+  const [showInternalLink, setShowInternalLink] = useState<boolean>(!!datasourceUid);
+  const previousUid = usePrevious(datasourceUid);
+
+  // Force internal link visibility change if uid changed outside of this component.
+  useEffect(() => {
+    if (!previousUid && datasourceUid && !showInternalLink) {
+      setShowInternalLink(true);
+    }
+    if (previousUid && !datasourceUid && showInternalLink) {
+      setShowInternalLink(false);
+    }
+  }, [previousUid, datasourceUid, showInternalLink]);
+
+  return [showInternalLink, setShowInternalLink];
+}

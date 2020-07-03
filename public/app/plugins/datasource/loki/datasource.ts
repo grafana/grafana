@@ -4,7 +4,7 @@ import { Observable, from, merge, of } from 'rxjs';
 import { map, filter, catchError, switchMap } from 'rxjs/operators';
 
 // Services & Utils
-import { DataFrame, dateMath, FieldCache } from '@grafana/data';
+import { DataFrame, dateMath, FieldCache, QueryResultMeta } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
@@ -140,6 +140,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
       limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
     };
+    /** Show results of Loki instant queries only in table */
+    const meta: QueryResultMeta = {
+      preferredVisualisationType: 'table',
+    };
 
     return this._request(INSTANT_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.cancelled, target)),
@@ -150,7 +154,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         }
 
         return {
-          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, true)],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
           key: `${target.refId}_instant`,
         };
       })
@@ -514,7 +518,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   showContextToggle = (row?: LogRowModel) => {
-    return row.searchWords && row.searchWords.length > 0;
+    return row && row.searchWords && row.searchWords.length > 0;
   };
 
   throwUnless = (err: any, condition: boolean, target: LokiQuery) => {

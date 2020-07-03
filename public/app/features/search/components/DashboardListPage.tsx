@@ -3,12 +3,12 @@ import { useAsync } from 'react-use';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel, locationUtil } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
-import { StoreState } from 'app/types';
+import { FolderDTO, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParams, getUrl } from 'app/core/selectors/location';
 import Page from 'app/core/components/Page/Page';
 import { loadFolderPage } from '../loaders';
-import { ManageDashboards } from './ManageDashboards';
+import ManageDashboards from './ManageDashboards';
 
 interface Props {
   navModel: NavModel;
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
-  const { loading, value } = useAsync(() => {
+  const { loading, value } = useAsync<{ folder?: FolderDTO; pageNavModel: NavModel }>(() => {
     if (!uid || !url.startsWith('/dashboards')) {
       return Promise.resolve({ pageNavModel: navModel });
     }

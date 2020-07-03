@@ -5,7 +5,6 @@ import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
   DataFrame,
-  DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
   Field,
@@ -19,6 +18,8 @@ import {
   VariableSuggestionsScope,
   urlUtil,
   textUtil,
+  DataLink,
+  PanelPlugin,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -229,6 +230,18 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
     origin: VariableOrigin.Value,
   };
   return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
+};
+
+export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: DataFrame[]): VariableSuggestion[] => {
+  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
+  return [
+    ...dataVariables, // field values
+    ...templateSrv.getVariables().map(variable => ({
+      value: variable.name as string,
+      label: variable.name,
+      origin: VariableOrigin.Template,
+    })),
+  ];
 };
 
 export interface LinkService {
