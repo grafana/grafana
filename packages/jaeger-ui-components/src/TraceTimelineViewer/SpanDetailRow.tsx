@@ -21,7 +21,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
-import { Log, Span, KeyValuePair, Link } from '../types/trace';
+import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -70,13 +70,13 @@ type SpanDetailRowProps = {
   columnDivision: number;
   detailState: DetailState;
   onDetailToggled: (spanID: string) => void;
-  linksGetter: (span: Span, links: KeyValuePair[], index: number) => Link[];
-  logItemToggle: (spanID: string, log: Log) => void;
+  linksGetter: (span: TraceSpan, links: TraceKeyValuePair[], index: number) => TraceLink[];
+  logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   referencesToggle: (spanID: string) => void;
   warningsToggle: (spanID: string) => void;
-  span: Span;
+  span: TraceSpan;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
   focusSpan: (uiFind: string) => void;
@@ -91,7 +91,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
     this.props.onDetailToggled(this.props.span.spanID);
   };
 
-  _linksGetter = (items: KeyValuePair[], itemIndex: number) => {
+  _linksGetter = (items: TraceKeyValuePair[], itemIndex: number) => {
     const { linksGetter, span } = this.props;
     return linksGetter(span, items, itemIndex);
   };

@@ -7,6 +7,7 @@ import {
   DataQueryResponse,
   DataFrame,
   ScopedVars,
+  DataLink,
 } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
@@ -86,7 +87,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       };
     }
 
-    return getBackendSrv().datasourceRequest(options);
+    return getBackendSrv()
+      .datasourceRequest(options)
+      .catch((err: any) => {
+        if (err.data && err.data.error) {
+          throw {
+            message: 'Elasticsearch error: ' + err.data.error.reason,
+            error: err.data.error,
+          };
+        }
+        throw err;
+      });
   }
 
   /**
@@ -128,21 +139,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private post(url: string, data: any) {
-    return this.request('POST', url, data)
-      .then((results: any) => {
-        results.data.$$config = results.config;
-        return results.data;
-      })
-      .catch((err: any) => {
-        if (err.data && err.data.error) {
-          throw {
-            message: 'Elasticsearch error: ' + err.data.error.reason,
-            error: err.data.error,
-          };
-        }
-
-        throw err;
-      });
+    return this.request('POST', url, data).then((results: any) => {
+      results.data.$$config = results.config;
+      return results.data;
+    });
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -405,7 +405,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       if (sentTargets.some(target => target.isLogsQuery)) {
         const response = er.getLogs(this.logMessageField, this.logLevelField);
         for (const dataFrame of response.data) {
-          this.enhanceDataFrame(dataFrame);
+          enhanceDataFrame(dataFrame, this.dataLinks);
         }
         return response;
       }
@@ -585,24 +585,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return false;
   }
 
-  enhanceDataFrame(dataFrame: DataFrame) {
-    if (this.dataLinks.length) {
-      for (const field of dataFrame.fields) {
-        const dataLink = this.dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
-        if (dataLink) {
-          field.config = field.config || {};
-          field.config.links = [
-            ...(field.config.links || []),
-            {
-              url: dataLink.url,
-              title: '',
-            },
-          ];
-        }
-      }
-    }
-  }
-
   private isPrimitive(obj: any) {
     if (obj === null || obj === undefined) {
       return true;
@@ -638,5 +620,37 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     return false;
+  }
+}
+
+/**
+ * Modifies dataframe and adds dataLinks from the config.
+ * Exported for tests.
+ */
+export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[]) {
+  if (dataLinks.length) {
+    for (const field of dataFrame.fields) {
+      const dataLinkConfig = dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
+      if (dataLinkConfig) {
+        let link: DataLink;
+        if (dataLinkConfig.datasourceUid) {
+          link = {
+            title: '',
+            url: '',
+            internal: {
+              query: { query: dataLinkConfig.url },
+              datasourceUid: dataLinkConfig.datasourceUid,
+            },
+          };
+        } else {
+          link = {
+            title: '',
+            url: dataLinkConfig.url,
+          };
+        }
+        field.config = field.config || {};
+        field.config.links = [...(field.config.links || []), link];
+      }
+    }
   }
 }

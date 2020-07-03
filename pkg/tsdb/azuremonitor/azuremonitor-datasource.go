@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -21,7 +22,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -57,7 +57,6 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		if err != nil {
 			return nil, err
 		}
-		// azlog.Debug("AzureMonitor", "Response", resp)
 
 		err = e.parseResponse(queryRes, resp, query)
 		if err != nil {
@@ -130,10 +129,25 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
 		params.Add("metricnamespace", azJSONModel.MetricNamespace)
 
+		// old model
 		dimension := strings.TrimSpace(azJSONModel.Dimension)
 		dimensionFilter := strings.TrimSpace(azJSONModel.DimensionFilter)
-		if dimension != "" && dimensionFilter != "" && dimension != "None" {
-			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+
+		dimSB := strings.Builder{}
+
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionsFilters) == 0 {
+			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+		} else {
+			for i, filter := range azJSONModel.DimensionsFilters {
+				dimSB.WriteString(filter.String())
+				if i != len(azJSONModel.DimensionsFilters)-1 {
+					dimSB.WriteString(" and ")
+				}
+			}
+		}
+
+		if dimSB.String() != "" {
+			params.Add("$filter", dimSB.String())
 			params.Add("top", azJSONModel.Top)
 		}
 
@@ -157,7 +171,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, AzureMonitorResponse, error) {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+	queryResult := &tsdb.QueryResult{RefId: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -167,7 +181,6 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
-	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
 	span.SetTag("target", query.Target)
@@ -221,7 +234,10 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -265,21 +281,25 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		return nil
 	}
 
+	frames := data.Frames{}
 	for _, series := range amr.Value[0].Timeseries {
-		metadataName := ""
-		metadataValue := ""
-		if len(series.Metadatavalues) > 0 {
-			metadataName = series.Metadatavalues[0].Name.LocalizedValue
-			metadataValue = series.Metadatavalues[0].Value
+		labels := data.Labels{}
+		for _, md := range series.Metadatavalues {
+			labels[md.Name.LocalizedValue] = md.Value
 		}
-		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], amr.Value[0].Name.LocalizedValue, metadataName, metadataValue, amr.Namespace, amr.Value[0].ID)
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.RefID
-		frame.Fields[1].Name = metricName
-		frame.Fields[1].SetConfig(&data.FieldConfig{
+		dataField := frame.Fields[1]
+		dataField.Name = amr.Value[0].Name.LocalizedValue
+		dataField.Labels = labels
+		dataField.SetConfig(&data.FieldConfig{
 			Unit: amr.Value[0].Unit,
 		})
+		if query.Alias != "" {
+			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+		}
 
 		requestedAgg := query.Params.Get("aggregation")
 
@@ -303,27 +323,17 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		encodedFrame, err := frame.MarshalArrow()
-		if err != nil {
-			queryRes.Error = fmt.Errorf("failed to encode dataframe response into arrow: %w", err)
-		}
-
-		queryRes.Dataframes = append(queryRes.Dataframes, encodedFrame)
+		frames = append(frames, frame)
 	}
+
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
 	return nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name
 // Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string) string {
-	if alias == "" {
-		if len(metadataName) > 0 {
-			return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
-		}
-		return fmt.Sprintf("%s.%s", resourceName, metricName)
-	}
-
+func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string, labels data.Labels) string {
 	startIndex := strings.Index(seriesID, "/resourceGroups/") + 16
 	endIndex := strings.Index(seriesID, "/providers")
 	resourceGroup := seriesID[startIndex:endIndex]
@@ -349,14 +359,25 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 			return []byte(metricName)
 		}
 
+		keys := make([]string, 0, len(labels))
+		if metaPartName == "dimensionname" || metaPartName == "dimensionvalue" {
+			for k := range labels {
+				keys = append(keys, k)
+			}
+			keys = sort.StringSlice(keys)
+		}
+
 		if metaPartName == "dimensionname" {
-			return []byte(metadataName)
+			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
-			return []byte(metadataValue)
+			return []byte(labels[keys[0]])
 		}
 
+		if v, ok := labels[metaPartName]; ok {
+			return []byte(v)
+		}
 		return in
 	})
 

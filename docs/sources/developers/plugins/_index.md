@@ -1,5 +1,5 @@
 +++
-title = "Build a plugin"
+title = "Build a plugin."
 type = "docs"
 +++
 
@@ -11,7 +11,7 @@ For more information on the types of plugins you can build, refer to the [Plugin
 
 The easiest way to start developing Grafana plugins is to use the [Grafana Toolkit](https://www.npmjs.com/package/@grafana/toolkit).
 
-Open the terminal, and run the following command in your [plugin directory]({{< relref "../../installation/configuration.md#plugins" >}}):
+Open the terminal, and run the following command in your [plugin directory]({{< relref "../../administration/configuration.md#plugins" >}}):
 
 ```bash
 npx @grafana/toolkit plugin:create my-grafana-plugin
@@ -41,6 +41,7 @@ Ready to learn more? Check out our other tutorials:
 
 Improve an existing plugin with one of our guides:
 
+- [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins" >}})
 - [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
 - [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
 - [Add support for variables]({{< relref "add-support-for-variables.md" >}})
@@ -52,7 +53,6 @@ Improve an existing plugin with one of our guides:
 Deepen your knowledge through a series of high-level overviews of plugin concepts:
 
 - [Data frames]({{< relref "data-frames.md" >}})
-- [Authentication for data source plugins]({{< relref "authentication.md" >}})
 
 ### UI library
 

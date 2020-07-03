@@ -1,14 +1,20 @@
 import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable } from '../types';
-import { TimeSeries, toDataFrame } from '@grafana/data';
-import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
+import {
+  DataQueryResponse,
+  ScopedVars,
+  DataSourceInstanceSettings,
+  QueryResultMeta,
+  MetricFindValue,
+} from '@grafana/data';
+import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 
-export default class AzureLogAnalyticsDatasource {
-  id: number;
+export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
+  AzureMonitorQuery,
+  AzureDataSourceJsonData
+> {
   url: string;
   baseUrl: string;
   applicationId: string;
@@ -17,12 +23,8 @@ export default class AzureLogAnalyticsDatasource {
   subscriptionId: string;
   cache: Map<string, any>;
 
-  /** @ngInject */
-  constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private templateSrv: TemplateSrv
-  ) {
-    this.id = instanceSettings.id;
+  constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
+    super(instanceSettings);
     this.cache = new Map();
 
     switch (this.instanceSettings.jsonData.cloudName) {
@@ -88,7 +90,7 @@ export default class AzureLogAnalyticsDatasource {
   }
 
   getWorkspaceList(subscription: string): Promise<any> {
-    const subscriptionId = this.templateSrv.replace(subscription || this.subscriptionId);
+    const subscriptionId = getTemplateSrv().replace(subscription || this.subscriptionId);
 
     const workspaceListUrl =
       this.azureMonitorUrl +
@@ -100,103 +102,66 @@ export default class AzureLogAnalyticsDatasource {
     if (!workspace) {
       return Promise.resolve();
     }
-    const url = `${this.baseUrl}/${this.templateSrv.replace(workspace, {})}/metadata`;
+    const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
 
     return this.doRequest(url).then((response: any) => {
       return new ResponseParser(response.data).parseSchemaResult();
     });
   }
 
-  async query(options: DataQueryRequest<AzureMonitorQuery>) {
-    const queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(target => {
-      const item = target.azureLogAnalytics;
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+    const item = target.azureLogAnalytics;
 
-      let workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+    const templateSrv = getTemplateSrv();
+    let workspace = templateSrv.replace(item.workspace, scopedVars);
 
-      if (!workspace && this.defaultOrFirstWorkspace) {
-        workspace = this.defaultOrFirstWorkspace;
-      }
-
-      const subscriptionId = this.templateSrv.replace(target.subscription || this.subscriptionId, options.scopedVars);
-      const query = this.templateSrv.replace(item.query, options.scopedVars, this.interpolateVariable);
-
-      return {
-        refId: target.refId,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        datasourceId: this.id,
-        format: target.format,
-        queryType: 'Azure Log Analytics',
-        subscriptionId: subscriptionId,
-        azureLogAnalytics: {
-          resultFormat: item.resultFormat,
-          query: query,
-          workspace: workspace,
-        },
-      };
-    });
-
-    if (!queries || queries.length === 0) {
-      return [];
+    if (!workspace && this.defaultOrFirstWorkspace) {
+      workspace = this.defaultOrFirstWorkspace;
     }
 
-    const { data } = await getBackendSrv().datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
+    const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
+    const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
+
+    return {
+      refId: target.refId,
+      format: target.format,
+      queryType: AzureQueryType.LogAnalytics,
+      subscriptionId: subscriptionId,
+      azureLogAnalytics: {
+        resultFormat: item.resultFormat,
+        query: query,
+        workspace: workspace,
       },
-    });
-
-    const result: DataQueryResponseData[] = [];
-    if (data.results) {
-      const results: any[] = Object.values(data.results);
-      for (let queryRes of results) {
-        for (let series of queryRes.series || []) {
-          const timeSeries: TimeSeries = {
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          };
-          const df = toDataFrame(timeSeries);
-
-          if (queryRes.meta.encodedQuery && queryRes.meta.encodedQuery.length > 0) {
-            const url = await this.buildDeepLink(queryRes);
-
-            if (url.length > 0) {
-              for (const field of df.fields) {
-                field.config.links = [
-                  {
-                    url: url,
-                    title: 'View in Azure Portal',
-                    targetBlank: true,
-                  },
-                ];
-              }
-            }
-          }
-
-          result.push(df);
-        }
-
-        for (let table of queryRes.tables || []) {
-          result.push(toDataFrame(table));
-        }
-      }
-    }
-
-    return result;
+    };
   }
 
-  private async buildDeepLink(queryRes: any) {
-    const base64Enc = encodeURIComponent(queryRes.meta.encodedQuery);
-    const workspaceId = queryRes.meta.workspace;
-    const subscription = queryRes.meta.subscription;
+  async processResponse(res: DataQueryResponse): Promise<DataQueryResponse> {
+    if (res.data) {
+      for (const df of res.data) {
+        const encodedQuery = df.meta?.custom?.encodedQuery;
+        if (encodedQuery && encodedQuery.length > 0) {
+          const url = await this.buildDeepLink(df.meta);
+          if (url?.length) {
+            for (const field of df.fields) {
+              field.config.links = [
+                {
+                  url: url,
+                  title: 'View in Azure Portal',
+                  targetBlank: true,
+                },
+              ];
+            }
+          }
+        }
+      }
+    }
+    return res;
+  }
+
+  private async buildDeepLink(meta: QueryResultMeta) {
+    const base64Enc = encodeURIComponent(meta.custom.encodedQuery);
+    const workspaceId = meta.custom.workspace;
+    const subscription = meta.custom.subscription;
 
     const details = await this.getWorkspaceDetails(workspaceId);
     if (!details.workspace || !details.resourceGroup) {
@@ -235,7 +200,7 @@ export default class AzureLogAnalyticsDatasource {
     };
   }
 
-  metricFindQuery(query: string) {
+  metricFindQuery(query: string): Promise<MetricFindValue[]> {
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
       return this.getWorkspaces(this.subscriptionId);
@@ -268,12 +233,12 @@ export default class AzureLogAnalyticsDatasource {
             throw { message: err.error.data.error.message };
           }
         });
-    });
+    }) as Promise<MetricFindValue[]>; // ??
   }
 
   private buildQuery(query: string, options: any, workspace: any) {
     const querystringBuilder = new LogAnalyticsQuerystringBuilder(
-      this.templateSrv.replace(query, {}, this.interpolateVariable),
+      getTemplateSrv().replace(query, {}, this.interpolateVariable),
       options,
       'TimeGenerated'
     );
@@ -382,10 +347,10 @@ export default class AzureLogAnalyticsDatasource {
     }
   }
 
-  testDatasource() {
+  testDatasource(): Promise<any> {
     const validationError = this.isValidConfig();
     if (validationError) {
-      return validationError;
+      return Promise.resolve(validationError);
     }
 
     return this.getDefaultOrFirstWorkspace()

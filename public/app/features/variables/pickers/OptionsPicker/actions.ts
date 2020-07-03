@@ -1,4 +1,5 @@
-import { debounce, trim } from 'lodash';
+import debounce from 'lodash/debounce';
+import trim from 'lodash/trim';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import {
   QueryVariableModel,
@@ -7,7 +8,7 @@ import {
   VariableTag,
   VariableWithMultiSupport,
   VariableWithOptions,
-} from '../../../templating/types';
+} from '../../types';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../types';
@@ -25,7 +26,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { toVariablePayload } from '../../state/types';
-import { containsSearchFilter } from '../../../templating/utils';
+import { containsSearchFilter } from '../../utils';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -57,7 +58,7 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
 export const filterOrSearchOptions = (searchQuery = ''): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { id, queryValue } = getState().templating.optionsPicker;
-    const { query, options } = getVariable<VariableWithOptions>(id!, getState());
+    const { query, options } = getVariable<VariableWithOptions>(id, getState());
     dispatch(updateSearchQuery(searchQuery));
 
     if (trim(queryValue) === trim(searchQuery)) {

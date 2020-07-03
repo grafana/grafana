@@ -90,6 +90,7 @@ var metricsMap = map[string][]string{
 	"AWS/MediaConnect":      {"ARQRecovered", "ARQRequests", "CATError", "CRCError", "ConnectedOutputs", "ContinuityCounter", "FECPackets", "FECRecovered", "NotRecoveredPackets", "OverflowPackets", "PATError", "PCRAccuracyError", "PCRError", "PIDError", "PMTError", "PTSError", "PacketLossPercent", "RecoveredPackets", "RoundTripTime", "SourceBitRate", "TSByteError", "TSSyncLoss", "TransportError"},
 	"AWS/MediaConvert":      {"AudioOutputSeconds", "Errors", "HDOutputSeconds", "JobsCompletedCount", "JobsErroredCount", "SDOutputSeconds", "StandbyTime", "TranscodingTime", "UHDOutputSeconds"},
 	"AWS/MediaPackage":      {"ActiveInput", "EgressBytes", "EgressRequestCount", "EgressResponseTime", "IngressBytes", "IngressResponseTime"},
+	"AWS/MediaStore":        {"RequestCount", "4xxErrorCount", "5xxErrorCount", "BytesUploaded", "BytesDownloaded", "TotalTime", "TurnaroundTime"},
 	"AWS/MediaTailor":       {"AdDecisionServer.Ads", "AdDecisionServer.Duration", "AdDecisionServer.Errors", "AdDecisionServer.FillRate", "AdDecisionServer.Timeouts", "AdNotReady", "Avails.Duration", "Avails.FillRate", "Avails.FilledDuration", "GetManifest.Errors", "Origin.Errors", "Origin.Timeouts"},
 	"AWS/NATGateway":        {"ActiveConnectionCount", "BytesInFromDestination", "BytesInFromSource", "BytesOutToDestination", "BytesOutToSource", "ConnectionAttemptCount", "ConnectionEstablishedCount", "ErrorPortAllocation", "IdleTimeoutCount", "PacketsDropCount", "PacketsInFromDestination", "PacketsInFromSource", "PacketsOutToDestination", "PacketsOutToSource"},
 	"AWS/Neptune":           {"CPUUtilization", "ClusterReplicaLag", "ClusterReplicaLagMaximum", "ClusterReplicaLagMinimum", "EngineUptime", "FreeLocalStorage", "FreeableMemory", "GremlinErrors", "GremlinHttp1xx", "GremlinHttp2xx", "GremlinHttp4xx", "GremlinHttp5xx", "GremlinRequests", "GremlinRequestsPerSec", "GremlinWebSocketAvailableConnections", "GremlinWebSocketClientErrors", "GremlinWebSocketServerErrors", "GremlinWebSocketSuccess", "Http100", "Http101", "Http1xx", "Http200", "Http2xx", "Http400", "Http403", "Http405", "Http413", "Http429", "Http4xx", "Http500", "Http501", "Http5xx", "LoaderErrors", "LoaderRequests", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "SparqlErrors", "SparqlHttp1xx", "SparqlHttp2xx", "SparqlHttp4xx", "SparqlHttp5xx", "SparqlRequests", "SparqlRequestsPerSec", "StatusErrors", "StatusRequests", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs"},
@@ -101,6 +102,8 @@ var metricsMap = map[string][]string{
 	"AWS/Route53":           {"ChildHealthCheckHealthyCount", "ConnectionTime", "DNSQueries", "HealthCheckPercentageHealthy", "HealthCheckStatus", "SSLHandshakeTime", "TimeToFirstByte"},
 	"AWS/Route53Resolver":   {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
 	"AWS/S3":                {"4xxErrors", "5xxErrors", "AllRequests", "BucketSizeBytes", "BytesDownloaded", "BytesUploaded", "DeleteRequests", "FirstByteLatency", "GetRequests", "HeadRequests", "ListRequests", "NumberOfObjects", "PostRequests", "PutRequests", "SelectRequests", "SelectReturnedBytes", "SelectScannedBytes", "TotalRequestLatency"},
+	"AWS/SDKMetrics":        {"CallCount", "ClientErrorCount", "EndToEndLatency", "ConnectionErrorCount", "ServerErrorCount", "ThrottleCount"},
+	"AWS/ServiceCatalog":    {"ProvisionedProductLaunch"},
 	"AWS/SES":               {"Bounce", "Clicks", "Complaint", "Delivery", "Opens", "Reject", "Rendering Failures", "Reputation.BounceRate", "Reputation.ComplaintRate", "Send"},
 	"AWS/SNS":               {"NumberOfMessagesPublished", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed", "NumberOfNotificationsFilteredOut", "NumberOfNotificationsFilteredOut-InvalidAttributes", "NumberOfNotificationsFilteredOut-NoMessageAttributes", "PublishSize", "SMSMonthToDateSpentUSD", "SMSSuccessRate"},
 	"AWS/SQS":               {"ApproximateAgeOfOldestMessage", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesNotVisible", "ApproximateNumberOfMessagesVisible", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "NumberOfMessagesReceived", "NumberOfMessagesSent", "SentMessageSize"},
@@ -116,6 +119,7 @@ var metricsMap = map[string][]string{
 	"AWS/Usage":             {"CallCount", "ResourceCount"},
 	"AWS/VPN":               {"TunnelDataIn", "TunnelDataOut", "TunnelState"},
 	"AWS/WAF":               {"AllowedRequests", "BlockedRequests", "CountedRequests", "PassedRequests"},
+	"AWS/WAFV2":             {"AllowedRequests", "BlockedRequests", "CountedRequests", "PassedRequests"},
 	"AWS/WorkSpaces":        {"Available", "ConnectionAttempt", "ConnectionFailure", "ConnectionSuccess", "InSessionLatency", "Maintenance", "SessionDisconnect", "SessionLaunchTime", "Stopped", "Unhealthy", "UserConnected"},
 	"ECS/ContainerInsights": {"ContainerInstanceCount", "CpuUtilized", "CpuReserved", "DeploymentCount", "DesiredTaskCount", "MemoryUtilized", "MemoryReserved", "NetworkRxBytes", "NetworkTxBytes", "PendingTaskCount", "RunningTaskCount", "ServiceCount", "StorageReadBytes", "StorageWriteBytes", "TaskCount", "TaskSetCount", "instance_cpu_limit", "instance_cpu_reserved_capacity", "instance_cpu_usage_total", "instance_cpu_utilization", "instance_filesystem_utilization", "instance_memory_limit", "instance_memory_reserved_capacity", "instance_memory_utliization", "instance_memory_working_set", "instance_network_total_bytes", "instance_number_of_running_tasks"},
 	"ContainerInsights":     {"cluster_failed_node_count", "cluster_node_count", "namespace_number_of_running_pods", "node_cpu_limit", "node_cpu_reserved_capacity", "node_cpu_usage_total", "node_cpu_utilization", "node_filesystem_utilization", "node_memory_limit", "node_memory_reserved_capacity", "node_memory_utilization", "node_memory_working_set", "node_network_total_bytes", "node_number_of_running_containers", "node_number_of_running_pods", "pod_cpu_reserved_capacity", "pod_cpu_utilization", "pod_cpu_utilization_over_pod_limit", "pod_memory_reserved_capacity", "pod_memory_utilization", "pod_memory_utilization_over_pod_limit", "pod_number_of_container_restarts", "pod_network_rx_bytes", "pod_network_tx_bytes", "service_number_of_running_pods"},
@@ -179,6 +183,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/MediaConnect":      {},
 	"AWS/MediaConvert":      {"Job", "Operation", "Queue"},
 	"AWS/MediaPackage":      {"Channel", "No Dimension", "OriginEndpoint", "StatusCodeRange"},
+	"AWS/MediaStore":        {"ContainerName", "ObjectGroupName", "RequestType"},
 	"AWS/MediaTailor":       {"Configuration Name"},
 	"AWS/NATGateway":        {"NatGatewayId"},
 	"AWS/Neptune":           {"DBClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
@@ -190,6 +195,8 @@ var dimensionsMap = map[string][]string{
 	"AWS/Route53":           {"HealthCheckId", "Region", "HostedZoneId"},
 	"AWS/Route53Resolver":   {"EndpointId"},
 	"AWS/S3":                {"BucketName", "FilterId", "StorageType"},
+	"AWS/SDKMetrics":        {"DestinationRegion", "Service"},
+	"AWS/ServiceCatalog":    {"State", "ProductId", "ProvisioningArtifactId"},
 	"AWS/SES":               {},
 	"AWS/SNS":               {"Application", "Country", "Platform", "SMSType", "TopicName"},
 	"AWS/SQS":               {"QueueName"},
@@ -205,6 +212,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Usage":             {"Class", "Resource", "Service", "Type"},
 	"AWS/VPN":               {"TunnelIpAddress", "VpnId"},
 	"AWS/WAF":               {"Region", "Rule", "RuleGroup", "WebACL"},
+	"AWS/WAFV2":             {"Region", "Rule", "RuleGroup", "WebACL"},
 	"AWS/WorkSpaces":        {"DirectoryId", "WorkspaceId"},
 	"ECS/ContainerInsights": {"ClusterName", "ServiceName", "TaskDefinitionFamily", "EC2InstanceId", "ContainerInstanceId"},
 	"ContainerInsights":     {"ClusterName", "NodeName", "Namespace", "InstanceId", "PodName", "Service"},
@@ -575,7 +583,7 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
 				} else if attr, ok := v.Interface().(*time.Time); ok {
-					data = (*attr).String()
+					data = attr.String()
 				} else {
 					return nil, errors.New("invalid attribute path")
 				}
@@ -732,7 +740,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	creds, err := GetCredentials(cwData)
+	creds, err := getCredentials(cwData)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}

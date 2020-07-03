@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -24,25 +24,28 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
-// ApplicationInsightsDatasource calls the application insights query API's
+// ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
 	httpClient *http.Client
 	dsInfo     *models.DataSource
 }
 
+// ApplicationInsightsQuery is the model that holds the information
+// needed to make a metrics query to Application Insights, and the information
+// used to parse the response.
 type ApplicationInsightsQuery struct {
 	RefID string
 
-	IsRaw bool
+	// Text based raw query options.
+	ApiURL string
+	Params url.Values
+	Alias  string
+	Target string
 
-	// Text based raw query options
-	ApiURL            string
-	Params            url.Values
-	Alias             string
-	Target            string
-	TimeColumnName    string
-	ValueColumnName   string
-	SegmentColumnName string
+	// These fields are used when parsing the response.
+	metricName  string
+	dimensions  []string
+	aggregation string
 }
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
@@ -92,72 +95,42 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 		insightsJSONModel := queryJSONModel.AppInsights
 		azlog.Debug("Application Insights", "target", insightsJSONModel)
 
-		if insightsJSONModel.RawQuery == nil {
-			return nil, fmt.Errorf("missing the 'rawQuery' property")
-		}
-
-		if *insightsJSONModel.RawQuery {
-			var rawQueryString string
-			if insightsJSONModel.RawQueryString == "" {
-				return nil, errors.New("rawQuery requires rawQueryString")
-			}
-
-			rawQueryString, err := KqlInterpolate(query, timeRange, insightsJSONModel.RawQueryString)
+		azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
+		timeGrain := insightsJSONModel.TimeGrain
+		timeGrains := insightsJSONModel.AllowedTimeGrainsMs
+		if timeGrain == "auto" {
+			timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {
 				return nil, err
 			}
-
-			params := url.Values{}
-			params.Add("query", rawQueryString)
-
-			applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
-				RefID:             query.RefId,
-				IsRaw:             true,
-				ApiURL:            "query",
-				Params:            params,
-				TimeColumnName:    insightsJSONModel.TimeColumn,
-				ValueColumnName:   insightsJSONModel.ValueColumn,
-				SegmentColumnName: insightsJSONModel.SegmentColumn,
-				Target:            params.Encode(),
-			})
-		} else {
-			azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
-			timeGrain := insightsJSONModel.TimeGrain
-			timeGrains := insightsJSONModel.AllowedTimeGrainsMs
-			if timeGrain == "auto" {
-				timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			params := url.Values{}
-			params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
-			if timeGrain != "none" {
-				params.Add("interval", timeGrain)
-			}
-			params.Add("aggregation", insightsJSONModel.Aggregation)
-
-			dimension := strings.TrimSpace(insightsJSONModel.Dimension)
-			// Azure Monitor combines this and the following logic such that if dimensionFilter, must also Dimension, should that be done here as well?
-			if dimension != "" && !strings.EqualFold(dimension, "none") {
-				params.Add("segment", dimension)
-			}
-
-			dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
-			if dimensionFilter != "" {
-				params.Add("filter", dimensionFilter)
-			}
-
-			applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
-				RefID:  query.RefId,
-				IsRaw:  false,
-				ApiURL: azureURL,
-				Params: params,
-				Alias:  insightsJSONModel.Alias,
-				Target: params.Encode(),
-			})
 		}
+
+		params := url.Values{}
+		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
+		if timeGrain != "none" {
+			params.Add("interval", timeGrain)
+		}
+		params.Add("aggregation", insightsJSONModel.Aggregation)
+
+		dimensionFilter := strings.TrimSpace(insightsJSONModel.DimensionFilter)
+		if dimensionFilter != "" {
+			params.Add("filter", dimensionFilter)
+		}
+
+		if len(insightsJSONModel.Dimensions) != 0 {
+			params.Add("segment", strings.Join(insightsJSONModel.Dimensions, ","))
+		}
+		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
+			RefID:       query.RefId,
+			ApiURL:      azureURL,
+			Params:      params,
+			Alias:       insightsJSONModel.Alias,
+			Target:      params.Encode(),
+			metricName:  insightsJSONModel.MetricName,
+			aggregation: insightsJSONModel.Aggregation,
+			dimensions:  insightsJSONModel.Dimensions,
+		})
+
 	}
 
 	return applicationInsightsQueries, nil
@@ -209,20 +182,18 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
-	if query.IsRaw {
-		queryResult.Series, queryResult.Meta, err = e.parseTimeSeriesFromQuery(body, query)
-		if err != nil {
-			queryResult.Error = err
-			return queryResult, nil
-		}
-	} else {
-		queryResult.Series, err = e.parseTimeSeriesFromMetrics(body, query)
-		if err != nil {
-			queryResult.Error = err
-			return queryResult, nil
-		}
+	mr := MetricsResult{}
+	err = json.Unmarshal(body, &mr)
+	if err != nil {
+		return nil, err
 	}
 
+	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
+	queryResult.Dataframes = tsdb.NewDecodedDataFrames(data.Frames{frame})
 	return queryResult, nil
 }
 
@@ -242,7 +213,10 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
 	proxyPass := fmt.Sprintf("%s/v1/apps/%s", pluginRouteName, appInsightsAppID)
 
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppID))
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -275,331 +249,4 @@ func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourc
 	}
 
 	return pluginRoute, pluginRouteName, nil
-}
-
-func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, query *ApplicationInsightsQuery) (tsdb.TimeSeriesSlice, *simplejson.Json, error) {
-	var data ApplicationInsightsQueryResponse
-	err := json.Unmarshal(body, &data)
-	if err != nil {
-		azlog.Debug("Failed to unmarshal Application Insights response", "error", err, "body", string(body))
-		return nil, nil, err
-	}
-
-	type Metadata struct {
-		Columns []string `json:"columns"`
-	}
-
-	meta := Metadata{}
-
-	for _, t := range data.Tables {
-		if t.Name == "PrimaryResult" {
-			timeIndex, valueIndex, segmentIndex := -1, -1, -1
-			meta.Columns = make([]string, 0)
-			for i, v := range t.Columns {
-				meta.Columns = append(meta.Columns, v.Name)
-				switch v.Name {
-				case query.TimeColumnName:
-					timeIndex = i
-				case query.ValueColumnName:
-					valueIndex = i
-				case query.SegmentColumnName:
-					segmentIndex = i
-				}
-			}
-
-			if timeIndex == -1 {
-				azlog.Info("no time column specified, returning existing columns, no data")
-				return nil, simplejson.NewFromAny(meta), nil
-			}
-
-			if valueIndex == -1 {
-				azlog.Info("no value column specified, returning existing columns, no data")
-				return nil, simplejson.NewFromAny(meta), nil
-			}
-
-			var getPoints func([]interface{}) *tsdb.TimeSeriesPoints
-			slice := tsdb.TimeSeriesSlice{}
-			if segmentIndex == -1 {
-				legend := formatApplicationInsightsLegendKey(query.Alias, query.ValueColumnName, "", "")
-				series := tsdb.NewTimeSeries(legend, []tsdb.TimePoint{})
-				slice = append(slice, series)
-				getPoints = func(row []interface{}) *tsdb.TimeSeriesPoints {
-					return &series.Points
-				}
-			} else {
-				mapping := map[string]*tsdb.TimeSeriesPoints{}
-				getPoints = func(row []interface{}) *tsdb.TimeSeriesPoints {
-					segment := fmt.Sprintf("%v", row[segmentIndex])
-					if points, ok := mapping[segment]; ok {
-						return points
-					}
-					legend := formatApplicationInsightsLegendKey(query.Alias, query.ValueColumnName, query.SegmentColumnName, segment)
-					series := tsdb.NewTimeSeries(legend, []tsdb.TimePoint{})
-					slice = append(slice, series)
-					mapping[segment] = &series.Points
-					return &series.Points
-				}
-			}
-
-			for _, r := range t.Rows {
-				timeStr, ok := r[timeIndex].(string)
-				if !ok {
-					return nil, simplejson.NewFromAny(meta), errors.New("invalid time value")
-				}
-				timeValue, err := time.Parse(time.RFC3339Nano, timeStr)
-				if err != nil {
-					return nil, simplejson.NewFromAny(meta), err
-				}
-
-				var value float64
-				if value, err = getFloat(r[valueIndex]); err != nil {
-					return nil, simplejson.NewFromAny(meta), err
-				}
-
-				points := getPoints(r)
-				*points = append(*points, tsdb.NewTimePoint(null.FloatFrom(value), float64(timeValue.Unix()*1000)))
-			}
-
-			return slice, simplejson.NewFromAny(meta), nil
-		}
-	}
-
-	return nil, nil, errors.New("could not find table")
-}
-
-func (e *ApplicationInsightsDatasource) parseTimeSeriesFromMetrics(body []byte, query *ApplicationInsightsQuery) (tsdb.TimeSeriesSlice, error) {
-	doc, err := simplejson.NewJson(body)
-	if err != nil {
-		return nil, err
-	}
-
-	value := doc.Get("value").MustMap()
-
-	if value == nil {
-		return nil, errors.New("could not find value element")
-	}
-
-	endStr, ok := value["end"].(string)
-	if !ok {
-		return nil, errors.New("missing 'end' value in response")
-	}
-	endTime, err := time.Parse(time.RFC3339Nano, endStr)
-	if err != nil {
-		return nil, fmt.Errorf("bad 'end' value: %v", err)
-	}
-
-	for k, v := range value {
-		switch k {
-		case "start":
-		case "end":
-		case "interval":
-		case "segments":
-			// we have segments!
-			return parseSegmentedValueTimeSeries(query, endTime, v)
-		default:
-			return parseSingleValueTimeSeries(query, k, endTime, v)
-		}
-	}
-
-	azlog.Error("Bad response from application insights/metrics", "body", string(body))
-	return nil, errors.New("could not find expected values in response")
-}
-
-func parseSegmentedValueTimeSeries(query *ApplicationInsightsQuery, endTime time.Time, segmentsJson interface{}) (tsdb.TimeSeriesSlice, error) {
-	segments, ok := segmentsJson.([]interface{})
-	if !ok {
-		return nil, errors.New("bad segments value")
-	}
-
-	slice := tsdb.TimeSeriesSlice{}
-	seriesMap := map[string]*tsdb.TimeSeriesPoints{}
-
-	for _, segment := range segments {
-		segmentMap, ok := segment.(map[string]interface{})
-		if !ok {
-			return nil, errors.New("bad segments value")
-		}
-		err := processSegment(&slice, segmentMap, query, endTime, seriesMap)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return slice, nil
-}
-
-func processSegment(slice *tsdb.TimeSeriesSlice, segment map[string]interface{}, query *ApplicationInsightsQuery, endTime time.Time, pointMap map[string]*tsdb.TimeSeriesPoints) error {
-	var segmentName string
-	var segmentValue string
-	var childSegments []interface{}
-	hasChildren := false
-	var value float64
-	var valueName string
-	var ok bool
-	var err error
-	for k, v := range segment {
-		switch k {
-		case "start":
-		case "end":
-			endStr, ok := v.(string)
-			if !ok {
-				return errors.New("missing 'end' value in response")
-			}
-			endTime, err = time.Parse(time.RFC3339Nano, endStr)
-			if err != nil {
-				return fmt.Errorf("bad 'end' value: %v", err)
-			}
-		case "segments":
-			childSegments, ok = v.([]interface{})
-			if !ok {
-				return errors.New("invalid format segments")
-			}
-			hasChildren = true
-		default:
-			mapping, hasValues := v.(map[string]interface{})
-			if hasValues {
-				valueName = k
-				value, err = getAggregatedValue(mapping, valueName)
-				if err != nil {
-					return err
-				}
-			} else {
-				segmentValue, ok = v.(string)
-				if !ok {
-					return fmt.Errorf("invalid mapping for key %v", k)
-				}
-				segmentName = k
-			}
-		}
-	}
-
-	if hasChildren {
-		for _, s := range childSegments {
-			segmentMap, ok := s.(map[string]interface{})
-			if !ok {
-				return errors.New("invalid format segments")
-			}
-			if err := processSegment(slice, segmentMap, query, endTime, pointMap); err != nil {
-				return err
-			}
-		}
-	} else {
-
-		aliased := formatApplicationInsightsLegendKey(query.Alias, valueName, segmentName, segmentValue)
-
-		if segmentValue == "" {
-			segmentValue = valueName
-		}
-
-		points, ok := pointMap[segmentValue]
-
-		if !ok {
-			series := tsdb.NewTimeSeries(aliased, tsdb.TimeSeriesPoints{})
-			points = &series.Points
-			*slice = append(*slice, series)
-			pointMap[segmentValue] = points
-		}
-
-		*points = append(*points, tsdb.NewTimePoint(null.FloatFrom(value), float64(endTime.Unix()*1000)))
-	}
-
-	return nil
-}
-
-func parseSingleValueTimeSeries(query *ApplicationInsightsQuery, metricName string, endTime time.Time, valueJson interface{}) (tsdb.TimeSeriesSlice, error) {
-	legend := formatApplicationInsightsLegendKey(query.Alias, metricName, "", "")
-
-	valueMap, ok := valueJson.(map[string]interface{})
-	if !ok {
-		return nil, errors.New("bad value aggregation")
-	}
-
-	metricValue, err := getAggregatedValue(valueMap, metricName)
-	if err != nil {
-		return nil, err
-	}
-
-	return []*tsdb.TimeSeries{
-		tsdb.NewTimeSeries(
-			legend,
-			tsdb.TimeSeriesPoints{
-				tsdb.NewTimePoint(
-					null.FloatFrom(metricValue),
-					float64(endTime.Unix()*1000)),
-			},
-		),
-	}, nil
-}
-
-func getAggregatedValue(valueMap map[string]interface{}, valueName string) (float64, error) {
-
-	aggValue := ""
-	var metricValue float64
-	var err error
-	for k, v := range valueMap {
-		if aggValue != "" {
-			return 0, fmt.Errorf("found multiple aggregations, %v, %v", aggValue, k)
-		}
-		if k == "" {
-			return 0, errors.New("found no aggregation name")
-		}
-		aggValue = k
-		metricValue, err = getFloat(v)
-
-		if err != nil {
-			return 0, fmt.Errorf("bad value: %v", err)
-		}
-	}
-
-	if aggValue == "" {
-		return 0, fmt.Errorf("no aggregation value found for %v", valueName)
-	}
-
-	return metricValue, nil
-}
-
-func getFloat(in interface{}) (float64, error) {
-	if out, ok := in.(float32); ok {
-		return float64(out), nil
-	} else if out, ok := in.(int32); ok {
-		return float64(out), nil
-	} else if out, ok := in.(json.Number); ok {
-		return out.Float64()
-	} else if out, ok := in.(int64); ok {
-		return float64(out), nil
-	} else if out, ok := in.(float64); ok {
-		return out, nil
-	}
-
-	return 0, fmt.Errorf("cannot convert '%v' to float32", in)
-}
-
-// formatApplicationInsightsLegendKey builds the legend key or timeseries name
-// Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatApplicationInsightsLegendKey(alias string, metricName string, dimensionName string, dimensionValue string) string {
-	if alias == "" {
-		if len(dimensionName) > 0 {
-			return fmt.Sprintf("{%s=%s}.%s", dimensionName, dimensionValue, metricName)
-		}
-		return metricName
-	}
-
-	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
-		metaPartName := strings.Replace(string(in), "{{", "", 1)
-		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
-		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
-
-		switch metaPartName {
-		case "metric":
-			return []byte(metricName)
-		case "dimensionname", "groupbyname":
-			return []byte(dimensionName)
-		case "dimensionvalue", "groupbyvalue":
-			return []byte(dimensionValue)
-		}
-
-		return in
-	})
-
-	return string(result)
 }

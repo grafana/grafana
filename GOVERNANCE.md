@@ -1,36 +1,37 @@
 # Governance
 
-This document describes the rules and governance of the project. It is meant to be followed by all the developers of the project and the Grafana community. Common terminology used in this governance document are listed below: 
+This document describes the rules and governance of the project. It is meant to be followed by all the developers of the project and the Grafana community. Common terminology used in this governance document are listed below:
 
-* **Team members**: Any members of the private [grafana-team][team] Google group.
+- **Team members**: Any members of the private [grafana-team][team] Google group.
 
-* **Maintainers**: Maintainers lead an individual project or parts thereof ([`MAINTAINERS.md`][maintainers]).
+- **Maintainers**: Maintainers lead an individual project or parts thereof ([`MAINTAINERS.md`][maintainers]).
 
-* **Projects**: A single repository in the Grafana GitHub organization and listed below is referred to as a project:
-  * clock-panel
-  * devtools
-  * gel-app
-  * grafana
-  * grafana-github-datasource
-  * grafana-image-renderer
-  * grafana-kiosk
-  * grafana-plugin-sdk-go
-  * grafana-polystat-panel
-  * grafonnet-lib
-  * kairosdb-datasource
-  * piechart-panel
-  * simple-angular-panel
-  * simple-app-plugin
-  * simple-datasource
-  * simple-datasource-backend
-  * simple-json-backend-datasource
-  * simple-json-datasource
-  * simple-react-panel
-  * strava-datasource
-  * tutorials
-  * worldmap-panel
+- **Projects**: A single repository in the Grafana GitHub organization and listed below is referred to as a project:
 
-* **The Grafana project**: The sum of all activities performed under this governance, concerning one or more repositories or the community.
+  - clock-panel
+  - devtools
+  - gel-app
+  - grafana
+  - grafana-github-datasource
+  - grafana-image-renderer
+  - grafana-kiosk
+  - grafana-plugin-sdk-go
+  - grafana-polystat-panel
+  - grafonnet-lib
+  - kairosdb-datasource
+  - piechart-panel
+  - simple-angular-panel
+  - simple-app-plugin
+  - simple-datasource
+  - simple-datasource-backend
+  - simple-json-backend-datasource
+  - simple-json-datasource
+  - simple-react-panel
+  - strava-datasource
+  - tutorials
+  - worldmap-panel
+
+- **The Grafana project**: The sum of all activities performed under this governance, concerning one or more repositories or the community.
 
 ## Values
 
@@ -64,37 +65,41 @@ In case a member leaves, the [offboarding](#offboarding) procedure is applied.
 
 The current team members are:
 
-* Alexander Zobnin ([Grafana Labs](https://grafana.com/))
-* Andrej Ocenas ([Grafana Labs](https://grafana.com/))
-* Arve Knudsen ([Grafana Labs](https://grafana.com/))
-* Brian Gann ([Grafana Labs](https://grafana.com/))
-* Carl Bergquist ([Grafana Labs](https://grafana.com/))
-* Daniel Lee ([Grafana Labs](https://grafana.com/))
-* David Kaltschmidt ([Grafana Labs](https://grafana.com/))
-* Diana Payton ([Grafana Labs](https://grafana.com/))
-* Diana Sarlinska ([Grafana Labs](https://grafana.com/))
-* Dominik Prokop ([Grafana Labs](https://grafana.com/))
-* Emil Tullstedt ([Grafana Labs](https://grafana.com/))
-* Hugo Häggmark ([Grafana Labs](https://grafana.com/))
-* Ivana Huckova ([Grafana Labs](https://grafana.com/))
-* Jessica Müller ([Grafana Labs](https://grafana.com/))
-* Julien Pivotto ([Inuits](https://inuits.eu/))
-* Kay Delaney ([Grafana Labs](https://grafana.com/))
-* Kyle Brandt ([Grafana Labs](https://grafana.com/))
-* Leonard Gram ([Grafana Labs](https://grafana.com/))
-* Lukas Siatka ([Grafana Labs](https://grafana.com/))
-* Marcus Andersson ([Grafana Labs](https://grafana.com/))
-* Marcus Efraimsson ([Grafana Labs](https://grafana.com/))
-* Marcus Olsson ([Grafana Labs](https://grafana.com/))
-* Mitsuhiro Tanda ([GREE](https://corp.gree.net/jp/en/))
-* Patrick O’Carroll ([Grafana Labs](https://grafana.com/))
-* Peter Holmberg ([Grafana Labs](https://grafana.com/))
-* Ryan McKinley ([Grafana Labs](https://grafana.com/))
-* Sofia Papagiannaki ([Grafana Labs](https://grafana.com/))
-* Stephanie Closson ([Grafana Labs](https://grafana.com/))
-* Tobias Skarhed ([Grafana Labs](https://grafana.com/))
-* Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
-* Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
+- Alexander Zobnin ([Grafana Labs](https://grafana.com/))
+- Andrej Ocenas ([Grafana Labs](https://grafana.com/))
+- Arve Knudsen ([Grafana Labs](https://grafana.com/))
+- Brian Gann ([Grafana Labs](https://grafana.com/))
+- Carl Bergquist ([Grafana Labs](https://grafana.com/))
+- Chris Trott ([Grafana Labs](https://grafana.com/))
+- Daniel Lee ([Grafana Labs](https://grafana.com/))
+- David Kaltschmidt ([Grafana Labs](https://grafana.com/))
+- Diana Payton ([Grafana Labs](https://grafana.com/))
+- Diana Sarlinska ([Grafana Labs](https://grafana.com/))
+- Dominik Prokop ([Grafana Labs](https://grafana.com/))
+- Emil Tullstedt ([Grafana Labs](https://grafana.com/))
+- Hugo Häggmark ([Grafana Labs](https://grafana.com/))
+- Ivana Huckova ([Grafana Labs](https://grafana.com/))
+- Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
+- Jessica Müller ([Grafana Labs](https://grafana.com/))
+- Julien Pivotto ([Inuits](https://inuits.eu/))
+- Kay Delaney ([Grafana Labs](https://grafana.com/))
+- Kyle Brandt ([Grafana Labs](https://grafana.com/))
+- Leonard Gram ([Grafana Labs](https://grafana.com/))
+- Lukas Siatka ([Grafana Labs](https://grafana.com/))
+- Malcolm Holmes ([Grafana Labs](https://grafana.com/))
+- Marcus Andersson ([Grafana Labs](https://grafana.com/))
+- Marcus Efraimsson ([Grafana Labs](https://grafana.com/))
+- Marcus Olsson ([Grafana Labs](https://grafana.com/))
+- Mitsuhiro Tanda ([GREE](https://corp.gree.net/jp/en/))
+- Patrick O’Carroll ([Grafana Labs](https://grafana.com/))
+- Peter Holmberg ([Grafana Labs](https://grafana.com/))
+- Richard Hartmann ([Grafana Labs](https://grafana.com/))
+- Ryan McKinley ([Grafana Labs](https://grafana.com/))
+- Sofia Papagiannaki ([Grafana Labs](https://grafana.com/))
+- Stephanie Closson ([Grafana Labs](https://grafana.com/))
+- Tobias Skarhed ([Grafana Labs](https://grafana.com/))
+- Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
+- Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
 
 ### Maintainers
 
@@ -138,7 +143,7 @@ For public discussions, anyone interested is encouraged to participate. Formal p
 
 ### Consensus
 
-The default decision making mechanism for the Grafana project is [rough][rough] consensus. This means that any decision on technical issues is considered supported by the [team][team] as long as nobody objects or the objection has been considered but not necessarily accomodated.
+The default decision making mechanism for the Grafana project is [rough][rough] consensus. This means that any decision on technical issues is considered supported by the [team][team] as long as nobody objects or the objection has been considered but not necessarily accommodated.
 
 Silence on any consensus decision is implicit agreement and equivalent to explicit agreement. Explicit agreement may be stated at will. Decisions may, but do not need to be called out and put up for decision on the [developers mailing list][devs] at any time and by anyone.
 
@@ -174,21 +179,20 @@ If there are multiple alternatives, members may vote for one or more alternative
 
 The new member is
 
-* added to the list of [team members](#team-members). Ideally by sending a PR of their own, at least approving said PR.
-* announced on the [developers mailing list][devs] by an existing team member. Ideally, the new member replies in this thread, acknowledging team membership.
-* added to the projects with commit rights.
-* added to the [team mailing list][team].
-
+- added to the list of [team members](#team-members). Ideally by sending a PR of their own, at least approving said PR.
+- announced on the [developers mailing list][devs] by an existing team member. Ideally, the new member replies in this thread, acknowledging team membership.
+- added to the projects with commit rights.
+- added to the [team mailing list][team].
 
 ### Offboarding
 
 The ex-member is
 
-* removed from the list of [team members](#team-members). Ideally by sending a PR of their own, at least approving said PR. In case of forced removal, no approval is needed.
-* removed from the projects. Optionally, they can retain maintainership of one or more repositories if the [team](#team-members) agrees.
-* removed from the team mailing list and demoted to a normal member of the other mailing lists.
-* not allowed to call themselves an active team member any more, nor allowed to imply this to be the case.
-* added to a list of previous members if they so choose.
+- removed from the list of [team members](#team-members). Ideally by sending a PR of their own, at least approving said PR. In case of forced removal, no approval is needed.
+- removed from the projects. Optionally, they can retain maintainership of one or more repositories if the [team](#team-members) agrees.
+- removed from the team mailing list and demoted to a normal member of the other mailing lists.
+- not allowed to call themselves an active team member any more, nor allowed to imply this to be the case.
+- added to a list of previous members if they so choose.
 
 If needed, we reserve the right to publicly announce removal.
 

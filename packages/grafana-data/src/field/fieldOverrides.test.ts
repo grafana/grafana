@@ -22,13 +22,14 @@ import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
 import { locationUtil } from '../utils';
-const property1 = {
+
+const property1: any = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
 
 const property2 = {
   id: 'custom.property2', // Match field properties
@@ -36,18 +37,26 @@ const property2 = {
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
 
-const property3 = {
+const property3: any = {
   id: 'custom.property3.nested', // Match field properties
   path: 'property3.nested', // Match field properties
   isCustom: true,
   process: (value: any) => value,
   shouldApply: () => true,
-} as any;
+};
+
+const shouldApplyFalse: any = {
+  id: 'custom.shouldApplyFalse', // Match field properties
+  path: 'shouldApplyFalse', // Match field properties
+  isCustom: true,
+  process: (value: any) => value,
+  shouldApply: () => false,
+};
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-  return [property1, property2, property3, ...mockStandardProperties()];
+  return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
 });
 
 describe('Global MinMax', () => {
@@ -109,6 +118,7 @@ describe('applyFieldOverrides', () => {
           overrides: [],
         },
         replaceVariables: (value: any) => value,
+        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
@@ -178,6 +188,7 @@ describe('applyFieldOverrides', () => {
         overrides: [],
       },
       fieldConfigRegistry: customFieldRegistry,
+      getDataSourceSettingsByUid: undefined as any,
       replaceVariables: v => v,
       theme: {} as GrafanaTheme,
     })[0];
@@ -195,6 +206,7 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
+      getDataSourceSettingsByUid: undefined as any,
       theme: (undefined as any) as GrafanaTheme,
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -222,6 +234,7 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
+      getDataSourceSettingsByUid: undefined as any,
       theme: (undefined as any) as GrafanaTheme,
       autoMinMax: true,
     })[0];
@@ -353,6 +366,27 @@ describe('setDynamicConfigValue', () => {
     expect(config.custom.property1).toEqual('applied');
   });
 
+  it('applies overrides even when shouldApply returns false', () => {
+    const config: FieldConfig = {
+      custom: {},
+    };
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'custom.shouldApplyFalse',
+        value: 'applied',
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [] as any,
+        field: { type: FieldType.number } as any,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.custom.shouldApplyFalse).toEqual('applied');
+  });
+
   it('applies nested custom dynamic config values', () => {
     const config = {
       custom: {
@@ -448,11 +482,72 @@ describe('getLinksSupplier', () => {
     });
 
     const replaceSpy = jest.fn();
-    const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy, { theme: {} as GrafanaTheme });
+    const supplier = getLinksSupplier(
+      f0,
+      f0.fields[0],
+      {},
+      replaceSpy,
+      // this is used only for internal links so isn't needed here
+      () => ({} as any),
+      {
+        theme: {} as GrafanaTheme,
+      }
+    );
     supplier({});
 
     expect(replaceSpy).toBeCalledTimes(2);
     expect(replaceSpy.mock.calls[0][0]).toEqual('url to be interpolated');
     expect(replaceSpy.mock.calls[1][0]).toEqual('title to be interpolated');
+  });
+
+  it('handles internal links', () => {
+    locationUtil.initialize({
+      getConfig: () => ({ appSubUrl: '' } as any),
+      buildParamsFromVariables: (() => {}) as any,
+      getTimeRangeForUrl: (() => {}) as any,
+    });
+
+    const f0 = new MutableDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+          config: {
+            links: [
+              {
+                url: '',
+                title: '',
+                internal: {
+                  datasourceUid: '0',
+                  query: '12345',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const supplier = getLinksSupplier(
+      f0,
+      f0.fields[0],
+      {},
+      // We do not need to interpolate anything for this test
+      (value, vars, format) => value,
+      uid => ({ name: 'testDS' } as any),
+      { theme: {} as GrafanaTheme }
+    );
+    const links = supplier({ valueRowIndex: 0 });
+    expect(links.length).toBe(1);
+    expect(links[0]).toEqual(
+      expect.objectContaining({
+        title: 'testDS',
+        href:
+          '/explore?left={"datasource":"testDS","queries":["12345"],"mode":"Metrics","ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+        onClick: undefined,
+      })
+    );
   });
 });

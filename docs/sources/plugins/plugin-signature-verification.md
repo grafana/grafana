@@ -5,11 +5,16 @@ type = "docs"
 
 # Plugin signature verification
 
-Plugin signature verification (signing) is a security measure to make sure plugins haven't been tampered with. Grafana will verify if a plugin is signed or unsigned when loading it by inspecting and verifying its digital signature.
+Plugin signature verification (signing) is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned when inspecting and verifying its digital signature.
 
 ## How it works
 
-For Grafana to be able to verify the digital signature of a plugin, the plugin must include a signed manifest file, _MANIFEST.txt_. The signed manifest file contains two sections, signed message and digital signature. The signed message contains plugin metadata and plugin files with their respective checksums (SHA256). The digital signature is created by encrypting the signed message using a private key. Grafana have a public key built-in that can be used to verify that the digital signature have been encrypted using expected private key. Signed manifest example file:
+For Grafana to be able to verify the digital signature of a plugin, the plugin must include a signed manifest file, _MANIFEST.txt_. The signed manifest file contains two sections:
+
+- **Signed message -** The signed message contains plugin metadata and plugin files with their respective checksums (SHA256).
+- **Digital signature -**  The digital signature is created by encrypting the signed message using a private key. Grafana has a public key built-in that can be used to verify that the digital signature have been encrypted using expected private key. 
+ 
+### Signed manifest example file
 
 ```txt
 // MANIFEST.txt
@@ -43,31 +48,33 @@ FJnPwM6Y2tTdq7AkpVTTAb3RTFadA8dRmLfajxgHxmDf5yUv9M2M6sa1eTSG
 
 ```
 
-When Grafana starts it discovers plugins to load. For each discovered plugin it verifies the authenticity of it, and then decides whether to load it or not based on the state of the plugin signature:
+## Plugin signatures
+
+When Grafana starts, it discovers plugins to load. For each discovered plugin it verifies the authenticity of it, and then decides whether to load it or not based on the state of the plugin signature:
 
 | Plugin signature | Description |
 | ---------------- | ----------- |
 | internal | Core plugin built into Grafana. |
-| unsigned | Plugin don't have a _MANIFEST.txt_ file. |
 | invalid  | Digital signature of _MANIFEST.txt_ file is not valid. |
 | modified | Manifest plugin id or version have been changed or files checksums doesn't match. |
+| unsigned | Plugin don't have a _MANIFEST.txt_ file. |
 | valid    | If any of the above descriptions is false. |
 
 The plugin signature state can be inspected for each plugin in the plugins listing page (Configuration -> Plugins).
 
 ## Backend plugins
 
-If a [backend plugin]({{< relref "../developers/plugins/backend/_index.md" >}}) is not signed then Grafana will not load or start it. Trying to load a backend plugin with an invalid signature, then Grafana writes an error message to the server log:
+If a [backend plugin]({{< relref "../developers/plugins/backend/_index.md" >}}) is not signed, then Grafana will not load or start it. If you try to load a backend plugin with an invalid signature, then Grafana writes an error message to the server log:
 
 ```bash
 EROR[06-01|16:45:59] Failed to load plugin   error=plugin <plugin id> is unsigned
 ```
 
-> Note: All Grafana Labs authored backend plugins, including Enterprise plugins, are signed.
+> **Note:** All Grafana Labs authored backend plugins, including Enterprise plugins, are signed.
 
 ## Allow unsigned plugins
 
-While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../installation/configuration.md#allow-loading-unsigned-plugins" >}}). Still, allowing unsigned plugins will not skip verifying the authenticity of a plugin if plugin has a _MANIFEST.txt_ file.
+While you can allow unsigned plugins using a configuration setting, we strongly advise you not to. For more information on how to allow unsigned backend plugin, refer to [Configuration]({{< relref "../administration/configuration.md#allow-loading-unsigned-plugins" >}}). Allowing unsigned plugins will not skip verifying the authenticity of a plugin if plugin has a _MANIFEST.txt_ file.
 
 If you run an unsigned backend plugin, then Grafana writes a warning message to the server log:
 
@@ -75,4 +82,4 @@ If you run an unsigned backend plugin, then Grafana writes a warning message to 
 WARN[06-01|16:45:59] Running an unsigned backend plugin   pluginID=<plugin id>
 ```
 
-If you're developing plugins and run Grafana from source the development mode will be enabled per default and also allow you to run unsigned backend plugins.
+If you're developing plugins and run Grafana from source, the development mode is enabled by default and also allow you to run unsigned backend plugins.

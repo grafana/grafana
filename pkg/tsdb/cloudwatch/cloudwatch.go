@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
@@ -30,6 +32,7 @@ type DatasourceInfo struct {
 	Region        string
 	AuthType      string
 	AssumeRoleArn string
+	ExternalID    string
 	Namespace     string
 
 	AccessKey string
@@ -79,15 +82,11 @@ func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	}, nil
 }
 
-var (
-	plog        log.Logger
-	aliasFormat *regexp.Regexp
-)
+var plog = log.New("tsdb.cloudwatch")
+var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
-	plog = log.New("tsdb.cloudwatch")
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
-	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwatchlogs.CloudWatchLogs, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -110,11 +109,14 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwa
 
 	attemptCount := 1
 	for range ticker.C {
-		if res, err := e.executeGetQueryResults(ctx, logsClient, requestParams); err != nil {
+		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
+		if err != nil {
 			return nil, err
-		} else if isTerminated(*res.Status) {
+		}
+		if isTerminated(*res.Status) {
 			return res, err
-		} else if attemptCount >= maxAttempts {
+		}
+		if attemptCount >= maxAttempts {
 			return res, fmt.Errorf("fetching of query results exceeded max number of attempts")
 		}
 
@@ -202,37 +204,23 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 			return nil, err
 		}
 
-		encodedFrames := make([][]byte, 0)
-		for _, frame := range groupedFrames {
-			dataframeEnc, err := frame.MarshalArrow()
-			if err != nil {
-				return nil, err
-			}
-			encodedFrames = append(encodedFrames, dataframeEnc)
-		}
-
 		response := &tsdb.Response{
 			Results: make(map[string]*tsdb.QueryResult),
 		}
 
 		response.Results["A"] = &tsdb.QueryResult{
 			RefId:      "A",
-			Dataframes: encodedFrames,
+			Dataframes: tsdb.NewDecodedDataFrames(groupedFrames),
 		}
 
 		return response, nil
-	}
-
-	dataframeEnc, err := dataframe.MarshalArrow()
-	if err != nil {
-		return nil, err
 	}
 
 	response := &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{
 			"A": {
 				RefId:      "A",
-				Dataframes: [][]byte{dataframeEnc},
+				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
 			},
 		},
 	}

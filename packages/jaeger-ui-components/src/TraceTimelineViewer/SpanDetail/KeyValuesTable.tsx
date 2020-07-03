@@ -20,7 +20,7 @@ import cx from 'classnames';
 import CopyIcon from '../../common/CopyIcon';
 
 import { TNil } from '../../types';
-import { KeyValuePair, Link } from '../../types/trace';
+import { TraceKeyValuePair, TraceLink } from '@grafana/data';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
@@ -102,7 +102,7 @@ LinkValue.defaultProps = {
   title: '',
 };
 
-const linkValueList = (links: Link[]) => (
+const linkValueList = (links: TraceLink[]) => (
   <UIMenu>
     {links.map(({ text, url }, index) => (
       // `index` is necessary in the key because url can repeat
@@ -114,8 +114,8 @@ const linkValueList = (links: Link[]) => (
 );
 
 type KeyValuesTableProps = {
-  data: KeyValuePair[];
-  linksGetter: ((pairs: KeyValuePair[], index: number) => Link[]) | TNil;
+  data: TraceKeyValuePair[];
+  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {

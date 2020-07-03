@@ -43,7 +43,7 @@ The time period for the dashboard can be controlled by the [Time range controls]
 
 Dashboards can use [templating]({{< relref "../../variables/templates-and-variables.md" >}}) to make them more dynamic and interactive.
 
-Dashboards can use [annotations]({{< relref "../../reference/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
+Dashboards can use [annotations]({{< relref "../../dashboards/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 
 Dashboards can be [shared]({{< relref "../../reference/share_dashboard.md" >}}) easily in a variety of ways.
 
@@ -55,7 +55,7 @@ A *row* is a logical divider within a dashboard. It is used to group panels toge
 
 Rows are always 12 “units” wide. These units are automatically scaled dependent on the horizontal resolution of your browser. You can control the relative width of panels within a row by setting their specific width.
 
-We use a unit abstraction so that Grafana looks great on all screens sizes.
+We use a unit abstraction so that Grafana looks great on all screen sizes.
 
  > Note: With MaxDataPoint functionality, Grafana can show you the perfect number of data points, regardless of resolution or time range.
 
