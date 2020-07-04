@@ -116,7 +116,6 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
           href: link && link.href,
         } as DebugField;
       } catch (error) {
-        console.error(error);
         return {
           name: field.name,
           error,
