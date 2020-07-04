@@ -55,10 +55,8 @@
       "search": false,
       "starred": true,
       "tags": [],
-      "title": "SQL Atlas",
-      "content": "<div class=\"text-center\" style=\"padding-top: 15px\">\nPepe el cojo \n</div>",
-      "type": "text",
-      "mode": "html"
+      "title": "Alerts",
+      "type": "alertlist"
     }
   ],
   "schemaVersion": 22,
