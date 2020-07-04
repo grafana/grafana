@@ -59,7 +59,7 @@ describe('getQueryHints()', () => {
 
     // Test substring match not triggering hint
     hints = getQueryHints('foo_foo', series, datasource);
-    expect(hints).toBe([]);
+    expect(hints).toEqual([]);
   });
 
   it('returns no rate hint for a counter metric that already has a rate', () => {
