@@ -184,7 +184,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
     const hints = datasource.getQueryHints(query, result);
-    const hint = hints && hints.length > 0 ? hints[0] : null;
+    const hint = hints.length > 0 ? hints[0] : null;
     this.setState({ hint });
   };
 

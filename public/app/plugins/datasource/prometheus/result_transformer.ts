@@ -75,7 +75,7 @@ export class ResultTransformer {
     return {
       datapoints: dps,
       refId: options.refId,
-      target: name,
+      target: name ?? '',
       tags: labels,
       title,
       meta: options.meta,
