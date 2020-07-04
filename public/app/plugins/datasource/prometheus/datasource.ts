@@ -72,7 +72,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
-  lookupsDisabled?: boolean;
+  lookupsDisabled: boolean;
   resultTransformer: ResultTransformer;
   customQueryParameters: any;
 
@@ -91,7 +91,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
-    this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup;
+    this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
   }
 
@@ -559,7 +559,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return [];
     }
 
-    const step = Math.floor(query.step) * 1000;
+    const step = Math.floor(query.step ?? 15) * 1000;
 
     response?.data?.data?.result?.forEach(series => {
       const tags = Object.entries(series.metric)
@@ -579,14 +579,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       });
 
       const activeValues = series.values.filter((value: Record<number, string>) => parseFloat(value[1]) >= 1);
-      const activeValuesTimestamps = activeValues.map((value: number[]) => value[0]);
+      const activeValuesTimestamps: number[] = activeValues.map((value: number[]) => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
       // then `step` apart.
-      let latestEvent: AnnotationEvent = null;
-      activeValuesTimestamps.forEach((timestamp: number) => {
+      let latestEvent: AnnotationEvent | null = null;
+
+      for (const timestamp of activeValuesTimestamps) {
         // We already have event `open` and we have new event that is inside the `step` so we just update the end.
-        if (latestEvent && latestEvent.timeEnd + step >= timestamp) {
+        if (latestEvent && (latestEvent.timeEnd ?? 0) + step >= timestamp) {
           latestEvent.timeEnd = timestamp;
           return;
         }
@@ -605,7 +606,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           tags,
           text: self.resultTransformer.renderTemplate(textFormat, series.metric),
         };
-      });
+      }
+
       if (latestEvent) {
         // finish up last point if we have one
         latestEvent.timeEnd = activeValuesTimestamps[activeValuesTimestamps.length - 1];
@@ -706,7 +708,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   getPrometheusTime(date: string | DateTime, roundUp: boolean) {
     if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp)!;
     }
 
     return Math.ceil(date.valueOf() / 1000);

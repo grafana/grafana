@@ -461,6 +461,7 @@ export interface QueryHint {
 
 export interface MetricFindValue {
   text: string;
+  expandable?: boolean;
 }
 
 export interface DataSourceJsonData {

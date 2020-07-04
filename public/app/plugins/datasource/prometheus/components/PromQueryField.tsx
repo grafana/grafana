@@ -250,7 +250,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { datasource, query, onChange, onRunQuery } = this.props;
     const { hint } = this.state;
 
-    onChange(datasource.modifyQuery(query, hint.fix.action));
+    onChange(datasource.modifyQuery(query, hint!.fix!.action));
     onRunQuery();
   };
 
@@ -277,7 +277,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
         : metricsByPrefix;
 
     // Hint for big disabled lookups
-    let hint: QueryHint;
+    let hint: QueryHint | null = null;
+
     if (!datasource.lookupsDisabled && languageProvider.lookupsDisabled) {
       hint = {
         label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
