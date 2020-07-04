@@ -29,7 +29,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   cacheTimeout: any;
   withCredentials: boolean;
   funcDefs: any = null;
-  funcDefsPromise: Promise<any> = null;
+  funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
 
   /** @ngInject */
@@ -64,8 +64,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
   async query(options: DataQueryRequest<GraphiteQuery>): Promise<DataQueryResponse> {
     const graphOptions = {
-      from: this.translateTime(options.rangeRaw.from, false, options.timezone),
-      until: this.translateTime(options.rangeRaw.to, true, options.timezone),
+      from: this.translateTime(options.range.raw.from, false, options.timezone),
+      until: this.translateTime(options.range.raw.to, true, options.timezone),
       targets: options.targets,
       format: (options as any).format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -199,7 +199,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          target: this.templateSrv.replace(query.target, scopedVars),
+          target: this.templateSrv.replace(query.target ?? '', scopedVars),
         };
         return expandedQuery;
       });
@@ -290,7 +290,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   }
 
   targetContainsTemplate(target: GraphiteQuery) {
-    return this.templateSrv.variableExists(target.target);
+    return this.templateSrv.variableExists(target.target ?? '');
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {
