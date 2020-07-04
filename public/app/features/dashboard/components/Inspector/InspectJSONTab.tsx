@@ -142,7 +142,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
                 height={height}
                 language="json"
                 showLineNumbers={true}
-                showMiniMap={false}
+                showMiniMap={text && text.length > 100}
                 value={text || ''}
                 readOnly={!isPanelJSON}
                 onBlur={this.onTextChanged}
