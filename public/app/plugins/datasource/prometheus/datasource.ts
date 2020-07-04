@@ -589,7 +589,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         // We already have event `open` and we have new event that is inside the `step` so we just update the end.
         if (latestEvent && (latestEvent.timeEnd ?? 0) + step >= timestamp) {
           latestEvent.timeEnd = timestamp;
-          return;
+          continue;
         }
 
         // Event exists but new one is outside of the `step` so we "finish" the current region.
