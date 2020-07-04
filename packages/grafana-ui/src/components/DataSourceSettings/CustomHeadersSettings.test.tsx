@@ -28,6 +28,7 @@ const setup = (propOverrides?: object) => {
       secureJsonData: {
         password: true,
       },
+      secureJsonFields: {},
       readOnly: true,
     },
     onChange: jest.fn(),

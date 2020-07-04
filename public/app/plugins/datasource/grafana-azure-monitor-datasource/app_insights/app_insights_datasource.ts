@@ -1,4 +1,4 @@
-import { ScopedVars } from '@grafana/data';
+import { ScopedVars, MetricFindValue } from '@grafana/data';
 import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import _, { isString } from 'lodash';
@@ -122,7 +122,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     };
   }
 
-  metricFindQuery(query: string) {
+  metricFindQuery(query: string): Promise<MetricFindValue[]> {
     const appInsightsMetricNameQuery = query.match(/^AppInsightsMetricNames\(\)/i);
     if (appInsightsMetricNameQuery) {
       return this.getMetricNames();
@@ -134,7 +134,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
       return this.getGroupBys(getTemplateSrv().replace(metricName));
     }
 
-    return undefined;
+    return Promise.resolve([]);
   }
 
   testDatasource() {

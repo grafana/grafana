@@ -2,13 +2,7 @@ import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
-import {
-  DataQueryResponse,
-  ScopedVars,
-  DataSourceInstanceSettings,
-  QueryResultMeta,
-  MetricFindValue,
-} from '@grafana/data';
+import { DataQueryResponse, ScopedVars, DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
@@ -140,7 +134,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       for (const df of res.data) {
         const encodedQuery = df.meta?.custom?.encodedQuery;
         if (encodedQuery && encodedQuery.length > 0) {
-          const url = await this.buildDeepLink(df.meta);
+          const url = await this.buildDeepLink(df.meta.custom);
           if (url?.length) {
             for (const field of df.fields) {
               field.config.links = [
@@ -158,10 +152,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return res;
   }
 
-  private async buildDeepLink(meta: QueryResultMeta) {
-    const base64Enc = encodeURIComponent(meta.custom.encodedQuery);
-    const workspaceId = meta.custom.workspace;
-    const subscription = meta.custom.subscription;
+  private async buildDeepLink(customMeta: Record<string, any>) {
+    const base64Enc = encodeURIComponent(customMeta.encodedQuery);
+    const workspaceId = customMeta.workspace;
+    const subscription = customMeta.subscription;
 
     const details = await this.getWorkspaceDetails(workspaceId);
     if (!details.workspace || !details.resourceGroup) {
