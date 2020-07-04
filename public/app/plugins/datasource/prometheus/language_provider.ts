@@ -136,7 +136,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     { prefix, text, value, labelKey, wrapperClasses }: TypeaheadInput,
     context: { history: Array<HistoryItem<PromQuery>> } = { history: [] }
   ): Promise<TypeaheadOutput> => {
-    const emptyResult = { suggestions: [] };
+    const emptyResult: TypeaheadOutput = { suggestions: [] };
 
     if (!value) {
       return emptyResult;
