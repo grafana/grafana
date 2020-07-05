@@ -253,10 +253,6 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
                       moreRecordsMatched = true;
                     }
                     prevRecordsMatched[frame.refId!] = recordsMatched;
-
-                    if (!this.logQueries[frame.refId].statsQuery) {
-                      _.set(frame, 'meta.preferredVisualisationType', 'logs');
-                    }
                   }
                   const noProgressMade = i >= MAX_ATTEMPTS - 2 && !moreRecordsMatched;
                   if (noProgressMade) {
