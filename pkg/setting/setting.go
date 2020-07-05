@@ -110,16 +110,6 @@ var (
 	StrictTransportSecuritySubDomains bool
 
 	ContentSecurityPolicy string
-	ScriptSrc             string
-	ObjectSrc             string
-	FontSrc               string
-	StyleSrc              string
-	ImgSrc                string
-	BaseUri               string
-	ConnectSrc            string
-	ManifestSrc           string
-	MediaSrc              string
-	BlockAllMixedContent  bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
