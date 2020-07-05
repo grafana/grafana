@@ -102,7 +102,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     };
   }
 
-  metricFindQuery(query: string): Promise<MetricFindValue[]> {
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
     const subscriptionsQuery = query.match(/^Subscriptions\(\)/i);
     if (subscriptionsQuery) {
       return this.getSubscriptions();
@@ -191,7 +191,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace);
     }
 
-    return Promise.resolve([]);
+    return null;
   }
 
   toVariable(metric: string) {

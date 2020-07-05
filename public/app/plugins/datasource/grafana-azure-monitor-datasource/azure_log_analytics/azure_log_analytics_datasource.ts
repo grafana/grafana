@@ -194,7 +194,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     };
   }
 
-  metricFindQuery(query: string): Promise<MetricFindValue[]> {
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
       return this.getWorkspaces(this.subscriptionId);
@@ -227,7 +227,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
             throw { message: err.error.data.error.message };
           }
         });
-    }) as Promise<MetricFindValue[]>; // ??
+    }) as Promise<MetricFindValue[]>;
   }
 
   private buildQuery(query: string, options: any, workspace: any) {

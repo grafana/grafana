@@ -122,7 +122,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     };
   }
 
-  metricFindQuery(query: string): Promise<MetricFindValue[]> {
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
     const appInsightsMetricNameQuery = query.match(/^AppInsightsMetricNames\(\)/i);
     if (appInsightsMetricNameQuery) {
       return this.getMetricNames();
@@ -134,7 +134,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
       return this.getGroupBys(getTemplateSrv().replace(metricName));
     }
 
-    return Promise.resolve([]);
+    return null;
   }
 
   testDatasource() {

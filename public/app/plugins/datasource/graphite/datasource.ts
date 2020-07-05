@@ -8,6 +8,7 @@ import {
   QueryResultMetaStat,
   ScopedVars,
   toDataFrame,
+  TimeRange,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
@@ -212,7 +213,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     if (options.annotation.target) {
       const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
       const graphiteQuery = ({
-        rangeRaw: options.rangeRaw,
+        range: options.range,
         targets: [{ target: target }],
         format: 'json',
         maxDataPoints: 100,
@@ -245,7 +246,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     } else {
       // Graphite event as annotation
       const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.rangeRaw, tags: tags }).then((results: any) => {
+      return this.events({ range: options.range, tags: tags }).then((results: any) => {
         const list = [];
         for (let i = 0; i < results.data.length; i++) {
           const e = results.data[i];
@@ -269,7 +270,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
   }
 
-  events(options: { range: any; tags: any; timezone?: any }) {
+  events(options: { range: TimeRange; tags: any; timezone?: any }) {
     try {
       let tags = '';
       if (options.tags) {
@@ -279,9 +280,9 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         method: 'GET',
         url:
           '/events/get_data?from=' +
-          this.translateTime(options.range.from, false, options.timezone) +
+          this.translateTime(options.range.raw.from, false, options.timezone) +
           '&until=' +
-          this.translateTime(options.range.to, true, options.timezone) +
+          this.translateTime(options.range.raw.to, true, options.timezone) +
           tags,
       });
     } catch (err) {
