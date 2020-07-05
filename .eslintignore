@@ -1,0 +1,5 @@
+public/app/plugins/datasource/cloudwatch/utils/query/ScrollQLParser.js
+node_modules
+compiled
+build
+vendor
