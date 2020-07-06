@@ -815,7 +815,7 @@ jobs:
             pushd /tmp
             VERSION=1.28.0
             curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${VERSION}/golangci-lint-${VERSION}-linux-amd64.tar.gz
-            echo 9a00786e1671f9ddbc8eeed51fe85825bcb10a2586ac8ab510c4ceb1ec499729 \
+            echo 179d34edf4baf6454a7081fbaaf74dc99397a3be8e1a535dee04d835a977bf76 \
               golangci-lint-${VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
             tar -xf golangci-lint-${VERSION}-linux-amd64.tar.gz
             sudo mv golangci-lint-${VERSION}-linux-amd64/golangci-lint /usr/local/bin/
