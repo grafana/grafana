@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -193,6 +194,9 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		queryResult.Error = err
 		return queryResult, nil
 	}
+
+	applyInsightsMetricAlias(frame, query.Alias)
+
 	queryResult.Dataframes = tsdb.NewDecodedDataFrames(data.Frames{frame})
 	return queryResult, nil
 }
@@ -252,15 +256,25 @@ func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourc
 }
 
 // formatApplicationInsightsLegendKey builds the legend key or timeseries name
-// Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-// (KMB TODO): Seems to be lying about the resourceName....
-func formatApplicationInsightsLegendKey(alias string, metricName string, dimensionName string, dimensionValue string) string {
-	if alias == "" {
-		if len(dimensionName) > 0 {
-			return fmt.Sprintf("{%s=%s}.%s", dimensionName, dimensionValue, metricName)
+// Alias patterns like {{metric}} are replaced with the appropriate data values.
+func formatApplicationInsightsLegendKey(alias string, metricName string, labels data.Labels) string {
+
+	// backwards support for "ToLower" (eww). Could be a problem if there were
+	// two keys that varied only in case, but I don't think that would
+	// happen with azure.
+	lowerLabels := labels.Copy()
+	for k, v := range lowerLabels {
+		if strings.ToLower(k) == k {
+			continue
 		}
-		return metricName
+		lowerLabels[strings.ToLower(k)] = v
+		delete(lowerLabels, k)
 	}
+	keys := make([]string, 0, len(labels))
+	for k := range lowerLabels {
+		keys = append(keys, k)
+	}
+	keys = sort.StringSlice(keys)
 
 	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
@@ -271,13 +285,39 @@ func formatApplicationInsightsLegendKey(alias string, metricName string, dimensi
 		case "metric":
 			return []byte(metricName)
 		case "dimensionname", "groupbyname":
-			return []byte(dimensionName)
+			return []byte(keys[0])
 		case "dimensionvalue", "groupbyvalue":
-			return []byte(dimensionValue)
+			return []byte(lowerLabels[keys[0]])
+		}
+
+		if v, ok := lowerLabels[metaPartName]; ok {
+			return []byte(v)
 		}
 
 		return in
 	})
 
 	return string(result)
+}
+
+func applyInsightsMetricAlias(frame *data.Frame, alias string) {
+	if alias == "" {
+		return
+	}
+
+	for _, field := range frame.Fields {
+		if field.Type() == data.FieldTypeTime || field.Type() == data.FieldTypeNullableTime {
+			continue
+		}
+
+		displayName := formatApplicationInsightsLegendKey(alias, field.Name, field.Labels)
+
+		if field.Config == nil {
+			field.Config = &data.FieldConfig{}
+		}
+
+		field.Config.DisplayName = displayName
+	}
+	return
+
 }
