@@ -21,7 +21,6 @@ const (
 )
 
 func TestLoadingSettings(t *testing.T) {
-
 	Convey("Testing loading settings from ini file", t, func() {
 		skipStaticRootValidation = true
 
@@ -276,7 +275,6 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	Convey("Test reading string values from .ini file", t, func() {
-
 		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
 		So(err, ShouldBeNil)
 
@@ -297,7 +295,6 @@ func TestLoadingSettings(t *testing.T) {
 			So(err.Error(), ShouldEqual, "Invalid value for key 'root_url' in configuration file")
 			So(value, ShouldEqual, "")
 		})
-
 	})
 }
 

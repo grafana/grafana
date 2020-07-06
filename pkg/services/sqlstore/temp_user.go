@@ -25,7 +25,6 @@ func UpdateTempUserStatus(cmd *models.UpdateTempUserStatusCommand) error {
 
 func CreateTempUser(cmd *models.CreateTempUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		// create user
 		user := &models.TempUser{
 			Email:           cmd.Email,

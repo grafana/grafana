@@ -571,7 +571,6 @@ func initMetricVars() {
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 	)
-
 }
 
 func newCounterVecStartingAtZero(opts prometheus.CounterOpts, labels []string, labelValues ...string) *prometheus.CounterVec {

@@ -80,7 +80,6 @@ func TestDashboardImport(t *testing.T) {
 			inputs := res.Get("__inputs")
 			So(inputs.Interface(), ShouldBeNil)
 		})
-
 	})
 }
 

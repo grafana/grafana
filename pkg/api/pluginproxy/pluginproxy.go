@@ -60,7 +60,6 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 	targetURL, _ := url.Parse(route.URL)
 
 	director := func(req *http.Request) {
-
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
 		req.Host = targetURL.Host

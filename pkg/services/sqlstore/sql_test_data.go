@@ -13,7 +13,6 @@ func init() {
 }
 
 func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *DBSession) error {
-
 	timeWalker := time.Now().UTC().Add(time.Hour * -200)
 	now := time.Now().UTC()
 	step := time.Minute
