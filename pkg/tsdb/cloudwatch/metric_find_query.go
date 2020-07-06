@@ -180,7 +180,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Lex":               {"BotAlias", "BotChannelName", "BotName", "BotVersion", "InputMode", "Operation", "Source"},
 	"AWS/Logs":              {"DestinationType", "FilterName", "LogGroupName"},
 	"AWS/ML":                {"MLModelId", "RequestMode"},
-	"AWS/MediaConnect":      {},
+	"AWS/MediaConnect":      {"AvailabilityZone", "FlowARN", "SourceARN", "OutputARN"},
 	"AWS/MediaConvert":      {"Job", "Operation", "Queue"},
 	"AWS/MediaPackage":      {"Channel", "No Dimension", "OriginEndpoint", "StatusCodeRange"},
 	"AWS/MediaStore":        {"ContainerName", "ObjectGroupName", "RequestType"},
