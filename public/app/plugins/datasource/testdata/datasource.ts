@@ -65,15 +65,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
             to: options.range.to.valueOf().toString(),
             queries: queries,
           },
-          // This sets up a cancel token
-          requestId: options.requestId,
         })
-        .pipe(
-          map(res => {
-            console.log('res', res);
-            return this.processQueryResult(queries, res);
-          })
-        );
+        .pipe(map(res => this.processQueryResult(queries, res)));
 
       streams.push(stream);
     }
