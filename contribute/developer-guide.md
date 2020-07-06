@@ -125,7 +125,7 @@ yarn e2e:dev
 
 ## Configure Grafana for development
 
-The default configuration, `grafana.ini`, is located in the `conf` directory.
+The default configuration, `defaults.ini`, is located in the `conf` directory.
 
 To override the default configuration, create a `custom.ini` file in the `conf` directory. You only need to add the options you wish to override.
 

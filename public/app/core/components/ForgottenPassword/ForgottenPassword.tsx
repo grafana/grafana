@@ -45,7 +45,7 @@ export const ForgottenPassword: FC = () => {
           <Legend>Reset password</Legend>
           <Field
             label="User"
-            description="Enter your informaton to get a reset link sent to you"
+            description="Enter your information to get a reset link sent to you"
             invalid={!!errors.userOrEmail}
             error={errors?.userOrEmail?.message}
           >

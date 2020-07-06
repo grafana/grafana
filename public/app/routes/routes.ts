@@ -538,9 +538,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
     })
     .otherwise({
-      templateUrl: 'public/app/partials/error.html',
-      controller: 'ErrorCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "ErrorPage" */ 'app/core/components/ErrorPage/ErrorPage')),
+      },
     });
 
   applyRouteRegistrationHandlers($routeProvider);
