@@ -76,8 +76,9 @@ In the query editor for a panel, after choosing your Azure Monitor data source, 
 - `Azure Monitor`
 - `Application Insights`
 - `Azure Log Analytics`
+- `Insights Analytics`
 
-The query editor will change depending on which one you pick. Azure Monitor is the default.
+The query editor will change depending on which one you pick. Azure Monitor is the default. As of 7.1, Insights Analytics was added and replaces the former edit mode from within Application Insights.
 
 ## Querying the Azure Monitor service
 
@@ -93,17 +94,21 @@ Examples of metrics that you can get from the service are:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Monitor Query Editor" >}}
 
+As of 7.1, the query editor will let you query multiple dimensions for metrics that support them. Metrics that support multiple dimensions are those listed in the [Azure Monitor supported Metrics List](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported) that have one or more values listed in the "Dimension" column for the metric.
+
 ### Formatting legend keys with aliases for Azure Monitor
 
 The default legend formatting for the Azure Monitor API is:
 
-`resourceName{dimensionValue=dimensionName}.metricName`
+`metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
+
+Note: Before 7.1, the formatting used to include the resource name in the default: `resourceName{dimensionName=dimensionValue}.metricName`. As of 7.1 the resource name as been removed as the default.
 
 These can be quite long but this formatting can be changed using aliases. In the Legend Format field, the aliases which are defined below can be combined any way you want.
 
 Azure Monitor Examples:
 
-- `dimension: {{dimensionvalue}}`
+- `Blob Type: {{ blobtype }}`
 - `{{resourcegroup}} - {{resourcename}}`
 
 ### Alias patterns for Azure Monitor
@@ -112,8 +117,9 @@ Azure Monitor Examples:
 - `{{namespace}}` = replaced with the value of the Namespace (e.g. Microsoft.Compute/virtualMachines)
 - `{{resourcename}}` = replaced with the value of the Resource Name
 - `{{metric}}` = replaced with metric name (e.g. Percentage CPU)
-- `{{dimensionname}}` = replaced with dimension key/label (e.g. blobtype)
-- `{{dimensionvalue}}` = replaced with dimension value (e.g. BlockBlob)
+- `{{dimensionname}}` = *Legacy* replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
+- `{{dimensionvalue}}` = *Legacy* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ arbitraryDim }}` = (Added in 7.1) replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
 
 ### Templating with variables for Azure Monitor
 
