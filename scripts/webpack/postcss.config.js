@@ -4,6 +4,6 @@ module.exports = () => {
       autoprefixer: {},
       'postcss-reporter': {},
       'postcss-browser-reporter': {},
-    }
+    },
   };
 };

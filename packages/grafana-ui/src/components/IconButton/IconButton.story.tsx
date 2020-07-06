@@ -33,7 +33,7 @@ export const simple = () => {
 };
 
 function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[], icons: IconName[]) {
-  let bg: string = 'red';
+  let bg = 'red';
 
   switch (surface) {
     case 'dashboard':

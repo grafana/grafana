@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable import/first */
 jest.mock('./scroll-page');
 
 import { scrollBy, scrollTo } from './scroll-page';
@@ -179,8 +178,7 @@ describe('ScrollManager', () => {
     it('scrolls to last visible row when boundary is hidden', () => {
       const parentOfLastRowWithHiddenChildrenIndex = trace.spans.length - 2;
       accessors.getBottomRowIndexVisible.mockReturnValue(0);
-      accessors.getCollapsedChildren = () =>
-        new Set([trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID]);
+      accessors.getCollapsedChildren = () => new Set([trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID]);
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[0].spanID]);
       trace.spans[trace.spans.length - 1].references = getRefs(
         trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID

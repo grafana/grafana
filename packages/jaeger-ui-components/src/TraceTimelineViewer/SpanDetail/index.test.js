@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable import/first */
 jest.mock('../utils');
 
 import React from 'react';
@@ -53,11 +52,17 @@ describe('<SpanDetail>', () => {
   span.logs = [
     {
       timestamp: 10,
-      fields: [{ key: 'message', value: 'oh the log message' }, { key: 'something', value: 'else' }],
+      fields: [
+        { key: 'message', value: 'oh the log message' },
+        { key: 'something', value: 'else' },
+      ],
     },
     {
       timestamp: 20,
-      fields: [{ key: 'message', value: 'oh the next log message' }, { key: 'more', value: 'stuff' }],
+      fields: [
+        { key: 'message', value: 'oh the next log message' },
+        { key: 'more', value: 'stuff' },
+      ],
     },
   ];
 
@@ -141,9 +146,7 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders the process tags', () => {
-    const target = (
-      <AccordianKeyValues data={span.process.tags} label="Process" isOpen={detailState.isProcessOpen} />
-    );
+    const target = <AccordianKeyValues data={span.process.tags} label="Process" isOpen={detailState.isProcessOpen} />;
     expect(wrapper.containsMatchingElement(target)).toBe(true);
     wrapper.find({ data: span.process.tags }).simulate('toggle');
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);

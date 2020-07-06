@@ -42,9 +42,7 @@ it('getSpanTimestamp() should return the timestamp of the span', () => {
 });
 
 it('getSpanReferences() should return the span reference array', () => {
-  expect(spanSelectors.getSpanReferences(generatedTrace.spans[0])).toEqual(
-    generatedTrace.spans[0].references
-  );
+  expect(spanSelectors.getSpanReferences(generatedTrace.spans[0])).toEqual(generatedTrace.spans[0].references);
 });
 
 it('getSpanReferences() should return empty array for null references', () => {

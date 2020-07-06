@@ -1,6 +1,6 @@
 import { e2e } from '../index';
 
-export const login = (username: string = 'admin', password: string = 'admin') => {
+export const login = (username = 'admin', password = 'admin') => {
   e2e().logToConsole('Logging in with username:', username);
   e2e.pages.Login.visit();
   e2e.pages.Login.username()

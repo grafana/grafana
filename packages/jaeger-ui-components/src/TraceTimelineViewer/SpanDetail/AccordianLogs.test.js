@@ -24,11 +24,17 @@ describe('<AccordianLogs>', () => {
   const logs = [
     {
       timestamp: 10,
-      fields: [{ key: 'message', value: 'oh the log message' }, { key: 'something', value: 'else' }],
+      fields: [
+        { key: 'message', value: 'oh the log message' },
+        { key: 'something', value: 'else' },
+      ],
     },
     {
       timestamp: 20,
-      fields: [{ key: 'message', value: 'oh the next log message' }, { key: 'more', value: 'stuff' }],
+      fields: [
+        { key: 'message', value: 'oh the next log message' },
+        { key: 'more', value: 'stuff' },
+      ],
     },
   ];
   const props = {
