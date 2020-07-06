@@ -16,10 +16,9 @@ import { apiPrefix } from './constants';
 import { ZipkinSpan } from './types';
 import { transformResponse } from './utils/transforms';
 
-export type ZipkinQuery = {
-  // At the moment this should be simply the trace ID to get
+export interface ZipkinQuery extends DataQuery {
   query: string;
-} & DataQuery;
+}
 
 export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
   constructor(private instanceSettings: DataSourceInstanceSettings) {
