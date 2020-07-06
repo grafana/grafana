@@ -130,7 +130,6 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			aggregation: insightsJSONModel.Aggregation,
 			dimensions:  insightsJSONModel.Dimensions,
 		})
-
 	}
 
 	return applicationInsightsQueries, nil

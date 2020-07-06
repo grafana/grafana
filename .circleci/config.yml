@@ -813,9 +813,9 @@ jobs:
           name: Install Go linters
           command: |
             pushd /tmp
-            VERSION=1.27.0
+            VERSION=1.28.0
             curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${VERSION}/golangci-lint-${VERSION}-linux-amd64.tar.gz
-            echo 8d345e4e88520e21c113d81978e89ad77fc5b13bfdf20e5bca86b83fc4261272 \
+            echo 179d34edf4baf6454a7081fbaaf74dc99397a3be8e1a535dee04d835a977bf76 \
               golangci-lint-${VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
             tar -xf golangci-lint-${VERSION}-linux-amd64.tar.gz
             sudo mv golangci-lint-${VERSION}-linux-amd64/golangci-lint /usr/local/bin/
@@ -826,7 +826,7 @@ jobs:
           command: |
             # To save memory, run in two batches
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E deadcode -E depguard -E dogsled \
-              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E scopelint ./pkg/...
+              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E scopelint -E whitespace ./pkg/...
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign \
               -E rowserrcheck -E staticcheck -E structcheck -E typecheck -E unconvert -E unused -E varcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...

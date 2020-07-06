@@ -53,15 +53,15 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
    * Helper function to return the {@link DisplayProcessor} for a given field column.
    * @param colIndex - the field column index for the data frame.
    */
-  getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null {
+  getFieldDisplayProcessor(colIndex: number): DisplayProcessor | undefined {
     if (!this.dataFrame || !this.dataFrame.fields) {
-      return null;
+      return undefined;
     }
 
     const field = this.dataFrame.fields[colIndex];
 
     if (!field || !field.display) {
-      return null;
+      return undefined;
     }
 
     return field.display;

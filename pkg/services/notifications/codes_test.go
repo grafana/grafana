@@ -9,7 +9,6 @@ import (
 )
 
 func TestEmailCodes(t *testing.T) {
-
 	Convey("When generating code", t, func() {
 		setting.EmailCodeValidMinutes = 120
 
@@ -34,7 +33,5 @@ func TestEmailCodes(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(isValid, ShouldBeFalse)
 		})
-
 	})
-
 }

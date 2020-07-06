@@ -24,7 +24,6 @@ func StarDashboard(c *models.ReqContext) Response {
 }
 
 func UnstarDashboard(c *models.ReqContext) Response {
-
 	cmd := models.UnstarDashboardCommand{UserId: c.UserId, DashboardId: c.ParamsInt64(":id")}
 
 	if cmd.DashboardId <= 0 {

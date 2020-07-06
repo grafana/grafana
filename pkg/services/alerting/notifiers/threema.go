@@ -98,7 +98,6 @@ func init() {
 			},
 		},
 	})
-
 }
 
 // ThreemaNotifier is responsible for sending

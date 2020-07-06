@@ -9,7 +9,6 @@ import (
 )
 
 func TestUploadToWebdav(t *testing.T) {
-
 	// Can be tested with this docker container: https://hub.docker.com/r/morrisjobke/webdav/
 	SkipConvey("[Integration test] for external_image_store.webdav", t, func() {
 		webdavUploader, _ := NewWebdavImageUploader("http://localhost:8888/webdav/", "test", "test", "")
