@@ -12,6 +12,7 @@ import {
   toLegacyResponseData,
   ExploreMode,
   LogsDedupStrategy,
+  DataQueryRequest,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -129,6 +130,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
 export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
   series: [],
+  request: {} as DataQueryRequest,
   error: null,
   timeRange: DefaultTimeRange,
 });
