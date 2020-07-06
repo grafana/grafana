@@ -538,7 +538,6 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 					getAttribute(groupIDAttribute, group),
 				)
 			}
-			break
 		}
 	}
 
