@@ -309,6 +309,11 @@ func (c Cfg) IsExpressionsEnabled() bool {
 	return c.FeatureToggles["expressions"]
 }
 
+// IsStandaloneAlertsEnabled returns whether the standalone alerts feature is enabled.
+func (c Cfg) IsStandaloneAlertsEnabled() bool {
+	return c.FeatureToggles["standaloneAlerts"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
