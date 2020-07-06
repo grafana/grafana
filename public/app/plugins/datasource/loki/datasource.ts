@@ -409,7 +409,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
     const query = Object.keys(row.labels)
-      .map(label => `${label}="${row.labels[label]}"`)
+      .map(label => `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`)
       .join(',');
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
