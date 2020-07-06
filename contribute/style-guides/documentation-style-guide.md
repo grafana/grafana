@@ -18,6 +18,32 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 
 The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
 
+## Inclusive language
+
+This section provides guidelines on how to avoid using charged language in documentation.
+
+### Allowing and blocking
+
+Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
+
+* When used as a noun, use "allowlist" or "blocklist".
+* When used as a verb, use "allow" or "block"
+
+Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
+
+### Leader and follower
+
+Don't use "master" or "slave" to describe relationships between nodes or processes.
+
+* Use "leader", "main" or "primary," instead of "master."
+* Use "follower" or "secondary," instead of "slave."
+
+### Exceptions
+
+When referring to a configuration or settings used by third-party libraries och technologies outside the Grafana project, prefer the original name to avoid confusion.
+
+For example, use "master" when referring to the default Git branch.
+
 ## Grafana-specific style
 
 The following sections provide general guidelines on topics specific to Grafana documentation. Note that for the most part, these are *guidelines*, not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
@@ -168,29 +194,3 @@ Two words if used as a verb, one word if used as a noun.
 
 * Set up the workspace.
 * Initial setup might take five minutes.
-
-### Inclusive language
-
-This section provides guidelines on how to avoid using charged language in documentation.
-
-**Exceptions:**
-
-* When referring to a configuration or settings used by third-party libraries och technologies outside the Grafana project, prefer the original name to avoid confusion.
-
-  For example, use "master" when referring to the default Git branch.
-
-#### Allowing and blocking
-
-Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
-
-* When used as a noun, use "allowlist" or "blocklist".
-* When used as a verb, use "allow" or "block"
-
-Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
-
-#### Leader and follower
-
-Don't use "master" or "slave" to describe relationships between nodes or processes.
-
-* Use "leader", "main" or "primary", instead of "master".
-* Use "follower" or "secondary", instead of "slave".
