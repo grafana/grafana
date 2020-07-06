@@ -120,7 +120,7 @@ export const formatCloudMonitoringError = (error: any) => {
     try {
       message = JSON.parse(error.data.message).error.message;
     } catch (err) {
-      error.error;
+      error.error = err;
     }
   }
   return message;

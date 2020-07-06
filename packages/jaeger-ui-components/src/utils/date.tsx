@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import moment from 'moment';
+import moment from 'moment-timezone';
 import _round from 'lodash/round';
 
 import { toFloatPrecision } from './number';
