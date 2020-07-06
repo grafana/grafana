@@ -376,7 +376,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 					metricName += " " + metric.Field
 					if metric.Type == "bucket_script" {
 						//Use the formula in the column name
-						metricName = metric.Settings.MustString("script")
+						metricName, _ = metric.Settings.Get("script").String()
 					}
 				}
 
