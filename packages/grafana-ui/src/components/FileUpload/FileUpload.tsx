@@ -3,12 +3,14 @@ import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFormStyles, Icon } from '../index';
 import { stylesFactory, useTheme } from '../../themes';
+import { ComponentSize } from '../../types/size';
 
 export interface Props {
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
   /** Accepted file extensions */
   accept?: string;
   className?: string;
+  size?: ComponentSize;
 }
 
 function trimFileName(fileName: string) {
@@ -24,9 +26,15 @@ function trimFileName(fileName: string) {
   return `${file.substring(0, nameLength)}...${extension}`;
 }
 
-export const FileUpload: FC<Props> = ({ onFileUpload, className, children = 'Upload file', accept = '*' }) => {
+export const FileUpload: FC<Props> = ({
+  onFileUpload,
+  className,
+  children = 'Upload file',
+  accept = '*',
+  size = 'md',
+}) => {
   const theme = useTheme();
-  const style = getStyles(theme);
+  const style = getStyles(theme, size);
   const [fileName, setFileName] = useState('');
 
   const onChange = useCallback((event: FormEvent<HTMLInputElement>) => {
@@ -60,8 +68,8 @@ export const FileUpload: FC<Props> = ({ onFileUpload, className, children = 'Upl
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const buttonFormStyle = getFormStyles(theme, { variant: 'primary', invalid: false, size: 'md' }).button.button;
+const getStyles = stylesFactory((theme: GrafanaTheme, size: ComponentSize) => {
+  const buttonFormStyle = getFormStyles(theme, { variant: 'primary', invalid: false, size }).button.button;
   return {
     fileUpload: css`
       display: none;

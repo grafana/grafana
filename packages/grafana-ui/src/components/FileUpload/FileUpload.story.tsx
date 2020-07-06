@@ -2,6 +2,8 @@ import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { FileUpload } from './FileUpload';
 import mdx from './FileUpload.mdx';
+import { useSize } from '../../utils/storybook/useSize';
+import { ComponentSize } from '../../types/size';
 
 export default {
   title: 'Forms/FileUpload',
@@ -15,8 +17,10 @@ export default {
 };
 
 export const single = () => {
+  const size = useSize();
   return (
     <FileUpload
+      size={size as ComponentSize}
       onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}
     />
   );

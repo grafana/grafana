@@ -286,18 +286,19 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
           </tr>
         </thead>
         <tbody>
-          {seriesList.map((series, i) => (
-            <LegendItem
-              key={`${series.id}-${i}`}
-              asTable={true}
-              series={series}
-              hidden={hiddenSeries[series.alias]}
-              onLabelClick={this.props.onToggleSeries}
-              onColorChange={this.props.onColorChange}
-              onToggleAxis={this.props.onToggleAxis}
-              {...seriesValuesProps}
-            />
-          ))}
+          {seriesList &&
+            seriesList.map((series, i) => (
+              <LegendItem
+                key={`${series.id}-${i}`}
+                asTable={true}
+                series={series}
+                hidden={hiddenSeries[series.alias]}
+                onLabelClick={this.props.onToggleSeries}
+                onColorChange={this.props.onColorChange}
+                onToggleAxis={this.props.onToggleAxis}
+                {...seriesValuesProps}
+              />
+            ))}
         </tbody>
       </table>
     );
