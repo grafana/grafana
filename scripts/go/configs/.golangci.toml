@@ -29,7 +29,7 @@ enable = [
   # "interfacer",
   # "misspell",
   "rowserrcheck",
-  "scopelint",
+  "exportloopref",
   "staticcheck",
   "structcheck",
   # "stylecheck",
@@ -43,10 +43,6 @@ enable = [
 # Disabled linters (might want them later)
 # "gocyclo",
 # "unparam"
-
-[[issues.exclude-rules]]
-path = "_test\\.go"
-linters = ["scopelint"]
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
