@@ -49,7 +49,7 @@ const JSONTooltip: FC<PopupProps> = props => {
   `;
   return (
     <div className={className}>
-      <div style={{ backgroundColor: '#fff' }}>
+      <div>
         <JSONFormatter json={props.value} open={4} />
       </div>
     </div>
