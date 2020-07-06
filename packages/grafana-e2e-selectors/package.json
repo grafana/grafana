@@ -21,7 +21,6 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "lint": "eslint src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

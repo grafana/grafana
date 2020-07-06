@@ -19,7 +19,6 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "lint": "eslint src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,7 +29,6 @@
     "xss": "1.0.6"
   },
   "devDependencies": {
-    "@grafana/eslint-config": "^1.0.0-rc1",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-json": "4.0.3",
