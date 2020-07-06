@@ -813,9 +813,9 @@ jobs:
           name: Install Go linters
           command: |
             pushd /tmp
-            VERSION=1.27.0
+            VERSION=1.28.0
             curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${VERSION}/golangci-lint-${VERSION}-linux-amd64.tar.gz
-            echo 8d345e4e88520e21c113d81978e89ad77fc5b13bfdf20e5bca86b83fc4261272 \
+            echo 9a00786e1671f9ddbc8eeed51fe85825bcb10a2586ac8ab510c4ceb1ec499729 \
               golangci-lint-${VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
             tar -xf golangci-lint-${VERSION}-linux-amd64.tar.gz
             sudo mv golangci-lint-${VERSION}-linux-amd64/golangci-lint /usr/local/bin/
