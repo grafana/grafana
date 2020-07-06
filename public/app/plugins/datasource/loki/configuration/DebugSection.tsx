@@ -84,6 +84,7 @@ type DebugField = {
   value?: string;
   href?: string;
 };
+
 function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string): DebugField[] {
   return derivedFields
     .filter(field => field.name && field.matcherRegex)
@@ -91,7 +92,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
       try {
         const testMatch = debugText.match(field.matcherRegex);
         const value = testMatch && testMatch[1];
-        let link: LinkModel<Field>;
+        let link: LinkModel<Field> = null;
 
         if (field.url && value) {
           link = getFieldLinksForExplore(

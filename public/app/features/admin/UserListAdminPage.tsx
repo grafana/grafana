@@ -99,14 +99,20 @@ const renderUser = (user: UserDTO) => {
           <img className="filter-table__avatar" src={user.avatarUrl} />
         </a>
       </td>
-      <td className="link-td">
-        <a href={editUrl}>{user.login}</a>
+      <td className="link-td max-width-10">
+        <a className="ellipsis" href={editUrl} title={user.login}>
+          {user.login}
+        </a>
       </td>
-      <td className="link-td">
-        <a href={editUrl}>{user.email}</a>
+      <td className="link-td max-width-10">
+        <a className="ellipsis" href={editUrl} title={user.email}>
+          {user.email}
+        </a>
       </td>
-      <td className="link-td">
-        <a href={editUrl}>{user.name}</a>
+      <td className="link-td max-width-10">
+        <a className="ellipsis" href={editUrl} title={user.name}>
+          {user.name}
+        </a>
       </td>
       <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
       <td className="link-td">
