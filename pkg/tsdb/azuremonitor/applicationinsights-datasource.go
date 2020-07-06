@@ -250,3 +250,34 @@ func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourc
 
 	return pluginRoute, pluginRouteName, nil
 }
+
+// formatApplicationInsightsLegendKey builds the legend key or timeseries name
+// Alias patterns like {{resourcename}} are replaced with the appropriate data values.
+// (KMB TODO): Seems to be lying about the resourceName....
+func formatApplicationInsightsLegendKey(alias string, metricName string, dimensionName string, dimensionValue string) string {
+	if alias == "" {
+		if len(dimensionName) > 0 {
+			return fmt.Sprintf("{%s=%s}.%s", dimensionName, dimensionValue, metricName)
+		}
+		return metricName
+	}
+
+	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
+		metaPartName := strings.Replace(string(in), "{{", "", 1)
+		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
+		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
+
+		switch metaPartName {
+		case "metric":
+			return []byte(metricName)
+		case "dimensionname", "groupbyname":
+			return []byte(dimensionName)
+		case "dimensionvalue", "groupbyvalue":
+			return []byte(dimensionValue)
+		}
+
+		return in
+	})
+
+	return string(result)
+}
