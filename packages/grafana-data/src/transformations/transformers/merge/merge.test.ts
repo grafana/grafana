@@ -147,8 +147,8 @@ describe('Merge multipe to single', () => {
     const result = transformDataFrame([cfg], [tableA, seriesB, tableB]);
     const expected: Field[] = [
       createField('Time', FieldType.time, [500, 1000, 1000]),
-      createField('Temp', FieldType.number, [2, 1, -1]),
-      createField('Humidity', FieldType.number, [5, 10, null]),
+      createField('Temp', FieldType.number, [2, -1, 1]),
+      createField('Humidity', FieldType.number, [5, null, 10]),
     ];
 
     expect(result[0].fields).toMatchObject(expected);
@@ -230,14 +230,15 @@ describe('Merge multipe to single', () => {
     });
 
     const result = transformDataFrame([cfg], [tableA, tableB, tableC]);
+
     const expected: Field[] = [
-      createField('Time', FieldType.time, [100, 100, 100, 124, 125, 126, 149, 150, 200]),
-      createField('Temp', FieldType.number, [1, -1, 1, 4, 2, 3, 5, 4, 5]),
-      createField('Humidity', FieldType.number, [10, null, 22, 25, null, null, 30, 14, 55]),
-      createField('Enabled', FieldType.boolean, [null, true, null, null, false, true, null, null, null]),
+      createField('Time', FieldType.time, [200, 150, 149, 126, 125, 124, 100, 100, 100]),
+      createField('Temp', FieldType.number, [5, 4, 5, 3, 2, 4, 1, -1, 1]),
+      createField('Humidity', FieldType.number, [55, 14, 30, null, null, 25, 10, null, 22]),
+      createField('Enabled', FieldType.boolean, [null, null, null, true, false, null, null, true, null]),
     ];
 
-    expect(result[0].fields).toMatchObject(expected);
+    expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
   it('combine two time series, where first serie fields has displayName, into one', () => {
@@ -339,4 +340,15 @@ describe('Merge multipe to single', () => {
 
 const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {
   return { name, type, values: new ArrayVector(values), config, labels: undefined };
+};
+
+const unwrap = (fields: Field[]): Field[] => {
+  return fields.map(field =>
+    createField(
+      field.name,
+      field.type,
+      field.values.toArray().map((value: any) => value),
+      field.config
+    )
+  );
 };
