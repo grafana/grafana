@@ -12,8 +12,13 @@ weight = 3
 
 # Generic OAuth Authentication
 
-You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Below you
-can find examples using BitBucket, OneLogin, Auth0 and Centrify. [Okta]({{< relref "okta.md" >}}) and [Azure AD]({{< relref "azuread.md" >}}) have moved to separate pages.
+You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
+- [BitBucket](#set-up-oauth2-with-bitbucket) 
+- [OneLogin](#set-up-oauth2-with-onelogin)
+- [Auth0](#set-up-oauth2-with-auth0)
+- [Centrify](#set-up-oauth2-with-centrify)
+- [Okta]({{< relref "okta.md" >}}) 
+- [Azure AD]({{< relref "azuread.md" >}})
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
