@@ -31,7 +31,6 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	}
 
 	for _, query := range tsdbQuery.Queries {
-
 		qm, err := GetQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
 			tRes.Results[query.RefId] = &tsdb.QueryResult{Error: err}
@@ -82,7 +81,6 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 		client: influxdb2.NewClient(url, token),
 		org:    org,
 	}, nil
-
 }
 
 // backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a

@@ -205,7 +205,6 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			// updates to datasources using the datasource.yaml file without knowing exactly what version
 			// a datasource have in the db.
 			updateSession = sess.Where("id=? and org_id=? and version < ?", ds.Id, ds.OrgId, ds.Version)
-
 		} else {
 			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 		}

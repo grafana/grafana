@@ -7,9 +7,7 @@ import (
 )
 
 func TestEncryption(t *testing.T) {
-
 	Convey("When getting encryption key", t, func() {
-
 		key, err := encryptionKeyToBytes("secret", "salt")
 		So(err, ShouldBeNil)
 		So(len(key), ShouldEqual, 32)
@@ -27,5 +25,4 @@ func TestEncryption(t *testing.T) {
 		So(decryptErr, ShouldBeNil)
 		So(string(decrypted), ShouldEqual, "grafana")
 	})
-
 }

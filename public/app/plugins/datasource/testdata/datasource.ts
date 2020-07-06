@@ -49,7 +49,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           intervalMs: options.intervalMs,
           maxDataPoints: options.maxDataPoints,
           datasourceId: this.id,
-          alias: templateSrv.replace(target.alias || ''),
+          alias: templateSrv.replace(target.alias || '', options.scopedVars),
         });
       }
     }
