@@ -82,7 +82,6 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		collapsedJSON, collapsed := panel.CheckGet("collapsed")
 		// check if the panel is collapsed
 		if collapsed && collapsedJSON.MustBool() {
-
 			// extract alerts from sub panels for collapsed panels
 			alertSlice, err := e.getAlertFromPanels(panel, validateAlertFunc)
 			if err != nil {

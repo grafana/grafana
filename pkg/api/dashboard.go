@@ -458,7 +458,6 @@ func GetDashboardVersion(c *models.ReqContext) Response {
 
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
 func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffOptions) Response {
-
 	guardianBase := guardian.New(apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardianBase.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)

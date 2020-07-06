@@ -11,7 +11,6 @@ import (
 )
 
 func TestOrgRedirectMiddleware(t *testing.T) {
-
 	Convey("Can redirect to correct org", t, func() {
 		middlewareScenario(t, "when setting a correct org for the user", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")

@@ -9,7 +9,6 @@ import (
 )
 
 func TestDashboardModel(t *testing.T) {
-
 	Convey("Generate full dashboard url", t, func() {
 		setting.AppUrl = "http://grafana.local/"
 		fullUrl := GetFullDashboardUrl("uid", "my-dashboard")
