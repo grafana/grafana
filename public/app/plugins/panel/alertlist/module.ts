@@ -90,10 +90,10 @@ class AlertListPanel extends PanelCtrl {
 
     if (this.panel.show === 'current') {
       getAlertsPromise = this.getCurrentAlertState();
-    }
-
-    if (this.panel.show === 'changes') {
+    } else if (this.panel.show === 'changes') {
       getAlertsPromise = this.getStateChanges();
+    } else {
+      getAlertsPromise = Promise.resolve();
     }
 
     getAlertsPromise.then(() => {
