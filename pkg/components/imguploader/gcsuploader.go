@@ -61,7 +61,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		u.log.Debug("Creating HTTP client")
 		client = conf.Client(ctx)
 	} else {
-		u.log.Debug("Key file is empty, try to retrieve token from GCE metadata server")
+		u.log.Debug("Key file is empty, trying to use application default credentials")
 		client, err = google.DefaultClient(ctx)
 		if err != nil {
 			return "", err
