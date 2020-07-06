@@ -122,6 +122,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
   onOpen = (event: FormEvent<HTMLButtonElement>) => {
     const { isOpen } = this.state;
     event.stopPropagation();
+    event.preventDefault();
     this.setState({ isOpen: !isOpen });
   };
 
