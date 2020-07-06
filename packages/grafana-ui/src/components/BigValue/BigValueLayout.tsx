@@ -9,7 +9,6 @@ import { calculateFontSize } from '../../utils/measureText';
 
 // Types
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
-import { text } from 'd3';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
