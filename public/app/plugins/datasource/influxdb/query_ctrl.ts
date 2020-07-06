@@ -167,6 +167,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     const plusButton = this.uiSegmentSrv.newPlusButton();
     this.groupBySegment.value = plusButton.value;
     this.groupBySegment.html = plusButton.html;
+    this.groupBySegment.fake = true;
     this.panelCtrl.refresh();
   }
 
@@ -308,6 +309,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     if (segment.type === 'condition') {
       return Promise.resolve([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
+
     if (segment.type === 'operator') {
       const nextValue = this.tagSegments[index + 1].value;
       if (/^\/.*\/$/.test(nextValue)) {
