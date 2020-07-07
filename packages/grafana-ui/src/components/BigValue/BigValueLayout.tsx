@@ -463,12 +463,18 @@ export interface BigValueTextValues extends DisplayValue {
 }
 
 function getTextValues(props: Props): BigValueTextValues {
-  const { textMode: nameAndValue, value, alignmentFactors } = props;
+  const { value, alignmentFactors, count } = props;
+  let { textMode } = props;
 
   const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
   const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
 
-  switch (nameAndValue) {
+  // In the auto case we only show title if this big value is part of more panes (count > 1)
+  if (textMode === BigValueTextMode.Auto && (count ?? 1) === 1) {
+    textMode = BigValueTextMode.Value;
+  }
+
+  switch (textMode) {
     case BigValueTextMode.Name:
       return {
         ...value,
@@ -498,6 +504,7 @@ function getTextValues(props: Props): BigValueTextValues {
         valueToAlignTo: '1',
         tooltip: `Name: ${value.title}\nValue: ${formattedValueToString(value)}`,
       };
+    case BigValueTextMode.ValueAndName:
     default:
       return {
         ...value,

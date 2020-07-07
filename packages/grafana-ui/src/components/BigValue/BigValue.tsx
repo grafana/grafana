@@ -55,6 +55,12 @@ export interface Props extends Themeable {
   justifyMode?: BigValueJustifyMode;
   alignmentFactors?: DisplayValueAlignmentFactors;
   textMode?: BigValueTextMode;
+
+  /**
+   * If part of a series of stat panes, this is the total number.
+   * Used by BigValueTextMode.Auto text mode.
+   */
+  count?: number;
 }
 
 export class BigValue extends PureComponent<Props> {
