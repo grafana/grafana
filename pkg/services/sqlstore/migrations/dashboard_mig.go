@@ -219,5 +219,4 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"title"},
 		Type: IndexType,
 	}))
-
 }

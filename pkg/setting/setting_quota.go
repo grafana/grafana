@@ -90,5 +90,4 @@ func (cfg *Cfg) readQuotaSettings() {
 		ApiKey:     quota.Key("global_api_key").MustInt64(-1),
 		Session:    quota.Key("global_session").MustInt64(-1),
 	}
-
 }

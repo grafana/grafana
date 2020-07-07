@@ -8,7 +8,6 @@ import (
 )
 
 func TestTempUserCommandsAndQueries(t *testing.T) {
-
 	Convey("Testing Temp User commands & queries", t, func() {
 		InitTestDB(t)
 

@@ -470,8 +470,8 @@ export class EventMarkers {
       },
       left,
       top,
-      line.width(),
-      line.height()
+      line.width() ?? 1,
+      line.height() ?? 1
     );
 
     return drawableEvent;
@@ -604,8 +604,8 @@ export class EventMarkers {
       },
       left,
       top,
-      region.width(),
-      region.height()
+      region.width() ?? 1,
+      region.height() ?? 1
     );
 
     return drawableEvent;

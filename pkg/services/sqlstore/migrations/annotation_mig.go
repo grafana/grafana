@@ -6,7 +6,6 @@ import (
 )
 
 func addAnnotationMig(mg *Migrator) {
-
 	table := Table{
 		Name: "annotation",
 		Columns: []*Column{
