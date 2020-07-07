@@ -171,12 +171,11 @@ export class DataSourceWithBackend<
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
     return getBackendSrv()
-      .get(`/api/datasources/${this.id}/health`)
+      .request({ method: 'GET', url: `/api/datasources/${this.id}/health`, showErrorAlert: false })
       .then(v => {
         return v as HealthCheckResult;
       })
       .catch(err => {
-        err.isHandled = true; // Avoid extra popup warning
         return err.data as HealthCheckResult;
       });
   }
