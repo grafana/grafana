@@ -1,13 +1,14 @@
 import React, { FC, FormEvent, useState } from 'react';
+import { css, cx } from 'emotion';
+import { GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
+import { useStyles, useTheme } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
+import { getInputStyles } from '../Input/Input';
+import { getFocusStyle } from '../Forms/commonStyles';
 import { TimePickerButtonLabel } from './TimeRangePicker';
-import { GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
-import { useStyles } from '../../themes/ThemeContext';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { otherOptions, quickOptions } from './rangeOptions';
-import { Button } from '../Button';
-import { css } from 'emotion';
 
 export interface Props {
   hideText?: boolean;
@@ -20,7 +21,7 @@ export interface Props {
 export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, timeZone = 'browser' }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onOpen = (event: FormEvent<HTMLButtonElement>) => {
+  const onOpen = (event: FormEvent<HTMLDivElement>) => {
     event.stopPropagation();
     event.preventDefault();
     setIsOpen(!isOpen);
@@ -31,13 +32,20 @@ export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, t
   };
 
   const styles = useStyles(getStyles);
+  const theme = useTheme();
+  const inputStyles = getInputStyles({ theme, invalid: false });
 
   return (
     <div className={styles.container}>
-      <Button variant="secondary" aria-label="TimePicker Open Button" onClick={onOpen}>
+      <div
+        tabIndex={0}
+        className={cx(inputStyles.input, inputStyles.wrapper, styles.pickerInput)}
+        aria-label="TimePicker Open Button"
+        onClick={onOpen}
+      >
         <TimePickerButtonLabel value={value} />
-        <span className={styles.caretIcon}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />}</span>
-      </Button>
+        <span className={inputStyles.suffix}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />}</span>
+      </div>
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <TimePickerContent
@@ -58,6 +66,17 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
       display: flex;
+      position: relative;
+    `,
+    pickerInput: css`
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+
+      :focus {
+        ${getFocusStyle(theme)};
+      }
     `,
     caretIcon: css`
       margin-left: ${theme.spacing.xs};
