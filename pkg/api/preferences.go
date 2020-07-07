@@ -8,7 +8,6 @@ import (
 
 // POST /api/preferences/set-home-dash
 func SetHomeDashboard(c *models.ReqContext, cmd models.SavePreferencesCommand) Response {
-
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
 

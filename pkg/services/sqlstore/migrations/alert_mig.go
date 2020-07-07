@@ -5,7 +5,6 @@ import (
 )
 
 func addAlertMigrations(mg *Migrator) {
-
 	alertV1 := Table{
 		Name: "alert",
 		Columns: []*Column{
