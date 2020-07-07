@@ -1,6 +1,6 @@
 # Using this docker image
 
-Currently tagged and uploaded to dockerhub as srclosson/integrations-ci-build 
+Uploaded to dockerhub as grafana/grafana-plugin-ci:latest-alpine
 
 Based off of `circleci/node:12-browsers` 
 
