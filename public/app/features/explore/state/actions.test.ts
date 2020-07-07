@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, toUtc, ExploreUrlState } from '@grafana/data';
 
 import * as Actions from './actions';
 import {
@@ -10,7 +10,7 @@ import {
   navigateToExplore,
   refreshExplore,
 } from './actions';
-import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
+import { ExploreId, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   cancelQueriesAction,
@@ -259,7 +259,7 @@ describe('changing datasource', () => {
 
     jest.spyOn(Actions, 'importQueries').mockImplementationOnce(() => jest.fn);
     jest.spyOn(Actions, 'loadDatasource').mockImplementationOnce(() => jest.fn);
-    jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
+    const runQueriesAction = jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
     const dispatchedActions = await thunkTester(initialState)
       .givenThunk(changeDatasource)
       .whenThunkIsDispatched(exploreId, name);
@@ -272,6 +272,8 @@ describe('changing datasource', () => {
         mode: ExploreMode.Logs,
       }),
     ]);
+    // Don't run queries just on datasource change
+    expect(runQueriesAction).toHaveBeenCalledTimes(0);
   });
 });
 

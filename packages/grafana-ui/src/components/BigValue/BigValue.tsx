@@ -32,6 +32,17 @@ export enum BigValueJustifyMode {
   Center = 'center',
 }
 
+/**
+ * Options for how the value & title are to be displayed
+ */
+export enum BigValueTextMode {
+  Auto = 'auto',
+  Value = 'value',
+  ValueAndName = 'value_and_name',
+  Name = 'name',
+  None = 'none',
+}
+
 export interface Props extends Themeable {
   height: number;
   width: number;
@@ -43,6 +54,13 @@ export interface Props extends Themeable {
   graphMode: BigValueGraphMode;
   justifyMode?: BigValueJustifyMode;
   alignmentFactors?: DisplayValueAlignmentFactors;
+  textMode?: BigValueTextMode;
+
+  /**
+   * If part of a series of stat panes, this is the total number.
+   * Used by BigValueTextMode.Auto text mode.
+   */
+  count?: number;
 }
 
 export class BigValue extends PureComponent<Props> {
@@ -51,19 +69,20 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { value, onClick, className } = this.props;
+    const { onClick, className } = this.props;
 
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
     const valueStyles = layout.getValueStyles();
     const titleStyles = layout.getTitleStyles();
+    const textValues = layout.textValues;
 
     return (
-      <div className={className} style={panelStyles} onClick={onClick}>
+      <div className={className} style={panelStyles} onClick={onClick} title={textValues.tooltip}>
         <div style={valueAndTitleContainerStyles}>
-          {value.title && <div style={titleStyles}>{value.title}</div>}
-          <FormattedValueDisplay value={value} style={valueStyles} />
+          {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
+          <FormattedValueDisplay value={textValues} style={valueStyles} />
         </div>
         {layout.renderChart()}
       </div>

@@ -80,7 +80,6 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 //nolint:goconst
 func TestAlertmanagerNotifier(t *testing.T) {
 	Convey("Alertmanager notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

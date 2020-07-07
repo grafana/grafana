@@ -32,10 +32,10 @@ import { CustomScrollbar } from '@grafana/ui';
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [defaultProps](#defaultprops-property) | <code>static</code> | <code>Partial&lt;Props&gt;</code> |  |
-|  [renderThumb](#renderthumb-property) |  | <code>(thumb: &quot;thumb-horizontal&quot; &#124; &quot;thumb-vertical&quot;, passedProps: any) =&gt; JSX.Element</code> |  |
+|  [renderThumb](#renderthumb-property) |  | <code>(thumb: 'thumb-horizontal' &#124; 'thumb-vertical', passedProps: any) =&gt; JSX.Element</code> |  |
 |  [renderThumbHorizontal](#renderthumbhorizontal-property) |  | <code>(passedProps: any) =&gt; JSX.Element</code> |  |
 |  [renderThumbVertical](#renderthumbvertical-property) |  | <code>(passedProps: any) =&gt; JSX.Element</code> |  |
-|  [renderTrack](#rendertrack-property) |  | <code>(track: &quot;track-vertical&quot; &#124; &quot;track-horizontal&quot;, hideTrack: boolean &#124; undefined, passedProps: any) =&gt; JSX.Element</code> |  |
+|  [renderTrack](#rendertrack-property) |  | <code>(track: 'track-vertical' &#124; 'track-horizontal', hideTrack: boolean &#124; undefined, passedProps: any) =&gt; JSX.Element</code> |  |
 |  [renderTrackHorizontal](#rendertrackhorizontal-property) |  | <code>(passedProps: any) =&gt; JSX.Element</code> |  |
 |  [renderTrackVertical](#rendertrackvertical-property) |  | <code>(passedProps: any) =&gt; JSX.Element</code> |  |
 |  [renderView](#renderview-property) |  | <code>(passedProps: any) =&gt; JSX.Element</code> |  |
@@ -78,7 +78,7 @@ static defaultProps: Partial<Props>;
 <b>Signature</b>
 
 ```typescript
-renderThumb: (thumb: "thumb-horizontal" | "thumb-vertical", passedProps: any) => JSX.Element;
+renderThumb: (thumb: 'thumb-horizontal' | 'thumb-vertical', passedProps: any) => JSX.Element;
 ```
 
 ### renderThumbHorizontal property
@@ -102,7 +102,7 @@ renderThumbVertical: (passedProps: any) => JSX.Element;
 <b>Signature</b>
 
 ```typescript
-renderTrack: (track: "track-vertical" | "track-horizontal", hideTrack: boolean | undefined, passedProps: any) => JSX.Element;
+renderTrack: (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined, passedProps: any) => JSX.Element;
 ```
 
 ### renderTrackHorizontal property

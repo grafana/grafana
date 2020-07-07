@@ -45,7 +45,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     }
   `,
   // Wrapper with child selector needed.
-  // When classnames are appplied to the same element as the wrapper, it causes the suggestions to stop working
+  // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
   wrapperOverrides: css`
     width: 100%;
     > .slate-query-field__wrapper {

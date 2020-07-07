@@ -8,7 +8,6 @@ import (
 )
 
 func TestFrontendPlugin(t *testing.T) {
-
 	Convey("When setting paths based on App on Windows", t, func() {
 		setting.StaticRootPath = "c:\\grafana\\public"
 

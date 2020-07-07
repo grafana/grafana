@@ -20,6 +20,7 @@ import {
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from './PanelQueryRunner';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -335,7 +336,7 @@ export class PanelModel implements DataConfigSource {
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
-    if (plugin.panel && plugin.onPanelMigration) {
+    if (plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
 
       if (version !== this.pluginVersion) {
@@ -440,6 +441,7 @@ export class PanelModel implements DataConfigSource {
     return {
       fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
+      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };

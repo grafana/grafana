@@ -12,15 +12,15 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, PanelPlugin, DataFrame, FieldConfigProperty } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
-import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { graphPanelMigrationHandler } from './GraphMigrations';
+import { DataWarning, GraphPanelOptions, GraphFieldConfig } from './types';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
 import { CoreEvents } from 'app/types';
-import { DataWarning } from './types';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
@@ -28,7 +28,7 @@ import { dispatch } from 'app/store/store';
 
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 
-class GraphCtrl extends MetricsPanelCtrl {
+export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   renderError: boolean;
@@ -45,7 +45,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   subTabIndex: number;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
-  linkVariableSuggestions: VariableSuggestion[] = [];
 
   panelDefaults: any = {
     // datasource name, null = default datasource
@@ -139,7 +138,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     thresholds: [],
     timeRegions: [],
     options: {
-      dataLinks: [],
       // show/hide alert threshold lines and fill
       alertThreshold: true,
     },
@@ -165,7 +163,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
-    this.onDataLinksChange = this.onDataLinksChange.bind(this);
     this.annotationsPromise = Promise.resolve({ annotations: [] });
   }
 
@@ -176,7 +173,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds', 'public/app/plugins/panel/graph/tab_thresholds.html');
     this.addEditorTab('Time regions', 'public/app/plugins/panel/graph/tab_time_regions.html');
-    this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
     this.hiddenSeriesTainted = false;
   }
@@ -224,8 +220,6 @@ class GraphCtrl extends MetricsPanelCtrl {
       dataList: this.dataList,
       range: this.range,
     });
-
-    this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
     this.dataWarning = this.getDataWarning();
 
@@ -356,13 +350,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
-  onDataLinksChange(dataLinks: DataLink[]) {
-    this.panel.updateOptions({
-      ...this.panel.options,
-      dataLinks,
-    });
-  }
-
   addSeriesOverride(override: any) {
     this.panel.seriesOverrides.push(override || {});
   }
@@ -394,4 +381,15 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 }
 
-export { GraphCtrl, GraphCtrl as PanelCtrl };
+// Use new react style configuration
+export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
+  .useFieldConfig({
+    standardOptions: [
+      FieldConfigProperty.DisplayName,
+      FieldConfigProperty.Links, // previously saved as dataLinks on options
+    ],
+  })
+  .setMigrationHandler(graphPanelMigrationHandler);
+
+// Use the angular ctrt rather than a react one
+plugin.angularPanelCtrl = GraphCtrl;

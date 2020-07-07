@@ -532,13 +532,11 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 
 		if len(groupSearchResult.Entries) > 0 {
 			for _, group := range groupSearchResult.Entries {
-
 				memberOf = append(
 					memberOf,
 					getAttribute(groupIDAttribute, group),
 				)
 			}
-			break
 		}
 	}
 

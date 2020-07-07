@@ -25,6 +25,7 @@ import {
   applyFieldOverrides,
   DataConfigSource,
   TimeZone,
+  LoadingState,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -57,7 +58,7 @@ export interface GetDataOptions {
 }
 
 export class PanelQueryRunner {
-  private subject?: ReplaySubject<PanelData>;
+  private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
@@ -100,6 +101,7 @@ export class PanelQueryRunner {
                 timeZone: this.timeZone,
                 autoMinMax: true,
                 data: processedData.series,
+                getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
                 ...fieldConfig,
               }),
             };
@@ -197,6 +199,22 @@ export class PanelQueryRunner {
     });
   }
 
+  cancelQuery() {
+    if (!this.subscription) {
+      return;
+    }
+
+    this.subscription.unsubscribe();
+
+    // If we have an old result with loading state, send it with done state
+    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+      this.subject.next({
+        ...this.lastResult,
+        state: LoadingState.Done,
+      });
+    }
+  }
+
   resendLastResult = () => {
     if (this.lastResult) {
       this.subject.next(this.lastResult);
@@ -226,7 +244,7 @@ export class PanelQueryRunner {
     }
   }
 
-  getLastResult(): PanelData {
+  getLastResult(): PanelData | undefined {
     return this.lastResult;
   }
 }
