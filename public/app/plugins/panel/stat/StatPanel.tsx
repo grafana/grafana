@@ -26,7 +26,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    const { value, alignmentFactors, width, height } = valueProps;
+    const { value, alignmentFactors, width, height, count } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline: BigValueSparkline | undefined;
 
@@ -48,6 +48,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     return (
       <BigValue
         value={value.display}
+        count={count}
         sparkline={sparkline}
         colorMode={options.colorMode}
         graphMode={options.graphMode}
