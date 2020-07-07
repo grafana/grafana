@@ -1,10 +1,17 @@
+import { omit } from 'lodash';
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame } from '../../types/dataFrame';
-import { DataFrameBuilder } from './merge/DataFrameBuilder';
-import { TimeFieldsByFrame } from './merge/TimeFieldsByFrame';
-import { DataFramesStackedByTime } from './merge/DataFramesStackedByTime';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  TIME_SERIES_METRIC_FIELD_NAME,
+} from '../../types/dataFrame';
 import { isTimeSeries } from '../../dataframe/utils';
+import { MutableDataFrame, sortDataFrame } from '../../dataframe';
+import { ArrayVector } from '../../vector';
 
 export interface SeriesToRowsTransformerOptions {}
 
@@ -23,30 +30,67 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         return data;
       }
 
-      const timeFields = new TimeFieldsByFrame();
-      const framesStack = new DataFramesStackedByTime(timeFields);
-      const dataFrameBuilder = new DataFrameBuilder();
+      const timeFieldByIndex: Record<number, number> = {};
+      const targetFields = new Set<string>();
+      const dataFrame = new MutableDataFrame();
+      const metricField: Field = {
+        name: TIME_SERIES_METRIC_FIELD_NAME,
+        values: new ArrayVector(),
+        config: {},
+        type: FieldType.string,
+      };
 
-      for (const frame of data) {
-        const frameIndex = framesStack.push(frame);
-        timeFields.add(frameIndex, frame);
+      for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
+        const frame = data[frameIndex];
 
-        const timeIndex = timeFields.getFieldIndex(frameIndex);
-        dataFrameBuilder.addFields(frame, timeIndex);
+        for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+          const field = frame.fields[fieldIndex];
+
+          if (field.type === FieldType.time) {
+            timeFieldByIndex[frameIndex] = fieldIndex;
+
+            if (!targetFields.has(TIME_SERIES_TIME_FIELD_NAME)) {
+              dataFrame.addField(copyFieldStructure(field, TIME_SERIES_TIME_FIELD_NAME));
+              dataFrame.addField(metricField);
+              targetFields.add(TIME_SERIES_TIME_FIELD_NAME);
+            }
+            continue;
+          }
+
+          if (!targetFields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
+            dataFrame.addField(copyFieldStructure(field, TIME_SERIES_VALUE_FIELD_NAME));
+            targetFields.add(TIME_SERIES_VALUE_FIELD_NAME);
+          }
+        }
       }
 
-      if (data.length !== timeFields.getLength()) {
-        return data;
+      for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
+        const frame = data[frameIndex];
+
+        for (let valueIndex = 0; valueIndex < frame.length; valueIndex++) {
+          const timeFieldIndex = timeFieldByIndex[frameIndex];
+          const valueFieldIndex = timeFieldIndex === 0 ? 1 : 0;
+
+          dataFrame.add({
+            [TIME_SERIES_TIME_FIELD_NAME]: frame.fields[timeFieldIndex].values.get(valueIndex),
+            [TIME_SERIES_METRIC_FIELD_NAME]: frame.name,
+            [TIME_SERIES_VALUE_FIELD_NAME]: frame.fields[valueFieldIndex].values.get(valueIndex),
+          });
+        }
       }
 
-      const { dataFrame, valueMapper } = dataFrameBuilder.build();
-
-      for (let index = 0; index < framesStack.getLength(); index++) {
-        const { frame, valueIndex, timeIndex } = framesStack.pop();
-        dataFrame.add(valueMapper(frame, valueIndex, timeIndex));
-      }
-
-      return [dataFrame];
+      return [sortDataFrame(dataFrame, 0, true)];
     };
   },
+};
+
+const copyFieldStructure = (field: Field, name: string): Field => {
+  return {
+    ...omit(field, ['values', 'state', 'labels', 'config', 'name']),
+    name: name,
+    values: new ArrayVector(),
+    config: {
+      ...omit(field.config, 'displayName'),
+    },
+  };
 };
