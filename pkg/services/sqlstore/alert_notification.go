@@ -312,6 +312,13 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 			}
 		}
 
+		// delete empty keys
+		for k, v := range cmd.SecureSettings {
+			if v == "" {
+				delete(cmd.SecureSettings, k)
+			}
+		}
+
 		alertNotification := &models.AlertNotification{
 			Uid:                   cmd.Uid,
 			OrgId:                 cmd.OrgId,
@@ -368,6 +375,13 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 
 		if sameNameQuery.Result != nil && sameNameQuery.Result.Id != current.Id {
 			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+		}
+
+		// delete empty keys
+		for k, v := range cmd.SecureSettings {
+			if v == "" {
+				delete(cmd.SecureSettings, k)
+			}
 		}
 
 		current.Updated = time.Now()

@@ -294,7 +294,16 @@ func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotific
 		return Error(404, "Alert notification not found", nil)
 	}
 
-	return JSON(200, dtos.NewAlertNotification(cmd.Result))
+	query := models.GetAlertNotificationsQuery{
+		OrgId: c.OrgId,
+		Id:    cmd.Id,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get alert notification", err)
+	}
+
+	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
 func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNotificationWithUidCommand) Response {
@@ -314,7 +323,16 @@ func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNo
 		return Error(404, "Alert notification not found", nil)
 	}
 
-	return JSON(200, dtos.NewAlertNotification(cmd.Result))
+	query := models.GetAlertNotificationsWithUidQuery{
+		OrgId: cmd.OrgId,
+		Uid:   cmd.Uid,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get alert notification", err)
+	}
+
+	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
 func fillWithSecureSettingsData(cmd *models.UpdateAlertNotificationCommand) error {
