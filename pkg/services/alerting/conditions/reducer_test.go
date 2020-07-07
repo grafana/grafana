@@ -12,7 +12,6 @@ import (
 
 func TestSimpleReducer(t *testing.T) {
 	Convey("Test simple reducer by calculating", t, func() {
-
 		Convey("sum", func() {
 			result := testReducer("sum", 1, 2, 3)
 			So(result, ShouldEqual, float64(6))

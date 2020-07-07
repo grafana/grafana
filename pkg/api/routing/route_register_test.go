@@ -108,7 +108,6 @@ func TestRouteGroupedRegister(t *testing.T) {
 		user.Group("/admin", func(admin RouteRegister) {
 			admin.Delete("", emptyHandler("3"))
 			admin.Get("/all", emptyHandler("3"), emptyHandler("4"), emptyHandler("5"))
-
 		}, emptyHandler("3"))
 	})
 
@@ -235,7 +234,6 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 		user.Group("/admin", func(admin RouteRegister) {
 			admin.Delete("", emptyHandler("3"))
 			admin.Get("/all", emptyHandler("3"), emptyHandler("4"), emptyHandler("5"))
-
 		}, emptyHandler("3"))
 	})
 

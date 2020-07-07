@@ -370,7 +370,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   getTime(date: string | DateTime, roundUp: boolean) {
     if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp)!;
     }
 
     return Math.ceil(date.valueOf() * 1e6);
@@ -517,9 +517,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return annotations;
   }
 
-  showContextToggle = (row?: LogRowModel) => {
-    return row && row.searchWords && row.searchWords.length > 0;
-  };
+  showContextToggle(row?: LogRowModel): boolean {
+    return (row && row.searchWords && row.searchWords.length > 0) === true;
+  }
 
   throwUnless = (err: any, condition: boolean, target: LokiQuery) => {
     if (condition) {

@@ -113,10 +113,8 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
-
 		})
 	}
-
 }
 
 func loadInsightsMetricsResponse(name string) (MetricsResult, error) {

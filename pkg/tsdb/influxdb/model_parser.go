@@ -139,7 +139,6 @@ func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, 
 		}
 
 		return nil, err
-
 	}
 
 	qp, err := NewQueryPart(typ, params)

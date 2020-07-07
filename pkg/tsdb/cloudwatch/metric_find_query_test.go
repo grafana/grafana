@@ -43,7 +43,6 @@ func (m mockedRGTA) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesI
 }
 
 func TestCloudWatchMetrics(t *testing.T) {
-
 	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
 		dsInfo := &DatasourceInfo{
 			Region:        "us-east-1",

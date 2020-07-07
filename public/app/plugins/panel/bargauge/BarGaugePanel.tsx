@@ -6,6 +6,7 @@ import {
   getFieldDisplayValues,
   PanelProps,
   FieldConfig,
+  DisplayProcessor,
   DisplayValue,
 } from '@grafana/data';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
@@ -13,6 +14,7 @@ import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProp
 import { config } from 'app/core/config';
 import { BarGaugeOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { isNumber } from 'lodash';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderComponent = (
@@ -24,6 +26,11 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
 
+    let processor: DisplayProcessor | undefined = undefined;
+    if (view && isNumber(colIndex)) {
+      processor = view!.getFieldDisplayProcessor(colIndex as number);
+    }
+
     return (
       <BarGauge
         value={clearNameForSingleSeries(count, field, display)}
@@ -31,7 +38,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         height={height}
         orientation={orientation}
         field={field}
-        display={view?.getFieldDisplayProcessor(colIndex)}
+        display={processor}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}

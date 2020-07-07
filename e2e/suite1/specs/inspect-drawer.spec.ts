@@ -74,7 +74,7 @@ const expectDrawerTabsAndContent = () => {
       e2e.components.PanelInspector.Stats.content().should('not.be.visible');
       e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
-      e2e().wait(250);
+      e2e().wait(350);
       /* Monaco Editor specific wait that fixes error below https://github.com/microsoft/monaco-editor/issues/354
         TypeError: Cannot read property 'getText' of null
           at Object.getFoldingRanges (http://localhost:3001/public/build/json.worker.js:18829:102)
