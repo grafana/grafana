@@ -10,8 +10,7 @@
     },
     "rootDirs": ["public/"],
     "typeRoots": ["node_modules/@types", "public/app/types"],
-    "allowJs": true,
-    "strictNullChecks": true
+    "allowJs": true
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [

@@ -31,7 +31,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
         const seriesMatch = url.match(lokiSeriesEndpointRegex);
         if (labelsMatch) {
           return labelsAndValues[labelsMatch[1]] || [];
-        } else if (seriesMatch) {
+        } else if (seriesMatch && series && params) {
           return series[params.match] || [];
         } else {
           throw new Error(`Unexpected url error, ${url}`);
