@@ -53,10 +53,9 @@
   },
   "lint-staged": {
     "*.{js,ts,tsx}": [
-      "eslint --ext .js,.tsx,.ts --cache --fix",
-      "prettier --write"
+      "eslint --ext .js,.tsx,.ts --cache --fix"
     ],
-    "*.{ts,tsx,json,scss}": [
+    "*.{json,scss}": [
       "prettier --write"
     ],
     "*pkg/**/*.go": [
