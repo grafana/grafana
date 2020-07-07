@@ -167,9 +167,9 @@ Grafana alerting is supported for the Azure Monitor service. This is not Azure A
 
 ## Querying the Application Insights Service
 
-{{< docs-imagebox img="/img/docs/v60/appinsights-service-query-editor.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
+{{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
-As of 7.1, more than one dimension may be selected
+As of 7.1, more than one group by dimension may be selected.
 
 ### Formatting legend keys with aliases for Application Insights
 
@@ -262,6 +262,8 @@ Perf
 | summarize Samples=count(), AvgValue=avg(CounterValue) by bin(TimeGenerated, $__interval), Computer, CounterName, InstanceName
 | order by TimeGenerated asc
 ```
+
+{{< docs-imagebox img="/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
 ### Table queries
 
