@@ -120,10 +120,15 @@ export default class CloudMonitoringMetricFindQuery {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
-    const { valueType, metricKind } = metricDescriptors.find(
+    const descriptor = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
-    return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
+
+    if (!descriptor) {
+      return [];
+    }
+
+    return getAlignmentOptionsByMetric(descriptor.valueType, descriptor.metricKind).map(this.toFindQueryResult);
   }
 
   async handleAggregationQuery({ selectedMetricType, projectName }: VariableQueryData) {
@@ -140,8 +145,9 @@ export default class CloudMonitoringMetricFindQuery {
       return [];
     }
 
-    const { valueType, metricKind } = descriptor;
-    return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind as MetricKind).map(this.toFindQueryResult);
+    return getAggregationOptionsByMetric(descriptor.valueType as ValueTypes, descriptor.metricKind as MetricKind).map(
+      this.toFindQueryResult
+    );
   }
 
   async handleSLOServicesQuery({ projectName }: VariableQueryData) {
