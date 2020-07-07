@@ -538,7 +538,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     if (err.data) {
       if (typeof err.data === 'string') {
-        const escapeErrMessages = ['parse error at line', 'error parsing regexp: invalid escape sequence: `\\'];
+        const escapeErrMessages = ['parse error at', 'error parsing regexp: invalid escape sequence: `\\'];
         const isEscapeError = escapeErrMessages.some(errMes => err.data.indexOf(errMes) >= 0);
 
         if (isEscapeError && target.expr.includes('\\')) {
