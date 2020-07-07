@@ -73,7 +73,7 @@ Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 [Webhook](#webhook) | `webhook` | yes, external only | yes
-[WeChat Work] | `wechatwork` | yes, external only | no
+[WeChat Work](#wechat-work) | `wechatwork` | yes, external only | no
 
 ### Email
 
@@ -183,6 +183,18 @@ In DingTalk PC Client:
 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
 
 Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
+
+### WeChat Work
+
+In WeChat Work PC client, enter or create a group:
+
+1. Right click on the group name on left side panel of the client.
+
+2. Click "Add Group Robot" in the pop menu, then create a robot.
+
+3. After creation, a "Webhook URL" will display, if it doesn't, just click the robot icon and it will display.
+
+3. Create a notification channel in Grafana ,copy and paste the "Webhook URL" from steps displayed above, then click finish.
 
 ### Kafka
 
