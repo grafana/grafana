@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { TimeRange } from '@grafana/data';
+import { TimeRange, MetricFindValue } from '@grafana/data';
 import { PrometheusDatasource, PromDataQueryResponse } from './datasource';
 import { PromQueryRequest } from './types';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -13,7 +13,7 @@ export default class PrometheusMetricFindQuery {
     this.range = getTimeSrv().timeRange();
   }
 
-  process() {
+  process(): Promise<MetricFindValue[]> {
     const labelNamesRegex = /^label_names\(\)\s*$/;
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
     const metricNamesRegex = /^metrics\((.+)\)\s*$/;
@@ -28,7 +28,7 @@ export default class PrometheusMetricFindQuery {
       if (labelValuesQuery[1]) {
         return this.labelValuesQuery(labelValuesQuery[2], labelValuesQuery[1]);
       } else {
-        return this.labelValuesQuery(labelValuesQuery[2], null);
+        return this.labelValuesQuery(labelValuesQuery[2]);
       }
     }
 
@@ -136,7 +136,7 @@ export default class PrometheusMetricFindQuery {
     });
   }
 
-  metricNameAndLabelsQuery(query: string) {
+  metricNameAndLabelsQuery(query: string): Promise<MetricFindValue[]> {
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
     const params = new URLSearchParams({
@@ -144,10 +144,11 @@ export default class PrometheusMetricFindQuery {
       start: start.toString(),
       end: end.toString(),
     });
-    const url = `/api/v1/series?${params.toString()}`;
 
+    const url = `/api/v1/series?${params.toString()}`;
     const self = this;
-    return this.datasource.metadataRequest(url).then((result: PromDataQueryResponse) => {
+
+    return this.datasource.metadataRequest(url).then((result: any) => {
       return _.map(result.data.data, (metric: { [key: string]: string }) => {
         return {
           text: self.datasource.getOriginalMetricName(metric),
