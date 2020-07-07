@@ -28,7 +28,7 @@ USE stands for:
 - **Saturation -** Amount of work a resource has to do, often queue length or node load
 - **Errors -** Count of error events
 
-This method is best for hardware resources in infrastructure, such as CPU, memory, and network devices.
+This method is best for hardware resources in infrastructure, such as CPU, memory, and network devices. For more information, refer to [The USE Method](http://www.brendangregg.com/usemethod.html).
 
 ## RED method
 
