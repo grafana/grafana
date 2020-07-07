@@ -133,6 +133,8 @@ export class DataSourceWithBackend<
 
   /**
    * Optionally augment the response before returning the results to the
+   *
+   * @virtual
    */
   processResponse?(res: DataQueryResponse): DataQueryResponse;
 
