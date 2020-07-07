@@ -232,18 +232,42 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.loganalytics.io/index). A Log Analytics Query can be formatted as Time Series data or as Table data.
 
-Time Series queries are for the Graph Panel (and other panels like the Single Stat panel) and must contain a datetime column, a metric name column and a value column. Here is an example query that returns the aggregated count grouped by the Category column and grouped by hour:
+### Time series queries
 
-```
-AzureActivity
+Time Series queries are for the Graph Panel (and other panels like the Single Stat panel) and must contain at least a datetime column and a numeric value column. The result must also be sorted in ascending order by the time column.
+
+Here is an example query that returns the aggregated count grouped by hour:
+
+```kusto
+Perf
 | where $__timeFilter(TimeGenerated)
-| summarize count() by Category, bin(TimeGenerated, 1h)
+| summarize count() by bin(TimeGenerated, $__interval)
 | order by TimeGenerated asc
 ```
 
+A query may also additionally have one or more non-numeric/non-datetime columns, and those columns will be considered dimensions and become labels in the response. For example, a query that returns the aggregated count grouped by hour, Computer, and the CounterName:
+
+```kusto
+Perf
+| where $__timeFilter(TimeGenerated)
+| summarize count() by bin(TimeGenerated, $__interval), Computer, CounterName
+| order by TimeGenerated asc
+```
+
+Finally, additional number value columns may also be selected (with, or without multiple dimensions). For example getting a count and average value by time, Computer, CounterName, and InstanceName:
+
+```kusto
+Perf
+| where $__timeFilter(TimeGenerated)
+| summarize Samples=count(), AvgValue=avg(CounterValue) by bin(TimeGenerated, $__interval), Computer, CounterName, InstanceName
+| order by TimeGenerated asc
+```
+
+### Table queries
+
 Table queries are mainly used in the Table panel and row a list of columns and rows. This example query returns rows with the 6 specified columns:
 
-```
+```kusto
 AzureActivity
 | where $__timeFilter()
 | project TimeGenerated, ResourceGroup, Category, OperationName, ActivityStatus, Caller
