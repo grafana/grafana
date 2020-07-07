@@ -18,12 +18,12 @@ describe('JaegerQueryField', function() {
     expect(wrapper.find(ButtonCascader).props().options[0].label).toBe('No traces found');
   });
 
-  it('my test', async function() {
+  it('uses URL encoded service name in metadataRequest request', async function() {
     const wrapper = mount(
       <JaegerQueryField
         history={[]}
         datasource={makeDatasourceMock({
-          'ser/vice': {
+          'service/test': {
             op1: [
               {
                 traceID: '12345',
@@ -51,21 +51,20 @@ describe('JaegerQueryField', function() {
       />
     );
 
+    // Simulating selection options. We need this as the function depends on the intermediate state of the component
     await wrapper
       .find(ButtonCascader)
       .props()
-      .loadData([{ value: 'ser/vice', label: 'ser/vice' }]);
-
-    await wrapper
-      .find(ButtonCascader)
-      .props()
-      .loadData([
-        { value: 'ser/vice', label: 'ser/vice' },
-        { value: 'op1', label: 'op1' },
-      ]);
+      .loadData([{ value: 'service/test', label: 'service/test' }]);
 
     wrapper.update();
-    expect(wrapper.find(ButtonCascader).props().options[0].label).toBe('No traces found');
+    expect(wrapper.find(ButtonCascader).props().options[0].label).toEqual('service/test');
+    expect(wrapper.find(ButtonCascader).props().options[0].value).toEqual('service/test');
+    expect(wrapper.find(ButtonCascader).props().options[0].children[1]).toEqual({
+      isLeaf: false,
+      label: 'op1',
+      value: 'op1',
+    });
   });
 
   it('shows root span as 3rd level in cascader', async function() {
@@ -116,7 +115,10 @@ describe('JaegerQueryField', function() {
       ]);
 
     wrapper.update();
-    console.log(wrapper.debug());
+    expect(wrapper.find(ButtonCascader).props().options[0].children[1].children[0]).toEqual({
+      label: 'rootOp [0.099 ms]',
+      value: '12345',
+    });
   });
 });
 
@@ -126,9 +128,11 @@ function makeDatasourceMock(data: { [service: string]: { [operation: string]: an
       if (url.match(/\/services$/)) {
         return Promise.resolve(Object.keys(data));
       }
-      let match = url.match(/\/services\/(\w+)\/operations/);
+      let match = url.match(/\/services\/(.*)\/operations/);
       if (match) {
-        return Promise.resolve(Object.keys(data[match[1]]));
+        const decodedService = decodeURIComponent(match[1]);
+        expect(decodedService).toBe(Object.keys(data)[0]);
+        return Promise.resolve(Object.keys(data[decodedService]));
       }
 
       if (url.match(/\/traces?/)) {
