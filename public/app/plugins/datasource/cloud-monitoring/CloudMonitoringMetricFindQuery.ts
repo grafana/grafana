@@ -130,10 +130,17 @@ export default class CloudMonitoringMetricFindQuery {
     if (!selectedMetricType) {
       return [];
     }
+
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
-    const { valueType, metricKind } = metricDescriptors.find(
+    const descriptor = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
+
+    if (!descriptor) {
+      return [];
+    }
+
+    const { valueType, metricKind } = descriptor;
     return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind as MetricKind).map(this.toFindQueryResult);
   }
 
