@@ -12,10 +12,6 @@ min-occurrences = 5
 disable-all = true
 
 [[issues.exclude-rules]]
-path = "_test\\.go"
-linters = ["scopelint"]
-
-[[issues.exclude-rules]]
 linters = ["gosec"]
 text = "G108"
 

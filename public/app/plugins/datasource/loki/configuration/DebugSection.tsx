@@ -8,7 +8,7 @@ import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
 import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
 
 type Props = {
-  derivedFields: DerivedFieldConfig[];
+  derivedFields?: DerivedFieldConfig[];
   className?: string;
 };
 export const DebugSection = (props: Props) => {
@@ -92,7 +92,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
       try {
         const testMatch = debugText.match(field.matcherRegex);
         const value = testMatch && testMatch[1];
-        let link: LinkModel<Field> = null;
+        let link: LinkModel<Field> | null = null;
 
         if (field.url && value) {
           link = getFieldLinksForExplore(
@@ -116,7 +116,6 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
           href: link && link.href,
         } as DebugField;
       } catch (error) {
-        console.error(error);
         return {
           name: field.name,
           error,

@@ -120,9 +120,8 @@ export interface FetchError<T extends FetchErrorDataProps = any> {
  * use default values executing the request.
  *
  * @remarks
- * By default Grafana will display an error message alert if the remote call fails. If you want
- * to prevent this from happending you need to catch the error thrown by the BackendSrv and
- * set the `showErrorAlert = true` on the options object.
+ * By default, Grafana displays an error message alert if the remote call fails. To prevent this from
+ * happening `showErrorAlert = true` on the options object.
  *
  * @public
  */
@@ -132,9 +131,15 @@ export interface BackendSrv {
   post(url: string, data?: any): Promise<any>;
   patch(url: string, data?: any): Promise<any>;
   put(url: string, data?: any): Promise<any>;
+
+  /**
+   * @deprecated Use the fetch function instead. If you prefer to work with a promise
+   * call the toPromise() function on the Observable returned by fetch.
+   */
   request(options: BackendSrvRequest): Promise<any>;
 
   /**
+   * @deprecated Use the fetch function instead
    * Special function used to communicate with datasources that will emit core
    * events that the Grafana QueryInspector and QueryEditor is listening for to be able
    * to display datasource query information. Can be skipped by adding `option.silent`

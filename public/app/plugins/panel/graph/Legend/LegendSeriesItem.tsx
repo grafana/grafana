@@ -136,6 +136,8 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
   render() {
     const { label, color, yaxis } = this.props;
     const { onColorChange, onToggleAxis } = this.props;
+    const onLabelClick = this.props.onLabelClick ? this.props.onLabelClick : () => {};
+
     return [
       <LegendSeriesIcon
         key="icon"
@@ -148,7 +150,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         className="graph-legend-alias pointer"
         title={label}
         key="label"
-        onClick={e => this.props.onLabelClick(e)}
+        onClick={onLabelClick}
         aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
       >
         {label}

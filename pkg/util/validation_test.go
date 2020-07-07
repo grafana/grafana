@@ -7,7 +7,6 @@ import (
 )
 
 func TestIsEmail(t *testing.T) {
-
 	Convey("When validating a string that is a valid email", t, func() {
 		result := IsEmail("abc@def.com")
 

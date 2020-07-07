@@ -89,12 +89,11 @@ export class BackendSrv implements BackendService {
 
   private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
     const orgId = this.dependencies.contextSrv.user?.orgId;
-    const requestIsLocal = !options.url.match(/^http/);
 
     // init retry counter
     options.retry = options.retry ?? 0;
 
-    if (requestIsLocal) {
+    if (isLocalUrl(options.url)) {
       if (orgId) {
         options.headers = options.headers ?? {};
         options.headers['X-Grafana-Org-Id'] = orgId;
@@ -168,10 +167,9 @@ export class BackendSrv implements BackendService {
         retryWhen((attempts: Observable<any>) =>
           attempts.pipe(
             mergeMap((error, i) => {
-              const requestIsLocal = !options.url.match(/^http/);
               const firstAttempt = i === 0 && options.retry === 0;
 
-              if (error.status === 401 && requestIsLocal && firstAttempt && isSignedIn) {
+              if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
                 return from(this.loginPing()).pipe(
                   catchError(err => {
                     if (err.status === 401) {
@@ -190,7 +188,40 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  showApplicationErrorAlert(err: FetchError) {
+  showApplicationErrorAlert(err: FetchError) {}
+
+  showSuccessAlert<T>(response: FetchResponse<T>) {
+    const { config } = response;
+
+    if (config.showSuccessAlert === false) {
+      return;
+    }
+
+    // is showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
+    if (
+      config.showSuccessAlert === undefined &&
+      (config.method === 'GET' || isDataQuery(config.url) || !isLocalUrl(config.url))
+    ) {
+      return;
+    }
+
+    const data: { message: string } = response.data as any;
+
+    if (data?.message) {
+      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
+    }
+  }
+
+  showErrorAlert<T>(config: BackendSrvRequest, err: FetchError) {
+    if (config.showErrorAlert === false) {
+      return;
+    }
+
+    // is showErrorAlert is undefined we only show alerts non data query and local api requests
+    if (config.showErrorAlert === undefined || isDataQuery(config.url) || !isLocalUrl(config.url)) {
+      return;
+    }
+
     let description = '';
     let message = err.data.message;
 
@@ -210,25 +241,6 @@ export class BackendSrv implements BackendService {
     ]);
   }
 
-  showSuccessAlert<T>(response: FetchResponse<T>) {
-    const { config } = response;
-
-    if (config.method === 'GET' || config.showSuccessAlert === false) {
-      return;
-    }
-
-    // Skip success alerts for data queries
-    if (isDataQuery(response.config.url)) {
-      return;
-    }
-
-    const data: { message: string } = response.data as any;
-
-    if (data?.message) {
-      this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
-    }
-  }
-
   processRequestError(options: BackendSrvRequest, err: FetchError): FetchError {
     err.data = err.data ?? { message: 'Unexpected error' };
 
@@ -246,10 +258,10 @@ export class BackendSrv implements BackendService {
     }
 
     // check if we should show an error alert
-    if (err.data.message && !isDataQuery(options.url) && options.showErrorAlert !== false) {
+    if (err.data.message) {
       setTimeout(() => {
         if (!err.isHandled) {
-          this.showApplicationErrorAlert(err);
+          this.showErrorAlert(options, err);
         }
       }, 50);
     }
@@ -283,15 +295,13 @@ export class BackendSrv implements BackendService {
         ),
         // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
         // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
-        throwIfEmpty(() => {
-          return {
-            cancelled: true,
-            data: null,
-            status: this.HTTP_REQUEST_CANCELED,
-            statusText: 'Request was aborted',
-            config: options,
-          };
-        })
+        throwIfEmpty(() => ({
+          cancelled: true,
+          data: null,
+          status: this.HTTP_REQUEST_CANCELED,
+          statusText: 'Request was aborted',
+          config: options,
+        }))
       );
   }
 
@@ -357,6 +367,10 @@ function isDataQuery(url: string): boolean {
   }
 
   return false;
+}
+
+function isLocalUrl(url: string) {
+  return !url.match(/^http/);
 }
 
 coreModule.factory('backendSrv', () => backendSrv);

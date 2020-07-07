@@ -70,14 +70,12 @@ func New(configs []*ldap.ServerConfig) IMultiLDAP {
 
 // Ping dials each of the LDAP servers and returns their status. If the server is unavailable, it also returns the error.
 func (multiples *MultiLDAP) Ping() ([]*ServerStatus, error) {
-
 	if len(multiples.configs) == 0 {
 		return nil, ErrNoLDAPServers
 	}
 
 	serverStatuses := []*ServerStatus{}
 	for _, config := range multiples.configs {
-
 		status := &ServerStatus{}
 
 		status.Host = config.Host
@@ -104,7 +102,6 @@ func (multiples *MultiLDAP) Ping() ([]*ServerStatus, error) {
 func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
-
 	if len(multiples.configs) == 0 {
 		return nil, ErrNoLDAPServers
 	}
@@ -125,12 +122,11 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		defer server.Close()
 
 		user, err := server.Login(query)
+		// FIXME
 		if user != nil {
 			return user, nil
 		}
-
 		if err != nil {
-
 			if isSilentError(err) {
 				logger.Debug(
 					"unable to login with LDAP - skipping server",
@@ -155,7 +151,6 @@ func (multiples *MultiLDAP) User(login string) (
 	ldap.ServerConfig,
 	error,
 ) {
-
 	if len(multiples.configs) == 0 {
 		return nil, ldap.ServerConfig{}, ErrNoLDAPServers
 	}
