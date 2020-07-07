@@ -46,6 +46,8 @@ describe('parseHeaders', () => {
   it.each`
     options                                                                                 | expected
     ${undefined}                                                                            | ${{ map: { accept: 'application/json, text/plain, */*' } }}
+    ${{}}                                                                                   | ${{ map: { accept: 'application/json, text/plain, */*' } }}
+    ${{ headers: {} }}                                                                      | ${{ map: { accept: 'application/json, text/plain, */*' } }}
     ${{ propKey: 'some prop value' }}                                                       | ${{ map: { accept: 'application/json, text/plain, */*' } }}
     ${{ method: 'GET' }}                                                                    | ${{ map: { accept: 'application/json, text/plain, */*' } }}
     ${{ method: 'POST' }}                                                                   | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}

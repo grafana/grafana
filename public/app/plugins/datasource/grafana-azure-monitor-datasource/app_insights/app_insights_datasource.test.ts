@@ -1,6 +1,6 @@
 import { DataFrame, getFrameDisplayName, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { backendSrv } from 'app/core/services/__mocks__/backend_srv'; // ???? will use the version in __mocks__
 import { setBackendSrv } from '@grafana/runtime';
 import AppInsightsDatasource from './app_insights_datasource';
 
