@@ -318,6 +318,4 @@ func applyInsightsMetricAlias(frame *data.Frame, alias string) {
 
 		field.Config.DisplayName = displayName
 	}
-	return
-
 }
