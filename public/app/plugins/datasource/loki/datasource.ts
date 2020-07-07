@@ -538,10 +538,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     if (err.data) {
       if (typeof err.data === 'string') {
-        const escapeErrMessages = ['parse error at', 'error parsing regexp: invalid escape sequence: `\\'];
-        const isEscapeError = escapeErrMessages.some(errMes => err.data.indexOf(errMes) >= 0);
-
-        if (isEscapeError && target.expr.includes('\\')) {
+        if (err.data.includes('escape') && target.expr.includes('\\')) {
           error.message = `Error: ${err.data}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.`;
         } else {
           error.message = err.data;
