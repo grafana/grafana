@@ -37,7 +37,6 @@ func TestInfluxDB(t *testing.T) {
 			Convey("has an empty body", func() {
 				So(req.Body, ShouldEqual, nil)
 			})
-
 		})
 
 		Convey("createRequest with POST httpMode", func() {
@@ -60,7 +59,6 @@ func TestInfluxDB(t *testing.T) {
 				testBody := testBodyValues.Encode()
 				So(string(body[:]), ShouldEqual, testBody)
 			})
-
 		})
 
 		Convey("createRequest with PUT httpMode", func() {
@@ -70,8 +68,6 @@ func TestInfluxDB(t *testing.T) {
 			Convey("should miserably fail", func() {
 				So(err, ShouldEqual, ErrInvalidHttpMode)
 			})
-
 		})
-
 	})
 }

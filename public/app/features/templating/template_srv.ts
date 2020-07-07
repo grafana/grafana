@@ -265,9 +265,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variableName;
   }
 
-  variableExists(expression: string) {
+  variableExists(expression: string): boolean {
     const name = this.getVariableName(expression);
-    return name && this.getVariableAtIndex(name) !== void 0;
+    return (name && this.getVariableAtIndex(name)) !== undefined;
   }
 
   highlightVariablesAsHtml(str: string) {

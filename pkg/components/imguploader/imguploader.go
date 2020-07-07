@@ -27,7 +27,6 @@ var (
 )
 
 func NewImageUploader() (ImageUploader, error) {
-
 	switch setting.ImageUploadProvider {
 	case "s3":
 		s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
