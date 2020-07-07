@@ -667,8 +667,7 @@ jobs:
               # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             else
-              # TODO: Don't ignore errors, temporary workaround until we fix #22955
-              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
       - run:
           name: CI job failed
