@@ -54,17 +54,7 @@ sudo apt-get install grafana-enterprise
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
-
-# Alternatively you can add the beta repository, refer to the table above for links
-echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-
-sudo apt-get update
-sudo apt-get install grafana
 ```
-
-### Set up repository for ARM
-
-If you have problems using `add-apt-repository`, you can set up the repository without it.
 
 Add this repository for stable releases:
 
@@ -75,6 +65,13 @@ echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/a
 Add this repository if you want beta releases:
 ```bash
 echo "deb https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
+```
+
+After you add the repository:
+
+```
+sudo apt-get update
+sudo apt-get install grafana
 ```
 
 ### Install .deb package
