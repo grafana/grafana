@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -14,7 +16,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 	fakeSQL := InitTestDB(t)
 	repo := &SqlAnnotationRepo{}
 
-	createTestAnnotations(t, repo)
+	createTestAnnotations(t, repo, fakeSQL)
 	assertAnnotationCount(t, fakeSQL, "", 21)
 
 	tests := []struct {
@@ -46,17 +48,39 @@ func TestAnnotationCleanUp(t *testing.T) {
 			dashboardAnnotationCount: 5,
 			APIAnnotationCount:       5,
 		},
+		{
+			name: "should only keep three annotations",
+			cfg: &setting.Cfg{
+				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
+				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
+				APIAnnotationCleanupSettings:       settingsFn(0, 3),
+			},
+			alertAnnotationCount:     3,
+			dashboardAnnotationCount: 3,
+			APIAnnotationCount:       3,
+		},
+		{
+			name: "running the max count delete again should not remove an annotations",
+			cfg: &setting.Cfg{
+				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
+				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
+				APIAnnotationCleanupSettings:       settingsFn(0, 3),
+			},
+			alertAnnotationCount:     3,
+			dashboardAnnotationCount: 3,
+			APIAnnotationCount:       3,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cleaner := &AnnotationCleanupService{BatchSize: 10}
-			err := cleaner.cleanBasedOnMaxAge(context.Background(), "alert_id <> 0", time.Hour*24)
+			cleaner := &AnnotationCleanupService{BatchSize: 1, SQLStore: fakeSQL}
+			err := cleaner.CleanAnnotations(context.Background(), test.cfg)
 			require.Nil(t, err)
 
-			assertAnnotationCount(t, fakeSQL, "alert_id <> 0", test.alertAnnotationCount)
-			// assertAnnotationCount(t, fakeSQL, "dashboard_id <> 0 AND alert_id = 0", test.dashboardAnnotationCount)
-			// assertAnnotationCount(t, fakeSQL, "alert_id = 0 AND dashboard_id = 0", test.APIAnnotationCount)
+			assertAnnotationCount(t, fakeSQL, AlertAnnotationType, test.alertAnnotationCount)
+			assertAnnotationCount(t, fakeSQL, DashboardAnnotationType, test.dashboardAnnotationCount)
+			assertAnnotationCount(t, fakeSQL, APIAnnotationType, test.APIAnnotationCount)
 		})
 	}
 }
@@ -71,7 +95,7 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SqlStore, sql string, expected
 	require.Equal(t, expectedCount, count)
 }
 
-func createTestAnnotations(t *testing.T, repo *SqlAnnotationRepo) {
+func createTestAnnotations(t *testing.T, repo *SqlAnnotationRepo, sqlstore *SqlStore) {
 	t.Helper()
 
 	cutoffDate := time.Now()
@@ -105,7 +129,7 @@ func createTestAnnotations(t *testing.T, repo *SqlAnnotationRepo) {
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
-		_, err := x.Insert(a)
+		_, err := sqlstore.NewSession().Insert(a)
 		require.Nil(t, err, "should be able to save annotation", err)
 	}
 }
