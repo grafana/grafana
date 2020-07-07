@@ -259,16 +259,10 @@ func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourc
 // Alias patterns like {{metric}} are replaced with the appropriate data values.
 func formatApplicationInsightsLegendKey(alias string, metricName string, labels data.Labels) string {
 
-	// backwards support for "ToLower" (eww). Could be a problem if there were
-	// two keys that varied only in case, but I don't think that would
-	// happen with azure.
-	lowerLabels := labels.Copy()
-	for k, v := range lowerLabels {
-		if strings.ToLower(k) == k {
-			continue
-		}
+	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
+	lowerLabels := data.Labels{}
+	for k, v := range labels {
 		lowerLabels[strings.ToLower(k)] = v
-		delete(lowerLabels, k)
 	}
 	keys := make([]string, 0, len(labels))
 	for k := range lowerLabels {
