@@ -80,7 +80,6 @@ func GetPreferences(query *models.GetPreferencesQuery) error {
 
 func SavePreferences(cmd *models.SavePreferencesCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
 		if err != nil {

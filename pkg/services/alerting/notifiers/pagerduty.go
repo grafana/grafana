@@ -18,6 +18,7 @@ func init() {
 		Type:        "pagerduty",
 		Name:        "PagerDuty",
 		Description: "Sends notifications to PagerDuty",
+		Heading:     "PagerDuty settings",
 		Factory:     NewPagerdutyNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">PagerDuty settings</h3>
@@ -54,6 +55,45 @@ func init() {
         </gf-form-switch>
       </div>
     `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Integration Key",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Pagerduty Integration Key",
+				PropertyName: "integrationKey",
+				Required:     true,
+			},
+			{
+				Label:   "Severity",
+				Element: alerting.ElementTypeSelect,
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "critical",
+						Label: "Critical",
+					},
+					{
+						Value: "error",
+						Label: "Error",
+					},
+					{
+						Value: "warning",
+						Label: "Warning",
+					},
+					{
+						Value: "info",
+						Label: "Info",
+					},
+				},
+				PropertyName: "severity",
+			},
+			{
+				Label:        "Auto resolve incidents",
+				Element:      alerting.ElementTypeSwitch,
+				Description:  "Resolve incidents in pagerduty once the alert goes back to ok.",
+				PropertyName: "autoResolve",
+			},
+		},
 	})
 }
 
@@ -94,7 +134,6 @@ type PagerdutyNotifier struct {
 
 // buildEventPayload is responsible for building the event payload body for sending to Pagerduty v2 API
 func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext) ([]byte, error) {
-
 	eventType := "trigger"
 	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
@@ -201,7 +240,6 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-
 	if evalContext.Rule.State == models.AlertStateOK && !pn.AutoResolve {
 		pn.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", pn.AutoResolve)
 		return nil

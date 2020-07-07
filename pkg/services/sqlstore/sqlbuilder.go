@@ -29,7 +29,6 @@ func (sb *SqlBuilder) AddParams(params ...interface{}) {
 }
 
 func (sb *SqlBuilder) writeDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
-
 	if user.OrgRole == models.ROLE_ADMIN {
 		return
 	}

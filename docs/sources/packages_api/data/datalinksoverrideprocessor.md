@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-dataLinksOverrideProcessor: (value: any, _context: FieldOverrideContext, _settings?: DataLinksFieldConfigSettings | undefined) => DataLink[]
+dataLinksOverrideProcessor: (value: any, _context: FieldOverrideContext, _settings?: DataLinksFieldConfigSettings | undefined) => DataLink<any>[]
 ```
 <b>Import</b>
 

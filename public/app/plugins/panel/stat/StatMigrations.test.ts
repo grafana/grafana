@@ -1,6 +1,7 @@
 import { PanelModel } from '@grafana/data';
 import { statPanelChangedHandler } from './StatMigrations';
 import { BigValueGraphMode, BigValueColorMode } from '@grafana/ui';
+import { BigValueTextMode } from '@grafana/ui/src/components/BigValue/BigValue';
 
 describe('Stat Panel Migrations', () => {
   it('change from angular singlestat sparkline disabled', () => {
@@ -47,5 +48,17 @@ describe('Stat Panel Migrations', () => {
     const panel = {} as PanelModel;
     const options = statPanelChangedHandler(panel, 'singlestat', old);
     expect(options.colorMode).toBe(BigValueColorMode.Background);
+  });
+
+  it('change from angular singlestat with name stat', () => {
+    const old: any = {
+      angular: {
+        valueName: 'name',
+      },
+    };
+
+    const panel = {} as PanelModel;
+    const options = statPanelChangedHandler(panel, 'singlestat', old);
+    expect(options.textMode).toBe(BigValueTextMode.Name);
   });
 });

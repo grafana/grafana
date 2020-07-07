@@ -112,7 +112,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
-
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
 			userRoute.Get("/", Wrap(GetSignedInUser))
@@ -383,7 +382,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// error test
 		r.Get("/metrics/error", Wrap(GenerateError))
-
 	}, reqSignedIn)
 
 	// admin api
