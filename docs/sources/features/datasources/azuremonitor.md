@@ -109,16 +109,16 @@ These can be quite long but this formatting can be changed using aliases. In the
 Azure Monitor Examples:
 
 - `Blob Type: {{ blobtype }}`
-- `{{resourcegroup}} - {{resourcename}}`
+- `{{ resourcegroup }} - {{ resourcename }}`
 
 ### Alias patterns for Azure Monitor
 
-- `{{resourcegroup}}` = replaced with the value of the Resource Group
-- `{{namespace}}` = replaced with the value of the Namespace (e.g. Microsoft.Compute/virtualMachines)
-- `{{resourcename}}` = replaced with the value of the Resource Name
-- `{{metric}}` = replaced with metric name (e.g. Percentage CPU)
-- `{{dimensionname}}` = *Legacy* replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
-- `{{dimensionvalue}}` = *Legacy* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ resourcegroup }}` = replaced with the value of the Resource Group
+- `{{ namespace }}` = replaced with the value of the Namespace (e.g. Microsoft.Compute/virtualMachines)
+- `{{ resourcename }}` = replaced with the value of the Resource Name
+- `{{ metric }}` = replaced with metric name (e.g. Percentage CPU)
+- `{{ dimensionname }}` = *Legacy as of 7.1* replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
+- `{{ dimensionvalue }}` = *Legacy as of 7.1* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
 - `{{ arbitraryDim }}` = (Added in 7.1) replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
 
 ### Templating with variables for Azure Monitor
@@ -169,25 +169,27 @@ Grafana alerting is supported for the Azure Monitor service. This is not Azure A
 
 {{< docs-imagebox img="/img/docs/v60/appinsights-service-query-editor.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
+As of 7.1, more than one dimension may be selected
+
 ### Formatting legend keys with aliases for Application Insights
 
 The default legend formatting is:
 
-`metric/name{group/by="groupbyvalue"}`
+`metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
 In the Legend Format field, the aliases which are defined below can be combined any way you want.
 
 Application Insights Examples:
 
-- `server: {{groupbyvalue}}`
-- `city: {{groupbyvalue}}`
-- `{{groupbyname}}: {{groupbyvalue}}`
+- `city: {{ client/city }}`
+- `{{ metric }} [Location: {{ client/countryOrRegion }}, {{ client/city }}]`
 
 ### Alias patterns for Application Insights
 
-- `{{groupbyvalue}}` = replaced with the value of the group by
-- `{{groupbyname}}` = replaced with the name/label of the group by
-- `{{metric}}` = replaced with metric name (e.g. requests/count)
+- `{{ groupbyvalue }}` = *Legacy as of 7.1* replaced with the first dimension's key/label (as sorted by the key/label)
+- `{{ groupbyname }}` = *Legacy as of 7.1* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ metric }}` = replaced with metric name (e.g. requests/count)
+- `{{ arbitraryDim }}` = (Added in 7.1) replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
 
 ### Filter expressions for Application Insights
 
