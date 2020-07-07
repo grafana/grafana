@@ -4,3 +4,5 @@ compiled
 build
 vendor
 devenv
+data
+dist
