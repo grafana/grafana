@@ -12,6 +12,7 @@ import {
 import { isTimeSeries } from '../../dataframe/utils';
 import { MutableDataFrame, sortDataFrame } from '../../dataframe';
 import { ArrayVector } from '../../vector';
+import { getFrameDisplayName } from '../../field/fieldState';
 
 export interface SeriesToRowsTransformerOptions {}
 
@@ -73,7 +74,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
 
           dataFrame.add({
             [TIME_SERIES_TIME_FIELD_NAME]: frame.fields[timeFieldIndex].values.get(valueIndex),
-            [TIME_SERIES_METRIC_FIELD_NAME]: frame.name,
+            [TIME_SERIES_METRIC_FIELD_NAME]: getFrameDisplayName(frame),
             [TIME_SERIES_VALUE_FIELD_NAME]: frame.fields[valueFieldIndex].values.get(valueIndex),
           });
         }
