@@ -1,9 +1,9 @@
-import { mockTransformationsRegistry } from '../../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType } from '../../../types';
-import { DataTransformerID } from '../ids';
-import { toDataFrame } from '../../../dataframe';
-import { transformDataFrame } from '../../transformDataFrame';
-import { ArrayVector } from '../../../vector';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { DataTransformerID } from './ids';
+import { toDataFrame } from '../../dataframe';
+import { transformDataFrame } from '../transformDataFrame';
+import { ArrayVector } from '../../vector';
 import { mergeTransformer, MergeTransformerOptions } from './merge';
 
 describe('Merge multipe to single', () => {
@@ -35,11 +35,11 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [seriesA, seriesB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [1000, 2000]),
-      createField('Temp', FieldType.number, [1, -1]),
+      createField('Time', FieldType.time, [2000, 1000]),
+      createField('Temp', FieldType.number, [-1, 1]),
     ];
 
-    expect(result[0].fields).toMatchObject(expected);
+    expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
   it('combine two series with multiple values into one', () => {
@@ -66,11 +66,11 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [seriesA, seriesB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [100, 100, 125, 126, 150, 200]),
-      createField('Temp', FieldType.number, [-1, 1, 2, 3, 4, 5]),
+      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1]),
     ];
 
-    expect(result[0].fields).toMatchObject(expected);
+    expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
   it('combine three series into one', () => {
@@ -105,11 +105,11 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [seriesA, seriesB, seriesC]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [500, 1000, 2000]),
-      createField('Temp', FieldType.number, [2, 1, -1]),
+      createField('Time', FieldType.time, [2000, 1000, 500]),
+      createField('Temp', FieldType.number, [-1, 1, 2]),
     ];
 
-    expect(result[0].fields).toMatchObject(expected);
+    expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
   it('combine one serie and two tables into one table', () => {
@@ -146,12 +146,12 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [tableA, seriesB, tableB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [500, 1000, 1000]),
-      createField('Temp', FieldType.number, [2, -1, 1]),
-      createField('Humidity', FieldType.number, [5, null, 10]),
+      createField('Time', FieldType.time, [1000, 1000, 500]),
+      createField('Temp', FieldType.number, [1, -1, 2]),
+      createField('Humidity', FieldType.number, [10, null, 5]),
     ];
 
-    expect(result[0].fields).toMatchObject(expected);
+    expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
   it('combine one serie and two tables with ISO dates into one table', () => {
@@ -188,12 +188,12 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [tableA, seriesB, tableC]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, ['2019-09-01T11:10:23Z', '2019-10-01T11:10:23Z', '2019-11-01T11:10:23Z']),
-      createField('Temp', FieldType.number, [-1, 1, 2]),
-      createField('Humidity', FieldType.number, [null, 10, 5]),
+      createField('Time', FieldType.time, ['2019-11-01T11:10:23Z', '2019-10-01T11:10:23Z', '2019-09-01T11:10:23Z']),
+      createField('Temp', FieldType.number, [2, 1, -1]),
+      createField('Humidity', FieldType.number, [5, 10, null]),
     ];
 
-    expect(result[0].fields).toMatchObject(expected);
+    expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
   it('combine three tables with multiple values into one', () => {
@@ -265,12 +265,14 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [serieA, serieB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [100, 100, 125, 126, 150, 200]),
-      createField('Temp', FieldType.number, [1, -1, 2, 3, 4, 5]),
+      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1]),
     ];
 
-    expect(result[0].fields[2].config).toEqual({});
-    expect(result[0].fields).toMatchObject(expected);
+    const fields = unwrap(result[0].fields);
+
+    expect(fields[1].config).toEqual({});
+    expect(fields).toEqual(expected);
   });
 
   it('combine two time series, where first serie fields has units, into one', () => {
@@ -297,12 +299,14 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [serieA, serieB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [100, 100, 125, 126, 150, 200]),
-      createField('Temp', FieldType.number, [1, -1, 2, 3, 4, 5], { units: 'celsius' }),
+      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1], { units: 'celsius' }),
     ];
 
-    expect(result[0].fields[2].config).toEqual({ units: 'celsius' });
-    expect(result[0].fields).toMatchObject(expected);
+    const fields = unwrap(result[0].fields);
+
+    expect(fields[1].config).toEqual({ units: 'celsius' });
+    expect(fields).toEqual(expected);
   });
 
   it('combine two time series, where second serie fields has units, into one', () => {
@@ -329,12 +333,14 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [serieA, serieB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [100, 100, 125, 126, 150, 200]),
-      createField('Temp', FieldType.number, [1, -1, 2, 3, 4, 5]),
+      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1]),
     ];
 
-    expect(result[0].fields[2].config).toEqual({});
-    expect(result[0].fields).toMatchObject(expected);
+    const fields = unwrap(result[0].fields);
+
+    expect(fields[1].config).toEqual({});
+    expect(fields).toEqual(expected);
   });
 });
 

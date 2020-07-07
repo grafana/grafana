@@ -12,7 +12,7 @@ import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { renameFieldsTransformer } from './transformers/rename';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
-import { mergeTransformer } from './transformers/merge/merge';
+import { mergeTransformer } from './transformers/merge';
 
 export const standardTransformers = {
   noopTransformer,
