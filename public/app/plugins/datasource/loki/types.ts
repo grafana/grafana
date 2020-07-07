@@ -59,7 +59,7 @@ export interface LokiVectorResponse {
 }
 
 export interface LokiMatrixResult {
-  metric: { [label: string]: string };
+  metric: Record<string, string>;
   values: Array<[number, string]>;
 }
 
@@ -115,8 +115,8 @@ export type DerivedFieldConfig = {
 };
 
 export interface TransformerOptions {
-  format: string;
-  legendFormat: string;
+  format?: string;
+  legendFormat?: string;
   step: number;
   start: number;
   end: number;
