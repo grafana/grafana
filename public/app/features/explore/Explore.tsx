@@ -86,7 +86,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export interface ExploreProps {
   changeSize: typeof changeSize;
-  datasourceInstance: DataSourceApi;
+  datasourceInstance: DataSourceApi | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
   initializeExplore: typeof initializeExplore;
@@ -109,7 +109,7 @@ export interface ExploreProps {
   isLive: boolean;
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
-  graphResult?: GraphSeriesXY[];
+  graphResult?: GraphSeriesXY[] | null;
   loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
   showingGraph?: boolean;

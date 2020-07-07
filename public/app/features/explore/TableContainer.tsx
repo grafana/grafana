@@ -47,13 +47,13 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
     const hasTableResult = tableResult?.length;
 
-    if (hasTableResult) {
+    if (tableResult && tableResult.length) {
       // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
       // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
       // differently and sidestep this getLinks API on a dataframe
       for (const field of tableResult.fields) {
         field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore(field, config.valueRowIndex, splitOpen, range);
+          return getFieldLinksForExplore(field, config.valueRowIndex!, splitOpen, range);
         };
       }
     }

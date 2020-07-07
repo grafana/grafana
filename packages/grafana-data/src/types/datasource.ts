@@ -418,7 +418,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   dashboardId: number;
   interval: string;
-  intervalMs?: number;
+  intervalMs: number;
   maxDataPoints?: number;
   panelId: number;
   range: TimeRange;

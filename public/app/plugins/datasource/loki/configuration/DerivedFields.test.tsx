@@ -29,6 +29,7 @@ describe('DerivedFields', () => {
 
   it('renders correctly when there are fields', async () => {
     let wrapper: any;
+    //@ts-ignore
     await act(async () => {
       wrapper = await mount(<DerivedFields value={testValue} onChange={() => {}} />);
     });

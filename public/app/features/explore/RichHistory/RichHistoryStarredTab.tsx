@@ -25,7 +25,7 @@ export interface Props {
   datasourceFilters: SelectableValue[] | null;
   exploreId: ExploreId;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
+  onSelectDatasourceFilters: (value: SelectableValue[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

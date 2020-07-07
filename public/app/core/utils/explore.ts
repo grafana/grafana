@@ -67,6 +67,7 @@ export interface GetExploreUrlArguments {
   datasourceSrv: DataSourceSrv;
   timeSrv: TimeSrv;
 }
+
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
@@ -302,7 +303,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
     }
     return allQueries;
   }
-  return [{ ...generateEmptyQuery(queries) }];
+  return [{ ...generateEmptyQuery(queries ?? []) }];
 }
 
 /**
@@ -356,7 +357,7 @@ export function clearHistory(datasourceId: string) {
   store.delete(historyKey);
 }
 
-export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourceApi): string[] => {
+export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSourceApi | null): string[] => {
   const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
     const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
     return newQueryKeys.concat(`${primaryKey}-${index}`);
@@ -367,8 +368,8 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any),
-    to: dateMath.parse(rawRange.to, true, timeZone as any),
+    from: dateMath.parse(rawRange.from, false, timeZone as any)!,
+    to: dateMath.parse(rawRange.to, true, timeZone as any)!,
     raw: rawRange,
   };
 };
@@ -402,13 +403,13 @@ const parseRawTime = (value: any): TimeFragment | null => {
 
 export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
   const raw = {
-    from: parseRawTime(range.from),
-    to: parseRawTime(range.to),
+    from: parseRawTime(range.from)!,
+    to: parseRawTime(range.to)!,
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone as any),
-    to: dateMath.parse(raw.to, true, timeZone as any),
+    from: dateMath.parse(raw.from, false, timeZone as any)!,
+    to: dateMath.parse(raw.to, true, timeZone as any)!,
     raw,
   };
 };
@@ -536,13 +537,13 @@ export const convertToWebSocketUrl = (url: string) => {
   return `${backend}${url}`;
 };
 
-export const stopQueryState = (querySubscription: Unsubscribable) => {
+export const stopQueryState = (querySubscription: Unsubscribable | undefined) => {
   if (querySubscription) {
     querySubscription.unsubscribe();
   }
 };
 
-export function getIntervals(range: TimeRange, lowLimit: string, resolution?: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }

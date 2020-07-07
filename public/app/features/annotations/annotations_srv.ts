@@ -121,7 +121,10 @@ export class AnnotationsSrv {
       promises.push(
         datasourcePromise
           .then((datasource: DataSourceApi) => {
-            // issue query against data source
+            if (!datasource.annotationQuery) {
+              return [];
+            }
+
             return datasource.annotationQuery({
               range,
               rangeRaw: range.raw,

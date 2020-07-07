@@ -40,7 +40,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 interface Props extends Themeable {
-  series?: GraphSeriesXY[];
+  series?: GraphSeriesXY[] | null;
   width: number;
   absoluteRange: AbsoluteTimeRange;
   loading?: boolean;

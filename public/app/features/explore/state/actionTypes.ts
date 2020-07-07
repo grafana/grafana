@@ -64,7 +64,7 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   mode: ExploreMode;
   ui: ExploreUIState;
-  originPanelId: number;
+  originPanelId?: number | null;
 }
 
 export interface LoadDatasourceMissingPayload {

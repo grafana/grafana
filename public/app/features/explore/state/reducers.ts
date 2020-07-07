@@ -101,11 +101,11 @@ export const makeExploreItemState = (): ExploreItemState => ({
     from: null,
     to: null,
     raw: DEFAULT_RANGE,
-  },
+  } as any,
   absoluteRange: {
     from: null,
     to: null,
-  },
+  } as any,
   scanning: false,
   showingGraph: true,
   showingTable: true,
@@ -131,7 +131,6 @@ export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
   series: [],
   request: {} as DataQueryRequest,
-  error: null,
   timeRange: DefaultTimeRange,
 });
 
@@ -384,13 +383,14 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
       return { ...query, refId: '' };
     });
+
     const nextQueries: DataQuery[] = [];
 
     queriesAfterRemoval.forEach((query, i) => {
       nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
     });
 
-    const nextQueryKeys: string[] = nextQueries.map(query => query.key);
+    const nextQueryKeys: string[] = nextQueries.map(query => query.key!);
 
     return {
       ...state,
@@ -546,6 +546,10 @@ export const processQueryResponse = (
     };
   }
 
+  if (!request) {
+    return { ...state };
+  }
+
   const latency = request.endTime ? request.endTime - request.startTime : 0;
   const processor = new ResultProcessor(state, series, request.intervalMs, request.timezone as TimeZone);
   const graphResult = processor.getGraphResult();
@@ -553,7 +557,7 @@ export const processQueryResponse = (
   const logsResult = processor.getLogsResult();
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance.components.QueryCtrl) {
+  if (state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map(v => toLegacyResponseData(v));
 
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
@@ -577,6 +581,10 @@ export const updateChildRefreshState = (
   exploreId: ExploreId
 ): ExploreItemState => {
   const path = payload.path || '';
+  if (!payload.query) {
+    return state;
+  }
+
   const queryState = payload.query[exploreId] as string;
   if (!queryState) {
     return state;

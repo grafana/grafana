@@ -46,8 +46,6 @@ export function getPanelMenu(
   };
 
   const onInspectPanel = (tab?: string) => {
-    event.preventDefault();
-
     getLocationSrv().update({
       partial: true,
       query: {

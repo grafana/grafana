@@ -32,7 +32,7 @@ export interface Props {
   exploreId: ExploreId;
   height: number;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
+  onSelectDatasourceFilters: (value: SelectableValue[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
