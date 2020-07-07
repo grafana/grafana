@@ -15,6 +15,6 @@ export const seriesToRowsTransformerRegistryItem: TransformerRegistyItem<SeriesT
   editor: SeriesToRowsTransformerEditor,
   transformation: standardTransformers.seriesToRowsTransformer,
   name: 'Series to rows',
-  description: `Merge series and return a single series with metric name as a column. 
+  description: `Merge many series and return a single series with time, metric and value as columns. 
                 Useful for showing multiple time series visualized in a table.`,
 };
