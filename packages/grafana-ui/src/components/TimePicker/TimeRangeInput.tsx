@@ -55,6 +55,8 @@ export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, t
             otherOptions={otherOptions}
             quickOptions={quickOptions}
             onChangeTimeZone={onChangeTimeZone}
+            hideHistory
+            className={styles.content}
           />
         </ClickOutsideWrapper>
       )}
@@ -67,6 +69,9 @@ const getStyles = (theme: GrafanaTheme) => {
     container: css`
       display: flex;
       position: relative;
+    `,
+    content: css`
+      margin-left: 0;
     `,
     pickerInput: css`
       display: flex;

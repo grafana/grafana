@@ -1,5 +1,5 @@
 import { GrafanaTheme, isDateTime, TimeOption, TimeRange, TimeZone } from '@grafana/data';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import React, { memo, useState } from 'react';
 import { useMedia } from 'react-use';
 import { stylesFactory, useTheme } from '../../../themes';
@@ -134,6 +134,8 @@ interface Props {
   quickOptions?: TimeOption[];
   otherOptions?: TimeOption[];
   history?: TimeRange[];
+  hideHistory?: boolean;
+  className?: string;
 }
 
 interface PropsWithScreenSize extends Props {
@@ -152,7 +154,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
   const { quickOptions = [], otherOptions = [], isFullscreen } = props;
 
   return (
-    <div className={styles.container}>
+    <div className={cx(styles.container, props.className)}>
       <div className={styles.body}>
         <div className={styles.leftSide}>
           <FullScreenForm {...props} visible={isFullscreen} historyOptions={historyOptions} />
@@ -218,14 +220,16 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
               isFullscreen={false}
             />
           </div>
-          <TimeRangeList
-            title="Recently used absolute ranges"
-            options={props.historyOptions || []}
-            onSelect={props.onChange}
-            value={props.value}
-            placeholderEmpty={null}
-            timeZone={props.timeZone}
-          />
+          {!props.hideHistory && (
+            <TimeRangeList
+              title="Recently used absolute ranges"
+              options={props.historyOptions || []}
+              onSelect={props.onChange}
+              value={props.value}
+              placeholderEmpty={null}
+              timeZone={props.timeZone}
+            />
+          )}
         </div>
       )}
     </>
@@ -248,16 +252,18 @@ const FullScreenForm: React.FC<FormProps> = props => {
         </div>
         <TimeRangeForm value={props.value} timeZone={props.timeZone} onApply={props.onChange} isFullscreen={true} />
       </div>
-      <div className={styles.recent}>
-        <TimeRangeList
-          title="Recently used absolute ranges"
-          options={props.historyOptions || []}
-          onSelect={props.onChange}
-          value={props.value}
-          placeholderEmpty={<EmptyRecentList />}
-          timeZone={props.timeZone}
-        />
-      </div>
+      {!props.hideHistory && (
+        <div className={styles.recent}>
+          <TimeRangeList
+            title="Recently used absolute ranges"
+            options={props.historyOptions || []}
+            onSelect={props.onChange}
+            value={props.value}
+            placeholderEmpty={<EmptyRecentList />}
+            timeZone={props.timeZone}
+          />
+        </div>
+      )}
     </>
   );
 };
