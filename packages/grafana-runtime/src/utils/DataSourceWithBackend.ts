@@ -111,32 +111,13 @@ export class DataSourceWithBackend<
       })
       .pipe(
         map((rsp: any) => {
-          const dqs = toDataQueryResponse(rsp);
-
-          if (this.processResponse) {
-            return this.processResponse(dqs);
-          }
-
-          return dqs;
+          return toDataQueryResponse(rsp);
         }),
         catchError(err => {
-          const dqs = toDataQueryResponse(err);
-
-          if (this.processResponse) {
-            return of(this.processResponse(dqs));
-          }
-
-          return of(dqs);
+          return of(toDataQueryResponse(err));
         })
       );
   }
-
-  /**
-   * Optionally augment the response before returning the results to the
-   *
-   * @virtual
-   */
-  processResponse?(res: DataQueryResponse): DataQueryResponse;
 
   /**
    * Override to skip executing a query
