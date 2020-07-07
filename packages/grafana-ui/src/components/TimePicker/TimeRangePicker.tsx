@@ -227,7 +227,7 @@ export const TimePickerButtonLabel = memo<Pick<Props, 'hideText' | 'value' | 'ti
     return (
       <span className={styles.container}>
         <span>{formattedRange(value, timeZone)}</span>
-        <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbrevation(value, timeZone)}</span>
+        <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
       </span>
     );
   }
