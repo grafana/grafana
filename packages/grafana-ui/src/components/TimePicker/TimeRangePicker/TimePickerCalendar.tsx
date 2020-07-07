@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useEffect, useCallback, FormEvent } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, DateTime, TimeZone, dateTimeParse } from '@grafana/data';
@@ -189,7 +189,7 @@ interface Props {
   from: DateTime;
   to: DateTime;
   onClose: () => void;
-  onApply: () => void;
+  onApply: (e: FormEvent<HTMLButtonElement>) => void;
   onChange: (from: DateTime, to: DateTime) => void;
   isFullscreen: boolean;
   timeZone?: TimeZone;

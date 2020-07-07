@@ -55,16 +55,20 @@ export const TimeRangeForm: React.FC<Props> = props => {
     [isFullscreen, onOpen]
   );
 
-  const onApply = useCallback(() => {
-    if (to.invalid || from.invalid) {
-      return;
-    }
+  const onApply = useCallback(
+    (e: FormEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      if (to.invalid || from.invalid) {
+        return;
+      }
 
-    const raw: RawTimeRange = { from: from.value, to: to.value };
-    const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
+      const raw: RawTimeRange = { from: from.value, to: to.value };
+      const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
 
-    props.onApply(timeRange);
-  }, [from, to, roundup, timeZone]);
+      props.onApply(timeRange);
+    },
+    [from, to, roundup, timeZone]
+  );
 
   const onChange = useCallback(
     (from: DateTime, to: DateTime) => {
