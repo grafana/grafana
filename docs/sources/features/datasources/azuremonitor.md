@@ -21,7 +21,7 @@ The Azure Monitor data source supports multiple services in the Azure cloud:
 - **[Azure Monitor]({{< relref "#querying-the-azure-monitor-service" >}})** is the platform service that provides a single source for monitoring Azure resources.
 - **[Application Insights]({{< relref "#querying-the-application-insights-service" >}})** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies.
 - **[Azure Log Analytics]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Azure Logs) gives you access to log data collected by Azure Monitor.
-- **[Application Insights Analytics]({{< relref "#writing-analytics-queries-for-the-application-insights-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
+- **[Application Insights Analytics]({{< relref "#querying-the-application-insights-analytics-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
 
 ## Adding the data source
 
@@ -232,6 +232,8 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.loganalytics.io/index). A Log Analytics Query can be formatted as Time Series data or as Table data.
 
+If your credentials give you access to multiple subscriptions then choose the appropriate subscription first before entering queries.
+
 ### Time series queries
 
 Time Series queries are for the Graph Panel (and other panels like the Single Stat panel) and must contain at least a datetime column and a numeric value column. The result must also be sorted in ascending order by the time column.
@@ -275,10 +277,6 @@ AzureActivity
 | project TimeGenerated, ResourceGroup, Category, OperationName, ActivityStatus, Caller
 | order by TimeGenerated desc
 ```
-
-If your credentials give you access to multiple subscriptions then choose the appropriate subscription first.
-
-{{< docs-imagebox img="/img/docs/v60/azureloganalytics-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Log Analytics Query Editor" >}}
 
 ### Azure Log Analytics macros
 
@@ -365,21 +363,11 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../../alerting/alerts-overview.md" >}}).
 
-### Writing analytics queries For the Application Insights service
+## Querying the Application Insights Analytics service
 
-If you change the service type to "Application Insights", the menu icon to the right adds another option, "Toggle Edit Mode". Once clicked, the query edit mode changes to give you a full text area in which to write log analytics queries. (This is identical to how the InfluxDB data source lets you write raw queries.)
+If you change the service type to "Insights Analytics", a similar editor to the Log Analytics service is available. This service also uses the Kusto language so the instructions for querying data are identical to [querying the log analytics service]({{< relref "#querying-the-azure-log-analytics-service" >}}), except that you query Application Insights Analytics data instead.
 
-Once a query is written, the column names are automatically parsed out of the response data. You can then select them in the "X-axis", "Y-axis", and "Split On" dropdown menus, or just type them out.
-
-There are some important caveats to remember:
-
-- You'll want to order your y-axis in the query, eg. `order by timestamp asc`. The graph may come out looking bizarre otherwise. It's better to have Microsoft sort it on their side where it's faster, than to implement this in the plugin.
-
-- If you copy a log analytics query, typically they'll end with a render instruction, like `render barchart`. This is unnecessary, but harmless.
-
-- Currently, four default dashboard variables are supported: `$__timeFilter()`, `$__from`, `$__to`, and `$__interval`. If you're searching in timestamped data, replace the beginning of your where clause to `where $__timeFilter()`. Dashboard changes by time region are handled as you'd expect, as long as you leave the name of the `timestamp` column alone. Likewise, `$__interval` will automatically change based on the dashboard's time region _and_ the width of the chart being displayed. Use it in bins, so `bin(timestamp,$__interval)` changes into something like `bin(timestamp,1s)`. Use `$__from` and `$__to` if you just want the formatted dates to be inserted.
-
-- Templated dashboard variables are not yet supported! They will come in a future version.
+{{< docs-imagebox img="/img/docs/azuremonitor/insights_analytics_multi-dim.png" class="docs-image--no-shadow" caption="Azure Application Insights Analytics query with multiple dimensions" >}}
 
 ## Configure the data source with provisioning
 
