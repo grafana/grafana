@@ -49,6 +49,7 @@ export type NotifierType =
   | 'telegram'
   | 'opsgenie'
   | 'dingding'
+  | 'wechatwork'
   | 'webhook'
   | 'victorops'
   | 'pushover'

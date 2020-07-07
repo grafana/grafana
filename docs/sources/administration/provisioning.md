@@ -483,6 +483,12 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | url  |
 
+#### Alert notification `wechatwork`
+
+| Name |
+| ---- |
+| url  |
+
 #### Alert notification `email`
 
 | Name        |
