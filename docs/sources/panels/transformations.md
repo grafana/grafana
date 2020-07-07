@@ -74,6 +74,7 @@ Grafana comes with the following transformations:
     - [Join by field (outer join)](#join-by-field-outer-join)
     - [Add field from calculation](#add-field-from-calculation)
     - [Labels to fields](#labels-to-fields)
+    - [Series to rows](#series-to-rows)
   - [Debug transformations](#debug-transformations)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
@@ -96,7 +97,7 @@ After I apply the transformation, there is no time value and each column has bee
 
 ### Merge
 
-Use this transformation to combine the result from multiple queries into one single result based on the time field. This is helpful when using the table panel visualization. 
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that is mergeable will be combined into the same row. They are considered to be mergeable if the shared fields contains the same data.
 
 In the example below, we are visualizing multiple queries returning table data before applying the transformation.
 
@@ -105,16 +106,6 @@ In the example below, we are visualizing multiple queries returning table data b
 Here is the same example after applying the merge transformation.
 
 {{< docs-imagebox img="/img/docs/transformations/table-data-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-If any of the queries return time series data, then a `Metric` column containing the name of the query is added. You can be customized this value by defining `Label` on the source query.
-
-In the example below, we are visualizing multiple queries returning time series data before applying the transformation.
-
-{{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-Here is the same example after applying the merge transformation.
-
-{{< docs-imagebox img="/img/docs/transformations/time-series-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Filter by name
 
@@ -212,6 +203,19 @@ For this example, I manually defined labels in the Random Walk visualization of 
 After I apply the transformation, my labels appear in the table as fields.
 
 {{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+## Series to rows
+Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization. 
+
+The result from this transformation will contain three columns: `Time`, `Metric` and `Value`. The `Metric` column is added so you easily can see from what query the metric originate from. You can be customized this value by defining `Label` on the source query.
+
+In the example below, we are visualizing multiple queries returning time series data before applying the transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Here is the same example after applying the merge transformation.
+
+{{< docs-imagebox img="/img/docs/transformations/time-series-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Debug transformations
 
