@@ -11,7 +11,7 @@ import {
   MetricFindValue,
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import { Observable, from } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
@@ -141,10 +141,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   /**
    * Augment the results with links back to the azure console
    */
-  query(request: DataQueryRequest): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     return super.query(request).pipe(
       map((res: DataQueryResponse) => {
-        return from(this.processResponse(res)); // ???
+        // ???return from(this.processResponse(res)); // ???
+        return res;
       })
     );
   }
