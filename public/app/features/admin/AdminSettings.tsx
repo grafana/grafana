@@ -9,8 +9,6 @@ import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 
-const backendSrv = getBackendSrv();
-
 type Settings = { [key: string]: { [key: string]: string } };
 
 interface Props {
@@ -29,7 +27,7 @@ export class AdminSettings extends React.PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const settings: Settings = await backendSrv.get('/api/admin/settings');
+    const settings: Settings = await getBackendSrv().get('/api/admin/settings');
     this.setState({
       settings,
       isLoading: false,
@@ -59,7 +57,7 @@ export class AdminSettings extends React.PureComponent<Props, State> {
                   {Object.entries(sectionSettings).map(([settingName, settingValue], j) => (
                     <tr key={`property-${j}`}>
                       <td style={{ paddingLeft: '25px' }}>{settingName}</td>
-                      <td>{settingValue}</td>
+                      <td style={{ whiteSpace: 'break-spaces' }}>{settingValue}</td>
                     </tr>
                   ))}
                 </React.Fragment>

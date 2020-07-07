@@ -1,25 +1,36 @@
 import {
-  DEFAULT_RANGE,
-  serializeStateToUrlParam,
-  parseUrlState,
-  updateHistory,
+  buildQueryTransaction,
   clearHistory,
-  hasNonEmptyQuery,
-  getValueWithRefId,
+  DEFAULT_RANGE,
   getFirstQueryErrorWithoutRefId,
   getRefIds,
+  getValueWithRefId,
+  hasNonEmptyQuery,
+  parseUrlState,
   refreshIntervalToSortOrder,
-  SortOrder,
   sortLogsResult,
-  buildQueryTransaction,
+  SortOrder,
+  updateHistory,
+  getExploreUrl,
+  GetExploreUrlArguments,
 } from './explore';
-import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel, dateTime, MutableDataFrame } from '@grafana/data';
+import {
+  DataQueryError,
+  dateTime,
+  ExploreMode,
+  LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsModel,
+  MutableDataFrame,
+  ExploreUrlState,
+} from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
-  datasource: null,
+  datasource: '',
   queries: [],
   range: DEFAULT_RANGE,
   mode: ExploreMode.Metrics,
@@ -165,6 +176,32 @@ describe('state functions', () => {
   });
 });
 
+describe('getExploreUrl', () => {
+  const args = ({
+    panel: {
+      getSavedId: () => 1,
+    },
+    panelTargets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
+    panelDatasource: {
+      name: 'testDataSource',
+      meta: {
+        id: '1',
+      },
+    },
+    datasourceSrv: {
+      get: jest.fn(),
+      getDataSourceById: jest.fn(),
+    },
+    timeSrv: {
+      timeRangeForUrl: () => '1',
+    },
+  } as unknown) as GetExploreUrlArguments;
+
+  it('should omit legendFormat in explore url', () => {
+    expect(getExploreUrl(args).then(data => expect(data).not.toMatch(/legendFormat1/g)));
+  });
+});
+
 describe('updateHistory()', () => {
   const datasourceId = 'myDatasource';
   const key = `grafana.explore.history.${datasourceId}`;
@@ -250,7 +287,7 @@ describe('hasRefId', () => {
 describe('getFirstQueryErrorWithoutRefId', () => {
   describe('when called with a null value', () => {
     it('then it should return undefined', () => {
-      const errors: DataQueryError[] = null;
+      const errors: DataQueryError[] | undefined = undefined;
       const result = getFirstQueryErrorWithoutRefId(errors);
 
       expect(result).toBeUndefined();
@@ -372,34 +409,34 @@ describe('refreshIntervalToSortOrder', () => {
 });
 
 describe('sortLogsResult', () => {
-  const firstRow = {
+  const firstRow: LogRowModel = {
     rowIndex: 0,
     entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
-    timestamp: '2019-01-01T21:00:0.0000000Z',
     entry: '',
     hasAnsi: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
     timeEpochMs: 0,
+    timeEpochNs: '0',
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
     uid: '1',
   };
   const sameAsFirstRow = firstRow;
-  const secondRow = {
+  const secondRow: LogRowModel = {
     rowIndex: 1,
     entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
-    timestamp: '2019-01-01T22:00:0.0000000Z',
     entry: '',
     hasAnsi: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
-    timeEpochMs: 0,
+    timeEpochMs: 10,
+    timeEpochNs: '10000000',
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',

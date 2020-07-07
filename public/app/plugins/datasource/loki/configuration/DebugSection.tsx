@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
 import cx from 'classnames';
-import { FormField } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { FormField } = LegacyForms;
 import { DerivedFieldConfig } from '../types';
-import { getLinksFromLogsField } from '../../../../features/panel/panellinks/linkSuppliers';
-import { ArrayVector, FieldType } from '@grafana/data';
+import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
+import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
 
 type Props = {
-  derivedFields: DerivedFieldConfig[];
+  derivedFields?: DerivedFieldConfig[];
   className?: string;
 };
 export const DebugSection = (props: Props) => {
@@ -83,6 +84,7 @@ type DebugField = {
   value?: string;
   href?: string;
 };
+
 function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string): DebugField[] {
   return derivedFields
     .filter(field => field.name && field.matcherRegex)
@@ -90,10 +92,10 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
       try {
         const testMatch = debugText.match(field.matcherRegex);
         const value = testMatch && testMatch[1];
-        let link;
+        let link: LinkModel<Field> | null = null;
 
         if (field.url && value) {
-          link = getLinksFromLogsField(
+          link = getFieldLinksForExplore(
             {
               name: '',
               type: FieldType.string,
@@ -102,7 +104,9 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
                 links: [{ title: '', url: field.url }],
               },
             },
-            0
+            0,
+            (() => {}) as any,
+            {} as any
           )[0];
         }
 

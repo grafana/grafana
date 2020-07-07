@@ -64,7 +64,9 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
 	if u.username != "" {
 		req.SetBasicAuth(u.username, u.password)
 	}
@@ -73,6 +75,7 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 	if err != nil {
 		return "", err
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusCreated {
 		body, _ := ioutil.ReadAll(res.Body)

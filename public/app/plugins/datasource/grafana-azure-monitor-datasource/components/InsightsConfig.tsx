@@ -1,27 +1,25 @@
-import React, { PureComponent, ChangeEvent } from 'react';
-import { FormLabel, Button, Input } from '@grafana/ui';
-import { AzureDataSourceSettings } from '../types';
+import React, { PureComponent } from 'react';
+import { InlineFormLabel, Button, LegacyForms } from '@grafana/ui';
+const { Input } = LegacyForms;
+import { AzureDataSourceSettings, AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../types';
 
 export interface Props {
   options: AzureDataSourceSettings;
-  onUpdateOption: (key: string, val: any, secure: boolean) => void;
+  onUpdateJsonDataOption: (
+    key: keyof AzureDataSourceJsonData
+  ) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onUpdateSecureJsonDataOption: (
+    key: keyof AzureDataSourceSecureJsonData
+  ) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onResetOptionKey: (key: string) => void;
 }
 export class InsightsConfig extends PureComponent<Props> {
-  onAppInsightsAppIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('appInsightsAppId', event.target.value, false);
-  };
-
-  onAppInsightsApiKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('appInsightsApiKey', event.target.value, true);
-  };
-
   onAppInsightsResetApiKey = () => {
     this.props.onResetOptionKey('appInsightsApiKey');
   };
 
   render() {
-    const { options } = this.props;
+    const { options, onUpdateJsonDataOption, onUpdateSecureJsonDataOption } = this.props;
     return (
       <>
         <h3 className="page-heading">Application Insights Details</h3>
@@ -29,7 +27,7 @@ export class InsightsConfig extends PureComponent<Props> {
           {options.secureJsonFields.appInsightsApiKey ? (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-12">API Key</FormLabel>
+                <InlineFormLabel className="width-12">API Key</InlineFormLabel>
                 <Input className="width-25" placeholder="configured" disabled={true} />
               </div>
               <div className="gf-form">
@@ -43,13 +41,13 @@ export class InsightsConfig extends PureComponent<Props> {
           ) : (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <FormLabel className="width-12">API Key</FormLabel>
+                <InlineFormLabel className="width-12">API Key</InlineFormLabel>
                 <div className="width-15">
                   <Input
                     className="width-30"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                     value={options.secureJsonData.appInsightsApiKey || ''}
-                    onChange={this.onAppInsightsApiKeyChange}
+                    onChange={onUpdateSecureJsonDataOption('appInsightsApiKey')}
                   />
                 </div>
               </div>
@@ -57,12 +55,12 @@ export class InsightsConfig extends PureComponent<Props> {
           )}
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-12">Application ID</FormLabel>
+              <InlineFormLabel className="width-12">Application ID</InlineFormLabel>
               <div className="width-15">
                 <Input
                   className="width-30"
                   value={options.jsonData.appInsightsAppId || ''}
-                  onChange={this.onAppInsightsAppIdChange}
+                  onChange={onUpdateJsonDataOption('appInsightsAppId')}
                 />
               </div>
             </div>

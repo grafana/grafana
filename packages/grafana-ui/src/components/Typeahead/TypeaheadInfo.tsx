@@ -8,25 +8,27 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
   return {
     typeaheadItem: css`
       label: type-ahead-item;
+      z-index: 11;
       padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
       border: ${selectThemeVariant(
-        { light: `solid 1px ${theme.colors.gray5}`, dark: `solid 1px ${theme.colors.dark1}` },
+        { light: `solid 1px ${theme.palette.gray5}`, dark: `solid 1px ${theme.palette.dark1}` },
         theme.type
       )};
       overflow-y: scroll;
       overflow-x: hidden;
       outline: none;
-      background: ${selectThemeVariant({ light: theme.colors.white, dark: theme.colors.dark4 }, theme.type)};
+      background: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
       color: ${theme.colors.text};
       box-shadow: ${selectThemeVariant(
-        { light: `0 5px 10px 0 ${theme.colors.gray5}`, dark: `0 5px 10px 0 ${theme.colors.black}` },
+        { light: `0 5px 10px 0 ${theme.palette.gray5}`, dark: `0 5px 10px 0 ${theme.palette.black}` },
         theme.type
       )};
       visibility: ${visible === true ? 'visible' : 'hidden'};
       width: 250px;
       height: ${height + parseInt(theme.spacing.xxs, 10)}px;
       position: relative;
+      word-break: break-word;
     `,
   };
 };

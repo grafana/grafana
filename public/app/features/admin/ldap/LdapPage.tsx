@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { FormField, Alert } from '@grafana/ui';
+import { Alert, LegacyForms } from '@grafana/ui';
+const { FormField } = LegacyForms;
 import { getNavModel } from 'app/core/selectors/navModel';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
@@ -25,6 +26,7 @@ interface Props {
   ldapSyncInfo: SyncInfo;
   ldapError: LdapError;
   userError?: LdapError;
+  username?: string;
 
   loadLdapState: typeof loadLdapState;
   loadLdapSyncStatus: typeof loadLdapSyncStatus;
@@ -43,8 +45,12 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    await this.props.clearUserMappingInfo();
+    const { username, clearUserMappingInfo, loadUserMapping } = this.props;
+    await clearUserMappingInfo();
     await this.fetchLDAPStatus();
+    if (username) {
+      await loadUserMapping(username);
+    }
     this.setState({ isLoading: false });
   }
 
@@ -71,7 +77,7 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, navModel } = this.props;
+    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, navModel, username } = this.props;
     const { isLoading } = this.state;
 
     return (
@@ -86,12 +92,20 @@ export class LdapPage extends PureComponent<Props, State> {
 
             <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
 
-            {config.buildInfo.isEnterprise && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
+            {config.licenseInfo.hasLicense && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
             <h3 className="page-heading">Test user mapping</h3>
             <div className="gf-form-group">
               <form onSubmit={this.search} className="gf-form-inline">
-                <FormField label="Username" labelWidth={8} inputWidth={30} type="text" id="username" name="username" />
+                <FormField
+                  label="Username"
+                  labelWidth={8}
+                  inputWidth={30}
+                  type="text"
+                  id="username"
+                  name="username"
+                  defaultValue={username}
+                />
                 <button type="submit" className="btn btn-primary">
                   Run
                 </button>
@@ -117,6 +131,7 @@ export class LdapPage extends PureComponent<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'ldap'),
+  username: state.location.routeParams.user,
   ldapConnectionInfo: state.ldap.connectionInfo,
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,

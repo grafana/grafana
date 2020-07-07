@@ -2,15 +2,15 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func GetOrgQuotas(c *m.ReqContext) Response {
+func GetOrgQuotas(c *models.ReqContext) Response {
 	if !setting.Quota.Enabled {
 		return Error(404, "Quotas not enabled", nil)
 	}
-	query := m.GetOrgQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
+	query := models.GetOrgQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return Error(500, "Failed to get org quotas", err)
@@ -19,7 +19,7 @@ func GetOrgQuotas(c *m.ReqContext) Response {
 	return JSON(200, query.Result)
 }
 
-func UpdateOrgQuota(c *m.ReqContext, cmd m.UpdateOrgQuotaCmd) Response {
+func UpdateOrgQuota(c *models.ReqContext, cmd models.UpdateOrgQuotaCmd) Response {
 	if !setting.Quota.Enabled {
 		return Error(404, "Quotas not enabled", nil)
 	}
@@ -36,11 +36,11 @@ func UpdateOrgQuota(c *m.ReqContext, cmd m.UpdateOrgQuotaCmd) Response {
 	return Success("Organization quota updated")
 }
 
-func GetUserQuotas(c *m.ReqContext) Response {
+func GetUserQuotas(c *models.ReqContext) Response {
 	if !setting.Quota.Enabled {
 		return Error(404, "Quotas not enabled", nil)
 	}
-	query := m.GetUserQuotasQuery{UserId: c.ParamsInt64(":id")}
+	query := models.GetUserQuotasQuery{UserId: c.ParamsInt64(":id")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return Error(500, "Failed to get org quotas", err)
@@ -49,7 +49,7 @@ func GetUserQuotas(c *m.ReqContext) Response {
 	return JSON(200, query.Result)
 }
 
-func UpdateUserQuota(c *m.ReqContext, cmd m.UpdateUserQuotaCmd) Response {
+func UpdateUserQuota(c *models.ReqContext, cmd models.UpdateUserQuotaCmd) Response {
 	if !setting.Quota.Enabled {
 		return Error(404, "Quotas not enabled", nil)
 	}

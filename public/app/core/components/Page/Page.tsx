@@ -1,15 +1,15 @@
 // Libraries
 import React, { Component } from 'react';
-import config from 'app/core/config';
 import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
 // Components
 import PageHeader from '../PageHeader/PageHeader';
-import Footer from '../Footer/Footer';
+import { Footer } from '../Footer/Footer';
 import PageContents from './PageContents';
 import { CustomScrollbar } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { isEqual } from 'lodash';
+import { Branding } from '../Branding/Branding';
 
 interface Props {
   children: JSX.Element[] | JSX.Element;
@@ -32,7 +32,7 @@ class Page extends Component<Props> {
 
   updateTitle = () => {
     const title = this.getPageTitle;
-    document.title = title ? title + ' - Grafana' : 'Grafana';
+    document.title = title ? title + ' - ' + Branding.AppTitle : Branding.AppTitle;
   };
 
   get getPageTitle() {
@@ -45,20 +45,13 @@ class Page extends Component<Props> {
 
   render() {
     const { navModel } = this.props;
-    const { buildInfo } = config;
     return (
       <div className="page-scrollbar-wrapper">
         <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">
           <div className="page-scrollbar-content">
             <PageHeader model={navModel} />
             {this.props.children}
-            <Footer
-              appName="Grafana"
-              buildCommit={buildInfo.commit}
-              buildVersion={buildInfo.version}
-              newGrafanaVersion={buildInfo.latestVersion}
-              newGrafanaVersionExists={buildInfo.hasUpdate}
-            />
+            <Footer />
           </div>
         </CustomScrollbar>
       </div>

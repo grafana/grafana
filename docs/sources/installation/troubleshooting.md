@@ -27,14 +27,14 @@ For more on the query inspector read the Grafana Community article [Using Grafan
 
 ## Logging
 
-If you encounter an error or problem, then you can check the Grafana server log. Usually located at `/var/log/grafana/grafana.log` on Unix systems or in `<grafana_install_dir>/data/log` on other platforms and manual installs.
+If you encounter an error or problem, then you can check the Grafana server log. Usually located at `/var/log/grafana/grafana.log` on Unix systems or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
 
 You can enable more logging by changing log level in the Grafana configuration file.
 
 ## Diagnostics
 
 The `grafana-server` process can be instructed to enable certain diagnostics when it starts. This can be helpful
-when investigating certain performance problems. It's *not* recommended to have these enabled per default.
+when investigating certain performance problems. It's *not* recommended to have these enabled by default.
 
 ### Profiling
 
@@ -55,6 +55,18 @@ export GF_DIAGNOSTICS_PROFILING_PORT=8080
 ```
 
 Refer to [Go command pprof](https://golang.org/cmd/pprof/) for more information about how to collect and analyze profiling data.
+
+### Server side image rendering (RPM-based Linux)
+
+Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations, for example in alert notifications.
+
+If the image is missing text make sure you have font packages installed.
+
+```bash
+sudo yum install fontconfig
+sudo yum install freetype*
+sudo yum install urw-fonts
+```
 
 ### Tracing
 

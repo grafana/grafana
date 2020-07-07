@@ -21,7 +21,7 @@
   "info": {
     "description": "Open source time series database",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
@@ -29,7 +29,7 @@
       "large": "img/graphite_logo.png"
     },
     "links": [
-      { "name": "Graphite", "url": "https://graphiteapp.org/" },
+      { "name": "Learn more", "url": "https://graphiteapp.org/" },
       {
         "name": "Graphite 1.1 Release",
         "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"

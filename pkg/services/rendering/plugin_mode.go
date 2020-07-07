@@ -3,68 +3,33 @@ package rendering
 import (
 	"context"
 	"fmt"
-	"path"
 	"time"
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
 func (rs *RenderingService) startPlugin(ctx context.Context) error {
-	cmd := plugins.ComposePluginStartCommmand("plugin_start")
-	fullpath := path.Join(rs.pluginInfo.PluginDir, cmd)
-
-	rs.log.Info("Renderer plugin found, starting", "cmd", cmd)
-
-	rs.pluginClient = backendplugin.NewRendererClient(plugins.Renderer.Id, fullpath, rs.log)
-	rpcClient, err := rs.pluginClient.Client()
-	if err != nil {
-		return err
-	}
-
-	raw, err := rpcClient.Dispense(rs.pluginInfo.Id)
-	if err != nil {
-		return err
-	}
-
-	rs.grpcPlugin = raw.(pluginModel.RendererPlugin)
-
-	return nil
+	return rs.pluginInfo.Start(ctx)
 }
 
-func (rs *RenderingService) watchAndRestartPlugin(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 1)
+func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
+	// gives plugin some additional time to timeout and return possible errors.
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	defer cancel()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			if rs.pluginClient.Exited() {
-				err := rs.startPlugin(ctx)
-				rs.log.Debug("Render plugin existed, restarting...")
-				if err != nil {
-					rs.log.Error("Failed to start render plugin", err)
-				}
-			}
-		}
+	if rs.pluginInfo.GrpcPluginV2 != nil {
+		return rs.renderViaPluginV2(ctx, renderKey, opts)
 	}
+
+	return rs.renderViaPluginV1(ctx, renderKey, opts)
 }
 
-func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaPluginV1(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	pngPath, err := rs.getFilePathForNewImage()
 	if err != nil {
 		return nil, err
 	}
-
-	renderKey, err := rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
-	defer cancel()
 
 	req := &pluginModel.RenderRequest{
 		Url:       rs.getURL(opts.Path),
@@ -79,7 +44,54 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 	}
 	rs.log.Debug("calling renderer plugin", "req", req)
 
-	rsp, err := rs.grpcPlugin.Render(ctx, req)
+	rsp, err := rs.pluginInfo.GrpcPluginV1.Render(ctx, req)
+	if ctx.Err() == context.DeadlineExceeded {
+		rs.log.Info("Rendering timed out")
+		return nil, ErrTimeout
+	}
+	if err != nil {
+		return nil, err
+	}
+	if rsp.Error != "" {
+		return nil, fmt.Errorf("rendering failed: %v", rsp.Error)
+	}
+
+	return &RenderResult{FilePath: pngPath}, nil
+}
+
+func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
+	pngPath, err := rs.getFilePathForNewImage()
+	if err != nil {
+		return nil, err
+	}
+
+	headers := map[string]*pluginextensionv2.StringList{}
+
+	for k, values := range opts.Headers {
+		headers[k] = &pluginextensionv2.StringList{
+			Values: values,
+		}
+	}
+
+	req := &pluginextensionv2.RenderRequest{
+		Url:               rs.getURL(opts.Path),
+		Width:             int32(opts.Width),
+		Height:            int32(opts.Height),
+		DeviceScaleFactor: float32(opts.DeviceScaleFactor),
+		FilePath:          pngPath,
+		Timeout:           int32(opts.Timeout.Seconds()),
+		RenderKey:         renderKey,
+		Timezone:          isoTimeOffsetToPosixTz(opts.Timezone),
+		Domain:            rs.domain,
+		Headers:           headers,
+	}
+	rs.log.Debug("Calling renderer plugin", "req", req)
+
+	rsp, err := rs.pluginInfo.GrpcPluginV2.Render(ctx, req)
+	if ctx.Err() == context.DeadlineExceeded {
+		rs.log.Info("Rendering timed out")
+		return nil, ErrTimeout
+	}
 	if err != nil {
 		return nil, err
 	}

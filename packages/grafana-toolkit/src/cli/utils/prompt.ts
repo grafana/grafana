@@ -6,6 +6,8 @@ import {
   PasswordQuestion,
   EditorQuestion,
   ConfirmQuestion,
+  ListQuestion,
+  ChoiceOptions,
 } from 'inquirer';
 
 type QuestionWithValidation<A = any> =
@@ -38,6 +40,25 @@ export const promptInput = <A>(
   };
 
   return required ? answerRequired(model) : model;
+};
+
+export const promptList = <A>(
+  name: string,
+  message: string | ((answers: A) => string),
+  choices: () => ChoiceOptions[],
+  def: any = undefined,
+  when: boolean | ((answers: A) => boolean | Promise<boolean>) = true
+) => {
+  const model: ListQuestion<A> = {
+    type: 'list',
+    name,
+    message,
+    choices,
+    default: def,
+    when,
+  };
+
+  return model;
 };
 
 export const promptConfirm = <A>(

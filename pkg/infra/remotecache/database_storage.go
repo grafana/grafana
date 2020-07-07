@@ -130,7 +130,6 @@ func (dc *databaseCache) Delete(key string) error {
 
 		return err
 	})
-
 }
 
 // CacheData is the struct representing the table in the database

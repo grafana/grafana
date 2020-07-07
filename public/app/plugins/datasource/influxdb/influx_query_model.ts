@@ -3,7 +3,7 @@ import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
 import { InfluxQuery, InfluxQueryTag } from './types';
 import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
@@ -62,7 +62,12 @@ export default class InfluxQueryModel {
   }
 
   addGroupBy(value: string) {
-    const stringParts = value.match(/^(\w+)\((.*)\)$/);
+    let stringParts = value.match(/^(\w+)\((.*)\)$/);
+
+    if (!stringParts || !this.target.groupBy) {
+      return;
+    }
+
     const typePart = stringParts[1];
     const arg = stringParts[2];
     const partModel = queryPart.create({ type: typePart, params: [arg] });

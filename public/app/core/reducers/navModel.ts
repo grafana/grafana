@@ -1,5 +1,6 @@
-import { Action, ActionTypes } from 'app/core/actions/navModel';
-import { NavIndex, NavModelItem } from '@grafana/data';
+import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
+
 import config from 'app/core/config';
 
 export function buildInitialState(): NavIndex {
@@ -20,24 +21,46 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
       buildNavIndex(navIndex, node.children, node);
     }
   }
+
+  navIndex['not-found'] = { ...buildWarningNav('Page not found', '404 Error').node };
 }
 
-export const initialState: NavIndex = buildInitialState();
+function buildWarningNav(text: string, subTitle?: string): NavModel {
+  const node = {
+    text,
+    subTitle,
+    icon: 'exclamation-triangle',
+  };
+  return {
+    breadcrumbs: [node],
+    node: node,
+    main: node,
+  };
+}
 
-export const navIndexReducer = (state = initialState, action: Action): NavIndex => {
-  switch (action.type) {
-    case ActionTypes.UpdateNavIndex:
-      const newPages: NavIndex = {};
-      const payload = action.payload;
+export const initialState: NavIndex = {};
 
-      for (const node of payload.children) {
-        newPages[node.id] = {
-          ...node,
-          parentItem: payload,
-        };
-      }
+export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
 
-      return { ...state, ...newPages };
+// Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
+// ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
+// because the state would become frozen and during run time we would get errors because Angular would try to mutate
+// the frozen state.
+// https://github.com/reduxjs/redux-toolkit/issues/242
+export const navIndexReducer = (state: NavIndex = initialState, action: AnyAction): NavIndex => {
+  if (updateNavIndex.match(action)) {
+    const newPages: NavIndex = {};
+    const payload = action.payload;
+
+    for (const node of payload.children) {
+      newPages[node.id] = {
+        ...node,
+        parentItem: payload,
+      };
+    }
+
+    return { ...state, ...newPages };
   }
+
   return state;
 };

@@ -140,11 +140,11 @@ To add a filter click the plus icon to the right of the `Measurements/Fields` bu
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -162,7 +162,7 @@ You can also create nested variables. For example if you had another variable, f
 the hosts variable only show hosts from the current selected region with a query like this:
 
 ```sql
-SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
+SHOW TAG VALUES WITH KEY = "hostname"  WHERE region = '$region'
 ```
 
 You can fetch key names for a given measurement.
@@ -194,7 +194,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
 
 Example Dashboard:
-[InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+[InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
 
 ### Ad hoc filters variable
 
@@ -203,7 +203,7 @@ be applied to all your InfluxDB queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 
@@ -215,7 +215,7 @@ For InfluxDB, you need to enter a query like the one in the example above. The `
 
 ## Configure the data source with provisioning
 
-You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources).
+You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
 
 Here are some provisioning examples for this data source.
 

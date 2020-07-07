@@ -10,34 +10,39 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type S3Uploader struct {
-	region    string
-	bucket    string
-	path      string
-	acl       string
-	secretKey string
-	accessKey string
-	log       log.Logger
+	endpoint        string
+	region          string
+	bucket          string
+	path            string
+	acl             string
+	secretKey       string
+	accessKey       string
+	pathStyleAccess bool
+	log             log.Logger
 }
 
-func NewS3Uploader(region, bucket, path, acl, accessKey, secretKey string) *S3Uploader {
+func NewS3Uploader(endpoint, region, bucket, path, acl, accessKey, secretKey string, pathStyleAccess bool) *S3Uploader {
 	return &S3Uploader{
-		region:    region,
-		bucket:    bucket,
-		path:      path,
-		acl:       acl,
-		accessKey: accessKey,
-		secretKey: secretKey,
-		log:       log.New("s3uploader"),
+		endpoint:        endpoint,
+		region:          region,
+		bucket:          bucket,
+		path:            path,
+		acl:             acl,
+		accessKey:       accessKey,
+		secretKey:       secretKey,
+		pathStyleAccess: pathStyleAccess,
+		log:             log.New("s3uploader"),
 	}
 }
 
@@ -53,21 +58,22 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 				SecretAccessKey: u.secretKey,
 			}},
 			&credentials.EnvProvider{},
+			webIdentityProvider(sess),
 			remoteCredProvider(sess),
 		})
 	cfg := &aws.Config{
-		Region:      aws.String(u.region),
-		Credentials: creds,
+		Region:           aws.String(u.region),
+		Endpoint:         aws.String(u.endpoint),
+		S3ForcePathStyle: aws.Bool(u.pathStyleAccess),
+		Credentials:      creds,
 	}
 
-	s3_endpoint, _ := endpoints.DefaultResolver().EndpointFor("s3", u.region)
 	rand, err := util.GetRandomString(20)
 	if err != nil {
 		return "", err
 	}
 	key := u.path + rand + pngExt
-	image_url := s3_endpoint.URL + "/" + u.bucket + "/" + key
-	log.Debug("Uploading image to s3. url = %s", image_url)
+	log.Debug("Uploading image to s3. bucket = %s, path = %s", u.bucket, key)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {
@@ -79,19 +85,27 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	if err != nil {
 		return "", err
 	}
-	svc := s3.New(sess, cfg)
-	params := &s3.PutObjectInput{
+	uploader := s3manager.NewUploader(sess)
+	result, err := uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 		Bucket:      aws.String(u.bucket),
 		Key:         aws.String(key),
 		ACL:         aws.String(u.acl),
 		Body:        file,
 		ContentType: aws.String("image/png"),
-	}
-	_, err = svc.PutObject(params)
+	})
 	if err != nil {
 		return "", err
 	}
-	return image_url, nil
+	return result.Location, nil
+}
+
+func webIdentityProvider(sess *session.Session) credentials.Provider {
+	svc := sts.New(sess)
+
+	roleARN := os.Getenv("AWS_ROLE_ARN")
+	tokenFilepath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+	roleSessionName := os.Getenv("AWS_ROLE_SESSION_NAME")
+	return stscreds.NewWebIdentityRoleProvider(svc, roleARN, roleSessionName, tokenFilepath)
 }
 
 func remoteCredProvider(sess *session.Session) credentials.Provider {

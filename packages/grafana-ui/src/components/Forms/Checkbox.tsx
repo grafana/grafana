@@ -1,15 +1,14 @@
-import React, { HTMLProps } from 'react';
+import React, { HTMLProps, useCallback } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { getLabelStyles } from './Label';
 import { useTheme, stylesFactory } from '../../themes';
 import { css, cx } from 'emotion';
-import { getFocusCss } from './commonStyles';
+import { focusCss } from '../../themes/mixins';
 
-export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'onChange' | 'value'> {
+export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   label?: string;
   description?: string;
-  value: boolean;
-  onChange?: (checked: boolean) => void;
+  value?: boolean;
 }
 
 export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -20,6 +19,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       labelStyles.label,
       css`
         padding-left: ${theme.spacing.formSpacingBase}px;
+        white-space: nowrap;
       `
     ),
     description: cx(
@@ -31,6 +31,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       position: relative;
       padding-left: ${checkboxSize};
+      vertical-align: middle;
     `,
     input: css`
       position: absolute;
@@ -40,7 +41,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       opacity: 0;
       &:focus + span {
-        ${getFocusCss(theme)}
+        ${focusCss(theme)}
       }
 
       /**
@@ -52,9 +53,11 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
         background: blue;
         background: ${theme.colors.formCheckboxBgChecked};
         border: none;
+
         &:hover {
           background: ${theme.colors.formCheckboxBgCheckedHover};
         }
+
         &:after {
           content: '';
           position: absolute;
@@ -74,11 +77,12 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       height: ${checkboxSize};
       border-radius: ${theme.border.radius.sm};
       margin-right: ${theme.spacing.formSpacingBase}px;
-      background: ${theme.colors.formCheckboxBg};
+      background: ${theme.colors.formInputBg};
       border: 1px solid ${theme.colors.formInputBorder};
       position: absolute;
       top: 1px;
       left: 0;
+
       &:hover {
         cursor: pointer;
         border-color: ${theme.colors.formInputBorderHover};
@@ -87,43 +91,41 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const Checkbox: React.FC<CheckboxProps> = ({
-  label,
-  description,
-  value,
-  onChange,
-  id,
-  disabled,
-  ...inputProps
-}) => {
-  const theme = useTheme();
-  const styles = getCheckboxStyles(theme);
+export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+  ({ label, description, value, onChange, disabled, ...inputProps }, ref) => {
+    const theme = useTheme();
+    const handleOnChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (onChange) {
+          onChange(e);
+        }
+      },
+      [onChange]
+    );
+    const styles = getCheckboxStyles(theme);
 
-  return (
-    <label className={styles.wrapper}>
-      <input
-        type="checkbox"
-        className={styles.input}
-        id={id}
-        checked={value}
-        disabled={disabled}
-        onChange={event => {
-          if (onChange) {
-            onChange(event.target.checked);
-          }
-        }}
-        {...inputProps}
-      />
-      <span className={styles.checkmark} />
-      {label && <span className={styles.label}>{label}</span>}
-      {description && (
-        <>
-          <br />
-          <span className={styles.description}>{description}</span>
-        </>
-      )}
-    </label>
-  );
-};
+    return (
+      <label className={styles.wrapper}>
+        <input
+          type="checkbox"
+          className={styles.input}
+          checked={value}
+          disabled={disabled}
+          onChange={handleOnChange}
+          {...inputProps}
+          ref={ref}
+        />
+        <span className={styles.checkmark} />
+        {label && <span className={styles.label}>{label}</span>}
+        {description && (
+          <>
+            <br />
+            <span className={styles.description}>{description}</span>
+          </>
+        )}
+      </label>
+    );
+  }
+);
 
 Checkbox.displayName = 'Checkbox';

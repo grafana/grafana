@@ -9,9 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFolderNameReplacement(t *testing.T) {
@@ -105,11 +105,46 @@ func TestExtractFiles(t *testing.T) {
 }
 
 func TestInstallPluginCommand(t *testing.T) {
-	pluginDir, del := setupFakePluginsDir(t)
-	defer del()
-	cmd := setupPluginInstallCmd(t, pluginDir)
-	err := InstallPlugin("test-plugin-panel", "", cmd)
-	assert.Nil(t, err)
+	pluginsDir, cleanUp := setupFakePluginsDir(t)
+	defer cleanUp()
+	c, err := commandstest.NewCliContext(map[string]string{"pluginsDir": pluginsDir})
+	require.NoError(t, err)
+
+	client := &commandstest.FakeGrafanaComClient{
+		GetPluginFunc: func(pluginId, repoUrl string) (models.Plugin, error) {
+			require.Equal(t, "test-plugin-panel", pluginId)
+			plugin := models.Plugin{
+				Id:       "test-plugin-panel",
+				Category: "",
+				Versions: []models.Version{
+					{
+						Commit:  "commit",
+						Url:     "url",
+						Version: "1.0.0",
+						Arch: map[string]models.ArchMeta{
+							fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH): {
+								Md5: "test",
+							},
+						},
+					},
+				},
+			}
+			return plugin, nil
+		},
+		DownloadFileFunc: func(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
+			require.Equal(t, "test-plugin-panel", pluginName)
+			require.Equal(t, "/test-plugin-panel/versions/1.0.0/download", url)
+			require.Equal(t, "test", checksum)
+			f, err := os.Open("testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip")
+			require.NoError(t, err)
+			_, err = io.Copy(tmpFile, f)
+			require.NoError(t, err)
+			return nil
+		},
+	}
+
+	err = InstallPlugin("test-plugin-panel", "", c, client)
+	assert.NoError(t, err)
 }
 
 func TestIsPathSafe(t *testing.T) {
@@ -190,58 +225,13 @@ func TestSelectVersion(t *testing.T) {
 	})
 }
 
-func setupPluginInstallCmd(t *testing.T, pluginDir string) utils.CommandLine {
-	cmd := &commandstest.FakeCommandLine{
-		GlobalFlags: &commandstest.FakeFlagger{Data: map[string]interface{}{
-			"pluginsDir": pluginDir,
-		}},
-	}
-
-	client := &commandstest.FakeGrafanaComClient{}
-
-	client.GetPluginFunc = func(pluginId, repoUrl string) (models.Plugin, error) {
-		assert.Equal(t, "test-plugin-panel", pluginId)
-		plugin := models.Plugin{
-			Id:       "test-plugin-panel",
-			Category: "",
-			Versions: []models.Version{
-				{
-					Commit:  "commit",
-					Url:     "url",
-					Version: "1.0.0",
-					Arch: map[string]models.ArchMeta{
-						fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH): {
-							Md5: "test",
-						},
-					},
-				},
-			},
-		}
-		return plugin, nil
-	}
-
-	client.DownloadFileFunc = func(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
-		assert.Equal(t, "test-plugin-panel", pluginName)
-		assert.Equal(t, "/test-plugin-panel/versions/1.0.0/download", url)
-		assert.Equal(t, "test", checksum)
-		f, err := os.Open("testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip")
-		assert.Nil(t, err)
-		_, err = io.Copy(tmpFile, f)
-		assert.Nil(t, err)
-		return nil
-	}
-
-	cmd.Client = client
-	return cmd
-}
-
 func setupFakePluginsDir(t *testing.T) (string, func()) {
 	dirname := "testdata/fake-plugins-dir"
 	err := os.RemoveAll(dirname)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = os.MkdirAll(dirname, 0774)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	return dirname, func() {
 		err = os.RemoveAll(dirname)

@@ -17,7 +17,7 @@ describe('Prometheus Result Transformer', () => {
         status: 'success',
         data: {
           resultType: '',
-          result: null as DataQueryResponseData[],
+          result: (null as unknown) as DataQueryResponseData[],
         },
       };
       const series = ctx.resultTransformer.transform({ data: response }, {});
@@ -28,7 +28,7 @@ describe('Prometheus Result Transformer', () => {
         status: 'success',
         data: {
           resultType: '',
-          result: null as DataQueryResponseData[],
+          result: (null as unknown) as DataQueryResponseData[],
         },
       };
       const table = ctx.resultTransformer.transform({ data: response }, { format: 'table' });
@@ -116,6 +116,27 @@ describe('Prometheus Result Transformer', () => {
     });
   });
 
+  describe('When resultFormat is time series and instant = true', () => {
+    const response = {
+      status: 'success',
+      data: {
+        resultType: 'vector',
+        result: [
+          {
+            metric: { __name__: 'test', job: 'testjob' },
+            value: [1443454528, '3846'],
+          },
+        ],
+      },
+    };
+
+    it('should return time series', () => {
+      const timeSeries = ctx.resultTransformer.transform({ data: response }, {});
+      expect(timeSeries[0].target).toBe('test{job="testjob"}');
+      expect(timeSeries[0].title).toBe('test{job="testjob"}');
+    });
+  });
+
   describe('When resultFormat is heatmap', () => {
     const response = {
       status: 'success',
@@ -162,6 +183,7 @@ describe('Prometheus Result Transformer', () => {
       expect(result).toEqual([
         {
           target: '1',
+          title: '1',
           query: undefined,
           datapoints: [
             [10, 1445000010000],
@@ -172,6 +194,7 @@ describe('Prometheus Result Transformer', () => {
         },
         {
           target: '2',
+          title: '2',
           query: undefined,
           datapoints: [
             [10, 1445000010000],
@@ -182,6 +205,7 @@ describe('Prometheus Result Transformer', () => {
         },
         {
           target: '3',
+          title: '3',
           query: undefined,
           datapoints: [
             [10, 1445000010000],
@@ -285,6 +309,7 @@ describe('Prometheus Result Transformer', () => {
       expect(result).toEqual([
         {
           target: 'test{job="testjob"}',
+          title: 'test{job="testjob"}',
           query: undefined,
           datapoints: [
             [10, 0],
@@ -324,6 +349,7 @@ describe('Prometheus Result Transformer', () => {
       expect(result).toEqual([
         {
           target: 'test{job="testjob"}',
+          title: 'test{job="testjob"}',
           query: undefined,
           datapoints: [
             [null, 0],
@@ -333,6 +359,64 @@ describe('Prometheus Result Transformer', () => {
           tags: { job: 'testjob' },
         },
       ]);
+    });
+
+    it('should use __name__ label as series name', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: { __name__: 'test', job: 'testjob' },
+              values: [
+                [1, '10'],
+                [2, '0'],
+              ],
+            },
+          ],
+        },
+      };
+
+      const options = {
+        format: 'timeseries',
+        step: 1,
+        start: 0,
+        end: 2,
+      };
+
+      const result = ctx.resultTransformer.transform({ data: response }, options);
+      expect(result[0].target).toEqual('test{job="testjob"}');
+    });
+
+    it('should set frame name to undefined if no __name__ label but there are other labels', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: { job: 'testjob' },
+              values: [
+                [1, '10'],
+                [2, '0'],
+              ],
+            },
+          ],
+        },
+      };
+
+      const options = {
+        format: 'timeseries',
+        step: 1,
+        query: 'Some query',
+        start: 0,
+        end: 2,
+      };
+
+      const result = ctx.resultTransformer.transform({ data: response }, options);
+      expect(result[0].target).toBe('{job="testjob"}');
+      expect(result[0].tags.job).toEqual('testjob');
     });
 
     it('should align null values with step', () => {
@@ -356,13 +440,20 @@ describe('Prometheus Result Transformer', () => {
         step: 2,
         start: 0,
         end: 8,
+        refId: 'A',
+        meta: { custom: { hello: '1' } },
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         {
           target: 'test{job="testjob"}',
+          title: 'test{job="testjob"}',
+          meta: {
+            custom: { hello: '1' },
+          },
           query: undefined,
+          refId: 'A',
           datapoints: [
             [null, 0],
             [null, 2000],

@@ -15,6 +15,7 @@ func init() {
 		Type:        "LINE",
 		Name:        "LINE",
 		Description: "Send notifications to LINE notify",
+		Heading:     "LINE notify settings",
 		Factory:     NewLINENotifier,
 		OptionsTemplate: `
     <div class="gf-form-group">
@@ -25,6 +26,15 @@ func init() {
       </div>
     </div>
 `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Token",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "LINE notify token key",
+				PropertyName: "token",
+				Required:     true,
+			}},
 	})
 }
 
@@ -78,7 +88,7 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message)
 	form.Add("message", body)
 
-	if evalContext.ImagePublicURL != "" {
+	if ln.NeedsImage() && evalContext.ImagePublicURL != "" {
 		form.Add("imageThumbnail", evalContext.ImagePublicURL)
 		form.Add("imageFullsize", evalContext.ImagePublicURL)
 	}

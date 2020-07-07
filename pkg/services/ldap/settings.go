@@ -9,7 +9,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -61,7 +61,7 @@ type GroupToOrgRole struct {
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
 
-	OrgRole m.RoleType `toml:"org_role"`
+	OrgRole models.RoleType `toml:"org_role"`
 }
 
 // logger for all LDAP stuff
@@ -125,7 +125,10 @@ func readConfig(configFile string) (*Config, error) {
 	}
 
 	// interpolate full toml string (it can contain ENV variables)
-	stringContent := setting.EvalEnvVarExpression(string(fileBytes))
+	stringContent, err := setting.ExpandVar(string(fileBytes))
+	if err != nil {
+		return nil, errutil.Wrap("Failed to expand variables", err)
+	}
 
 	_, err = toml.Decode(stringContent, result)
 	if err != nil {

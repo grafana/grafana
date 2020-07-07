@@ -57,7 +57,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
       return;
     }
 
-    const res = await client.get('/issues', {
+    let res = await client.get('/issues', {
       params: {
         state: 'closed',
         per_page: 100,
@@ -66,15 +66,44 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
       },
     });
 
-    const issues = res.data;
+    const data: any[] = res.data;
+
+    while (res.headers.link) {
+      const links = parseLink(res.headers.link);
+      if (links.next) {
+        res = await client.get(links.next);
+        data.push(...res.data);
+      } else {
+        break;
+      }
+    }
+
+    const mergedIssues = [];
+    for (const item of data) {
+      if (!item.pull_request) {
+        // it's an issue, not pull request
+        mergedIssues.push(item);
+        continue;
+      }
+      const isMerged = await client.get(item.pull_request.url + '/merge');
+      if (isMerged.status === 204) {
+        mergedIssues.push(item);
+      }
+    }
+    const issues = _.sortBy(mergedIssues, 'title');
+
     const toolkitIssues = issues.filter((item: any) =>
       item.labels.find((label: any) => label.name === 'area/grafana/toolkit')
+    );
+    const grafanaUiIssues = issues.filter((item: any) =>
+      item.labels.find((label: any) => label.name === 'area/grafana/ui')
     );
 
     let markdown = '';
 
     markdown += getPackageChangelog('Grafana', issues);
     markdown += getPackageChangelog('grafana-toolkit', toolkitIssues);
+    markdown += getPackageChangelog('grafana-ui', grafanaUiIssues);
 
     console.log(markdown);
   }
@@ -83,17 +112,39 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
 function getMarkdownLineForIssue(item: any) {
   const githubGrafanaUrl = 'https://github.com/grafana/grafana';
   let markdown = '';
-  const title = item.title.replace(/^([^:]*)/, (_match: any, g1: any) => {
+  let title: string = item.title.replace(/^([^:]*)/, (_match: any, g1: any) => {
     return `**${g1}**`;
   });
+  title = title.trim();
+  if (title[title.length - 1] === '.') {
+    title = title.slice(0, -1);
+  }
 
-  markdown += '* ' + title + '.';
-  markdown += ` [#${item.number}](${githubGrafanaUrl}/pull/${item.number})`;
-  markdown += `, [@${item.user.login}](${item.user.html_url})`;
+  if (!item.pull_request) {
+    markdown += '* ' + title + '.';
+    markdown += ` [#${item.number}](${githubGrafanaUrl}/issues/${item.number})`;
+  } else {
+    markdown += '* ' + title + '.';
+    markdown += ` [#${item.number}](${githubGrafanaUrl}/pull/${item.number})`;
+    markdown += `, [@${item.user.login}](${item.user.html_url})`;
+  }
 
   markdown += '\n';
 
   return markdown;
+}
+
+function parseLink(s: any) {
+  const output: any = {};
+  const regex = /<([^>]+)>; rel="([^"]+)"/g;
+
+  let m;
+  while ((m = regex.exec(s))) {
+    const [, v, k] = m;
+    output[k] = v;
+  }
+
+  return output;
 }
 
 export const changelogTask = new Task<ChangelogOptions>('Changelog generator task', changelogTaskRunner);

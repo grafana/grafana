@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import mdx from './Checkbox.mdx';
 import { Checkbox } from './Checkbox';
 
 export default {
-  title: 'UI/Forms/Checkbox',
+  title: 'Forms/Checkbox',
   component: Checkbox,
   parameters: {
     docs: {
@@ -12,12 +12,23 @@ export default {
   },
 };
 
-export const simple = () => {
+export const controlled = () => {
   const [checked, setChecked] = useState(false);
+  const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
   return (
     <Checkbox
       value={checked}
-      onChange={setChecked}
+      onChange={onChange}
+      label="Skip SLL cert validation"
+      description="Set to true if you want to skip sll cert validation"
+    />
+  );
+};
+
+export const uncontrolled = () => {
+  return (
+    <Checkbox
+      defaultChecked={true}
       label="Skip SLL cert validation"
       description="Set to true if you want to skip sll cert validation"
     />

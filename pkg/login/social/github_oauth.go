@@ -14,10 +14,8 @@ import (
 
 type SocialGithub struct {
 	*SocialBase
-	allowedDomains       []string
 	allowedOrganizations []string
 	apiUrl               string
-	allowSignup          bool
 	teamIds              []int
 }
 
@@ -37,14 +35,6 @@ var (
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
-}
-
-func (s *SocialGithub) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
-}
-
-func (s *SocialGithub) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
@@ -124,7 +114,6 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, 
 	teams := make([]GithubTeam, 0)
 
 	for hasMore {
-
 		response, err := HttpGet(client, url)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
@@ -146,7 +135,6 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, 
 }
 
 func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
-
 	value, exists := headers["Link"]
 	if !exists {
 		return "", false
@@ -162,7 +150,6 @@ func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
 	url := matches[1]
 
 	return url, true
-
 }
 
 func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
@@ -191,7 +178,6 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 }
 
 func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`

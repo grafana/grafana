@@ -1,4 +1,11 @@
-import { pairsAreValid } from './InfluxLogsQueryField';
+import React from 'react';
+import { mount } from 'enzyme';
+import { InfluxLogsQueryField, pairsAreValid } from './InfluxLogsQueryField';
+import { InfluxDatasourceMock } from '../datasource.mock';
+import InfluxDatasource from '../datasource';
+import { InfluxQuery } from '../types';
+import { ButtonCascader } from '@grafana/ui';
+import { KeyValuePair } from '../../../../features/explore/AdHocFilterField';
 
 describe('pairsAreValid()', () => {
   describe('when all pairs are fully defined', () => {
@@ -28,7 +35,7 @@ describe('pairsAreValid()', () => {
 
   describe('when pairs are undefined', () => {
     it('should return true', () => {
-      expect(pairsAreValid(undefined)).toBe(true);
+      expect(pairsAreValid((undefined as unknown) as KeyValuePair[])).toBe(true);
     });
   });
 
@@ -51,3 +58,43 @@ describe('pairsAreValid()', () => {
     });
   });
 });
+
+describe('InfluxLogsQueryField', () => {
+  it('should load and show correct measurements and fields in cascader', async () => {
+    const wrapper = getInfluxLogsQueryField();
+    // Looks strange but we do async stuff in didMount and this will push the stack at the end of eval loop, effectively
+    // waiting for the didMount to finish.
+    await Promise.resolve();
+    wrapper.update();
+    const cascader = wrapper.find(ButtonCascader);
+    expect(cascader.prop('options')).toEqual([
+      { label: 'logs', value: 'logs', children: [{ label: 'description', value: 'description', children: [] }] },
+    ]);
+  });
+});
+
+function getInfluxLogsQueryField(props?: any) {
+  const datasource: InfluxDatasource = new InfluxDatasourceMock(
+    props?.measurements || {
+      logs: [{ name: 'description', type: 'string' }],
+    }
+  ) as any;
+
+  const defaultProps = {
+    datasource,
+    history: [] as any[],
+    onRunQuery: () => {},
+    onChange: (query: InfluxQuery) => {},
+    query: {
+      refId: '',
+    } as InfluxQuery,
+  };
+  return mount(
+    <InfluxLogsQueryField
+      {...{
+        ...defaultProps,
+        ...props,
+      }}
+    />
+  );
+}

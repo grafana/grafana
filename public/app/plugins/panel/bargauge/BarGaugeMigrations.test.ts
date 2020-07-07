@@ -43,8 +43,60 @@ describe('BarGauge Panel Migrations', () => {
       targets: [],
       title: 'Usage',
       type: 'bargauge',
-    } as PanelModel;
+    } as Omit<PanelModel, 'fieldConfig'>;
 
-    expect(barGaugePanelMigrationHandler(panel)).toMatchSnapshot();
+    const newOptions = barGaugePanelMigrationHandler(panel as PanelModel);
+
+    // should mutate panel model and move field config out of panel.options
+    expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
+      Object {
+        "defaults": Object {
+          "color": Object {
+            "mode": "thresholds",
+          },
+          "decimals": null,
+          "mappings": Array [],
+          "max": 33,
+          "min": -22,
+          "thresholds": Object {
+            "mode": "absolute",
+            "steps": Array [
+              Object {
+                "color": "green",
+                "index": 0,
+                "value": -Infinity,
+              },
+              Object {
+                "color": "orange",
+                "index": 1,
+                "value": 40,
+              },
+              Object {
+                "color": "red",
+                "index": 2,
+                "value": 80,
+              },
+            ],
+          },
+          "unit": "watt",
+        },
+        "overrides": Array [],
+      }
+    `);
+
+    // should options options
+    expect(newOptions).toMatchInlineSnapshot(`
+      Object {
+        "displayMode": "lcd",
+        "orientation": "vertical",
+        "reduceOptions": Object {
+          "calcs": Array [
+            "mean",
+          ],
+          "limit": undefined,
+          "values": false,
+        },
+      }
+    `);
   });
 });

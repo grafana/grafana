@@ -1,16 +1,17 @@
-import { reducerFactory } from 'app/core/redux';
-import { LdapState, LdapUserState } from 'app/types';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
-  ldapConnectionInfoLoadedAction,
-  ldapFailedAction,
-  userMappingInfoLoadedAction,
-  userMappingInfoFailedAction,
-  clearUserErrorAction,
-  userLoadedAction,
-  userSessionsLoadedAction,
-  ldapSyncStatusLoadedAction,
-  clearUserMappingInfoAction,
-} from './actions';
+  LdapConnectionInfo,
+  LdapError,
+  LdapState,
+  LdapUser,
+  SyncInfo,
+  UserAdminError,
+  UserAdminState,
+  UserDTO,
+  UserOrg,
+  UserSession,
+  UserListAdminState,
+} from 'app/types';
 
 const initialLdapState: LdapState = {
   connectionInfo: [],
@@ -20,116 +21,154 @@ const initialLdapState: LdapState = {
   userError: null,
 };
 
-const initialLdapUserState: LdapUserState = {
-  user: null,
-  ldapUser: null,
-  ldapSyncInfo: null,
-  sessions: [],
-};
-
-export const ldapReducer = reducerFactory(initialLdapState)
-  .addMapper({
-    filter: ldapConnectionInfoLoadedAction,
-    mapper: (state, action) => ({
+const ldapSlice = createSlice({
+  name: 'ldap',
+  initialState: initialLdapState,
+  reducers: {
+    ldapConnectionInfoLoadedAction: (state, action: PayloadAction<LdapConnectionInfo>): LdapState => ({
       ...state,
       ldapError: null,
       connectionInfo: action.payload,
     }),
-  })
-  .addMapper({
-    filter: ldapFailedAction,
-    mapper: (state, action) => ({
+    ldapFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
       ...state,
       ldapError: action.payload,
     }),
-  })
-  .addMapper({
-    filter: ldapSyncStatusLoadedAction,
-    mapper: (state, action) => ({
+    ldapSyncStatusLoadedAction: (state, action: PayloadAction<SyncInfo>): LdapState => ({
       ...state,
       syncInfo: action.payload,
     }),
-  })
-  .addMapper({
-    filter: userMappingInfoLoadedAction,
-    mapper: (state, action) => ({
+    userMappingInfoLoadedAction: (state, action: PayloadAction<LdapUser>): LdapState => ({
       ...state,
       user: action.payload,
       userError: null,
     }),
-  })
-  .addMapper({
-    filter: userMappingInfoFailedAction,
-    mapper: (state, action) => ({
+    userMappingInfoFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
       ...state,
       user: null,
       userError: action.payload,
     }),
-  })
-  .addMapper({
-    filter: clearUserMappingInfoAction,
-    mapper: (state, action) => ({
+    clearUserMappingInfoAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
       user: null,
     }),
-  })
-  .addMapper({
-    filter: clearUserErrorAction,
-    mapper: state => ({
+    clearUserErrorAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
       userError: null,
     }),
-  })
-  .create();
+  },
+});
 
-export const ldapUserReducer = reducerFactory(initialLdapUserState)
-  .addMapper({
-    filter: userMappingInfoLoadedAction,
-    mapper: (state, action) => ({
-      ...state,
-      ldapUser: action.payload,
-    }),
-  })
-  .addMapper({
-    filter: userMappingInfoFailedAction,
-    mapper: (state, action) => ({
-      ...state,
-      ldapUser: null,
-      userError: action.payload,
-    }),
-  })
-  .addMapper({
-    filter: clearUserErrorAction,
-    mapper: state => ({
-      ...state,
-      userError: null,
-    }),
-  })
-  .addMapper({
-    filter: ldapSyncStatusLoadedAction,
-    mapper: (state, action) => ({
-      ...state,
-      ldapSyncInfo: action.payload,
-    }),
-  })
-  .addMapper({
-    filter: userLoadedAction,
-    mapper: (state, action) => ({
+export const {
+  clearUserErrorAction,
+  clearUserMappingInfoAction,
+  ldapConnectionInfoLoadedAction,
+  ldapFailedAction,
+  ldapSyncStatusLoadedAction,
+  userMappingInfoFailedAction,
+  userMappingInfoLoadedAction,
+} = ldapSlice.actions;
+
+export const ldapReducer = ldapSlice.reducer;
+
+// UserAdminPage
+
+const initialUserAdminState: UserAdminState = {
+  user: null,
+  sessions: [],
+  orgs: [],
+  isLoading: true,
+  error: null,
+};
+
+export const userAdminSlice = createSlice({
+  name: 'userAdmin',
+  initialState: initialUserAdminState,
+  reducers: {
+    userProfileLoadedAction: (state, action: PayloadAction<UserDTO>): UserAdminState => ({
       ...state,
       user: action.payload,
-      userError: null,
     }),
-  })
-  .addMapper({
-    filter: userSessionsLoadedAction,
-    mapper: (state, action) => ({
+    userOrgsLoadedAction: (state, action: PayloadAction<UserOrg[]>): UserAdminState => ({
+      ...state,
+      orgs: action.payload,
+    }),
+    userSessionsLoadedAction: (state, action: PayloadAction<UserSession[]>): UserAdminState => ({
       ...state,
       sessions: action.payload,
     }),
-  })
-  .create();
+    userAdminPageLoadedAction: (state, action: PayloadAction<boolean>): UserAdminState => ({
+      ...state,
+      isLoading: !action.payload,
+    }),
+    userAdminPageFailedAction: (state, action: PayloadAction<UserAdminError>): UserAdminState => ({
+      ...state,
+      error: action.payload,
+      isLoading: false,
+    }),
+  },
+});
+
+export const {
+  userProfileLoadedAction,
+  userOrgsLoadedAction,
+  userSessionsLoadedAction,
+  userAdminPageLoadedAction,
+  userAdminPageFailedAction,
+} = userAdminSlice.actions;
+
+export const userAdminReducer = userAdminSlice.reducer;
+
+// UserListAdminPage
+
+const initialUserListAdminState: UserListAdminState = {
+  users: [],
+  query: '',
+  page: 0,
+  perPage: 50,
+  totalPages: 1,
+  showPaging: false,
+};
+
+interface UsersFetched {
+  users: UserDTO[];
+  perPage: number;
+  page: number;
+  totalCount: number;
+}
+
+export const userListAdminSlice = createSlice({
+  name: 'userListAdmin',
+  initialState: initialUserListAdminState,
+  reducers: {
+    usersFetched: (state, action: PayloadAction<UsersFetched>) => {
+      const { totalCount, perPage, ...rest } = action.payload;
+      const totalPages = Math.ceil(totalCount / perPage);
+
+      return {
+        ...state,
+        ...rest,
+        totalPages,
+        perPage,
+        showPaging: totalPages > 1,
+      };
+    },
+    queryChanged: (state, action: PayloadAction<string>) => ({
+      ...state,
+      query: action.payload,
+    }),
+    pageChanged: (state, action: PayloadAction<number>) => ({
+      ...state,
+      page: action.payload,
+    }),
+  },
+});
+
+export const { usersFetched, queryChanged, pageChanged } = userListAdminSlice.actions;
+export const userListAdminReducer = userListAdminSlice.reducer;
 
 export default {
   ldap: ldapReducer,
-  ldapUser: ldapUserReducer,
+  userAdmin: userAdminReducer,
+  userListAdmin: userListAdminReducer,
 };

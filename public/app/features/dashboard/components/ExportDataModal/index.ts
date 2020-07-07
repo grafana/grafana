@@ -1,1 +1,0 @@
-export { ExportDataModalCtrl } from './ExportDataModalCtrl';

@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
 var (
-	IoHelper            m.IoUtil = IoUtilImp{}
+	IoHelper            models.IoUtil = IoUtilImp{}
 	HttpClient          http.Client
 	HttpClientNoTimeout http.Client
 	grafanaVersion      string
@@ -63,7 +63,7 @@ func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	}
 }
 
-func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
+func ReadPlugin(pluginDir, pluginName string) (models.InstalledPlugin, error) {
 	distPluginDataPath := path.Join(pluginDir, pluginName, "dist", "plugin.json")
 
 	var data []byte
@@ -75,11 +75,11 @@ func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
 		data, err = IoHelper.ReadFile(pluginDataPath)
 
 		if err != nil {
-			return m.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
+			return models.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
 		}
 	}
 
-	res := m.InstalledPlugin{}
+	res := models.InstalledPlugin{}
 	if err := json.Unmarshal(data, &res); err != nil {
 		return res, err
 	}
@@ -89,14 +89,14 @@ func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
 	}
 
 	if res.Id == "" {
-		return m.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
+		return models.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
 	}
 
 	return res, nil
 }
 
-func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
-	result := make([]m.InstalledPlugin, 0)
+func GetLocalPlugins(pluginDir string) []models.InstalledPlugin {
+	result := make([]models.InstalledPlugin, 0)
 	files, _ := IoHelper.ReadDir(pluginDir)
 	for _, f := range files {
 		res, err := ReadPlugin(pluginDir, f.Name())

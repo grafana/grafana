@@ -1,19 +1,20 @@
 import _ from 'lodash';
+import Mousetrap from 'mousetrap';
+import 'mousetrap-global-bind';
+import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
+import { locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import locationUtil from 'app/core/utils/location_util';
 import { store } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
-
-import Mousetrap from 'mousetrap';
-import { PanelEvents } from '@grafana/data';
-import 'mousetrap-global-bind';
-import { ContextSrv } from './context_srv';
-import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { getLocationSrv } from '@grafana/runtime';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -82,7 +83,13 @@ export class KeybindingSrv {
   }
 
   openSearch() {
-    appEvents.emit(CoreEvents.showDashSearch);
+    const search = _.extend(this.$location.search(), { search: 'open' });
+    this.$location.search(search);
+  }
+
+  closeSearch() {
+    const search = _.extend(this.$location.search(), { search: null, ...defaultQueryParams });
+    this.$location.search(search);
   }
 
   openAlerting() {
@@ -123,19 +130,32 @@ export class KeybindingSrv {
       return;
     }
 
-    if (search.editPanel) {
-      delete search.editPanel;
+    if (search.inspect) {
+      delete search.inspect;
+      delete search.inspectTab;
       this.$location.search(search);
       return;
     }
 
-    if (search.fullscreen) {
-      appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
+    if (search.editPanel) {
+      delete search.editPanel;
+      delete search.tab;
+      this.$location.search(search);
+      return;
+    }
+
+    if (search.viewPanel) {
+      delete search.viewPanel;
+      this.$location.search(search);
       return;
     }
 
     if (search.kiosk) {
       this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
+    }
+
+    if (search.search) {
+      this.closeSearch();
     }
   }
 
@@ -174,7 +194,7 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
-  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: any) {
+  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit(CoreEvents.graphHoverClear);
@@ -182,7 +202,12 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      scope.appEvent(CoreEvents.saveDashboard);
+      appEvents.emit(CoreEvents.showModalReact, {
+        component: SaveDashboardModalProxy,
+        props: {
+          dashboard,
+        },
+      });
     });
 
     this.bind('t z', () => {
@@ -203,24 +228,24 @@ export class KeybindingSrv {
 
     // edit panel
     this.bind('e', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          edit: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
+        const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+        const search = _.extend(this.$location.search(), { viewPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
+      }
+    });
+
+    this.bind('i', () => {
+      if (dashboard.meta.focusPanelId) {
+        const search = _.extend(this.$location.search(), { inspect: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 
@@ -248,7 +273,7 @@ export class KeybindingSrv {
 
     // delete panel
     this.bind('p r', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         appEvents.emit(CoreEvents.removePanel, dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
@@ -256,7 +281,7 @@ export class KeybindingSrv {
 
     // duplicate panel
     this.bind('p d', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
@@ -265,22 +290,15 @@ export class KeybindingSrv {
     // share panel
     this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {
-        const shareScope: any = scope.$new();
         const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        shareScope.panel = panelInfo.panel;
-        shareScope.dashboard = dashboard;
 
-        appEvents.emit(CoreEvents.showModal, {
-          src: 'public/app/features/dashboard/components/ShareModal/template.html',
-          scope: shareScope,
+        appEvents.emit(CoreEvents.showModalReact, {
+          component: ShareModal,
+          props: {
+            dashboard: dashboard,
+            panel: panelInfo?.panel,
+          },
         });
-      }
-    });
-
-    // inspect panel
-    this.bind('p i', () => {
-      if (dashboard.meta.focusPanelId) {
-        getLocationSrv().update({ partial: true, query: { inspect: dashboard.meta.focusPanelId } });
       }
     });
 

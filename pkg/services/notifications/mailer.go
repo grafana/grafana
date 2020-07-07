@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 
 	gomail "gopkg.in/mail.v2"
 
@@ -21,16 +22,31 @@ import (
 )
 
 func (ns *NotificationService) send(msg *Message) (int, error) {
-	dialer, err := ns.createDialer()
-	if err != nil {
-		return 0, err
+	messages := []*Message{}
+
+	if msg.SingleEmail {
+		messages = append(messages, msg)
+	} else {
+		for _, address := range msg.To {
+			copy := *msg
+			copy.To = []string{address}
+			messages = append(messages, &copy)
+		}
 	}
 
-	var num int
-	for _, address := range msg.To {
+	return ns.dialAndSend(messages...)
+}
+
+func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err error) {
+	dialer, err := ns.createDialer()
+	if err != nil {
+		return
+	}
+
+	for _, msg := range messages {
 		m := gomail.NewMessage()
 		m.SetHeader("From", msg.From)
-		m.SetHeader("To", address)
+		m.SetHeader("To", msg.To...)
 		m.SetHeader("Subject", msg.Subject)
 
 		ns.setFiles(m, msg)
@@ -41,16 +57,15 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 
 		m.SetBody("text/html", msg.Body)
 
-		e := dialer.DialAndSend(m)
-		if e != nil {
-			err = errutil.Wrapf(e, "Failed to send notification to email address: %s", address)
+		if e := dialer.DialAndSend(m); e != nil {
+			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
 			continue
 		}
 
 		num++
 	}
 
-	return num, err
+	return
 }
 
 // setFiles attaches files in various forms
@@ -58,11 +73,12 @@ func (ns *NotificationService) setFiles(
 	m *gomail.Message,
 	msg *Message,
 ) {
-	for _, file := range msg.EmbededFiles {
+	for _, file := range msg.EmbeddedFiles {
 		m.Embed(file)
 	}
 
 	for _, file := range msg.AttachedFiles {
+		file := file
 		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
 			_, err := writer.Write(file.Content)
 			return err
@@ -96,6 +112,7 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 
 	d := gomail.NewDialer(host, iPort, ns.Cfg.Smtp.User, ns.Cfg.Smtp.Password)
 	d.TLSConfig = tlsconfig
+	d.StartTLSPolicy = getStartTLSPolicy(ns.Cfg.Smtp.StartTLSPolicy)
 
 	if ns.Cfg.Smtp.EhloIdentity != "" {
 		d.LocalName = ns.Cfg.Smtp.EhloIdentity
@@ -103,6 +120,17 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 		d.LocalName = setting.InstanceName
 	}
 	return d, nil
+}
+
+func getStartTLSPolicy(policy string) gomail.StartTLSPolicy {
+	switch policy {
+	case "NoStartTLS":
+		return -1
+	case "MandatoryStartTLS":
+		return 1
+	default:
+		return 0
+	}
 }
 
 func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
@@ -150,11 +178,13 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 
 	return &Message{
 		To:            cmd.To,
+		SingleEmail:   cmd.SingleEmail,
 		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
 		Subject:       subject,
 		Body:          buffer.String(),
-		EmbededFiles:  cmd.EmbededFiles,
+		EmbeddedFiles: cmd.EmbeddedFiles,
 		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
+		ReplyTo:       cmd.ReplyTo,
 	}, nil
 }
 

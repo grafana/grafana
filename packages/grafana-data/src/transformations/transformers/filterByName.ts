@@ -1,11 +1,12 @@
 import { DataTransformerID } from './ids';
-import { filterFieldsTransformer, FilterOptions } from './filter';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
+import { FilterOptions, filterFieldsTransformer } from './filter';
+import { RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
 
 export interface FilterFieldsByNameTransformerOptions {
-  include?: string;
-  exclude?: string;
+  include?: RegexpOrNamesMatcherOptions;
+  exclude?: RegexpOrNamesMatcherOptions;
 }
 
 export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNameTransformerOptions> = {
@@ -19,20 +20,33 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    * be applied, just return the input series
    */
   transformer: (options: FilterFieldsByNameTransformerOptions) => {
-    const filterOptions: FilterOptions = {};
-    if (options.include) {
-      filterOptions.include = {
-        id: FieldMatcherID.byName,
-        options: options.include,
-      };
-    }
-    if (options.exclude) {
-      filterOptions.exclude = {
-        id: FieldMatcherID.byName,
-        options: options.exclude,
-      };
-    }
+    const filterOptions: FilterOptions = {
+      include: getMatcherConfig(options.include),
+      exclude: getMatcherConfig(options.exclude),
+    };
 
     return filterFieldsTransformer.transformer(filterOptions);
   },
+};
+
+const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
+  if (!options) {
+    return undefined;
+  }
+
+  const { names, pattern } = options;
+
+  if ((!Array.isArray(names) || names.length === 0) && !pattern) {
+    return undefined;
+  }
+
+  if (!pattern) {
+    return { id: FieldMatcherID.byNames, options: names };
+  }
+
+  if (!Array.isArray(names) || names.length === 0) {
+    return { id: FieldMatcherID.byRegexp, options: pattern };
+  }
+
+  return { id: FieldMatcherID.byRegexpOrNames, options };
 };

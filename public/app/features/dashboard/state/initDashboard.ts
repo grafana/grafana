@@ -1,30 +1,34 @@
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
-import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
-
 // Actions
-import { updateLocation } from 'app/core/actions';
-import { notifyApp } from 'app/core/actions';
-import locationUtil from 'app/core/utils/location_util';
+import { notifyApp, updateLocation } from 'app/core/actions';
 import {
-  dashboardInitFetching,
+  clearDashboardQueriesToUpdateOnLoad,
   dashboardInitCompleted,
   dashboardInitFailed,
-  dashboardInitSlow,
+  dashboardInitFetching,
   dashboardInitServices,
-} from './actions';
-
+  dashboardInitSlow,
+} from './reducers';
 // Types
-import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO, ExploreItemState } from 'app/types';
+import {
+  DashboardDTO,
+  DashboardRouteInfo,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+  DashboardInitPhase,
+} from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { resetExploreAction } from 'app/features/explore/state/actionTypes';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, locationUtil } from '@grafana/data';
+import { initVariablesTransaction } from '../../variables/state/actions';
+import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -38,7 +42,7 @@ export interface InitDashboardArgs {
 }
 
 async function redirectToNewUrl(slug: string, dispatch: ThunkDispatch, currentPath: string) {
-  const res = await getBackendSrv().getDashboardBySlug(slug);
+  const res = await backendSrv.getDashboardBySlug(slug);
 
   if (res) {
     let newUrl = res.meta.url;
@@ -62,7 +66,12 @@ async function fetchDashboard(
     switch (args.routeInfo) {
       case DashboardRouteInfo.Home: {
         // load home dash
-        const dashDTO: DashboardDTO = await getBackendSrv().get('/api/dashboards/home');
+        const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
+
+        // if above all is cancelled it will return an array
+        if (Array.isArray(dashDTO)) {
+          return null;
+        }
 
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
@@ -130,7 +139,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
-      if (getState().dashboard.model === null) {
+      if (getState().dashboard.getModel() === null) {
         dispatch(dashboardInitSlow());
       }
     }, 500);
@@ -165,7 +174,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // init services
     const timeSrv: TimeSrv = args.$injector.get('timeSrv');
     const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
-    const variableSrv: VariableSrv = args.$injector.get('variableSrv');
     const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
     const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
@@ -173,16 +181,24 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
-    const left = storeState.explore && storeState.explore.left;
-    dashboard.meta.fromExplore = !!(left && left.originPanelId);
+    if (storeState.dashboard.modifiedQueries) {
+      const { panelId, queries } = storeState.dashboard.modifiedQueries;
+      dashboard.meta.fromExplore = !!(panelId && queries);
+    }
 
-    // template values service needs to initialize completely before
-    // the rest of the dashboard can load
-    try {
-      await variableSrv.init(dashboard);
-    } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
-      console.log(err);
+    // template values service needs to initialize completely before the rest of the dashboard can load
+    await dispatch(initVariablesTransaction(args.urlUid, dashboard));
+
+    if (getState().templating.transaction.uid !== args.urlUid) {
+      // if a previous dashboard has slow running variable queries the batch uid will be the new one
+      // but the args.urlUid will be the same as before initVariablesTransaction was called so then we can't continue initializing
+      // the previous dashboard.
+      return;
+    }
+
+    // If dashboard is in a different init phase it means it cancelled during service init
+    if (getState().dashboard.initPhase !== DashboardInitPhase.Services) {
+      return;
     }
 
     try {
@@ -203,12 +219,18 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.log(err);
     }
 
-    if (dashboard.meta.fromExplore) {
-      updateQueriesWhenComingFromExplore(dispatch, dashboard, left);
+    if (storeState.dashboard.modifiedQueries) {
+      const { panelId, queries } = storeState.dashboard.modifiedQueries;
+      updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
 
     // legacy srv state
     dashboardSrv.setCurrent(dashboard);
+
+    // send open dashboard event
+    if (args.routeInfo !== DashboardRouteInfo.New) {
+      emitDashboardViewEvent(dashboard);
+    }
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
@@ -245,24 +267,15 @@ function getNewDashboardModelData(urlFolderId?: string): any {
 function updateQueriesWhenComingFromExplore(
   dispatch: ThunkDispatch,
   dashboard: DashboardModel,
-  left: ExploreItemState
+  originPanelId: number,
+  queries: DataQuery[]
 ) {
-  // When returning to the origin panel from explore, if we're doing
-  // so with changes all the explore state is reset _except_ the queries
-  // and the origin panel ID.
-  const panelArrId = dashboard.panels.findIndex(panel => panel.id === left.originPanelId);
+  const panelArrId = dashboard.panels.findIndex(panel => panel.id === originPanelId);
 
   if (panelArrId > -1) {
-    dashboard.panels[panelArrId].targets = left.queries.map((query: DataQuery & { context?: string }) => {
-      delete query.context;
-      delete query.key;
-      return query;
-    });
+    dashboard.panels[panelArrId].targets = queries;
   }
 
-  dashboard.startRefresh();
-
-  // Force-reset explore so that on subsequent dashboard loads we aren't
-  // taking the modified queries from explore again.
-  dispatch(resetExploreAction({ force: true }));
+  // Clear update state now that we're done
+  dispatch(clearDashboardQueriesToUpdateOnLoad());
 }

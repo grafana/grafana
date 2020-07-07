@@ -1,13 +1,9 @@
 import React, { PureComponent } from 'react';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
-import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { PanelMenuItem } from '@grafana/data';
 
 export interface Props {
-  panel: PanelModel;
-  dashboard: DashboardModel;
+  items: PanelMenuItem[];
 }
 
 export class PanelHeaderMenu extends PureComponent<Props> {
@@ -33,9 +29,6 @@ export class PanelHeaderMenu extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, panel } = this.props;
-    const menu = getPanelMenu(dashboard, panel);
-
-    return <div className="panel-menu-container dropdown open">{this.renderItems(menu)}</div>;
+    return <div className="panel-menu-container dropdown open">{this.renderItems(this.props.items)}</div>;
   }
 }

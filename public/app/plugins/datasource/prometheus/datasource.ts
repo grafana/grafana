@@ -6,11 +6,6 @@ import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import {
   AnnotationEvent,
-  dateMath,
-  DateTime,
-  LoadingState,
-  TimeRange,
-  TimeSeries,
   CoreApp,
   DataQueryError,
   DataQueryRequest,
@@ -18,14 +13,20 @@ import {
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  dateMath,
+  DateTime,
+  LoadingState,
+  ScopedVars,
+  TimeRange,
+  TimeSeries,
 } from '@grafana/data';
-import { from, merge, Observable, of, forkJoin } from 'rxjs';
+import { forkJoin, from, merge, Observable, of } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
@@ -36,16 +37,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import TableModel from 'app/core/table_model';
 
-interface RequestOptions {
-  method?: string;
-  url?: string;
-  headers?: Record<string, string>;
-  transformRequest?: (data: any) => string;
-  data?: any;
-  withCredentials?: boolean;
-  silent?: boolean;
-  requestId?: string;
-}
+export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
 export interface PromDataQueryResponse {
   data: {
@@ -80,6 +72,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
+  lookupsDisabled: boolean;
   resultTransformer: ResultTransformer;
   customQueryParameters: any;
 
@@ -88,7 +81,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
-    this.url = instanceSettings.url;
+    this.url = instanceSettings.url!;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
@@ -98,6 +91,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
+    this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
   }
 
@@ -118,8 +112,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
   }
 
-  _request(url: string, data: Record<string, string> = {}, options?: RequestOptions) {
-    options = defaults(options || {}, {
+  _request(url: string, data: Record<string, string> | null, overrides?: Partial<BackendSrvRequest>) {
+    const options: BackendSrvRequest = defaults(overrides || {}, {
       url: this.url + url,
       method: this.httpMethod,
       headers: {},
@@ -148,7 +142,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       options.headers.Authorization = this.basicAuth;
     }
 
-    return getBackendSrv().datasourceRequest(options as Required<RequestOptions>);
+    return getBackendSrv().datasourceRequest(options);
   }
 
   // Use this for tab completion features, wont publish response to other components
@@ -186,6 +180,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       responseListLength,
       refId: target.refId,
       valueWithRefId: target.valueWithRefId,
+      meta: {
+        /** Fix for showing of Prometheus results in Explore table. We want to show result of instant query in table and the rest of time series in graph */
+        preferredVisualisationType: query.instant ? 'table' : 'graph',
+      },
     };
     const series = this.resultTransformer.transform(response, transformerOptions);
 
@@ -262,13 +260,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     let runningQueriesCount = queries.length;
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
-      let observable: Observable<any> = null;
 
-      if (query.instant) {
-        observable = from(this.performInstantQuery(query, end));
-      } else {
-        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
-      }
+      let observable = query.instant
+        ? from(this.performInstantQuery(query, end))
+        : from(this.performTimeSeriesQuery(query, query.start, query.end));
 
       return observable.pipe(
         // Decrease the counter here. We assume that each request returns only single value and then completes
@@ -292,13 +287,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   private panelsQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number, requestId: string) {
     const observables: Array<Observable<Array<TableModel | TimeSeries>>> = queries.map((query, index) => {
       const target = activeTargets[index];
-      let observable: Observable<any> = null;
 
-      if (query.instant) {
-        observable = from(this.performInstantQuery(query, end));
-      } else {
-        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
-      }
+      let observable = query.instant
+        ? from(this.performInstantQuery(query, end))
+        : from(this.performTimeSeriesQuery(query, query.start, query.end));
 
       return observable.pipe(
         filter((response: any) => (response.cancelled ? false : true)),
@@ -337,10 +329,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const range = Math.ceil(end - start);
 
     // options.interval is the dynamically calculated interval
-    let interval = kbn.interval_to_seconds(options.interval);
+    let interval: number = kbn.interval_to_seconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
-      templateSrv.replace(target.interval, options.scopedVars) || options.interval
+      templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
@@ -393,8 +385,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calculate a safe interval as an additional minimum to take into account.
-    const safeInterval = Math.ceil(range / 11000);
-    return Math.max(interval * intervalFactor, minInterval, safeInterval, 1);
+    // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
+    // If this is the case take the ceil of the value.
+    let safeInterval = range / 11000;
+    if (safeInterval > 1) {
+      safeInterval = Math.ceil(safeInterval);
+    }
+    return Math.max(interval * intervalFactor, minInterval, safeInterval);
   }
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
@@ -511,17 +508,28 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   getRangeScopedVars(range: TimeRange = getTimeSrv().timeRange()) {
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
-    const regularRange = kbn.secondsToHms(msRange / 1000);
     return {
       __range_ms: { text: msRange, value: msRange },
       __range_s: { text: sRange, value: sRange },
-      __range: { text: regularRange, value: regularRange },
+      __range: { text: sRange + 's', value: sRange + 's' },
     };
   }
 
-  async annotationQuery(options: any) {
+  createAnnotationQueryOptions = (options: any): DataQueryRequest<PromQuery> => {
     const annotation = options.annotation;
-    const { expr = '', tagKeys = '', titleFormat = '', textFormat = '', step = '60s' } = annotation;
+    const interval =
+      annotation && annotation.step && typeof annotation.step === 'string'
+        ? annotation.step
+        : ANNOTATION_QUERY_STEP_DEFAULT;
+    return {
+      ...options,
+      interval,
+    };
+  };
+
+  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
+    const annotation = options.annotation;
+    const { expr = '', tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
 
     if (!expr) {
       return Promise.resolve([]);
@@ -529,10 +537,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
-    const queryOptions = {
-      ...options,
-      interval: step,
-    };
+    const queryOptions = this.createAnnotationQueryOptions(options);
 
     // Unsetting min interval for accurate event resolution
     const minStep = '1s';
@@ -554,35 +559,59 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return [];
     }
 
+    const step = Math.floor(query.step ?? 15) * 1000;
+
     response?.data?.data?.result?.forEach(series => {
       const tags = Object.entries(series.metric)
         .filter(([k]) => splitKeys.includes(k))
         .map(([_k, v]: [string, string]) => v);
 
-      const dupCheck: Record<number, boolean> = {};
-      for (const value of series.values) {
-        const valueIsTrue = value[1] === '1'; // e.g. ALERTS
-        if (valueIsTrue || annotation.useValueForTime) {
-          const event: AnnotationEvent = {
-            annotation,
-            title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
-            tags,
-            text: self.resultTransformer.renderTemplate(textFormat, series.metric),
-          };
-
-          if (annotation.useValueForTime) {
-            const timestampValue = Math.floor(parseFloat(value[1]));
-            if (dupCheck[timestampValue]) {
-              continue;
-            }
-            dupCheck[timestampValue] = true;
-            event.time = timestampValue;
-          } else {
-            event.time = Math.floor(parseFloat(value[0])) * 1000;
-          }
-
-          eventList.push(event);
+      series.values.forEach((value: any[]) => {
+        let timestampValue;
+        // rewrite timeseries to a common format
+        if (annotation.useValueForTime) {
+          timestampValue = Math.floor(parseFloat(value[1]));
+          value[1] = 1;
+        } else {
+          timestampValue = Math.floor(parseFloat(value[0])) * 1000;
         }
+        value[0] = timestampValue;
+      });
+
+      const activeValues = series.values.filter((value: Record<number, string>) => parseFloat(value[1]) >= 1);
+      const activeValuesTimestamps: number[] = activeValues.map((value: number[]) => value[0]);
+
+      // Instead of creating singular annotation for each active event we group events into region if they are less
+      // then `step` apart.
+      let latestEvent: AnnotationEvent | null = null;
+
+      for (const timestamp of activeValuesTimestamps) {
+        // We already have event `open` and we have new event that is inside the `step` so we just update the end.
+        if (latestEvent && (latestEvent.timeEnd ?? 0) + step >= timestamp) {
+          latestEvent.timeEnd = timestamp;
+          continue;
+        }
+
+        // Event exists but new one is outside of the `step` so we "finish" the current region.
+        if (latestEvent) {
+          eventList.push(latestEvent);
+        }
+
+        // We start a new region.
+        latestEvent = {
+          time: timestamp,
+          timeEnd: timestamp,
+          annotation,
+          title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
+          tags,
+          text: self.resultTransformer.renderTemplate(textFormat, series.metric),
+        };
+      }
+
+      if (latestEvent) {
+        // finish up last point if we have one
+        latestEvent.timeEnd = activeValuesTimestamps[activeValuesTimestamps.length - 1];
+        eventList.push(latestEvent);
       }
     });
 
@@ -608,14 +637,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       : { status: 'error', message: response.error };
   }
 
-  interpolateVariablesInQueries(queries: PromQuery[]): PromQuery[] {
+  interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+          expr: templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
         };
         return expandedQuery;
       });
@@ -649,6 +678,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         expression = addLabelToQuery(expression, action.key, action.value);
         break;
       }
+      case 'ADD_FILTER_OUT': {
+        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        break;
+      }
       case 'ADD_HISTOGRAM_QUANTILE': {
         expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
         break;
@@ -675,7 +708,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   getPrometheusTime(date: string | DateTime, roundUp: boolean) {
     if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp)!;
     }
 
     return Math.ceil(date.valueOf() / 1000);

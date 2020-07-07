@@ -1,72 +1,59 @@
 {
-  "annotations": {
-    "list": []
-  },
-  "editable": true,
-  "folderId": null,
-  "gnetId": null,
-  "graphTooltip": 0,
-  "hideControls": true,
-  "id": null,
   "links": [],
   "panels": [
     {
-      "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
-      "editable": true,
-      "id": 1,
-      "links": [],
-      "mode": "html",
-      "style": {},
-      "title": "",
-      "transparent": true,
-      "type": "text",
+      "datasource": null,
       "gridPos": {
-        "w": 24,
         "h": 3,
+        "w": 24,
         "x": 0,
         "y": 0
-      }
+      },
+      "id": 1,
+      "title": "",
+      "transparent": false,
+      "type": "welcome"
     },
     {
+      "datasource": null,
       "folderId": 0,
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
       "headings": true,
       "id": 3,
       "limit": 30,
       "links": [],
+      "options": {},
       "query": "",
       "recent": true,
       "search": false,
       "starred": true,
       "tags": [],
-      "title": "",
-      "transparent": false,
-      "type": "dashlist",
-      "gridPos": {
-        "w": 12,
-        "h": 17,
-        "x": 0,
-        "y": 6
-      }
+      "title": "Dashboards",
+      "type": "dashlist"
     },
     {
-      "editable": true,
-      "error": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
       "id": 4,
       "links": [],
-      "title": "",
-      "transparent": false,
-      "type": "pluginlist",
-      "gridPos": {
-        "w": 12,
-        "h": 17,
-        "x": 12,
-        "y": 6
-      }
+      "options": {
+        "feedUrl": "https://grafana.com/blog/news.xml"
+      },
+      "title": "Latest from the blog",
+      "type": "news"
     }
   ],
-  "rows": [],
-  "schemaVersion": 17,
-  "style": "dark",
+  "schemaVersion": 22,
   "tags": [],
   "templating": {
     "list": []
@@ -82,6 +69,5 @@
     "type": "timepicker"
   },
   "timezone": "browser",
-  "title": "Home",
-  "version": 0
+  "title": "Home"
 }

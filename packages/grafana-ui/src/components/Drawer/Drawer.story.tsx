@@ -6,7 +6,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Drawer.mdx';
 
 export default {
-  title: 'UI/Drawer',
+  title: 'Overlays/Drawer',
   component: Drawer,
   decorators: [withCenteredStory],
   parameters: {
@@ -33,6 +33,7 @@ export const global = () => {
             {state.isOpen && (
               <Drawer
                 title={drawerTitle}
+                subtitle="This is a subtitle."
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });
                 }}
@@ -69,6 +70,8 @@ export const longContent = () => {
             </div>
             {state.isOpen && (
               <Drawer
+                scrollableContent
+                expandable
                 title="Drawer with long content"
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });

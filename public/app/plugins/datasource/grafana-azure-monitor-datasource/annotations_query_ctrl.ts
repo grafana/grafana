@@ -74,6 +74,6 @@ export class AzureMonitorAnnotationsQueryCtrl {
   };
 
   get templateVariables() {
-    return this.templateSrv.variables.map((t: any) => '$' + t.name);
+    return this.templateSrv.getVariables().map((t: any) => '$' + t.name);
   }
 }

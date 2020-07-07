@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -32,14 +31,14 @@ const (
 	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
+	REDACTED_PASSWORD string = "*********"
 )
 
 const (
-	DEV                 = "development"
-	PROD                = "production"
-	TEST                = "test"
-	APP_NAME            = "Grafana"
-	APP_NAME_ENTERPRISE = "Grafana Enterprise"
+	DEV      = "development"
+	PROD     = "production"
+	TEST     = "test"
+	APP_NAME = "Grafana"
 )
 
 var (
@@ -47,7 +46,7 @@ var (
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
-// it is used for comparision and has to be kept in sync
+// it is used for comparison and has to be kept in sync
 const (
 	AUTH_PROXY_SYNC_TTL = 60
 )
@@ -100,7 +99,8 @@ var (
 	DataProxyWhiteList                map[string]bool
 	DisableBruteForceLoginProtection  bool
 	CookieSecure                      bool
-	CookieSameSite                    http.SameSite
+	CookieSameSiteDisabled            bool
+	CookieSameSiteMode                http.SameSite
 	AllowEmbedding                    bool
 	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
@@ -118,6 +118,7 @@ var (
 
 	// Dashboard history
 	DashboardVersionsToKeep int
+	MinRefreshInterval      string
 
 	// User settings
 	AllowUserSignUp         bool
@@ -200,6 +201,7 @@ var (
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
 	AlertingMaxAttempts         int
+	AlertingMinInterval         int64
 
 	// Explore UI
 	ExploreEnabled bool
@@ -225,28 +227,39 @@ type Cfg struct {
 	AppUrl           string
 	AppSubUrl        string
 	ServeFromSubPath bool
+	StaticRootPath   string
+
+	// build
+	BuildVersion string
+	BuildCommit  string
+	BuildBranch  string
+	BuildStamp   int64
+	IsEnterprise bool
+
+	// packaging
+	Packaging string
 
 	// Paths
-	ProvisioningPath string
-	DataPath         string
-	LogsPath         string
+	ProvisioningPath   string
+	DataPath           string
+	LogsPath           string
+	BundledPluginsPath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir             string
-	PhantomDir            string
-	RendererUrl           string
-	RendererCallbackUrl   string
-	RendererLimit         int
-	RendererLimitAlerting int
+	ImagesDir                      string
+	RendererUrl                    string
+	RendererCallbackUrl            string
+	RendererConcurrentRequestLimit int
 
 	// Security
 	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
+	CookieSameSiteDisabled           bool
+	CookieSameSiteMode               http.SameSite
 
 	TempDataLifetime                 time.Duration
 	MetricsEndpointEnabled           bool
@@ -255,14 +268,22 @@ type Cfg struct {
 	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
+	PluginSettings                   PluginSettings
+	PluginsAllowUnsigned             []string
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
+
+	// Dashboards
+	DefaultHomeDashboardPath string
 
 	// Auth
 	LoginCookieName              string
 	LoginMaxInactiveLifetimeDays int
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
+
+	// OAuth
+	OAuthCookieMaxAge int
 
 	// SAML Auth
 	SAMLEnabled bool
@@ -277,7 +298,15 @@ type Cfg struct {
 
 	ApiKeyMaxSecondsToLive int64
 
+	// Use to enable new features which may still be in alpha/beta stage.
 	FeatureToggles map[string]bool
+
+	AnonymousHideVersion bool
+}
+
+// IsExpressionsEnabled returns whether the expressions feature is enabled.
+func (c Cfg) IsExpressionsEnabled() bool {
+	return c.FeatureToggles["expressions"]
 }
 
 type CommandLineArgs struct {
@@ -327,15 +356,13 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			sectionName := strings.ToUpper(strings.Replace(section.Name(), ".", "_", -1))
-			keyName := strings.ToUpper(strings.Replace(key.Name(), ".", "_", -1))
-			envKey := fmt.Sprintf("GF_%s_%s", sectionName, keyName)
+			envKey := envKey(section.Name(), key.Name())
 			envValue := os.Getenv(envKey)
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
-					envValue = "*********"
+					envValue = REDACTED_PASSWORD
 				}
 				if shouldRedactURLKey(envKey) {
 					u, err := url.Parse(envValue)
@@ -359,6 +386,14 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	return nil
 }
 
+func envKey(sectionName string, keyName string) string {
+	sN := strings.ToUpper(strings.Replace(sectionName, ".", "_", -1))
+	sN = strings.Replace(sN, "-", "_", -1)
+	kN := strings.ToUpper(strings.Replace(keyName, ".", "_", -1))
+	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
+	return envKey
+}
+
 func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
 	appliedCommandLineProperties = make([]string, 0)
 	for _, section := range file.Sections() {
@@ -368,7 +403,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			if exists {
 				key.SetValue(value)
 				if shouldRedactKey(keyString) {
-					value = "*********"
+					value = REDACTED_PASSWORD
 				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 			}
@@ -418,30 +453,6 @@ func makeAbsolute(path string, root string) string {
 		return path
 	}
 	return filepath.Join(root, path)
-}
-
-func EvalEnvVarExpression(value string) string {
-	regex := regexp.MustCompile(`\${(\w+)}`)
-	return regex.ReplaceAllStringFunc(value, func(envVar string) string {
-		envVar = strings.TrimPrefix(envVar, "${")
-		envVar = strings.TrimSuffix(envVar, "}")
-		envValue := os.Getenv(envVar)
-
-		// if env variable is hostname and it is empty use os.Hostname as default
-		if envVar == "HOSTNAME" && envValue == "" {
-			envValue, _ = os.Hostname()
-		}
-
-		return envValue
-	})
-}
-
-func evalConfigValues(file *ini.File) {
-	for _, section := range file.Sections() {
-		for _, key := range section.Keys() {
-			key.SetValue(EvalEnvVarExpression(key.Value()))
-		}
-	}
 }
 
 func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
@@ -498,7 +509,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load defaults
 	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
+		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
 		os.Exit(1)
 		return nil, err
 	}
@@ -530,7 +541,10 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineProperties(commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
-	evalConfigValues(parsedFile)
+	err = expandConfig(parsedFile)
+	if err != nil {
+		return nil, err
+	}
 
 	// update data path and logging config
 	dataPath, err := valueAsString(parsedFile.Section("paths"), "data", "")
@@ -609,10 +623,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Temporary keep global, to make refactor in steps
 	Raw = cfg.Raw
 
+	cfg.BuildVersion = BuildVersion
+	cfg.BuildCommit = BuildCommit
+	cfg.BuildStamp = BuildStamp
+	cfg.BuildBranch = BuildBranch
+	cfg.IsEnterprise = IsEnterprise
+	cfg.Packaging = Packaging
+
 	ApplicationName = APP_NAME
-	if IsEnterprise {
-		ApplicationName = APP_NAME_ENTERPRISE
-	}
 
 	Env, err = valueAsString(iniFile.Section(""), "app_mode", "development")
 	if err != nil {
@@ -627,11 +645,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
-	Provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
+	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err
 	}
-	cfg.ProvisioningPath = makeAbsolute(Provisioning, HomePath)
+	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
 	if err != nil {
@@ -684,6 +703,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
+	cfg.StaticRootPath = StaticRootPath
 
 	if err := cfg.validateStaticRootPath(); err != nil {
 		return err
@@ -712,24 +732,30 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
-	validSameSiteValues := map[string]http.SameSite{
-		"lax":    http.SameSiteLaxMode,
-		"strict": http.SameSiteStrictMode,
-		"none":   http.SameSiteDefaultMode,
-	}
 
-	if samesite, ok := validSameSiteValues[samesiteString]; ok {
-		CookieSameSite = samesite
-		cfg.CookieSameSite = CookieSameSite
+	if samesiteString == "disabled" {
+		CookieSameSiteDisabled = true
+		cfg.CookieSameSiteDisabled = CookieSameSiteDisabled
 	} else {
-		CookieSameSite = http.SameSiteLaxMode
-		cfg.CookieSameSite = CookieSameSite
+		validSameSiteValues := map[string]http.SameSite{
+			"lax":    http.SameSiteLaxMode,
+			"strict": http.SameSiteStrictMode,
+			"none":   http.SameSiteNoneMode,
+		}
+
+		if samesite, ok := validSameSiteValues[samesiteString]; ok {
+			CookieSameSiteMode = samesite
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		} else {
+			CookieSameSiteMode = http.SameSiteLaxMode
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		}
 	}
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
-	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(false)
-	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(false)
+	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
 	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
@@ -752,6 +778,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "5s")
+	if err != nil {
+		return err
+	}
+
+	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -831,6 +863,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(60)
 	SignoutRedirectUrl, err = valueAsString(auth, "signout_redirect_url", "")
 	if err != nil {
 		return err
@@ -849,6 +882,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")
@@ -917,8 +951,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
 		}
 	}
+	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
-	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
 	cfg.MetricsEndpointBasicAuthUsername, err = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
@@ -955,6 +990,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
+	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
@@ -965,6 +1001,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+	cfg.PluginSettings = extractPluginSettings(iniFile.Sections())
+	pluginsAllowUnsigned := pluginsSection.Key("allow_loading_unsigned_plugins").MustString("")
+	for _, plug := range strings.Split(pluginsAllowUnsigned, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
+	}
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
@@ -1112,6 +1154,37 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + Env)
+}
+
+type DynamicSection struct {
+	section *ini.Section
+	Logger  log.Logger
+}
+
+// Key dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
+func (s *DynamicSection) Key(k string) *ini.Key {
+	envKey := envKey(s.section.Name(), k)
+	envValue := os.Getenv(envKey)
+	key := s.section.Key(k)
+
+	if len(envValue) == 0 {
+		return key
+	}
+
+	key.SetValue(envValue)
+	if shouldRedactKey(envKey) {
+		envValue = REDACTED_PASSWORD
+	}
+	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
+
+	return key
+}
+
+// SectionWithEnvOverrides dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
+func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
+	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
 }
 
 func IsExpressionsEnabled() bool {

@@ -27,10 +27,10 @@ describe('ConfirmModal', () => {
         onDismiss={() => {}}
       />
     );
-    expect(wrapper.html()).toBe(null);
+    expect(wrapper.html()).toBe('');
 
     wrapper.setProps({ ...wrapper.props(), isOpen: false });
-    expect(wrapper.html()).toBe(null);
+    expect(wrapper.html()).toBe('');
   });
 
   it('renders correct contents', () => {

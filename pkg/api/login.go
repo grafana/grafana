@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/hex"
-	"net/http"
+	"errors"
 	"net/url"
 	"strings"
 
@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -28,7 +29,7 @@ var getViewIndex = func() string {
 	return ViewIndex
 }
 
-func validateRedirectTo(redirectTo string) error {
+func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	to, err := url.Parse(redirectTo)
 	if err != nil {
 		return login.ErrInvalidRedirectTo
@@ -36,10 +37,39 @@ func validateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
-	if setting.AppSubUrl != "" && !strings.HasPrefix(to.Path, "/"+setting.AppSubUrl) {
+
+	if to.Host != "" {
+		return login.ErrForbiddenRedirectTo
+	}
+
+	// path should have exactly one leading slash
+	if !strings.HasPrefix(to.Path, "/") {
+		return login.ErrForbiddenRedirectTo
+	}
+	if strings.HasPrefix(to.Path, "//") {
+		return login.ErrForbiddenRedirectTo
+	}
+
+	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
+	// will send the user to the wrong location
+	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
 		return login.ErrInvalidRedirectTo
 	}
+
 	return nil
+}
+
+func (hs *HTTPServer) CookieOptionsFromCfg() middleware.CookieOptions {
+	path := "/"
+	if len(hs.Cfg.AppSubUrl) > 0 {
+		path = hs.Cfg.AppSubUrl
+	}
+	return middleware.CookieOptions{
+		Path:             path,
+		Secure:           hs.Cfg.CookieSecure,
+		SameSiteDisabled: hs.Cfg.CookieSameSiteDisabled,
+		SameSiteMode:     hs.Cfg.CookieSameSiteMode,
+	}
 }
 
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
@@ -62,7 +92,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		//therefore the loginError should be passed to the view data
 		//and the view should return immediately before attempting
 		//to login again via OAuth and enter to a redirect loop
-		deleteCookie(c, LoginErrorCookieName)
+		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
 		return
@@ -75,17 +105,22 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
 		if setting.AuthProxyEnabled && setting.AuthProxyEnableLoginToken {
-			hs.loginAuthProxyUser(c)
+			user := &models.User{Id: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
+			err := hs.loginUserWithUser(user, c)
+			if err != nil {
+				c.Handle(500, "Failed to sign in user", err)
+				return
+			}
 		}
 
 		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-			if err := validateRedirectTo(redirectTo); err != nil {
-				viewData.Settings["loginError"] = err.Error()
-				c.HTML(200, getViewIndex(), viewData)
-				c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-				return
+			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
+				// the user is already logged so instead of rendering the login page with error
+				// it should be redirected to the home page.
+				log.Debug("Ignored invalid redirect_to cookie value: %v", redirectTo)
+				redirectTo = hs.Cfg.AppSubUrl + "/"
 			}
-			c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+			middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			c.Redirect(redirectTo)
 			return
 		}
@@ -95,14 +130,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	}
 
 	c.HTML(200, getViewIndex(), viewData)
-}
-
-func (hs *HTTPServer) loginAuthProxyUser(c *models.ReqContext) {
-	hs.loginUserWithUser(&models.User{
-		Id:    c.SignedInUser.UserId,
-		Email: c.SignedInUser.Email,
-		Login: c.SignedInUser.Login,
-	}, c)
 }
 
 func tryOAuthAutoLogin(c *models.ReqContext) bool {
@@ -161,36 +188,41 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 
 	user := authQuery.User
 
-	hs.loginUserWithUser(user, c)
+	err := hs.loginUserWithUser(user, c)
+	if err != nil {
+		return Error(500, "Error while signing in user", err)
+	}
 
 	result := map[string]interface{}{
 		"message": "Logged in",
 	}
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		if err := validateRedirectTo(redirectTo); err == nil {
+		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
 			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
 		}
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
 
 	metrics.MApiLoginPost.Inc()
 	return JSON(200, result)
 }
 
-func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) {
+func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) error {
 	if user == nil {
-		hs.log.Error("user login with nil user")
+		return errors.New("could not login user")
 	}
 
 	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, c.RemoteAddr(), c.Req.UserAgent())
 	if err != nil {
-		hs.log.Error("failed to create auth token", "error", err)
+		return errutil.Wrap("failed to create auth token", err)
 	}
+
 	hs.log.Info("Successful Login", "User", user.Email)
 	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
+	return nil
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
@@ -223,28 +255,31 @@ func tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, b
 	return string(decryptedError), err == nil
 }
 
-func deleteCookie(ctx *models.ReqContext, cookieName string) {
-	ctx.SetCookie(cookieName, "", -1, setting.AppSubUrl+"/")
-}
-
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
 	encryptedError, err := util.Encrypt([]byte(value), setting.SecretKey)
 	if err != nil {
 		return err
 	}
 
-	cookie := http.Cookie{
-		Name:     cookieName,
-		MaxAge:   60,
-		Value:    hex.EncodeToString(encryptedError),
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.CookieSecure,
-	}
-	if hs.Cfg.CookieSameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = hs.Cfg.CookieSameSite
-	}
-	http.SetCookie(ctx.Resp, &cookie)
+	middleware.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.CookieOptionsFromCfg)
 
 	return nil
+}
+
+func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
+	ctx.Logger.Error(err.Error(), v...)
+	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+		hs.log.Error("Failed to set encrypted cookie", "err", err)
+	}
+
+	ctx.Redirect(setting.AppSubUrl + "/login")
+}
+
+func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *RedirectResponse {
+	ctx.Logger.Error(err.Error(), v...)
+	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+		hs.log.Error("Failed to set encrypted cookie", "err", err)
+	}
+
+	return Redirect(setting.AppSubUrl + "/login")
 }

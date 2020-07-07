@@ -39,6 +39,10 @@
   background: $alert-warning-bg;
 }
 
+.alert-container {
+  z-index: $zindex-tooltip;
+}
+
 .page-alert-list {
   z-index: 8000;
   min-width: 400px;
@@ -54,6 +58,7 @@
   background: none;
   display: flex;
   align-items: center;
+
   .fa {
     align-self: flex-end;
     font-size: 21px;
@@ -78,6 +83,11 @@
 
 .alert-body {
   flex-grow: 1;
+
+  a {
+    color: $white;
+    text-decoration: underline;
+  }
 }
 
 .alert-icon-on-top {

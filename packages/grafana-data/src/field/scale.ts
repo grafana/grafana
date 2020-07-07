@@ -30,10 +30,12 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
   // Should we calculate the percentage
   const percentThresholds = thresholds && thresholds.mode === ThresholdsMode.Percentage;
   const useColorScheme = color && color.mode === FieldColorMode.Scheme;
+
   if (percentThresholds || useColorScheme) {
     // Calculate min/max if required
     let min = config.min;
     let max = config.max;
+
     if (!isNumber(min) || !isNumber(max)) {
       if (field.values && field.values.length) {
         const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
@@ -48,10 +50,12 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
         max = 100;
       }
     }
+
     const delta = max! - min!;
 
     // Use a d3 color scale
     let interpolator: colorInterpolator | undefined;
+
     if (useColorScheme) {
       interpolator = (d3 as any)[`interpolate${color!.schemeName}`] as colorInterpolator;
     }
@@ -62,6 +66,7 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
         ? getActiveThreshold(percentThresholds ? percent * 100 : value, thresholds.steps)
         : undefined; // 0-100
       let color = fixedColor;
+
       if (interpolator) {
         color = interpolator(percent);
       } else if (threshold) {

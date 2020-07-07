@@ -14,7 +14,6 @@ type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string
 	allowedOrganizations []string
-	allowSignup          bool
 }
 
 type OrgRecord struct {
@@ -27,10 +26,6 @@ func (s *SocialGrafanaCom) Type() int {
 
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
-}
-
-func (s *SocialGrafanaCom) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool {

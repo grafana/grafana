@@ -2,17 +2,17 @@ package notifiers
 
 import (
 	"context"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 )
 
 func TestOpsGenieNotifier(t *testing.T) {
 	Convey("OpsGenie notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -83,9 +83,9 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				receivedTags := make([]string, 0)
 				bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
-					bodyJson, err := simplejson.NewJson([]byte(cmd.Body))
+					bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
 					if err == nil {
-						receivedTags = bodyJson.Get("tags").MustStringArray([]string{})
+						receivedTags = bodyJSON.Get("tags").MustStringArray([]string{})
 					}
 					return err
 				})

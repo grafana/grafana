@@ -1,10 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, TeamList } from './TeamList';
-import { Team, OrgRole } from '../../types';
+import { OrgRole, Team } from '../../types';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { setSearchQuery } from './state/reducers';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -19,7 +21,7 @@ const setup = (propOverrides?: object) => {
     teams: [] as Team[],
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
-    setSearchQuery: jest.fn(),
+    setSearchQuery: mockToolkitActionCreator(setSearchQuery),
     searchQuery: '',
     teamsCount: 0,
     hasFetched: false,

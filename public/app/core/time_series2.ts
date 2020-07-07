@@ -91,15 +91,15 @@ export default class TimeSeries {
   label: string;
   alias: string;
   aliasEscaped: string;
-  color: string;
+  color?: string;
   valueFormater: any;
   stats: any;
   legend: boolean;
   hideTooltip: boolean;
   allIsNull: boolean;
   allIsZero: boolean;
-  decimals: number;
-  scaledDecimals: number;
+  decimals: DecimalCount;
+  scaledDecimals: DecimalCount;
   hasMsResolution: boolean;
   isOutsideRange: boolean;
 

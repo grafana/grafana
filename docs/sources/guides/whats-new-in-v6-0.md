@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.0"
+title = "What's new in Grafana v6.0"
 description = "Feature and improvement highlights for Grafana v6.0"
-keywords = ["grafana", "new", "documentation", "6.0"]
+keywords = ["grafana", "new", "documentation", "6.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.0"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -11
 +++
 
-# What's New in Grafana v6.0
+# What's new in Grafana v6.0
 
 This update to Grafana introduces a new way of exploring your data, support for log data, and tons of other features.
 
@@ -143,8 +143,8 @@ Read more about the short-lived token solution and how to configure it [here](/a
 
 Besides these changes we have also made security improvements regarding Cross-Site Request Forgery (CSRF) and Cross-site Scripting (XSS) vulnerabilities:
 
-* Cookies are per default using the [SameSite](/installation/configuration/#cookie-samesite) attribute to protect against CSRF attacks
-* Script tags in text panels are per default [disabled](/installation/configuration/#disable-sanitize-html) to protect against XSS attacks
+* Cookies are per default using the [SameSite](/administration/configuration/#cookie-samesite) attribute to protect against CSRF attacks
+* Script tags in text panels are per default [disabled](/administration/configuration/#disable-sanitize-html) to protect against XSS attacks
 
 > If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
 but our goal is to remove this requirement in the near future.

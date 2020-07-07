@@ -1,6 +1,7 @@
 import React, { FunctionComponent, ReactNode } from 'react';
 import classNames from 'classnames';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
+import { Icon } from '../Icon/Icon';
 
 interface Props {
   children: ReactNode;
@@ -9,7 +10,7 @@ interface Props {
   isFocused?: boolean;
   isInvalid?: boolean;
   tooltip?: PopoverContent;
-  width?: number;
+  width?: number | 'auto';
 }
 
 export const FormLabel: FunctionComponent<Props> = ({
@@ -22,7 +23,7 @@ export const FormLabel: FunctionComponent<Props> = ({
   width,
   ...rest
 }) => {
-  const classes = classNames(`gf-form-label width-${width ? width : '10'}`, className, {
+  const classes = classNames(className, `gf-form-label width-${width ? width : '10'}`, {
     'gf-form-label--is-focused': isFocused,
     'gf-form-label--is-invalid': isInvalid,
   });
@@ -33,7 +34,7 @@ export const FormLabel: FunctionComponent<Props> = ({
       {tooltip && (
         <Tooltip placement="top" content={tooltip} theme={'info'}>
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <i className="fa fa-info-circle" />
+            <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
           </div>
         </Tooltip>
       )}

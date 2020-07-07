@@ -1,15 +1,49 @@
 #!/usr/bin/env node
 
-var path = require('path') ;
+const fs = require('fs');
+const path = require('path');
 
-// This bin is used for cli executed internally
+let includeInternalScripts = false;
 
-var tsProjectPath = path.resolve(__dirname, '../tsconfig.json');
+const isLinkedMode = () => {
+  // In circleci we are in linked mode. Detect by using the circle working directory,
+  // rather than the present working directory.
+  const pwd = process.env.CIRCLE_WORKING_DIRECTORY || process.env.PWD || process.cwd();
 
-require('ts-node').register({
-  project: tsProjectPath,
-  transpileOnly: true
-});
+  if (path.basename(pwd) === 'grafana-toolkit') {
+    return true;
+  }
 
+  try {
+    const resolvedPath = path.resolve(`${__dirname}/../../../node_modules/@grafana/toolkit`);
+    return fs.lstatSync(resolvedPath).isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
 
-require('../src/cli/index.ts').run(true);
+const entrypoint = () => {
+  const entrypointBase = `${__dirname}/../src/cli/index`;
+  const resolvedJsDir = path.resolve(`${entrypointBase}.js`);
+  const resolvedTsDir = path.resolve(`${entrypointBase}.ts`);
+
+  // IF we have a toolkit directory AND linked grafana toolkit AND the toolkit dir is a symbolic lik
+  // THEN run everything in linked mode
+  if (isLinkedMode() || !fs.existsSync(resolvedJsDir)) {
+    console.log('Running in local/linked mode');
+    // This bin is used for cli executed internally
+    var tsProjectPath = path.resolve(__dirname, '../tsconfig.json');
+    require('ts-node').register({
+      project: tsProjectPath,
+      transpileOnly: true,
+    });
+
+    includeInternalScripts = true;
+    return resolvedTsDir;
+  }
+
+  // The default entrypoint must exist, return it now.
+  return resolvedJsDir;
+};
+
+require(entrypoint()).run(includeInternalScripts);

@@ -4,13 +4,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestNotifications(t *testing.T) {
-
 	Convey("Given the notifications service", t, func() {
 		setting.StaticRootPath = "../../../public/"
 
@@ -26,7 +25,7 @@ func TestNotifications(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("When sending reset email password", func() {
-			err := ns.sendResetPasswordEmail(&m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
+			err := ns.sendResetPasswordEmail(&models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
 			So(err, ShouldBeNil)
 
 			sentMsg := <-ns.mailQueue

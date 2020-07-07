@@ -16,7 +16,7 @@ To enable the GitHub OAuth2 you must register your application with GitHub. GitH
 
 ## Configure GitHub OAuth application
 
-You need to create a GitHub OAuth application (you find this under the GitHub
+You need to create a GitHub OAuth application (you  will find this under the GitHub
 settings page). When you create the application you will need to specify
 a callback URL. Specify this as callback:
 
@@ -25,7 +25,7 @@ http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
 ```
 
 This callback URL must match the full HTTP address that you use in your
-browser to access Grafana, but with the prefix path of `/login/github`.
+browser to access Grafana, but with the suffix path of `/login/github`.
 When the GitHub OAuth application is created you will get a Client ID and a
 Client Secret. Specify these in the Grafana configuration file. For
 example:

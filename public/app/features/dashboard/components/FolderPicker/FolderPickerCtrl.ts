@@ -1,10 +1,13 @@
 import _ from 'lodash';
+import { IScope } from 'angular';
+import { AppEvents } from '@grafana/data';
+
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { ValidationSrv } from 'app/features/manage-dashboards';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { AppEvents } from '@grafana/data';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class FolderPickerCtrl {
   initialTitle: string;
@@ -28,7 +31,7 @@ export class FolderPickerCtrl {
   dashboardId?: number;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private validationSrv: ValidationSrv, private contextSrv: ContextSrv) {
+  constructor(private validationSrv: ValidationSrv, private contextSrv: ContextSrv, private $scope: IScope) {
     this.isEditor = this.contextSrv.isEditor;
 
     if (!this.labelClass) {
@@ -45,33 +48,35 @@ export class FolderPickerCtrl {
       permission: 'Edit',
     };
 
-    return this.backendSrv.get('api/search', params).then((result: any) => {
-      if (
-        this.isEditor &&
-        (query === '' ||
-          query.toLowerCase() === 'g' ||
-          query.toLowerCase() === 'ge' ||
-          query.toLowerCase() === 'gen' ||
-          query.toLowerCase() === 'gene' ||
-          query.toLowerCase() === 'gener' ||
-          query.toLowerCase() === 'genera' ||
-          query.toLowerCase() === 'general')
-      ) {
-        result.unshift({ title: this.rootName, id: 0 });
-      }
+    return promiseToDigest(this.$scope)(
+      backendSrv.get('api/search', params).then((result: any) => {
+        if (
+          this.isEditor &&
+          (query === '' ||
+            query.toLowerCase() === 'g' ||
+            query.toLowerCase() === 'ge' ||
+            query.toLowerCase() === 'gen' ||
+            query.toLowerCase() === 'gene' ||
+            query.toLowerCase() === 'gener' ||
+            query.toLowerCase() === 'genera' ||
+            query.toLowerCase() === 'general')
+        ) {
+          result.unshift({ title: this.rootName, id: 0 });
+        }
 
-      if (this.isEditor && this.enableCreateNew && query === '') {
-        result.unshift({ title: '-- New Folder --', id: -1 });
-      }
+        if (this.isEditor && this.enableCreateNew && query === '') {
+          result.unshift({ title: '-- New Folder --', id: -1 });
+        }
 
-      if (this.enableReset && query === '' && this.initialTitle !== '') {
-        result.unshift({ title: this.initialTitle, id: null });
-      }
+        if (this.enableReset && query === '' && this.initialTitle !== '') {
+          result.unshift({ title: this.initialTitle, id: null });
+        }
 
-      return _.map(result, item => {
-        return { text: item.title, value: item.id };
-      });
-    });
+        return _.map(result, item => {
+          return { text: item.title, value: item.id };
+        });
+      })
+    );
   }
 
   onFolderChange(option: { value: number; text: string }) {
@@ -105,13 +110,15 @@ export class FolderPickerCtrl {
       evt.preventDefault();
     }
 
-    return this.backendSrv.createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
-      appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+    return promiseToDigest(this.$scope)(
+      backendSrv.createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
+        appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
 
-      this.closeCreateFolder();
-      this.folder = { text: result.title, value: result.id };
-      this.onFolderChange(this.folder);
-    });
+        this.closeCreateFolder();
+        this.folder = { text: result.title, value: result.id };
+        this.onFolderChange(this.folder);
+      })
+    );
   }
 
   cancelCreateFolder(evt: any) {

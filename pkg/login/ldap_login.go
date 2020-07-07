@@ -51,6 +51,7 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 	}
 
 	upsert := &models.UpsertUserCommand{
+		ReqContext:    query.ReqContext,
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
 	}
@@ -76,7 +77,6 @@ func DisableExternalUser(username string) error {
 
 	userInfo := userQuery.Result
 	if !userInfo.IsDisabled {
-
 		ldapLogger.Debug(
 			"Disabling external user",
 			"user",

@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import classNames from 'classnames';
 import { AlertRule } from '../../types';
+import { Icon, IconName, Button, Tooltip, LinkButton, HorizontalGroup } from '@grafana/ui';
 
 export interface Props {
   rule: AlertRule;
@@ -24,19 +24,11 @@ class AlertRuleItem extends PureComponent<Props> {
   render() {
     const { rule, onTogglePause } = this.props;
 
-    const iconClassName = classNames({
-      fa: true,
-      'fa-play': rule.state === 'paused',
-      'fa-pause': rule.state !== 'paused',
-    });
-
-    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
+    const ruleUrl = `${rule.url}?editPanel=${rule.panelId}&tab=alert`;
 
     return (
       <li className="alert-rule-item">
-        <span className={`alert-rule-item__icon ${rule.stateClass}`}>
-          <i className={rule.stateIcon} />
-        </span>
+        <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
         <div className="alert-rule-item__body">
           <div className="alert-rule-item__header">
             <div className="alert-rule-item__name">
@@ -51,16 +43,19 @@ class AlertRuleItem extends PureComponent<Props> {
         </div>
 
         <div className="alert-rule-item__actions">
-          <button
-            className="btn btn-small btn-inverse alert-list__btn width-2"
-            title="Pausing an alert rule prevents it from executing"
-            onClick={onTogglePause}
-          >
-            <i className={iconClassName} />
-          </button>
-          <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="gicon gicon-cog" />
-          </a>
+          <HorizontalGroup spacing="sm">
+            <Tooltip placement="bottom" content="Pausing an alert rule prevents it from executing">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={rule.state === 'paused' ? 'play' : 'pause'}
+                onClick={onTogglePause}
+              />
+            </Tooltip>
+            <Tooltip placement="right" content="Edit alert rule">
+              <LinkButton size="sm" variant="secondary" href={ruleUrl} icon="cog" />
+            </Tooltip>
+          </HorizontalGroup>
         </div>
       </li>
     );

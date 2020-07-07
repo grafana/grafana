@@ -1,13 +1,16 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { NavModel } from '@grafana/data';
+
 import Page from 'app/core/components/Page/Page';
 import OrgProfile from './OrgProfile';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
-import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
+import { loadOrganization, updateOrganization } from './state/actions';
 import { Organization, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel } from '@grafana/data';
+import { setOrganizationName } from './state/reducers';
+import { VerticalGroup } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -22,11 +25,8 @@ export class OrgDetailsPage extends PureComponent<Props> {
     await this.props.loadOrganization();
   }
 
-  onOrgNameChange = (name: string) => {
-    this.props.setOrganizationName(name);
-  };
-
-  onUpdateOrganization = () => {
+  onUpdateOrganization = (orgName: string) => {
+    this.props.setOrganizationName(orgName);
     this.props.updateOrganization();
   };
 
@@ -38,14 +38,10 @@ export class OrgDetailsPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
-            <div>
-              <OrgProfile
-                onOrgNameChange={name => this.onOrgNameChange(name)}
-                onSubmit={this.onUpdateOrganization}
-                orgName={organization.name}
-              />
+            <VerticalGroup>
+              <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />
               <SharedPreferences resourceUri="org" />
-            </div>
+            </VerticalGroup>
           )}
         </Page.Contents>
       </Page>

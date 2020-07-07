@@ -12,10 +12,11 @@ export const ConfigEditor = (props: Props) => {
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9090"
         dataSourceConfig={options}
+        showAccessOptions={true}
         onChange={onOptionsChange}
       />
 
-      <PromSettings value={options} onChange={onOptionsChange} />
+      <PromSettings options={options} onOptionsChange={onOptionsChange} />
     </>
   );
 };

@@ -54,8 +54,8 @@ export function ControllerTestContext(this: any) {
       self.panel = new PanelModel({ type: 'test' });
       self.dashboard = { meta: {} };
       self.isUtc = false;
-      self.dashboard.isTimezoneUtc = () => {
-        return self.isUtc;
+      self.dashboard.getTimezone = () => {
+        return self.isUtc ? 'utc' : 'browser';
       };
 
       $rootScope.appEvent = sinon.spy();
@@ -172,7 +172,11 @@ export class TimeSrvStub {
 }
 
 export class ContextSrvStub {
-  isGrafanaVisibile = jest.fn();
+  isGrafanaVisible = jest.fn();
+
+  getValidInterval() {
+    return '10s';
+  }
 
   hasRole() {
     return true;

@@ -1,15 +1,15 @@
-import React, { FunctionComponent, useContext } from 'react';
+import React, { FunctionComponent, useContext, useState } from 'react';
 import { css, cx } from 'emotion';
 
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
+import { Icon } from '../Icon/Icon';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   collapse: css`
     label: collapse;
-    margin-top: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing.sm};
   `,
   collapseBody: css`
     label: collapse__body;
@@ -36,7 +36,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
       animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
       animation-iteration-count: 100;
       left: -25%;
-      background: ${theme.colors.blue};
+      background: ${theme.palette.blue85};
     }
     @keyframes loader {
       from {
@@ -51,7 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   header: css`
     label: collapse__header;
-    padding: ${theme.spacing.sm} ${theme.spacing.md} 0 ${theme.spacing.md};
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
     display: flex;
     cursor: inherit;
     transition: all 0.1s linear;
@@ -60,11 +60,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   headerCollapsed: css`
     label: collapse__header--collapsed;
     cursor: pointer;
-    padding: ${theme.spacing.sm} ${theme.spacing.md} 0 ${theme.spacing.md};
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
   `,
   headerButtons: css`
     label: collapse__header-buttons;
     margin-right: ${theme.spacing.sm};
+    margin-top: ${theme.spacing.xxs};
     font-size: ${theme.typography.size.lg};
     line-height: ${theme.typography.heading.h6};
     display: inherit;
@@ -78,7 +79,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     font-weight: ${theme.typography.weight.semibold};
     margin-right: ${theme.spacing.sm};
     font-size: ${theme.typography.heading.h6};
-    box-shadow: ${selectThemeVariant({ light: 'none', dark: '1px 1px 4px rgb(45, 45, 45)' }, theme.type)};
   `,
 }));
 
@@ -90,6 +90,22 @@ interface Props {
   onToggle?: (isOpen: boolean) => void;
 }
 
+export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle, ...otherProps }) => {
+  const [open, setOpen] = useState(isOpen);
+  return (
+    <Collapse
+      isOpen={open}
+      {...otherProps}
+      onToggle={() => {
+        setOpen(!open);
+        if (onToggle) {
+          onToggle(!open);
+        }
+      }}
+    />
+  );
+};
+
 export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, collapsible, onToggle, children }) => {
   const theme = useContext(ThemeContext);
   const style = getStyles(theme);
@@ -100,7 +116,6 @@ export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, col
   };
 
   const panelClass = cx([style.collapse, 'panel-container']);
-  const iconClass = isOpen ? 'fa fa-caret-up' : 'fa fa-caret-down';
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
   const headerButtonsClass = collapsible ? cx([style.headerButtons]) : cx([style.headerButtonsCollapsed]);
@@ -109,7 +124,7 @@ export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, col
     <div className={panelClass}>
       <div className={headerClass} onClick={onClickToggle}>
         <div className={headerButtonsClass}>
-          <span className={iconClass} />
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </div>
         <div className={cx([style.headerLabel])}>{label}</div>
       </div>

@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
-import { AsyncSelect } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
 import { debounce } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
+const { AsyncSelect } = LegacyForms;
 
 export interface Team {
   id: number;
@@ -35,27 +36,28 @@ export class TeamPicker extends Component<Props, State> {
   }
 
   search(query?: string) {
-    const backendSrv = getBackendSrv();
     this.setState({ isLoading: true });
 
     if (_.isNil(query)) {
       query = '';
     }
 
-    return backendSrv.get(`/api/teams/search?perpage=100&page=1&query=${query}`).then((result: any) => {
-      const teams = result.teams.map((team: any) => {
-        return {
-          id: team.id,
-          value: team.id,
-          label: team.name,
-          name: team.name,
-          imgUrl: team.avatarUrl,
-        };
-      });
+    return getBackendSrv()
+      .get(`/api/teams/search?perpage=100&page=1&query=${query}`)
+      .then((result: any) => {
+        const teams = result.teams.map((team: any) => {
+          return {
+            id: team.id,
+            value: team.id,
+            label: team.name,
+            name: team.name,
+            imgUrl: team.avatarUrl,
+          };
+        });
 
-      this.setState({ isLoading: false });
-      return teams;
-    });
+        this.setState({ isLoading: false });
+        return teams;
+      });
   }
 
   render() {

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+set -eo pipefail
+
+_basedir=$(dirname "$0")
+cd "$_basedir"
 
 docker_build () {
 	dockerfile=$1

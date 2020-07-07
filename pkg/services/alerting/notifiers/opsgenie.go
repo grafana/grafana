@@ -16,6 +16,7 @@ func init() {
 		Type:        "opsgenie",
 		Name:        "OpsGenie",
 		Description: "Sends notifications to OpsGenie",
+		Heading:     "OpsGenie settings",
 		Factory:     NewOpsGenieNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">OpsGenie settings</h3>
@@ -36,7 +37,45 @@ func init() {
            tooltip="Automatically close alerts in OpsGenie once the alert goes back to ok.">
         </gf-form-switch>
       </div>
-    `,
+      <div class="gf-form">
+        <gf-form-switch
+           class="gf-form"
+           label="Override priority"
+           label-class="width-14"
+           checked="ctrl.model.settings.overridePriority"
+           tooltip="Allow the alert priority to be set using the og_priority tag">
+        </gf-form-switch>
+  </div>
+`,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "API Key",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "OpsGenie API Key",
+				PropertyName: "apiKey",
+				Required:     true,
+			},
+			{
+				Label:        "Alert API Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "https://api.opsgenie.com/v2/alerts",
+				PropertyName: "apiUrl",
+				Required:     true,
+			},
+			{
+				Label:        "Auto close incidents",
+				Element:      alerting.ElementTypeSwitch,
+				Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+				PropertyName: "autoClose",
+			}, {
+				Label:        "Override priority",
+				Element:      alerting.ElementTypeSwitch,
+				Description:  "Allow the alert priority to be set using the og_priority tag",
+				PropertyName: "overridePriority",
+			},
+		},
 	})
 }
 
@@ -47,6 +86,7 @@ var (
 // NewOpsGenieNotifier is the constructor for OpsGenie.
 func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
+	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
 	apiKey := model.Settings.Get("apiKey").MustString()
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
@@ -57,11 +97,12 @@ func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	}
 
 	return &OpsGenieNotifier{
-		NotifierBase: NewNotifierBase(model),
-		APIKey:       apiKey,
-		APIUrl:       apiURL,
-		AutoClose:    autoClose,
-		log:          log.New("alerting.notifier.opsgenie"),
+		NotifierBase:     NewNotifierBase(model),
+		APIKey:           apiKey,
+		APIUrl:           apiURL,
+		AutoClose:        autoClose,
+		OverridePriority: overridePriority,
+		log:              log.New("alerting.notifier.opsgenie"),
 	}, nil
 }
 
@@ -69,10 +110,11 @@ func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, er
 // alert notifications to OpsGenie
 type OpsGenieNotifier struct {
 	NotifierBase
-	APIKey    string
-	APIUrl    string
-	AutoClose bool
-	log       log.Logger
+	APIKey           string
+	APIUrl           string
+	AutoClose        bool
+	OverridePriority bool
+	log              log.Logger
 }
 
 // Notify sends an alert notification to OpsGenie.
@@ -111,7 +153,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 
 	details := simplejson.New()
 	details.Set("url", ruleURL)
-	if evalContext.ImagePublicURL != "" {
+	if on.NeedsImage() && evalContext.ImagePublicURL != "" {
 		details.Set("image", evalContext.ImagePublicURL)
 	}
 
@@ -124,7 +166,14 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		} else {
 			tags = append(tags, tag.Key)
 		}
-
+		if tag.Key == "og_priority" {
+			if on.OverridePriority {
+				validPriorities := map[string]bool{"P1": true, "P2": true, "P3": true, "P4": true, "P5": true}
+				if validPriorities[tag.Value] {
+					bodyJSON.Set("priority", tag.Value)
+				}
+			}
+		}
 	}
 	bodyJSON.Set("tags", tags)
 

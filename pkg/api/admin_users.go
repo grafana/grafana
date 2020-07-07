@@ -14,6 +14,7 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) {
 		Email:    form.Email,
 		Password: form.Password,
 		Name:     form.Name,
+		OrgId:    form.OrgId,
 	}
 
 	if len(cmd.Login) == 0 {
@@ -30,6 +31,11 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrOrgNotFound {
+			c.JsonApiErr(400, models.ErrOrgNotFound.Error(), nil)
+			return
+		}
+
 		c.JsonApiErr(500, "failed to create user", err)
 		return
 	}
@@ -108,6 +114,10 @@ func AdminDeleteUser(c *models.ReqContext) {
 	cmd := models.DeleteUserCommand{UserId: userID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrUserNotFound {
+			c.JsonApiErr(404, models.ErrUserNotFound.Error(), nil)
+			return
+		}
 		c.JsonApiErr(500, "Failed to delete user", err)
 		return
 	}
@@ -127,6 +137,9 @@ func (server *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := bus.Dispatch(&disableCmd); err != nil {
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
 		return Error(500, "Failed to disable user", err)
 	}
 
@@ -150,6 +163,9 @@ func AdminEnableUser(c *models.ReqContext) Response {
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := bus.Dispatch(&disableCmd); err != nil {
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
 		return Error(500, "Failed to enable user", err)
 	}
 

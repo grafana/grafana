@@ -18,14 +18,21 @@ bulkAlertingDashboard() {
 
 		requiresJsonnet
 
-		COUNTER=0
-		MAX=100
+		jsonnet -o "bulk_alerting_dashboards/bulk_alerting_datasources.yaml" ./bulk_alerting_dashboards/datasources.jsonnet
+
+		COUNTER=1
+		DS=1
+		MAX=1000
 		while [  $COUNTER -lt $MAX ]; do
-				jsonnet -o "bulk_alerting_dashboards/alerting_dashboard${COUNTER}.json" -e "local bulkDash = import 'bulk_alerting_dashboards/bulkdash_alerting.jsonnet'; bulkDash + {  uid: 'bd-${COUNTER}',  title: 'alerting-title-${COUNTER}' }"
+				jsonnet -o "bulk_alerting_dashboards/alerting_dashboard${COUNTER}.json" \
+					-e "local bulkDash = import 'bulk_alerting_dashboards/dashboard.libsonnet'; bulkDash.alertingDashboard(${COUNTER}, ${DS})"
 				let COUNTER=COUNTER+1
+				let DS=COUNTER/10
+				let DS=DS+1
 		done
 
 		ln -s -f ../../../devenv/bulk_alerting_dashboards/bulk_alerting_dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
+		ln -s -f ../../../devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml ../conf/provisioning/datasources/custom.yaml
 }
 
 requiresJsonnet() {
@@ -52,7 +59,7 @@ usage() {
 	echo "Usage:"
 	echo "  bulk-dashboards                              - create and provisioning 400 dashboards"
 	echo "  bulk-alerting-dashboards                     - create and provisioning 400 dashboards with alerts"
-	echo "  no args                                      - provisiong core datasources and dev dashboards"
+	echo "  no args                                      - provisioning core datasources and dev dashboards"
 }
 
 main() {

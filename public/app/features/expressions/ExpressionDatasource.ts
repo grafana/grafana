@@ -1,81 +1,18 @@
-import {
-  DataSourceApi,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { ExpressionQuery, GELQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { Observable, from } from 'rxjs';
-import { config } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DataSourceWithBackend } from '@grafana/runtime';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
  */
-export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
+export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
   getCollapsedText(query: ExpressionQuery) {
     return `Expression: ${query.type}`;
-  }
-
-  query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints, range } = request;
-
-    let expressionCount = 0;
-    const orgId = (window as any).grafanaBootData.user.orgId;
-    const queries = targets.map(q => {
-      if (q.datasource === ExpressionDatasourceID) {
-        expressionCount++;
-        return {
-          ...q,
-          datasourceId: this.id,
-          orgId,
-        };
-      }
-      const dsName = q.datasource && q.datasource !== 'default' ? q.datasource : config.defaultDatasource;
-      const ds = config.datasources[dsName];
-      if (!ds) {
-        throw new Error('Unknown Datasource: ' + q.datasource);
-      }
-      return {
-        ...q,
-        datasourceId: ds.id,
-        intervalMs,
-        maxDataPoints,
-        orgId,
-      };
-    });
-    const req: Promise<DataQueryResponse> = getBackendSrv()
-      .post('/api/ds/query', {
-        from: range.from.valueOf().toString(),
-        to: range.to.valueOf().toString(),
-        queries: queries,
-        range,
-        expressionCount,
-      })
-      .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp);
-      });
-    return from(req);
-  }
-
-  /**
-   * This makes the arrow libary loading async.
-   */
-  async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    const { resultsToDataFrames } = await import(
-      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/arrow/ArrowDataFrame'
-    );
-    return { data: resultsToDataFrames(rsp) };
-  }
-
-  testDatasource() {
-    return Promise.resolve({});
   }
 
   newQuery(): ExpressionQuery {
@@ -87,7 +24,9 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
   }
 }
 
+// MATCHES the constant in DataSourceWithBackend
 export const ExpressionDatasourceID = '__expr__';
+
 export const expressionDatasource = new ExpressionDatasourceApi({
   id: -100,
   name: ExpressionDatasourceID,

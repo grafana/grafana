@@ -1,51 +1,52 @@
 package teamguardian
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUpdateTeam(t *testing.T) {
 	Convey("Updating a team", t, func() {
 		bus.ClearBusHandlers()
 
-		admin := m.SignedInUser{
+		admin := models.SignedInUser{
 			UserId:  1,
 			OrgId:   1,
-			OrgRole: m.ROLE_ADMIN,
+			OrgRole: models.ROLE_ADMIN,
 		}
-		editor := m.SignedInUser{
+		editor := models.SignedInUser{
 			UserId:  2,
 			OrgId:   1,
-			OrgRole: m.ROLE_EDITOR,
+			OrgRole: models.ROLE_EDITOR,
 		}
-		testTeam := m.Team{
+		testTeam := models.Team{
 			Id:    1,
 			OrgId: 1,
 		}
 
 		Convey("Given an editor and a team he isn't a member of", func() {
 			Convey("Should not be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
-					cmd.Result = []*m.TeamMemberDTO{}
+				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+					cmd.Result = []*models.TeamMemberDTO{}
 					return nil
 				})
 
 				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
-				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
+				So(err, ShouldEqual, models.ErrNotAllowedToUpdateTeam)
 			})
 		})
 
 		Convey("Given an editor and a team he is an admin in", func() {
 			Convey("Should be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
-					cmd.Result = []*m.TeamMemberDTO{{
+				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeam.OrgId,
 						TeamId:     testTeam.Id,
 						UserId:     editor.UserId,
-						Permission: m.PERMISSION_ADMIN,
+						Permission: models.PERMISSION_ADMIN,
 					}}
 					return nil
 				})
@@ -56,24 +57,24 @@ func TestUpdateTeam(t *testing.T) {
 		})
 
 		Convey("Given an editor and a team in another org", func() {
-			testTeamOtherOrg := m.Team{
+			testTeamOtherOrg := models.Team{
 				Id:    1,
 				OrgId: 2,
 			}
 
 			Convey("Shouldn't be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
-					cmd.Result = []*m.TeamMemberDTO{{
+				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeamOtherOrg.OrgId,
 						TeamId:     testTeamOtherOrg.Id,
 						UserId:     editor.UserId,
-						Permission: m.PERMISSION_ADMIN,
+						Permission: models.PERMISSION_ADMIN,
 					}}
 					return nil
 				})
 
 				err := CanAdmin(bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
-				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeamInDifferentOrg)
+				So(err, ShouldEqual, models.ErrNotAllowedToUpdateTeamInDifferentOrg)
 			})
 		})
 

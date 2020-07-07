@@ -4,11 +4,11 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 )
 
 type Migrator struct {
@@ -81,6 +81,7 @@ func (mg *Migrator) Start() error {
 	}
 
 	for _, m := range mg.migrations {
+		m := m
 		_, exists := logMap[m.Id()]
 		if exists {
 			mg.Logger.Debug("Skipping migration: Already executed", "id", m.Id())

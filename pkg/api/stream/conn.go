@@ -104,6 +104,13 @@ func (c *connection) handleMessage(message []byte) {
 	if err != nil {
 		log.Warn("Error Writing same socket back to the channel", "err", err)
 	}
+
+	// switch msgType {
+	// case "subscribe":
+	// 	c.hub.subChannel <- &streamSubscription{name: streamName, conn: c}
+	// case "unsubscribe":
+	// 	c.hub.subChannel <- &streamSubscription{name: streamName, conn: c, remove: true}
+	// }
 }
 
 func (c *connection) write(mt int, payload []byte) error {

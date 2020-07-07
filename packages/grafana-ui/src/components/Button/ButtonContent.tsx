@@ -1,39 +1,53 @@
 import React from 'react';
-import cx from 'classnames';
 import { css } from 'emotion';
-import { stylesFactory } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
+import { IconName } from '../../types/icon';
+import { Icon } from '../Icon/Icon';
+import { ComponentSize } from '../../types/size';
+import { GrafanaTheme } from '@grafana/data';
 
-const getStyles = stylesFactory(() => ({
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   content: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     white-space: nowrap;
+    height: 100%;
+  `,
+
+  icon: css`
+    & + * {
+      margin-left: ${theme.spacing.sm};
+    }
   `,
 }));
 
 type Props = {
-  icon?: string;
+  icon?: IconName;
   className?: string;
-  iconClassName?: string;
   children: React.ReactNode;
+  size?: ComponentSize;
 };
+
 export function ButtonContent(props: Props) {
-  const { icon, className, iconClassName, children } = props;
-  const styles = getStyles();
-  if (icon && children) {
-    return (
-      <span className={cx(styles.content, className)}>
-        <i className={cx([icon, iconClassName])} />
-        &nbsp; &nbsp;
-        <span>{children}</span>
-      </span>
-    );
-  }
-  if (icon) {
-    return (
-      <span className={cx(styles.content, className)}>
-        <i className={cx([icon, iconClassName])} />
-      </span>
-    );
+  const { icon, children, size } = props;
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
+  if (!children) {
+    return <span className={styles.content}>{icon && <Icon name={icon} size={size} />}</span>;
   }
 
-  return <span className={styles.content}>{children}</span>;
+  const iconElement = icon && (
+    <span className={styles.icon}>
+      <Icon name={icon} size={size} />
+    </span>
+  );
+
+  return (
+    <span className={styles.content}>
+      {iconElement}
+      <span>{children}</span>
+    </span>
+  );
 }

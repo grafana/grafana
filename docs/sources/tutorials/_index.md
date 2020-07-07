@@ -12,10 +12,7 @@ This section of the docs contains a series for tutorials and stack setup guides.
 
 ## Articles
 
-- [Running Grafana behind a reverse proxy]({{< relref "../installation/behind_proxy.md" >}})
 - [API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization]({{< relref "api_org_token_howto.md" >}})
-- [How to Use IIS with URL Rewrite as a Reverse Proxy for Grafana on Windows]({{< relref "iis.md" >}})
-- [How to integrate Hubot with Grafana]({{< relref "hubot_howto.md" >}})
 - [How to setup Grafana for high availability]({{< relref "ha_setup.md" >}})
 
 ## External links

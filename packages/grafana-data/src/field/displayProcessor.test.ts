@@ -1,7 +1,7 @@
 import { getDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { ValueMapping, MappingType } from '../types/valueMapping';
-import { FieldType, Threshold, GrafanaTheme, Field, FieldConfig, ThresholdsMode } from '../types';
+import { MappingType, ValueMapping } from '../types/valueMapping';
+import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode } from '../types';
 import { getScaleCalculator, sortThresholds } from './scale';
 import { ArrayVector } from '../vector';
 import { validateFieldConfig } from './fieldOverrides';
@@ -152,8 +152,8 @@ describe('Format value', () => {
 
   it('should return formatted value if there are no matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
-      { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
+      { id: 0, text: 'elva', type: MappingType.ValueToText, value: '11' },
+      { id: 1, text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
     ];
     const value = '10';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
@@ -186,8 +186,8 @@ describe('Format value', () => {
 
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-      { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
+      { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
+      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
     const value = '11';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
@@ -196,14 +196,24 @@ describe('Format value', () => {
   });
 
   it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 1, operator: '', text: '', type: MappingType.ValueToText, value: '1' },
-    ];
+    const valueMappings: ValueMapping[] = [{ id: 1, text: '', type: MappingType.ValueToText, value: '1' }];
     const value = '1';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
 
     expect(instance(value).text).toEqual('');
     expect(instance(value).numeric).toEqual(1);
+  });
+
+  it('With null value and thresholds should use base color', () => {
+    const instance = getDisplayProcessorFromConfig({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: '#AAA' }],
+      },
+    });
+    const disp = instance(null);
+    expect(disp.text).toEqual('');
+    expect(disp.color).toEqual('#AAA');
   });
 
   //
@@ -246,7 +256,7 @@ describe('Format value', () => {
 describe('Date display options', () => {
   it('should format UTC dates', () => {
     const processor = getDisplayProcessor({
-      isUtc: true,
+      timeZone: 'utc',
       field: {
         type: FieldType.time,
         config: {
@@ -259,7 +269,7 @@ describe('Date display options', () => {
 
   it('should pick configured time format', () => {
     const processor = getDisplayProcessor({
-      isUtc: true,
+      timeZone: 'utc',
       field: {
         type: FieldType.time,
         config: {
@@ -272,7 +282,7 @@ describe('Date display options', () => {
 
   it('respect the configured date format', () => {
     const processor = getDisplayProcessor({
-      isUtc: true,
+      timeZone: 'utc',
       field: {
         type: FieldType.time,
         config: {
