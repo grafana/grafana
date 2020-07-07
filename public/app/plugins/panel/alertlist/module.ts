@@ -117,8 +117,8 @@ class AlertListPanel extends PanelCtrl {
       params.dashboardId = this.dashboard.id;
     }
 
-    params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
-    params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
+    params.from = dateMath.parse(this.dashboard.time.from)!.unix() * 1000;
+    params.to = dateMath.parse(this.dashboard.time.to)!.unix() * 1000;
 
     return promiseToDigest(this.$scope)(
       getBackendSrv()

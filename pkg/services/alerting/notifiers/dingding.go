@@ -57,7 +57,6 @@ func init() {
 			},
 		},
 	})
-
 }
 
 func newDingDingNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
@@ -113,7 +112,6 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageURL string) ([]byte, error) {
-
 	q := url.Values{
 		"pc_slide": {"false"},
 		"url":      {messageURL},

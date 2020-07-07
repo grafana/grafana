@@ -15,6 +15,7 @@ import {
   Field,
   QueryResultMetaStat,
   QueryResultMeta,
+  TimeSeriesValue,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -154,16 +155,14 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
   };
 }
 
-function lokiPointsToTimeseriesPoints(
-  data: Array<[number, string]>,
-  options: TransformerOptions
-): Array<[number, number]> {
+function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: TransformerOptions): TimeSeriesValue[][] {
   const stepMs = options.step * 1000;
-  const datapoints: Array<[number, number]> = [];
+  const datapoints: TimeSeriesValue[][] = [];
 
   let baseTimestampMs = options.start / 1e6;
   for (const [time, value] of data) {
-    let datapointValue = parseFloat(value);
+    let datapointValue: TimeSeriesValue = parseFloat(value);
+
     if (isNaN(datapointValue)) {
       datapointValue = null;
     }
@@ -198,7 +197,7 @@ export function lokiResultsToTableModel(
 
   // Collect all labels across all metrics
   const metricLabels: Set<string> = new Set<string>(
-    lokiResults.reduce((acc, cur) => acc.concat(Object.keys(cur.metric)), [])
+    lokiResults.reduce((acc, cur) => acc.concat(Object.keys(cur.metric)), [] as string[])
   );
 
   // Sort metric labels, create columns for them and record their index
@@ -245,9 +244,9 @@ function createMetricLabel(labelData: { [key: string]: string }, options?: Trans
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat), labelData);
+      : renderTemplate(templateSrv.replace(options.legendFormat ?? ''), labelData);
 
-  if (!label) {
+  if (!label && options) {
     label = options.query;
   }
   return label;
@@ -272,11 +271,13 @@ export function decamelize(s: string): string {
 }
 
 // Turn loki stats { metric: value } into meta stat { title: metric, value: value }
-function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
+function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[] {
   const result: QueryResultMetaStat[] = [];
+
   if (!stats) {
     return result;
   }
+
   for (const section in stats) {
     const values = stats[section];
     for (const label in values) {
@@ -293,6 +294,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
       result.push({ displayName: title, value, unit });
     }
   }
+
   return result;
 }
 
@@ -309,6 +311,7 @@ export function lokiStreamsToDataframes(
   const custom = {
     lokiQueryStatKey: 'Summary: total bytes processed',
   };
+
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
@@ -406,10 +409,10 @@ export function rangeQueryResponseToTimeSeries(
 
   const transformerOptions: TransformerOptions = {
     format: target.format,
-    legendFormat: target.legendFormat,
-    start: query.start,
-    end: query.end,
-    step: query.step,
+    legendFormat: target.legendFormat ?? '',
+    start: query.start!,
+    end: query.end!,
+    step: query.step!,
     query: query.query,
     responseListLength,
     refId: target.refId,

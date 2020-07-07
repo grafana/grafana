@@ -8,7 +8,6 @@ import (
 
 func TestURLBuilder(t *testing.T) {
 	Convey("AzureMonitor URL Builder", t, func() {
-
 		Convey("when metric definition is in the short form", func() {
 			ub := &urlBuilder{
 				DefaultSubscription: "default-sub",
