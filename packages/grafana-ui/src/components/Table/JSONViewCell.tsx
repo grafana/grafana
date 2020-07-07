@@ -30,7 +30,7 @@ export const JSONViewCell: FC<TableCellProps> = props => {
   const content = <JSONTooltip value={value} />;
   return (
     <div className={cx(txt, tableStyles.tableCell)}>
-      <Tooltip placement="auto" content={content} theme={'info'}>
+      <Tooltip placement="auto" content={content} theme="code">
         <div className={tableStyles.overflow}>{displayValue}</div>
       </Tooltip>
     </div>
@@ -45,7 +45,6 @@ const JSONTooltip: FC<PopupProps> = props => {
   const theme = useTheme();
   const className = css`
     padding: ${theme.spacing.xs};
-    background-color: ${theme.colors.bg1};
   `;
   return (
     <div className={className}>

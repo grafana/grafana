@@ -4,7 +4,7 @@ import { Popover } from './Popover';
 import { PopoverController, UsingPopperProps } from './PopoverController';
 
 export interface TooltipProps extends UsingPopperProps {
-  theme?: 'info' | 'error';
+  theme?: 'info' | 'error' | 'code';
 }
 
 export interface PopoverContentProps {
