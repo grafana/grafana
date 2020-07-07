@@ -10,6 +10,7 @@ func init() {
 	bus.AddHandler("sql", SaveProvisionedDashboard)
 	bus.AddHandler("sql", GetProvisionedDataByDashboardId)
 	bus.AddHandler("sql", UnprovisionDashboard)
+	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboard)
 }
 
 type DashboardExtras struct {
@@ -87,4 +88,29 @@ func UnprovisionDashboard(cmd *models.UnprovisionDashboardCommand) error {
 		return err
 	}
 	return nil
+}
+
+func DeleteOrphanedProvisionedDashboard(cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		var result []*models.DashboardProvisioning
+
+		convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
+		for index, readerName := range cmd.ReaderNames {
+			convertedReaderNames[index] = readerName
+		}
+
+		err := sess.NotIn("name", convertedReaderNames...).Find(&result)
+		if err != nil {
+			return err
+		}
+
+		for _, deleteDashCommand := range result {
+			err := deleteDashboard(&models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId}, sess)
+			if err != nil && err != models.ErrDashboardNotFound {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
