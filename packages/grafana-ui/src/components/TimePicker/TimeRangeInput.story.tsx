@@ -1,13 +1,13 @@
 import React from 'react';
-import { TimeRangeInput } from './TimeRangeInput';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './TimeRangeInput.mdx';
-import { UseState } from '../../utils/storybook/UseState';
-import { dateTime, TimeFragment } from '@grafana/data';
 import { action } from '@storybook/addon-actions';
+import { dateTime, TimeFragment } from '@grafana/data';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { UseState } from '../../utils/storybook/UseState';
+import { TimeRangeInput } from './TimeRangeInput';
+import mdx from './TimeRangeInput.mdx';
 
 export default {
-  title: 'Forms/TimeRangeInput',
+  title: 'Pickers and Editors/TimePickers/TimeRangeInput',
   component: TimeRangeInput,
   decorators: [withCenteredStory],
   parameters: {

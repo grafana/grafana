@@ -44,7 +44,9 @@ export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, t
         onClick={onOpen}
       >
         <TimePickerButtonLabel value={value} />
-        <span className={inputStyles.suffix}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />}</span>
+        <span className={cx(inputStyles.suffix, styles.caretIcon)}>
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
+        </span>
       </div>
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
