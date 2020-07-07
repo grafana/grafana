@@ -55,7 +55,7 @@ GF_PATHS_PROVISIONING | /etc/grafana/provisioning
 
 ## Logging
 
-Logs in the docker container go to standard out by default, as is common in the docker world. You can change this by setting a different [log mode]({{< relref "../administration/configuration.md#mode" >}}).
+Logs in the docker container go to standard out by default, as is common in the docker world. Change this by setting a different [log mode]({{< relref "../administration/configuration.md#mode" >}}).
 
 Example:
 
