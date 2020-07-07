@@ -14,7 +14,7 @@ const defaultWeChatWorkMsgType = "link"
 const wechatworkOptionsTemplate = `
       <h3 class="page-heading">WeChat Work settings</h3>
       <div class="gf-form">
-        <span class="gf-form-label width-10">WeChat Work Robot Webhook Url</span>
+        <span class="gf-form-label width-14">WeChat Work Robot Webhook Url</span>
         <input type="text" required class="gf-form-input max-width-70" ng-model="ctrl.model.settings.url" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx"></input>
       </div>
 `
@@ -93,7 +93,6 @@ func (ww *WeChatWorkNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 func (ww *WeChatWorkNotifier) genBody(evalContext *alerting.EvalContext, messageURL string) ([]byte, error) {
-
 	message := evalContext.Rule.Message
 	picURL := evalContext.ImagePublicURL
 	title := evalContext.GetNotificationTitle()
