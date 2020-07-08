@@ -691,15 +691,15 @@ describe('DashboardModel', () => {
       expect(model.templating.list[1].tags).toEqual([
         { text: 'Africa', selected: false },
         {
-          text: 'America',
           selected: true,
+          text: 'America',
           values: ['server-us-east', 'server-us-central', 'server-us-west'],
           valuesText: 'server-us-east + server-us-central + server-us-west',
         },
         { text: 'Asia', selected: false },
         {
-          text: 'Europe',
           selected: true,
+          text: 'Europe',
           values: ['server-eu-east', 'server-eu-west'],
           valuesText: 'server-eu-east + server-eu-west',
         },

@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import _, { defaults } from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
@@ -557,8 +557,7 @@ export class DashboardMigrator {
             continue;
           }
 
-          const currentValue = currents[tag];
-          newTags.push({ ...currentValue, text: tag, selected: false });
+          newTags.push(defaults(currents[tag], { text: tag, selected: false }));
         }
         variable.tags = newTags;
       }
