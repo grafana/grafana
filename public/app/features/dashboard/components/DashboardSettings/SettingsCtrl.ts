@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 import { selectors } from '@grafana/e2e-selectors';
