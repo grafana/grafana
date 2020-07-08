@@ -19,6 +19,7 @@ import (
 	"github.com/go-macaron/session"
 	ini "gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -1092,8 +1093,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 }
 
 func newAnnotationCleanupSettings(section *ini.Section) AnnotationCleanupSettings {
+	maxAge, err := gtime.ParseInterval(section.Key("max_age").MustString(""))
+	if err != nil {
+		maxAge = 0
+	}
+
 	return AnnotationCleanupSettings{
-		MaxAge:   section.Key("max_age").MustDuration(0),
+		MaxAge:   maxAge,
 		MaxCount: section.Key("max_annotations_to_keep").MustInt64(0),
 	}
 }
