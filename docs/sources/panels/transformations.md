@@ -101,13 +101,29 @@ After I apply the transformation, there is no time value and each column has bee
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contains the same data.
 
-In the example below, we are visualizing multiple queries returning table data before applying the transformation.
+In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
-{{< docs-imagebox img="/img/docs/transformations/table-data-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Query A:
 
-Here is the same example after applying the merge transformation.
+| Time                | Job     | Uptime    |
+|---------------------|---------|-----------|
+| 2020-07-07 11:34:20 | node    | 25260122  |
+| 2020-07-07 11:24:20 | postgre | 123001233 |
 
-{{< docs-imagebox img="/img/docs/transformations/table-data-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Query B:
+
+| Time                | Job     | Errors |
+|---------------------|---------|--------|
+| 2020-07-07 11:34:20 | node    | 15     |
+| 2020-07-07 11:24:20 | postgre | 5      |
+
+Here is the result after applying the merge transformation.
+
+| Time                | Job     | Errors | Uptime    |
+|---------------------|---------|--------|-----------|
+| 2020-07-07 11:34:20 | node    | 15     | 25260122  |
+| 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
+
 
 ### Filter by name
 
@@ -214,13 +230,34 @@ Use this transformation to combine the result from multiple time series data que
 
 The result from this transformation will contain three columns: `Time`, `Metric`, and `Value`. The `Metric` column is added so you easily can see from which query the metric originates from. Customize this value by defining `Label` on the source query.
 
-In the example below, we apply a transformation to multiple queries returning time series data.
+In the example below, we have two queries returning time series data. It is visualized as two separate tables before applying the transformation.
 
-{{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Query A:
 
-Here is the same example after applying the Series to rows transformation.
+| Time                | Temperature |
+|---------------------|-------------|
+| 2020-07-07 11:34:20 | 25          |
+| 2020-07-07 10:31:22 | 22          |
+| 2020-07-07 09:30:05 | 19          |
 
-{{< docs-imagebox img="/img/docs/transformations/time-series-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Query B:
+
+| Time                | Humidity |
+|---------------------|----------|
+| 2020-07-07 11:34:20 | 24       |
+| 2020-07-07 10:32:20 | 29       |
+| 2020-07-07 09:30:57 | 33       |
+
+Here is the result after applying the `Series to rows` transformation.
+
+| Time                | Metric      | Value |
+|---------------------|-------------|-------|
+| 2020-07-07 11:34:20 | Temperature | 25    |
+| 2020-07-07 11:34:20 | Humidity    | 22    |
+| 2020-07-07 10:32:20 | Humidity    | 29    |
+| 2020-07-07 10:31:22 | Temperature | 22    |
+| 2020-07-07 09:30:57 | Humidity    | 33    |
+| 2020-07-07 09:30:05 | Temperature | 19    |
 
 ## Debug transformations
 
