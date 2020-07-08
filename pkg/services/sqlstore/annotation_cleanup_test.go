@@ -130,7 +130,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 	require.Nil(t, err)
 
-	// The
+	// assert that the last annotations was kept
 	countNew, err := session.Where("alert_id = 20").Count(&annotations.Item{})
 	require.Nil(t, err)
 	require.Equal(t, int64(1), countNew, "the last annotations should be kept")
