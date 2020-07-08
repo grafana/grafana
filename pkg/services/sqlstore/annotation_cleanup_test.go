@@ -1,5 +1,3 @@
-// +build integration
-
 package sqlstore
 
 import (
@@ -7,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -74,13 +73,13 @@ func TestAnnotationCleanUp(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cleaner := &AnnotationCleanupService{BatchSize: 1, SQLStore: fakeSQL}
+			cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
 			err := cleaner.CleanAnnotations(context.Background(), test.cfg)
 			require.Nil(t, err)
 
-			assertAnnotationCount(t, fakeSQL, AlertAnnotationType, test.alertAnnotationCount)
-			assertAnnotationCount(t, fakeSQL, DashboardAnnotationType, test.dashboardAnnotationCount)
-			assertAnnotationCount(t, fakeSQL, APIAnnotationType, test.APIAnnotationCount)
+			assertAnnotationCount(t, fakeSQL, alertAnnotationType, test.alertAnnotationCount)
+			assertAnnotationCount(t, fakeSQL, dashboardAnnotationType, test.dashboardAnnotationCount)
+			assertAnnotationCount(t, fakeSQL, apiAnnotationType, test.APIAnnotationCount)
 		})
 	}
 }

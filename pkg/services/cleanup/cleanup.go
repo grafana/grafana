@@ -34,16 +34,16 @@ func (srv *CleanUpService) Init() error {
 func (srv *CleanUpService) Run(ctx context.Context) error {
 	srv.cleanUpTmpFiles()
 
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Minute * 10)
 	for {
 		select {
 		case <-ticker.C:
-			ctxWithTimeout, cancelFn := context.WithTimeout(ctx, time.Second*9)
+			ctxWithTimeout, cancelFn := context.WithTimeout(ctx, time.Minute*9)
 			defer cancelFn()
 
-			//srv.cleanUpTmpFiles()
-			//srv.deleteExpiredSnapshots()
-			//srv.deleteExpiredDashboardVersions()
+			srv.cleanUpTmpFiles()
+			srv.deleteExpiredSnapshots()
+			srv.deleteExpiredDashboardVersions()
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
 
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
