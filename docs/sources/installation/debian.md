@@ -55,7 +55,7 @@ After you add the repository:
 
 ```
 sudo apt-get update
-sudo apt-get install grafana
+sudo apt-get install grafana-enterprise
 ```
 
 #### To install the latest OSS release:
