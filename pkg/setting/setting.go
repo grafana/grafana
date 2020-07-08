@@ -303,7 +303,7 @@ type Cfg struct {
 
 	AnonymousHideVersion bool
 
-	// // Annotations
+	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
