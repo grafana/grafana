@@ -129,6 +129,11 @@ export class DataSourceWithBackend<
 
   /**
    * Optionally augment the response before returning the results to the
+   *
+   * NOTE: this was added in 7.1 for azure, and will be removed in 7.2
+   * when the entire response pipeline is Observable
+   *
+   * @internal
    */
   processResponse?(res: DataQueryResponse): Promise<DataQueryResponse>;
 
