@@ -40,4 +40,14 @@ describe('when checking template variables', () => {
     expect(findTemplateVarChanges(b, a)).toBeUndefined();
     expect(findTemplateVarChanges(a, b)).toBeUndefined();
   });
+
+  it('then should ignore empty array values', () => {
+    const a: UrlQueryMap = {
+      'var-adhoc': [],
+    };
+    const b: UrlQueryMap = {};
+
+    expect(findTemplateVarChanges(b, a)).toBeUndefined();
+    expect(findTemplateVarChanges(a, b)).toBeUndefined();
+  });
 });

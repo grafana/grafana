@@ -8,6 +8,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { templateVarsChangedInUrl } from 'app/features/variables/state/actions';
+import { isArray, isEqual } from 'lodash';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
@@ -15,6 +16,7 @@ export class BridgeSrv {
   private lastQuery: UrlQueryMap = {};
   private lastPath = '';
   private angularUrl: string;
+  private lastUrl: string | null = null;
 
   /** @ngInject */
   constructor(
@@ -62,6 +64,11 @@ export class BridgeSrv {
       const state = store.getState();
       const url = state.location.url;
 
+      // No url change ignore redux store change
+      if (url === this.lastUrl) {
+        return;
+      }
+
       if (this.angularUrl !== url) {
         // store angular url right away as otherwise we end up syncing multiple times
         this.angularUrl = url;
@@ -90,7 +97,9 @@ export class BridgeSrv {
       } else {
         this.lastQuery = {};
       }
+
       this.lastPath = state.location.path;
+      this.lastUrl = state.location.url;
     });
 
     appEvents.on(CoreEvents.locationChange, payload => {
@@ -111,19 +120,45 @@ export class BridgeSrv {
 export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
   let count = 0;
   const changes: UrlQueryMap = {};
+
   for (const key in query) {
     if (!key.startsWith('var-')) {
       continue;
     }
-    if (query[key] !== old[key]) {
-      changes[key] = query[key];
+
+    let oldValue = getUrlValueForComparison(old[key]);
+    let newValue = getUrlValueForComparison(query[key]);
+
+    if (!isEqual(newValue, oldValue)) {
+      changes[key] = newValue;
       count++;
     }
   }
+
+  function getUrlValueForComparison(value: any): any {
+    if (isArray(value)) {
+      if (value.length === 0) {
+        value = undefined;
+      } else if (value.length === 1) {
+        value = value[0];
+      }
+    }
+
+    return value;
+  }
+
   for (const key in old) {
     if (!key.startsWith('var-')) {
       continue;
     }
+
+    const value = old[key];
+
+    // ignore empty array values
+    if (isArray(value) && value.length === 0) {
+      continue;
+    }
+
     if (!query.hasOwnProperty(key)) {
       changes[key] = ''; // removed
       count++;
