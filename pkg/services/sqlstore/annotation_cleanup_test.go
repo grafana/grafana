@@ -15,7 +15,11 @@ func TestAnnotationCleanUp(t *testing.T) {
 	fakeSQL := InitTestDB(t)
 
 	t.Cleanup(func() {
-		fakeSQL.NewSession().Exec("DELETE from annotation")
+		_ = fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
+			_, err := session.Exec("DELETE from annotation")
+			require.Nil(t, err, "cleaning up all annotations should not cause problems")
+			return err
+		})
 	})
 
 	createTestAnnotations(t, fakeSQL, 21, 6)
@@ -91,10 +95,10 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	fakeSQL := InitTestDB(t)
 
 	t.Cleanup(func() {
-		fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
+		_ = fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
 			_, err := session.Exec("DELETE from annotation")
 			require.Nil(t, err, "cleaning up all annotations should not cause problems")
-			return nil
+			return err
 		})
 	})
 
@@ -124,6 +128,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	// run the clean up task to keep one annotations.
 	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
 	err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+	require.Nil(t, err)
 
 	// The
 	countNew, err := session.Where("alert_id = 20").Count(&annotations.Item{})
