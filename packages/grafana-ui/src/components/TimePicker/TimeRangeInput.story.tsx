@@ -29,6 +29,7 @@ export const basic = () => {
       {(value, updateValue) => {
         return (
           <TimeRangeInput
+            onChangeTimeZone={tz => action('onTimeZoneChange fired')(tz)}
             timeZone="browser"
             value={value}
             onChange={timeRange => {
