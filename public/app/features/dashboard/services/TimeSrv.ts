@@ -29,7 +29,7 @@ export class TimeSrv {
   refreshTimer: any;
   refresh: any;
   oldRefresh: boolean;
-  dashboard: Partial<DashboardModel>;
+  dashboard: DashboardModel;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
 
@@ -56,7 +56,7 @@ export class TimeSrv {
     });
   }
 
-  init(dashboard: Partial<DashboardModel>) {
+  init(dashboard: DashboardModel) {
     this.timer.cancelAll();
 
     this.dashboard = dashboard;
@@ -279,11 +279,11 @@ export class TimeSrv {
       to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
     };
 
-    const timezone: TimeZone = this.dashboard ? this.dashboard.getTimezone() : undefined;
+    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
-      from: dateMath.parse(raw.from, false, timezone),
-      to: dateMath.parse(raw.to, true, timezone),
+      from: dateMath.parse(raw.from, false, timezone)!,
+      to: dateMath.parse(raw.to, true, timezone)!,
       raw: raw,
     };
   }

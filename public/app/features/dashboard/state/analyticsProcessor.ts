@@ -33,7 +33,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       panelId: data.request.panelId,
       dashboardId: data.request.dashboardId,
       dataSize: 0,
-      duration: data.request.endTime - data.request.startTime,
+      duration: data.request.endTime! - data.request.startTime,
     };
 
     // enrich with dashboard info

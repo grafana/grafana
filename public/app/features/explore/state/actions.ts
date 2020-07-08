@@ -93,7 +93,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
@@ -644,12 +644,13 @@ export const updateTime = (config: {
     const range = getTimeRange(timeZone, rawRange);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
-    getTimeSrv().init({
-      time: range.raw,
-      refresh: false,
-      getTimezone: () => timeZone,
-      timeRangeUpdated: (): any => undefined,
-    });
+    getTimeSrv().init(
+      new DashboardModel({
+        time: range.raw,
+        refresh: false,
+        timeZone,
+      })
+    );
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };

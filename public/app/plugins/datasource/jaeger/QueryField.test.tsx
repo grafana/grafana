@@ -52,21 +52,15 @@ describe('JaegerQueryField', function() {
     );
 
     // Simulating selection options. We need this as the function depends on the intermediate state of the component
-    await wrapper
-      .find(ButtonCascader)
-      .props()
-      .loadData([{ value: 'service1', label: 'service1' }]);
+    await wrapper.find(ButtonCascader)!.props().loadData!([{ value: 'service1', label: 'service1' }]);
 
-    await wrapper
-      .find(ButtonCascader)
-      .props()
-      .loadData([
-        { value: 'service1', label: 'service1' },
-        { value: 'op1', label: 'op1' },
-      ]);
+    await wrapper.find(ButtonCascader)!.props().loadData!([
+      { value: 'service1', label: 'service1' },
+      { value: 'op1', label: 'op1' },
+    ]);
 
     wrapper.update();
-    expect(wrapper.find(ButtonCascader).props().options[0].children[1].children[0]).toEqual({
+    expect(wrapper.find(ButtonCascader)!.props().options![0].children![1].children![0]).toEqual({
       label: 'rootOp [0.099 ms]',
       value: '12345',
     });
