@@ -922,6 +922,9 @@ jobs:
 
   deploy-to-kubernetes:
     description: "Deploy Grafana master Docker image to Kubernetes"
+    parameters:
+      edition:
+        type: string
     executor: base
     steps:
       - attach_workspace:
@@ -1323,6 +1326,7 @@ workflows:
             - postgres-integration-test
       - deploy-to-kubernetes:
           filters: *filter-only-master
+          edition: enterprise
           requires:
             - build-enterprise-docker-images
 
