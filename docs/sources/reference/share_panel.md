@@ -45,7 +45,7 @@ Below there should be an interactive Grafana graph embedded in an iframe:
 
 <iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
 
-#### Export Panel Data
+## Export Panel Data
 
 {{< docs-imagebox img="/img/docs/v50/export_panel_data.png" max-width="500px" >}}
 
