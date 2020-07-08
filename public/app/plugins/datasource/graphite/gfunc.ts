@@ -975,7 +975,7 @@ export class FuncInstance {
   text: any;
   added: boolean;
 
-  constructor(funcDef: any, options: { withDefaultParams: any }) {
+  constructor(funcDef: any, options?: { withDefaultParams: any }) {
     this.def = funcDef;
     this.params = [];
 

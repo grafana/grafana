@@ -13,7 +13,7 @@ const props: Props = {
   metricDescriptor: {
     valueType: '',
     metricKind: '',
-  },
+  } as any,
   crossSeriesReducer: '',
   groupBys: [],
   children: renderProps => <div />,
@@ -33,7 +33,7 @@ describe('Aggregations', () => {
         metricDescriptor: {
           valueType: ValueTypes.DOUBLE,
           metricKind: MetricKind.GAUGE,
-        },
+        } as any,
       };
 
       it('should not have the reduce values', () => {
@@ -54,7 +54,7 @@ describe('Aggregations', () => {
         metricDescriptor: {
           valueType: ValueTypes.MONEY,
           metricKind: MetricKind.CUMULATIVE,
-        },
+        } as any,
       };
 
       it('should have the reduce values', () => {

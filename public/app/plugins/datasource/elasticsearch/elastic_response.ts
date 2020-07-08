@@ -12,7 +12,8 @@ export class ElasticResponse {
   }
 
   processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
-    let metric, y, i, newSeries, bucket, value;
+    let metric, y, i, bucket, value;
+    let newSeries: any;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -486,7 +487,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
   let propNames: string[] = [];
 
   for (const hit of hits) {
-    const flattened = hit._source ? flatten(hit._source, null) : {};
+    const flattened = hit._source ? flatten(hit._source) : {};
     const doc = {
       _id: hit._id,
       _type: hit._type,

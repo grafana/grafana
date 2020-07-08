@@ -12,7 +12,7 @@ export default class InfluxQueryModel {
   groupByParts: any;
   templateSrv: any;
   scopedVars: any;
-  refId: string;
+  refId?: string;
 
   /** @ngInject */
   constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
@@ -111,12 +111,12 @@ export default class InfluxQueryModel {
       });
     }
 
-    this.target.groupBy.splice(index, 1);
+    this.target.groupBy!.splice(index, 1);
     this.updateProjection();
   }
 
   removeSelect(index: number) {
-    this.target.select.splice(index, 1);
+    this.target.select!.splice(index, 1);
     this.updateProjection();
   }
 
@@ -141,7 +141,7 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
-  private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate: boolean) {
+  private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate?: boolean) {
     let str = '';
     let operator = tag.operator;
     let value = tag.value;

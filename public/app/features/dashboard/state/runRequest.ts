@@ -115,13 +115,14 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       return state.panelData;
     }),
     // handle errors
-    catchError(err =>
-      of({
+    catchError(err => {
+      console.log('runRequest.catchError', err);
+      return of({
         ...state.panelData,
         state: LoadingState.Error,
         error: toDataQueryError(err),
-      })
-    ),
+      });
+    }),
     tap(emitDataRequestEvent(datasource)),
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
@@ -181,7 +182,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function preProcessPanelData(data: PanelData, lastResult: PanelData): PanelData {
+export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
   const { series } = data;
 
   //  for loading states with no data, use last result
@@ -190,7 +191,11 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
       lastResult = data;
     }
 
-    return { ...lastResult, state: LoadingState.Loading };
+    return {
+      ...lastResult,
+      state: LoadingState.Loading,
+      request: data.request,
+    };
   }
 
   // Make sure the data frames are properly formatted
