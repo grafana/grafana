@@ -5,11 +5,17 @@ import { Task, TaskRunner } from './task';
 interface StartTaskOptions {
   watchThemes: boolean;
   noTsCheck: boolean;
+  measurePerf: boolean;
   hot: boolean;
 }
 
-const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTsCheck, hot }) => {
+const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTsCheck, hot, measurePerf }) => {
   const noTsCheckArg = noTsCheck ? 1 : 0;
+  const measurePerfArg = measurePerf ? 1 : 0;
+
+  const startWebpackArgs = measurePerfArg ? `--progress` : `--progress --watch --colors`;
+  const envWebpackArgs = `--env.noTsCheck=${noTsCheckArg} --env.measurePerf=${measurePerfArg}`;
+
   const jobs = [
     watchThemes && {
       command: 'nodemon -e ts -w ./packages/grafana-ui/src/themes -x yarn run themes:generate',
@@ -21,7 +27,7 @@ const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTs
           name: 'Dev server',
         }
       : {
-          command: `webpack --progress --colors --watch --env.noTsCheck=${noTsCheckArg} --config scripts/webpack/webpack.dev.js`,
+          command: `webpack ${startWebpackArgs} ${envWebpackArgs} --config scripts/webpack/webpack.dev.js`,
           name: 'Webpack',
         },
   ];

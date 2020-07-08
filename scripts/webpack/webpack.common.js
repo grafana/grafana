@@ -1,5 +1,4 @@
 const path = require('path');
-
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
@@ -27,7 +26,6 @@ function shouldExclude(filename) {
   return true;
 }
 
-console.log(path.resolve());
 module.exports = {
   target: 'web',
   entry: {

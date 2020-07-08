@@ -5,13 +5,69 @@ const common = require('./webpack.common.js');
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin")
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-module.exports = (env = {}) =>
-  merge(common, {
+
+module.exports = (env = {}) => {
+  const plugins = [...common.plugins, new CleanWebpackPlugin(),
+    env.noTsCheck
+      ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
+      : new ForkTsCheckerWebpackPlugin({
+        eslint: {
+          enabled: true,
+          files: [
+            'public/app/**/*.{ts,tsx}',
+            // this can't be written like this packages/**/src/**/*.ts because it throws an error
+            'packages/grafana-ui/src/**/*.{ts,tsx}',
+            'packages/grafana-data/src/**/*.{ts,tsx}',
+            'packages/grafana-runtime/src/**/*.{ts,tsx}',
+            'packages/grafana-e2e-selectors/src/**/*.{ts,tsx}',
+            'packages/jaeger-ui-components/src/**/*.{ts,tsx}',
+          ],
+          options: {
+            cache: true,
+          },
+        },
+        typescript: {
+          mode: 'write-references',
+          diagnosticOptions: {
+            semantic: true,
+            syntactic: true,
+          },
+        },
+      }),
+    new MiniCssExtractPlugin({
+      filename: 'grafana.[name].[hash].css',
+    }),
+    new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/error.html'),
+      template: path.resolve(__dirname, '../../public/views/error-template.html'),
+      inject: false,
+      chunksSortMode: 'none',
+      excludeChunks: ['dark', 'light'],
+    }),
+    new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/index.html'),
+      template: path.resolve(__dirname, '../../public/views/index-template.html'),
+      inject: false,
+      chunksSortMode: 'none',
+      excludeChunks: ['dark', 'light'],
+    }),
+    new webpack.NamedModulesPlugin(),
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.DefinePlugin({
+      'process.env': {
+        NODE_ENV: JSON.stringify('development'),
+      },
+    })];
+
+
+
+  const config =  merge(common, {
     devtool: 'cheap-module-source-map',
     mode: 'development',
 
@@ -83,59 +139,13 @@ module.exports = (env = {}) =>
     },
 
     plugins: [
-      new CleanWebpackPlugin(),
-      env.noTsCheck
-        ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
-        : new ForkTsCheckerWebpackPlugin({
-            eslint: {
-              enabled: true,
-              files: [
-                'public/app/**/*.{ts,tsx}',
-                // this can't be written like this packages/**/src/**/*.ts because it throws an error
-                'packages/grafana-ui/src/**/*.{ts,tsx}',
-                'packages/grafana-data/src/**/*.{ts,tsx}',
-                'packages/grafana-runtime/src/**/*.{ts,tsx}',
-                'packages/grafana-e2e-selectors/src/**/*.{ts,tsx}',
-                'packages/jaeger-ui-components/src/**/*.{ts,tsx}',
-              ],
-              options: {
-                cache: true,
-              },
-            },
-            typescript: {
-              mode: 'write-references',
-              diagnosticOptions: {
-                semantic: true,
-                syntactic: true,
-              },
-            },
-          }),
-      new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[hash].css',
-      }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/error.html'),
-        template: path.resolve(__dirname, '../../public/views/error-template.html'),
-        inject: false,
-        chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
-      }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/index.html'),
-        template: path.resolve(__dirname, '../../public/views/index-template.html'),
-        inject: false,
-        chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
-      }),
-      new webpack.NamedModulesPlugin(),
-      new webpack.HotModuleReplacementPlugin(),
-      new webpack.DefinePlugin({
-        'process.env': {
-          NODE_ENV: JSON.stringify('development'),
-        },
-      }),
+      ...plugins,
       // new BundleAnalyzerPlugin({
       //   analyzerPort: 8889
       // })
     ],
   });
+
+
+  return env.measurePerf ? new SpeedMeasurePlugin().wrap(config) : config;
+}
