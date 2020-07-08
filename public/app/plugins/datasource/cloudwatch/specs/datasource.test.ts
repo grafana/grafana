@@ -193,7 +193,6 @@ describe('CloudWatchDatasource', () => {
               ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom,
               Status: 'Complete',
             },
-            preferredVisualisationType: 'logs',
           },
         },
       ];
