@@ -307,7 +307,7 @@ By default Grafana will delete dashboards in the database if the file is removed
 ### Provision folders structure from filesystem to Grafana
 If you already store your dashboards using folders in a git repo or on a filesystem, and also you want to have the same folder names in the Grafana menu, you can use `foldersFromFilesStructure` option.
 
-For example, to replicate these dashboards structure from the filesystem to Grafana, 
+For example, to replicate these dashboards structure from the filesystem to Grafana,
 ```
 /etc/dashboards
 ├── /server
@@ -320,7 +320,7 @@ For example, to replicate these dashboards structure from the filesystem to Graf
 you need to specify just this short provision configuration file.
 ```yaml
 apiVersion: 1
-    
+
 providers:
 - name: dashboards
   type: file
@@ -378,13 +378,15 @@ notifiers:
     send_reminder: true
     frequency: 1h
     disable_resolve_message: false
-    # See `Supported Settings` section for settings supporter for each
+    # See `Supported Settings` section for settings supported for each
     # alert notification type.
     settings:
       recipient: 'XXX'
-      token: 'xoxb'
       uploadImage: true
+    # Secure settings that will be encrypted in the database. See `Supported Settings` section for secure settings supported for each
+    secure_settings:
       url: https://slack.com
+      token: 'xoxb'
 
 delete_notifiers:
   - name: notification-channel-1
@@ -399,7 +401,9 @@ delete_notifiers:
 
 ### Supported Settings
 
-The following sections detail the supported settings for each alert notification type.
+The following sections detail the supported settings and secure settings for each alert notification type.
+
+> **Note**: Secure settings is supported since Grafana v7.2+.
 
 #### Alert notification `pushover`
 
@@ -413,9 +417,9 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `slack`
 
+**Settings:**
 | Name           |
 | -------------- |
-| url            |
 | recipient      |
 | username       |
 | icon_emoji     |
@@ -424,7 +428,12 @@ The following sections detail the supported settings for each alert notification
 | mentionUsers   |
 | mentionGroups  |
 | mentionChannel |
-| token          |
+
+**Secure settings:**
+| Name        |
+| ----------- |
+| url         |
+| token       |
 
 #### Alert notification `victorops`
 

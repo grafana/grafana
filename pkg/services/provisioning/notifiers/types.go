@@ -30,6 +30,7 @@ type notificationFromConfig struct {
 	Frequency             string
 	IsDefault             bool
 	Settings              map[string]interface{}
+	SecureSettings        map[string]string
 }
 
 // notificationsAsConfigV0 is mapping for zero version configs. This is mapped to its normalised version.
@@ -46,16 +47,17 @@ type deleteNotificationConfigV0 struct {
 }
 
 type notificationFromConfigV0 struct {
-	UID                   values.StringValue `json:"uid" yaml:"uid"`
-	OrgID                 values.Int64Value  `json:"org_id" yaml:"org_id"`
-	OrgName               values.StringValue `json:"org_name" yaml:"org_name"`
-	Name                  values.StringValue `json:"name" yaml:"name"`
-	Type                  values.StringValue `json:"type" yaml:"type"`
-	SendReminder          values.BoolValue   `json:"send_reminder" yaml:"send_reminder"`
-	DisableResolveMessage values.BoolValue   `json:"disable_resolve_message" yaml:"disable_resolve_message"`
-	Frequency             values.StringValue `json:"frequency" yaml:"frequency"`
-	IsDefault             values.BoolValue   `json:"is_default" yaml:"is_default"`
-	Settings              values.JSONValue   `json:"settings" yaml:"settings"`
+	UID                   values.StringValue    `json:"uid" yaml:"uid"`
+	OrgID                 values.Int64Value     `json:"org_id" yaml:"org_id"`
+	OrgName               values.StringValue    `json:"org_name" yaml:"org_name"`
+	Name                  values.StringValue    `json:"name" yaml:"name"`
+	Type                  values.StringValue    `json:"type" yaml:"type"`
+	SendReminder          values.BoolValue      `json:"send_reminder" yaml:"send_reminder"`
+	DisableResolveMessage values.BoolValue      `json:"disable_resolve_message" yaml:"disable_resolve_message"`
+	Frequency             values.StringValue    `json:"frequency" yaml:"frequency"`
+	IsDefault             values.BoolValue      `json:"is_default" yaml:"is_default"`
+	Settings              values.JSONValue      `json:"settings" yaml:"settings"`
+	SecureSettings        values.StringMapValue `json:"secure_settings" yaml:"secure_settings"`
 }
 
 func (notification notificationFromConfig) SettingsToJSON() *simplejson.Json {
@@ -88,6 +90,7 @@ func (cfg *notificationsAsConfigV0) mapToNotificationFromConfig() *notifications
 			DisableResolveMessage: notification.DisableResolveMessage.Value(),
 			Frequency:             notification.Frequency.Value(),
 			SendReminder:          notification.SendReminder.Value(),
+			SecureSettings:        notification.SecureSettings.Value(),
 		})
 	}
 
