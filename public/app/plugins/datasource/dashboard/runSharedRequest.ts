@@ -26,7 +26,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
       return undefined;
     }
 
-    const currentPanel = dashboard.getPanelById(options.panelId);
+    const currentPanel = dashboard.getPanelById(options.panelId)!;
     const listenToPanel = dashboard.getPanelById(listenToPanelId);
 
     if (!listenToPanel) {

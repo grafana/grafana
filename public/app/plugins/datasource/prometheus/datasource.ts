@@ -1,6 +1,5 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
-import defaults from 'lodash/defaults';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
 import {
@@ -111,12 +110,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
   }
 
-  _request(url: string, data: Record<string, string> | null, overrides?: Partial<BackendSrvRequest>) {
-    const options: BackendSrvRequest = defaults(overrides || {}, {
+  _request(url: string, data: Record<string, string> | null, overrides: Partial<BackendSrvRequest> = {}) {
+    const options: BackendSrvRequest = {
       url: this.url + url,
       method: this.httpMethod,
       headers: {},
-    });
+      ...overrides,
+    };
 
     if (options.method === 'GET') {
       if (data && Object.keys(data).length) {
@@ -128,7 +128,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             .join('&');
       }
     } else {
-      options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      options.headers!['Content-Type'] = 'application/x-www-form-urlencoded';
       options.data = data;
     }
 
@@ -137,7 +137,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     if (this.basicAuth) {
-      options.headers.Authorization = this.basicAuth;
+      options.headers!.Authorization = this.basicAuth;
     }
 
     return getBackendSrv().datasourceRequest(options);

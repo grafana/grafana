@@ -908,6 +908,7 @@ const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
     dashboardId: 0,
     interval: '',
     panelId: 0,
+    intervalMs: 1,
     scopedVars: {},
     timezone: '',
     app: CoreApp.Dashboard,

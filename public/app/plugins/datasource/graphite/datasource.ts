@@ -100,11 +100,15 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return this.doGraphiteRequest(httpOptions).then(this.convertResponseToDataFrames);
   }
 
-  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId: any; panelId: any }) {
+  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
-      httpOptions.headers['X-Panel-Id'] = options.panelId;
+      if (options.dashboardId) {
+        httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      }
+      if (options.panelId) {
+        httpOptions.headers['X-Panel-Id'] = options.panelId;
+      }
     }
   }
 

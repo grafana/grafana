@@ -73,7 +73,7 @@ describe('LokiDatasource', () => {
         range,
       };
 
-      const req = ds.createRangeQuery(target, options);
+      const req = ds.createRangeQuery(target, options as any);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
