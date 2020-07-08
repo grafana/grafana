@@ -46,10 +46,10 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 			}
 
 			if dataframe.Meta != nil {
-				dataframe.Meta.PreferredVisualisationType = "logs"
+				dataframe.Meta.PreferredVisualization = "logs"
 			} else {
 				dataframe.Meta = &data.FrameMeta{
-					PreferredVisualisationType: "logs",
+					PreferredVisualization: "logs",
 				}
 			}
 
