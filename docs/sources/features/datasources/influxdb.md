@@ -33,7 +33,6 @@ Name | Description
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-*Enable flux* | Enables support for the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Requires that the Token field be set a valid [Influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/)
 *Database* | Name of your InfluxDB database
 *User* | Name of your database user
 *Password* | Database user's password
@@ -133,7 +132,7 @@ Name | Description
 ------------ | -------------
 *Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB 2.0 API port is by default 9999)
 *Organization* | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
-*Token* | The authentication token used for Flux queries.
+*Token* | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password` 
 *Default Bucket* | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
 
 You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
@@ -142,7 +141,6 @@ You can use the [Flux query and scripting language](https://www.influxdata.com/p
 ### Supported Macros
 
 The macros are designed to easily support copy+paste from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/)
-
 
 Macro example | Description
 ------------ | -------------
