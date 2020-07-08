@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useCallback } from 'react';
+import React, { FormEvent, useState, useCallback, useEffect } from 'react';
 import {
   TimeZone,
   isDateTime,
@@ -36,6 +36,12 @@ export const TimeRangeForm: React.FC<Props> = props => {
   const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
   const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
   const [isOpen, setOpen] = useState(false);
+
+  // Synchronize internal state with external value
+  useEffect(() => {
+    setFrom(valueToState(value.raw.from, false, timeZone));
+    setTo(valueToState(value.raw.to, true, timeZone));
+  }, [value.raw.from, value.raw.to, timeZone]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
