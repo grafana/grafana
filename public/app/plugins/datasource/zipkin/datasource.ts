@@ -8,9 +8,8 @@ import {
   FieldType,
 } from '@grafana/data';
 import { from, Observable, of } from 'rxjs';
-import { DatasourceRequestOptions } from '../../../core/services/backend_srv';
 import { serializeParams } from '../../../core/utils/fetch';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { map } from 'rxjs/operators';
 import { apiPrefix } from './constants';
 import { ZipkinSpan } from './types';
@@ -48,7 +47,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
     return query.query;
   }
 
-  private request<T = any>(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<{ data: T }> {
+  private request<T = any>(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<{ data: T }> {
     // Hack for proxying metadata requests
     const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
     const params = data ? serializeParams(data) : '';

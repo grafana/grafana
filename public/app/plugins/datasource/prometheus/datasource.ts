@@ -1,7 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
 import defaults from 'lodash/defaults';
-import $ from 'jquery';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
 import {
@@ -130,7 +129,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     } else {
       options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      options.transformRequest = (data: any) => $.param(data);
       options.data = data;
     }
 
