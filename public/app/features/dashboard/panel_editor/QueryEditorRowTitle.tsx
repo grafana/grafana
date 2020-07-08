@@ -7,10 +7,10 @@ import { selectors } from '@grafana/e2e-selectors';
 interface QueryEditorRowTitleProps {
   query: DataQuery;
   datasource: DataSourceApi;
-  inMixedMode: boolean;
-  disabled: boolean;
+  inMixedMode?: boolean;
+  disabled?: boolean;
   onClick: (e: React.MouseEvent) => void;
-  collapsedText: string;
+  collapsedText: string | null;
 }
 
 export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
@@ -23,6 +23,7 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
 }) => {
   const theme = useTheme();
   const styles = getQueryEditorRowTitleStyles(theme);
+
   return (
     <HorizontalGroup align="center">
       <div className={styles.refId} aria-label={selectors.components.QueryEditorRow.title(query.refId)}>

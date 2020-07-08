@@ -196,7 +196,7 @@ export function getPanelMenu(
   }
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing) {
-    menu.push({ type: 'divider' });
+    menu.push({ type: 'divider', text: '' });
 
     menu.push({
       text: 'Remove',

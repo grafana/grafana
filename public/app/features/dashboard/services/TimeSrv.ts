@@ -4,16 +4,7 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 // Types
-import {
-  dateMath,
-  DefaultTimeRange,
-  TimeRange,
-  RawTimeRange,
-  TimeZone,
-  toUtc,
-  dateTime,
-  isDateTime,
-} from '@grafana/data';
+import { dateMath, DefaultTimeRange, TimeRange, RawTimeRange, toUtc, dateTime, isDateTime } from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -28,7 +19,7 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
-  oldRefresh: boolean;
+  oldRefresh: string | null | undefined;
   dashboard: DashboardModel;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;

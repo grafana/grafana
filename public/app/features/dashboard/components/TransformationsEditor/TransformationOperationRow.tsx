@@ -7,7 +7,7 @@ import { QueryOperationAction } from 'app/core/components/QueryOperationRow/Quer
 
 interface TransformationOperationRowProps {
   name: string;
-  description: string;
+  description?: string;
   editor?: JSX.Element;
   onRemove: () => void;
   input: DataFrame[];

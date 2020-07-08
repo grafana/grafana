@@ -12,7 +12,6 @@ import {
   toLegacyResponseData,
   ExploreMode,
   LogsDedupStrategy,
-  DataQueryRequest,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';

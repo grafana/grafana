@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
-  current?: DataSourceSelectItem;
+  current?: DataSourceSelectItem | null;
   hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;

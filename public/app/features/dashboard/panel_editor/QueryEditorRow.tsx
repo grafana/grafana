@@ -36,7 +36,7 @@ interface Props {
   onMoveQuery: (query: DataQuery, direction: number) => void;
   onChange: (query: DataQuery) => void;
   dataSourceValue: string | null;
-  inMixedMode: boolean;
+  inMixedMode?: boolean;
 }
 
 interface State {
@@ -261,11 +261,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { query, inMixedMode } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
+
     return (
       <QueryEditorRowTitle
         query={query}
         inMixedMode={inMixedMode}
-        datasource={datasource}
+        datasource={datasource!}
         disabled={isDisabled}
         onClick={e => this.onToggleEditMode(e, props)}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
@@ -331,7 +332,7 @@ export interface AngularQueryComponentScope {
   events: Emitter;
   refresh: () => void;
   render: () => void;
-  datasource: DataSourceApi;
+  datasource: DataSourceApi | null;
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
   range: TimeRange;

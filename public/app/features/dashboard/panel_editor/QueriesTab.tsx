@@ -38,7 +38,7 @@ interface State {
   dataSource?: DataSourceApi;
   dataSourceItem: DataSourceSelectItem;
   dataSourceError?: string;
-  helpContent: JSX.Element;
+  helpContent: React.ReactNode;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
@@ -96,7 +96,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ data });
   }
 
-  findCurrentDataSource(dataSourceName: string = this.props.panel.datasource): DataSourceSelectItem {
+  findCurrentDataSource(dataSourceName: string | null = this.props.panel.datasource): DataSourceSelectItem {
     return this.datasources.find(datasource => datasource.value === dataSourceName) || this.datasources[0];
   }
 

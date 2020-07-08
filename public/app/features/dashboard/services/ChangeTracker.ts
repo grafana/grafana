@@ -123,7 +123,7 @@ export class ChangeTracker {
       }
 
       // remove scopedVars
-      panel.scopedVars = null;
+      panel.scopedVars = undefined;
 
       // ignore panel legend sort
       if (panel.legend) {

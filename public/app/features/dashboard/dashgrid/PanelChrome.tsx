@@ -35,7 +35,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isViewing: boolean;
-  isEditing?: boolean;
+  isEditing: boolean;
   isInView: boolean;
   width: number;
   height: number;
@@ -257,7 +257,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return null;
     }
 
-    const PanelComponent = plugin.panel;
+    const PanelComponent = plugin.panel!;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;

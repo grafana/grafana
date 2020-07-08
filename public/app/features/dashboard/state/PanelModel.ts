@@ -116,7 +116,7 @@ export class PanelModel implements DataConfigSource {
   soloMode?: boolean;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: string;
+  datasource: string | null;
   thresholds?: any;
   pluginVersion?: string;
 

@@ -30,7 +30,7 @@ export class DashboardSrv {
 
   onRemovePanel = (panelId: number) => {
     const dashboard = this.getCurrent();
-    removePanel(dashboard, dashboard.getPanelById(panelId), true);
+    removePanel(dashboard, dashboard.getPanelById(panelId)!, true);
   };
 
   saveJSONDashboard(json: string) {
