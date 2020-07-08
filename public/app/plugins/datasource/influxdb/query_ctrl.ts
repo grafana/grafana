@@ -11,6 +11,9 @@ import InfluxDatasource from './datasource';
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
+  // force component to update since we are mutating the actual changes
+  refreshCounter = 0;
+
   datasource: InfluxDatasource;
   queryModel: InfluxQueryModel;
   queryBuilder: any;
@@ -80,6 +83,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
    */
   onChange = (target: InfluxQuery) => {
     this.target.query = target.query;
+    this.refreshCounter++;
   };
 
   onRunQuery = () => {
