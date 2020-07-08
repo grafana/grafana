@@ -27,12 +27,14 @@ import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetails } from './LogDetails';
+import { LogRowMessageParsed } from './LogRowMessageParsed';
 import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
+  showParsedFields: Array<string>;
   showDuplicates: boolean;
   showLabels: boolean;
   showTime: boolean;
@@ -43,6 +45,8 @@ interface Props extends Themeable {
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickShowParsedField?: (key: string) => void;
+  onClickHideParsedField?: (key: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
@@ -133,6 +137,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
+      onClickShowParsedField,
+      onClickHideParsedField,
       highlighterExpressions,
       allowDetails,
       row,
@@ -141,6 +147,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showContextToggle,
       showLabels,
       showTime,
+      showParsedFields,
       wrapLogMessage,
       theme,
       getFieldLinks,
@@ -175,19 +182,23 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <LogLabels labels={row.uniqueLabels} />
             </td>
           )}
-          <LogRowMessage
-            highlighterExpressions={highlighterExpressions}
-            row={row}
-            getRows={getRows}
-            errors={errors}
-            hasMoreContextRows={hasMoreContextRows}
-            updateLimit={updateLimit}
-            context={context}
-            contextIsOpen={showContext}
-            showContextToggle={showContextToggle}
-            wrapLogMessage={wrapLogMessage}
-            onToggleContext={this.toggleContext}
-          />
+          {showParsedFields.length > 0 ? (
+            <LogRowMessageParsed className={hoverBackground} row={row} showParsedFields={showParsedFields} />
+          ) : (
+            <LogRowMessage
+              highlighterExpressions={highlighterExpressions}
+              row={row}
+              getRows={getRows}
+              errors={errors}
+              hasMoreContextRows={hasMoreContextRows}
+              updateLimit={updateLimit}
+              context={context}
+              contextIsOpen={showContext}
+              showContextToggle={showContextToggle}
+              wrapLogMessage={wrapLogMessage}
+              onToggleContext={this.toggleContext}
+            />
+          )}
         </tr>
         {this.state.showDetails && (
           <LogDetails
@@ -198,8 +209,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
+            onClickShowParsedField={onClickShowParsedField}
+            onClickHideParsedField={onClickHideParsedField}
             getRows={getRows}
             row={row}
+            showParsedFields={showParsedFields}
           />
         )}
       </>

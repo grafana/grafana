@@ -38,7 +38,10 @@ export interface Props extends Themeable {
   onMouseLeave?: () => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickShowParsedField?: (key: string) => void;
+  onClickHideParsedField?: (key: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showParsedFields: Array<string>;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -154,6 +157,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
       className,
       onMouseEnter,
       onMouseLeave,
+      onClickShowParsedField,
+      onClickHideParsedField,
+      showParsedFields,
     } = this.props;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
@@ -211,11 +217,14 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       parsedKey={key}
                       parsedValue={value}
                       links={links}
+                      onClickShowParsedField={onClickShowParsedField}
+                      onClickHideParsedField={onClickHideParsedField}
                       getStats={() =>
                         fieldIndex === undefined
                           ? this.getStatsForParsedField(key)
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
+                      showParsedFields={showParsedFields}
                     />
                   );
                 })}

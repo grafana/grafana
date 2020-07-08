@@ -38,6 +38,7 @@ export interface Props extends Themeable {
 
 interface State {
   renderAll: boolean;
+  showParsedFields: Array<string>;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -50,6 +51,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   state: State = {
     renderAll: false,
+    showParsedFields: [],
   };
 
   componentDidMount() {
@@ -79,6 +81,28 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     sortLogRows(logRows, logsSortOrder)
   );
 
+  showParsedField = (key: string) => {
+    const index = this.state.showParsedFields.indexOf(key);
+    if (index === -1) {
+      this.setState(state => {
+        return {
+          showParsedFields: state.showParsedFields.concat(key),
+        };
+      });
+    }
+  };
+
+  hideParsedField = (key: string) => {
+    const index = this.state.showParsedFields.indexOf(key);
+    if (index > -1) {
+      this.setState(state => {
+        return {
+          showParsedFields: state.showParsedFields.filter(k => key !== k),
+        };
+      });
+    }
+  };
+
   render() {
     const {
       dedupStrategy,
@@ -100,7 +124,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       disableCustomHorizontalScroll,
       logsSortOrder,
     } = this.props;
-    const { renderAll } = this.state;
+    const { renderAll, showParsedFields } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
@@ -140,11 +164,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
+                  showParsedFields={showParsedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickShowParsedField={this.showParsedField}
+                  onClickHideParsedField={this.hideParsedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />
@@ -161,11 +188,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
+                  showParsedFields={showParsedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickShowParsedField={this.showParsedField}
+                  onClickHideParsedField={this.hideParsedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />
