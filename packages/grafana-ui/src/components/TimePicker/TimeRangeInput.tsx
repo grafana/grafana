@@ -11,7 +11,6 @@ import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { otherOptions, quickOptions } from './rangeOptions';
 
 export interface Props {
-  hideText?: boolean;
   value: TimeRange;
   timeZone?: TimeZone;
   onChange: (timeRange: TimeRange) => void;

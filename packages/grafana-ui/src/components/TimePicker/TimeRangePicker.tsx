@@ -68,7 +68,6 @@ export interface Props extends Themeable {
   onMoveForward: () => void;
   onZoom: () => void;
   history?: TimeRange[];
-  hideControls?: boolean;
 }
 
 export interface State {
@@ -108,7 +107,6 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       theme,
       history,
       onChangeTimeZone,
-      hideControls,
     } = this.props;
 
     const { isOpen } = this.state;
@@ -121,29 +119,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       [`explore-active-button`]: syncedTimePicker,
     });
 
-    return hideControls ? (
-      <div className={styles.container}>
-        <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
-          <button aria-label="TimePicker Open Button" className={timePickerButtonClass} onClick={this.onOpen}>
-            <TimePickerButtonLabel {...this.props} />
-            <span className={styles.caretIcon}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />}</span>
-          </button>
-        </Tooltip>
-        {isOpen && (
-          <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
-            <TimePickerContent
-              timeZone={timeZone}
-              value={value}
-              onChange={this.onChange}
-              otherOptions={otherOptions}
-              quickOptions={quickOptions}
-              history={history}
-              onChangeTimeZone={onChangeTimeZone}
-            />
-          </ClickOutsideWrapper>
-        )}
-      </div>
-    ) : (
+    return (
       <div className={styles.container}>
         <div className={styles.buttons}>
           {hasAbsolute && (
