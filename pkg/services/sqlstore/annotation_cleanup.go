@@ -65,7 +65,7 @@ func (acs *AnnotationCleanupService) executeUtilDoneOrCancelled(ctx context.Cont
 			return ctx.Err()
 		default:
 			var affected int64
-			withDbSession(ctx, func(session *DBSession) error {
+			err := withDbSession(ctx, func(session *DBSession) error {
 				res, err := session.Exec(sql)
 				if err != nil {
 					return err
@@ -75,6 +75,10 @@ func (acs *AnnotationCleanupService) executeUtilDoneOrCancelled(ctx context.Cont
 
 				return err
 			})
+
+			if err != nil {
+				return err
+			}
 
 			if affected == 0 {
 				return nil
