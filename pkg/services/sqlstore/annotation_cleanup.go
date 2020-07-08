@@ -24,20 +24,20 @@ var (
 // CleanAnnotations deletes old annotations created by
 // alert rules, API requests and human made in the UI.
 func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *setting.Cfg) error {
-	err := acs.clean(ctx, cfg.AlertingAnnotationCleanupSetting, alertAnnotationType)
+	err := acs.cleanAnnotations(ctx, cfg.AlertingAnnotationCleanupSetting, alertAnnotationType)
 	if err != nil {
 		return err
 	}
 
-	err = acs.clean(ctx, cfg.APIAnnotationCleanupSettings, apiAnnotationType)
+	err = acs.cleanAnnotations(ctx, cfg.APIAnnotationCleanupSettings, apiAnnotationType)
 	if err != nil {
 		return err
 	}
 
-	return acs.clean(ctx, cfg.DashboardAnnotationCleanupSettings, dashboardAnnotationType)
+	return acs.cleanAnnotations(ctx, cfg.DashboardAnnotationCleanupSettings, dashboardAnnotationType)
 }
 
-func (acs *AnnotationCleanupService) clean(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) error {
+func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) error {
 	if cfg.MaxAge > 0 {
 		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC LIMIT %v)`
@@ -50,7 +50,7 @@ func (acs *AnnotationCleanupService) clean(ctx context.Context, cfg setting.Anno
 	}
 
 	if cfg.MaxCount > 0 {
-		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT ID FROM (SELECT id FROM annotation WHERE %s ORDER BY id LIMIT %v, %v) a)`
+		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT ID FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC LIMIT %v, %v) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, cfg.MaxCount, acs.batchSize)
 		return acs.executeUtilDoneOrCancelled(ctx, sql)
 	}
