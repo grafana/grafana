@@ -1,8 +1,9 @@
 import { DataFrame, getFrameDisplayName, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { setBackendSrv } from '@grafana/runtime';
 import AppInsightsDatasource from './app_insights_datasource';
+import { of } from 'rxjs';
 
 const templateSrv = new TemplateSrv();
 
@@ -15,6 +16,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('AppInsightsDatasource', () => {
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx: any = {};
 
@@ -164,11 +166,11 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -206,11 +208,11 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.segmentColumn = 'partition';
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -268,13 +270,13 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -314,13 +316,13 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.timeGrain = 'PT30M';
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.query).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           expect(options.data.queries[0].appInsights.timeGrain).toBe('PT30M');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -372,12 +374,12 @@ describe('AppInsightsDatasource', () => {
         beforeEach(() => {
           options.targets[0].appInsights.dimension = 'client/city';
 
-          datasourceRequestMock.mockImplementation((options: any) => {
+          fetchMock.mockImplementation((options: any) => {
             expect(options.url).toContain('/api/ds/query');
             expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
             expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
             expect([...options.data.queries[0].appInsights.dimension]).toMatchObject(['client/city']);
-            return Promise.resolve({ data: response, status: 200 });
+            return of({ data: response, status: 200 } as any);
           });
         });
 
