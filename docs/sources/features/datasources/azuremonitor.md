@@ -78,7 +78,9 @@ In the query editor for a panel, after choosing your Azure Monitor data source, 
 - `Azure Log Analytics`
 - `Insights Analytics`
 
-The query editor will change depending on which one you pick. Azure Monitor is the default. As of 7.1, Insights Analytics was added and replaces the former edit mode from within Application Insights.
+The query editor will change depending on which one you pick. Azure Monitor is the default.
+
+As of 7.1+, Insights Analytics was added and replaces the former edit mode from within Application Insights.
 
 ## Querying the Azure Monitor service
 
@@ -102,9 +104,9 @@ The default legend formatting for the Azure Monitor API is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-Note: Before 7.1, the formatting used to include the resource name in the default: `resourceName{dimensionName=dimensionValue}.metricName`. As of 7.1 the resource name as been removed as the default.
+Note: Before 7.1+, the formatting used to include the resource name in the default: `resourceName{dimensionName=dimensionValue}.metricName`. As of 7.1+ the resource name as been removed from the default legend.
 
-These can be quite long but this formatting can be changed using aliases. In the Legend Format field, the aliases which are defined below can be combined any way you want.
+These can be quite long, but this formatting can be changed by using aliases. In the Legend Format field, the aliases which are defined below can be combined any way you want.
 
 Azure Monitor Examples:
 
@@ -117,9 +119,9 @@ Azure Monitor Examples:
 - `{{ namespace }}` = replaced with the value of the Namespace (e.g. Microsoft.Compute/virtualMachines)
 - `{{ resourcename }}` = replaced with the value of the Resource Name
 - `{{ metric }}` = replaced with metric name (e.g. Percentage CPU)
-- `{{ dimensionname }}` = *Legacy as of 7.1* replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
-- `{{ dimensionvalue }}` = *Legacy as of 7.1* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
-- `{{ arbitraryDim }}` = (Added in 7.1) replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
+- `{{ dimensionname }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
+- `{{ dimensionvalue }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ arbitraryDim }}` = *Available in 7.1+* replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
 
 ### Templating with variables for Azure Monitor
 
@@ -169,7 +171,7 @@ Grafana alerting is supported for the Azure Monitor service. This is not Azure A
 
 {{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
-As of 7.1, more than one group by dimension may be selected.
+As of 7.1+, more than one group by dimension may be selected.
 
 ### Formatting legend keys with aliases for Application Insights
 
@@ -186,10 +188,10 @@ Application Insights Examples:
 
 ### Alias patterns for Application Insights
 
-- `{{ groupbyvalue }}` = *Legacy as of 7.1* replaced with the first dimension's key/label (as sorted by the key/label)
-- `{{ groupbyname }}` = *Legacy as of 7.1* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ groupbyvalue }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with the first dimension's key/label (as sorted by the key/label)
+- `{{ groupbyname }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
 - `{{ metric }}` = replaced with metric name (e.g. requests/count)
-- `{{ arbitraryDim }}` = (Added in 7.1) replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
+- `{{ arbitraryDim }}` = *Available in 7.1+* replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
 
 ### Filter expressions for Application Insights
 
@@ -236,14 +238,14 @@ If your credentials give you access to multiple subscriptions then choose the ap
 
 ### Time series queries
 
-Time Series queries are for the Graph Panel (and other panels like the Single Stat panel) and must contain at least a datetime column and a numeric value column. The result must also be sorted in ascending order by the time column.
+Time Series queries are for the Graph Panel (and other panels like the Single Stat panel) and must contain at least a datetime column and a numeric value column. The result must also be sorted in ascending order by the datetime column.
 
 Here is an example query that returns the aggregated count grouped by hour:
 
 ```kusto
 Perf
 | where $__timeFilter(TimeGenerated)
-| summarize count() by bin(TimeGenerated, $__interval)
+| summarize count() by bin(TimeGenerated, 1h)
 | order by TimeGenerated asc
 ```
 
@@ -252,16 +254,17 @@ A query may also additionally have one or more non-numeric/non-datetime columns,
 ```kusto
 Perf
 | where $__timeFilter(TimeGenerated)
-| summarize count() by bin(TimeGenerated, $__interval), Computer, CounterName
+| summarize count() by bin(TimeGenerated, 1h), Computer, CounterName
 | order by TimeGenerated asc
 ```
 
-Finally, additional number value columns may also be selected (with, or without multiple dimensions). For example getting a count and average value by time, Computer, CounterName, and InstanceName:
+Finally, additional number value columns may also be selected (with, or without multiple dimensions). For example getting a count and average value by hour, Computer, CounterName, and InstanceName:
 
 ```kusto
 Perf
 | where $__timeFilter(TimeGenerated)
-| summarize Samples=count(), AvgValue=avg(CounterValue) by bin(TimeGenerated, $__interval), Computer, CounterName, InstanceName
+| summarize Samples=count(), AvgValue=avg(CounterValue)
+    by bin(TimeGenerated, $__interval), Computer, CounterName, InstanceName
 | order by TimeGenerated asc
 ```
 
@@ -336,7 +339,7 @@ Example variable queries:
 
 Example of a time series query using variables:
 
-```
+```kusto
 Perf
 | where ObjectName == "$object" and CounterName == "$metric"
 | where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()
