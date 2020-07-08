@@ -18,6 +18,10 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
   return (
     <Form
       onSubmit={async (data: SaveDashboardFormDTO) => {
+        if (!onSubmit) {
+          return;
+        }
+
         const result = await onSubmit(dashboard.getSaveModelClone(data), data, dashboard);
         if (result.status === 'success') {
           if (data.saveVariables) {
