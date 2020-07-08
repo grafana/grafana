@@ -20,11 +20,12 @@ Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin in
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select *InfluxDB* from the *Type* dropdown.
+5. Select *InfluxQL* or *Flux* from the `Query Language` dropdown.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
-Starting in Grafana 7.1, this plugin will support InfluxQL or Flux queries.  
 
+### InfluxQL (classic InfluxDB query)
 
 Name | Description
 ------------ | -------------
@@ -123,7 +124,9 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 ## Flux support
 
-> Only available in Grafana v7.1+. The client supports flux runing on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more details
+> Starting in v7.1 grafana will execute Flux queries in addition to InfluxQL queries
+
+The client supports flux running on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more details and connection details
 
 
 Name | Description
@@ -137,6 +140,9 @@ You can use the [Flux query and scripting language](https://www.influxdata.com/p
 
 
 ### Supported Macros
+
+The macros are designed to easily support copy+paste from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/)
+
 
 Macro example | Description
 ------------ | -------------
