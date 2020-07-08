@@ -171,12 +171,21 @@ export class BarGauge extends PureComponent<Props> {
       valueHeight,
       valueWidth,
       maxBarHeight,
-      maxBarWidth,
+      maxBarWidth: maxBarWidthStep1,
       wrapperWidth,
       wrapperHeight,
     } = calculateBarAndValueDimensions(this.props);
     const minValue = field.min!;
     const maxValue = field.max!;
+
+    const valueColor = getValueColor(this.props);
+    const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
+    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+
+    // The actual value width is always a little bit smaller than what was accounted for
+    // in calculateBarAndValueDimensions so here we adjust the maxBarWidth so that it
+    // takes into account the actual value width
+    const maxBarWidth = maxBarWidthStep1 + valueWidth - (valueStyles.width as number);
 
     const isVert = isVertical(orientation);
     const valueRange = maxValue - minValue;
@@ -184,10 +193,6 @@ export class BarGauge extends PureComponent<Props> {
     const cellSpacing = itemSpacing!;
     const cellCount = Math.floor(maxSize / lcdCellWidth!);
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
-    const valueColor = getValueColor(this.props);
-
-    const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -411,13 +416,20 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
   const { displayMode, field, value, alignmentFactors, orientation, theme } = props;
-  const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
+  const { valueWidth, valueHeight, maxBarHeight, maxBarWidth: maxBarWidthStep1 } = calculateBarAndValueDimensions(
+    props
+  );
 
   const valuePercent = getValuePercent(value.numeric, field.min!, field.max!);
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
   const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+
+  // The actual value width is always a little bit smaller than what was accounted for
+  // in calculateBarAndValueDimensions so here we adjust the maxBarWidth so that it
+  // takes into account the actual value width
+  const maxBarWidth = maxBarWidthStep1 + valueWidth - (valueStyles.width as number);
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
