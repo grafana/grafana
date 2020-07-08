@@ -23,6 +23,9 @@ Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin in
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
+Starting in Grafana 7.1, this plugin will support InfluxQL or Flux queries.  
+
+
 Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels and queries.
@@ -30,12 +33,9 @@ Name | Description
 *Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Enable flux* | Enables support for the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Requires that the Token field be set a valid [Influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/)
-*Organization* | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries (Only displayed and valid with "Enable Flux"). This is also used to for the `v.organization` query macro
-*Default Bucket* | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries (Only displayed and valid with "Enable Flux")
 *Database* | Name of your InfluxDB database
 *User* | Name of your database user
 *Password* | Database user's password
-*Token* | The authentication token used for Flux queries.
 *HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
@@ -123,9 +123,18 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 ## Flux support
 
-> Only available in Grafana v7.1+.
+> Only available in Grafana v7.1+. The client supports flux runing on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more details
 
-If you have enabled Flux and set up a token for auth in the data source configuration, then you can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
+
+Name | Description
+------------ | -------------
+*Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB 2.0 API port is by default 9999)
+*Organization* | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
+*Token* | The authentication token used for Flux queries.
+*Default Bucket* | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
+
+You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
+
 
 ### Supported Macros
 
