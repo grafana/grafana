@@ -34,6 +34,7 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import TableModel from 'app/core/table_model';
+import { defaults } from 'lodash';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -111,12 +112,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   _request(url: string, data: Record<string, string> | null, overrides: Partial<BackendSrvRequest> = {}) {
-    const options: BackendSrvRequest = {
+    const options: BackendSrvRequest = defaults(overrides, {
       url: this.url + url,
       method: this.httpMethod,
       headers: {},
-      ...overrides,
-    };
+    });
 
     if (options.method === 'GET') {
       if (data && Object.keys(data).length) {
