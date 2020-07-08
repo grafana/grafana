@@ -115,13 +115,14 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       return state.panelData;
     }),
     // handle errors
-    catchError(err =>
-      of({
+    catchError(err => {
+      console.log('runRequest.catchError', err);
+      return of({
         ...state.panelData,
         state: LoadingState.Error,
         error: toDataQueryError(err),
-      })
-    ),
+      });
+    }),
     tap(emitDataRequestEvent(datasource)),
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
