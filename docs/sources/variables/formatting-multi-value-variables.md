@@ -24,8 +24,7 @@ break the regex expression.
 
 ## Multi-value variables with an Elastic data source
 
-Elasticsearch uses lucene query syntax, so the same variable would be formatted as `("host1" OR "host2" OR "host3")`. In this case, every value
-must be escaped so that the value only contains lucene control words and quotation marks.
+Elasticsearch uses lucene query syntax, so the same variable would be formatted as `("host1" OR "host2" OR "host3")`. In this case, every value must be escaped so that the value only contains lucene control words and quotation marks.
 
 ## Formatting troubles
 
