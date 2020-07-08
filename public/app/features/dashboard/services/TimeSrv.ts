@@ -79,12 +79,7 @@ export class TimeSrv {
       return intervals;
     }
 
-    const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
-
-    if (validIntervals.indexOf(this.contextSrv.minRefreshInterval) === -1) {
-      validIntervals.unshift(this.contextSrv.minRefreshInterval);
-    }
-    return validIntervals;
+    return intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
   }
 
   private parseTime() {
