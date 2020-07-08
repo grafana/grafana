@@ -82,11 +82,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: ${theme.spacing.md};
     `,
     header: css`
-      padding: 0 ${theme.spacing.sm};
+      padding: ${theme.spacing.xs} ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
-      height: ${theme.spacing.formInputHeight}px;
-      line-height: ${theme.spacing.formInputHeight}px;
+      min-height: ${theme.spacing.formInputHeight}px;
+      line-height: ${theme.spacing.sm}px;
       display: flex;
       align-items: center;
       justify-content: space-between;

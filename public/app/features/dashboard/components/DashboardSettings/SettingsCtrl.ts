@@ -6,12 +6,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { appEvents, contextSrv, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
 import { getConfig } from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEvents, locationUtil, TimeZone } from '@grafana/data';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -229,7 +229,7 @@ export class SettingsCtrl {
 
   deleteDashboardConfirmed() {
     promiseToDigest(this.$scope)(
-      backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
+      deleteDashboard(this.dashboard.uid, false).then(() => {
         appEvents.emit(AppEvents.alertSuccess, ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
         this.$location.url('/');
       })

@@ -61,6 +61,8 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
 	metrics["stats.teams.count"] = statsQuery.Result.Teams
 	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
+	metrics["stats.dashboard_versions.count"] = statsQuery.Result.DashboardVersions
+	metrics["stats.annotations.count"] = statsQuery.Result.Annotations
 	metrics["stats.valid_license.count"] = getValidLicenseCount(uss.License.HasValidLicense())
 	metrics["stats.edition.oss.count"] = getOssEditionCount()
 	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
@@ -181,9 +183,12 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	client := http.Client{Timeout: 5 * time.Second}
 	go func() {
-		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
+		resp, err := client.Post(usageStatsURL, "application/json", data)
+		if err != nil {
 			metricsLogger.Error("Failed to send usage stats", "err", err)
+			return
 		}
+		resp.Body.Close()
 	}()
 }
 
@@ -209,6 +214,8 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveEditors.Set(float64(statsQuery.Result.ActiveEditors))
 	metrics.StatsTotalAdmins.Set(float64(statsQuery.Result.Admins))
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
+	metrics.StatsTotalDashboardVersions.Set(float64(statsQuery.Result.DashboardVersions))
+	metrics.StatsTotalAnnotations.Set(float64(statsQuery.Result.Annotations))
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsStats); err != nil {

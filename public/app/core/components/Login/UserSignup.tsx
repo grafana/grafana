@@ -1,13 +1,25 @@
 import React, { FC } from 'react';
-import { LinkButton, HorizontalGroup } from '@grafana/ui';
+import { LinkButton, VerticalGroup } from '@grafana/ui';
+import { css } from 'emotion';
 
 export const UserSignup: FC<{}> = () => {
   return (
-    <HorizontalGroup justify="flex-start">
-      <LinkButton href="signup" variant="secondary">
+    <VerticalGroup
+      className={css`
+        margin-top: 8px;
+      `}
+    >
+      <span>New to Grafana?</span>
+      <LinkButton
+        className={css`
+          width: 100%;
+          justify-content: center;
+        `}
+        href="signup"
+        variant="secondary"
+      >
         Sign Up
       </LinkButton>
-      <span>New to Grafana?</span>
-    </HorizontalGroup>
+    </VerticalGroup>
   );
 };

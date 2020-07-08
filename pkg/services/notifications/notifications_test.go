@@ -10,7 +10,6 @@ import (
 )
 
 func TestNotifications(t *testing.T) {
-
 	Convey("Given the notifications service", t, func() {
 		setting.StaticRootPath = "../../../public/"
 

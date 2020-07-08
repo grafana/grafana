@@ -566,14 +566,23 @@ describe('shared actions', () => {
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
-        tester.thenDispatchedActionsShouldEqual(
-          variablesInitTransaction({ uid }),
-          addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })),
-          addInitLock(toVariablePayload(constant)),
-          resolveInitLock(toVariablePayload(constant)),
-          removeInitLock(toVariablePayload(constant)),
-          variablesCompleteTransaction({ uid })
-        );
+        tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+          expect(dispatchedActions[0]).toEqual(variablesInitTransaction({ uid }));
+          expect(dispatchedActions[1]).toEqual(
+            addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
+          );
+          expect(dispatchedActions[2]).toEqual(addInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[3]).toEqual(resolveInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[4]).toEqual(removeInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[5].type).toEqual(addVariable.type);
+          expect(dispatchedActions[5].payload.id).toEqual('__dashboard');
+          expect(dispatchedActions[6].type).toEqual(addVariable.type);
+          expect(dispatchedActions[6].payload.id).toEqual('__org');
+          expect(dispatchedActions[7].type).toEqual(addVariable.type);
+          expect(dispatchedActions[7].payload.id).toEqual('__user');
+          expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 9;
+        });
       });
     });
 
@@ -594,16 +603,25 @@ describe('shared actions', () => {
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
-        tester.thenDispatchedActionsShouldEqual(
-          cleanVariables(),
-          variablesClearTransaction(),
-          variablesInitTransaction({ uid }),
-          addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })),
-          addInitLock(toVariablePayload(constant)),
-          resolveInitLock(toVariablePayload(constant)),
-          removeInitLock(toVariablePayload(constant)),
-          variablesCompleteTransaction({ uid })
-        );
+        tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+          expect(dispatchedActions[0]).toEqual(cleanVariables());
+          expect(dispatchedActions[1]).toEqual(variablesClearTransaction());
+          expect(dispatchedActions[2]).toEqual(variablesInitTransaction({ uid }));
+          expect(dispatchedActions[3]).toEqual(
+            addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
+          );
+          expect(dispatchedActions[4]).toEqual(addInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[5]).toEqual(resolveInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[6]).toEqual(removeInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[7].type).toEqual(addVariable.type);
+          expect(dispatchedActions[7].payload.id).toEqual('__dashboard');
+          expect(dispatchedActions[8].type).toEqual(addVariable.type);
+          expect(dispatchedActions[8].payload.id).toEqual('__org');
+          expect(dispatchedActions[9].type).toEqual(addVariable.type);
+          expect(dispatchedActions[9].payload.id).toEqual('__user');
+          expect(dispatchedActions[10]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 11;
+        });
       });
     });
   });

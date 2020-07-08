@@ -16,7 +16,7 @@ Returns collection of standard option editors definitions
 <b>Signature</b>
 
 ```typescript
-getStandardOptionEditors: () => (StandardEditorsRegistryItem<any, any> | StandardEditorsRegistryItem<string, any> | StandardEditorsRegistryItem<number, any> | StandardEditorsRegistryItem<boolean, any> | StandardEditorsRegistryItem<ValueMapping[], any> | StandardEditorsRegistryItem<ThresholdsConfig, any> | StandardEditorsRegistryItem<DataLink[], any> | StandardEditorsRegistryItem<string[], any>)[]
+getStandardOptionEditors: () => (StandardEditorsRegistryItem<any, any> | StandardEditorsRegistryItem<string, any> | StandardEditorsRegistryItem<number, any> | StandardEditorsRegistryItem<boolean, any> | StandardEditorsRegistryItem<ValueMapping[], any> | StandardEditorsRegistryItem<ThresholdsConfig, any> | StandardEditorsRegistryItem<DataLink<any>[], any> | StandardEditorsRegistryItem<string[], any>)[]
 ```
 <b>Import</b>
 

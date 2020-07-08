@@ -48,7 +48,6 @@ func getTeamSelectSqlBase() string {
 
 func CreateTeam(cmd *models.CreateTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		if isNameTaken, err := isTeamNameTaken(cmd.OrgId, cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -73,7 +72,6 @@ func CreateTeam(cmd *models.CreateTeamCommand) error {
 
 func UpdateTeam(cmd *models.UpdateTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		if isNameTaken, err := isTeamNameTaken(cmd.OrgId, cmd.Name, cmd.Id, sess); err != nil {
 			return err
 		} else if isNameTaken {

@@ -88,7 +88,7 @@ describe('when rendering func instance', () => {
   it('should handle function with no metric param', () => {
     const func = gfunc.createFuncInstance('randomWalk');
     func.params[0] = 'test';
-    expect(func.render(undefined, replaceVariablesDummy)).toEqual("randomWalk('test')");
+    expect(func.render((undefined as unknown) as string, replaceVariablesDummy)).toEqual("randomWalk('test')");
   });
 
   it('should handle function multiple series params', () => {

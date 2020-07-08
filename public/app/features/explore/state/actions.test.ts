@@ -1,28 +1,28 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, toUtc, ExploreUrlState } from '@grafana/data';
 
 import * as Actions from './actions';
 import {
+  cancelQueries,
   changeDatasource,
+  changeMode,
   loadDatasource,
   navigateToExplore,
   refreshExplore,
-  cancelQueries,
-  changeMode,
 } from './actions';
-import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
+import { ExploreId, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
+  cancelQueriesAction,
+  changeModeAction,
   initializeExploreAction,
   InitializeExplorePayload,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
+  scanStopAction,
   setQueriesAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
-  cancelQueriesAction,
-  scanStopAction,
-  changeModeAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { makeInitialUpdateState } from './reducers';
@@ -65,8 +65,8 @@ const testRange = {
   },
 };
 jest.mock('app/core/utils/explore', () => ({
-  ...jest.requireActual('app/core/utils/explore'),
-  getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
+  ...((jest.requireActual('app/core/utils/explore') as unknown) as object),
+  getTimeRangeFromUrl: (range: any) => testRange,
 }));
 
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
@@ -259,7 +259,7 @@ describe('changing datasource', () => {
 
     jest.spyOn(Actions, 'importQueries').mockImplementationOnce(() => jest.fn);
     jest.spyOn(Actions, 'loadDatasource').mockImplementationOnce(() => jest.fn);
-    jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
+    const runQueriesAction = jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
     const dispatchedActions = await thunkTester(initialState)
       .givenThunk(changeDatasource)
       .whenThunkIsDispatched(exploreId, name);
@@ -272,6 +272,8 @@ describe('changing datasource', () => {
         mode: ExploreMode.Logs,
       }),
     ]);
+    // Don't run queries just on datasource change
+    expect(runQueriesAction).toHaveBeenCalledTimes(0);
   });
 });
 

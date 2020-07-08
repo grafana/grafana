@@ -15,20 +15,10 @@ export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonDat
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceQueryType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
-  infer TQuery,
-  infer _TOptions
->
-  ? TQuery
-  : never;
+export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, any> ? TQuery : never;
 
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
-  infer _TQuery,
-  infer TOptions
->
-  ? TOptions
-  : never;
+export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -453,7 +443,6 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
-  type: string;
   label: string;
   action?: QueryFixAction;
 }
@@ -472,6 +461,7 @@ export interface QueryHint {
 
 export interface MetricFindValue {
   text: string;
+  expandable?: boolean;
 }
 
 export interface DataSourceJsonData {
