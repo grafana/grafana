@@ -4,7 +4,6 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { appEvents, contextSrv, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
-import { getConfig } from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
@@ -120,12 +119,7 @@ export class SettingsCtrl {
     const url = this.$location.path();
 
     for (const section of this.sections) {
-      section.url =
-        getConfig().appSubUrl +
-        urlUtil.renderUrl(url, {
-          ...params,
-          editview: section.id,
-        });
+      section.url = locationUtil.assureBaseUrl(urlUtil.renderUrl(url, { ...params, editview: section.id }));
     }
   }
 
