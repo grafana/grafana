@@ -13,9 +13,12 @@ import (
 
 func TestAnnotationCleanUp(t *testing.T) {
 	fakeSQL := InitTestDB(t)
-	repo := &SqlAnnotationRepo{}
 
-	createTestAnnotations(t, repo, fakeSQL)
+	t.Cleanup(func() {
+		fakeSQL.NewSession().Exec("DELETE from annotation")
+	})
+
+	createTestAnnotations(t, fakeSQL, 21, 6)
 	assertAnnotationCount(t, fakeSQL, "", 21)
 
 	tests := []struct {
@@ -84,6 +87,54 @@ func TestAnnotationCleanUp(t *testing.T) {
 	}
 }
 
+func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
+	fakeSQL := InitTestDB(t)
+
+	t.Cleanup(func() {
+		fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
+			_, err := session.Exec("DELETE from annotation")
+			require.Nil(t, err, "cleaning up all annotations should not cause problems")
+			return nil
+		})
+	})
+
+	//create some test annotations
+	a := annotations.Item{
+		DashboardId: 1,
+		OrgId:       1,
+		UserId:      1,
+		PanelId:     1,
+		AlertId:     10,
+		Text:        "",
+		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
+	}
+
+	session := fakeSQL.NewSession()
+	defer session.Close()
+
+	_, err := session.Insert(a)
+	require.Nil(t, err, "cannot insert annotation")
+	_, err = session.Insert(a)
+	require.Nil(t, err, "cannot insert annotation")
+
+	a.AlertId = 20
+	_, err = session.Insert(a)
+	require.Nil(t, err, "cannot insert annotation")
+
+	// run the clean up task to keep one annotations.
+	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
+	err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+
+	// The
+	countNew, err := session.Where("alert_id = 20").Count(&annotations.Item{})
+	require.Nil(t, err)
+	require.Equal(t, int64(1), countNew, "the last annotations should be kept")
+
+	countOld, err := session.Where("alert_id = 10").Count(&annotations.Item{})
+	require.Nil(t, err)
+	require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted.")
+}
+
 func assertAnnotationCount(t *testing.T, fakeSQL *SqlStore, sql string, expectedCount int64) {
 	t.Helper()
 
@@ -94,12 +145,12 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SqlStore, sql string, expected
 	require.Equal(t, expectedCount, count)
 }
 
-func createTestAnnotations(t *testing.T, repo *SqlAnnotationRepo, sqlstore *SqlStore) {
+func createTestAnnotations(t *testing.T, sqlstore *SqlStore, expectedCount int, oldAnnotations int) {
 	t.Helper()
 
 	cutoffDate := time.Now()
 
-	for i := 0; i < 21; i++ {
+	for i := 0; i < expectedCount; i++ {
 		a := &annotations.Item{
 			DashboardId: 1,
 			OrgId:       1,
@@ -124,7 +175,7 @@ func createTestAnnotations(t *testing.T, repo *SqlAnnotationRepo, sqlstore *SqlS
 		a.Created = cutoffDate.UnixNano() / int64(time.Millisecond)
 
 		// set a really old date for the first six annotations
-		if i < 6 {
+		if i < oldAnnotations {
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
