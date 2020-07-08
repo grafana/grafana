@@ -15,7 +15,7 @@ export function LokiExploreQueryEditor(props: Props) {
   const { query, data, datasource, exploreMode, history, onChange, onRunQuery } = props;
 
   let absolute: AbsoluteTimeRange;
-  if (data && !_.isEmpty(data.request)) {
+  if (data && data.request) {
     const { range } = data.request;
 
     absolute = {

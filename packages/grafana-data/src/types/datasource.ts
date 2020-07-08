@@ -329,7 +329,7 @@ export interface ExploreQueryFieldProps<
 }
 
 export interface ExploreStartPageProps {
-  datasource?: DataSourceApi;
+  datasource: DataSourceApi;
   exploreMode: ExploreMode;
   onClickExample: (query: DataQuery) => void;
   exploreId?: any;
@@ -490,7 +490,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   isDefault: boolean;
   jsonData: T;
   secureJsonData?: S;
-  secureJsonFields?: KeyValue<boolean>;
+  secureJsonFields: KeyValue<boolean>;
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;

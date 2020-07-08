@@ -423,7 +423,7 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of metric names', () => {
-        return ctx.ds.metricFindQuery('appInsightsMetricNames()').then((results: any) => {
+        return ctx.ds.metricFindQueryInternal('appInsightsMetricNames()').then((results: any) => {
           expect(results.length).toBe(2);
           expect(results[0].text).toBe('exceptions/server');
           expect(results[0].value).toBe('exceptions/server');
@@ -461,7 +461,7 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of group bys', () => {
-        return ctx.ds.metricFindQuery('appInsightsGroupBys(requests/count)').then((results: any) => {
+        return ctx.ds.metricFindQueryInternal('appInsightsGroupBys(requests/count)').then((results: any) => {
           expect(results[0].text).toContain('client/os');
           expect(results[0].value).toContain('client/os');
           expect(results[1].text).toContain('client/city');

@@ -38,7 +38,7 @@ interface DataViewVars {
   fields?: Record<string, DisplayValue>;
 }
 
-interface DataLinkScopedVars extends ScopedVars {
+interface DataLinkScopedVars {
   __series?: ScopedVar<SeriesVars>;
   __field?: ScopedVar<FieldVars>;
   __value?: ScopedVar<ValueVars>;
@@ -53,6 +53,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
   if (!links || links.length === 0) {
     return undefined;
   }
+
   return {
     getLinks: (existingScopedVars?: any) => {
       const scopedVars: DataLinkScopedVars = {
@@ -71,8 +72,8 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         };
 
         const field = value.colIndex !== undefined ? dataFrame.fields[value.colIndex] : undefined;
+
         if (field) {
-          console.log('Full Field Info:', field);
           scopedVars['__field'] = {
             value: {
               name: field.name,
@@ -80,19 +81,19 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
             },
             text: 'Field',
           };
-        }
 
-        if (!isNaN(value.rowIndex)) {
-          const { timeField } = getTimeField(dataFrame);
-          scopedVars['__value'] = {
-            value: {
-              raw: field.values.get(value.rowIndex),
-              numeric: value.display.numeric,
-              text: formattedValueToString(value.display),
-              time: timeField ? timeField.values.get(value.rowIndex) : undefined,
-            },
-            text: 'Value',
-          };
+          if (value.rowIndex !== undefined && value.rowIndex >= 0) {
+            const { timeField } = getTimeField(dataFrame);
+            scopedVars['__value'] = {
+              value: {
+                raw: field.values.get(value.rowIndex),
+                numeric: value.display.numeric,
+                text: formattedValueToString(value.display),
+                time: timeField ? timeField.values.get(value.rowIndex) : undefined,
+              },
+              text: 'Value',
+            };
+          }
 
           // Expose other values on the row
           if (value.view) {
@@ -124,13 +125,13 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
       }
 
       return links.map((link: DataLink) => {
-        return getLinkSrv().getDataLinkUIModel(link, scopedVars, value);
+        return getLinkSrv().getDataLinkUIModel(link, scopedVars as ScopedVars, value);
       });
     },
   };
 };
 
-export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<PanelModel> => {
+export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<PanelModel> | undefined => {
   const links = value.links;
 
   if (!links || links.length === 0) {

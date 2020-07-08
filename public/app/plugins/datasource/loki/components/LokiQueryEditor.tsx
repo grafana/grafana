@@ -27,11 +27,11 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
     // Query target properties that are fully controlled inputs
     this.state = {
       // Fully controlled text inputs
-      legendFormat: query.legendFormat,
+      legendFormat: query.legendFormat ?? '',
     };
   }
 
-  calcAbsoluteRange = (data: PanelData): AbsoluteTimeRange => {
+  calcAbsoluteRange = (data: PanelData | undefined): AbsoluteTimeRange => {
     if (data && data.request) {
       const { range } = data.request;
       return {

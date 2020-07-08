@@ -126,7 +126,7 @@ export class DatasourceSrv implements DataSourceService {
 
     Object.entries(config.datasources).forEach(([key, value]) => {
       if (value.meta?.metrics) {
-        let metricSource = { value: key, name: key, meta: value.meta, sort: key };
+        let metricSource: DataSourceSelectItem = { value: key, name: key, meta: value.meta, sort: key };
 
         //Make sure grafana and mixed are sorted at the bottom
         if (value.meta.id === 'grafana') {

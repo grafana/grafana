@@ -26,7 +26,7 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
             onChange(
               value === removeText
                 ? values.filter((_, i) => i !== index)
-                : values.map((v, i) => (i === index ? value : v))
+                : values.map((v, i) => (i === index ? value! : v))
             )
           }
         />
@@ -38,8 +38,8 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
         </a>
       }
       allowCustomValue
-      onChange={({ value }) => onChange([...values, value])}
-      options={[...stats.filter(({ value }) => !values.includes(value)), variableOptionGroup]}
+      onChange={({ value }) => onChange([...values, value!])}
+      options={[...stats.filter(({ value }) => !values.includes(value!)), variableOptionGroup]}
     />
   </>
 );

@@ -18,6 +18,7 @@ describe('DerivedFields', () => {
 
   it('renders correctly when no fields', async () => {
     let wrapper: any;
+    //@ts-ignore
     await act(async () => {
       wrapper = await mount(<DerivedFields onChange={() => {}} />);
     });
@@ -42,6 +43,7 @@ describe('DerivedFields', () => {
   it('adds new field', async () => {
     const onChangeMock = jest.fn();
     let wrapper: any;
+    //@ts-ignore
     await act(async () => {
       wrapper = await mount(<DerivedFields onChange={onChangeMock} />);
     });
@@ -53,6 +55,7 @@ describe('DerivedFields', () => {
   it('removes field', async () => {
     const onChangeMock = jest.fn();
     let wrapper: any;
+    //@ts-ignore
     await act(async () => {
       wrapper = await mount(<DerivedFields value={testValue} onChange={onChangeMock} />);
     });

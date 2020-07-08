@@ -41,14 +41,14 @@ export const loadFolderPage = (uid: string, activeChildId: string) => {
     const folderUrl = folder.url;
     navModel.main.text = folderTitle;
 
-    const dashTab = navModel.main.children.find((child: any) => child.id === 'manage-folder-dashboards');
+    const dashTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-dashboards');
     dashTab!.url = folderUrl;
 
     if (folder.canAdmin) {
-      const permTab = navModel.main.children.find((child: any) => child.id === 'manage-folder-permissions');
+      const permTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-permissions');
       permTab!.url = folderUrl + '/permissions';
 
-      const settingsTab = navModel.main.children.find((child: any) => child.id === 'manage-folder-settings');
+      const settingsTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-settings');
       settingsTab!.url = folderUrl + '/settings';
     } else {
       navModel.main.children = [dashTab!];
