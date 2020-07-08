@@ -22,11 +22,11 @@ Start your document with a single ``#`` for the title of the page. Add the sub-h
 
 * Make text **bold** using two asterisks.
 
-**Example:** It is ``**important**`` to use Github Flavored Markdown emoji consistently.
+**Example:** It is ``**important**`` to use GitHub Flavored Markdown emoji consistently.
 
 * Make text ``*emphasized*`` using single `` _underscores_`` or a single asterisk.
 
-**Example:** Github Flavored Markdown emoji should _only_ appear in specific cases.
+**Example:** GitHub Flavored Markdown emoji should _only_ appear in specific cases.
 
 
 ## Links and references
@@ -36,7 +36,7 @@ the web URL in curved brackets.
 
 \[text to display](www.website.com)
 
-**Example:** For more information on including emoji in Github flavored Markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
+**Example:** For more information on including emoji in GitHub flavored Markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
 
 ## Block quotes
 

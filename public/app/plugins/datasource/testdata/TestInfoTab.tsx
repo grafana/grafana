@@ -23,7 +23,7 @@ export class TestInfoTab extends PureComponent<Props> {
           target="_blank"
           rel="noopener"
         >
-          Github
+          GitHub
         </a>
         <br />
       </div>
