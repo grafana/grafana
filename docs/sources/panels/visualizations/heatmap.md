@@ -14,7 +14,7 @@ weight = 600
 
 The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
 
-![](/img/docs/v43/heatmap_panel_cover.jpg)
+![](../../../../img/docs/v43/heatmap_panel_cover.jpg)
 
 ## Axes options
 

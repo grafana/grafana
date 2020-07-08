@@ -135,7 +135,7 @@ tag_values(server, server=~${__searchFilter:regex})
 ### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
-![variable](/img/docs/v2/templated_variable_parameter.png)
+![variable](../../../../img/docs/v2/templated_variable_parameter.png)
 
 There are two syntaxes:
 

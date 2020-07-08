@@ -129,7 +129,7 @@ using "\*" characters.
 
 Include images in a document using the following syntax:
 
-**Example** \!\[Grafana Logo](/link/to/grafanalogo/logo.png)
+**Example** \!\[Grafana Logo](../../link/to/grafanalogo/logo.png)
 
 This follows the format of "!", alt text wrapped in "[]" and the link URL wrapped in "()".
 

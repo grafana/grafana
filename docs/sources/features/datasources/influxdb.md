@@ -79,7 +79,7 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](../../../../img/docs/influxdb/select_editor.png)
 
 The above generates the following InfluxDB `SELECT` clause:
 
@@ -112,7 +112,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 ### Table query / raw data
 
-![](/assets/img/blog/v2.6/table_influxdb_logs.png)
+![](../../../../assets/img/blog/v2.6/table_influxdb_logs.png)
 
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
@@ -123,7 +123,7 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
 
-![](/img/docs/v63/influxdb_explore_logs.png)
+![](../../../../img/docs/v63/influxdb_explore_logs.png)
 
 Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
 and then use the `Measurements/Fields` button to display your logs.

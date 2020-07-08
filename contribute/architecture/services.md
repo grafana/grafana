@@ -12,7 +12,7 @@ Even though the services in Grafana do different things, they share a number of 
 
 To start building a service:
 
-- Create a new Go package `mysvc` in the [pkg/services](/pkg/services) directory.
+- Create a new Go package `mysvc` in the [pkg/services](../../pkg/services) directory.
 - Create a `service.go` file inside your new directory.
 
 All services need to implement the [Service](https://godoc.org/github.com/grafana/grafana/pkg/registry#Service) interface:

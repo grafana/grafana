@@ -544,7 +544,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users from the [Grafana Admin Pages](/reference/admin).
+users from the [Grafana Admin Pages](../../../reference/admin).
 
 ### allow_org_create
 

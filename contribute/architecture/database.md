@@ -75,7 +75,7 @@ For transactions, use the `WithTransactionalDbSession` method instead.
 
 As Grafana evolves, it becomes necessary to create _schema migrations_ for one or more database tables.
 
-To see all the types of migrations you can add, refer to [migrations.go](/pkg/services/sqlstore/migrator/migrations.go).
+To see all the types of migrations you can add, refer to [migrations.go](../../pkg/services/sqlstore/migrator/migrations.go).
 
 Before you add a migration, make sure that you:
 
@@ -91,11 +91,11 @@ Add a migration using one of the following methods:
 
 ### Add migrations in `migrations` package
 
-Most services have their migrations located in the [migrations](/pkg/services/sqlstore/migrations/migrations.go) package.
+Most services have their migrations located in the [migrations](../../pkg/services/sqlstore/migrations/migrations.go) package.
 
 To add a migration:
 
-- Open the [migrations.go](/pkg/services/sqlstore/migrations/migrations.go) file.
+- Open the [migrations.go](../../pkg/services/sqlstore/migrations/migrations.go) file.
 - In the `AddMigrations` function, find the `addXxxMigration` function for the service you want to create a migration for.
 - At the end of the `addXxxMigration` function, register your migration:
 

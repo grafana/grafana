@@ -44,7 +44,7 @@ published for both stable and nightly builds.
 ## Improved Docker image
 
 The Grafana docker image adds support for Docker secrets which enables you to supply Grafana with configuration through files. More
-information in the [Installing using Docker documentation](/installation/docker/#reading-secrets-from-files-support-for-docker-secrets).
+information in the [Installing using Docker documentation](../../../installation/docker/#reading-secrets-from-files-support-for-docker-secrets).
 
 ## Security
 

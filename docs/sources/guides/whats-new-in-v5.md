@@ -107,7 +107,7 @@ and alerts as well.
 ### Data sources
 
 Data sources can now be setup using config files. These data sources are by default not editable from the Grafana GUI.
-It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](/administration/provisioning/#datasources).
+It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](../../../administration/provisioning/#datasources).
 
 ### Dashboards
 

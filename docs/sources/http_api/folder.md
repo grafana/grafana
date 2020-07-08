@@ -131,7 +131,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Optional [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid).
+- **uid** – Optional [unique identifier](../../../http_api/folder/#identifier-id-vs-unique-identifier-uid).
 - **title** – The title of the folder.
 
 **Example Response**:
@@ -186,7 +186,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Provide another [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier.
+- **uid** – Provide another [unique identifier](../../../http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier.
 - **title** – The title of the folder.
 - **version** – Provide the current version to be able to update the folder. Not needed if `overwrite=true`.
 - **overwrite** – Set to true if you want to overwrite existing folder with newer version.

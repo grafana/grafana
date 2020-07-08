@@ -81,7 +81,7 @@ of new features, changes, and bug fixes.
 
 ## Download
 
-Head to [v4.2-beta download page](/download/4_2_0/) for download links and instructions.
+Head to [v4.2-beta download page](../../../download/4_2_0/) for download links and instructions.
 
 ## Thanks
 

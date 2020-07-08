@@ -180,7 +180,7 @@ Content-Type: application/json
 
 ## Create notification channel
 
-You can find the full list of [supported notifiers](/alerting/notifications/#all-supported-notifier) on the alert notifiers page.
+You can find the full list of [supported notifiers](../../../alerting/notifications/#all-supported-notifier) on the alert notifiers page.
 
 `POST /api/alert-notifications`
 
@@ -379,7 +379,7 @@ Content-Type: application/json
 ## Test notification channel
 
 Sends a test notification message for the given notification channel type and settings.
-You can find the full list of [supported notifiers](/alerting/notifications/#all-supported-notifier) at the alert notifiers page.
+You can find the full list of [supported notifiers](../../../alerting/notifications/#all-supported-notifier) at the alert notifiers page.
 
 `POST /api/alert-notifications/test`
 

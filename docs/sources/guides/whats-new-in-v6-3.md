@@ -50,7 +50,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using Elasticsearch in Grafana](../../../features/datasources/elasticsearch/#querying-logs-beta) for more detailed information on how to get started and use it.
 
 ### InfluxDB logs support
 
@@ -59,7 +59,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using InfluxDB in Grafana](/features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using InfluxDB in Grafana](../../../features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
 
 ## Data Links
 
@@ -124,7 +124,7 @@ wait for the user to logout or the session to expire for the Grafana permissions
 With active sync the user would be automatically removed from the corresponding team in Grafana or even logged out and disabled if no longer
 belonging to an LDAP group that gives them access to Grafana.
 
-[Read more](/auth/enhanced_ldap/#active-ldap-synchronization).
+[Read more](../../../auth/enhanced_ldap/#active-ldap-synchronization).
 
 ### SAML Authentication
 
@@ -143,4 +143,4 @@ When setting up OAuth with GitHub it's now possible to sync GitHub teams with Te
 We've added support for enriching the Auth Proxy headers with Teams information, which makes it possible
 to use Team Sync with Auth Proxy.
 
-[See docs](/auth/auth-proxy/#auth-proxy-authentication).
+[See docs](../../../auth/auth-proxy/#auth-proxy-authentication).

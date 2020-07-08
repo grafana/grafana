@@ -178,7 +178,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![](/img/docs/v43/mysql_table.png)
+![](../../../../img/docs/v43/mysql_table.png)
 
 ## Time series queries
 

@@ -62,7 +62,7 @@ of new features, changes, and bug fixes.
 
 ## Download
 
-Head to [v4.1 download page](/download/4_1_0/) for download links and instructions.
+Head to [v4.1 download page](../../../download/4_1_0/) for download links and instructions.
 
 ## Thanks
 A big thanks to all the Grafana users who contribute by submitting PRs, bug reports and feedback!

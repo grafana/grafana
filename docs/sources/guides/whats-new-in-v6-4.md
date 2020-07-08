@@ -79,7 +79,7 @@ Read more about Data Links and what you can do with them in [documentation](http
 
 ## Series override to turn constant into a line
 
-Some graph query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides](/features/panels/graph/#series-overrides).
+Some graph query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides](../../../features/panels/graph/#series-overrides).
 To show a horizontal line through the Y-value of the datapoint across the whole graph, add a series override and select `Transform > constant`.
 
 <img src="/img/docs/v64/constant-series-override.png" />
@@ -141,7 +141,7 @@ GitLab OAuth gets support for Team Sync, making it possible to synchronize your 
 
 ## Upgrading
 
-See [upgrade notes](/installation/upgrading/#upgrading-to-v6-4).
+See [upgrade notes](../../../installation/upgrading/#upgrading-to-v6-4).
 
 ## Changelog
 

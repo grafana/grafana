@@ -86,7 +86,7 @@ group by time you need an aggregation function. Some functions like derivative r
 
 The editor tries simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](../../../img/docs/influxdb/select_editor.png)
 
 The above will generate the following InfluxDB `SELECT` clause:
 
@@ -113,7 +113,7 @@ If you have Elasticsearch 2.x and Grafana 2.6 or above then you can use pipeline
 **Moving Average** and **Derivative**. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric
 to hide metrics from appearing in the graph.
 
-![](/img/docs/elasticsearch/pipeline_metrics_editor.png)
+![](../../../img/docs/elasticsearch/pipeline_metrics_editor.png)
 
 ## Changelog
 For a detailed list and link to github issues for everything included in the 2.6 release please

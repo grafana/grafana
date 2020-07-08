@@ -97,7 +97,7 @@ go test -v ./pkg/...
 
 ### Run end-to-end tests
 
-The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md).
+The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](../contribute/style-guides/e2e.md).
 
 To run the tests:
 
@@ -139,7 +139,7 @@ app_mode = development
 
 By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you need to add at least one data source to verify the change.
 
-To set up data sources for your development environment, go to the [devenv](/devenv) directory in the Grafana repository:
+To set up data sources for your development environment, go to the [devenv](../devenv) directory in the Grafana repository:
 
 ```
 cd devenv
@@ -159,7 +159,7 @@ make devenv sources=influxdb,loki
 
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.
 
-See the repository for all the [available data sources](/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `prometheus_mac`.
+See the repository for all the [available data sources](../devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `prometheus_mac`.
 
 ## Build a Docker image
 
@@ -229,7 +229,7 @@ If that happens to you, chances are you've already set a lower limit and your sh
 
 ## Next steps
 
-- Read our [style guides](/contribute/style-guides).
-- Learn how to [Create a pull request](/contribute/create-pull-request.md).
+- Read our [style guides](../contribute/style-guides).
+- Learn how to [Create a pull request](../contribute/create-pull-request.md).
 - Read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
 - Read about the [architecture](architecture).

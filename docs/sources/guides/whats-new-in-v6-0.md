@@ -41,7 +41,7 @@ query editor and the experience to provide the best possible exploration UX.
 
 ### Explore and Prometheus
 
-Explore features a new [Prometheus query editor](/features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
+Explore features a new [Prometheus query editor](../../../features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
 integrations with the Explore table view for easy label filtering, and useful query hints that can automatically apply
 functions to your query. There is also integration between Prometheus and Grafana Loki (see more about Loki below) that
 enabled jumping between metrics query and logs query with preserved label filters.
@@ -116,7 +116,7 @@ will be shared soon.
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
 
-To get started read the guide: [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/).
+To get started read the guide: [Using Google Stackdriver in Grafana](../../../features/datasources/stackdriver/).
 
 ## Azure Monitor data source
 
@@ -124,7 +124,7 @@ One of the goals of the Grafana v6.0 release is to add support for the three maj
 
 The Azure Monitor data source integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
-Please read [Using Azure Monitor in Grafana documentation](/features/datasources/azuremonitor/) for more detailed information on how to get started and use it.
+Please read [Using Azure Monitor in Grafana documentation](../../../features/datasources/azuremonitor/) for more detailed information on how to get started and use it.
 
 ## Provisioning support for alert notifiers
 
@@ -132,21 +132,21 @@ Grafana now has support for provisioning alert notifiers from configuration file
 
 ## Easier to deploy and improved security
 
-Grafana 6.0 removes the need to configure and set up additional storage for [user sessions](/tutorials/ha_setup/#user-sessions). This should make it easier to deploy and operate Grafana in a
+Grafana 6.0 removes the need to configure and set up additional storage for [user sessions](../../../tutorials/ha_setup/#user-sessions). This should make it easier to deploy and operate Grafana in a
 high availability setup and/or if you're using a stateless user session store like Redis, Memcache, Postgres or MySQL.
 
 Instead of user sessions, we've implemented a solution based on short-lived tokens that are rotated frequently. This also replaces the old "remember me cookie"
 solution, which allowed a user to be logged in between browser sessions and which have been subject to several security holes throughout the years.
-Read more about the short-lived token solution and how to configure it [here](/auth/overview/#login-and-short-lived-tokens).
+Read more about the short-lived token solution and how to configure it [here](../../../auth/overview/#login-and-short-lived-tokens).
 
 > Please note that due to these changes, all users will be required to login upon next visit after upgrade.
 
 Besides these changes we have also made security improvements regarding Cross-Site Request Forgery (CSRF) and Cross-site Scripting (XSS) vulnerabilities:
 
-* Cookies are per default using the [SameSite](/administration/configuration/#cookie-samesite) attribute to protect against CSRF attacks
-* Script tags in text panels are per default [disabled](/administration/configuration/#disable-sanitize-html) to protect against XSS attacks
+* Cookies are per default using the [SameSite](../../../administration/configuration/#cookie-samesite) attribute to protect against CSRF attacks
+* Script tags in text panels are per default [disabled](../../../administration/configuration/#disable-sanitize-html) to protect against XSS attacks
 
-> If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
+> If you're using [Auth Proxy Authentication](../../../auth/auth-proxy/) you still need to have user sessions set up and configured
 but our goal is to remove this requirement in the near future.
 
 ## Named Colors
@@ -169,7 +169,7 @@ Named colors also enables Grafana to adapt colors to the current theme.
 
 ## Upgrading
 
-See [upgrade notes](/installation/upgrading/#upgrading-to-v6-0).
+See [upgrade notes](../../../installation/upgrading/#upgrading-to-v6-0).
 
 ## Changelog
 

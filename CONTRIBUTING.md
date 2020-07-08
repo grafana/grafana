@@ -37,7 +37,7 @@ We want to make Grafana accessible to even more people. Submit an [accessibility
 
 If you don't have the knowledge or time to code, consider helping with _issue triage_. The community will thank you for saving them time by spending some of yours.
 
-Read more about the ways you can [Triage issues](/contribute/triage-issues.md).
+Read more about the ways you can [Triage issues](./contribute/triage-issues.md).
 
 ### Answering questions
 
@@ -54,7 +54,7 @@ Unsure where to begin contributing to Grafana? Start by browsing issues labeled 
 
 If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
 
-When you're ready to contribute, it's time to [Create a pull request](/contribute/create-pull-request.md).
+When you're ready to contribute, it's time to [Create a pull request](./contribute/create-pull-request.md).
 
 #### Contributor License Agreement (CLA)
 
