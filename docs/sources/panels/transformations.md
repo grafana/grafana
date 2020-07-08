@@ -117,7 +117,7 @@ Query B:
 | 2020-07-07 11:34:20 | node    | 15     |
 | 2020-07-07 11:24:20 | postgre | 5      |
 
-Here is the result after applying the merge transformation.
+Here is the result after applying the `Merge` transformation.
 
 | Time                | Job     | Errors | Uptime    |
 |---------------------|---------|--------|-----------|
