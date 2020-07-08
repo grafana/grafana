@@ -378,15 +378,13 @@ notifiers:
     send_reminder: true
     frequency: 1h
     disable_resolve_message: false
-    # See `Supported Settings` section for settings supported for each
+    # See `Supported Settings` section for settings supporter for each
     # alert notification type.
     settings:
       recipient: 'XXX'
-      uploadImage: true
-    # Secure settings that will be encrypted in the database. See `Supported Settings` section for secure settings supported for each
-    secure_settings:
-      url: https://slack.com
       token: 'xoxb'
+      uploadImage: true
+      url: https://slack.com
 
 delete_notifiers:
   - name: notification-channel-1
@@ -401,9 +399,7 @@ delete_notifiers:
 
 ### Supported Settings
 
-The following sections detail the supported settings and secure settings for each alert notification type.
-
-> **Note**: Secure settings is supported since Grafana v7.2+.
+The following sections detail the supported settings for each alert notification type.
 
 #### Alert notification `pushover`
 
@@ -417,9 +413,9 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `slack`
 
-**Settings:**
 | Name           |
 | -------------- |
+| url            |
 | recipient      |
 | username       |
 | icon_emoji     |
@@ -428,12 +424,7 @@ The following sections detail the supported settings and secure settings for eac
 | mentionUsers   |
 | mentionGroups  |
 | mentionChannel |
-
-**Secure settings:**
-| Name        |
-| ----------- |
-| url         |
-| token       |
+| token          |
 
 #### Alert notification `victorops`
 
