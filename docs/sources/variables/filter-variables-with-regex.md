@@ -4,7 +4,7 @@ Using the Regex Query option, you filter the list of options returned by the var
 
 This page shows how to use regex to filter/modify values in the variable dropdown
 
-Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned.
+Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned. For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
 
 Examples of filtering on the following list of options:
 
