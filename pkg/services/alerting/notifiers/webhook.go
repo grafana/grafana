@@ -29,19 +29,8 @@ func init() {
 				</div>
 			</div>
 			<div class="gf-form max-width-30">
-				<div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Username</label></div>
-				<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.username">
-					<input type="text"
-						class="gf-form-input max-width-30"
-						ng-init="ctrl.model.secureSettings.username = ctrl.model.settings.username || null; ctrl.model.settings.username = null;"
-						ng-model="ctrl.model.secureSettings.username"
-						data-placement="right">
-					</input>
-				</div>
-				<div class="gf-form" ng-if="ctrl.model.secureFields.username">
-					<input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-					<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.username = false">reset</a>
-				</div>
+				<span class="gf-form-label width-8">Username</span>
+				<input type="text" class="gf-form-input max-width-30" ng-model="ctrl.model.settings.username"></input>
 			</div>
 			<div class="gf-form max-width-30">
 				<div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Password</label></div>
@@ -106,13 +95,12 @@ func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, err
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	username := model.DecryptedValue("username", model.Settings.Get("username").MustString())
 	password := model.DecryptedValue("password", model.Settings.Get("password").MustString())
 
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),
 		URL:          url,
-		User:         username,
+		User:         model.Settings.Get("username").MustString(),
 		Password:     password,
 		HTTPMethod:   model.Settings.Get("httpMethod").MustString("POST"),
 		log:          log.New("alerting.notifier.webhook"),
