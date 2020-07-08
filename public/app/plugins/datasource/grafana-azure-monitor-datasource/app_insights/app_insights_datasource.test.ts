@@ -1,11 +1,12 @@
 import { DataFrame, getFrameDisplayName, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { backendSrv } from 'app/core/services/__mocks__/backend_srv'; // ???? will use the version in __mocks__
+import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
 import { setBackendSrv } from '@grafana/runtime';
 import AppInsightsDatasource from './app_insights_datasource';
 
 const templateSrv = new TemplateSrv();
 
+jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
