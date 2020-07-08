@@ -7,7 +7,6 @@ import {
   DataQueryResponse,
   ScopedVars,
   DataSourceInstanceSettings,
-  QueryResultMeta,
   MetricFindValue,
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
