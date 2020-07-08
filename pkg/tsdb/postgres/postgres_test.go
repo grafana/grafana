@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -23,19 +24,9 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-// Test newPostgresQueryEndpoint.
-func TestNewPostgresQueryEndpoint(t *testing.T) {
-	origFactory := sqleng.NewXormEngine
-	t.Cleanup(func() {
-		sqleng.NewXormEngine = origFactory
-	})
-	var gotDriver string
-	var gotConnStr string
-	sqleng.NewXormEngine = func(driverName string, connStr string) (*xorm.Engine, error) {
-		gotDriver = driverName
-		gotConnStr = connStr
-		return nil, fmt.Errorf("stop here")
-	}
+// Test generateConnectionString.
+func TestGenerateConnectionString(t *testing.T) {
+	logger := log.New("tsdb.postgres")
 
 	testCases := []struct {
 		desc       string
@@ -87,23 +78,24 @@ func TestNewPostgresQueryEndpoint(t *testing.T) {
 		},
 	}
 	for _, tt := range testCases {
-		ds := &models.DataSource{
-			Url:      tt.host,
-			User:     tt.user,
-			Password: tt.password,
-			Database: tt.database,
-			JsonData: simplejson.New(),
-		}
-		_, err := newPostgresQueryEndpoint(ds)
-		require.Error(t, err, tt.desc)
-		if tt.expErr == "" {
-			require.Equal(t, "stop here", err.Error(), tt.desc)
-			assert.Equal(t, "postgres", gotDriver, tt.desc)
-			assert.Equal(t, tt.expConnStr, gotConnStr, tt.desc)
-		} else {
-			assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
-				fmt.Sprintf("%s: %q doesn't start with %q", tt.desc, err, tt.expErr))
-		}
+		t.Run(tt.desc, func(t *testing.T) {
+			ds := &models.DataSource{
+				Url:      tt.host,
+				User:     tt.user,
+				Password: tt.password,
+				Database: tt.database,
+				JsonData: simplejson.New(),
+			}
+			connStr, err := generateConnectionString(ds, logger)
+			if tt.expErr == "" {
+				require.NoError(t, err, tt.desc)
+				assert.Equal(t, tt.expConnStr, connStr, tt.desc)
+			} else {
+				require.Error(t, err, tt.desc)
+				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
+					fmt.Sprintf("%s: %q doesn't start with %q", tt.desc, err, tt.expErr))
+			}
+		})
 	}
 }
 
