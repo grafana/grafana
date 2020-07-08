@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -24,59 +25,63 @@ var (
 )
 
 type AlertNotification struct {
-	Id                    int64            `json:"id"`
-	Uid                   string           `json:"-"`
-	OrgId                 int64            `json:"-"`
-	Name                  string           `json:"name"`
-	Type                  string           `json:"type"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             time.Duration    `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"`
-	Created               time.Time        `json:"created"`
-	Updated               time.Time        `json:"updated"`
+	Id                    int64                         `json:"id"`
+	Uid                   string                        `json:"-"`
+	OrgId                 int64                         `json:"-"`
+	Name                  string                        `json:"name"`
+	Type                  string                        `json:"type"`
+	SendReminder          bool                          `json:"sendReminder"`
+	DisableResolveMessage bool                          `json:"disableResolveMessage"`
+	Frequency             time.Duration                 `json:"frequency"`
+	IsDefault             bool                          `json:"isDefault"`
+	Settings              *simplejson.Json              `json:"settings"`
+	SecureSettings        securejsondata.SecureJsonData `json:"secureSettings"`
+	Created               time.Time                     `json:"created"`
+	Updated               time.Time                     `json:"updated"`
 }
 
 type CreateAlertNotificationCommand struct {
-	Uid                   string           `json:"uid"`
-	Name                  string           `json:"name"  binding:"Required"`
-	Type                  string           `json:"type"  binding:"Required"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"`
+	Uid                   string            `json:"uid"`
+	Name                  string            `json:"name"  binding:"Required"`
+	Type                  string            `json:"type"  binding:"Required"`
+	SendReminder          bool              `json:"sendReminder"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Frequency             string            `json:"frequency"`
+	IsDefault             bool              `json:"isDefault"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string]string `json:"secureSettings"`
 
 	OrgId  int64 `json:"-"`
 	Result *AlertNotification
 }
 
 type UpdateAlertNotificationCommand struct {
-	Id                    int64            `json:"id"  binding:"Required"`
-	Uid                   string           `json:"uid"`
-	Name                  string           `json:"name"  binding:"Required"`
-	Type                  string           `json:"type"  binding:"Required"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"  binding:"Required"`
+	Id                    int64             `json:"id"  binding:"Required"`
+	Uid                   string            `json:"uid"`
+	Name                  string            `json:"name"  binding:"Required"`
+	Type                  string            `json:"type"  binding:"Required"`
+	SendReminder          bool              `json:"sendReminder"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Frequency             string            `json:"frequency"`
+	IsDefault             bool              `json:"isDefault"`
+	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
+	SecureSettings        map[string]string `json:"secureSettings"`
 
 	OrgId  int64 `json:"-"`
 	Result *AlertNotification
 }
 
 type UpdateAlertNotificationWithUidCommand struct {
-	Uid                   string           `json:"-"`
-	NewUid                string           `json:"uid"`
-	Name                  string           `json:"name"  binding:"Required"`
-	Type                  string           `json:"type"  binding:"Required"`
-	SendReminder          bool             `json:"sendReminder"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
-	IsDefault             bool             `json:"isDefault"`
-	Settings              *simplejson.Json `json:"settings"  binding:"Required"`
+	Uid                   string            `json:"-"`
+	NewUid                string            `json:"uid"`
+	Name                  string            `json:"name"  binding:"Required"`
+	Type                  string            `json:"type"  binding:"Required"`
+	SendReminder          bool              `json:"sendReminder"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Frequency             string            `json:"frequency"`
+	IsDefault             bool              `json:"isDefault"`
+	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
+	SecureSettings        map[string]string `json:"secureSettings"`
 
 	OrgId  int64
 	Result *AlertNotification
@@ -156,4 +161,12 @@ type GetOrCreateNotificationStateQuery struct {
 	NotifierId int64
 
 	Result *AlertNotificationState
+}
+
+// decryptedValue returns decrypted value from secureSettings
+func (an *AlertNotification) DecryptedValue(field string, fallback string) string {
+	if value, ok := an.SecureSettings.DecryptedValue(field); ok {
+		return value
+	}
+	return fallback
 }

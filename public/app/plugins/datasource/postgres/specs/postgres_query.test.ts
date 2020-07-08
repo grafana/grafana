@@ -4,7 +4,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 describe('PostgresQuery', () => {
   // @ts-ignore
   const templateSrv: TemplateSrv = {
-    replace: jest.fn(text => text),
+    replace: jest.fn(text => text) as any,
   };
 
   describe('When initializing', () => {

@@ -7,10 +7,10 @@ export interface Props {
   selectedAzureCloud?: string;
   selectedSubscription?: string;
   azureCloudOptions?: SelectableValue[];
-  tenantId: string;
-  clientId: string;
-  clientSecret: string;
-  clientSecretConfigured: boolean;
+  tenantId?: string;
+  clientId?: string;
+  clientSecret?: string;
+  clientSecretConfigured?: boolean;
   subscriptionOptions?: SelectableValue[];
   onAzureCloudChange?: (value: SelectableValue<string>) => void;
   onSubscriptionSelectChange?: (value: SelectableValue<string>) => void;
@@ -124,7 +124,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
                   <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
                   <div className="width-25">
                     <Select
-                      value={subscriptionOptions.find(subscription => subscription.value === selectedSubscription)}
+                      value={subscriptionOptions!.find(subscription => subscription.value === selectedSubscription)}
                       options={subscriptionOptions}
                       defaultValue={selectedSubscription}
                       onChange={onSubscriptionSelectChange}

@@ -87,8 +87,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const dataFrameCsv = toCSV([dataFrame]);
 
-    const blob = new Blob([dataFrameCsv], {
-      type: 'application/csv;charset=utf-8',
+    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
+      type: 'text/csv;charset=utf-8',
     });
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
     const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;

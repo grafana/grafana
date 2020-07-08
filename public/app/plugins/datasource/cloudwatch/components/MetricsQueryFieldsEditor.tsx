@@ -94,7 +94,7 @@ export function MetricsQueryFieldsEditor({
           placeholder="Select region"
           options={regions}
           allowCustomValue
-          onChange={({ value: region }) => onQueryChange({ ...query, region })}
+          onChange={({ value: region }) => onQueryChange({ ...query, region: region! })}
         />
       </QueryInlineField>
 
@@ -106,7 +106,7 @@ export function MetricsQueryFieldsEditor({
               placeholder="Select namespace"
               allowCustomValue
               options={namespaces}
-              onChange={({ value: namespace }) => onQueryChange({ ...query, namespace })}
+              onChange={({ value: namespace }) => onQueryChange({ ...query, namespace: namespace! })}
             />
           </QueryInlineField>
 
