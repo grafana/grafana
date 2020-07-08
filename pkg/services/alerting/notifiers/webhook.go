@@ -16,48 +16,48 @@ func init() {
 		Heading:     "Webhook settings",
 		Factory:     NewWebHookNotifier,
 		OptionsTemplate: `
-      <h3 class="page-heading">Webhook settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Url</span>
-        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Http Method</span>
-        <div class="gf-form-select-wrapper max-width-30">
-          <select class="gf-form-input" ng-model="ctrl.model.settings.httpMethod" ng-options="t for t in ['POST', 'PUT']">
-          </select>
-        </div>
+			<h3 class="page-heading">Webhook settings</h3>
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-8">Url</span>
+				<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
 			</div>
 			<div class="gf-form max-width-30">
-        <div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Username</label></div>
-        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.username">
-          <input type="text"
+				<span class="gf-form-label width-8">Http Method</span>
+				<div class="gf-form-select-wrapper max-width-30">
+					<select class="gf-form-input" ng-model="ctrl.model.settings.httpMethod" ng-options="t for t in ['POST', 'PUT']">
+					</select>
+				</div>
+			</div>
+			<div class="gf-form max-width-30">
+				<div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Username</label></div>
+				<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.username">
+					<input type="text"
 						class="gf-form-input max-width-30"
 						ng-init="ctrl.model.secureSettings.username = ctrl.model.settings.username || null; ctrl.model.settings.username = null;"
-            ng-model="ctrl.model.secureSettings.username"
-            data-placement="right">
-          </input>
-        </div>
-        <div class="gf-form" ng-if="ctrl.model.secureFields.username">
-          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.username = false">reset</a>
-        </div>
+						ng-model="ctrl.model.secureSettings.username"
+						data-placement="right">
+					</input>
+				</div>
+				<div class="gf-form" ng-if="ctrl.model.secureFields.username">
+					<input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+					<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.username = false">reset</a>
+				</div>
 			</div>
 			<div class="gf-form max-width-30">
-        <div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Password</label></div>
-        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.password">
-          <input type="text"
+				<div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Password</label></div>
+				<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.password">
+					<input type="text"
 						class="gf-form-input max-width-30"
 						ng-init="ctrl.model.secureSettings.password = ctrl.model.settings.password || null; ctrl.model.settings.password = null;"
-            ng-model="ctrl.model.secureSettings.password"
-            data-placement="right">
-          </input>
-        </div>
-        <div class="gf-form" ng-if="ctrl.model.secureFields.password">
-          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.password = false">reset</a>
-        </div>
-      </div>
+						ng-model="ctrl.model.secureSettings.password"
+						data-placement="right">
+					</input>
+				</div>
+				<div class="gf-form" ng-if="ctrl.model.secureFields.password">
+					<input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+					<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.password = false">reset</a>
+				</div>
+			</div>
     `,
 		Options: []alerting.NotifierOption{
 			{
