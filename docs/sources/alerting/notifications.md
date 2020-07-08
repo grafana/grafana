@@ -194,7 +194,7 @@ In WeChat Work PC client, enter or create a group:
 
 3. After creation, a "Webhook URL" will display, if it doesn't, just click the robot icon and it will display.
 
-3. Create a notification channel in Grafana ,copy and paste the "Webhook URL" from steps displayed above, then click finish.
+4. Create a notification channel in Grafana ,copy and paste the "Webhook URL" from steps displayed above, then click finish.
 
 ### Kafka
 
