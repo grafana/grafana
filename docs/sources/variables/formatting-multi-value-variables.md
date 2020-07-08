@@ -7,9 +7,7 @@ weight = 500
 
 # Formatting multi-value variables
 
-Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that
-is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
-inform the templating interpolation engine what format to use for multiple values.
+Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to inform the templating interpolation engine what format to use for multiple values.
 
 > **Note:** The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If leave it blank, then the Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value will be something like `*` or `all`.
 
