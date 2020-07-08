@@ -23,7 +23,7 @@ The Azure Monitor data source supports multiple services in the Azure cloud:
 - **[Azure Log Analytics]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Azure Logs) gives you access to log data collected by Azure Monitor.
 - **[Application Insights Analytics]({{< relref "#querying-the-application-insights-analytics-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
 
-## Adding the data source
+## Add the data source
 
 The data source can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
 
@@ -78,11 +78,11 @@ In the query editor for a panel, after choosing your Azure Monitor data source, 
 - `Azure Log Analytics`
 - `Insights Analytics`
 
-The query editor will change depending on which one you pick. Azure Monitor is the default.
+The query editor changes depending on which one you pick. Azure Monitor is the default.
 
-As of 7.1+, Insights Analytics was added and replaces the former edit mode from within Application Insights.
+Starting in Grafana 7.1, Insights Analytics replaced the former edit mode from within Application Insights.
 
-## Querying the Azure Monitor service
+## Query the Azure Monitor service
 
 The Azure Monitor service provides metrics for all the Azure services that you have running. It helps you understand how your applications on Azure are performing and to proactively find issues affecting your applications.
 
@@ -96,19 +96,19 @@ Examples of metrics that you can get from the service are:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Monitor Query Editor" >}}
 
-As of 7.1, the query editor will let you query multiple dimensions for metrics that support them. Metrics that support multiple dimensions are those listed in the [Azure Monitor supported Metrics List](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported) that have one or more values listed in the "Dimension" column for the metric.
+As of Grafana 7.1, the query editor allows you to query multiple dimensions for metrics that support them. Metrics that support multiple dimensions are those listed in the [Azure Monitor supported Metrics List](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported) that have one or more values listed in the "Dimension" column for the metric.
 
-### Formatting legend keys with aliases for Azure Monitor
+### Format legend keys with aliases for Azure Monitor
 
 The default legend formatting for the Azure Monitor API is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-Note: Before 7.1+, the formatting used to include the resource name in the default: `resourceName{dimensionName=dimensionValue}.metricName`. As of 7.1+ the resource name as been removed from the default legend.
+> **Note:** Before Grafana 7.1, the formatting included the resource name in the default: `resourceName{dimensionName=dimensionValue}.metricName`. As of Grafana 7.1, the resource name has been removed from the default legend.
 
-These can be quite long, but this formatting can be changed by using aliases. In the Legend Format field, the aliases which are defined below can be combined any way you want.
+These can be quite long, but this formatting can be changed by using aliases. In the **Legend Format** field, you can combine the aliases defined below any way you want.
 
-Azure Monitor Examples:
+Azure Monitor examples:
 
 - `Blob Type: {{ blobtype }}`
 - `{{ resourcegroup }} - {{ resourcename }}`
@@ -123,7 +123,7 @@ Azure Monitor Examples:
 - `{{ dimensionvalue }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
 - `{{ arbitraryDim }}` = *Available in 7.1+* replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
 
-### Templating with variables for Azure Monitor
+### Create template variables for Azure Monitor
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
@@ -167,11 +167,11 @@ Grafana alerting is supported for the Azure Monitor service. This is not Azure A
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
-## Querying the Application Insights Service
+## Query the Application Insights Service
 
 {{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
-As of 7.1+, more than one group by dimension may be selected.
+As of Grafana 7.1, you can select more than one group by dimension.
 
 ### Formatting legend keys with aliases for Application Insights
 
@@ -181,7 +181,7 @@ The default legend formatting is:
 
 In the Legend Format field, the aliases which are defined below can be combined any way you want.
 
-Application Insights Examples:
+Application Insights examples:
 
 - `city: {{ client/city }}`
 - `{{ metric }} [Location: {{ client/countryOrRegion }}, {{ client/city }}]`
@@ -232,13 +232,13 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 ## Querying the Azure Log Analytics service
 
-Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.loganalytics.io/index). A Log Analytics Query can be formatted as Time Series data or as Table data.
+Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.loganalytics.io/index). A Log Analytics query can be formatted as time series data or as table data.
 
-If your credentials give you access to multiple subscriptions then choose the appropriate subscription first before entering queries.
+If your credentials give you access to multiple subscriptions, then choose the appropriate subscription before entering queries.
 
 ### Time series queries
 
-Time Series queries are for the Graph Panel (and other panels like the Single Stat panel) and must contain at least a datetime column and a numeric value column. The result must also be sorted in ascending order by the datetime column.
+Time series queries are for the Graph panel and other panels like the SingleStat panel. Each query must contain at least a datetime column and a numeric value column. The result must also be sorted in ascending order by the datetime column.
 
 Here is an example query that returns the aggregated count grouped by hour:
 
@@ -249,7 +249,7 @@ Perf
 | order by TimeGenerated asc
 ```
 
-A query may also additionally have one or more non-numeric/non-datetime columns, and those columns will be considered dimensions and become labels in the response. For example, a query that returns the aggregated count grouped by hour, Computer, and the CounterName:
+A query can also have one or more non-numeric/non-datetime columns, and those columns are considered dimensions and become labels in the response. For example, a query that returns the aggregated count grouped by hour, Computer, and the CounterName:
 
 ```kusto
 Perf
@@ -258,7 +258,7 @@ Perf
 | order by TimeGenerated asc
 ```
 
-Finally, additional number value columns may also be selected (with, or without multiple dimensions). For example getting a count and average value by hour, Computer, CounterName, and InstanceName:
+You can also select additional number value columns (with, or without multiple dimensions). For example, getting a count and average value by hour, Computer, CounterName, and InstanceName:
 
 ```kusto
 Perf
@@ -272,7 +272,7 @@ Perf
 
 ### Table queries
 
-Table queries are mainly used in the Table panel and row a list of columns and rows. This example query returns rows with the 6 specified columns:
+Table queries are mainly used in the Table panel and show a list of columns and rows. This example query returns rows with the six specified columns:
 
 ```kusto
 AzureActivity
@@ -366,9 +366,9 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../../alerting/alerts-overview.md" >}}).
 
-## Querying the Application Insights Analytics service
+## Query the Application Insights Analytics service
 
-If you change the service type to "Insights Analytics", a similar editor to the Log Analytics service is available. This service also uses the Kusto language so the instructions for querying data are identical to [querying the log analytics service]({{< relref "#querying-the-azure-log-analytics-service" >}}), except that you query Application Insights Analytics data instead.
+If you change the service type to **Insights Analytics**, then a similar editor to the Log Analytics service is available. This service also uses the Kusto language, so the instructions for querying data are identical to [querying the log analytics service]({{< relref "#querying-the-azure-log-analytics-service" >}}), except that you query Application Insights Analytics data instead.
 
 {{< docs-imagebox img="/img/docs/azuremonitor/insights_analytics_multi-dim.png" class="docs-image--no-shadow" caption="Azure Application Insights Analytics query with multiple dimensions" >}}
 
