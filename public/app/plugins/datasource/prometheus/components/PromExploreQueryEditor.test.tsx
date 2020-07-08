@@ -18,6 +18,7 @@ const setup = (renderMethod: any, propOverrides?: object) => {
     request: {
       requestId: '1',
       dashboardId: 1,
+      intervalMs: 1000,
       interval: '1s',
       panelId: 1,
       range: {
