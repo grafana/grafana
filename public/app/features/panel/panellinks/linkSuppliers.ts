@@ -54,8 +54,10 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
     return undefined;
   }
   return {
-    getLinks: (_scopedVars?: any) => {
-      const scopedVars: DataLinkScopedVars = {};
+    getLinks: (existingScopedVars?: any) => {
+      const scopedVars: DataLinkScopedVars = {
+        ...(existingScopedVars ?? {}),
+      };
 
       if (value.view) {
         const { dataFrame } = value.view;
