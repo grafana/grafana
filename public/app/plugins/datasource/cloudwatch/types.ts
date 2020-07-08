@@ -37,7 +37,6 @@ export interface CloudWatchLogsQuery extends DataQuery {
 
   id: string;
   region: string;
-  namespace: string;
   expression?: string;
   logGroupNames?: string[];
   statsGroups?: string[];
