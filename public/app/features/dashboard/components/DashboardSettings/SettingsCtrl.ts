@@ -255,7 +255,7 @@ export class SettingsCtrl {
   };
 
   onRefreshIntervalChange = (intervals: string[]) => {
-    this.dashboard.timepicker.refresh_intervals = intervals;
+    this.dashboard.timepicker.refresh_intervals = intervals.filter(i => i.trim() !== '');
   };
 
   onNowDelayChange = (nowDelay: string) => {
