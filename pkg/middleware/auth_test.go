@@ -9,7 +9,6 @@ import (
 )
 
 func TestMiddlewareAuth(t *testing.T) {
-
 	Convey("Given the grafana middleware", t, func() {
 		reqSignIn := Auth(&AuthOptions{ReqSignedIn: true})
 

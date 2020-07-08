@@ -92,5 +92,4 @@ func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 	}
 
 	return seriesSlice, nil
-
 }

@@ -21,7 +21,6 @@ func (cmd Command) listRemoteCommand(c utils.CommandLine) error {
 				logger.Infof("id: %v version: %s\n", plugin.Id, ver.Version)
 			}
 		}
-
 	}
 
 	return nil

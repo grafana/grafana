@@ -49,7 +49,6 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 func TestAlertRuleModel(t *testing.T) {
 	sqlstore.InitTestDB(t)
 	Convey("Testing alert rule", t, func() {
-
 		RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 			return &FakeCondition{}, nil
 		})

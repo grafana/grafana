@@ -22,7 +22,6 @@ func TestLineNotifier(t *testing.T) {
 
 			_, err := NewLINENotifier(model)
 			So(err, ShouldNotBeNil)
-
 		})
 		Convey("settings should trigger incident", func() {
 			json := `

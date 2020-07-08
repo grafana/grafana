@@ -370,7 +370,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   getTime(date: string | DateTime, roundUp: boolean) {
     if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp)!;
     }
 
     return Math.ceil(date.valueOf() * 1e6);
@@ -409,7 +409,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
     const query = Object.keys(row.labels)
-      .map(label => `${label}="${row.labels[label]}"`)
+      .map(label => `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`) // escape backslashes in label as users can't escape them by themselves
       .join(',');
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
@@ -517,9 +517,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return annotations;
   }
 
-  showContextToggle = (row?: LogRowModel) => {
-    return row && row.searchWords && row.searchWords.length > 0;
-  };
+  showContextToggle(row?: LogRowModel): boolean {
+    return (row && row.searchWords && row.searchWords.length > 0) === true;
+  }
 
   throwUnless = (err: any, condition: boolean, target: LokiQuery) => {
     if (condition) {

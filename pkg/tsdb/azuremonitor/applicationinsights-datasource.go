@@ -131,7 +131,6 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			aggregation: insightsJSONModel.Aggregation,
 			dimensions:  insightsJSONModel.Dimensions,
 		})
-
 	}
 
 	return applicationInsightsQueries, nil
@@ -258,7 +257,6 @@ func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourc
 // formatApplicationInsightsLegendKey builds the legend key or timeseries name
 // Alias patterns like {{metric}} are replaced with the appropriate data values.
 func formatApplicationInsightsLegendKey(alias string, metricName string, labels data.Labels) string {
-
 	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
 	lowerLabels := data.Labels{}
 	for k, v := range labels {

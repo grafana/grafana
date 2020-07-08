@@ -52,3 +52,42 @@ To build individual packages, run:
 ```
 grafana-toolkit package:build --scope=<ui|toolkit|runtime|data>
 ```
+
+### Setting up @grafana/* packages for local development
+
+A known issue with @grafana/* packages is that a lot of times we discover problems on canary channel(see [versioning overview](#Versioning)) when the version was already pushed to npm. 
+
+We can easily avoid that by setting up a local packages registry and test the packages before actually publishing to npm.
+
+In this guide you will set up [Verdaccio](https://verdaccio.org/) registry locally to fake npm registry. This will enable testing @grafana/* packages without the need for pushing to master.
+
+#### Setting up local npm registry
+
+From your terminal: 
+1. Modify `/etc/hosts` file and add the following entry: ```127.0.0.1       grafana-npm.local```
+2. Navigate to `devenv/local-npm` directory. 
+3. Run `docker-compose up`. This will start your local npm registry, available at http://grafana-npm.local:4873/
+4. Run `npm login --registry=http://grafana-npm.local:4873 --scope=@grafana` . This will allow you to publish any @grafana/* package into the local registry.
+5. Run `npm config set @grafana:registry http://grafana-npm.local:4873`. This will config your npm to install @grafana scoped packages from your local registry.
+
+#### Publishing packages to local npm registry
+
+You need to follow [manual packages release procedure](#manual-release). The only difference is you need to run `yarn packages:publishDev` task in order to publish to you local registry.
+
+From your terminal:
+1. Run `yarn packages:prepare`.
+2. Commit changes in package.json and lerna.json files
+3. Build packages: `yarn packages:build`
+4. Run `yarn packages:publishDev`. 
+5. Navigate to http://grafana-npm.local:4873 and verify that version was published
+
+Locally published packages will be published under `dev` channel, so in your plugin package.json file you can use that channel. For  example:
+
+```
+// plugin's package.json
+
+{
+  ...
+  "@grafana/data": "dev"
+}
+```
