@@ -976,6 +976,41 @@ Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
+# Configures for how long alert annotations should be kept. Default is 0 which keeps them for ever
+
+max_annotation_age =
+
+# Configures max number of alert annotations that should be kept. Defaul value is 0 which keeps all alert annotations
+
+max_annotations_to_keep =
+
+<hr>
+
+## [annotations.dashboard]
+
+Dashboard annotations means that the annotation are associated with an dashboard.
+
+### max_age
+
+Configures for how long dashboard annotations should be kept. Default is 0 which keeps them for ever
+
+### max_annotations_to_keep
+
+Configures max number of dashboard annotations that should be kept. Defaul value is 0 which keeps all dashboard annotations
+
+## [annotations.api]
+
+API annotations means that the annotations have been created using the API without any
+association with a dashboard
+
+### max_age
+
+Configures for how long dashboard annotations should be kept. Default is 0 which keeps them for ever
+
+### max_annotations_to_keep
+
+Configures max number of dashboard annotations that should be kept. Defaul value is 0 which keeps all dashboard annotations
+
 <hr>
 
 ## [explore]
