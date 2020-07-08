@@ -38,7 +38,7 @@ export default class Api {
         method: 'GET',
       });
 
-      const responsePropName = path.match(/([^\/]*)\/*$/)[1];
+      const responsePropName = path.match(/([^\/]*)\/*$/)![1];
       let res = [];
       if (response && response.data && response.data[responsePropName]) {
         res = response.data[responsePropName].map(responseMap);

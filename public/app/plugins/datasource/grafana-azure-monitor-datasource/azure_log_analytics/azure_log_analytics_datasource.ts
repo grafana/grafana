@@ -154,7 +154,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       for (const df of res.data) {
         const encodedQuery = df.meta?.custom?.encodedQuery;
         if (encodedQuery && encodedQuery.length > 0) {
-          const url = await this.buildDeepLink(df.meta);
+          const url = await this.buildDeepLink(df.meta.custom);
           if (url?.length) {
             for (const field of df.fields) {
               field.config.links = [
@@ -172,10 +172,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return res;
   }
 
-  private async buildDeepLink(meta: QueryResultMeta) {
-    const base64Enc = encodeURIComponent(meta.custom.encodedQuery);
-    const workspaceId = meta.custom.workspace;
-    const subscription = meta.custom.subscription;
+  private async buildDeepLink(customMeta: Record<string, any>) {
+    const base64Enc = encodeURIComponent(customMeta.encodedQuery);
+    const workspaceId = customMeta.workspace;
+    const subscription = customMeta.subscription;
 
     const details = await this.getWorkspaceDetails(workspaceId);
     if (!details.workspace || !details.resourceGroup) {
@@ -214,7 +214,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     };
   }
 
-  metricFindQuery(query: string): Promise<MetricFindValue[]> {
+  /**
+   * This is named differently than DataSourceApi.metricFindQuery
+   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
+   * And some of the azure internal data sources return null in this function, which the
+   * external interface does not support
+   */
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
       return this.getWorkspaces(this.subscriptionId);
@@ -247,7 +253,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
             throw { message: err.error.data.error.message };
           }
         });
-    }) as Promise<MetricFindValue[]>; // ??
+    }) as Promise<MetricFindValue[]>;
   }
 
   private buildQuery(query: string, options: any, workspace: any) {

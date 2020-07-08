@@ -60,7 +60,7 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
           <>
             <Field
               invalid={!!errors.loginOrEmail}
-              error={!!errors.loginOrEmail && 'Email or Username is required'}
+              error={!!errors.loginOrEmail ? 'Email or Username is required' : undefined}
               label="Email or Username"
             >
               <Input name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />

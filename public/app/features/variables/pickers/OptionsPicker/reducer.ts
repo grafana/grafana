@@ -16,7 +16,7 @@ export interface OptionsPickerState {
   id: string;
   selectedValues: VariableOption[];
   selectedTags: VariableTag[];
-  queryValue: string | null;
+  queryValue: string;
   highlightIndex: number;
   tags: VariableTag[];
   options: VariableOption[];
@@ -26,7 +26,7 @@ export interface OptionsPickerState {
 export const initialState: OptionsPickerState = {
   id: '',
   highlightIndex: -1,
-  queryValue: null,
+  queryValue: '',
   selectedTags: [],
   selectedValues: [],
   tags: [],
