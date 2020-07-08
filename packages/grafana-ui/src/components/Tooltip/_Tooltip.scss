@@ -50,7 +50,6 @@ $popper-margin-from-ref: 5px;
 
   &.popper__background--code {
     @include popper-theme($popover-code-bg, $white);
-    box-shadow: $popover-code-boxshadow;
   }
 }
 
