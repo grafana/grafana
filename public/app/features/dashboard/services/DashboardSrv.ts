@@ -4,8 +4,9 @@ import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
 import { CoreEvents, DashboardMeta } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { backendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { promiseToDigest } from '../../../core/utils/promiseToDigest';
+import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 
 export class DashboardSrv {
   dashboard: DashboardModel;
@@ -34,7 +35,8 @@ export class DashboardSrv {
 
   saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
-    return getBackendSrv().saveDashboard(parsedJson, {
+    return saveDashboard({
+      dashboard: parsedJson,
       folderId: this.dashboard.meta.folderId || parsedJson.folderId,
     });
   }

@@ -374,7 +374,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "multiple dimension time series response with label alias",
 			responseFile: "7-azure-monitor-response-multi-dimension.json",
 			mockQuery: &AzureMonitorQuery{
-				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{tier}}}",
+				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{Tier}}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
