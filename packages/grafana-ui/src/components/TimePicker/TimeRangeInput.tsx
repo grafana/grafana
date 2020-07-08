@@ -31,6 +31,11 @@ export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, t
     setIsOpen(false);
   };
 
+  const onRangeChange = (timeRange: TimeRange) => {
+    onClose();
+    onChange(timeRange);
+  };
+
   const styles = useStyles(getStyles);
   const theme = useTheme();
   const inputStyles = getInputStyles({ theme, invalid: false });
@@ -53,7 +58,7 @@ export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, t
           <TimePickerContent
             timeZone={timeZone}
             value={value}
-            onChange={onChange}
+            onChange={onRangeChange}
             otherOptions={otherOptions}
             quickOptions={quickOptions}
             onChangeTimeZone={onChangeTimeZone}
