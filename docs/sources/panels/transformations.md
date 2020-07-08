@@ -11,7 +11,7 @@ weight = 300
 
 This page explains what transformations in Grafana are and how to use them.
 
-> **Note:** This documentation refers to a Grafana 7.0 beta feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
+> **Note:** This documentation refers to a Grafana 7.0 feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
 
 Transformations process the result set before it’s passed to the visualization. You access transformations in the Transform tab of the Grafana panel editor.
 
@@ -97,7 +97,9 @@ After I apply the transformation, there is no time value and each column has bee
 
 ### Merge
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that is mergeable will be combined into the same row. They are considered to be mergeable if the shared fields contains the same data.
+> **Note:** This documentation refers to a Grafana 7.1 feature.
+
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contains the same data.
 
 In the example below, we are visualizing multiple queries returning table data before applying the transformation.
 
@@ -205,15 +207,18 @@ After I apply the transformation, my labels appear in the table as fields.
 {{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Series to rows
+
+> **Note:** This documentation refers to a Grafana 7.1 feature.
+
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization. 
 
-The result from this transformation will contain three columns: `Time`, `Metric` and `Value`. The `Metric` column is added so you easily can see from what query the metric originate from. You can be customized this value by defining `Label` on the source query.
+The result from this transformation will contain three columns: `Time`, `Metric`, and `Value`. The `Metric` column is added so you easily can see from which query the metric originates from. Customize this value by defining `Label` on the source query.
 
-In the example below, we are visualizing multiple queries returning time series data before applying the transformation.
+In the example below, we apply a transformation to multiple queries returning time series data.
 
 {{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-Here is the same example after applying the merge transformation.
+Here is the same example after applying the Series to rows transformation.
 
 {{< docs-imagebox img="/img/docs/transformations/time-series-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
