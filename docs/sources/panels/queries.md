@@ -9,8 +9,6 @@ weight = 300
 
 # Queries
 
-> **Note:** This documentation refers to a feature only available in Grafana 7.0 beta.
-
 _Queries_ are how Grafana panels communicate with data sources to get data for the visualization. A query is a question written in the query language used by the data source. Grafana asks, "Hey data source, would you send me this data, organized this way?" If the query is properly formed, then the data source responds. How often the query is sent to the data source and how many data points are collected can be adjusted in the panel data source options.
 
 Grafana supports up to 26 queries per panel.
@@ -76,7 +74,7 @@ In addition to the data sources that you have configured in your Grafana, there 
 
 Click **Query options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made in this panel.
 
-{{< docs-imagebox img="/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="400px" >}}
+{{< docs-imagebox img="/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 Grafana sets defaults that are shown in dark gray text. Changes are displayed in white text. To return a field to the default setting, delete the white text from the field.
 
@@ -88,13 +86,13 @@ Panel data source query options:
 
   With streaming data, the max data points value is used for the rolling buffer. (Streaming is a continuous flow of data and buffering is a way of dividing the stream into chunks). Loki streams data in the live tailing mode.
 
-- **Min interval -** Sets a minimum limit for the automatically calculated interval, typically the minimum scrape interval. If a data point is saved every 15 seconds, then there's no point in having an interval lower than that. Another use case is set it to a higher minimum than the scrape interval to get more coarse-grained, well-functioning queries.
+- **Min interval -** Sets a minimum limit for the automatically calculated interval, typically the minimum scrape interval. If a data point is saved every 15 seconds, then there's no point in having an interval lower than that. Another use case is to set it to a higher minimum than the scrape interval to get more coarse-grained, well-functioning queries.
   
 - **Interval -** The interval is a time span that you can use when aggregating or grouping data points by time. 
   
   Grafana automatically calculates an appropriate interval and it can be used as a variable in templated queries. The variable is either in seconds: `$__interval` or in milliseconds: `$__interval_ms`. It is typically used in aggregation functions like sum or average. For example, a Prometheus query using the interval variable: `rate(http_requests_total[$__interval])`.
 
-  This automatic interval is calculated based on the width of the graph. If the user zooms out a lot then the interval becomes greater, resulting in a more coarse grained aggregation whereas if the use zooms in then the interval decreases resulting in a more fine grained aggregation.
+  This automatic interval is calculated based on the width of the graph. If the user zooms out a lot then the interval becomes greater, resulting in a more coarse grained aggregation whereas if the user zooms in then the interval decreases resulting in a more fine grained aggregation.
 
   For more information, refer to [Global variables]({{< relref "../variables/global-variables.md" >}}).
 
@@ -102,7 +100,7 @@ Panel data source query options:
   
 - **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range. 
   
-  For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Panel time overrides and timeshift]({{< relref "../packages_api/data/timerange.md#panel-time-overrides-and-timeshift" >}}).
+  For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}).
 
 - **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
 

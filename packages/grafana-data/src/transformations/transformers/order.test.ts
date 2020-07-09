@@ -43,18 +43,30 @@ describe('Order Transformer', () => {
           name: 'temperature',
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+          labels: undefined,
+          state: {
+            displayName: 'temperature',
+          },
         },
         {
           config: {},
           name: 'humidity',
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
+          labels: undefined,
+          state: {
+            displayName: 'humidity',
+          },
         },
         {
           config: {},
           name: 'time',
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
+          labels: undefined,
+          state: {
+            displayName: 'time',
+          },
         },
       ]);
     });
@@ -90,18 +102,30 @@ describe('Order Transformer', () => {
           name: 'humidity',
           type: FieldType.number,
           values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
+          labels: undefined,
+          state: {
+            displayName: 'humidity',
+          },
         },
         {
           config: {},
           name: 'time',
           type: FieldType.time,
           values: new ArrayVector([3000, 4000, 5000, 6000]),
+          labels: undefined,
+          state: {
+            displayName: 'time',
+          },
         },
         {
           config: {},
           name: 'pressure',
           type: FieldType.number,
           values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+          labels: undefined,
+          state: {
+            displayName: 'pressure',
+          },
         },
       ]);
     });

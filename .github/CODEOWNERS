@@ -14,10 +14,47 @@
 # Documentation owner: Diana Payton
 /docs/ @oddlittlebird
 /contribute/ @oddlittlebird  @marcusolsson
-# @grafana/ui component documentation
-*.mdx @marcusolsson @jessover9000
+
 
 # Backend code
 *.go @grafana/backend-platform
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
+
+/e2e @grafana/grafana-frontend-platform
+/packages @grafana/grafana-frontend-platform
+/plugins-bundled @grafana/grafana-frontend-platform
+/public @grafana/grafana-frontend-platform
+/scripts/build/release-packages.sh @grafana/grafana-frontend-platform
+/scripts/circle-release-next-packages.sh @grafana/grafana-frontend-platform
+/scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform
+/scripts/grunt @grafana/grafana-frontend-platform
+/scripts/webpack @grafana/grafana-frontend-platform
+package.json @grafana/grafana-frontend-platform
+tsconfig.json @grafana/grafana-frontend-platform
+lerna.json @grafana/grafana-frontend-platform
+.babelrc @grafana/grafana-frontend-platform
+.prettierrc.js @grafana/grafana-frontend-platform
+.eslintrc @grafana/grafana-frontend-platform
+
+# @grafana/ui component documentation
+*.mdx @marcusolsson @jessover9000 @grafana/grafana-frontend-platform
+
+/public/app/features/explore/ @grafana/observability-squad
+/packages/jaeger-ui-components/ @grafana/observability-squad
+
+# Core datasources
+/public/app/plugins/datasource/cloudwatch @grafana/backend-platform @grafana/observability-squad
+/public/app/plugins/datasource/elasticsearch @grafana/observability-squad
+/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/backend-platform
+/public/app/plugins/datasource/graphite @grafana/observability-squad
+/public/app/plugins/datasource/influxdb @grafana/observability-squad
+/public/app/plugins/datasource/jaeger @grafana/observability-squad
+/public/app/plugins/datasource/loki @grafana/observability-squad
+/public/app/plugins/datasource/mssql @grafana/backend-platform
+/public/app/plugins/datasource/mysql @grafana/backend-platform
+/public/app/plugins/datasource/opentsdb @grafana/backend-platform
+/public/app/plugins/datasource/postgres @grafana/backend-platform
+/public/app/plugins/datasource/prometheus @grafana/observability-squad
+/public/app/plugins/datasource/cloud-monitoring @grafana/backend-platform
+/public/app/plugins/datasource/zipkin @grafana/observability-squad

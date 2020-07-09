@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Span, filterSpans } from '@jaegertracing/jaeger-ui-components';
+import { filterSpans } from '@jaegertracing/jaeger-ui-components';
+import { TraceSpan } from '@grafana/data';
 
 /**
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
  */
-export function useSearch(spans?: Span[]) {
+export function useSearch(spans?: TraceSpan[]) {
   const [search, setSearch] = useState('');
   const spanFindMatches: Set<string> | undefined = useMemo(() => {
     return search && spans ? filterSpans(search, spans) : undefined;

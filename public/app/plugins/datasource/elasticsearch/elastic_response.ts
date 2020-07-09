@@ -12,7 +12,8 @@ export class ElasticResponse {
   }
 
   processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
-    let metric, y, i, newSeries, bucket, value;
+    let metric, y, i, bucket, value;
+    let newSeries: any;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -368,7 +369,7 @@ export class ElasticResponse {
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elastic error response';
+      result.message = err.reason || 'Unknown elastic error response';
     }
 
     if (response.$$config) {
@@ -466,7 +467,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
   let propNames: string[] = [];
 
   for (const hit of hits) {
-    const flattened = hit._source ? flatten(hit._source, null) : {};
+    const flattened = hit._source ? flatten(hit._source) : {};
     const doc = {
       _id: hit._id,
       _type: hit._type,

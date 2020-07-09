@@ -19,7 +19,7 @@ Grafana v4.6 brings many enhancements to Annotations, Cloudwatch and Prometheus.
 {{< docs-imagebox img="/img/docs/v46/add_annotation_region.png"  max-width= "800px" >}}
 
 You can now add annotation events and regions right from the graph panel! Just hold Ctrl/Cmd+Click or drag region to open the **Add Annotation** view. The
-[Annotations]({{< relref "../reference/annotations.md" >}}) documentation is updated to include details on this new exciting feature.
+[Annotations]({{< relref "../dashboards/annotations.md" >}}) documentation is updated to include details on this new exciting feature.
 
 ### Cloudwatch
 
@@ -60,9 +60,9 @@ This makes exploring and filtering Prometheus data much easier.
 
 ### Minor Changes
 
-* **SMTP**: Make it possible to set specific EHLO for smtp client. [#9319](https://github.com/grafana/grafana/issues/9319)
-* **Dataproxy**: Allow Grafana to renegotiate tls connection [#9250](https://github.com/grafana/grafana/issues/9250)
-* **HTTP**: set net.Dialer.DualStack to true for all http clients [#9367](https://github.com/grafana/grafana/pull/9367)
+* **SMTP**: Make it possible to set specific EHLO for SMTP client. [#9319](https://github.com/grafana/grafana/issues/9319)
+* **Dataproxy**: Allow Grafana to renegotiate TLS connection [#9250](https://github.com/grafana/grafana/issues/9250)
+* **HTTP**: set net.Dialer.DualStack to true for all HTTP clients [#9367](https://github.com/grafana/grafana/pull/9367)
 * **Alerting**: Add diff and percent diff as series reducers [#9386](https://github.com/grafana/grafana/pull/9386), thx [@shanhuhai5739](https://github.com/shanhuhai5739)
 * **Slack**: Allow images to be uploaded to slack when Token is present [#7175](https://github.com/grafana/grafana/issues/7175), thx [@xginn8](https://github.com/xginn8)
 * **Opsgenie**: Use their latest API instead of old version [#9399](https://github.com/grafana/grafana/pull/9399), thx [@cglrkn](https://github.com/cglrkn)

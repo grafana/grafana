@@ -1,7 +1,8 @@
 import { backendSrv } from 'app/core/services/backend_srv';
+import { NavModel } from '@grafana/data';
 
 export const loadFolderPage = (uid: string, activeChildId: string) => {
-  const navModel = {
+  const navModel: Pick<NavModel, 'main'> = {
     main: {
       icon: 'folder-open',
       id: 'manage-folder',
@@ -35,19 +36,19 @@ export const loadFolderPage = (uid: string, activeChildId: string) => {
     },
   };
 
-  return backendSrv.getFolderByUid(uid).then((folder: any) => {
+  return backendSrv.getFolderByUid(uid).then(folder => {
     const folderTitle = folder.title;
     const folderUrl = folder.url;
     navModel.main.text = folderTitle;
 
-    const dashTab = navModel.main.children.find((child: any) => child.id === 'manage-folder-dashboards');
+    const dashTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-dashboards');
     dashTab!.url = folderUrl;
 
     if (folder.canAdmin) {
-      const permTab = navModel.main.children.find((child: any) => child.id === 'manage-folder-permissions');
+      const permTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-permissions');
       permTab!.url = folderUrl + '/permissions';
 
-      const settingsTab = navModel.main.children.find((child: any) => child.id === 'manage-folder-settings');
+      const settingsTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-settings');
       settingsTab!.url = folderUrl + '/settings';
     } else {
       navModel.main.children = [dashTab!];

@@ -3,7 +3,6 @@ import { AnyAction } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   DataQuery,
-  DataQueryRequest,
   DataSourceApi,
   DefaultTimeRange,
   LoadingState,
@@ -12,6 +11,7 @@ import {
   TimeZone,
   toLegacyResponseData,
   ExploreMode,
+  LogsDedupStrategy,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -69,6 +69,7 @@ import {
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
+import { Emitter } from 'app/core/core';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -105,7 +106,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
     to: null,
   },
   scanning: false,
-  scanRange: null,
   showingGraph: true,
   showingTable: true,
   loading: false,
@@ -114,16 +114,20 @@ export const makeExploreItemState = (): ExploreItemState => ({
   update: makeInitialUpdateState(),
   latency: 0,
   supportedModes: [],
-  mode: null,
+  mode: (null as unknown) as ExploreMode,
   isLive: false,
   isPaused: false,
   urlReplaced: false,
   queryResponse: createEmptyQueryResponse(),
+  tableResult: null,
+  graphResult: null,
+  logsResult: null,
+  dedupStrategy: LogsDedupStrategy.none,
+  eventBridge: (null as unknown) as Emitter,
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
-  request: {} as DataQueryRequest<DataQuery>,
   series: [],
   error: null,
   timeRange: DefaultTimeRange,
@@ -367,15 +371,24 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (removeQueryRowAction.match(action)) {
-    const { queries, queryKeys } = state;
+    const { queries } = state;
     const { index } = action.payload;
 
     if (queries.length <= 1) {
       return state;
     }
 
-    const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
-    const nextQueryKeys = [...queryKeys.slice(0, index), ...queryKeys.slice(index + 1)];
+    // removes a query under a given index and reassigns query keys and refIds to keep everything in order
+    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
+      return { ...query, refId: '' };
+    });
+    const nextQueries: DataQuery[] = [];
+
+    queriesAfterRemoval.forEach((query, i) => {
+      nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
+    });
+
+    const nextQueryKeys: string[] = nextQueries.map(query => query.key);
 
     return {
       ...state,

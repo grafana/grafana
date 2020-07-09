@@ -24,6 +24,7 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
+export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
@@ -33,6 +34,11 @@ export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
+
+// Code editor
+export { CodeEditor } from './Monaco/CodeEditorLazy';
+export { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
 export { Modal } from './Modal/Modal';
@@ -45,7 +51,7 @@ export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsConte
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export { TableCellDisplayMode } from './Table/types';
+export { TableCellDisplayMode, TableSortByFieldState } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
@@ -59,6 +65,7 @@ export {
   BigValueSparkline,
   BigValueGraphMode,
   BigValueJustifyMode,
+  BigValueTextMode,
 } from './BigValue/BigValue';
 
 export { Gauge } from './Gauge/Gauge';
@@ -118,6 +125,7 @@ export { Slider } from './Slider/Slider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';
+export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
@@ -133,6 +141,7 @@ export { getFormStyles } from './Forms/getFormStyles';
 export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';
 export { Legend } from './Forms/Legend';
+export { FieldSet } from './Forms/FieldSet';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
@@ -149,11 +158,12 @@ export { Switch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
+export { FileUpload } from './FileUpload/FileUpload';
 
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
-export { FormLabel as InlineFormLabel } from './FormLabel/FormLabel';
+export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';

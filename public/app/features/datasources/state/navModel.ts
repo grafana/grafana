@@ -53,6 +53,16 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       text: 'Permissions',
       url: `datasources/edit/${dataSource.id}/permissions`,
     });
+
+    if (config.featureToggles.datasourceInsights) {
+      navModel.children.push({
+        active: false,
+        icon: 'info-circle',
+        id: `datasource-insights-${dataSource.id}`,
+        text: 'Insights',
+        url: `datasources/edit/${dataSource.id}/insights`,
+      });
+    }
   }
 
   return navModel;
@@ -78,6 +88,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       typeLogoUrl: 'public/img/icn-datasource.svg',
       url: '',
       user: '',
+      secureJsonFields: {},
     },
     {
       meta: {
@@ -103,14 +114,14 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         module: '',
         baseUrl: '',
       },
-    } as GenericDataSourcePlugin
+    } as any
   );
 
   let node: NavModelItem;
 
   // find active page
-  for (const child of main.children) {
-    if (child.id.indexOf(pageName) > 0) {
+  for (const child of main.children!) {
+    if (child.id!.indexOf(pageName) > 0) {
       child.active = true;
       node = child;
       break;
@@ -119,7 +130,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
 
   return {
     main: main,
-    node: node,
+    node: node!,
   };
 }
 

@@ -142,7 +142,6 @@ func TestCloudWatchQuery(t *testing.T) {
 				Convey("it is not metric stat", func() {
 					So(query.isMetricStat(), ShouldBeFalse)
 				})
-
 			})
 
 			Convey("and match exact is true", func() {
@@ -158,7 +157,6 @@ func TestCloudWatchQuery(t *testing.T) {
 				Convey("it is a metric stat", func() {
 					So(query.isMetricStat(), ShouldBeTrue)
 				})
-
 			})
 		})
 

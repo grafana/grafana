@@ -25,6 +25,7 @@ import {
   applyFieldOverrides,
   DataConfigSource,
   TimeZone,
+  LoadingState,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -51,8 +52,13 @@ function getNextRequestId() {
   return 'Q' + counter++;
 }
 
+export interface GetDataOptions {
+  withTransforms: boolean;
+  withFieldConfig: boolean;
+}
+
 export class PanelQueryRunner {
-  private subject?: ReplaySubject<PanelData>;
+  private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
@@ -66,37 +72,40 @@ export class PanelQueryRunner {
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(transform = true): Observable<PanelData> {
+  getData(options: GetDataOptions): Observable<PanelData> {
+    const { withFieldConfig, withTransforms } = options;
+
     return this.subject.pipe(
       map((data: PanelData) => {
         let processedData = data;
 
-        // Apply transformations
-
-        if (transform) {
+        // Apply transformation
+        if (withTransforms) {
           const transformations = this.dataConfigSource.getTransformations();
 
           if (transformations && transformations.length > 0) {
             processedData = {
               ...processedData,
-              series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
+              series: transformDataFrame(transformations, data.series),
             };
           }
         }
 
-        // Apply field defaults & overrides
-        const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-
-        if (fieldConfig) {
-          processedData = {
-            ...processedData,
-            series: applyFieldOverrides({
-              timeZone: this.timeZone,
-              autoMinMax: true,
-              data: processedData.series,
-              ...fieldConfig,
-            }),
-          };
+        if (withFieldConfig) {
+          // Apply field defaults & overrides
+          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          if (fieldConfig) {
+            processedData = {
+              ...processedData,
+              series: applyFieldOverrides({
+                timeZone: this.timeZone,
+                autoMinMax: true,
+                data: processedData.series,
+                getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
+                ...fieldConfig,
+              }),
+            };
+          }
         }
 
         return processedData;
@@ -190,6 +199,22 @@ export class PanelQueryRunner {
     });
   }
 
+  cancelQuery() {
+    if (!this.subscription) {
+      return;
+    }
+
+    this.subscription.unsubscribe();
+
+    // If we have an old result with loading state, send it with done state
+    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+      this.subject.next({
+        ...this.lastResult,
+        state: LoadingState.Done,
+      });
+    }
+  }
+
   resendLastResult = () => {
     if (this.lastResult) {
       this.subject.next(this.lastResult);
@@ -219,7 +244,7 @@ export class PanelQueryRunner {
     }
   }
 
-  getLastResult(): PanelData {
+  getLastResult(): PanelData | undefined {
     return this.lastResult;
   }
 }

@@ -55,7 +55,7 @@ Open a graph in edit mode by clicking the title > Edit (or by pressing `e` key w
 The Prometheus data source allows you to run "instant" queries, which query only the latest value.
 You can visualize the results in a table panel to see all available labels of a timeseries.
 
-Instant query results are made up only of one data point per series but can be shown in the graph panel with the help of [series overrides]({{< relref "../panels/graph/#series-overrides" >}}).
+Instant query results are made up only of one data point per series but can be shown in the graph panel with the help of [series overrides]({{< relref "../../panels/visualizations/graph-panel.md#series-overrides" >}}).
 To show them in the graph as a latest value point, add a series override and select `Points > true`.
 To show a horizontal line across the whole graph, add a series override and select `Transform > constant`.
 
@@ -123,7 +123,7 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.

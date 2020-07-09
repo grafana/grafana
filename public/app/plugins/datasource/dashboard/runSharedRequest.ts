@@ -23,7 +23,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
 
     if (!listenToPanelId) {
       subscriber.next(getQueryError('Missing panel reference ID'));
-      return null;
+      return undefined;
     }
 
     const currentPanel = dashboard.getPanelById(options.panelId);
@@ -31,11 +31,11 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
 
     if (!listenToPanel) {
       subscriber.next(getQueryError('Unknown Panel: ' + listenToPanelId));
-      return null;
+      return undefined;
     }
 
     const listenToRunner = listenToPanel.getQueryRunner();
-    const subscription = listenToRunner.getData(false).subscribe({
+    const subscription = listenToRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => {
         subscriber.next(data);
       },

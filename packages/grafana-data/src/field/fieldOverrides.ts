@@ -16,6 +16,8 @@ import {
   ValueLinkConfig,
   GrafanaTheme,
   TimeZone,
+  DataLink,
+  DataSourceInstanceSettings,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -33,6 +35,7 @@ import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { formatLabels } from '../utils/labels';
 import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { mapInternalLinkToExplore } from '../utils/dataLinks';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -112,8 +115,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         text: 'Field',
         value: {
           name: displayName, // Generally appropriate (may include the series name if useful)
-          labels: formatLabels(field.labels!),
-          label: field.labels,
+          formattedLabels: formatLabels(field.labels!),
+          labels: field.labels,
         },
       };
 
@@ -129,6 +132,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         data: options.data!,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
+        getDataSourceSettingsByUid: options.getDataSourceSettingsByUid,
         fieldConfigRegistry: fieldConfigRegistry,
       };
 
@@ -138,7 +142,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Find any matching rules and then override
       for (const rule of override) {
-        if (rule.match(field)) {
+        if (rule.match(field, frame, options.data!)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
@@ -206,10 +210,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      f.getLinks = getLinksSupplier(frame, f, fieldScopedVars, context.replaceVariables, {
-        theme: options.theme,
-        timeZone: options.timeZone,
-      });
+      f.getLinks = getLinksSupplier(
+        frame,
+        f,
+        fieldScopedVars,
+        context.replaceVariables,
+        context.getDataSourceSettingsByUid,
+        {
+          theme: options.theme,
+          timeZone: options.timeZone,
+        }
+      );
 
       return f;
     });
@@ -228,7 +239,7 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
 export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
-  if (!item || !item.shouldApply(context.field!)) {
+  if (!item) {
     return;
   }
 
@@ -343,11 +354,12 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
-const getLinksSupplier = (
+export const getLinksSupplier = (
   frame: DataFrame,
   field: Field,
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
+  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined,
   options: {
     theme: GrafanaTheme;
     timeZone?: TimeZone;
@@ -359,19 +371,10 @@ const getLinksSupplier = (
   const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
   const { timeField } = getTimeField(frame);
 
-  return field.config.links.map(link => {
-    let href = link.url;
+  return field.config.links.map((link: DataLink) => {
+    const variablesQuery = locationUtil.getVariablesUrlParams();
     let dataFrameVars = {};
     let valueVars = {};
-
-    const info: LinkModel<Field> = {
-      href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
-      title: replaceVariables(link.title || ''),
-      target: link.targetBlank ? '_blank' : '_self',
-      origin: field,
-    };
-
-    const variablesQuery = locationUtil.getVariablesUrlParams();
 
     // We are not displaying reduction result
     if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
@@ -402,7 +405,7 @@ const getLinksSupplier = (
       }
     }
 
-    info.href = replaceVariables(info.href, {
+    const variables = {
       ...fieldScopedVars,
       __value: {
         text: 'Value',
@@ -417,10 +420,27 @@ const getLinksSupplier = (
         text: variablesQuery,
         value: variablesQuery,
       },
-    });
+    };
 
-    info.href = locationUtil.processUrl(info.href);
+    if (link.internal) {
+      // For internal links at the moment only destination is Explore.
+      return mapInternalLinkToExplore(link, variables, {} as any, field, {
+        replaceVariables,
+        getDataSourceSettingsByUid,
+      });
+    } else {
+      let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
+      href = replaceVariables(href, variables);
+      href = locationUtil.processUrl(href);
 
-    return info;
+      const info: LinkModel<Field> = {
+        href,
+        title: replaceVariables(link.title || '', variables),
+        target: link.targetBlank ? '_blank' : undefined,
+        origin: field,
+      };
+
+      return info;
+    }
   });
 };

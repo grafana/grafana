@@ -33,7 +33,7 @@ Refer to [Explore]({{< relref "../features/explore/index.md" >}}) for more infor
 
 If you're using Grafana alerting, then you can have alerts sent through a number of different [alert notifiers]({{< relref "../alerting/notifications.md" >}}), including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack. 
 
-Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define [alert rules]({{< relref "../alerting/rules.md" >}}) for your most important metrics.
+Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define [alert rules]({{< relref "../alerting/alerts-overview.md" >}}) for your most important metrics.
 
 ## Annotations
 
@@ -41,7 +41,7 @@ Annotate graphs with rich events from different data sources. Hover over events 
 
 This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source.
 
-Refer to [Annotations]({{< relref "../reference/annotations.md" >}}) for more information.
+Refer to [Annotations]({{< relref "../dashboards/annotations.md" >}}) for more information.
 
 ## Dashboard variables
 
@@ -51,7 +51,7 @@ Templating allows you to drill down into your data, say, from all data to North 
 
 ## Configure Grafana
 
-If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../installation/configuration.md" >}}) and the [Grafana CLI]({{< relref "../administration/cli.md" >}}).
+If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../administration/configuration.md" >}}) and the [Grafana CLI]({{< relref "../administration/cli.md" >}}).
 
 Configuration covers both config files and environment variables. You can set up default ports, logging levels, email IP addresses, security, and more.
 

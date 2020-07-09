@@ -52,14 +52,14 @@ We've improved the TV and kiosk mode to make it easier to use. There's now an ic
 3. Hit the escape key to go back to the default view mode.
 
 When switching view modes, the URL will be updated to reflect the view mode selected. This allows a dashboard to be opened with a
-certain view mode enabled. Additionally, this also enables [playlists](/reference/playlist) to be started with a certain view mode enabled.
+certain view mode enabled. Additionally, this also enables [playlists](/dashboards/playlist) to be started with a certain view mode enabled.
 
 <div class="clearfix"></div>
 
 ## Notification Reminders
 
 Do you use Grafana alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you continue to be alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
-For additional examples of why reminders might be useful for you, see [multiple series](/alerting/rules/#multiple-series).
+For additional examples of why reminders might be useful for you, see [multiple series](/alerting/alerts-overview/#multiple-series).
 
 Learn how to enable and configure reminders [here](/alerting/notifications/#send-reminders).
 
@@ -76,8 +76,8 @@ Learn how to enable and configure it in the [documentation](/auth/gitlab/).
 
 ## Annotations
 
-Grafana 5.3 brings improved support for [native annotations](/reference/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
-Learn more about it in the [documentation](/reference/annotations/#query-by-tag).
+Grafana 5.3 brings improved support for [native annotations](/dashboards/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
+Learn more about it in the [documentation](/dashboards/annotations/#query-by-tag).
 
 {{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 

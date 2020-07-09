@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-export function getMessageFromError(err: string | (Error & { data?: any; statusText?: string })): string | null {
+export function getMessageFromError(err: string | (Error & { data?: any; statusText?: string })): string {
   if (err && !_.isString(err)) {
     if (err.message) {
       return err.message;

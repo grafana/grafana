@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //***
@@ -39,6 +40,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logStreamIdentifierInternal),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logIdentifierInternal),
+					Value: aws.String("fakelog"),
+				},
 			},
 			{
 				&cloudwatchlogs.ResultField{
@@ -60,6 +69,23 @@ func TestLogsResultsToDataframes(t *testing.T) {
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logStreamIdentifierInternal),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logIdentifierInternal),
+					Value: aws.String("fakelog"),
+				},
+			},
+			// Sometimes cloudwatch returns empty row
+			{},
+			// or rows with only timestamp
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("@timestamp"),
+					Value: aws.String("2020-03-02 17:04:05.000"),
 				},
 			},
 			{
@@ -83,6 +109,14 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Field: aws.String("@log"),
 					Value: aws.String("fakelog"),
 				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logStreamIdentifierInternal),
+					Value: aws.String("fakelogstream"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String(logIdentifierInternal),
+					Value: aws.String("fakelog"),
+				},
 			},
 		},
 		Status: aws.String("ok"),
@@ -93,15 +127,19 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		},
 	}
 
-	dataframes, _ := logsResultsToDataframes(fakeCloudwatchResponse)
-	timeA, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
-	timeB, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
-	timeC, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	dataframes, err := logsResultsToDataframes(fakeCloudwatchResponse)
+	require.NoError(t, err)
+	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
+	require.NoError(t, err)
+	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
+	require.NoError(t, err)
+	timeC, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	require.NoError(t, err)
 	timeVals := []*time.Time{
 		&timeA, &timeB, &timeC,
 	}
 	timeField := data.NewField("@timestamp", nil, timeVals)
-	timeField.SetConfig(&data.FieldConfig{Title: "Time"})
+	timeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	lineField := data.NewField("line", nil, []*string{
 		aws.String("test message 1"),
@@ -114,20 +152,32 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("fakelogstream"),
 		aws.String("fakelogstream"),
 	})
-	logStreamField.SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{
-			"Hidden": true,
-		},
-	})
 
 	logField := data.NewField("@log", nil, []*string{
 		aws.String("fakelog"),
 		aws.String("fakelog"),
 		aws.String("fakelog"),
 	})
-	logField.SetConfig(&data.FieldConfig{
+
+	hiddenLogStreamField := data.NewField(logStreamIdentifierInternal, nil, []*string{
+		aws.String("fakelogstream"),
+		aws.String("fakelogstream"),
+		aws.String("fakelogstream"),
+	})
+	hiddenLogStreamField.SetConfig(&data.FieldConfig{
 		Custom: map[string]interface{}{
-			"Hidden": true,
+			"hidden": true,
+		},
+	})
+
+	hiddenLogField := data.NewField(logIdentifierInternal, nil, []*string{
+		aws.String("fakelog"),
+		aws.String("fakelog"),
+		aws.String("fakelog"),
+	})
+	hiddenLogField.SetConfig(&data.FieldConfig{
+		Custom: map[string]interface{}{
+			"hidden": true,
 		},
 	})
 
@@ -138,6 +188,8 @@ func TestLogsResultsToDataframes(t *testing.T) {
 			lineField,
 			logStreamField,
 			logField,
+			hiddenLogStreamField,
+			hiddenLogField,
 		},
 		RefID: "",
 		Meta: &data.FrameMeta{
@@ -165,26 +217,32 @@ func TestGroupKeyGeneration(t *testing.T) {
 		aws.String("fakelog-a"),
 		aws.String("fakelog-b"),
 		aws.String("fakelog-c"),
+		nil,
 	})
 
 	streamField := data.NewField("stream", data.Labels{}, []*string{
 		aws.String("stream-a"),
 		aws.String("stream-b"),
 		aws.String("stream-c"),
+		aws.String("stream-d"),
 	})
 
 	fakeFields := []*data.Field{logField, streamField}
-	expectedKeys := []string{"fakelog-astream-a", "fakelog-bstream-b", "fakelog-cstream-c"}
+	expectedKeys := []string{"fakelog-astream-a", "fakelog-bstream-b", "fakelog-cstream-c", "stream-d"}
 
 	assert.Equal(t, expectedKeys[0], generateGroupKey(fakeFields, 0))
 	assert.Equal(t, expectedKeys[1], generateGroupKey(fakeFields, 1))
 	assert.Equal(t, expectedKeys[2], generateGroupKey(fakeFields, 2))
+	assert.Equal(t, expectedKeys[3], generateGroupKey(fakeFields, 3))
 }
 
 func TestGroupingResults(t *testing.T) {
-	timeA, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
-	timeB, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
-	timeC, _ := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
+	require.NoError(t, err)
+	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
+	require.NoError(t, err)
+	timeC, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	require.NoError(t, err)
 	timeVals := []*time.Time{
 		&timeA, &timeA, &timeA, &timeB, &timeB, &timeB, &timeC, &timeC, &timeC,
 	}
@@ -294,6 +352,7 @@ func TestGroupingResults(t *testing.T) {
 		},
 	}
 
-	groupedResults, _ := groupResults(fakeDataFrame, []string{"@log"})
+	groupedResults, err := groupResults(fakeDataFrame, []string{"@log"})
+	require.NoError(t, err)
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }

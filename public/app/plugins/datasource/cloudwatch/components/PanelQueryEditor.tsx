@@ -9,35 +9,32 @@ import LogsQueryEditor from './LogsQueryEditor';
 
 export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
-interface State {
-  queryMode: ExploreMode;
-}
+const apiModes = {
+  Metrics: { label: 'CloudWatch Metrics', value: 'Metrics' },
+  Logs: { label: 'CloudWatch Logs', value: 'Logs' },
+};
 
-export class PanelQueryEditor extends PureComponent<Props, State> {
-  state: State = { queryMode: (this.props.query.queryMode as ExploreMode) ?? ExploreMode.Metrics };
-
-  onQueryModeChange(mode: ExploreMode) {
-    this.setState({
-      queryMode: mode,
-    });
-  }
-
+export class PanelQueryEditor extends PureComponent<Props> {
   render() {
-    const { queryMode } = this.state;
+    const { query } = this.props;
+    const apiMode = query.apiMode ?? query.queryMode ?? 'Metrics';
 
     return (
       <>
         <QueryInlineField label="Query Mode">
           <Segment
-            value={queryMode}
-            options={[
-              { label: 'Metrics', value: ExploreMode.Metrics },
-              { label: 'Logs', value: ExploreMode.Logs },
-            ]}
-            onChange={({ value }) => this.onQueryModeChange(value ?? ExploreMode.Metrics)}
+            value={apiModes[apiMode]}
+            options={Object.values(apiModes)}
+            onChange={({ value }) =>
+              this.props.onChange({ ...query, apiMode: (value as 'Metrics' | 'Logs') ?? 'Metrics' })
+            }
           />
         </QueryInlineField>
-        {queryMode === ExploreMode.Logs ? <LogsQueryEditor {...this.props} /> : <MetricsQueryEditor {...this.props} />}
+        {apiMode === ExploreMode.Logs ? (
+          <LogsQueryEditor {...this.props} allowCustomValue />
+        ) : (
+          <MetricsQueryEditor {...this.props} />
+        )}
       </>
     );
   }

@@ -3,7 +3,7 @@ import { Badge, BadgeProps } from '@grafana/ui';
 import { PluginSignatureStatus } from '@grafana/data';
 
 interface Props {
-  status: PluginSignatureStatus;
+  status?: PluginSignatureStatus;
 }
 
 export const PluginSignatureBadge: React.FC<Props> = ({ status }) => {
@@ -11,7 +11,11 @@ export const PluginSignatureBadge: React.FC<Props> = ({ status }) => {
   return <Badge text={display.text} color={display.color} icon={display.icon} tooltip={display.tooltip} />;
 };
 
-function getSignatureDisplayModel(signature: PluginSignatureStatus): BadgeProps {
+function getSignatureDisplayModel(signature?: PluginSignatureStatus): BadgeProps {
+  if (!signature) {
+    signature = PluginSignatureStatus.invalid;
+  }
+
   switch (signature) {
     case PluginSignatureStatus.internal:
       return { text: 'Core', icon: 'cube', color: 'blue', tooltip: 'Core plugin that is bundled with Grafana' };

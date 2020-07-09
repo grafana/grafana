@@ -111,6 +111,13 @@ var adminCommands = []*cli.Command{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
 		Action: runDbCommand(resetPasswordCommand),
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "password-from-stdin",
+				Usage: "Read the password from stdin",
+				Value: false,
+			},
+		},
 	},
 	{
 		Name:  "data-migration",
@@ -119,7 +126,7 @@ var adminCommands = []*cli.Command{
 			{
 				Name:   "encrypt-datasource-passwords",
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
-				Action: runDbCommand(datamigrations.EncryptDatasourcePaswords),
+				Action: runDbCommand(datamigrations.EncryptDatasourcePasswords),
 			},
 		},
 	},

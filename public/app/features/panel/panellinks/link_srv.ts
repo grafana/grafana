@@ -5,7 +5,6 @@ import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
   DataFrame,
-  DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
   Field,
@@ -19,6 +18,9 @@ import {
   VariableSuggestionsScope,
   urlUtil,
   textUtil,
+  DataLink,
+  PanelPlugin,
+  DataLinkClickEvent,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -125,8 +127,8 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
 };
 
 const getDataFrameVars = (dataFrames: DataFrame[]) => {
-  let numeric: Field = undefined;
-  let title: Field = undefined;
+  let numeric: Field | undefined = undefined;
+  let title: Field | undefined = undefined;
   const suggestions: VariableSuggestion[] = [];
   const keys: KeyValue<true> = {};
 
@@ -231,8 +233,20 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
 
+export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: DataFrame[]): VariableSuggestion[] => {
+  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
+  return [
+    ...dataVariables, // field values
+    ...templateSrv.getVariables().map(variable => ({
+      value: variable.name as string,
+      label: variable.name,
+      origin: VariableOrigin.Template,
+    })),
+  ];
+};
+
 export interface LinkService {
-  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
+  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars | undefined, origin: T) => LinkModel<T>;
   getAnchorInfo: (link: any) => any;
   getLinkUrl: (link: any) => string;
 }
@@ -282,15 +296,17 @@ export class LinkSrv implements LinkService {
       });
     }
 
-    let onClick: (e: any) => void = undefined;
+    let onClick: ((event: DataLinkClickEvent) => void) | undefined = undefined;
 
     if (link.onClick) {
-      onClick = (e: any) => {
-        link.onClick({
-          origin,
-          scopedVars,
-          e,
-        });
+      onClick = (e: DataLinkClickEvent) => {
+        if (link.onClick) {
+          link.onClick({
+            origin,
+            scopedVars,
+            e,
+          });
+        }
       };
     }
 

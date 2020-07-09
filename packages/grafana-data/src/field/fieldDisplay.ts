@@ -21,6 +21,8 @@ import { GrafanaTheme } from '../types/theme';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { getFieldMatcher } from '../transformations';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -32,6 +34,8 @@ export interface ReduceDataOptions {
   limit?: number;
   /** When !values, pick one value for the whole field */
   calcs: string[];
+  /** Which fields to show.  By default this is only numeric fields */
+  fields?: string;
 }
 
 // TODO: use built in variables, same as for data links?
@@ -80,10 +84,20 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, fieldConfig, timeZone } = options;
+  const { replaceVariables, reduceOptions, timeZone } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
+  const fieldMatcher = getFieldMatcher(
+    reduceOptions.fields
+      ? {
+          id: FieldMatcherID.byRegexp,
+          options: reduceOptions.fields,
+        }
+      : {
+          id: FieldMatcherID.numeric,
+        }
+  );
 
   if (options.data) {
     // Field overrides are applied already
@@ -104,7 +118,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const fieldLinksSupplier = field.getLinks;
 
         // To filter out time field, need an option for this
-        if (field.type !== FieldType.number) {
+        if (!fieldMatcher(field, series, data)) {
           continue;
         }
 
@@ -209,9 +223,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push(createNoValuesFieldDisplay(options));
-  } else if (values.length === 1 && !fieldConfig.defaults.displayName) {
-    // Don't show title for single item
-    values[0].display.title = undefined;
   }
 
   return values;
@@ -275,6 +286,8 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
     name: displayName,
     field: {
       ...defaults,
+      max: defaults.max ?? 0,
+      min: defaults.min ?? 0,
     },
     display: {
       text,

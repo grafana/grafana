@@ -26,9 +26,9 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = _.map([1, 2, 3, 
 }));
 
 interface State {
-  legendFormat: string;
+  legendFormat?: string;
   formatOption: SelectableValue<string>;
-  interval: string;
+  interval?: string;
   intervalFactorOption: SelectableValue<number>;
   instant: boolean;
 }
@@ -155,6 +155,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <div className="gf-form-label">Resolution</div>
             <Select
               isSearchable={false}
+              menuPlacement="bottom"
               options={INTERVAL_FACTOR_OPTIONS}
               onChange={this.onIntervalFactorChange}
               value={intervalFactorOption}

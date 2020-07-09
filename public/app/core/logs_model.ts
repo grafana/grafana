@@ -27,6 +27,7 @@ import {
   getDisplayProcessor,
   textUtil,
   dateTime,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
@@ -90,18 +91,14 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZone: TimeZone): GraphSeriesXY[] {
+export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number, timeZone: TimeZone): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
-  // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
-  // when executing queries & interval calculated and not here but this is a temporary fix.
-  // intervalMs = intervalMs * 10;
+  // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
   // Graph time series by log level
   const seriesByLevel: any = {};
-  const bucketSize = intervalMs * 10;
   const seriesList: any[] = [];
 
-  const sortedRows = rows.sort(sortInAscendingOrder);
   for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
 
@@ -156,6 +153,9 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
       ...valueField.config,
       color: series.color,
     };
+    valueField.name = series.alias;
+    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
 
     const points = getFlotPairs({
       xField: timeField,
@@ -198,16 +198,23 @@ function isLogsData(series: DataFrame) {
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
-  timeZone: TimeZone
+  timeZone: TimeZone,
+  absoluteRange?: AbsoluteTimeRange
 ): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
-      // Create metrics from logs
-      // If interval is not defined or 0 we cannot really compute the series
-      logsModel.series = intervalMs ? makeSeriesForLogs(logsModel.rows, intervalMs, timeZone) : [];
+      // Create histogram metrics from logs using the interval as bucket size for the line count
+      if (intervalMs && logsModel.rows.length > 0) {
+        const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
+        const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+        logsModel.visibleRange = visibleRange;
+        logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
+      } else {
+        logsModel.series = [];
+      }
     } else {
       // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
@@ -232,6 +239,43 @@ export function dataFrameToLogsModel(
     meta: [],
     series: [],
   };
+}
+
+/**
+ * Returns a clamped time range and interval based on the visible logs and the given range.
+ *
+ * @param sortedRows Log rows from the query response
+ * @param intervalMs Dynamnic data interval based on available pixel width
+ * @param absoluteRange Requested time range
+ * @param pxPerBar Default: 20, buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
+ */
+export function getSeriesProperties(
+  sortedRows: LogRowModel[],
+  intervalMs: number,
+  absoluteRange?: AbsoluteTimeRange,
+  pxPerBar = 20,
+  minimumBucketSize = 1000
+) {
+  let visibleRange = absoluteRange;
+  let resolutionIntervalMs = intervalMs;
+  let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
+  // Clamp time range to visible logs otherwise big parts of the graph might look empty
+  if (absoluteRange) {
+    const earliest = sortedRows[0].timeEpochMs;
+    const latest = absoluteRange.to;
+    const visibleRangeMs = latest - earliest;
+    if (visibleRangeMs > 0) {
+      // Adjust interval bucket size for potentially shorter visible range
+      const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+      resolutionIntervalMs *= clampingFactor;
+      // Minimum bucketsize of 1s for nicer graphing
+      bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
+      // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
+      const adjustedEarliest = Math.floor(earliest / bucketSize) * bucketSize;
+      visibleRange = { from: adjustedEarliest, to: latest };
+    }
+  }
+  return { bucketSize, visibleRange };
 }
 
 function separateLogsAndMetrics(dataFrames: DataFrame[]) {
@@ -275,10 +319,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Find the fields we care about and collect all labels
   const allSeries: LogFields[] = logSeries.map(series => {
     const fieldCache = new FieldCache(series);
-
-    const stringField = fieldCache.hasFieldNamed('line')
-      ? fieldCache.getFieldByName('line')
-      : fieldCache.getFirstFieldOfType(FieldType.string);
+    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     if (stringField?.labels) {
       allLabels.push(stringField.labels);
     }
@@ -384,13 +425,19 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
+  const queriesVisited: { [refId: string]: boolean } = {};
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
-    if (totalBytesKey && series.meta.stats) {
-      const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
-      if (byteStat) {
-        totalBytes += byteStat.value;
+    // Stats are per query, keeping track by refId
+    const { refId } = series;
+    if (refId && !queriesVisited[refId]) {
+      if (totalBytesKey && series.meta.stats) {
+        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+        if (byteStat) {
+          totalBytes += byteStat.value;
+        }
       }
+      queriesVisited[refId] = true;
     }
   }
   if (totalBytes > 0) {

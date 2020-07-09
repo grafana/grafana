@@ -14,8 +14,8 @@ export interface Props {
   syncEnabled: boolean;
   editorsCanAdmin: boolean;
   signedInUserIsTeamAdmin: boolean;
-  removeTeamMember?: typeof removeTeamMember;
-  updateTeamMember?: typeof updateTeamMember;
+  removeTeamMember: typeof removeTeamMember;
+  updateTeamMember: typeof updateTeamMember;
 }
 
 export class TeamMemberRow extends PureComponent<Props> {
@@ -31,14 +31,17 @@ export class TeamMemberRow extends PureComponent<Props> {
 
   onPermissionChange = (item: SelectableValue<TeamPermissionLevel>, member: TeamMember) => {
     const permission = item.value;
-    const updatedTeamMember = { ...member, permission };
+    const updatedTeamMember: TeamMember = {
+      ...member,
+      permission: permission as number,
+    };
 
     this.props.updateTeamMember(updatedTeamMember);
   };
 
   renderPermissions(member: TeamMember) {
     const { editorsCanAdmin, signedInUserIsTeamAdmin } = this.props;
-    const value = teamsPermissionLevels.find(dp => dp.value === member.permission);
+    const value = teamsPermissionLevels.find(dp => dp.value === member.permission)!;
 
     return (
       <WithFeatureToggle featureToggle={editorsCanAdmin}>

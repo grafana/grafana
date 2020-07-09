@@ -43,6 +43,7 @@ export interface CloudWatchLogsQuery extends DataQuery {
   namespace: string;
   expression: string;
   logGroupNames: string[];
+  statsGroups?: string[];
 }
 
 export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
@@ -58,6 +59,7 @@ export type SelectableStrings = Array<SelectableValue<string>>;
 export interface CloudWatchJsonData extends DataSourceJsonData {
   timeField?: string;
   assumeRoleArn?: string;
+  externalId?: string;
   database?: string;
   customMetricsNamespaces?: string;
 }

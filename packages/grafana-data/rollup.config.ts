@@ -21,7 +21,7 @@ const buildCjsPackage = ({ env }) => {
         globals: {},
       },
     ],
-    external: ['lodash', 'apache-arrow'], // Use Lodash & arrow from grafana
+    external: ['lodash', 'rxjs', 'apache-arrow'], // Use Lodash, rxjs & arrow from grafana
     plugins: [
       json({
         include: ['../../node_modules/moment-timezone/data/packed/latest.json'],

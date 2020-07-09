@@ -5,12 +5,16 @@ import {
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
+  FieldConfig,
+  DisplayProcessor,
+  DisplayValue,
 } from '@grafana/data';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 
 import { config } from 'app/core/config';
 import { BarGaugeOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { isNumber } from 'lodash';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderComponent = (
@@ -18,18 +22,23 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { options } = this.props;
-    const { value, alignmentFactors, orientation, width, height } = valueProps;
+    const { value, alignmentFactors, orientation, width, height, count } = valueProps;
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
 
+    let processor: DisplayProcessor | undefined = undefined;
+    if (view && isNumber(colIndex)) {
+      processor = view!.getFieldDisplayProcessor(colIndex as number);
+    }
+
     return (
       <BarGauge
-        value={display}
+        value={clearNameForSingleSeries(count, field, display)}
         width={width}
         height={height}
         orientation={orientation}
         field={field}
-        display={view?.getFieldDisplayProcessor(colIndex)}
+        display={processor}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}
@@ -45,17 +54,17 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { value } = valueProps;
     const { hasLinks, getLinks } = value;
 
-    if (!hasLinks) {
-      return this.renderComponent(valueProps, {});
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
     }
 
-    return (
-      <DataLinksContextMenu links={getLinks}>
-        {api => {
-          return this.renderComponent(valueProps, api);
-        }}
-      </DataLinksContextMenu>
-    );
+    return this.renderComponent(valueProps, {});
   };
 
   getValues = (): FieldDisplay[] => {
@@ -96,4 +105,15 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       />
     );
   }
+}
+
+export function clearNameForSingleSeries(count: number, field: FieldConfig<any>, display: DisplayValue): DisplayValue {
+  if (count === 1 && !field.displayName) {
+    return {
+      ...display,
+      title: undefined,
+    };
+  }
+
+  return display;
 }

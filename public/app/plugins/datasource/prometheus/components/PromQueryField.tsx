@@ -184,7 +184,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
     const hints = datasource.getQueryHints(query, result);
-    const hint = hints && hints.length > 0 ? hints[0] : null;
+    const hint = hints.length > 0 ? hints[0] : null;
     this.setState({ hint });
   };
 
@@ -250,7 +250,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { datasource, query, onChange, onRunQuery } = this.props;
     const { hint } = this.state;
 
-    onChange(datasource.modifyQuery(query, hint.fix.action));
+    onChange(datasource.modifyQuery(query, hint!.fix!.action));
     onRunQuery();
   };
 
@@ -277,7 +277,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
         : metricsByPrefix;
 
     // Hint for big disabled lookups
-    let hint: QueryHint;
+    let hint: QueryHint | null = null;
+
     if (!datasource.lookupsDisabled && languageProvider.lookupsDisabled) {
       hint = {
         label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
@@ -324,13 +325,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
+        <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
           <div className="gf-form flex-shrink-0">
             <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className="gf-form gf-form--grow flex-shrink-1">
+          <div className={'gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin'}>
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
@@ -340,7 +341,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               onBlur={this.props.onBlur}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a PromQL query"
+              placeholder="Enter a PromQL query (run with Shift+Enter)"
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}
             />

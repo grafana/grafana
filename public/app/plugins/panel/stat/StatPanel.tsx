@@ -26,7 +26,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    const { value, alignmentFactors, width, height } = valueProps;
+    const { value, alignmentFactors, width, height, count } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline: BigValueSparkline | undefined;
 
@@ -48,10 +48,12 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     return (
       <BigValue
         value={value.display}
+        count={count}
         sparkline={sparkline}
         colorMode={options.colorMode}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
+        textMode={options.textMode}
         alignmentFactors={alignmentFactors}
         width={width}
         height={height}
@@ -65,17 +67,17 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
-    if (!hasLinks) {
-      return this.renderComponent(valueProps, {});
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
     }
 
-    return (
-      <DataLinksContextMenu links={getLinks}>
-        {api => {
-          return this.renderComponent(valueProps, api);
-        }}
-      </DataLinksContextMenu>
-    );
+    return this.renderComponent(valueProps, {});
   };
 
   getValues = (): FieldDisplay[] => {

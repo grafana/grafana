@@ -42,6 +42,11 @@ case "$1" in
     cp /usr/share/grafana/conf/provisioning/notifiers/sample.yaml $PROVISIONING_CFG_DIR/notifiers/sample.yaml
   fi
 
+  if [ ! -d $PROVISIONING_CFG_DIR/plugins ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/plugins
+    cp /usr/share/grafana/conf/provisioning/plugins/sample.yaml $PROVISIONING_CFG_DIR/plugins/sample.yaml
+  fi
+
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
 	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*
 	chmod 755 /etc/grafana

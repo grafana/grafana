@@ -8,6 +8,7 @@ import {
   RawTimeRange,
   toDataFrame,
   UrlQueryMap,
+  ExploreUrlState,
 } from '@grafana/data';
 
 import {
@@ -18,7 +19,7 @@ import {
   makeExploreItemState,
   makeInitialUpdateState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   changeModeAction,
@@ -31,9 +32,13 @@ import {
   toggleGraphAction,
   toggleTableAction,
   updateDatasourceInstanceAction,
+  addQueryRowAction,
+  removeQueryRowAction,
 } from './actionTypes';
-import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+
+const QUERY_KEY_REGEX = /Q-([0-9]+)-([0-9.]+)-([0-9]+)/;
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -229,6 +234,75 @@ describe('Explore item reducer', () => {
             range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
           } as unknown) as ExploreItemState);
       });
+    });
+  });
+
+  describe('query rows', () => {
+    it('adds a new query row', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(itemReducer, ({
+          queries: [],
+        } as unknown) as ExploreItemState)
+        .whenActionIsDispatched(
+          addQueryRowAction({
+            exploreId: ExploreId.left,
+            query: { refId: 'A', key: 'mockKey' },
+            index: 0,
+          })
+        )
+        .thenStateShouldEqual(({
+          queries: [{ refId: 'A', key: 'mockKey' }],
+          queryKeys: ['mockKey-0'],
+        } as unknown) as ExploreItemState);
+    });
+    it('removes a query row', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(itemReducer, ({
+          queries: [
+            { refId: 'A', key: 'mockKey' },
+            { refId: 'B', key: 'mockKey' },
+          ],
+          queryKeys: ['mockKey-0', 'mockKey-1'],
+        } as unknown) as ExploreItemState)
+        .whenActionIsDispatched(
+          removeQueryRowAction({
+            exploreId: ExploreId.left,
+            index: 0,
+          })
+        )
+        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
+          expect(resultingState.queries.length).toBe(1);
+          expect(resultingState.queries[0].refId).toBe('A');
+          expect(resultingState.queries[0].key).toMatch(QUERY_KEY_REGEX);
+          expect(resultingState.queryKeys[0]).toMatch(QUERY_KEY_REGEX);
+          return true;
+        });
+    });
+    it('reassigns query refId after removing a query to keep queries in order', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(itemReducer, ({
+          queries: [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }],
+          queryKeys: ['undefined-0', 'undefined-1', 'undefined-2'],
+        } as unknown) as ExploreItemState)
+        .whenActionIsDispatched(
+          removeQueryRowAction({
+            exploreId: ExploreId.left,
+            index: 0,
+          })
+        )
+        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
+          expect(resultingState.queries.length).toBe(2);
+          const queriesRefIds = resultingState.queries.map(query => query.refId);
+          const queriesKeys = resultingState.queries.map(query => query.key);
+          expect(queriesRefIds).toEqual(['A', 'B']);
+          queriesKeys.forEach(queryKey => {
+            expect(queryKey).toMatch(QUERY_KEY_REGEX);
+          });
+          resultingState.queryKeys.forEach(queryKey => {
+            expect(queryKey).toMatch(QUERY_KEY_REGEX);
+          });
+          return true;
+        });
     });
   });
 });

@@ -82,7 +82,7 @@ export interface Field<T = any, V = Vector<T>> {
   labels?: Labels;
 
   /**
-   * Cached values with appropriate dispaly and id values
+   * Cached values with appropriate display and id values
    */
   state?: FieldState | null;
 
@@ -150,3 +150,4 @@ export interface FieldCalcs extends Record<string, any> {}
 
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
+export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';

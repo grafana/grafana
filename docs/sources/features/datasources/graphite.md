@@ -104,7 +104,7 @@ Query | Description
 *tag_values(server, server=~backend\*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
 *tag_values(server, server=~backend\*, app=~${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
 
-For more details, see the [Graphite docs on the autocomplete api for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
+For more details, see the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
 ### Query variable
 
@@ -162,7 +162,7 @@ Check out the [Advanced Formatting Options section in the Variables]({{< relref 
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,

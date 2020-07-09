@@ -3,6 +3,7 @@ import {
   hideOptions,
   initialState as optionsPickerInitialState,
   moveOptionsHighlight,
+  OPTIONS_LIMIT,
   optionsPickerReducer,
   OptionsPickerState,
   showOptions,
@@ -14,7 +15,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { QueryVariableModel, VariableTag } from '../../../templating/types';
+import { QueryVariableModel, VariableTag, VariableOption } from '../../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -29,32 +30,17 @@ const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
 describe('optionsPickerReducer', () => {
   describe('when toggleOption is dispatched', () => {
     const opsAll = [
-      { text: 'All', value: '$__all', selected: true },
+      { text: '$__all', value: '$__all', selected: true },
       { text: 'A', value: 'A', selected: false },
       { text: 'B', value: 'B', selected: false },
     ];
     const opsA = [
-      { text: 'All', value: '$__all', selected: false },
+      { text: '$__all', value: '$__all', selected: false },
       { text: 'A', value: 'A', selected: true },
       { text: 'B', value: 'B', selected: false },
     ];
-    const opsB = [
-      { text: 'All', value: '$__all', selected: false },
-      { text: 'A', value: 'A', selected: false },
-      { text: 'B', value: 'B', selected: true },
-    ];
     const opsAB = [
-      { text: 'All', value: '$__all', selected: false },
-      { text: 'A', value: 'A', selected: true },
-      { text: 'B', value: 'B', selected: true },
-    ];
-
-    const opA = { text: 'A', selected: true, value: 'A' };
-    const opANot = { text: 'A', selected: false, value: 'A' };
-    const opASel = [{ text: 'A', value: 'A', selected: true }];
-    const opBSel = [{ text: 'B', value: 'B', selected: true }];
-    const opAllSel = [{ text: 'All', value: '$__all', selected: true }];
-    const opABSel = [
+      { text: '$__all', value: '$__all', selected: false },
       { text: 'A', value: 'A', selected: true },
       { text: 'B', value: 'B', selected: true },
     ];
@@ -65,125 +51,114 @@ describe('optionsPickerReducer', () => {
       forceSelect: any;
       clearOthers: any;
       option: any;
-      expOps: any;
-      expSel: any;
+      expectSelected: any;
     }) => {
-      const { initialState } = getVariableTestContext({ options: args.options, multi: args.multi });
-      const payload = { forceSelect: args.forceSelect, clearOthers: args.clearOthers, option: args.option };
+      const { initialState } = getVariableTestContext({
+        options: args.options,
+        multi: args.multi,
+        selectedValues: args.options.filter((o: any) => o.selected),
+      });
+      const payload = {
+        forceSelect: args.forceSelect,
+        clearOthers: args.clearOthers,
+        option: { text: args.option, value: args.option, selected: true },
+      };
+      const expectedAsRecord: any = args.expectSelected.reduce((all: any, current: any) => {
+        all[current] = current;
+        return all;
+      }, {});
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
         .whenActionIsDispatched(toggleOption(payload))
         .thenStateShouldEqual({
           ...initialState,
-          selectedValues: args.expSel,
-          options: args.expOps,
+          selectedValues: args.expectSelected.map((value: any) => ({ value, text: value, selected: true })),
+          options: args.options.map((option: any) => {
+            return { ...option, selected: !!expectedAsRecord[option.value] };
+          }),
         });
     };
 
     describe('toggleOption for multi value variable', () => {
       const multi = true;
-      describe('and options with All selected', () => {
+      describe('and value All is selected in options', () => {
         const options = opsAll;
         it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option      | forceSelect | clearOthers | expectSelected
+          ${'A'}      | ${true}     | ${false}    | ${['A']}
+          ${'A'}      | ${false}    | ${false}    | ${['A']}
+          ${'A'}      | ${true}     | ${true}     | ${['A']}
+          ${'A'}      | ${false}    | ${true}     | ${['A']}
+          ${'B'}      | ${true}     | ${false}    | ${['B']}
+          ${'B'}      | ${false}    | ${false}    | ${['B']}
+          ${'B'}      | ${true}     | ${true}     | ${['B']}
+          ${'B'}      | ${false}    | ${true}     | ${['B']}
+          ${'$__all'} | ${true}     | ${false}    | ${['$__all']}
+          ${'$__all'} | ${false}    | ${false}    | ${['$__all']}
+          ${'$__all'} | ${true}     | ${true}     | ${['$__all']}
+          ${'$__all'} | ${false}    | ${true}     | ${['$__all']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
-      describe('and options with A selected', () => {
+      describe('and value A is selected in options', () => {
         const options = opsA;
         it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA}   | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsAll} | ${opAllSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expectSelected
+          ${'A'} | ${true}     | ${false}    | ${['A']}
+          ${'A'} | ${false}    | ${false}    | ${['$__all']}
+          ${'A'} | ${true}     | ${true}     | ${['A']}
+          ${'A'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${true}     | ${['B']}
+          ${'B'} | ${false}    | ${true}     | ${['B']}
+          ${'B'} | ${true}     | ${false}    | ${['A', 'B']}
+          ${'B'} | ${false}    | ${false}    | ${['A', 'B']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
-      describe('and options with B selected', () => {
-        const options = opsB;
-        it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${false}    | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opA}    | ${false}    | ${false}    | ${opsB}   | ${opBSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
-        `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectToggleOptionState({
-              options,
-              multi,
-              option,
-              clearOthers,
-              forceSelect,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with A + B selected', () => {
+
+      describe('and values A + B is selected in options', () => {
         const options = opsAB;
         it.each`
-          option    | forceSelect | clearOthers | expOps    | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${false}    | ${false}    | ${opsAB}  | ${opABSel}
-          ${opANot} | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsAB}  | ${opABSel}
-          ${opA}    | ${false}    | ${false}    | ${opsB}   | ${opBSel}
-          ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
+          option | forceSelect | clearOthers | expectSelected
+          ${'A'} | ${true}     | ${false}    | ${['A', 'B']}
+          ${'A'} | ${false}    | ${false}    | ${['B']}
+          ${'A'} | ${true}     | ${true}     | ${['A']}
+          ${'A'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${true}     | ${['B']}
+          ${'B'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${false}    | ${['A', 'B']}
+          ${'B'} | ${false}    | ${false}    | ${['A']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
@@ -191,84 +166,89 @@ describe('optionsPickerReducer', () => {
 
     describe('toggleOption for single value variable', () => {
       const multi = false;
-      describe('and options with All selected', () => {
+      describe('and value All is selected in options', () => {
         const options = opsAll;
         it.each`
-          option    | forceSelect | clearOthers | expOps  | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
+          option      | forceSelect | clearOthers | expectSelected
+          ${'A'}      | ${true}     | ${false}    | ${['A']}
+          ${'A'}      | ${false}    | ${false}    | ${['A']}
+          ${'A'}      | ${true}     | ${true}     | ${['A']}
+          ${'A'}      | ${false}    | ${true}     | ${['A']}
+          ${'B'}      | ${true}     | ${false}    | ${['B']}
+          ${'B'}      | ${false}    | ${false}    | ${['B']}
+          ${'B'}      | ${true}     | ${true}     | ${['B']}
+          ${'B'}      | ${false}    | ${true}     | ${['B']}
+          ${'$__all'} | ${true}     | ${false}    | ${['$__all']}
+          ${'$__all'} | ${false}    | ${false}    | ${['$__all']}
+          ${'$__all'} | ${true}     | ${true}     | ${['$__all']}
+          ${'$__all'} | ${false}    | ${true}     | ${['$__all']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
-      describe('and options with A selected', () => {
+      describe('and value A is selected in options', () => {
         const options = opsA;
         it.each`
-          option    | forceSelect | clearOthers | expOps  | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
+          option | forceSelect | clearOthers | expectSelected
+          ${'A'} | ${true}     | ${false}    | ${['A']}
+          ${'A'} | ${false}    | ${false}    | ${['$__all']}
+          ${'A'} | ${true}     | ${true}     | ${['A']}
+          ${'A'} | ${false}    | ${true}     | ${['$__all']}
+          ${'B'} | ${true}     | ${false}    | ${['B']}
+          ${'B'} | ${false}    | ${false}    | ${['B']}
+          ${'B'} | ${true}     | ${true}     | ${['B']}
+          ${'B'} | ${false}    | ${true}     | ${['B']}
         `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
+          'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
+          ({ option, forceSelect, clearOthers, expectSelected }) =>
             expectToggleOptionState({
               options,
               multi,
               option,
               clearOthers,
               forceSelect,
-              expOps,
-              expSel,
+              expectSelected,
             })
         );
       });
-      describe('and options with B selected', () => {
-        const options = opsB;
-        it.each`
-          option    | forceSelect | clearOthers | expOps  | expSel
-          ${opANot} | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opANot} | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opANot} | ${false}    | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${false}    | ${opsA} | ${opASel}
-          ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
-          ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
-        `(
-          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
-          ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectToggleOptionState({
-              options,
-              multi,
-              option,
-              clearOthers,
-              forceSelect,
-              expOps,
-              expSel,
-            })
-        );
-      });
+    });
+  });
+
+  describe('when showOptions is dispatched', () => {
+    it('then correct values should be selected', () => {
+      const { initialState } = getVariableTestContext({});
+      const payload = {
+        type: 'query',
+        query: '',
+        options: [
+          { text: 'All', value: '$__all', selected: false },
+          { text: 'A', value: 'A', selected: false },
+          { text: 'B', value: 'B', selected: true },
+        ],
+        multi: false,
+        id: '0',
+      } as QueryVariableModel;
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(showOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: payload.options,
+          id: payload.id,
+          multi: payload.multi,
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: '',
+        });
     });
   });
 
@@ -294,7 +274,7 @@ describe('optionsPickerReducer', () => {
           ...initialState,
           options: payload.options,
           queryValue,
-          id: payload.id!,
+          id: payload.id,
           multi: payload.multi,
           selectedValues: [selected],
         });
@@ -390,6 +370,43 @@ describe('optionsPickerReducer', () => {
             { text: 'AA', selected: true, value: 'AA' },
             { text: 'AAA', selected: true, value: 'AAA' },
           ],
+        });
+    });
+  });
+
+  describe('when toggleTag is dispatched when tag is selected', () => {
+    it('then state should be correct', () => {
+      const { initialState } = getVariableTestContext({
+        tags: [
+          { text: 'All A:s', selected: true, values: ['A', 'AA', 'AAA'] },
+          { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
+          { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
+        ],
+        options: [
+          { text: 'A', selected: true, value: 'A' },
+          { text: 'AA', selected: true, value: 'AA' },
+          { text: 'AAA', selected: true, value: 'AAA' },
+          { text: 'B', selected: false, value: 'B' },
+        ],
+      });
+      const payload: VariableTag = { text: 'All A:s', selected: true, values: ['A', 'AA', 'AAA'] };
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleTag(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'A', selected: false, value: 'A' },
+            { text: 'AA', selected: false, value: 'AA' },
+            { text: 'AAA', selected: false, value: 'AAA' },
+            { text: 'B', selected: false, value: 'B' },
+          ],
+          tags: [
+            { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] },
+            { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
+            { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
+          ],
+          selectedValues: [],
         });
     });
   });
@@ -553,12 +570,14 @@ describe('optionsPickerReducer', () => {
   });
 
   describe('when toggleAllOptions is dispatched', () => {
-    it('then state should be correct', () => {
+    it('should toggle all values to true', () => {
       const { initialState } = getVariableTestContext({
         options: [
+          { text: 'All', value: '$__all', selected: false },
           { text: 'A', value: 'A', selected: false },
           { text: 'B', value: 'B', selected: false },
         ],
+        selectedValues: [],
         multi: true,
       });
 
@@ -568,13 +587,65 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: [
+            { text: 'All', value: '$__all', selected: true },
             { text: 'A', value: 'A', selected: true },
             { text: 'B', value: 'B', selected: true },
           ],
           selectedValues: [
+            { text: 'All', value: '$__all', selected: true },
             { text: 'A', value: 'A', selected: true },
             { text: 'B', value: 'B', selected: true },
           ],
+        });
+    });
+
+    it('should toggle all values to false when $_all is selected', () => {
+      const { initialState } = getVariableTestContext({
+        options: [
+          { text: 'All', value: '$__all', selected: true },
+          { text: 'A', value: 'A', selected: false },
+          { text: 'B', value: 'B', selected: false },
+        ],
+        selectedValues: [{ text: 'All', value: '$__all', selected: true }],
+        multi: true,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleAllOptions())
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: false },
+          ],
+          selectedValues: [],
+        });
+    });
+
+    it('should toggle all values to false when a option is selected', () => {
+      const { initialState } = getVariableTestContext({
+        options: [
+          { text: 'All', value: '$__all', selected: false },
+          { text: 'A', value: 'A', selected: false },
+          { text: 'B', value: 'B', selected: true },
+        ],
+        selectedValues: [{ text: 'B', value: 'B', selected: true }],
+        multi: true,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleAllOptions())
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: false },
+          ],
+          selectedValues: [],
         });
     });
   });
@@ -605,6 +676,149 @@ describe('optionsPickerReducer', () => {
           selectedValues: [{ text: 'All', value: '$__all', selected: true }],
           queryValue: searchQuery,
           highlightIndex: 0,
+        });
+    });
+
+    describe('and option count is are greater then OPTIONS_LIMIT', () => {
+      it('then state should be correct', () => {
+        const searchQuery = 'option:1337';
+
+        const options = [];
+        for (let index = 0; index <= OPTIONS_LIMIT + 337; index++) {
+          options.push({ text: `option:${index}`, value: `option:${index}`, selected: false });
+        }
+
+        const { initialState } = getVariableTestContext({
+          queryValue: searchQuery,
+        });
+
+        reducerTester<OptionsPickerState>()
+          .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+          .whenActionIsDispatched(updateOptionsAndFilter(options))
+          .thenStateShouldEqual({
+            ...cloneDeep(initialState),
+            options: [{ text: 'option:1337', value: 'option:1337', selected: false }],
+            selectedValues: [],
+            queryValue: 'option:1337',
+            highlightIndex: 0,
+          });
+      });
+    });
+  });
+
+  describe('when value is selected and filter is applied but then removed', () => {
+    it('then state should be correct', () => {
+      const searchQuery = 'A';
+
+      const options: VariableOption[] = [
+        { text: 'All', value: '$__all', selected: false },
+        { text: 'A', value: 'A', selected: false },
+        { text: 'B', value: 'B', selected: false },
+      ];
+
+      const { initialState } = getVariableTestContext({
+        options,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleOption({ option: options[2], forceSelect: false, clearOthers: false }))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+        })
+        .whenActionIsDispatched(updateSearchQuery(searchQuery))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: searchQuery,
+        })
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: searchQuery,
+          highlightIndex: 0,
+        })
+        .whenActionIsDispatched(updateSearchQuery(''))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: '',
+          highlightIndex: 0,
+        })
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+          queryValue: '',
+          highlightIndex: 0,
+        });
+    });
+  });
+
+  describe('when value is toggled back and forth', () => {
+    it('then state should be correct', () => {
+      const options: VariableOption[] = [
+        { text: 'All', value: '$__all', selected: false },
+        { text: 'A', value: 'A', selected: false },
+        { text: 'B', value: 'B', selected: false },
+      ];
+
+      const toggleOptionAction = toggleOption({
+        option: options[2],
+        forceSelect: false,
+        clearOthers: false,
+      });
+
+      const { initialState } = getVariableTestContext({
+        options,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(toggleOptionAction)
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: false },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+          ],
+          selectedValues: [{ text: 'B', value: 'B', selected: true }],
+        })
+        .whenActionIsDispatched(toggleOptionAction)
+        .thenStateShouldEqual({
+          ...initialState,
+          options: [
+            { text: 'All', value: '$__all', selected: true },
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: false },
+          ],
+          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
         });
     });
   });

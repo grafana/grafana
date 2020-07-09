@@ -5,14 +5,17 @@ import {
   KeyValue,
   LoadingState,
   DataQueryError,
+  TimeSeries,
+  TableData,
+  toDataFrame,
 } from '@grafana/data';
 
 interface DataResponse {
   error?: string;
   refId?: string;
   dataframes?: string[];
-  // series: null,
-  // tables: null,
+  series?: TimeSeries[];
+  tables?: TableData[];
 }
 
 /**
@@ -32,6 +35,24 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
               message: dr.error,
             };
             rsp.state = LoadingState.Error;
+          }
+        }
+
+        if (dr.series && dr.series.length) {
+          for (const s of dr.series) {
+            if (!s.refId) {
+              s.refId = refId;
+            }
+            rsp.data.push(toDataFrame(s));
+          }
+        }
+
+        if (dr.tables && dr.tables.length) {
+          for (const s of dr.tables) {
+            if (!s.refId) {
+              s.refId = refId;
+            }
+            rsp.data.push(toDataFrame(s));
           }
         }
 
@@ -69,7 +90,7 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
 
 /**
  * Convert an object into a DataQueryError -- if this is an HTTP response,
- * it will put the correct values in the error filds
+ * it will put the correct values in the error field
  */
 export function toDataQueryError(err: any): DataQueryError {
   const error = (err || {}) as DataQueryError;

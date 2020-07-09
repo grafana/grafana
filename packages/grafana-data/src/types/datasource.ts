@@ -15,20 +15,10 @@ export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonDat
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceQueryType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
-  infer TQuery,
-  infer _TOptions
->
-  ? TQuery
-  : never;
+export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, any> ? TQuery : never;
 
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
-  infer _TQuery,
-  infer TOptions
->
-  ? TOptions
-  : never;
+export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -305,12 +295,14 @@ export interface QueryEditorProps<
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
+  onBlur?: () => void;
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
   exploreMode?: ExploreMode;
   exploreId?: any;
+  history?: HistoryItem[];
 }
 
 export enum DataSourceStatus {
@@ -337,7 +329,7 @@ export interface ExploreQueryFieldProps<
 }
 
 export interface ExploreStartPageProps {
-  datasource?: DataSourceApi;
+  datasource: DataSourceApi;
   exploreMode: ExploreMode;
   onClickExample: (query: DataQuery) => void;
   exploreId?: any;
@@ -451,7 +443,6 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
-  type: string;
   label: string;
   action?: QueryFixAction;
 }
@@ -470,6 +461,7 @@ export interface QueryHint {
 
 export interface MetricFindValue {
   text: string;
+  expandable?: boolean;
 }
 
 export interface DataSourceJsonData {
@@ -498,7 +490,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   isDefault: boolean;
   jsonData: T;
   secureJsonData?: S;
-  secureJsonFields?: KeyValue<boolean>;
+  secureJsonFields: KeyValue<boolean>;
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;
@@ -522,9 +514,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   database?: string;
 
   /**
-   * This is the full Authorization header if basic auth is ennabled.
+   * This is the full Authorization header if basic auth is enabled.
    * Only available here when access is Browser (direct), when access is Server (proxy)
-   * The basic auth header, username & password is never exposted to browser/Frontend
+   * The basic auth header, username & password is never exposed to browser/Frontend
    * so this will be empty then.
    */
   basicAuth?: string;

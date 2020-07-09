@@ -34,12 +34,16 @@ export interface QueryResultMeta {
   preferredVisualisationType?: PreferredVisualisationType;
 
   /**
+   * This is the raw query sent to the underlying system.  All macros and templating
+   * as been applied.  When metadata contains this value, it will be shown in the query inspector
+   */
+  executedQueryString?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
-  rawQuery?: string; // used by stackdriver
-  alignmentPeriod?: string; // used by stackdriver
-  query?: string; // used by azure log
+  alignmentPeriod?: string; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
@@ -96,6 +100,7 @@ export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
   unit?: string;
+  custom?: Record<string, any>;
 }
 
 export interface TableData extends QueryResultBase {

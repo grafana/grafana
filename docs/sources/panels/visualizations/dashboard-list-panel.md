@@ -6,8 +6,7 @@ aliases = ["/docs/grafana/latest/reference/dashlist/", "/docs/grafana/latest/fea
 [menu.docs]
 name = "Dashboard list"
 parent = "visualizations"
-weight = 800
-draft = "true"
+weight = 300
 +++
 
 # Dashboard list panel
