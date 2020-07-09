@@ -492,7 +492,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     const interpolatedExpr = this.templateSrv.replace(options.annotation.expr, {}, this.interpolateQueryExpr);
     const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr };
-    const { data } = await this.runRangeQuery(query, options).toPromise();
+    const { data } = await this.runRangeQuery(query, options as any).toPromise();
     const annotations: AnnotationEvent[] = [];
 
     for (const frame of data) {

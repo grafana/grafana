@@ -65,9 +65,9 @@ interface StateProps {
   hasLiveOption: boolean;
   isLive: boolean;
   isPaused: boolean;
-  originPanelId?: number;
+  originPanelId?: number | null;
   queries: DataQuery[];
-  datasourceLoading?: boolean;
+  datasourceLoading?: boolean | null;
   containerWidth: number;
   datasourceName?: string;
 }
@@ -130,7 +130,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     if (withChanges) {
       this.props.setDashboardQueriesToUpdateOnLoad({
-        panelId: originPanelId,
+        panelId: originPanelId!,
         queries: this.cleanQueries(queries),
       });
     }
@@ -235,7 +235,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     onChange={this.onChangeDatasource}
                     datasources={getExploreDatasources()}
                     current={this.getSelectedDatasource()}
-                    showLoading={datasourceLoading}
+                    showLoading={datasourceLoading === true}
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>

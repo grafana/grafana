@@ -22,6 +22,7 @@ const setup = (renderMethod: any, propOverrides?: object) => {
       requestId: '1',
       dashboardId: 1,
       interval: '1s',
+      intervalMs: 1000,
       panelId: 1,
       range: {
         from: toUtc('2020-01-01', 'YYYY-MM-DD'),

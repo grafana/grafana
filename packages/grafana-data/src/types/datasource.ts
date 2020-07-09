@@ -416,11 +416,9 @@ export interface DataQueryError {
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
 
-  dashboardId: number;
   interval: string;
-  intervalMs?: number;
+  intervalMs: number;
   maxDataPoints?: number;
-  panelId: number;
   range: TimeRange;
   reverse?: boolean;
   scopedVars: ScopedVars;
@@ -432,6 +430,8 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   exploreMode?: ExploreMode;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
+  panelId?: number;
+  dashboardId?: number;
 
   // Request Timing
   startTime: number;

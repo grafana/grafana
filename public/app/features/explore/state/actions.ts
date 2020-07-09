@@ -93,7 +93,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
@@ -295,7 +295,7 @@ export function initializeExplore(
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState,
-  originPanelId: number
+  originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
@@ -348,7 +348,7 @@ export const loadDatasourceReady = (
 export const importQueries = (
   exploreId: ExploreId,
   queries: DataQuery[],
-  sourceDataSource: DataSourceApi | undefined,
+  sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi
 ): ThunkResult<void> => {
   return async dispatch => {
@@ -452,6 +452,10 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
       dispatch(stateSave()); // Remember to save to state and update location
+      return;
+    }
+
+    if (!datasourceInstance) {
       return;
     }
 
@@ -584,7 +588,7 @@ export const stateSave = (): ThunkResult<void> => {
     const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = { orgId };
     const leftUrlState: ExploreUrlState = {
-      datasource: left.datasourceInstance.name,
+      datasource: left.datasourceInstance!.name,
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
       mode: left.mode,
@@ -598,7 +602,7 @@ export const stateSave = (): ThunkResult<void> => {
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
       const rightUrlState: ExploreUrlState = {
-        datasource: right.datasourceInstance.name,
+        datasource: right.datasourceInstance!.name,
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
         mode: right.mode,
@@ -646,12 +650,13 @@ export const updateTime = (config: {
     const range = getTimeRange(timeZone, rawRange);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
-    getTimeSrv().init({
-      time: range.raw,
-      refresh: false,
-      getTimezone: () => timeZone,
-      timeRangeUpdated: (): any => undefined,
-    });
+    getTimeSrv().init(
+      new DashboardModel({
+        time: range.raw,
+        refresh: false,
+        timeZone,
+      })
+    );
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
@@ -716,9 +721,9 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
 
     if (options) {
       rightState.queries = [];
-      rightState.graphResult = undefined;
-      rightState.logsResult = undefined;
-      rightState.tableResult = undefined;
+      rightState.graphResult = null;
+      rightState.logsResult = null;
+      rightState.tableResult = null;
       rightState.queryKeys = [];
       urlState.queries = [];
       rightState.urlState = urlState;
@@ -733,7 +738,7 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       ];
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
-      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
+      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
       await dispatch(runQueries(ExploreId.right));
     } else {
@@ -827,12 +832,19 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
+
+    if (!urlState) {
+      return;
+    }
+
     const { datasource, queries, range: urlRange, mode, ui, originPanelId } = urlState;
     const refreshQueries: DataQuery[] = [];
+
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
       refreshQueries.push(generateNewKeyAndAddRefIdIfMissing(query, refreshQueries, index));
     }
+
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRangeFromUrl(urlRange, timeZone);
 
@@ -884,7 +896,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
   getTimeSrv: () => TimeSrv;
-  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string>;
+  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
 }
 
@@ -904,7 +916,7 @@ export const navigateToExplore = (
       timeSrv: getTimeSrv(),
     });
 
-    if (openInNewWindow) {
+    if (openInNewWindow && path) {
       openInNewWindow(path);
       return;
     }
