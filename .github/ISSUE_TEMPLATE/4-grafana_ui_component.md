@@ -26,7 +26,7 @@ ___
 
 - [ ] Component has a story in Storybook
 - [ ] Props and naming follows [our style guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/frontend.md)
-- [ ] It is extendable (rest rest props are spreaded, styles with className works, and so on)
+- [ ] It is extendable (rest props are spread, styles with className works, and so on).
 - [ ] Uses [theme for spacing, colors, and so on](https://github.com/grafana/grafana/blob/master/contribute/style-guides/themes.md)
 - [ ] Works with both light and dark theme
 
