@@ -14,7 +14,6 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 interface Props {
   target: InfluxQuery;
-  counter: number; // property changes to force a refresh (angular hack)
   change: (target: InfluxQuery) => void;
   refresh: () => void;
 }
@@ -149,6 +148,13 @@ export class FluxQueryEditor extends PureComponent<Props> {
     return sugs;
   };
 
+  // For some reason in angular, when this component gets re-mounted, the width
+  // is not set properly.  This forces the layout shorly after mount so that it
+  // displays OK.  Note: this is not an issue when used directly in react
+  editorDidMountCallbackHack = (editor: any) => {
+    setTimeout(() => editor.layout(), 10);
+  };
+
   render() {
     const { target } = this.props;
 
@@ -170,7 +176,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
           showMiniMap={false}
           showLineNumbers={true}
           getSuggestions={this.getSuggestions}
-          {...{ refreshCounter: this.props.counter }} // HACK! try to get this to refresh
+          onEditorDidMount={this.editorDidMountCallbackHack}
         />
         <div className="gf-form-inline">
           <div className="gf-form">
@@ -199,6 +205,6 @@ export class FluxQueryEditor extends PureComponent<Props> {
 coreModule.directive('fluxQueryEditor', [
   'reactDirective',
   (reactDirective: any) => {
-    return reactDirective(FluxQueryEditor, ['target', 'change', 'refresh', 'counter']);
+    return reactDirective(FluxQueryEditor, ['target', 'change', 'refresh']);
   },
 ]);
