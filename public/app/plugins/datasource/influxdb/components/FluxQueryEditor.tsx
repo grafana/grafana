@@ -152,7 +152,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
   // is not set properly.  This forces the layout shorly after mount so that it
   // displays OK.  Note: this is not an issue when used directly in react
   editorDidMountCallbackHack = (editor: any) => {
-    setTimeout(() => editor.layout(), 10);
+    setTimeout(() => editor.layout(), 100);
   };
 
   render() {
