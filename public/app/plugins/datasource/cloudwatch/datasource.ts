@@ -71,25 +71,6 @@ const displayCustomError = (title: string, message: string) =>
 export const MAX_ATTEMPTS = 8;
 const POLLING_TIMES = [100, 200, 500, 1000];
 
-const metricsParams = [
-  'queryMode',
-  'id',
-  'region',
-  'namespace',
-  'expression',
-  'metricName',
-  'dimensions',
-  'statistics',
-  'period',
-  'alias',
-  'matchExact',
-  'datasource',
-  'queryType',
-  'key',
-  'hide',
-  'refId',
-];
-
 export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
   type: any;
   proxyUrl: any;
@@ -218,14 +199,12 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
             throw { message: 'Invalid extended statistics' };
           }
 
-          const reducedItem = _.pick(item, metricsParams);
-
           return {
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
             datasourceId: this.id,
             type: 'timeSeriesQuery',
-            ...reducedItem,
+            ...item,
           };
         }
       );
