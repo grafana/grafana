@@ -23,30 +23,28 @@ export const job =
   (process.env.DRONE_STEP_NAME ? process.env.DRONE_STEP_NAME : process.env.CIRCLE_JOB) || getJobFromProcessArgv();
 
 export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
-  let isCi = false;
-  let repo;
-  let branch;
-  let hash;
-  let build;
-  let pr;
-  if (process.env.DRONE === 'true') {
-    isCi = true;
-    repo = process.env.DRONE_REPO_LINK;
-    branch = process.env.DRONE_BRANCH;
-    hash = process.env.DRONE_COMMIT_SHA;
-    build = parseInt(process.env.DRONE_BUILD_NUMBER, 10);
-    pr = parseInt(process.env.DRONE_PULL_REQUEST, 10);
-  } else if (process.env.CIRCLECI === 'true') {
-    isCi = true;
-    repo = process.env.CIRCLE_REPOSITORY_URL;
-    branch = process.env.CIRCLE_BRANCH;
-    hash = process.env.CIRCLE_SHA1;
-    build = parseInt(process.env.CIRCLE_BUILD_NUM, 10);
-    const url = process.env.CIRCLE_PULL_REQUEST;
-    const idx = url.lastIndexOf('/') + 1;
-    pr = parseInt(url.substring(idx), 10);
-  }
-  if (isCi) {
+  if (process.env.CI === 'true') {
+    let repo: string | undefined;
+    let branch: string | undefined;
+    let hash: string | undefined;
+    let build: number | undefined;
+    let pr: number | undefined;
+    if (process.env.DRONE === 'true') {
+      repo = process.env.DRONE_REPO_LINK;
+      branch = process.env.DRONE_BRANCH;
+      hash = process.env.DRONE_COMMIT_SHA;
+      build = parseInt(process.env.DRONE_BUILD_NUMBER || '', 10);
+      pr = parseInt(process.env.DRONE_PULL_REQUEST || '', 10);
+    } else if (process.env.CIRCLECI === 'true') {
+      repo = process.env.CIRCLE_REPOSITORY_URL;
+      branch = process.env.CIRCLE_BRANCH;
+      hash = process.env.CIRCLE_SHA1;
+      build = parseInt(process.env.CIRCLE_BUILD_NUM || '', 10);
+      const url = process.env.CIRCLE_PULL_REQUEST || '';
+      const idx = url.lastIndexOf('/') + 1;
+      pr = parseInt(url.substring(idx), 10);
+    }
+
     const info: PluginBuildInfo = {
       time: Date.now(),
       repo,
@@ -59,11 +57,11 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
     if (build) {
       info.number = build;
     }
-    return Promise.resolve(info);
+    return info;
   }
 
-  branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
-  hash = await execa('git', ['rev-parse', 'HEAD']);
+  const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+  const hash = await execa('git', ['rev-parse', 'HEAD']);
   return {
     time: Date.now(),
     branch: branch.stdout,
@@ -71,11 +69,21 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
   };
 };
 
-export const getPullRequestNumber = () => {
+export const getBuildNumber = (): number | undefined => {
   if (process.env.DRONE === 'true') {
-    return parseInt(process.env.DRONE_PULL_REQUEST, 10);
+    return parseInt(process.env.DRONE_BUILD_NUMBER || '', 10);
   } else if (process.env.CIRCLECI === 'true') {
-    const url = process.env.CIRCLE_PULL_REQUEST;
+    return parseInt(process.env.CIRCLE_BUILD_NUM || '', 10);
+  }
+
+  return undefined;
+};
+
+export const getPullRequestNumber = (): number | undefined => {
+  if (process.env.DRONE === 'true') {
+    return parseInt(process.env.DRONE_PULL_REQUEST || '', 10);
+  } else if (process.env.CIRCLECI === 'true') {
+    const url = process.env.CIRCLE_PULL_REQUEST || '';
     const idx = url.lastIndexOf('/') + 1;
     return parseInt(url.substring(idx), 10);
   }
@@ -100,19 +108,13 @@ export const getCiFolder = () => {
 };
 
 export const writeJobStats = (startTime: number, workDir: string) => {
-  let buildNumber;
-  if (process.env.DRONE === 'true') {
-    buildNumber = parseInt(process.env.DRONE_BUILD_NUMBER, 10);
-  } else if (process.env.CIRCLECI === 'true') {
-    buildNumber = parseInt(process.env.CIRCLE_BUILD_NUM, 10);
-  }
   const endTime = Date.now();
   const stats: JobInfo = {
     job,
     startTime,
     endTime,
     elapsed: endTime - startTime,
-    buildNumber,
+    buildNumber: getBuildNumber(),
   };
   const f = path.resolve(workDir, 'job.json');
   fs.writeFile(f, JSON.stringify(stats, null, 2), err => {
