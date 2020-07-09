@@ -7,6 +7,9 @@
       - '8086:8086'
     volumes:
       - ./docker/blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
+    environment:
+      INFLUXDB_ADMIN_USER: grafana
+      INFLUXDB_ADMIN_PASSWORD: grafana
 
   fake-influxdb-data:
     image: grafana/fake-data-gen
