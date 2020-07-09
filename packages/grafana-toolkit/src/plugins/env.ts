@@ -19,18 +19,40 @@ const getJobFromProcessArgv = () => {
   return 'unknown_job';
 };
 
-export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
+export const job =
+  (process.env.DRONE_STEP_NAME ? process.env.DRONE_STEP_NAME : process.env.CIRCLE_JOB) || getJobFromProcessArgv();
 
 export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
-  if (process.env.DRONE_COMMIT_SHA) {
+  let isCi = false;
+  let repo;
+  let branch;
+  let hash;
+  let buildNumber;
+  let pr;
+  if (process.env.DRONE === 'true') {
+    isCi = true;
+    repo = process.env.DRONE_REPO_LINK;
+    branch = process.env.DRONE_BRANCH;
+    hash = process.env.DRONE_COMMIT_SHA;
+    buildNumber = parseInt(process.env.DRONE_BUILD_NUMBER, 10);
+    pr = parseInt(process.env.DRONE_PULL_REQUEST, 10);
+  } else if (process.env.CIRCLECI === 'true') {
+    isCi = true;
+    repo = process.env.CIRCLE_REPOSITORY_URL;
+    branch = process.env.CIRCLE_BRANCH;
+    hash = process.env.CIRCLE_SHA1;
+    buildNumber = parseInt(process.env.CIRCLE_BUILD_NUM, 10);
+    const url = process.env.CIRCLE_PULL_REQUEST;
+    const idx = url.lastIndexOf('/') + 1;
+    pr = parseInt(url.substring(idx), 10);
+  }
+  if (isCi) {
     const info: PluginBuildInfo = {
       time: Date.now(),
-      repo: process.env.DRONE_REPO_LINK,
-      branch: process.env.DRONE_BRANCH,
-      hash: process.env.DRONE_COMMIT_SHA,
+      repo,
+      branch,
+      hash,
     };
-    const pr = getPullRequestNumber();
-    const build = getBuildNumber();
     if (pr) {
       info.pr = pr;
     }
@@ -39,6 +61,7 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
     }
     return Promise.resolve(info);
   }
+
   const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
   const hash = await execa('git', ['rev-parse', 'HEAD']);
   return {
@@ -46,20 +69,6 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
     branch: branch.stdout,
     hash: hash.stdout,
   };
-};
-
-export const getBuildNumber = (): number | undefined => {
-  if (process.env.DRONE_BUILD_NUMBER) {
-    return parseInt(process.env.DRONE_BUILD_NUMBER, 10);
-  }
-  return undefined;
-};
-
-export const getPullRequestNumber = (): number | undefined => {
-  if (process.env.DRONE_PULL_REQUEST) {
-    return parseInt(process.env.DRONE_PULL_REQUEST, 10);
-  }
-  return undefined;
 };
 
 export const getJobFolder = () => {
@@ -79,13 +88,19 @@ export const getCiFolder = () => {
 };
 
 export const writeJobStats = (startTime: number, workDir: string) => {
+  let buildNumber;
+  if (process.env.DRONE === 'true') {
+    buildNumber = parseInt(process.env.DRONE_BUILD_NUMBER, 10);
+  } else if (process.env.CIRCLECI === 'true') {
+    buildNumber = parseInt(process.env.CIRCLE_BUILD_NUM, 10);
+  }
   const endTime = Date.now();
   const stats: JobInfo = {
     job,
     startTime,
     endTime,
     elapsed: endTime - startTime,
-    buildNumber: getBuildNumber(),
+    buildNumber,
   };
   const f = path.resolve(workDir, 'job.json');
   fs.writeFile(f, JSON.stringify(stats, null, 2), err => {

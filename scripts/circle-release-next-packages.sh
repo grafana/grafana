@@ -68,7 +68,9 @@ else
     yarn workspace @grafana/"${PACKAGE}" run build
     runtime=$((($(date +%s%N) - start)/1000000))
     if [ "${DRONE_BRANCH}" == "master" ]; then
-      exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.$DRONE_STEP_NAME.$PACKAGE=$runtime"
+      exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.${DRONE_STEP_NAME}.$PACKAGE=$runtime"
+	elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+      exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.${CIRCLE_JOB}.$PACKAGE=$runtime"
     fi
 
     exit_status=$?
