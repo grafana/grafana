@@ -142,17 +142,18 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     const data = toDataFrame(series);
     const fieldCache = new FieldCache(data);
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time)!;
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
     });
 
-    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
     valueField.config = {
       ...valueField.config,
       color: series.color,
     };
+
     valueField.name = series.alias;
     const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
     valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
@@ -426,20 +427,23 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
   const queriesVisited: { [refId: string]: boolean } = {};
+
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
-    // Stats are per query, keeping track by refId
-    const { refId } = series;
+    const { refId } = series; // Stats are per query, keeping track by refId
+
     if (refId && !queriesVisited[refId]) {
-      if (totalBytesKey && series.meta.stats) {
+      if (totalBytesKey && series.meta?.stats) {
         const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }
       }
+
       queriesVisited[refId] = true;
     }
   }
+
   if (totalBytes > 0) {
     const { text, suffix } = decimalSIPrefix('B')(totalBytes);
     meta.push({
