@@ -14,6 +14,7 @@ import { Branding } from '../Branding/Branding';
 interface Props {
   children: React.ReactNode;
   navModel: NavModel;
+  isLoading?: boolean;
 }
 
 class Page extends Component<Props> {
@@ -44,12 +45,12 @@ class Page extends Component<Props> {
   }
 
   render() {
-    const { navModel } = this.props;
+    const { navModel, isLoading } = this.props;
     return (
       <div className="page-scrollbar-wrapper">
         <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">
           <div className="page-scrollbar-content">
-            <PageHeader model={navModel} />
+            {!isLoading && navModel && <PageHeader model={navModel} />}
             {this.props.children}
             <Footer />
           </div>
