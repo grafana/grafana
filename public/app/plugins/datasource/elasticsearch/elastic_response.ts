@@ -135,8 +135,8 @@ export class ElasticResponse {
       table.addColumn({ text: metricName });
       values.push(value);
     };
-
-    for (const bucket of esAgg.buckets) {
+    const buckets = _.isArray(esAgg.buckets) ? esAgg.buckets : [esAgg.buckets];
+    for (const bucket of buckets) {
       const values = [];
 
       for (const propValues of _.values(props)) {
@@ -230,8 +230,7 @@ export class ElasticResponse {
           if (bucket.key_as_string) {
             props[aggDef.field] = bucket.key_as_string;
           }
-          const aggs = _.isArray(bucket) ? bucket : [bucket];
-          this.processBuckets(aggs, target, seriesList, table, props, depth + 1);
+          this.processBuckets(bucket, target, seriesList, table, props, depth + 1);
         }
       }
     }
