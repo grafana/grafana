@@ -24,6 +24,7 @@ interface State {
   loading: boolean;
   plugin?: AppPlugin | null;
   nav: NavModel;
+  removeStyling?: boolean;
 }
 
 export function getAppPluginPageError(meta: AppPluginMeta) {
@@ -45,6 +46,7 @@ class AppRootPage extends Component<Props, State> {
     this.state = {
       loading: true,
       nav: getLoadingNav(),
+      removeStyling: false,
     };
   }
 
@@ -71,9 +73,13 @@ class AppRootPage extends Component<Props, State> {
     this.setState({ nav });
   };
 
+  removeStyling = (removeStyling: boolean) => {
+    this.setState({ removeStyling });
+  };
+
   render() {
     const { path, query } = this.props;
-    const { loading, plugin, nav } = this.state;
+    const { loading, plugin, nav, removeStyling } = this.state;
 
     if (plugin && !plugin.root) {
       // TODO? redirect to plugin page?
@@ -81,10 +87,16 @@ class AppRootPage extends Component<Props, State> {
     }
 
     return (
-      <Page navModel={nav}>
-        <Page.Contents isLoading={loading}>
+      <Page navModel={nav} isLoading={loading}>
+        <Page.Contents isLoading={loading} removeStyling={removeStyling}>
           {plugin && plugin.root && (
-            <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />
+            <plugin.root
+              meta={plugin.meta}
+              query={query}
+              path={path}
+              onNavChanged={this.onNavChanged}
+              removeParentStyling={this.removeStyling}
+            />
           )}
         </Page.Contents>
       </Page>

@@ -6,14 +6,19 @@ import PageLoader from '../PageLoader/PageLoader';
 
 interface Props {
   isLoading?: boolean;
+  removeStyling?: boolean;
   children: React.ReactNode;
 }
 
 class PageContents extends Component<Props> {
   render() {
-    const { isLoading } = this.props;
+    const { isLoading, removeStyling } = this.props;
 
-    return <div className="page-container page-body">{isLoading ? <PageLoader /> : this.props.children}</div>;
+    return (
+      <div className={`${!removeStyling ? 'page-container page-body' : ''}`}>
+        {isLoading ? <PageLoader /> : this.props.children}
+      </div>
+    );
   }
 }
 

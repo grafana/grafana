@@ -17,7 +17,12 @@ export interface AppRootProps<T = KeyValue> {
   /**
    * Pass the nav model to the container... is there a better way?
    */
-  onNavChanged: (nav: NavModel) => void;
+  onNavChanged: (nav: NavModel | null) => void;
+
+  /**
+   * Pass a boolean to either show or hide the default styling that the parent App Wrapper has.
+   */
+  removeParentStyling?: (removeParentStyling: boolean) => void;
 }
 
 export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
