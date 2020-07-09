@@ -7,26 +7,30 @@ describe('datasource', () => {
   describe('query', () => {
     it('should return error if log query and log groups is not specified', async () => {
       const { datasource } = setup();
-      const response: DataQueryResponse = (await datasource.query({
-        targets: [
-          {
-            queryMode: 'Logs' as 'Logs',
-          },
-        ],
-      } as any)) as any;
+      const response: DataQueryResponse = (await datasource
+        .query({
+          targets: [
+            {
+              queryMode: 'Logs' as 'Logs',
+            },
+          ],
+        } as any)
+        .toPromise()) as any;
       expect(response.error?.message).toBe('Log group is required');
     });
 
     it('should return empty response if queries are hidden', async () => {
       const { datasource } = setup();
-      const response: DataQueryResponse = (await datasource.query({
-        targets: [
-          {
-            queryMode: 'Logs' as 'Logs',
-            hide: true,
-          },
-        ],
-      } as any)) as any;
+      const response: DataQueryResponse = (await datasource
+        .query({
+          targets: [
+            {
+              queryMode: 'Logs' as 'Logs',
+              hide: true,
+            },
+          ],
+        } as any)
+        .toPromise()) as any;
       expect(response.data).toEqual([]);
     });
   });

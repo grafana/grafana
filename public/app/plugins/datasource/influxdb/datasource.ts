@@ -149,6 +149,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         });
 
         switch (target.resultFormat) {
+          case 'logs':
+            meta.preferredVisualisationType = 'logs';
           case 'table': {
             seriesList.push(influxSeries.getTable());
             break;

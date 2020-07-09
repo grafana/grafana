@@ -34,7 +34,7 @@ export class DatasourceSrv implements DataSourceService {
     return Object.values(config.datasources).find(ds => ds.uid === uid);
   }
 
-  get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     if (!name) {
       return this.get(config.defaultDatasource);
     }
