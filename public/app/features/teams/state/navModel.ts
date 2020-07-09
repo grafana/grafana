@@ -54,8 +54,8 @@ export function getTeamLoadingNav(pageName: string): NavModel {
   let node: NavModelItem;
 
   // find active page
-  for (const child of main.children) {
-    if (child.id.indexOf(pageName) > 0) {
+  for (const child of main.children!) {
+    if (child.id!.indexOf(pageName) > 0) {
       child.active = true;
       node = child;
       break;
@@ -64,6 +64,6 @@ export function getTeamLoadingNav(pageName: string): NavModel {
 
   return {
     main: main,
-    node: node,
+    node: node!,
   };
 }

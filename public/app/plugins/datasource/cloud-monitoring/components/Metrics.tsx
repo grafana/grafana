@@ -14,7 +14,7 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
   projectName: string;
   metricType: string;
-  children?: (renderProps: any) => JSX.Element;
+  children: (metricDescriptor?: MetricDescriptor) => JSX.Element;
 }
 
 interface State {
@@ -23,8 +23,8 @@ interface State {
   services: any[];
   service: string;
   metric: string;
-  metricDescriptor: MetricDescriptor;
-  projectName: string;
+  metricDescriptor?: MetricDescriptor;
+  projectName: string | null;
 }
 
 export function Metrics(props: Props) {
@@ -34,7 +34,6 @@ export function Metrics(props: Props) {
     services: [],
     service: '',
     metric: '',
-    metricDescriptor: null,
     projectName: null,
   });
 
@@ -57,7 +56,7 @@ export function Metrics(props: Props) {
   }, [projectName]);
 
   const getSelectedMetricDescriptor = (metricDescriptors: MetricDescriptor[], metricType: string) => {
-    return metricDescriptors.find(md => md.type === props.templateSrv.replace(metricType));
+    return metricDescriptors.find(md => md.type === props.templateSrv.replace(metricType))!;
   };
 
   const getMetricsList = (metricDescriptors: MetricDescriptor[]) => {
@@ -97,9 +96,9 @@ export function Metrics(props: Props) {
   };
 
   const onMetricTypeChange = ({ value }: SelectableValue<string>, extra: any = {}) => {
-    const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value);
+    const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value!);
     setState({ ...state, metricDescriptor, ...extra });
-    props.onChange({ ...metricDescriptor, type: value });
+    props.onChange({ ...metricDescriptor, type: value! });
   };
 
   const getServicesList = (metricDescriptors: MetricDescriptor[]) => {

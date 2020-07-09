@@ -46,7 +46,7 @@ export class InsightsConfig extends PureComponent<Props> {
                   <Input
                     className="width-30"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                    value={options.secureJsonData.appInsightsApiKey || ''}
+                    value={options.secureJsonData!.appInsightsApiKey || ''}
                     onChange={onUpdateSecureJsonDataOption('appInsightsApiKey')}
                   />
                 </div>

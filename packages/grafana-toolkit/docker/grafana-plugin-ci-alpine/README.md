@@ -1,6 +1,6 @@
 # Using this docker image
 
-Currently tagged and uploaded to dockerhub as srclosson/integrations-ci-build 
+Uploaded to dockerhub as grafana/grafana-plugin-ci:latest-alpine
 
 Based off of `circleci/node:12-browsers` 
 
@@ -15,7 +15,7 @@ The home directory will be `/home/circleci`
 
 ## Go
 - Go 1.14 is installed in `/usr/local/bin/go`
-- golangci-lint 1.23.7 is installed in `/usr/local/bin/golangci-lint`
+- golangci-lint is installed in `/usr/local/bin/golangci-lint`
 - mage is installed in `/home/circleci/go/bin/mage`
 
 All of the above directories are in the path, so there is no need to specify fully qualified paths.

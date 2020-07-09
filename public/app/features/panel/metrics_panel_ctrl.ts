@@ -33,7 +33,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   timeInfo?: string;
   skipDataOnInit: boolean;
   dataList: LegacyResponseData[];
-  querySubscription?: Unsubscribable;
+  querySubscription?: Unsubscribable | null;
   useDataFrames = false;
 
   constructor($scope: any, $injector: any) {

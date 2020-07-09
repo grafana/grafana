@@ -38,14 +38,17 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     // Build groups of queries to run in parallel
     const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource');
     const mixed: BatchedQueries[] = [];
+
     for (const key in sets) {
       const targets = sets[key];
       const dsName = targets[0].datasource;
+
       mixed.push({
-        datasource: getDataSourceSrv().get(dsName),
+        datasource: getDataSourceSrv().get(dsName, request.scopedVars),
         targets,
       });
     }
+
     return this.batchQueries(mixed, request);
   }
 

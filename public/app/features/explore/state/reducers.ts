@@ -3,7 +3,6 @@ import { AnyAction } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   DataQuery,
-  DataQueryRequest,
   DataSourceApi,
   DefaultTimeRange,
   LoadingState,
@@ -129,7 +128,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
 
 export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
-  request: {} as DataQueryRequest<DataQuery>,
   series: [],
   error: null,
   timeRange: DefaultTimeRange,

@@ -20,7 +20,7 @@ export interface FunctionEditorControlsProps {
   onRemove: (func: FunctionDescriptor) => void;
 }
 
-const FunctionHelpButton = (props: { description: string; name: string; onDescriptionShow: () => void }) => {
+const FunctionHelpButton = (props: { description?: string; name: string; onDescriptionShow: () => void }) => {
   if (props.description) {
     return <Icon className="pointer" name="question-circle" onClick={props.onDescriptionShow} />;
   }

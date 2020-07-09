@@ -158,10 +158,8 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 				}
 			}
 		}
-
 	}
 	return nil
-
 }
 
 func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, series *tsdb.TimeSeriesSlice, props map[string]string) error {
@@ -424,7 +422,6 @@ func (rp *responseParser) nameSeries(seriesList *tsdb.TimeSeriesSlice, target *Q
 	for _, series := range *seriesList {
 		series.Name = rp.getSeriesName(series, target, metricTypeCount)
 	}
-
 }
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
@@ -519,7 +516,6 @@ func (rp *responseParser) getSeriesName(series *tsdb.TimeSeries, target *Query, 
 	}
 
 	return strings.TrimSpace(name) + " " + metricName
-
 }
 
 func (rp *responseParser) getMetricName(metric string) string {
