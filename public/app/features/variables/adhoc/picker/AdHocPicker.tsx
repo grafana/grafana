@@ -85,7 +85,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
         {this.renderFilters(filters)}
         <AdHocFilterBuilder
           appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
-          onLoadKeys={this.fetchFilterKeysWithRemove}
+          onLoadKeys={this.fetchFilterKeys}
           onLoadValues={this.fetchFilterValues}
           onCompleted={this.appendFilterToVariable}
         />
