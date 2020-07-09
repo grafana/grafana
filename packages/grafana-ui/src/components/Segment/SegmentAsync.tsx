@@ -29,8 +29,10 @@ export function SegmentAsync<T>({
     return (
       <Label
         onClick={async () => {
+          console.log('loading');
           setSelectPlaceholder('Loading options...');
           const opts = await loadOptions();
+          console.log('loading', opts);
           setLoadedOptions(opts);
           setSelectPlaceholder(opts.length ? '' : 'No options found');
         }}
