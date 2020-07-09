@@ -469,7 +469,6 @@ type mockLDAP struct {
 
 // Login test fn
 func (mock *mockLDAP) Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-
 	mock.loginCalledTimes = mock.loginCalledTimes + 1
 	return mock.loginReturn, mock.loginErrReturn
 }

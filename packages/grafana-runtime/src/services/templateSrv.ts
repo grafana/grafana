@@ -16,7 +16,7 @@ export interface TemplateSrv {
   /**
    * Replace the values within the target string.  See also {@link InterpolateFunction}
    */
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string;
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
 }
 
 let singletonInstance: TemplateSrv;

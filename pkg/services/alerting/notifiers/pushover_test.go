@@ -14,7 +14,6 @@ import (
 
 func TestPushoverNotifier(t *testing.T) {
 	Convey("Pushover notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -65,7 +64,6 @@ func TestPushoverNotifier(t *testing.T) {
 
 func TestGenPushoverBody(t *testing.T) {
 	Convey("Pushover body generation tests", t, func() {
-
 		Convey("Given common sounds", func() {
 			sirenSound := "siren_sound_tst"
 			successSound := "success_sound_tst"
@@ -93,6 +91,5 @@ func TestGenPushoverBody(t *testing.T) {
 				So(strings.Contains(pushoverBody.String(), successSound), ShouldBeTrue)
 			})
 		})
-
 	})
 }

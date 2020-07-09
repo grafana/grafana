@@ -19,10 +19,10 @@ export interface DashboardAclDTO {
 }
 
 export interface DashboardAclUpdateDTO {
-  userId: number;
-  teamId: number;
-  role: OrgRole;
-  permission: PermissionLevel;
+  userId?: number;
+  teamId?: number;
+  role?: OrgRole;
+  permission?: PermissionLevel;
 }
 
 export interface DashboardAcl {

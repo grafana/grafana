@@ -39,7 +39,6 @@ func AdminGetSettings(c *models.ReqContext) {
 }
 
 func AdminGetStats(c *models.ReqContext) {
-
 	statsQuery := models.GetAdminStatsQuery{}
 
 	if err := bus.Dispatch(&statsQuery); err != nil {

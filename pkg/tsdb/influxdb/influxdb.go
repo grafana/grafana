@@ -44,7 +44,6 @@ func init() {
 }
 
 func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-
 	glog.Info("query", "q", tsdbQuery.Queries)
 
 	version := dsInfo.JsonData.Get("version").MustString("")
@@ -123,7 +122,6 @@ func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Q
 }
 
 func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
-
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err

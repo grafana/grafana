@@ -1295,7 +1295,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1336,7 +1336,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1377,7 +1377,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=0&end=400&step=100';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1423,7 +1423,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=50&end=400&step=50';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1522,7 +1522,7 @@ describe('PrometheusDatasource', () => {
         '&step=' +
         step;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1572,7 +1572,7 @@ describe('PrometheusDatasource', () => {
         query.targets[0].expr
       )}&start=0&end=3600&step=60`;
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
