@@ -35,7 +35,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "lineHeight": 1,
           "paddingLeft": "10px",
           "paddingRight": "10px",
-          "width": 22,
+          "width": "60px",
         }
       }
       value={
