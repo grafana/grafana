@@ -220,18 +220,12 @@ export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps,
   switchToMetrics = (query: CloudWatchLogsQuery) => {
     const { onClickExample, exploreId } = this.props;
 
-    const nextQuery: CloudWatchLogsQuery = {
-      ...(query as CloudWatchLogsQuery),
-      apiMode: 'Logs',
-      queryMode: 'Logs',
-    };
-
     dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
-    onClickExample(nextQuery);
+    onClickExample(query);
   };
 
   onClickExample(query: CloudWatchLogsQuery) {
-    if (query.expression.includes('stats')) {
+    if (query.expression?.includes('stats')) {
       this.switchToMetrics(query);
     } else {
       this.props.onClickExample(query);
@@ -243,7 +237,9 @@ export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps,
       <div
         className="cheat-sheet-item__example"
         key={expr}
-        onClick={e => this.onClickExample({ refId: 'A', expression: expr } as CloudWatchLogsQuery)}
+        onClick={e =>
+          this.onClickExample({ refId: 'A', expression: expr, queryMode: 'Logs', region: 'default', id: 'A' })
+        }
       >
         <pre>{renderHighlightedMarkup(expr, keyPrefix)}</pre>
       </div>

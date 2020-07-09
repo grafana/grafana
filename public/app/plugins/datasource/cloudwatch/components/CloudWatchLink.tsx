@@ -42,9 +42,9 @@ export default class CloudWatchLink extends Component<Props, State> {
       start,
       timeType: 'ABSOLUTE',
       tz: 'UTC',
-      editorString: query.expression,
+      editorString: query.expression ?? '',
       isLiveTail: false,
-      source: query.logGroupNames,
+      source: query.logGroupNames ?? [],
     };
 
     return encodeUrl(urlProps, datasource.getActualRegion(query.region));
