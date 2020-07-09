@@ -91,7 +91,7 @@ type Props = StateProps & DispatchProps & OwnProps;
 
 export class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (option: { value: any }) => {
-    this.props.changeDatasource(this.props.exploreId, option.value);
+    this.props.changeDatasource(this.props.exploreId, option.value, { importQueries: true });
   };
 
   onClearAll = () => {

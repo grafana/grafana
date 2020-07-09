@@ -275,16 +275,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   switchToMetrics = () => {
-    const { query, onChange, exploreId } = this.props;
-
-    if (onChange) {
-      const nextQuery: CloudWatchLogsQuery = {
-        ...(query as CloudWatchLogsQuery),
-        apiMode: 'Logs',
-      };
-      onChange(nextQuery);
-    }
-
+    const { exploreId } = this.props;
     dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
   };
 
@@ -409,7 +400,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
-              query={query.expression}
+              query={query.expression ?? ''}
               onChange={this.onChangeQuery}
               onBlur={this.props.onBlur}
               onClick={this.onQueryFieldClick}

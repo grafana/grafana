@@ -10,16 +10,108 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
 	_ "github.com/lib/pq"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+// Test generateConnectionString.
+func TestGenerateConnectionString(t *testing.T) {
+	logger := log.New("tsdb.postgres")
+
+	testCases := []struct {
+		desc       string
+		host       string
+		user       string
+		password   string
+		database   string
+		sslMode    string
+		expConnStr string
+		expErr     string
+	}{
+		{
+			desc:       "Unix socket host",
+			host:       "/var/run/postgresql",
+			user:       "user",
+			password:   "password",
+			database:   "database",
+			expConnStr: "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+		},
+		{
+			desc:       "TCP host",
+			host:       "host",
+			user:       "user",
+			password:   "password",
+			database:   "database",
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+		},
+		{
+			desc:       "TCP/port host",
+			host:       "host:1234",
+			user:       "user",
+			password:   "password",
+			database:   "database",
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' port=1234",
+		},
+		{
+			desc:     "Invalid port",
+			host:     "host:invalid",
+			user:     "user",
+			database: "database",
+			expErr:   "invalid port in host specifier",
+		},
+		{
+			desc:       "Password with single quote and backslash",
+			host:       "host",
+			user:       "user",
+			password:   `p'\assword`,
+			database:   "database",
+			expConnStr: `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+		},
+		{
+			desc:       "Custom SSL mode",
+			host:       "host",
+			user:       "user",
+			password:   "password",
+			database:   "database",
+			sslMode:    "disable",
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.desc, func(t *testing.T) {
+			data := map[string]interface{}{}
+			if tt.sslMode != "" {
+				data["sslmode"] = tt.sslMode
+			}
+			ds := &models.DataSource{
+				Url:      tt.host,
+				User:     tt.user,
+				Password: tt.password,
+				Database: tt.database,
+				JsonData: simplejson.NewFromAny(data),
+			}
+			connStr, err := generateConnectionString(ds, logger)
+			if tt.expErr == "" {
+				require.NoError(t, err, tt.desc)
+				assert.Equal(t, tt.expConnStr, connStr, tt.desc)
+			} else {
+				require.Error(t, err, tt.desc)
+				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
+					fmt.Sprintf("%s: %q doesn't start with %q", tt.desc, err, tt.expErr))
+			}
+		})
+	}
+}
 
 // To run this test, set runPostgresTests=true
 // Or from the commandline: GRAFANA_TEST_DB=postgres go test -v ./pkg/tsdb/postgres

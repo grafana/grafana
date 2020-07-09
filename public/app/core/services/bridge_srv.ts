@@ -93,11 +93,9 @@ export class BridgeSrv {
             dispatch(templateVarsChangedInUrl(changes));
           }
         }
-        this.lastQuery = state.location.query;
-      } else {
-        this.lastQuery = {};
       }
 
+      this.lastQuery = state.location.query;
       this.lastPath = state.location.path;
       this.lastUrl = state.location.url;
     });
@@ -117,6 +115,18 @@ export class BridgeSrv {
   }
 }
 
+function getUrlValueForComparison(value: any): any {
+  if (isArray(value)) {
+    if (value.length === 0) {
+      value = undefined;
+    } else if (value.length === 1) {
+      value = value[0];
+    }
+  }
+
+  return value;
+}
+
 export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
   let count = 0;
   const changes: UrlQueryMap = {};
@@ -130,21 +140,9 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ur
     let newValue = getUrlValueForComparison(query[key]);
 
     if (!isEqual(newValue, oldValue)) {
-      changes[key] = newValue;
+      changes[key] = query[key];
       count++;
     }
-  }
-
-  function getUrlValueForComparison(value: any): any {
-    if (isArray(value)) {
-      if (value.length === 0) {
-        value = undefined;
-      } else if (value.length === 1) {
-        value = value[0];
-      }
-    }
-
-    return value;
   }
 
   for (const key in old) {

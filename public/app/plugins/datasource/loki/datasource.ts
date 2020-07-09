@@ -537,7 +537,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     if (err.data) {
       if (typeof err.data === 'string') {
-        error.message = err.data;
+        if (err.data.includes('escape') && target.expr.includes('\\')) {
+          error.message = `Error: ${err.data}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.`;
+        } else {
+          error.message = err.data;
+        }
       } else if (err.data.error) {
         error.message = safeStringifyValue(err.data.error);
       }
