@@ -90,10 +90,10 @@ class AlertListPanel extends PanelCtrl {
 
     if (this.panel.show === 'current') {
       getAlertsPromise = this.getCurrentAlertState();
-    }
-
-    if (this.panel.show === 'changes') {
+    } else if (this.panel.show === 'changes') {
       getAlertsPromise = this.getStateChanges();
+    } else {
+      getAlertsPromise = Promise.resolve();
     }
 
     getAlertsPromise.then(() => {
@@ -117,8 +117,8 @@ class AlertListPanel extends PanelCtrl {
       params.dashboardId = this.dashboard.id;
     }
 
-    params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
-    params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
+    params.from = dateMath.parse(this.dashboard.time.from)!.unix() * 1000;
+    params.to = dateMath.parse(this.dashboard.time.to)!.unix() * 1000;
 
     return promiseToDigest(this.$scope)(
       getBackendSrv()

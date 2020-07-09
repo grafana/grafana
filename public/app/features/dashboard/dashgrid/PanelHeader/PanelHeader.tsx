@@ -95,7 +95,7 @@ export class PanelHeader extends Component<Props, State> {
     return (
       <div className="panel-loading" onClick={this.onCancelQuery}>
         <Tooltip content="Cancel query">
-          <Icon className="panel-loading__spinner spin-counter-clock" name="sync" />
+          <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
         </Tooltip>
       </div>
     );

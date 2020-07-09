@@ -327,11 +327,11 @@ providers:
   updateIntervalSeconds: 30
   options:
     path: /etc/dashboards
-    foldersFromFileStructure: true
+    foldersFromFilesStructure: true
 ```
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFileStructure` works.
+> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
 
 ## Alert Notification Channels
 

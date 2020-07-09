@@ -38,12 +38,11 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
 export function useTheme(): GrafanaTheme {
   return useContext(ThemeContextMock || ThemeContext);
 }
+
 /** Hook for using memoized styles with access to the theme. */
-export const useStyles = (getStyles: (theme?: GrafanaTheme) => any) => {
-  const currentTheme = useTheme();
-  const callback = stylesFactory(stylesTheme => getStyles(stylesTheme));
-  return callback(currentTheme);
-};
+export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
+  return stylesFactory(getStyles)(useTheme());
+}
 
 /**
  * Enables theme context  mocking

@@ -123,12 +123,14 @@ class PluginPage extends PureComponent<Props, State> {
   componentDidUpdate(prevProps: Props) {
     const prevPage = prevProps.query.page as string;
     const page = this.props.query.page as string;
+
     if (prevPage !== page) {
       const { nav, defaultPage } = this.state;
       const node = {
         ...nav.node,
-        children: setActivePage(page, nav.node.children, defaultPage),
+        children: setActivePage(page, nav.node.children!, defaultPage),
       };
+
       this.setState({
         nav: {
           node: node,
@@ -146,7 +148,7 @@ class PluginPage extends PureComponent<Props, State> {
       return <Alert severity={AppNotificationSeverity.Error} title="Plugin Not Found" />;
     }
 
-    const active = nav.main.children.find(tab => tab.active);
+    const active = nav.main.children!.find(tab => tab.active);
     if (active) {
       // Find the current config tab
       if (plugin.configPages) {
@@ -175,7 +177,7 @@ class PluginPage extends PureComponent<Props, State> {
   showUpdateInfo = () => {
     appEvents.emit(CoreEvents.showModal, {
       src: 'public/app/features/plugins/partials/update_instructions.html',
-      model: this.state.plugin.meta,
+      model: this.state.plugin!.meta,
     });
   };
 
@@ -190,7 +192,7 @@ class PluginPage extends PureComponent<Props, State> {
         <span>{meta.info.version}</span>
         {meta.hasUpdate && (
           <div>
-            <Tooltip content={meta.latestVersion} theme="info" placement="top">
+            <Tooltip content={meta.latestVersion!} theme="info" placement="top">
               <a href="#" onClick={this.showUpdateInfo}>
                 Update Available!
               </a>
@@ -203,7 +205,7 @@ class PluginPage extends PureComponent<Props, State> {
 
   renderSidebarIncludeBody(item: PluginInclude) {
     if (item.type === PluginIncludeType.page) {
-      const pluginId = this.state.plugin.meta.id;
+      const pluginId = this.state.plugin!.meta.id;
       const page = item.name.toLowerCase().replace(' ', '-');
       return (
         <a href={`plugins/${pluginId}/page/${page}`}>
@@ -220,7 +222,7 @@ class PluginPage extends PureComponent<Props, State> {
     );
   }
 
-  renderSidebarIncludes(includes: PluginInclude[]) {
+  renderSidebarIncludes(includes?: PluginInclude[]) {
     if (!includes || !includes.length) {
       return null;
     }
@@ -241,7 +243,7 @@ class PluginPage extends PureComponent<Props, State> {
     );
   }
 
-  renderSidebarDependencies(dependencies: PluginDependencies) {
+  renderSidebarDependencies(dependencies?: PluginDependencies) {
     if (!dependencies) {
       return null;
     }
@@ -295,10 +297,11 @@ class PluginPage extends PureComponent<Props, State> {
     const { loading, nav, plugin } = this.state;
     const { $contextSrv } = this.props;
     const isAdmin = $contextSrv.hasRole('Admin');
+
     return (
       <Page navModel={nav}>
         <Page.Contents isLoading={loading}>
-          {!loading && (
+          {plugin && (
             <div className="sidebar-container">
               <div className="sidebar-content">
                 {plugin.loadError && (
@@ -316,14 +319,12 @@ class PluginPage extends PureComponent<Props, State> {
                 {this.renderBody()}
               </div>
               <aside className="page-sidebar">
-                {plugin && (
-                  <section className="page-sidebar-section">
-                    {this.renderVersionInfo(plugin.meta)}
-                    {isAdmin && this.renderSidebarIncludes(plugin.meta.includes)}
-                    {this.renderSidebarDependencies(plugin.meta.dependencies)}
-                    {this.renderSidebarLinks(plugin.meta.info)}
-                  </section>
-                )}
+                <section className="page-sidebar-section">
+                  {this.renderVersionInfo(plugin.meta)}
+                  {isAdmin && this.renderSidebarIncludes(plugin.meta.includes)}
+                  {this.renderSidebarDependencies(plugin.meta.dependencies)}
+                  {this.renderSidebarLinks(plugin.meta.info)}
+                </section>
               </aside>
             </div>
           )}
@@ -341,7 +342,7 @@ function getPluginTabsNav(
   isAdmin: boolean
 ): { defaultPage: string; nav: NavModel } {
   const { meta } = plugin;
-  let defaultPage: string;
+  let defaultPage: string | undefined;
   const pages: NavModelItem[] = [];
 
   if (true) {
@@ -377,6 +378,7 @@ function getPluginTabsNav(
             url: `${appSubUrl}${path}?page=${page.id}`,
             id: page.id,
           });
+
           if (!defaultPage) {
             defaultPage = page.id;
           }
@@ -405,11 +407,11 @@ function getPluginTabsNav(
     subTitle: meta.info.author.name,
     breadcrumbs: [{ title: 'Plugins', url: 'plugins' }],
     url: `${appSubUrl}${path}`,
-    children: setActivePage(query.page as string, pages, defaultPage),
+    children: setActivePage(query.page as string, pages, defaultPage!),
   };
 
   return {
-    defaultPage,
+    defaultPage: defaultPage!,
     nav: {
       node: node,
       main: node,
@@ -427,9 +429,11 @@ function setActivePage(pageId: string, pages: NavModelItem[], defaultPageId: str
     }
     return { ...p, active };
   });
+
   if (!found) {
     changed[0].active = true;
   }
+
   return changed;
 }
 

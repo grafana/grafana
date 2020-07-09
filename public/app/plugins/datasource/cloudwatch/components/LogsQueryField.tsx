@@ -40,7 +40,7 @@ export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<Cl
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
   syntaxLoaded: boolean;
-  syntax: Grammar;
+  syntax: Grammar | null;
   exploreId: ExploreId;
   allowCustomValue?: boolean;
 }

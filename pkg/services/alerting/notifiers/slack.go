@@ -31,7 +31,19 @@ func init() {
       <h3 class="page-heading">Slack settings</h3>
       <div class="gf-form max-width-30">
         <span class="gf-form-label width-8">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
+        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.url">
+					<input type="text"
+						required
+						class="gf-form-input max-width-30"
+						ng-init="ctrl.model.secureSettings.url = ctrl.model.settings.url || null; ctrl.model.settings.url = null;"
+						ng-model="ctrl.model.secureSettings.url"
+						placeholder="Slack incoming webhook url">
+					</input>
+        </div>
+        <div class="gf-form" ng-if="ctrl.model.secureFields.url">
+          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.url = false">reset</a>
+        </div>
       </div>
       <div class="gf-form max-width-30">
         <span class="gf-form-label width-8">Recipient</span>
@@ -114,15 +126,22 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Token</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.token"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify Recipient for this to work
-        </info-popover>
+        <div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Token</label></div>
+        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.token">
+          <input type="text"
+						class="gf-form-input max-width-30"
+						ng-init="ctrl.model.secureSettings.token = ctrl.model.settings.token || null; ctrl.model.settings.token = null;"
+            ng-model="ctrl.model.secureSettings.token"
+            data-placement="right">
+          </input>
+          <info-popover mode="right-absolute">
+            Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify Recipient for this to work
+          </info-popover>
+        </div>
+        <div class="gf-form" ng-if="ctrl.model.secureFields.token">
+          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.token = false">reset</a>
+        </div>
       </div>
     `,
 		Options: []alerting.NotifierOption{
@@ -211,7 +230,7 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	url := model.Settings.Get("url").MustString()
+	url := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
@@ -226,7 +245,8 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	token := model.Settings.Get("token").MustString()
+	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {

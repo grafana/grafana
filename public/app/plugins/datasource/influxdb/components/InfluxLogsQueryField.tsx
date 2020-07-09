@@ -13,15 +13,15 @@ export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQu
 
 export interface State {
   measurements: CascaderOption[];
-  measurement: string;
-  field: string;
-  error: string;
+  measurement: string | null;
+  field: string | null;
+  error: string | null;
 }
 
 interface ChooserOptions {
-  measurement: string;
-  field: string;
-  error: string;
+  measurement: string | null;
+  field: string | null;
+  error: string | null;
 }
 
 // Helper function for determining if a collection of pairs are valid
@@ -51,9 +51,9 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
   state: State = {
     measurements: [],
-    measurement: (null as unknown) as string,
-    field: (null as unknown) as string,
-    error: (null as unknown) as string,
+    measurement: null,
+    field: null,
+    error: null,
   };
 
   async componentDidMount() {
@@ -115,10 +115,10 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
         ...query,
         resultFormat: 'table',
         groupBy: [],
-        select: [[{ type: 'field', params: [field] }]],
+        select: [[{ type: 'field', params: [field ?? ''] }]],
         tags: pairs,
         limit: '1000',
-        measurement,
+        measurement: measurement ?? '',
       },
       this.templateSrv
     );
@@ -143,7 +143,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
           <ButtonCascader
             options={measurements}
             disabled={!hasMeasurement}
-            value={[measurement, field]}
+            value={[measurement ?? '', field ?? '']}
             onChange={this.onMeasurementsChange}
           >
             {cascadeText}

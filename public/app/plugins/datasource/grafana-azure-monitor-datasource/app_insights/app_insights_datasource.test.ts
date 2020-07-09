@@ -1,11 +1,13 @@
 import { DataFrame, getFrameDisplayName, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { backendSrv } from 'app/core/services/backend_srv';
 import { setBackendSrv } from '@grafana/runtime';
 import AppInsightsDatasource from './app_insights_datasource';
+import { of } from 'rxjs';
 
 const templateSrv = new TemplateSrv();
 
+jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
@@ -14,6 +16,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('AppInsightsDatasource', () => {
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx: any = {};
 
@@ -163,11 +166,11 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -205,11 +208,11 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.segmentColumn = 'partition';
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -267,13 +270,13 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -313,13 +316,13 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.timeGrain = 'PT30M';
-        datasourceRequestMock.mockImplementation((options: any) => {
+        fetchMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/ds/query');
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.query).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           expect(options.data.queries[0].appInsights.timeGrain).toBe('PT30M');
-          return Promise.resolve({ data: response, status: 200 });
+          return of({ data: response, status: 200 } as any);
         });
       });
 
@@ -371,12 +374,12 @@ describe('AppInsightsDatasource', () => {
         beforeEach(() => {
           options.targets[0].appInsights.dimension = 'client/city';
 
-          datasourceRequestMock.mockImplementation((options: any) => {
+          fetchMock.mockImplementation((options: any) => {
             expect(options.url).toContain('/api/ds/query');
             expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
             expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
             expect([...options.data.queries[0].appInsights.dimension]).toMatchObject(['client/city']);
-            return Promise.resolve({ data: response, status: 200 });
+            return of({ data: response, status: 200 } as any);
           });
         });
 
@@ -423,7 +426,7 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of metric names', () => {
-        return ctx.ds.metricFindQuery('appInsightsMetricNames()').then((results: any) => {
+        return ctx.ds.metricFindQueryInternal('appInsightsMetricNames()').then((results: any) => {
           expect(results.length).toBe(2);
           expect(results[0].text).toBe('exceptions/server');
           expect(results[0].value).toBe('exceptions/server');
@@ -461,7 +464,7 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of group bys', () => {
-        return ctx.ds.metricFindQuery('appInsightsGroupBys(requests/count)').then((results: any) => {
+        return ctx.ds.metricFindQueryInternal('appInsightsGroupBys(requests/count)').then((results: any) => {
           expect(results[0].text).toContain('client/os');
           expect(results[0].value).toContain('client/os');
           expect(results[1].text).toContain('client/city');
