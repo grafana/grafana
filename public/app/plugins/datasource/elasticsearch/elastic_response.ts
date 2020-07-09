@@ -230,8 +230,8 @@ export class ElasticResponse {
           if (bucket.key_as_string) {
             props[aggDef.field] = bucket.key_as_string;
           }
-          const bucketInArray = _.isArray(bucket) ? bucket : [bucket];
-          this.processBuckets(bucketInArray, target, seriesList, table, props, depth + 1);
+          const aggs = _.isArray(bucket) ? bucket : [bucket];
+          this.processBuckets(aggs, target, seriesList, table, props, depth + 1);
         }
       }
     }
