@@ -251,9 +251,6 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 
 func (s *SocialGenericOAuth) extractGroupMappings(data *UserInfoJson) ([]setting.OAuthGroupMapping, error) {
 	var groupMappings []setting.OAuthGroupMapping
-	if s.groupMappings == nil {
-		return nil, nil
-	}
 
 	for _, mapping := range s.groupMappings {
 		role, err := s.searchJSONForAttr(mapping.RoleAttributePath, data.rawJSON)
