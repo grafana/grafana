@@ -13,8 +13,7 @@ Interpolating a variable with multiple values selected is tricky as it is not st
 
 ## Multi-value variables with a Graphite data source
 
-Graphite uses glob expressions. A variable with multiple values would, in this case, be interpolated as `{host1,host2,host3}` if
-the current variable value was *host1*, *host2*, and *host3*.
+Graphite uses glob expressions. A variable with multiple values would, in this case, be interpolated as `{host1,host2,host3}` if the current variable value was *host1*, *host2*, and *host3*.
 
 ## Multi-value variables with a Prometheus or InfluxDB data source
 
