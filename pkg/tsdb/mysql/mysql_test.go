@@ -303,7 +303,6 @@ func TestMySQL(t *testing.T) {
 
 				// check for NULL values inserted by fill
 				So(points[6][0].Valid, ShouldBeFalse)
-
 			})
 
 			Convey("When doing a metric query using timeGroup and $__interval", func() {
@@ -393,7 +392,6 @@ func TestMySQL(t *testing.T) {
 				So(points[3][0].Float64, ShouldEqual, 15.0)
 				So(points[6][0].Float64, ShouldEqual, 20.0)
 			})
-
 		})
 
 		Convey("Given a table with metrics having multiple values and measurements", func() {
@@ -779,7 +777,6 @@ func TestMySQL(t *testing.T) {
 			queryResult := resp.Results["A"]
 			So(queryResult.Error, ShouldBeNil)
 			So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
-
 		})
 
 		Convey("Given a table with event data", func() {

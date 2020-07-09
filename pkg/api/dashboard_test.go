@@ -716,7 +716,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	})
 
 	Convey("Post dashboard response tests", t, func() {
-
 		// This tests that a valid request returns correct response
 
 		Convey("Given a correct request for creating a dashboard", func() {
@@ -953,7 +952,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	})
 
 	Convey("Given provisioned dashboard", t, func() {
-
 		bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
 			query.Result = []*models.Dashboard{{}}
 			return nil
@@ -1062,7 +1060,6 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 }
 
 func CallGetDashboard(sc *scenarioContext, hs *HTTPServer) {
-
 	sc.handlerFunc = hs.GetDashboard
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }

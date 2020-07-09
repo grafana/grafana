@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, ReactNode } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   DataFrame,
@@ -171,11 +171,16 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : (defaults as any)[item.path];
 
-      const label = (
+      let label: ReactNode | undefined = (
         <Label description={item.description} category={item.category?.slice(1)}>
           {item.name}
         </Label>
       );
+
+      // hide label if there is only one item and category name is same as item, name
+      if (categoryItemCount === 1 && item.category?.[0] === item.name) {
+        label = undefined;
+      }
 
       return (
         <Field label={label} key={`${item.id}/${item.isCustom}`}>

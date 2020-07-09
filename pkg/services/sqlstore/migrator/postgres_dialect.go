@@ -2,9 +2,10 @@ package migrator
 
 import (
 	"fmt"
-	"github.com/lib/pq"
 	"strconv"
 	"strings"
+
+	"github.com/lib/pq"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"

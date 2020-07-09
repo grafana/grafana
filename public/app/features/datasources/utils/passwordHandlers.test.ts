@@ -18,7 +18,7 @@ describe('createResetHandler', () => {
       createResetHandler(ctrl, field)(event);
       expect(ctrl).toEqual({
         current: {
-          [field]: null,
+          [field]: undefined,
           secureJsonData: {
             [field]: '',
           },

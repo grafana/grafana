@@ -1,4 +1,4 @@
-const esModule = '@iconscout/react-unicons';
+const esModule = '@iconscout/react-unicons|monaco-editor/esm/vs';
 
 module.exports = {
   verbose: false,
@@ -16,5 +16,6 @@ module.exports = {
   globals: { 'ts-jest': { isolatedModules: true } },
   moduleNameMapper: {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
+    '\\.css': '<rootDir>/public/test/mocks/style.ts',
   },
 };

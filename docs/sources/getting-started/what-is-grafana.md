@@ -41,7 +41,7 @@ Annotate graphs with rich events from different data sources. Hover over events 
 
 This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source.
 
-Refer to [Annotations]({{< relref "../reference/annotations.md" >}}) for more information.
+Refer to [Annotations]({{< relref "../dashboards/annotations.md" >}}) for more information.
 
 ## Dashboard variables
 

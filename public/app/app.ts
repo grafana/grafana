@@ -94,7 +94,7 @@ export class GrafanaApp {
 
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
-    setTimeZoneResolver(() => config.bootData.user.timeZone);
+    setTimeZoneResolver(() => config.bootData.user.timezone);
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 

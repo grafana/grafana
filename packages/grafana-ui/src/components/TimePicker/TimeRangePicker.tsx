@@ -5,7 +5,7 @@ import { css, cx } from 'emotion';
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { TimePickerContent } from './TimePickerContent/TimePickerContent';
+import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
@@ -98,6 +98,7 @@ export interface Props extends Themeable {
   timeSyncButton?: JSX.Element;
   isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
@@ -139,6 +140,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       isSynced,
       theme,
       history,
+      onChangeTimeZone,
     } = this.props;
 
     const { isOpen } = this.state;
@@ -168,7 +170,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
               </button>
             </Tooltip>
             {isOpen && (
-              <ClickOutsideWrapper onClick={this.onClose}>
+              <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
                 <TimePickerContent
                   timeZone={timeZone}
                   value={value}
@@ -176,6 +178,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
                   otherOptions={otherOptions}
                   quickOptions={quickOptions}
                   history={history}
+                  onChangeTimeZone={onChangeTimeZone}
                 />
               </ClickOutsideWrapper>
             )}

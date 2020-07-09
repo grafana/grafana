@@ -87,7 +87,7 @@ var metricsMap = map[string][]string{
 	"AWS/Lex":               {"BotChannelAuthErrors", "BotChannelConfigurationErrors", "BotChannelInboundThrottledEvents", "BotChannelOutboundThrottledEvents", "BotChannelRequestCount", "BotChannelResponseCardErrors", "BotChannelSystemErrors", "MissedUtteranceCount", "RuntimeInvalidLambdaResponses", "RuntimeLambdaErrors", "RuntimePollyErrors", "RuntimeRequestCount", "RuntimeSucessfulRequestLatency", "RuntimeSystemErrors", "RuntimeThrottledEvents", "RuntimeUserErrors"},
 	"AWS/Logs":              {"DeliveryErrors", "DeliveryThrottling", "ForwardedBytes", "ForwardedLogEvents", "IncomingBytes", "IncomingLogEvents"},
 	"AWS/ML":                {"PredictCount", "PredictFailureCount"},
-	"AWS/MediaConnect":      {"ARQRecovered", "ARQRequests", "CATError", "CRCError", "ConnectedOutputs", "ContinuityCounter", "FECPackets", "FECRecovered", "NotRecoveredPackets", "OverflowPackets", "PATError", "PCRAccuracyError", "PCRError", "PIDError", "PMTError", "PTSError", "PacketLossPercent", "RecoveredPackets", "RoundTripTime", "SourceBitRate", "TSByteError", "TSSyncLoss", "TransportError"},
+	"AWS/MediaConnect":      {"ARQRecovered", "ARQRequests", "BitRate", "CATError", "CRCError", "Connected", "ConnectedOutputs", "ContinuityCounter", "Disconnections", "DroppedPackets", "FECPackets", "FECRecovered", "NotRecoveredPackets", "OutputConnected", "OutputDisconnections", "OverflowPackets", "PATError", "PCRAccuracyError", "PCRError", "PIDError", "PMTError", "PTSError", "PacketLossPercent", "RecoveredPackets", "RoundTripTime", "SourceARQRecovered", "SourceARQRequests", "SourceBitRate", "SourceCATError", "SourceCRCError", "SourceConnected", "SourceContinuityCounter", "SourceDisconnections", "SourceDroppedPackets", "SourceFECPackets", "SourceFECRecovered", "SourceNotRecoveredPackets", "SourceOverflowPackets", "SourcePATError", "SourcePCRAccuracyError", "SourcePCRError", "SourcePIDError", "SourcePMTError", "SourcePTSError", "SourcePacketLossPercent", "SourceRecoveredPackets", "SourceRoundTripTime", "SourceTSByteError", "SourceTSSyncLoss", "SourceTotalPackets", "SourceTransportError", "TSByteError", "TSSyncLoss", "TotalPackets", "TransportError"},
 	"AWS/MediaConvert":      {"AudioOutputSeconds", "Errors", "HDOutputSeconds", "JobsCompletedCount", "JobsErroredCount", "SDOutputSeconds", "StandbyTime", "TranscodingTime", "UHDOutputSeconds"},
 	"AWS/MediaPackage":      {"ActiveInput", "EgressBytes", "EgressRequestCount", "EgressResponseTime", "IngressBytes", "IngressResponseTime"},
 	"AWS/MediaStore":        {"RequestCount", "4xxErrorCount", "5xxErrorCount", "BytesUploaded", "BytesDownloaded", "TotalTime", "TurnaroundTime"},
@@ -103,6 +103,7 @@ var metricsMap = map[string][]string{
 	"AWS/Route53Resolver":   {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
 	"AWS/S3":                {"4xxErrors", "5xxErrors", "AllRequests", "BucketSizeBytes", "BytesDownloaded", "BytesUploaded", "DeleteRequests", "FirstByteLatency", "GetRequests", "HeadRequests", "ListRequests", "NumberOfObjects", "PostRequests", "PutRequests", "SelectRequests", "SelectReturnedBytes", "SelectScannedBytes", "TotalRequestLatency"},
 	"AWS/SDKMetrics":        {"CallCount", "ClientErrorCount", "EndToEndLatency", "ConnectionErrorCount", "ServerErrorCount", "ThrottleCount"},
+	"AWS/ServiceCatalog":    {"ProvisionedProductLaunch"},
 	"AWS/SES":               {"Bounce", "Clicks", "Complaint", "Delivery", "Opens", "Reject", "Rendering Failures", "Reputation.BounceRate", "Reputation.ComplaintRate", "Send"},
 	"AWS/SNS":               {"NumberOfMessagesPublished", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed", "NumberOfNotificationsFilteredOut", "NumberOfNotificationsFilteredOut-InvalidAttributes", "NumberOfNotificationsFilteredOut-NoMessageAttributes", "PublishSize", "SMSMonthToDateSpentUSD", "SMSSuccessRate"},
 	"AWS/SQS":               {"ApproximateAgeOfOldestMessage", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesNotVisible", "ApproximateNumberOfMessagesVisible", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "NumberOfMessagesReceived", "NumberOfMessagesSent", "SentMessageSize"},
@@ -179,7 +180,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Lex":               {"BotAlias", "BotChannelName", "BotName", "BotVersion", "InputMode", "Operation", "Source"},
 	"AWS/Logs":              {"DestinationType", "FilterName", "LogGroupName"},
 	"AWS/ML":                {"MLModelId", "RequestMode"},
-	"AWS/MediaConnect":      {},
+	"AWS/MediaConnect":      {"AvailabilityZone", "FlowARN", "SourceARN", "OutputARN"},
 	"AWS/MediaConvert":      {"Job", "Operation", "Queue"},
 	"AWS/MediaPackage":      {"Channel", "No Dimension", "OriginEndpoint", "StatusCodeRange"},
 	"AWS/MediaStore":        {"ContainerName", "ObjectGroupName", "RequestType"},
@@ -195,6 +196,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Route53Resolver":   {"EndpointId"},
 	"AWS/S3":                {"BucketName", "FilterId", "StorageType"},
 	"AWS/SDKMetrics":        {"DestinationRegion", "Service"},
+	"AWS/ServiceCatalog":    {"State", "ProductId", "ProvisioningArtifactId"},
 	"AWS/SES":               {},
 	"AWS/SNS":               {"Application", "Country", "Platform", "SMSType", "TopicName"},
 	"AWS/SQS":               {"QueueName"},
@@ -581,7 +583,7 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
 				} else if attr, ok := v.Interface().(*time.Time); ok {
-					data = (*attr).String()
+					data = attr.String()
 				} else {
 					return nil, errors.New("invalid attribute path")
 				}
@@ -738,7 +740,7 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	creds, err := GetCredentials(cwData)
+	creds, err := getCredentials(cwData)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}

@@ -2,14 +2,15 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, DataSourceApi, ExploreMode, dateTimeFormat, AppEvents, urlUtil } from '@grafana/data';
+import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
-import { serializeStateToUrlParam, SortOrder } from './explore';
+import { SortOrder } from './explore';
 import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
-import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
@@ -178,15 +179,6 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
     range: { from: 'now-1h', to: 'now' },
     datasource: query.datasourceName,
     queries: query.queries,
-    /* Default mode is metrics. Exceptions are Loki (logs) and Jaeger (tracing) data sources.
-     * In the future, we can remove this as we are working on metrics & logs logic.
-     **/
-    mode:
-      query.datasourceId === 'loki'
-        ? ExploreMode.Logs
-        : query.datasourceId === 'jaeger'
-        ? ExploreMode.Tracing
-        : ExploreMode.Metrics,
     ui: {
       showingGraph: true,
       showingLogs: true,
@@ -261,7 +253,7 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi) {
+export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi | undefined) {
   /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
    * to format query text
    */
@@ -327,6 +319,53 @@ export function notEmptyQuery(query: DataQuery) {
   }
 
   return false;
+}
+
+export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
+  return queries.filter(query => {
+    if (query.comment.includes(searchFilter)) {
+      return true;
+    }
+
+    const listOfMatchingQueries = query.queries.filter(query =>
+      // Remove fields in which we don't want to be searching
+      Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
+        value.toString().includes(searchFilter)
+      )
+    );
+
+    return listOfMatchingQueries.length > 0;
+  });
+}
+
+export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[] | null) {
+  return listOfDatasourceFilters && listOfDatasourceFilters.length > 0
+    ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+    : queries;
+}
+
+export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
+  return queries.filter(
+    q =>
+      q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
+      q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
+  );
+}
+
+export function filterAndSortQueries(
+  queries: RichHistoryQuery[],
+  sortOrder: SortOrder,
+  listOfDatasourceFilters: string[] | null,
+  searchFilter: string,
+  timeFilter?: [number, number]
+) {
+  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
+  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
+  const filteredQueriesToBeSorted = timeFilter
+    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
+    : filteredQueriesByDsAndSearchFilter;
+
+  return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
 /* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */

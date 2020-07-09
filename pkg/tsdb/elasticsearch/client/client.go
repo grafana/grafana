@@ -205,11 +205,15 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
-	res, err := ctxhttp.Do(c.ctx, httpClient, req)
+	//nolint:bodyclose
+	resp, err := ctxhttp.Do(c.ctx, httpClient, req)
+	if err != nil {
+		return nil, err
+	}
 	return &response{
-		httpResponse: res,
+		httpResponse: resp,
 		reqInfo:      reqInfo,
-	}, err
+	}, nil
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {

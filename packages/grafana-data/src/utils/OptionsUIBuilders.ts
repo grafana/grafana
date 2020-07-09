@@ -192,6 +192,15 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
+  addTimeZonePicker<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('timezone').editor as any,
+      settings: config.settings || {},
+    });
+  }
+
   addUnitPicker<TSettings = any>(
     config: PanelOptionsEditorConfig<TOptions, TSettings & UnitFieldConfigSettings, string>
   ): this {

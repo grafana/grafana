@@ -429,7 +429,8 @@ class GraphElement {
 
   // Function for rendering panel
   renderPanel() {
-    this.panelWidth = this.elem.width();
+    this.panelWidth = this.elem.width() ?? 0;
+
     if (this.shouldAbortRender()) {
       return;
     }

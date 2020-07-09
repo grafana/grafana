@@ -931,11 +931,22 @@ describe('AzureMonitorDatasource', () => {
           'Transactions'
         )
         .then((results: any) => {
-          expect(results.dimensions.length).toEqual(4);
-          expect(results.dimensions[0].text).toEqual('None');
-          expect(results.dimensions[0].value).toEqual('None');
-          expect(results.dimensions[1].text).toEqual('Response type');
-          expect(results.dimensions[1].value).toEqual('ResponseType');
+          expect(results.dimensions).toMatchInlineSnapshot(`
+            Array [
+              Object {
+                "text": "Response type",
+                "value": "ResponseType",
+              },
+              Object {
+                "text": "Geo type",
+                "value": "GeoType",
+              },
+              Object {
+                "text": "API name",
+                "value": "ApiName",
+              },
+            ]
+          `);
         });
     });
 

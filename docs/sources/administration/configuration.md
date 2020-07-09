@@ -19,22 +19,26 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 ## Config file locations
 
-*Do not* change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
+_Do not_ change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
 ### Linux
+
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 ### Docker
+
 Refer to [Configure a Grafana Docker image]({{< relref "../installation/configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
+
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-### MacOS
+### macOS
+
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
@@ -42,6 +46,7 @@ By default, the configuration file is located at `/usr/local/etc/grafana/grafana
 Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file. If you want to change a setting, you must delete the semicolon (`;`) in front of the setting before it will work.
 
 **Example**
+
 ```
 # The HTTP port  to use
 ;http_port = 3000
@@ -82,7 +87,51 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 ```
 
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
+## Variable expansion
+
+> Only available in Grafana 7.1+.
+
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana.
+
+If any of your options contains the expression `$__<provider>{<argument>}`
+or `${<environment variable>}`, then they will be processed by Grafana's
+variable expander. The expander runs the provider with the provided argument
+to get the final value of the option.
+
+There are three providers: `env`, `file`, and `vault`.
+
+### Env provider
+
+The `env` provider can be used to expand an environment variable. If you
+set an option to `$__env{PORT}` the `PORT` environment variable will be
+used in its place. For environment variables you can also use the
+short-hand syntax `${PORT}`.
+Grafana's log directory would be set to the `grafana` directory in the
+directory behind the `LOGDIR` environment variable in the following
+example.
+
+```ini
+[paths]
+logs = $__env{LOGDIR}/grafana
+```
+
+### File provider
+
+`file` reads a file from the filesystem. It trims whitespace from the
+beginning and the end of files.
+The database password in the following example would be replaced by
+the content of the `/etc/secrets/gf_sql_password` file:
+
+```ini
+[database]
+password = $__file{/etc/secrets/gf_sql_password}
+```
+
+### Vault provider
+
+The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
+
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 <hr />
 
@@ -234,8 +283,7 @@ Either `mysql`, `postgres` or `sqlite3`, it's your choice.
 ### host
 
 Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of Unix sockets the path to it.
-For example, for MySQL running on the same host as Grafana: `host =
-127.0.0.1:3306` or with Unix sockets: `host = /var/run/mysqld/mysqld.sock`
+For example, for MySQL running on the same host as Grafana: `host = 127.0.0.1:3306` or with Unix sockets: `host = /var/run/mysqld/mysqld.sock`
 
 ### name
 
@@ -256,9 +304,11 @@ Use either URL or the other fields below to configure the database
 Example: `mysql://user:secret@host:port/database`
 
 ### max_idle_conn
+
 The maximum number of connections in the idle connection pool.
 
 ### max_open_conn
+
 The maximum number of open connections to the database.
 
 ### conn_max_lifetime
@@ -322,7 +372,7 @@ Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
 
 - `addr` is the host `:` port of the redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to redis.
-- `db` (optional) is the number indentifer of the redis database you want to use.
+- `db` (optional) is the number identifier of the redis database you want to use.
 - `ssl` (optional) is if SSL should be used to connect to redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
 
 #### memcache
@@ -339,7 +389,9 @@ This enables data proxy logging, default is `false`.
 
 ### timeout
 
-How long the data proxy should wait before timing out. Default is `30` (seconds)
+How long the data proxy should wait before timing out. Default is 30 seconds.
+
+This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
 
 ### send_user_header
 
@@ -363,7 +415,7 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 
 ### google_analytics_ua_id
 
-If you want to track Grafana usage via Google analytics specify *your* Universal
+If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
 
 ### google_tag_manager_id
@@ -413,7 +465,7 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 ### cookie_samesite
 
-Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF),  [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF), [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
 ### allow_embedding
 
@@ -423,7 +475,7 @@ mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking
 
 ### strict_transport_security
 
-Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
+Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS.
 
 ### strict_transport_security_max_age_seconds
 
@@ -491,7 +543,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 ### allow_sign_up
 
 Set to `false` to prohibit users from being able to sign up / create
-user accounts. Default is `false`.  The admin user can still create
+user accounts. Default is `false`. The admin user can still create
 users from the [Grafana Admin Pages](/reference/admin).
 
 ### allow_org_create
@@ -514,7 +566,7 @@ that this organization already exists. Default is 1.
 ### auto_assign_org_role
 
 The role new users will be assigned for the main organization (if the
-above setting is set to true).  Defaults to `Viewer`, other valid
+above setting is set to true). Defaults to `Viewer`, other valid
 options are `Admin` and `Editor`. e.g.:
 
 `auto_assign_org_role = Viewer`
@@ -537,7 +589,7 @@ Set the default UI theme: `dark` or `light`. Default is `dark`.
 
 ### External user management
 
-If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description. 
+If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description.
 
 ### viewers_can_edit
 
@@ -683,7 +735,7 @@ Email server settings.
 
 Enable this to allow Grafana to send email. Default is `false`.
 
-If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example:  """#password;"""
+If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
 
 ### host
 
@@ -733,7 +785,7 @@ Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `e
 
 Default is `false`.
 
-### templates_pattern 
+### templates_pattern
 
 Default is `emails/*.html`.
 
@@ -1075,6 +1127,7 @@ of the default, which is virtual hosted bucket addressing when possible (`http:/
 
 (for backward compatibility, only works when no bucket or region are configured)
 Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
+
 - http://grafana.s3.amazonaws.com/
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
 
@@ -1118,7 +1171,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence ${file}, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence \${file}, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -1126,7 +1179,7 @@ Optional URL to send to users in notifications. If the string contains the seque
 
 ### key_file
 
-Path to JSON key file associated with a Google service account to authenticate and authorize.
+Optional path to JSON key file associated with a Google service account to authenticate and authorize. If no value is provided it tries to use the [application default credentials](https://cloud.google.com/docs/authentication/production#finding_credentials_automatically).
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
 Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
@@ -1211,7 +1264,7 @@ Instruct headless browser instance to use a default timezone when not provided b
 ### rendering_language
 
 Instruct headless browser instance to use a default language when not provided by Grafana, e.g. when rendering panel image of alert.
-Refer to the HTTP header Accept-Language to understand how to format this value, e.g. 'fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5'.
+Refer to the HTTP header Accept-Language to understand how to format this value, e.g. 'fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, \*;q=0.5'.
 
 ### rendering_viewport_device_scale_factor
 
@@ -1224,7 +1277,7 @@ Instruct headless browser instance whether to ignore HTTPS errors during navigat
 
 ### rendering_verbose_logging
 
-Instruct headless browser instance whether to capture and log verbose information when rendering an image. Default is `false` and will only capture and log error messages. 
+Instruct headless browser instance whether to capture and log verbose information when rendering an image. Default is `false` and will only capture and log error messages.
 
 When enabled, debug messages are captured and logged as well.
 

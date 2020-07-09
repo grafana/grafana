@@ -38,6 +38,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.resultFormats = [
       { text: 'Time series', value: 'time_series' },
       { text: 'Table', value: 'table' },
+      { text: 'Logs', value: 'logs' },
     ];
 
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
@@ -104,7 +105,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         memo.push(menu);
         return memo;
       },
-      []
+      [] as any
     );
   }
 
@@ -167,6 +168,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     const plusButton = this.uiSegmentSrv.newPlusButton();
     this.groupBySegment.value = plusButton.value;
     this.groupBySegment.html = plusButton.html;
+    this.groupBySegment.fake = true;
     this.panelCtrl.refresh();
   }
 
@@ -308,6 +310,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     if (segment.type === 'condition') {
       return Promise.resolve([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
+
     if (segment.type === 'operator') {
       const nextValue = this.tagSegments[index + 1].value;
       if (/^\/.*\/$/.test(nextValue)) {
@@ -382,7 +385,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   rebuildTargetTagConditions() {
     const tags: any[] = [];
     let tagIndex = 0;
-    let tagOperator = '';
+    let tagOperator: string | null = '';
 
     _.each(this.tagSegments, (segment2, index) => {
       if (segment2.type === 'key') {
@@ -409,7 +412,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  getTagValueOperator(tagValue: string, tagOperator: string): string {
+  getTagValueOperator(tagValue: string, tagOperator: string): string | null {
     if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
       return '=~';
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {

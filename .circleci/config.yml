@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.14
+            VERSION=0.4.21
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -625,11 +625,12 @@ jobs:
       - run:
           name: Install gcloud SDK
           command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
-              sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-              sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
+            VERSION=298.0.0
+            curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            echo 0d58f451331abf43d080fa997c8e580d64897627e30be74f6d8f983ccfabef1e \
+              google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --strict --status
+            tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            ./google-cloud-sdk/install.sh -q
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
@@ -639,6 +640,7 @@ jobs:
       - run:
           name: Build Docker images
           command: |
+            source google-cloud-sdk/path.bash.inc
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
@@ -665,8 +667,7 @@ jobs:
               # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             else
-              # TODO: Don't ignore errors, temporary workaround until we fix #22955
-              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
       - run:
           name: CI job failed
@@ -811,31 +812,31 @@ jobs:
           name: Install Go linters
           command: |
             pushd /tmp
-            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
-            echo 241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179 \
-              golangci-lint-1.24.0-linux-amd64.tar.gz | sha256sum --check --strict --status
-            tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
-            sudo mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            VERSION=1.28.0
+            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${VERSION}/golangci-lint-${VERSION}-linux-amd64.tar.gz
+            echo 179d34edf4baf6454a7081fbaaf74dc99397a3be8e1a535dee04d835a977bf76 \
+              golangci-lint-${VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
+            tar -xf golangci-lint-${VERSION}-linux-amd64.tar.gz
+            sudo mv golangci-lint-${VERSION}-linux-amd64/golangci-lint /usr/local/bin/
             popd
-            make scripts/go/bin/revive scripts/go/bin/gosec
+            make scripts/go/bin/revive
       - run:
           name: Lint Go
           command: |
-            go vet ./pkg/...
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
-              -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
-              -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
+            # To save memory, run in two batches
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E deadcode -E depguard -E dogsled \
+              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E exportloopref -E whitespace ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign \
+              -E rowserrcheck -E staticcheck -E structcheck -E typecheck -E unconvert -E unused -E varcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
               -exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
               ./pkg/services/alerting/... \
               ./pkg/services/provisioning/datasources/... \
               ./pkg/services/provisioning/dashboards/... \
+              ./pkg/services/provisioning/notifiers/... \
+              ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
-
-            ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
-              -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
     executor: node
@@ -923,11 +924,14 @@ jobs:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - install-grabpl
       - run:
           name: Deploy to Kubernetes
           command: |
-            /tmp/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+            cp -r /tmp/workspace/enterprise/dist .
+            /tmp/grabpl deploy-to-k8s
 
   release-packages:
     executor: node

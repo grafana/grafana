@@ -1,7 +1,17 @@
 import angular from 'angular';
-import { CoreApp, DataQueryRequest, DataSourceInstanceSettings, dateMath, dateTime, Field, toUtc } from '@grafana/data';
+import {
+  ArrayVector,
+  CoreApp,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  dateMath,
+  dateTime,
+  Field,
+  MutableDataFrame,
+  toUtc,
+} from '@grafana/data';
 import _ from 'lodash';
-import { ElasticDatasource } from './datasource';
+import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -223,8 +233,8 @@ describe('ElasticDatasource', function(this: any) {
           },
         ],
       });
-      // 1 for logs and 1 for counts.
-      expect(response.data.length).toBe(2);
+
+      expect(response.data.length).toBe(1);
       const links = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
@@ -849,12 +859,56 @@ describe('ElasticDatasource', function(this: any) {
   });
 });
 
+describe('enhanceDataFrame', () => {
+  it('adds links to dataframe', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        {
+          name: 'urlField',
+          values: new ArrayVector([]),
+        },
+        {
+          name: 'traceField',
+          values: new ArrayVector([]),
+        },
+      ],
+    });
+    enhanceDataFrame(df, [
+      {
+        field: 'urlField',
+        url: 'someUrl',
+      },
+      {
+        field: 'traceField',
+        url: 'query',
+        datasourceUid: 'dsUid',
+      },
+    ]);
+
+    expect(df.fields[0].config.links?.length).toBe(1);
+    expect(df.fields[0].config.links?.[0]).toEqual({
+      title: '',
+      url: 'someUrl',
+    });
+    expect(df.fields[1].config.links?.length).toBe(1);
+    expect(df.fields[1].config.links?.[0]).toEqual({
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query' },
+        datasourceUid: 'dsUid',
+      },
+    });
+  });
+});
+
 const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
   return {
     requestId: '',
     dashboardId: 0,
     interval: '',
     panelId: 0,
+    intervalMs: 1,
     scopedVars: {},
     timezone: '',
     app: CoreApp.Dashboard,

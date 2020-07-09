@@ -209,6 +209,51 @@ func TestAggregateGrouping(t *testing.T) {
 	})
 }
 
+func TestNonStandardTimeColumn(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("Time Column", func(t *testing.T) {
+		runner := &MockRunner{
+			testDataPath: "non_standard_time_column.csv",
+		}
+
+		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		if dr.Error != nil {
+			t.Fatal(dr.Error)
+		}
+
+		if len(dr.Frames) != 1 {
+			t.Fatal("Expected one frame")
+		}
+
+		str, _ := dr.Frames[0].StringTable(-1, -1)
+		fmt.Println(str)
+
+		// Dimensions: 2 Fields by 1 Rows
+		// +-----------------------------------------+------------------+
+		// | Name: _start_water                      | Name:            |
+		// | Labels:                                 | Labels: st=1     |
+		// | Type: []time.Time                       | Type: []*float64 |
+		// +-----------------------------------------+------------------+
+		// | 2020-06-28 17:50:13.012584046 +0000 UTC | 156.304          |
+		// +-----------------------------------------+------------------+
+
+		expectedFrame := data.NewFrame("",
+			data.NewField("_start_water", nil, []time.Time{
+				time.Date(2020, 6, 28, 17, 50, 13, 12584046, time.UTC),
+			}),
+			data.NewField("", map[string]string{"st": "1"}, []*float64{
+				pointer.Float64(156.304),
+			}),
+		)
+		expectedFrame.Meta = &data.FrameMeta{}
+
+		if diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+}
+
 func TestBuckets(t *testing.T) {
 	ctx := context.Background()
 
