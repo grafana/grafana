@@ -10,12 +10,12 @@ By using this template you will make it easier for us to make sure that document
 Thank you!
 -->
 
-**Why this component is needed**:
+**Why is this component needed**:
 <!-- Explain your use case -->
 ___
  - [ ] Is/could it be used in more than one place in Grafana?
 
- **Where is/could it be used?**:
+**Where is/could it be used?**:
 
 ___
 - [ ] Post screenshots possible.
