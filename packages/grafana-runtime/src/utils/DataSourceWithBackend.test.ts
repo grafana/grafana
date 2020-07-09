@@ -1,6 +1,7 @@
-import { BackendSrv } from 'src/services';
+import { BackendSrv, BackendSrvRequest } from 'src/services';
 import { DataSourceWithBackend } from './DataSourceWithBackend';
 import { DataSourceJsonData, DataQuery, DataSourceInstanceSettings, DataQueryRequest } from '@grafana/data';
+import { of } from 'rxjs';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
@@ -11,7 +12,9 @@ class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> 
 const mockDatasourceRequest = jest.fn();
 
 const backendSrv = ({
-  datasourceRequest: mockDatasourceRequest,
+  fetch: (options: BackendSrvRequest) => {
+    return of(mockDatasourceRequest(options));
+  },
 } as unknown) as BackendSrv;
 
 jest.mock('../services', () => ({
