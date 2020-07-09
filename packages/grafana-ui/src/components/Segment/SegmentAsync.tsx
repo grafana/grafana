@@ -31,7 +31,6 @@ export function SegmentAsync<T>({
         onClick={async () => {
           setSelectPlaceholder('Loading options...');
           const opts = await loadOptions();
-          console.log('loading', opts);
           setLoadedOptions(opts);
           setSelectPlaceholder(opts.length ? '' : 'No options found');
         }}
