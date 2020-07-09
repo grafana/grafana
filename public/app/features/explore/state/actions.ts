@@ -16,7 +16,6 @@ import {
   QueryFixAction,
   RawTimeRange,
   TimeRange,
-  ExploreMode,
   ExploreUrlState,
   ExploreUIState,
 } from '@grafana/data';
@@ -53,7 +52,6 @@ import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
-  changeModeAction,
   changeQueryAction,
   changeRangeAction,
   changeRefreshIntervalAction,
@@ -141,16 +139,11 @@ export function changeDatasource(
     const orgId = getState().user.orgId;
     const datasourceVersion = newDataSourceInstance.getVersion && (await newDataSourceInstance.getVersion());
 
-    // HACK: Switch to logs mode if coming from Prometheus to Loki
-    const prometheusToLoki =
-      currentDataSourceInstance?.meta?.name === 'Prometheus' && newDataSourceInstance?.meta?.name === 'Loki';
-
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,
         datasourceInstance: newDataSourceInstance,
         version: datasourceVersion,
-        mode: prometheusToLoki ? ExploreMode.Logs : undefined,
       })
     );
 
@@ -164,16 +157,6 @@ export function changeDatasource(
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance, orgId));
     dispatch(runQueries(exploreId));
-  };
-}
-
-/**
- * Change the display mode in Explore.
- */
-export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
-  return dispatch => {
-    dispatch(changeModeAction({ exploreId, mode }));
-    dispatch(stateSave());
   };
 }
 
@@ -291,7 +274,6 @@ export function initializeExplore(
   datasourceName: string,
   queries: DataQuery[],
   range: TimeRange,
-  mode: ExploreMode,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState,
@@ -306,7 +288,6 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
-        mode,
         ui,
         originPanelId,
       })
@@ -444,7 +425,6 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
-      mode,
       showingGraph,
       showingTable,
     } = exploreItemState;
@@ -457,11 +437,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance.interval;
+    const minInterval = datasourceInstance?.interval;
 
     stopQueryState(querySubscription);
 
-    const datasourceId = datasourceInstance.meta.id;
+    const datasourceId = datasourceInstance?.meta.id;
 
     const queryOptions: QueryOptions = {
       minInterval,
@@ -469,11 +449,12 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
       // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
       // Influx - used to correctly display logs in graph
-      maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+      // TODO:unification
+      // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+      maxDataPoints: containerWidth,
       liveStreaming: live,
       showingGraph,
       showingTable,
-      mode,
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
@@ -587,7 +568,6 @@ export const stateSave = (): ThunkResult<void> => {
       datasource: left.datasourceInstance.name,
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
-      mode: left.mode,
       ui: {
         showingGraph: left.showingGraph,
         showingLogs: true,
@@ -601,7 +581,6 @@ export const stateSave = (): ThunkResult<void> => {
         datasource: right.datasourceInstance.name,
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
-        mode: right.mode,
         ui: {
           showingGraph: right.showingGraph,
           showingLogs: true,
@@ -827,7 +806,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range: urlRange, mode, ui, originPanelId } = urlState;
+    const { datasource, queries, range: urlRange, ui, originPanelId } = urlState;
     const refreshQueries: DataQuery[] = [];
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
@@ -840,17 +819,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       dispatch(
-        initializeExplore(
-          exploreId,
-          datasource,
-          initialQueries,
-          range,
-          mode,
-          containerWidth,
-          eventBridge,
-          ui,
-          originPanelId
-        )
+        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui, originPanelId)
       );
       return;
     }
@@ -867,11 +836,6 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     // need to refresh queries
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
-    }
-
-    // need to refresh mode
-    if (update.mode) {
-      dispatch(changeModeAction({ exploreId, mode }));
     }
 
     // always run queries when refresh is needed

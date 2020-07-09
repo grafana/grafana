@@ -31,7 +31,6 @@ import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'a
 import {
   addQueryRowAction,
   changeLoadingStateAction,
-  changeModeAction,
   changeQueryAction,
   changeRangeAction,
   changeRefreshIntervalAction,
@@ -115,7 +114,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   update: makeInitialUpdateState(),
   latency: 0,
   supportedModes: [],
-  mode: (null as unknown) as ExploreMode,
   isLive: false,
   isPaused: false,
   urlReplaced: false,
@@ -192,18 +190,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return { ...state, containerWidth };
   }
 
-  if (changeModeAction.match(action)) {
-    return {
-      ...state,
-      mode: action.payload.mode,
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-      queryResponse: createEmptyQueryResponse(),
-      loading: false,
-    };
-  }
-
   if (changeRefreshIntervalAction.match(action)) {
     const { refreshInterval } = action.payload;
     const live = RefreshPicker.isLive(refreshInterval);
@@ -258,13 +244,12 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, mode, ui, originPanelId } = action.payload;
+    const { containerWidth, eventBridge, queries, range, ui, originPanelId } = action.payload;
     return {
       ...state,
       containerWidth,
       eventBridge,
       range,
-      mode,
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
@@ -275,7 +260,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (updateDatasourceInstanceAction.match(action)) {
-    const { datasourceInstance, version, mode } = action.payload;
+    const { datasourceInstance, version } = action.payload;
 
     // Custom components
     stopQueryState(state.querySubscription);
@@ -297,7 +282,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     }
 
     const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });
-    const [supportedModes, newMode] = getModesForDatasource(updatedDatasourceInstance, state.mode);
+    const supportedModes = getModesForDatasource(updatedDatasourceInstance);
 
     return {
       ...state,
@@ -310,7 +295,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       loading: false,
       queryKeys: [],
       supportedModes,
-      mode: mode ?? newMode,
       originPanelId: state.urlState && state.urlState.originPanelId,
     };
   }
@@ -432,7 +416,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       return { ...state, showingGraph };
     }
 
-    return { ...state, showingGraph, graphResult: null };
+    return { ...state, showingGraph };
   }
 
   if (toggleTableAction.match(action)) {
@@ -441,7 +425,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       return { ...state, showingTable };
     }
 
-    return { ...state, showingTable, tableResult: null };
+    return { ...state, showingTable };
   }
 
   if (queriesImportedAction.match(action)) {
@@ -568,6 +552,10 @@ export const processQueryResponse = (
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     update: makeInitialUpdateState(),
+    showLogs: !!logsResult,
+    showMetrics: !!graphResult,
+    showTable: !!tableResult,
+    showTrace: !!processor.traceFrames.length,
   };
 };
 
@@ -595,7 +583,6 @@ export const updateChildRefreshState = (
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
-  const mode = _.isEqual(urlState ? urlState.mode : ExploreMode.Metrics, state.urlState.mode) === false;
   const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
 
   return {
@@ -606,18 +593,16 @@ export const updateChildRefreshState = (
       datasource,
       queries,
       range,
-      mode,
       ui,
     },
   };
 };
 
-const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMode): [ExploreMode[], ExploreMode] => {
+const getModesForDatasource = (dataSource: DataSourceApi): ExploreMode[] => {
   const supportsGraph = dataSource.meta.metrics;
   const supportsLogs = dataSource.meta.logs;
   const supportsTracing = dataSource.meta.tracing;
 
-  let mode = currentMode || ExploreMode.Metrics;
   const supportedModes: ExploreMode[] = [];
 
   if (supportsGraph) {
@@ -632,17 +617,7 @@ const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMo
     supportedModes.push(ExploreMode.Tracing);
   }
 
-  if (supportedModes.length === 1) {
-    mode = supportedModes[0];
-  }
-
-  // HACK: Used to set Loki's default explore mode to Logs mode.
-  // A better solution would be to introduce a "default" or "preferred" mode to the datasource config
-  if (dataSource.meta.name === 'Loki' && (!currentMode || supportedModes.indexOf(currentMode) === -1)) {
-    mode = ExploreMode.Logs;
-  }
-
-  return [supportedModes, mode];
+  return supportedModes;
 };
 
 /**

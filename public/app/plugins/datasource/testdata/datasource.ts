@@ -1,3 +1,5 @@
+import set from 'lodash/set';
+
 import {
   ArrayDataFrame,
   arrowTableToDataFrame,
@@ -86,6 +88,11 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         const table = t as TableData;
         table.refId = query.refId;
         table.name = query.alias;
+
+        if (query.scenarioId === 'logs') {
+          set(table, 'meta.preferredVisualisationType', 'logs');
+        }
+
         data.push(table);
       }
 

@@ -49,6 +49,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                     values: response?.data?.data || [],
                   },
                 ],
+                meta: {
+                  preferredVisualisationType: 'trace',
+                },
               }),
             ],
           };
@@ -65,6 +68,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                 values: [],
               },
             ],
+            meta: {
+              preferredVisualisationType: 'trace',
+            },
           }),
         ],
       });
