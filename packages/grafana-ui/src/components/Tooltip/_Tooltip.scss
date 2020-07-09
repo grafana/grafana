@@ -48,8 +48,8 @@ $popper-margin-from-ref: 5px;
     @include popper-theme($popover-help-bg, $popover-help-color);
   }
 
-  &.popper__background--code {
-    @include popper-theme($popover-code-bg, $white);
+  &.popper__background--info-alt {
+    @include popper-theme($popover-code-bg, $text-color);
   }
 }
 

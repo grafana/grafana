@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { TableCellProps } from './types';
+import { isString } from 'lodash';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
-import { isString } from 'lodash';
 import { useTheme } from '../../themes';
+import { TableCellProps } from './types';
 
 export const JSONViewCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles } = props;
@@ -30,7 +30,7 @@ export const JSONViewCell: FC<TableCellProps> = props => {
   const content = <JSONTooltip value={value} />;
   return (
     <div className={cx(txt, tableStyles.tableCell)}>
-      <Tooltip placement="auto" content={content} theme="code">
+      <Tooltip placement="auto" content={content} theme="info-alt">
         <div className={tableStyles.overflow}>{displayValue}</div>
       </Tooltip>
     </div>
