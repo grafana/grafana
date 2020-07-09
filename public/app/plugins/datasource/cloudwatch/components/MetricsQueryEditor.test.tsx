@@ -41,7 +41,6 @@ const setup = () => {
   const props: Props = {
     query: {
       queryMode: 'Metrics',
-      apiMode: 'Metrics',
       refId: '',
       id: '',
       region: 'us-east-1',
