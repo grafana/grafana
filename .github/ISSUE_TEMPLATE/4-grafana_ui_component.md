@@ -19,21 +19,21 @@ ___
 
 ___
 - [ ] Post screenshots possible.
-- [ ] It has a single use case
-- [ ] It is/could be used in multiple places
+- [ ] It has a single use case.
+- [ ] It is/could be used in multiple places.
 
 **Implementation** (Checklist meant for the person implementing the component)
 
-- [ ] Component has a story in Storybook
-- [ ] Props and naming follows [our style guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/frontend.md)
-- [ ] It is extendable (rest props are spread, styles with className works, and so on).
-- [ ] Uses [theme for spacing, colors, and so on](https://github.com/grafana/grafana/blob/master/contribute/style-guides/themes.md)
-- [ ] Works with both light and dark theme
+- [ ] Component has a story in Storybook.
+- [ ] Props and naming follows [our style guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/frontend.md).
+- [ ] It is extendable (rest props are spread, styles with className work, and so on).
+- [ ] Uses [theme for spacing, colors, and so on](https://github.com/grafana/grafana/blob/master/contribute/style-guides/themes.md).
+- [ ] Works with both light and dark theme.
 
 **Documentation**
 
-- [ ] Properties are documented
-- [ ] Use cases are described
-- [ ] Code examples for the different use cases
-- [ ] Dos and don'ts 
-- [ ] Styling guidelines, specific color usage (if applicable)
+- [ ] Properties are documented.
+- [ ] Use cases are described.
+- [ ] Code examples for the different use cases.
+- [ ] Dos and don'ts.
+- [ ] Styling guidelines, specific color usage (if applicable).
