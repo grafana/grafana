@@ -122,11 +122,7 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(
-  exploreId: ExploreId,
-  datasourceName: string,
-  options?: { importQueries: boolean }
-): ThunkResult<void> {
+export function changeDatasource(exploreId: ExploreId, datasourceName: string): ThunkResult<void> {
   return async (dispatch, getState) => {
     let newDataSourceInstance: DataSourceApi;
 
@@ -154,9 +150,7 @@ export function changeDatasource(
       })
     );
 
-    if (options?.importQueries) {
-      await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
-    }
+    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     if (getState().explore[exploreId].isLive) {
       dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
@@ -274,7 +268,7 @@ export function loadExploreDatasourcesAndSetDatasource(
     const exploreDatasources = getExploreDatasources();
 
     if (exploreDatasources.length >= 1) {
-      await dispatch(changeDatasource(exploreId, datasourceName, { importQueries: true }));
+      await dispatch(changeDatasource(exploreId, datasourceName));
       dispatch(runQueries(exploreId));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
@@ -735,7 +729,6 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
-      await dispatch(runQueries(ExploreId.right));
     } else {
       rightState.queries = leftState.queries.slice();
       rightState.urlState = urlState;

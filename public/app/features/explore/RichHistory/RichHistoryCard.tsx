@@ -163,7 +163,7 @@ export function RichHistoryCard(props: Props) {
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
     if (query.datasourceName !== datasourceInstance?.name) {
-      await changeDatasource(exploreId, query.datasourceName, { importQueries: true });
+      await changeDatasource(exploreId, query.datasourceName);
       setQueries(exploreId, queriesToRun);
     } else {
       setQueries(exploreId, queriesToRun);
