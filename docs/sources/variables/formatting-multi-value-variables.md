@@ -17,9 +17,7 @@ Graphite uses glob expressions. A variable with multiple values would, in this c
 
 ## Multi-value variables with a Prometheus or InfluxDB data source
 
-InfluxDB and Prometheus use regex expressions, so the same variable
-would be interpolated as `(host1|host2|host3)`. Every value would also be regex escaped if not, a value with a regex control character would
-break the regex expression.
+InfluxDB and Prometheus use regex expressions, so the same variable would be interpolated as `(host1|host2|host3)`. Every value would also be regex escaped. If not, a value with a regex control character would break the regex expression.
 
 ## Multi-value variables with an Elastic data source
 
