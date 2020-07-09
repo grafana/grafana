@@ -2,8 +2,16 @@ import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
-import { DataQueryResponse, ScopedVars, DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  ScopedVars,
+  DataSourceInstanceSettings,
+  MetricFindValue,
+} from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { Observable, from } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -127,6 +135,17 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         workspace: workspace,
       },
     };
+  }
+
+  /**
+   * Augment the results with links back to the azure console
+   */
+  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
+    return super.query(request).pipe(
+      mergeMap((res: DataQueryResponse) => {
+        return from(this.processResponse(res));
+      })
+    );
   }
 
   async processResponse(res: DataQueryResponse): Promise<DataQueryResponse> {
