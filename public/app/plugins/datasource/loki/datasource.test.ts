@@ -189,6 +189,33 @@ describe('LokiDatasource', () => {
       expect(dataFrame.meta?.limit).toBe(20);
       expect(dataFrame.meta?.searchWords).toEqual(['foo']);
     });
+
+    test('should return custom error message when Loki returns escaping error', async () => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      const ds = new LokiDatasource(customSettings, templateSrvMock);
+
+      datasourceRequestMock.mockImplementation(
+        jest.fn().mockReturnValueOnce(
+          Promise.reject({
+            data: 'parse error at line 1, col 6: invalid char escape',
+            status: 400,
+            statusText: 'Bad Request',
+          })
+        )
+      );
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{job="gra\\fana"}', refId: 'B' }],
+      });
+
+      try {
+        await ds.query(options).toPromise();
+      } catch (err) {
+        expect(err.message).toBe(
+          'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.'
+        );
+      }
+    });
   });
 
   describe('When interpolating variables', () => {
