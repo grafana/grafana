@@ -27,21 +27,21 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
   let repo;
   let branch;
   let hash;
-  let buildNumber;
+  let build;
   let pr;
   if (process.env.DRONE === 'true') {
     isCi = true;
     repo = process.env.DRONE_REPO_LINK;
     branch = process.env.DRONE_BRANCH;
     hash = process.env.DRONE_COMMIT_SHA;
-    buildNumber = parseInt(process.env.DRONE_BUILD_NUMBER, 10);
+    build = parseInt(process.env.DRONE_BUILD_NUMBER, 10);
     pr = parseInt(process.env.DRONE_PULL_REQUEST, 10);
   } else if (process.env.CIRCLECI === 'true') {
     isCi = true;
     repo = process.env.CIRCLE_REPOSITORY_URL;
     branch = process.env.CIRCLE_BRANCH;
     hash = process.env.CIRCLE_SHA1;
-    buildNumber = parseInt(process.env.CIRCLE_BUILD_NUM, 10);
+    build = parseInt(process.env.CIRCLE_BUILD_NUM, 10);
     const url = process.env.CIRCLE_PULL_REQUEST;
     const idx = url.lastIndexOf('/') + 1;
     pr = parseInt(url.substring(idx), 10);
@@ -62,13 +62,25 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
     return Promise.resolve(info);
   }
 
-  const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
-  const hash = await execa('git', ['rev-parse', 'HEAD']);
+  branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+  hash = await execa('git', ['rev-parse', 'HEAD']);
   return {
     time: Date.now(),
     branch: branch.stdout,
     hash: hash.stdout,
   };
+};
+
+export const getPullRequestNumber = () => {
+  if (process.env.DRONE === 'true') {
+    return parseInt(process.env.DRONE_PULL_REQUEST, 10);
+  } else if (process.env.CIRCLECI === 'true') {
+    const url = process.env.CIRCLE_PULL_REQUEST;
+    const idx = url.lastIndexOf('/') + 1;
+    return parseInt(url.substring(idx), 10);
+  }
+
+  return undefined;
 };
 
 export const getJobFolder = () => {
