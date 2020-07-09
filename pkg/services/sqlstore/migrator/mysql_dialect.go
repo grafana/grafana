@@ -1,12 +1,12 @@
 package migrator
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
 
@@ -115,22 +115,19 @@ func (db *Mysql) ColumnCheckSql(tableName, columnName string) (string, []interfa
 }
 
 func (db *Mysql) CleanDB() error {
-	tables, err := db.engine.DBMetas()
-	if err != nil {
-		return err
-	}
+	tables, _ := db.engine.DBMetas()
 	sess := db.engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
 		if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
-			return errutil.Wrap("failed to disable foreign key checks", err)
+			return fmt.Errorf("failed to disable foreign key checks")
 		}
 		if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
-			return errutil.Wrapf(err, "failed to delete table %q", table.Name)
+			return fmt.Errorf("failed to delete table: %v, err: %v", table.Name, err)
 		}
 		if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
-			return errutil.Wrap("failed to disable foreign key checks", err)
+			return fmt.Errorf("failed to disable foreign key checks")
 		}
 	}
 
