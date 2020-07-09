@@ -233,8 +233,8 @@ describe('ElasticDatasource', function(this: any) {
           },
         ],
       });
-      // 1 for logs and 1 for counts.
-      expect(response.data.length).toBe(2);
+
+      expect(response.data.length).toBe(1);
       const links = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');

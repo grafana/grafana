@@ -79,7 +79,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   datasourceName: string;
   debouncedAlert: (datasourceName: string, region: string) => void;
   debouncedCustomAlert: (title: string, message: string) => void;
-  logQueries: Record<string, { id: string; region: string }>;
+  logQueries: Record<string, { id: string; region: string; statsQuery: boolean }>;
   languageProvider: CloudWatchLanguageProvider;
 
   /** @ngInject */
@@ -228,7 +228,11 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach(param => {
-      this.logQueries[param.refId] = { id: param.queryId, region: param.region };
+      this.logQueries[param.refId] = {
+        id: param.queryId,
+        region: param.region,
+        statsQuery: param.statsGroups?.length > 0 ?? false,
+      };
     });
     let prevRecordsMatched: Record<string, number> = {};
 

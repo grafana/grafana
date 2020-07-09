@@ -166,7 +166,6 @@ export interface ExploreItemState {
 
   latency: number;
   supportedModes: ExploreMode[];
-  mode: ExploreMode;
 
   /**
    * If true, the view is in live tailing mode.
@@ -188,6 +187,11 @@ export interface ExploreItemState {
    * query of that panel.
    */
   originPanelId?: number | null;
+
+  showLogs?: boolean;
+  showMetrics?: boolean;
+  showTable?: boolean;
+  showTrace?: boolean;
 }
 
 export interface ExploreUpdateState {
