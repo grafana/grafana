@@ -363,7 +363,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       let queryObj;
       if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [queryDef.defaultBucketAgg()];
-        target.metrics = [queryDef.defaultMetricAgg()];
+        target.metrics = [];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);

@@ -10,7 +10,6 @@ import {
   DataSourceApi,
   dateMath,
   DefaultTimeZone,
-  ExploreMode,
   HistoryItem,
   IntervalValues,
   LogRowModel,
@@ -248,9 +247,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
   const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
 
-  const modeObj = parsedSegments.filter(segment => isSegment(segment, 'mode'))[0];
-  const mode = modeObj ? modeObj.mode : ExploreMode.Metrics;
-
   const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
   const ui = uiState
     ? {
@@ -262,7 +258,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     : DEFAULT_UI_STATE;
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, mode, originPanelId };
+  return { datasource, queries, range, ui, originPanelId };
 }
 
 export function generateKey(index = 0): string {

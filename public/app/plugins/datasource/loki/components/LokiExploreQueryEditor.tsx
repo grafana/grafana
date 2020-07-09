@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import _ from 'lodash';
 
 // Types
-import { AbsoluteTimeRange, ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
+import { AbsoluteTimeRange, ExploreQueryFieldProps } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
@@ -12,7 +12,7 @@ import LokiExploreExtraField from './LokiExploreExtraField';
 type Props = ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions>;
 
 export function LokiExploreQueryEditor(props: Props) {
-  const { query, data, datasource, exploreMode, history, onChange, onRunQuery } = props;
+  const { query, data, datasource, history, onChange, onRunQuery } = props;
 
   let absolute: AbsoluteTimeRange;
   if (data && !_.isEmpty(data.request)) {
@@ -72,16 +72,14 @@ export function LokiExploreQueryEditor(props: Props) {
       data={data}
       absoluteRange={absolute}
       ExtraFieldElement={
-        exploreMode === ExploreMode.Logs ? (
-          <LokiExploreExtraField
-            label={'Line limit'}
-            onChangeFunc={onMaxLinesChange}
-            onKeyDownFunc={onReturnKeyDown}
-            value={query?.maxLines?.toString() || ''}
-            type={'number'}
-            min={0}
-          />
-        ) : null
+        <LokiExploreExtraField
+          label={'Line limit'}
+          onChangeFunc={onMaxLinesChange}
+          onKeyDownFunc={onReturnKeyDown}
+          value={query?.maxLines?.toString() || ''}
+          type={'number'}
+          min={0}
+        />
       }
     />
   );

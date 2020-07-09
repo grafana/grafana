@@ -1,15 +1,7 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import {
-  AnnotationQueryRequest,
-  DataFrame,
-  DataSourceApi,
-  dateTime,
-  ExploreMode,
-  FieldCache,
-  TimeRange,
-} from '@grafana/data';
+import { AnnotationQueryRequest, DataFrame, DataSourceApi, dateTime, FieldCache, TimeRange } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { makeMockLokiDatasource } from './mocks';
 import { of } from 'rxjs';
@@ -19,7 +11,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -110,24 +102,9 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(() => Promise.resolve(testResp));
     });
 
-    test('should run instant query and range query when in metrics mode', async () => {
-      const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({job="grafana"}[5m])', refId: 'A' }],
-        exploreMode: ExploreMode.Metrics,
-      });
-
-      ds.runInstantQuery = jest.fn(() => of({ data: [] }));
-      ds.runRangeQuery = jest.fn(() => of({ data: [] }));
-      await ds.query(options).toPromise();
-
-      expect(ds.runInstantQuery).toBeCalled();
-      expect(ds.runRangeQuery).toBeCalled();
-    });
-
     test('should just run range query when in logs mode', async () => {
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="grafana"}', refId: 'B' }],
-        exploreMode: ExploreMode.Logs,
       });
 
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
