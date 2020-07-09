@@ -255,6 +255,8 @@
       name: Advanced variable formats
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
+    - link: /variables/chained-variables/
+      name: Chained variables
 - name: What's new in Grafana
   link: /whatsnew/
   children:
