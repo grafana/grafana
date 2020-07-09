@@ -134,7 +134,7 @@ function joinEvalMatches(matches: any, separator: string) {
 
       return res;
     },
-    []
+    [] as string[]
   ).join(separator);
 }
 

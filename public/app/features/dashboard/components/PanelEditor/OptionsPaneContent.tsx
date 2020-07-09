@@ -175,7 +175,7 @@ export const TabsBarContent: React.FC<{
 
   // Show the appropriate tabs
   let tabs = tabSelections;
-  let active = tabs.find(v => v.value === activeTab);
+  let active = tabs.find(v => v.value === activeTab)!;
 
   // If no field configs hide Fields & Override tab
   if (plugin.fieldConfigRegistry.isEmpty()) {
@@ -191,7 +191,7 @@ export const TabsBarContent: React.FC<{
             options={tabs}
             value={active}
             onChange={v => {
-              setActiveTab(v.value);
+              setActiveTab(v.value!);
             }}
           />
         </div>
@@ -200,12 +200,12 @@ export const TabsBarContent: React.FC<{
           {tabs.map(item => (
             <Tab
               key={item.value}
-              label={item.label}
+              label={item.label!}
               counter={item.value === 'overrides' ? overridesCount : undefined}
               active={active.value === item.value}
-              onChangeTab={() => setActiveTab(item.value)}
+              onChangeTab={() => setActiveTab(item.value!)}
               title={item.tooltip}
-              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label)}
+              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label!)}
             />
           ))}
           <div className="flex-grow-1" />

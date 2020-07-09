@@ -31,7 +31,7 @@ interface Props {
 }
 
 interface State {
-  allNodesExpanded: boolean;
+  allNodesExpanded: boolean | null;
   isMocking: boolean;
   mockedResponse: string;
   dsQuery: DsQuery;

@@ -11,12 +11,12 @@ import { updateLocation } from 'app/core/actions';
 import { CustomScrollbar } from '@grafana/ui';
 
 export interface Props {
-  dashboard: DashboardModel | null;
+  dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
 }
 
 export class DashboardSettings extends PureComponent<Props> {
-  element: HTMLElement;
+  element?: HTMLElement | null;
   angularCmp: AngularComponent;
 
   componentDidMount() {
@@ -44,7 +44,7 @@ export class DashboardSettings extends PureComponent<Props> {
   render() {
     const { dashboard } = this.props;
     const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = dashboard.meta.folderId > 0;
+    const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
 
     return (
       <div className="dashboard-settings">

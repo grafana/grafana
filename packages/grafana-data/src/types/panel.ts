@@ -81,7 +81,7 @@ export interface PanelEditorProps<T = any> {
     callback?: () => void
   ) => void;
   /** Result set of panel queries */
-  data: PanelData;
+  data?: PanelData;
 }
 
 export interface PanelModel<TOptions = any> {

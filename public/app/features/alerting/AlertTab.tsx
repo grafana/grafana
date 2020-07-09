@@ -23,7 +23,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  angularPanelComponent: AngularComponent;
+  angularPanelComponent?: AngularComponent | null;
 }
 
 interface DispatchProps {

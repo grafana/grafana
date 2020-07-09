@@ -158,11 +158,14 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     return this._fieldConfigRegistry;
   }
 
-  get optionEditors() {
-    if (!this._optionEditors && this.registerOptionEditors) {
+  get optionEditors(): PanelOptionEditorsRegistry {
+    if (!this._optionEditors) {
       const builder = new PanelOptionsEditorBuilder<TOptions>();
-      this.registerOptionEditors(builder);
       this._optionEditors = builder.getRegistry();
+
+      if (this.registerOptionEditors) {
+        this.registerOptionEditors(builder);
+      }
     }
 
     return this._optionEditors;

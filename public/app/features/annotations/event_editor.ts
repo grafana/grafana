@@ -24,7 +24,7 @@ export class EventEditorCtrl {
       this.event.timeEnd = tryEpochToMoment(this.event.timeEnd);
     }
 
-    this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time);
+    this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time!);
   }
 
   save() {
@@ -33,11 +33,11 @@ export class EventEditorCtrl {
     }
 
     const saveModel = _.cloneDeep(this.event);
-    saveModel.time = saveModel.time.valueOf();
+    saveModel.time = saveModel.time!.valueOf();
     saveModel.timeEnd = 0;
 
     if (saveModel.isRegion) {
-      saveModel.timeEnd = this.event.timeEnd.valueOf();
+      saveModel.timeEnd = this.event.timeEnd!.valueOf();
 
       if (saveModel.timeEnd < saveModel.time) {
         console.log('invalid time');

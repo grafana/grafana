@@ -15,7 +15,7 @@ interface UsePanelLatestData {
  * Subscribes and returns latest panel data from PanelQueryRunner
  */
 export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): UsePanelLatestData => {
-  const querySubscription = useRef<Unsubscribable>(null);
+  const querySubscription = useRef<Unsubscribable>();
   const [latestData, setLatestData] = useState<PanelData>();
 
   useEffect(() => {

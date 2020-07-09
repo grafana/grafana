@@ -214,7 +214,7 @@ export class AlertTabCtrl {
         memo.push(this.buildConditionModel(value));
         return memo;
       },
-      []
+      [] as string[]
     );
 
     ThresholdMapper.alertToGraphThresholds(this.panel);
@@ -282,7 +282,7 @@ export class AlertTabCtrl {
     }
 
     let firstTarget;
-    let foundTarget: DataQuery = null;
+    let foundTarget: DataQuery | null = null;
 
     const promises: Array<Promise<any>> = [];
     for (const condition of this.alert.conditions) {

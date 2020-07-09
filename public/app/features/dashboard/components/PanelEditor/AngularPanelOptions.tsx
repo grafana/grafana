@@ -20,7 +20,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  angularPanelComponent: AngularComponent;
+  angularPanelComponent?: AngularComponent | null;
 }
 
 interface DispatchProps {
@@ -30,8 +30,8 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
-  element?: HTMLElement;
-  angularOptions: AngularComponent;
+  element?: HTMLElement | null;
+  angularOptions?: AngularComponent | null;
 
   constructor(props: Props) {
     super(props);

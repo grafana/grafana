@@ -6,7 +6,7 @@ import { OnRowOptionsUpdate } from './RowOptionsForm';
 
 export interface RowOptionsButtonProps {
   title: string | null;
-  repeat: string | null;
+  repeat: string | null | undefined;
   onUpdate: OnRowOptionsUpdate;
 }
 
