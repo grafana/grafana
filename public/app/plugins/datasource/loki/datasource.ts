@@ -42,7 +42,10 @@ import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
-export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
+export type RangeQueryOptions = Pick<
+  DataQueryRequest<LokiQuery>,
+  'range' | 'intervalMs' | 'maxDataPoints' | 'reverse' | 'liveStreaming' | 'showingGraph' | 'showingTable'
+>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 
@@ -193,7 +196,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     const queryOptions = { ...options, maxDataPoints: linesLimit };
-    if (target.liveStreaming) {
+    if (options.liveStreaming) {
       return this.runLiveQuery(target, queryOptions);
     }
     const query = this.createRangeQuery(target, queryOptions);
