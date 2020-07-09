@@ -1,7 +1,6 @@
 package social
 
 import (
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -243,21 +242,13 @@ var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
 }
 
 func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
-	if configFile == "" {
-		return nil, nil
-	}
 	result := &setting.OAuthGroupMappingsConfig{}
 
 	oauthLogger.Debug("Reading group mapping file", "file", configFile)
 
-	fileBytes, err := ioutil.ReadFile(configFile)
+	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load OAuth config file", err)
-	}
-
-	_, err = toml.Decode(string(fileBytes), result)
-	if err != nil {
-		return nil, errutil.Wrap("Failed to load OAuth config file", err)
+		return nil, errutil.Wrap("Failed to load OAuth group mappings file", err)
 	}
 
 	if len(result.GroupMappings) == 0 {
@@ -267,7 +258,7 @@ func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
 	// Validate role_attribute_path is set
 	for _, groupMapping := range result.GroupMappings {
 		if groupMapping.RoleAttributePath == "" {
-			return nil, xerrors.New("Failed to validate role_attribute_path setting")
+			return nil, xerrors.New("OAuth group mapping require role_attribute_path to be set")
 		}
 	}
 
