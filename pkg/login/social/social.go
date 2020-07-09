@@ -102,18 +102,21 @@ func NewOAuthService() {
 			TlsClientKey:       sec.Key("tls_client_key").String(),
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
-			GroupMappingsFile:  sec.Key("group_mappings_file").String(),
+			GroupMappings:      []setting.OAuthGroupMapping{},
 		}
 
 		if !info.Enabled {
 			continue
 		}
 
-		groupMappingsConfig, err := readConfig(info.GroupMappingsFile)
-		if err != nil {
-			log.Error(3, "Error reading group mappings config: %s", err.Error())
-		} else {
-			info.GroupMappings = groupMappingsConfig.GroupMappings
+		groupMappingsFile := sec.Key("group_mappings_file").String()
+		if groupMappingsFile != "" {
+			groupMappingsConfig, err := readConfig(groupMappingsFile)
+			if err != nil {
+				oauthLogger.Error("Failed to read group mappings file", "file", groupMappingsFile, "provider", name, "error", err.Error())
+			} else {
+				info.GroupMappings = groupMappingsConfig.GroupMappings
+			}
 		}
 
 		if name == "grafananet" {
@@ -245,7 +248,7 @@ func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
 	}
 	result := &setting.OAuthGroupMappingsConfig{}
 
-	oauthLogger.Info("OAuth enabled, reading config file", "file", configFile)
+	oauthLogger.Debug("Reading group mapping file", "file", configFile)
 
 	fileBytes, err := ioutil.ReadFile(configFile)
 	if err != nil {
