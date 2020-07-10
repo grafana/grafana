@@ -20,13 +20,17 @@ You can choose any of your existing Grafana dashboards to replace the default ho
 
 You can also replace it for you only by updating your own preferences.
 
+If you change the home dashboard in both preferences, user preferences will override organization preferences. 
+
 
 ## Configuration
 
-You can provide your own JSON file and set the path to this file in the [configuration]({{< relref "./configuration.md">}}) file.
+You can also provide your own JSON file and set the path to this file in the [configuration]({{< relref "./configuration.md">}}) file.
 
 ```ini
 [dashboards]
 # Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
 default_home_dashboard_path =
 ```
+
+If preferences are set as described above, they will override this value.
