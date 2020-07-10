@@ -52,7 +52,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    this.componentDidUpdate(null);
+    this.componentDidUpdate(this.props);
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -60,9 +60,9 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
     if (!prevProps || prevProps.panelData !== panelData) {
       const query = this.props.panel.targets[0] as DashboardQuery;
-      const defaultDS = await getDatasourceSrv().get(null);
+      const defaultDS = await getDatasourceSrv().get();
       const dashboard = getDashboardSrv().getCurrent();
-      const panel = dashboard.getPanelById(query.panelId);
+      const panel = dashboard.getPanelById(query.panelId ?? -124134);
 
       if (!panel) {
         this.setState({ defaultDatasource: defaultDS.name });
@@ -143,7 +143,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const dashboard = getDashboardSrv().getCurrent();
     const query = this.getQuery();
 
-    let selected: SelectableValue<number>;
+    let selected: SelectableValue<number> | undefined;
     const panels: Array<SelectableValue<number>> = [];
 
     for (const panel of dashboard.panels) {
@@ -188,7 +188,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
             isSearchable={true}
             options={panels}
             value={selected}
-            onChange={item => this.onPanelChanged(item.value)}
+            onChange={item => this.onPanelChanged(item.value!)}
           />
         </div>
         <div className={css({ padding: '16px' })}>{query.panelId && this.renderQueryData(editURL)}</div>

@@ -63,7 +63,7 @@ export class MonitorConfig extends PureComponent<Props> {
           selectedSubscription={options.jsonData.subscriptionId}
           tenantId={options.jsonData.tenantId}
           clientId={options.jsonData.clientId}
-          clientSecret={options.secureJsonData.clientSecret}
+          clientSecret={options.secureJsonData?.clientSecret}
           clientSecretConfigured={options.secureJsonFields.clientSecret}
           onAzureCloudChange={this.onAzureCloudSelect}
           onSubscriptionSelectChange={this.onSubscriptionSelect}
