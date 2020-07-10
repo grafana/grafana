@@ -10,7 +10,6 @@ import {
   DataSourceApi,
   dateMath,
   DefaultTimeZone,
-  ExploreMode,
   HistoryItem,
   IntervalValues,
   LogRowModel,
@@ -67,6 +66,7 @@ export interface GetExploreUrlArguments {
   datasourceSrv: DataSourceSrv;
   timeSrv: TimeSrv;
 }
+
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
@@ -248,9 +248,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
   const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
 
-  const modeObj = parsedSegments.filter(segment => isSegment(segment, 'mode'))[0];
-  const mode = modeObj ? modeObj.mode : ExploreMode.Metrics;
-
   const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
   const ui = uiState
     ? {
@@ -262,7 +259,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     : DEFAULT_UI_STATE;
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, mode, originPanelId };
+  return { datasource, queries, range, ui, originPanelId };
 }
 
 export function generateKey(index = 0): string {
@@ -302,7 +299,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
     }
     return allQueries;
   }
-  return [{ ...generateEmptyQuery(queries) }];
+  return [{ ...generateEmptyQuery(queries ?? []) }];
 }
 
 /**
@@ -356,7 +353,7 @@ export function clearHistory(datasourceId: string) {
   store.delete(historyKey);
 }
 
-export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourceApi): string[] => {
+export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSourceApi | null): string[] => {
   const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
     const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
     return newQueryKeys.concat(`${primaryKey}-${index}`);
@@ -367,8 +364,8 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any),
-    to: dateMath.parse(rawRange.to, true, timeZone as any),
+    from: dateMath.parse(rawRange.from, false, timeZone as any)!,
+    to: dateMath.parse(rawRange.to, true, timeZone as any)!,
     raw: rawRange,
   };
 };
@@ -402,13 +399,13 @@ const parseRawTime = (value: any): TimeFragment | null => {
 
 export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
   const raw = {
-    from: parseRawTime(range.from),
-    to: parseRawTime(range.to),
+    from: parseRawTime(range.from)!,
+    to: parseRawTime(range.to)!,
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone as any),
-    to: dateMath.parse(raw.to, true, timeZone as any),
+    from: dateMath.parse(raw.from, false, timeZone as any)!,
+    to: dateMath.parse(raw.to, true, timeZone as any)!,
     raw,
   };
 };
@@ -536,13 +533,13 @@ export const convertToWebSocketUrl = (url: string) => {
   return `${backend}${url}`;
 };
 
-export const stopQueryState = (querySubscription: Unsubscribable) => {
+export const stopQueryState = (querySubscription: Unsubscribable | undefined) => {
   if (querySubscription) {
     querySubscription.unsubscribe();
   }
 };
 
-export function getIntervals(range: TimeRange, lowLimit: string, resolution?: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }

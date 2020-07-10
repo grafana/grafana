@@ -32,7 +32,6 @@ import {
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
-import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
@@ -143,19 +142,23 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     const fieldCache = new FieldCache(data);
 
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-    timeField.display = getDisplayProcessor({
-      field: timeField,
-      timeZone,
-    });
+    if (timeField) {
+      timeField.display = getDisplayProcessor({
+        field: timeField,
+        timeZone,
+      });
+    }
 
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
-    valueField.config = {
-      ...valueField.config,
-      color: series.color,
-    };
-    valueField.name = series.alias;
-    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
-    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
+    if (valueField) {
+      valueField.config = {
+        ...valueField.config,
+        color: series.color,
+      };
+      valueField.name = series.alias;
+      const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+      valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
+    }
 
     const points = getFlotPairs({
       xField: timeField,
@@ -201,35 +204,21 @@ export function dataFrameToLogsModel(
   timeZone: TimeZone,
   absoluteRange?: AbsoluteTimeRange
 ): LogsModel {
-  const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
+  const { logSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
+  // unification: Removed logic for using metrics data in LogsModel as with the unification changes this would result
+  // in the incorrect data being used. Instead logs series are always derived from logs.
   if (logsModel) {
-    if (metricSeries.length === 0) {
-      // Create histogram metrics from logs using the interval as bucket size for the line count
-      if (intervalMs && logsModel.rows.length > 0) {
-        const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-        const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
-        logsModel.visibleRange = visibleRange;
-        logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
-      } else {
-        logsModel.series = [];
-      }
+    // Create histogram metrics from logs using the interval as bucket size for the line count
+    if (intervalMs && logsModel.rows.length > 0) {
+      const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
+      const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+      logsModel.visibleRange = visibleRange;
+      logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
     } else {
-      // We got metrics in the dataFrame so process those
-      logsModel.series = getGraphSeriesModel(
-        metricSeries,
-        timeZone,
-        {},
-        { showBars: true, showLines: false, showPoints: false },
-        {
-          asTable: false,
-          isVisible: true,
-          placement: 'under',
-        }
-      );
+      logsModel.series = [];
     }
-
     return logsModel;
   }
 
@@ -431,8 +420,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     // Stats are per query, keeping track by refId
     const { refId } = series;
     if (refId && !queriesVisited[refId]) {
-      if (totalBytesKey && series.meta.stats) {
-        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+      if (totalBytesKey && series.meta?.stats) {
+        const byteStat = series.meta?.stats.find(stat => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }
