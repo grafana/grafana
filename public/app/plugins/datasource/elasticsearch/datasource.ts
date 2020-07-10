@@ -344,6 +344,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
+    console.log('optinos', options);
     let payload = '';
     const targets = _.cloneDeep(options.targets);
     const sentTargets: ElasticsearchQuery[] = [];
@@ -411,6 +412,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           enhanceDataFrame(dataFrame, this.dataLinks);
         }
         return response;
+      } else if (sentTargets.some(target => target.metrics.some(metric => metric.type === 'raw_document_v2'))) {
+        return er.getTimeSeries(true);
       }
 
       return er.getTimeSeries();

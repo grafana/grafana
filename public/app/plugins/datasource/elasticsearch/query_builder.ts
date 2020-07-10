@@ -212,9 +212,10 @@ export class ElasticQueryBuilder {
     // If target doesn't have bucketAggs and type is not raw_document, it is invalid query.
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
-      if (!metric || metric.type !== 'raw_document') {
-        throw { message: 'Invalid query' };
-      }
+      //tu treba pridat
+      // if (!metric || metric.type !== 'raw_document') {
+      //   throw { message: 'Invalid query' };
+      // }
     }
 
     /* Handle document query:
@@ -222,6 +223,14 @@ export class ElasticQueryBuilder {
      * Otherwise it will not be a valid query and error will be thrown.
      */
     if (target.metrics?.[0]?.type === 'raw_document') {
+      metric = target.metrics[0];
+      const size = (metric.settings && metric.settings.size !== 0 && metric.settings.size) || 500;
+      return this.documentQuery(query, size);
+    }
+
+    /* Handle document query v2:
+     */
+    if (target.metrics?.[0]?.type === 'raw_document_v2') {
       metric = target.metrics[0];
       const size = (metric.settings && metric.settings.size !== 0 && metric.settings.size) || 500;
       return this.documentQuery(query, size);

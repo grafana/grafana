@@ -80,6 +80,7 @@ export const metricAggTypes = [
     minVersion: 2,
   },
   { text: 'Raw Document', value: 'raw_document', requiresField: false },
+  { text: 'Raw Document v2', value: 'raw_document_v2', requiresField: false },
   { text: 'Logs', value: 'logs', requiresField: false },
 ];
 

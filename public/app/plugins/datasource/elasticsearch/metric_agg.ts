@@ -109,6 +109,14 @@ export class ElasticMetricAggCtrl {
           $scope.target.bucketAggs = [];
           break;
         }
+        case 'raw_document_v2': {
+          $scope.agg.settings.size = $scope.agg.settings.size || 500;
+          $scope.settingsLinkText = 'Size: ' + $scope.agg.settings.size;
+          $scope.target.metrics.splice(0, $scope.target.metrics.length, $scope.agg);
+
+          $scope.target.bucketAggs = [];
+          break;
+        }
       }
       if ($scope.aggDef.supportsInlineScript) {
         // I know this stores the inline script twice
@@ -164,7 +172,10 @@ export class ElasticMetricAggCtrl {
       $scope.showOptions = false;
 
       // reset back to metric/group by query
-      if ($scope.target.bucketAggs.length === 0 && $scope.agg.type !== 'raw_document') {
+      if (
+        ($scope.target.bucketAggs.length === 0 && $scope.agg.type !== 'raw_document') ||
+        $scope.agg.type !== 'raw_document_v2'
+      ) {
         $scope.target.bucketAggs = [queryDef.defaultBucketAgg()];
       }
 
