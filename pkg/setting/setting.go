@@ -1080,7 +1080,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// Annotations
 	dashboardAnnotation := iniFile.Section("annotations.dashboard")
-	APIAnnotation := iniFile.Section("annotations.api")
+	apiIAnnotation := iniFile.Section("annotations.api")
 
 	cfg.AlertingAnnotationCleanupSetting = AnnotationCleanupSettings{
 		MaxAge:   alerting.Key("max_annotation_age").MustDuration(0),

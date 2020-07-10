@@ -988,7 +988,7 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 ## [annotations.dashboard]
 
-Dashboard annotations means that annotation are associated with the dashboard they are created on.
+Dashboard annotations means that annotations are associated with the dashboard they are created on.
 
 ### max_age
 

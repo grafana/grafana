@@ -16,7 +16,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 
 	t.Cleanup(func() {
 		_ = fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
-			_, err := session.Exec("DELETE from annotation")
+			_, err := session.Exec("DELETE FROM annotation")
 			require.Nil(t, err, "cleaning up all annotations should not cause problems")
 			return err
 		})
@@ -66,7 +66,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			APIAnnotationCount:       3,
 		},
 		{
-			name: "running the max count delete again should not remove an annotations",
+			name: "running the max count delete again should not remove any annotations",
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
 				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
@@ -82,7 +82,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
 			err := cleaner.CleanAnnotations(context.Background(), test.cfg)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			assertAnnotationCount(t, fakeSQL, alertAnnotationType, test.alertAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, dashboardAnnotationType, test.dashboardAnnotationCount)
@@ -96,7 +96,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	t.Cleanup(func() {
 		_ = fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
-			_, err := session.Exec("DELETE from annotation")
+			_, err := session.Exec("DELETE FROM annotation")
 			require.Nil(t, err, "cleaning up all annotations should not cause problems")
 			return err
 		})
@@ -117,26 +117,26 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	defer session.Close()
 
 	_, err := session.Insert(a)
-	require.Nil(t, err, "cannot insert annotation")
+	require.NoError(t, err, "cannot insert annotation")
 	_, err = session.Insert(a)
-	require.Nil(t, err, "cannot insert annotation")
+	require.NoError(t, err, "cannot insert annotation")
 
 	a.AlertId = 20
 	_, err = session.Insert(a)
-	require.Nil(t, err, "cannot insert annotation")
+	require.NoError(t, err, "cannot insert annotation")
 
 	// run the clean up task to keep one annotations.
 	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
 	err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
-	// assert that the last annotations was kept
+	// assert that the last annotations were kept
 	countNew, err := session.Where("alert_id = 20").Count(&annotations.Item{})
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, int64(1), countNew, "the last annotations should be kept")
 
 	countOld, err := session.Where("alert_id = 10").Count(&annotations.Item{})
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted.")
 }
 
@@ -146,7 +146,7 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SqlStore, sql string, expected
 	session := fakeSQL.NewSession()
 	defer session.Close()
 	count, err := session.Where(sql).Count(&annotations.Item{})
-	require.Nil(t, err, "cound should not return error")
+	require.NoError(t, err)
 	require.Equal(t, expectedCount, count)
 }
 
@@ -185,7 +185,7 @@ func createTestAnnotations(t *testing.T, sqlstore *SqlStore, expectedCount int, 
 		}
 
 		_, err := sqlstore.NewSession().Insert(a)
-		require.Nil(t, err, "should be able to save annotation", err)
+		require.NoError(t, err, "should be able to save annotation", err)
 	}
 }
 
