@@ -323,6 +323,7 @@ export function lokiStreamsToDataframes(
         limit,
         stats,
         custom,
+        preferredVisualisationType: 'logs',
       },
     };
   });

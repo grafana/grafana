@@ -142,20 +142,20 @@ describe('enhanceDataFrame', () => {
     });
     expect(df.fields.length).toBe(3);
     const fc = new FieldCache(df);
-    expect(fc.getFieldByName('trace1').values.toArray()).toEqual([null, '1234', null]);
-    expect(fc.getFieldByName('trace1').config.links[0]).toEqual({
+    expect(fc.getFieldByName('trace1')!.values.toArray()).toEqual([null, '1234', null]);
+    expect(fc.getFieldByName('trace1')!.config.links![0]).toEqual({
       url: 'http://localhost/${__value.raw}',
       title: '',
     });
 
-    expect(fc.getFieldByName('trace2').values.toArray()).toEqual([null, null, 'foo']);
-    expect(fc.getFieldByName('trace2').config.links.length).toBe(2);
-    expect(fc.getFieldByName('trace2').config.links[0]).toEqual({
+    expect(fc.getFieldByName('trace2')!.values.toArray()).toEqual([null, null, 'foo']);
+    expect(fc.getFieldByName('trace2')!.config.links!.length).toBe(2);
+    expect(fc.getFieldByName('trace2')!.config.links![0]).toEqual({
       title: '',
       internal: { datasourceUid: 'uid', query: { query: 'test' } },
       url: '',
     });
-    expect(fc.getFieldByName('trace2').config.links[1]).toEqual({
+    expect(fc.getFieldByName('trace2')!.config.links![1]).toEqual({
       title: '',
       internal: { datasourceUid: 'uid2', query: { query: 'test' } },
       url: '',

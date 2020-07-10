@@ -59,7 +59,7 @@ export interface ExploreItemState {
   /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
-  datasourceInstance?: DataSourceApi;
+  datasourceInstance?: DataSourceApi | null;
   /**
    * Current data source name or null if default
    */
@@ -157,7 +157,7 @@ export interface ExploreItemState {
    * Copy of the state of the URL which is in store.location.query. This is duplicated here so we can diff the two
    * after a change to see if we need to sync url state back to redux store (like on clicking Back in browser).
    */
-  urlState: ExploreUrlState;
+  urlState: ExploreUrlState | null;
 
   /**
    * Map of what changed between real url and local urlState so we can partially update just the things that are needed.
@@ -166,7 +166,6 @@ export interface ExploreItemState {
 
   latency: number;
   supportedModes: ExploreMode[];
-  mode: ExploreMode;
 
   /**
    * If true, the view is in live tailing mode.
@@ -187,7 +186,12 @@ export interface ExploreItemState {
    * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
    * query of that panel.
    */
-  originPanelId?: number;
+  originPanelId?: number | null;
+
+  showLogs?: boolean;
+  showMetrics?: boolean;
+  showTable?: boolean;
+  showTrace?: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -199,7 +203,7 @@ export interface ExploreUpdateState {
 }
 
 export interface QueryOptions {
-  minInterval: string;
+  minInterval?: string;
   maxDataPoints?: number;
   liveStreaming?: boolean;
   showingGraph?: boolean;

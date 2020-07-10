@@ -47,10 +47,10 @@ export function getLoadingNav(tabIndex: number): NavModel {
     version: 0,
   });
 
-  main.children[tabIndex].active = true;
+  main.children![tabIndex].active = true;
 
   return {
     main: main,
-    node: main.children[tabIndex],
+    node: main.children![tabIndex],
   };
 }

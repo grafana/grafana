@@ -34,7 +34,7 @@ interface RunningQueryState {
  * This function should handle composing a PanelData from multiple responses
  */
 export function processResponsePacket(packet: DataQueryResponse, state: RunningQueryState): RunningQueryState {
-  const request = state.panelData.request;
+  const request = state.panelData.request!;
   const packets: MapOfResponsePackets = {
     ...state.packets,
   };
@@ -48,8 +48,8 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   const range = { ...request.range };
   const timeRange = isString(range.raw.from)
     ? {
-        from: dateMath.parse(range.raw.from, false),
-        to: dateMath.parse(range.raw.to, true),
+        from: dateMath.parse(range.raw.from, false)!,
+        to: dateMath.parse(range.raw.to, true)!,
         raw: range.raw,
       }
     : range;
@@ -182,7 +182,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function preProcessPanelData(data: PanelData, lastResult: PanelData): PanelData {
+export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
   const { series } = data;
 
   //  for loading states with no data, use last result
@@ -191,7 +191,11 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
       lastResult = data;
     }
 
-    return { ...lastResult, state: LoadingState.Loading };
+    return {
+      ...lastResult,
+      state: LoadingState.Loading,
+      request: data.request,
+    };
   }
 
   // Make sure the data frames are properly formatted

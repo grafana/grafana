@@ -9,7 +9,7 @@ const intervalMap: any = {
 };
 
 export class IndexPattern {
-  constructor(private pattern: any, private interval: string | null) {}
+  constructor(private pattern: any, private interval?: string) {}
 
   getIndexForToday() {
     if (this.interval) {

@@ -4,16 +4,7 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 // Types
-import {
-  dateMath,
-  DefaultTimeRange,
-  TimeRange,
-  RawTimeRange,
-  TimeZone,
-  toUtc,
-  dateTime,
-  isDateTime,
-} from '@grafana/data';
+import { dateMath, DefaultTimeRange, TimeRange, RawTimeRange, toUtc, dateTime, isDateTime } from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -28,8 +19,8 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
-  oldRefresh: boolean;
-  dashboard: Partial<DashboardModel>;
+  oldRefresh: string | null | undefined;
+  dashboard: DashboardModel;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
 
@@ -56,7 +47,7 @@ export class TimeSrv {
     });
   }
 
-  init(dashboard: Partial<DashboardModel>) {
+  init(dashboard: DashboardModel) {
     this.timer.cancelAll();
 
     this.dashboard = dashboard;
@@ -79,12 +70,7 @@ export class TimeSrv {
       return intervals;
     }
 
-    const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
-
-    if (validIntervals.indexOf(this.contextSrv.minRefreshInterval) === -1) {
-      validIntervals.unshift(this.contextSrv.minRefreshInterval);
-    }
-    return validIntervals;
+    return intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
   }
 
   private parseTime() {
@@ -284,11 +270,11 @@ export class TimeSrv {
       to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
     };
 
-    const timezone: TimeZone = this.dashboard ? this.dashboard.getTimezone() : undefined;
+    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
-      from: dateMath.parse(raw.from, false, timezone),
-      to: dateMath.parse(raw.to, true, timezone),
+      from: dateMath.parse(raw.from, false, timezone)!,
+      to: dateMath.parse(raw.to, true, timezone)!,
       raw: raw,
     };
   }
