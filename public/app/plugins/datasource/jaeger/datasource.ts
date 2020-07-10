@@ -48,6 +48,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                     values: response?.data?.data || [],
                   },
                 ],
+                meta: {
+                  preferredVisualisationType: 'trace',
+                },
               }),
             ],
           };
@@ -64,6 +67,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                 values: [],
               },
             ],
+            meta: {
+              preferredVisualisationType: 'trace',
+            },
           }),
         ],
       });
@@ -102,7 +108,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
 function getTime(date: string | DateTime, roundUp: boolean) {
   if (typeof date === 'string') {
-    date = dateMath.parse(date, roundUp);
+    date = dateMath.parse(date, roundUp)!;
   }
   return date.valueOf() * 1000;
 }

@@ -45,6 +45,14 @@ func (e *CloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 				return nil
 			}
 
+			if dataframe.Meta != nil {
+				dataframe.Meta.PreferredVisualization = "logs"
+			} else {
+				dataframe.Meta = &data.FrameMeta{
+					PreferredVisualization: "logs",
+				}
+			}
+
 			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe})}
 			return nil
 		})

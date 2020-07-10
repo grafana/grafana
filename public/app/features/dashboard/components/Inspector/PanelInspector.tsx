@@ -15,7 +15,7 @@ import { updateLocation } from 'app/core/actions';
 interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
-  defaultTab: InspectTab;
+  defaultTab?: InspectTab;
 }
 
 export interface ConnectedProps {

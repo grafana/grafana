@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.19
+            VERSION=0.4.21
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -924,11 +924,14 @@ jobs:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - install-grabpl
       - run:
           name: Deploy to Kubernetes
           command: |
-            /tmp/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+            cp -r /tmp/workspace/enterprise/dist .
+            /tmp/grabpl deploy-to-k8s
 
   release-packages:
     executor: node
