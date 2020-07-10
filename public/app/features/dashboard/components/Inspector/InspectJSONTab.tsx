@@ -109,7 +109,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
       }
     } catch (err) {
-      console.log('Error applyign updates', err);
+      console.error('Error applying updates', err);
       appEvents.emit(AppEvents.alertError, ['Invalid JSON text']);
     }
 
