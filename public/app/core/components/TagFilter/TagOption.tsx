@@ -28,9 +28,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     option: css`
       padding: 8px;
-      display: flex;
-      align-items: center;
-      flex-direction: row;
       white-space: nowrap;
       cursor: pointer;
       border-left: 2px solid transparent;

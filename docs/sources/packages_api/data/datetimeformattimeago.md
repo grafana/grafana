@@ -11,6 +11,8 @@ type = "docs"
 
 ### dateTimeFormatTimeAgo variable
 
+Helper function to return elapsed time since passed date. The returned value will be formatted in a human readable format e.g. 4 years ago. If no options are supplied, then default values are used. For more details, see [DateTimeOptions](./data/datetimeoptions.md)<!-- -->.
+
 <b>Signature</b>
 
 ```typescript

@@ -1,4 +1,4 @@
-import { AdHocVariableFilter } from 'app/features/templating/types';
+import { AdHocVariableFilter } from 'app/features/variables/types';
 import { UrlQueryValue } from '@grafana/data';
 import { isArray, isString } from 'lodash';
 

@@ -5,7 +5,7 @@ import { ThunkResult } from '../../../types';
 import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
 import { getVariable } from '../state/selectors';
-import { IntervalVariableModel } from '../../templating/types';
+import { IntervalVariableModel } from '../types';
 import kbn from '../../../core/utils/kbn';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import templateSrv from '../../templating/template_srv';

@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { DataSourceVariableModel } from '../../templating/types';
+import { DataSourceVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
@@ -8,7 +8,7 @@ import { OptionsPicker } from '../pickers';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
-import { containsVariable } from '../../templating/utils';
+import { containsVariable } from '../utils';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {

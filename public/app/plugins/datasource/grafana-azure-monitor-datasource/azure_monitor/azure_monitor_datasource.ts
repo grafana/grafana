@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { filter, startsWith } from 'lodash';
 import UrlBuilder from './url_builder';
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
@@ -8,37 +8,31 @@ import {
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
+  AzureQueryType,
 } from '../types';
-import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import { getBackendSrv, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { TimeSeries, toDataFrame } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { getBackendSrv } from '@grafana/runtime';
+const defaultDropdownValue = 'select';
 
-export default class AzureMonitorDatasource {
+export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
-  id: number;
   subscriptionId: string;
   baseUrl: string;
   resourceGroup: string;
   resourceName: string;
   url: string;
-  defaultDropdownValue = 'select';
   cloudName: string;
   supportedMetricNamespaces: string[] = [];
 
-  /** @ngInject */
-  constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private templateSrv: TemplateSrv
-  ) {
-    this.id = instanceSettings.id;
+  constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
+    super(instanceSettings);
+
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
     this.baseUrl = `/${this.cloudName}/subscriptions`;
-    this.url = instanceSettings.url;
-
+    this.url = instanceSettings.url!;
     this.supportedMetricNamespaces = new SupportedNamespaces(this.cloudName).get();
   }
 
@@ -46,102 +40,75 @@ export default class AzureMonitorDatasource {
     return !!this.subscriptionId && this.subscriptionId.length > 0;
   }
 
-  async query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponseData[]> {
-    const queries = _.filter(options.targets, item => {
-      return (
-        item.hide !== true &&
-        item.azureMonitor.resourceGroup &&
-        item.azureMonitor.resourceGroup !== this.defaultDropdownValue &&
-        item.azureMonitor.resourceName &&
-        item.azureMonitor.resourceName !== this.defaultDropdownValue &&
-        item.azureMonitor.metricDefinition &&
-        item.azureMonitor.metricDefinition !== this.defaultDropdownValue &&
-        item.azureMonitor.metricName &&
-        item.azureMonitor.metricName !== this.defaultDropdownValue
-      );
-    }).map(target => {
-      const item = target.azureMonitor;
-
-      // fix for timeGrainUnit which is a deprecated/removed field name
-      if (item.timeGrainUnit && item.timeGrain !== 'auto') {
-        item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
-      }
-
-      const subscriptionId = this.templateSrv.replace(target.subscription || this.subscriptionId, options.scopedVars);
-      const resourceGroup = this.templateSrv.replace(item.resourceGroup, options.scopedVars);
-      const resourceName = this.templateSrv.replace(item.resourceName, options.scopedVars);
-      const metricNamespace = this.templateSrv.replace(item.metricNamespace, options.scopedVars);
-      const metricDefinition = this.templateSrv.replace(item.metricDefinition, options.scopedVars);
-      const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
-      const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
-      const top = this.templateSrv.replace(item.top || '', options.scopedVars);
-
-      return {
-        refId: target.refId,
-        intervalMs: options.intervalMs,
-        datasourceId: this.id,
-        subscription: subscriptionId,
-        queryType: 'Azure Monitor',
-        type: 'timeSeriesQuery',
-        raw: false,
-        azureMonitor: {
-          resourceGroup: resourceGroup,
-          resourceName: resourceName,
-          metricDefinition: metricDefinition,
-          timeGrain: timeGrain,
-          allowedTimeGrainsMs: item.allowedTimeGrainsMs,
-          metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
-          metricNamespace:
-            metricNamespace && metricNamespace !== this.defaultDropdownValue ? metricNamespace : metricDefinition,
-          aggregation: aggregation,
-          dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
-          top: top || '10',
-          dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
-          alias: item.alias,
-          format: target.format,
-        },
-      };
-    });
-
-    if (!queries || queries.length === 0) {
-      return Promise.resolve([]);
-    }
-
-    const { data } = await getBackendSrv().datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
-      },
-    });
-
-    const result: DataQueryResponseData[] = [];
-    if (data.results) {
-      Object['values'](data.results).forEach((queryRes: any) => {
-        if (!queryRes.series) {
-          return;
-        }
-        queryRes.series.forEach((series: any) => {
-          const timeSerie: TimeSeries = {
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          };
-          result.push(toDataFrame(timeSerie));
-        });
-      });
-      return result;
-    }
-
-    return Promise.resolve([]);
+  filterQuery(item: AzureMonitorQuery): boolean {
+    return (
+      item.hide !== true &&
+      item.azureMonitor.resourceGroup !== defaultDropdownValue &&
+      item.azureMonitor.resourceName !== defaultDropdownValue &&
+      item.azureMonitor.metricDefinition !== defaultDropdownValue &&
+      item.azureMonitor.metricName !== defaultDropdownValue
+    );
   }
 
-  annotationQuery(options: any) {}
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+    const item = target.azureMonitor;
 
-  metricFindQuery(query: string) {
+    // fix for timeGrainUnit which is a deprecated/removed field name
+    if (item.timeGrainUnit && item.timeGrain !== 'auto') {
+      item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
+    }
+
+    const templateSrv = getTemplateSrv();
+
+    const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
+    const resourceGroup = templateSrv.replace(item.resourceGroup, scopedVars);
+    const resourceName = templateSrv.replace(item.resourceName, scopedVars);
+    const metricNamespace = templateSrv.replace(item.metricNamespace, scopedVars);
+    const metricDefinition = templateSrv.replace(item.metricDefinition, scopedVars);
+    const timeGrain = templateSrv.replace((item.timeGrain || '').toString(), scopedVars);
+    const aggregation = templateSrv.replace(item.aggregation, scopedVars);
+    const top = templateSrv.replace(item.top || '', scopedVars);
+
+    const dimensionsFilters = item.dimensionFilters
+      .filter(f => f.dimension && f.dimension !== 'None')
+      .map(f => {
+        const filter = templateSrv.replace(f.filter ?? '', scopedVars);
+        return {
+          dimension: templateSrv.replace(f.dimension, scopedVars),
+          operator: f.operator || 'eq',
+          filter: filter || '*', // send * when empty
+        };
+      });
+
+    return {
+      refId: target.refId,
+      subscription: subscriptionId,
+      queryType: AzureQueryType.AzureMonitor,
+      azureMonitor: {
+        resourceGroup,
+        resourceName,
+        metricDefinition,
+        timeGrain,
+        allowedTimeGrainsMs: item.allowedTimeGrainsMs,
+        metricName: templateSrv.replace(item.metricName, scopedVars),
+        metricNamespace:
+          metricNamespace && metricNamespace !== defaultDropdownValue ? metricNamespace : metricDefinition,
+        aggregation: aggregation,
+        dimensionsFilters,
+        top: top || '10',
+        alias: item.alias,
+        format: target.format,
+      },
+    };
+  }
+
+  /**
+   * This is named differently than DataSourceApi.metricFindQuery
+   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
+   * And some of the azure internal data sources return null in this function, which the
+   * external interface does not support
+   */
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
     const subscriptionsQuery = query.match(/^Subscriptions\(\)/i);
     if (subscriptionsQuery) {
       return this.getSubscriptions();
@@ -230,11 +197,11 @@ export default class AzureMonitorDatasource {
       return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace);
     }
 
-    return undefined;
+    return null;
   }
 
   toVariable(metric: string) {
-    return this.templateSrv.replace((metric || '').trim());
+    return getTemplateSrv().replace((metric || '').trim());
   }
 
   getSubscriptions(route?: string) {
@@ -258,7 +225,7 @@ export default class AzureMonitorDatasource {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
       .then((result: any) => {
-        return _.filter(result, t => {
+        return filter(result, t => {
           for (let i = 0; i < this.supportedMetricNamespaces.length; i++) {
             if (t.value.toLowerCase() === this.supportedMetricNamespaces[i].toLowerCase()) {
               return true;
@@ -304,7 +271,7 @@ export default class AzureMonitorDatasource {
     const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`;
 
     return this.doRequest(url).then((result: any) => {
-      if (!_.startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
+      if (!startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
         return ResponseParser.parseResourceNames(result, metricDefinition);
       }
 
@@ -378,19 +345,19 @@ export default class AzureMonitorDatasource {
     });
   }
 
-  testDatasource() {
+  testDatasource(): Promise<any> {
     if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
-      return {
+      return Promise.resolve({
         status: 'error',
         message: 'The Tenant Id field is required.',
-      };
+      });
     }
 
     if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
-      return {
+      return Promise.resolve({
         status: 'error',
         message: 'The Client Id field is required.',
-      };
+      });
     }
 
     const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
@@ -429,7 +396,7 @@ export default class AzureMonitorDatasource {
       });
   }
 
-  isValidConfigField(field: string) {
+  isValidConfigField(field?: string) {
     return field && field.length > 0;
   }
 

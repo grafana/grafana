@@ -18,7 +18,7 @@ import cx from 'classnames';
 
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { SpanReference } from '../../types/trace';
+import { TraceSpanReference } from '@grafana/data';
 import ReferenceLink from '../../url/ReferenceLink';
 
 import { createStyle } from '../../Theme';
@@ -66,7 +66,7 @@ const getStyles = createStyle(() => {
 });
 
 type AccordianReferencesProps = {
-  data: SpanReference[];
+  data: TraceSpanReference[];
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
@@ -75,7 +75,7 @@ type AccordianReferencesProps = {
 };
 
 type ReferenceItemProps = {
-  data: SpanReference[];
+  data: TraceSpanReference[];
   focusSpan: (uiFind: string) => void;
 };
 

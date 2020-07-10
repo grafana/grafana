@@ -28,6 +28,7 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
       width: 250px;
       height: ${height + parseInt(theme.spacing.xxs, 10)}px;
       position: relative;
+      word-break: break-word;
     `,
   };
 };

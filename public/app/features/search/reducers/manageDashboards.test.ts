@@ -1,14 +1,7 @@
-import {
-  TOGGLE_CAN_SAVE,
-  TOGGLE_EDIT_PERMISSIONS,
-  TOGGLE_ALL_CHECKED,
-  TOGGLE_CHECKED,
-  DELETE_ITEMS,
-  MOVE_ITEMS,
-} from './actionTypes';
+import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, DELETE_ITEMS, MOVE_ITEMS } from './actionTypes';
 import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
 import { sections } from '../testData';
-import { UidsToDelete } from '../types';
+import { DashboardSection, UidsToDelete } from '../types';
 
 // Remove Recent and Starred sections as they're not used in manage dashboards
 const results = sections.slice(2);
@@ -32,16 +25,6 @@ describe('Manage dashboards reducer', () => {
       true
     );
     expect(newState2.allChecked).toBe(false);
-  });
-
-  it('should handle TOGGLE_CAN_SAVE', () => {
-    const newState = reducer(state, { type: TOGGLE_CAN_SAVE, payload: true });
-    expect(newState.canSave).toBe(true);
-  });
-
-  it('should handle TOGGLE_EDIT_PERMISSIONS', () => {
-    const newState = reducer(state, { type: TOGGLE_EDIT_PERMISSIONS, payload: true });
-    expect(newState.hasEditPermissionInFolders).toBe(true);
   });
 
   it('should handle TOGGLE_CHECKED sections', () => {
@@ -100,5 +83,13 @@ describe('Manage dashboards reducer', () => {
     expect(newState.results[0].items[1].uid).toEqual('lBdLINUWk');
     expect(newState.results[3].items).toHaveLength(1);
     expect(newState.results[3].items[0].uid).toEqual('LCFWfl9Zz');
+  });
+
+  it('should not display dashboards in a non-expanded folder', () => {
+    const general = results.find(res => res.id === 0);
+    const toMove = { dashboards: general?.items, folder: { id: 4074 } };
+    const newState = reducer({ ...state, results }, { type: MOVE_ITEMS, payload: toMove });
+    expect(newState.results.find((res: DashboardSection) => res.id === 4074).items).toHaveLength(0);
+    expect(newState.results.find((res: DashboardSection) => res.id === 0).items).toHaveLength(0);
   });
 });

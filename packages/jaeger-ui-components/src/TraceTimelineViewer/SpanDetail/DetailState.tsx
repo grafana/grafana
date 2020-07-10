@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Log } from '../../types/trace';
+import { TraceLog } from '@grafana/data';
 
 /**
  * Which items of a {@link SpanDetail} component are expanded.
@@ -20,7 +20,7 @@ import { Log } from '../../types/trace';
 export default class DetailState {
   isTagsOpen: boolean;
   isProcessOpen: boolean;
-  logs: { isOpen: boolean; openedItems: Set<Log> };
+  logs: { isOpen: boolean; openedItems: Set<TraceLog> };
   isWarningsOpen: boolean;
   isReferencesOpen: boolean;
 
@@ -72,7 +72,7 @@ export default class DetailState {
     return next;
   }
 
-  toggleLogItem(logItem: Log) {
+  toggleLogItem(logItem: TraceLog) {
     const next = new DetailState(this);
     if (next.logs.openedItems.has(logItem)) {
       next.logs.openedItems.delete(logItem);

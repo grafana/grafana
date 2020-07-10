@@ -52,7 +52,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-interface Props extends Themeable {
+export interface Props extends Themeable {
   className?: string;
   size?: ComponentSize;
   confirmText?: string;

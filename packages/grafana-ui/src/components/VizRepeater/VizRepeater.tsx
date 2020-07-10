@@ -32,6 +32,10 @@ export interface VizRepeaterRenderValueProps<V, D = {}> {
   height: number;
   orientation: VizOrientation;
   alignmentFactors: D;
+  /**
+   * Total number of values being shown in repeater
+   */
+  count: number;
 }
 
 interface DefaultProps {
@@ -110,7 +114,14 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
       items.push(
         <div key={i} style={itemStyles}>
-          {renderValue({ value, width: itemWidth, height: itemHeight, alignmentFactors, orientation })}
+          {renderValue({
+            value,
+            width: itemWidth,
+            height: itemHeight,
+            alignmentFactors,
+            orientation,
+            count: values.length,
+          })}
         </div>
       );
 
@@ -178,6 +189,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
                 height: vizHeight,
                 alignmentFactors,
                 orientation: resolvedOrientation,
+                count: values.length,
               })}
             </div>
           );

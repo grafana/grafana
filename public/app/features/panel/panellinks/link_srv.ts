@@ -5,7 +5,6 @@ import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
   DataFrame,
-  DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
   Field,
@@ -19,6 +18,9 @@ import {
   VariableSuggestionsScope,
   urlUtil,
   textUtil,
+  DataLink,
+  PanelPlugin,
+  DataLinkClickEvent,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -125,8 +127,8 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
 };
 
 const getDataFrameVars = (dataFrames: DataFrame[]) => {
-  let numeric: Field = undefined;
-  let title: Field = undefined;
+  let numeric: Field | undefined = undefined;
+  let title: Field | undefined = undefined;
   const suggestions: VariableSuggestion[] = [];
   const keys: KeyValue<true> = {};
 
@@ -149,7 +151,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
         numeric = f;
       }
 
-      if (!title && f.config.title && f.config.title !== f.name) {
+      if (!title && f.config.displayName && f.config.displayName !== f.name) {
         title = f;
       }
     }
@@ -181,7 +183,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
 
   if (title) {
     suggestions.push({
-      value: `__data.fields[${title.config.title}]`,
+      value: `__data.fields[${title.config.displayName}]`,
       label: `Select by title`,
       documentation: `Use the title to pick the field`,
       origin: VariableOrigin.Fields,
@@ -231,8 +233,22 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
 
+export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: DataFrame[]): VariableSuggestion[] => {
+  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
+  return [
+    ...dataVariables, // field values
+    ...templateSrv.getVariables().map(variable => ({
+      value: variable.name as string,
+      label: variable.name,
+      origin: VariableOrigin.Template,
+    })),
+  ];
+};
+
 export interface LinkService {
-  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
+  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars | undefined, origin: T) => LinkModel<T>;
+  getAnchorInfo: (link: any) => any;
+  getLinkUrl: (link: any) => string;
 }
 
 export class LinkSrv implements LinkService {
@@ -280,15 +296,17 @@ export class LinkSrv implements LinkService {
       });
     }
 
-    let onClick: (e: any) => void = undefined;
+    let onClick: ((event: DataLinkClickEvent) => void) | undefined = undefined;
 
     if (link.onClick) {
-      onClick = (e: any) => {
-        link.onClick({
-          origin,
-          scopedVars,
-          e,
-        });
+      onClick = (e: DataLinkClickEvent) => {
+        if (link.onClick) {
+          link.onClick({
+            origin,
+            scopedVars,
+            e,
+          });
+        }
       };
     }
 

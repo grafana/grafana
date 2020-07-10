@@ -8,8 +8,8 @@ import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { getVariables } from '../state/selectors';
-import { VariableModel } from '../../templating/types';
+import { getEditorVariables } from '../state/selectors';
+import { VariableModel } from '../types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 
@@ -124,7 +124,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getVariables(state, true),
+  variables: getEditorVariables(state),
   idInEditor: state.templating.editor.id,
 });
 

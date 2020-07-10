@@ -16,7 +16,7 @@ The 2.1 release brings numerous improvements that make dashboards more dynamic t
 ### Multi-Value Template Variables
 A template variable with Multi-Value enabled allows for the selection of multiple values at the same time.
 These variables can then be used in any Panel to make them more dynamic, and to give you the perfect view of your data.
-Multi-Value variables is also enabling the new `row repeat` and `panel repeat` feature described below.
+Multi-Value variables are also enabling the new `row repeat` and `panel repeat` feature described below.
 
 ![Multi-Value Select](/img/docs/v2/multi-select.gif "Multi-Value Select")
 <br/><br/>
@@ -92,7 +92,7 @@ Grafana OpenTSDB data source now supports template variable values queries. This
 template variables that fetches the values from OpenTSDB (for example metric names, tag names, or tag values).
 The query editor is also enhanced to limiting tags by metric.
 
-> ***Note:*** OpenTSDB config option tsd.core.meta.enable_realtime_ts must enabled for OpenTSDB lookup api)
+> ***Note:*** OpenTSDB config option tsd.core.meta.enable_realtime_ts must enabled for OpenTSDB lookup API)
 
 ### New Data Source: KairosDB
 The Cassandra backed time series database KairosDB is now supported in Grafana out of the box. Thank you to

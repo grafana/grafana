@@ -5,7 +5,7 @@ import tinycolor from 'tinycolor2';
 import { Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
 import { GrafanaTheme, LogRowModel, TimeZone, dateTimeFormat } from '@grafana/data';
 
-import ElapsedTime from './ElapsedTime';
+import { ElapsedTime } from './ElapsedTime';
 
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`

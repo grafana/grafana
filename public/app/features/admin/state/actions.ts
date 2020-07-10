@@ -37,12 +37,13 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
       }
       dispatch(userAdminPageLoadedAction(true));
     } catch (error) {
-      console.log(error);
-      error.isHandled = true;
+      console.error(error);
+
       const userError = {
         title: error.data.message,
         body: error.data.error,
       };
+
       dispatch(userAdminPageFailedAction(userError));
     }
   };

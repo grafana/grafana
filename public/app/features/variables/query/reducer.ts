@@ -1,15 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceSelectItem, stringToJsRegex, MetricFindValue } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, MetricFindValue, stringToJsRegex } from '@grafana/data';
 
-import {
-  QueryVariableModel,
-  VariableHide,
-  VariableOption,
-  VariableRefresh,
-  VariableSort,
-  VariableTag,
-} from '../../templating/types';
+import { QueryVariableModel, VariableHide, VariableOption, VariableRefresh, VariableSort, VariableTag } from '../types';
 
 import {
   ALL_VARIABLE_TEXT,

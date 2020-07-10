@@ -1,7 +1,7 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame } from '../..';
-import { Field } from '../../types';
+import { DataFrame, Field } from '../../types';
+import { getFieldDisplayName } from '../../field/fieldState';
 
 export interface OrderFieldsTransformerOptions {
   indexByName: Record<string, number>;
@@ -29,7 +29,7 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
 
       return data.map(frame => ({
         ...frame,
-        fields: orderer(frame.fields),
+        fields: orderer(frame.fields, data, frame),
       }));
     };
   },
@@ -39,7 +39,11 @@ export const createOrderFieldsComparer = (indexByName: Record<string, number>) =
   return indexOfField(a, indexByName) - indexOfField(b, indexByName);
 };
 
-const createFieldsOrderer = (indexByName: Record<string, number>) => (fields: Field[]) => {
+const createFieldsOrderer = (indexByName: Record<string, number>) => (
+  fields: Field[],
+  data: DataFrame[],
+  frame: DataFrame
+) => {
   if (!Array.isArray(fields) || fields.length === 0) {
     return fields;
   }
@@ -47,7 +51,7 @@ const createFieldsOrderer = (indexByName: Record<string, number>) => (fields: Fi
     return fields;
   }
   const comparer = createOrderFieldsComparer(indexByName);
-  return fields.sort((a, b) => comparer(a.name, b.name));
+  return fields.sort((a, b) => comparer(getFieldDisplayName(a, frame, data), getFieldDisplayName(b, frame, data)));
 };
 
 const indexOfField = (fieldName: string, indexByName: Record<string, number>) => {

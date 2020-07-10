@@ -23,7 +23,7 @@ export function Form<T>({
   validateOn = 'onSubmit',
   maxWidth = 400,
 }: FormProps<T>) {
-  const { handleSubmit, register, errors, control, triggerValidation, getValues, formState } = useForm<T>({
+  const { handleSubmit, register, errors, control, triggerValidation, getValues, formState, watch } = useForm<T>({
     mode: validateOn,
     defaultValues,
   });
@@ -38,10 +38,11 @@ export function Form<T>({
     <form
       className={css`
         max-width: ${maxWidth}px;
+        width: 100%;
       `}
       onSubmit={handleSubmit(onSubmit)}
     >
-      {children({ register, errors, control, getValues, formState })}
+      {children({ register, errors, control, getValues, formState, watch })}
     </form>
   );
 }

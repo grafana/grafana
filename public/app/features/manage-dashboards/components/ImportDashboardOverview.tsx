@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
-import { Forms, Form } from '@grafana/ui';
+import { Legend, Form } from '@grafana/ui';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
-import { clearLoadedDashboard, saveDashboard } from '../state/actions';
+import { clearLoadedDashboard, importDashboard } from '../state/actions';
 import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
 
@@ -19,7 +19,7 @@ interface ConnectedProps {
 
 interface DispatchProps {
   clearLoadedDashboard: typeof clearLoadedDashboard;
-  saveDashboard: typeof saveDashboard;
+  importDashboard: typeof importDashboard;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -34,7 +34,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   onSubmit = (form: ImportDashboardDTO) => {
-    this.props.saveDashboard(form);
+    this.props.importDashboard(form);
   };
 
   onCancel = () => {
@@ -54,7 +54,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
         {source === DashboardSource.Gcom && (
           <div style={{ marginBottom: '24px' }}>
             <div>
-              <Forms.Legend>
+              <Legend>
                 Importing Dashboard from{' '}
                 <a
                   href={`https://grafana.com/dashboards/${dashboard.gnetId}`}
@@ -63,7 +63,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
                 >
                   Grafana.com
                 </a>
-              </Forms.Legend>
+              </Legend>
             </div>
             <table className="filter-table form-inline">
               <tbody>
@@ -116,7 +116,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   clearLoadedDashboard,
-  saveDashboard,
+  importDashboard,
 };
 
 export const ImportDashboardOverview = connect(mapStateToProps, mapDispatchToProps)(ImportDashboardOverviewUnConnected);

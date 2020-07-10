@@ -20,7 +20,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const buckets = parseSchemaRetentions(meta['schema-retentions']);
     const rollupNotice = getRollupNotice([meta]);
     const runtimeNotice = getRuntimeConsolidationNotice([meta]);
-    const normFunc = (meta['consolidator-normfetch'] || '').replace('Consolidator', '');
+    const normFunc = (meta['consolidator-normfetch'] ?? '').replace('Consolidator', '');
 
     let totalSeconds = 0;
 
@@ -99,7 +99,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
       if (series.meta && series.meta.custom) {
         for (const metaItem of series.meta.custom.seriesMetaList as MetricTankSeriesMeta[]) {
           // key is to dedupe as many series will have identitical meta
-          const key = `${metaItem['schema-name']}-${metaItem['archive-read']}`;
+          const key = `${JSON.stringify(metaItem)}`;
 
           if (seriesMetas[key]) {
             seriesMetas[key].count += metaItem.count;

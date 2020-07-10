@@ -4,6 +4,7 @@ import hoistNonReactStatics from 'hoist-non-react-statics';
 import { getTheme } from './getTheme';
 import { Themeable } from '../types/theme';
 import { GrafanaTheme, GrafanaThemeType } from '@grafana/data';
+import { stylesFactory } from './stylesFactory';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 type Subtract<T, K> = Omit<T, keyof K>;
@@ -34,8 +35,13 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
   return WithTheme as Hoisted;
 };
 
-export function useTheme() {
+export function useTheme(): GrafanaTheme {
   return useContext(ThemeContextMock || ThemeContext);
+}
+
+/** Hook for using memoized styles with access to the theme. */
+export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
+  return stylesFactory(getStyles)(useTheme());
 }
 
 /**

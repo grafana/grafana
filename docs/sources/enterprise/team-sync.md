@@ -14,8 +14,7 @@ weight = 600
 
 {{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
-Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP or GitHub OAuth users who are members
-of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
+Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP, OAuth, or SAML users who are members of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
 
 > Only available in Grafana Enterprise.
 
@@ -25,6 +24,16 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 > Currently the synchronization only happens when a user logs in, unless LDAP is used with the active background synchronization that was added in Grafana 6.3.
 
 <div class="clearfix"></div>
+
+## Supported providers
+
+* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+* [Azure AD]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
+* [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
+* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
+* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+* [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
+* [SAML]({{< relref "saml.md#configure-team-sync" >}})
 
 ## Synchronize a Grafana team with an external group
 
@@ -42,11 +51,3 @@ If you have already grouped some users into a team, then you can synchronize tha
     - For Auth Proxy, this is the value we receive as part of the custom `Groups` header.
 
 1. Click `Add group` to save.
-
-## Supported providers
-
-* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
-* [Azure AD]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
-* [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
-* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
-* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})

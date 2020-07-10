@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type FieldMatcher = (field: Field) => boolean;
+export declare type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 ```
 <b>Import</b>
 

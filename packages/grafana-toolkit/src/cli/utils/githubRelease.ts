@@ -41,6 +41,7 @@ class GitHubRelease {
 
     this.git = new GithubClient({
       required: true,
+      owner: username,
       repo: repository,
     });
   }
@@ -57,6 +58,7 @@ class GitHubRelease {
           'Content-Type': resolveContentType(path.extname(file)),
           'Content-Length': fileStat.size,
         },
+        maxContentLength: fileStat.size * 2 * 1024 * 1024,
       });
     });
   }

@@ -1,6 +1,5 @@
 import { LogRowModel, toDataFrame, Field, FieldCache } from '@grafana/data';
 import React, { useState, useEffect } from 'react';
-import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryResponse, DataQueryError } from '@grafana/data';
@@ -37,6 +36,7 @@ interface LogRowContextProviderProps {
     errors: LogRowContextQueryErrors;
     hasMoreContextRows: HasMoreContextRows;
     updateLimit: () => void;
+    limit: number;
   }) => JSX.Element;
 }
 
@@ -100,11 +100,7 @@ export const getRowContexts = async (
           const lineField: Field<string> = dataFrame.fields.filter(field => field.name === 'line')[0];
           const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
 
-          if (data.length === 0) {
-            data[0] = [line];
-          } else {
-            data[0].push(line);
-          }
+          data.push(line);
         }
       }
 
@@ -127,17 +123,17 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   children,
 }) => {
   // React Hook that creates a number state value called limit to component state and a setter function called setLimit
-  // The intial value for limit is 10
+  // The initial value for limit is 10
   // Used for the number of rows to retrieve from backend from a specific point in time
   const [limit, setLimit] = useState(10);
 
   // React Hook that creates an object state value called result to component state and a setter function called setResult
-  // The intial value for result is null
+  // The initial value for result is null
   // Used for sorting the response from backend
   const [result, setResult] = useState<ResultType>((null as any) as ResultType);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
-  // The intial value for hasMoreContextRows is {before: true, after: true}
+  // The initial value for hasMoreContextRows is {before: true, after: true}
   // Used for indicating in UI if there are more rows to load in a given direction
   const [hasMoreContextRows, setHasMoreContextRows] = useState({
     before: true,
@@ -160,11 +156,19 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
-        if (currentResult && currentResult.data[0].length === value.data[0].length) {
+        const currentResultBefore = currentResult?.data[0];
+        const currentResultAfter = currentResult?.data[1];
+        const valueBefore = value.data[0];
+        const valueAfter = value.data[1];
+
+        // checks if there are more log rows in a given direction
+        // if after fetching additional rows the length of result is the same,
+        // we can assume there are no logs in that direction within a given time range
+        if (currentResult && (!valueBefore || currentResultBefore.length === valueBefore.length)) {
           hasMoreLogsBefore = false;
         }
 
-        if (currentResult && currentResult.data[1].length === value.data[1].length) {
+        if (currentResult && (!valueAfter || currentResultAfter.length === valueAfter.length)) {
           hasMoreLogsAfter = false;
         }
 
@@ -180,8 +184,8 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
 
   return children({
     result: {
-      before: result ? flatten(result.data[0]) : [],
-      after: result ? flatten(result.data[1]) : [],
+      before: result ? result.data[0] : [],
+      after: result ? result.data[1] : [],
     },
     errors: {
       before: result ? result.errors[0] : undefined,
@@ -189,5 +193,6 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     },
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),
+    limit,
   });
 };

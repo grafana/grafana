@@ -20,7 +20,7 @@ MySQL or Postgres.
 ## Configure multiple servers to use the same database
 
 First, you need to setup MySQL or Postgres on another server and configure Grafana to use that database.
-You can find the configuration for doing that in the [[database]]({{< relref "../installation/configuration.md" >}}#database) section in the grafana config.
+You can find the configuration for doing that in the [[database]]({{< relref "../administration/configuration.md" >}}#database) section in the grafana config.
 Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database you're using.
 
 ## Alerting
@@ -30,7 +30,7 @@ Currently alerting supports a limited form of high availability. Since v4.2.0, a
 ## User sessions
 
 > After Grafana 6.2 you don't need to configure session storage since the database will be used by default.
-> If you want to offload the login session data from the database you can configure [remote_cache]({{< relref "../installation/configuration.md" >}}#remote-cache)
+> If you want to offload the login session data from the database you can configure [remote_cache]({{< relref "../administration/configuration.md" >}}#remote-cache)
 
 The second thing to consider is how to deal with user sessions and how to configure your load balancer in front of Grafana.
 Grafana supports two ways of storing session data: locally on disk or in a database/cache-server.
@@ -43,7 +43,7 @@ stored on disk rather than on a shared database. This is the default behavior fo
 
 ### Stateless sessions
 You can also choose to store session data in a Redis/Memcache/Postgres/MySQL which means that the load balancer can send a user to any Grafana server without having to log in on each server. This requires a little bit more work from the operator but enables you to remove/add grafana servers without impacting the user experience.
-If you use MySQL/Postgres for session storage, you first need a table to store the session data in. More details about that in [[sessions]]({{< relref "../installation/configuration.md" >}}#session)
+If you use MySQL/Postgres for session storage, you first need a table to store the session data in. More details about that in [[sessions]]({{< relref "../administration/configuration.md" >}}#session)
 
 For Grafana itself it doesn't really matter if you store the session data on disk or database/redis/memcache. But we recommend using a database/redis/memcache since it makes it easier to manage the grafana servers.
 

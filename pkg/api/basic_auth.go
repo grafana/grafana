@@ -2,6 +2,7 @@ package api
 
 import (
 	"crypto/subtle"
+
 	macaron "gopkg.in/macaron.v1"
 )
 

@@ -216,12 +216,7 @@ type DashboardSearchProjection struct {
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
-	if query.SortBy == nil {
-		query.SortBy = searchstore.TitleSorter{}
-	}
-
 	filters := []interface{}{
-		query.SortBy,
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
 			OrgId:           query.SignedInUser.OrgId,
@@ -230,6 +225,8 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 			PermissionLevel: query.Permission,
 		},
 	}
+
+	filters = append(filters, query.Filters...)
 
 	if query.OrgId != 0 {
 		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})

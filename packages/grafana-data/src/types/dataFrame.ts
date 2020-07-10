@@ -4,7 +4,6 @@ import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DisplayProcessor, DisplayValue } from './displayValue';
 import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
-import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
 
@@ -24,7 +23,7 @@ export enum FieldType {
  * Plugins may extend this with additional properties. Something like series overrides
  */
 export interface FieldConfig<TOptions extends object = any> {
-  title?: string; // The display value for this field.  This supports template variables blank is auto
+  displayName?: string; // The display value for this field.  This supports template variables blank is auto
   filterable?: boolean;
 
   // Numeric Options
@@ -53,8 +52,6 @@ export interface FieldConfig<TOptions extends object = any> {
 
   // Panel Specific Values
   custom?: TOptions;
-
-  scopedVars?: ScopedVars;
 }
 
 export interface ValueLinkConfig {
@@ -85,9 +82,9 @@ export interface Field<T = any, V = Vector<T>> {
   labels?: Labels;
 
   /**
-   * Cache of reduced values
+   * Cached values with appropriate display and id values
    */
-  calcs?: FieldCalcs;
+  state?: FieldState | null;
 
   /**
    * Convert text to the field value
@@ -103,6 +100,23 @@ export interface Field<T = any, V = Vector<T>> {
    * Get value data links with variables interpolated
    */
   getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
+}
+
+export interface FieldState {
+  /**
+   * An appropriate name for the field (does not include frame info)
+   */
+  displayName?: string | null;
+
+  /**
+   * Cache of reduced values
+   */
+  calcs?: FieldCalcs;
+
+  /**
+   * Appropriate values for templating
+   */
+  scopedVars?: ScopedVars;
 }
 
 export interface DataFrame extends QueryResultBase {
@@ -131,3 +145,9 @@ export interface DataFrameDTO extends QueryResultBase {
   name?: string;
   fields: Array<FieldDTO | Field>;
 }
+
+export interface FieldCalcs extends Record<string, any> {}
+
+export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
+export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
+export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';

@@ -1,4 +1,4 @@
-import { VariableOption } from 'app/features/templating/types';
+import { VariableOption } from 'app/features/variables/types';
 import { alignCurrentWithMulti } from './multiOptions';
 
 describe('alignCurrentWithMulti', () => {

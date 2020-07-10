@@ -167,11 +167,23 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 	}
 
+	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	buildstamp := setting.BuildStamp
+
+	if hideVersion {
+		version = ""
+		commit = ""
+		buildstamp = 0
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":          defaultDatasource,
 		"datasources":                datasources,
 		"minRefreshInterval":         setting.MinRefreshInterval,
 		"panels":                     panels,
+		"appUrl":                     setting.AppUrl,
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
@@ -196,9 +208,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
-			"version":       setting.BuildVersion,
-			"commit":        setting.BuildCommit,
-			"buildstamp":    setting.BuildStamp,
+			"hideVersion":   hideVersion,
+			"version":       version,
+			"commit":        commit,
+			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,

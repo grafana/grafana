@@ -64,6 +64,11 @@
 	<div class="gf-form offset-width-7" ng-if="agg.type === 'derivative'">
 		<label class="gf-form-label width-10">Unit</label>
 		<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.unit" ng-blur="onChangeInternal()" spellcheck='false'>
+  </div>
+
+	<div class="gf-form offset-width-7" ng-if="agg.type === 'cumulative_sum'">
+		<label class="gf-form-label width-10">Format</label>
+		<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.format" ng-blur="onChangeInternal()" spellcheck='false'>
 	</div>
 
   <div ng-if="agg.type === 'moving_avg'">

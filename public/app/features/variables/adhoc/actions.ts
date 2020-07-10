@@ -13,7 +13,7 @@ import {
   filterUpdated,
   initialAdHocVariableModelState,
 } from './reducer';
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/types';
+import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 
@@ -40,11 +40,11 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
     if (index === -1) {
       const { value, key, operator } = options;
       const filter = { value, key, operator, condition: '' };
-      return await dispatch(addFilter(variable.id!, filter));
+      return await dispatch(addFilter(variable.id, filter));
     }
 
     const filter = { ...variable.filters[index], operator: options.operator };
-    return await dispatch(changeFilter(variable.id!, { index, filter }));
+    return await dispatch(changeFilter(variable.id, { index, filter }));
   };
 };
 

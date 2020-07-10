@@ -70,7 +70,7 @@ data from Prometheus. Mixing different data sources on the same graph works for 
 ### Panel Resize handles
 <img src="/img/docs/whatsnew_2_5/panel_resize.gif" alt="">
 
-This release adds resize handles to the the bottom right corners of panels making is easy to resize both width and height.
+This release adds resize handles to the bottom right corners of panels making it easy to resize both width and height.
 
 ### User invites
 <img src="/img/docs/whatsnew_2_5/org_invite.png" alt="">

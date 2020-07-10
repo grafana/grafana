@@ -1,17 +1,16 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
-import { DashboardRouteInfo } from 'app/types';
+import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 import { updateLocation } from '../../../core/actions';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
-import { getConfig } from 'app/core/config';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
-import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
+import { TransactionStatus, variablesInitTransaction } from '../../variables/state/transactionReducer';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -38,7 +37,6 @@ interface ScenarioContext {
   timeSrv: any;
   annotationsSrv: any;
   unsavedChangesSrv: any;
-  variableSrv: any;
   dashboardSrv: any;
   loaderSrv: any;
   keybindingSrv: any;
@@ -55,7 +53,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     const timeSrv = { init: jest.fn() };
     const annotationsSrv = { init: jest.fn() };
     const unsavedChangesSrv = { init: jest.fn() };
-    const variableSrv = { init: jest.fn() };
     const dashboardSrv = { setCurrent: jest.fn() };
     const keybindingSrv = { setupDashboardBindings: jest.fn() };
     const loaderSrv = {
@@ -102,8 +99,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             return unsavedChangesSrv;
           case 'dashboardSrv':
             return dashboardSrv;
-          case 'variableSrv':
-            return variableSrv;
           case 'keybindingSrv':
             return keybindingSrv;
           default:
@@ -116,6 +111,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     const ctx: ScenarioContext = {
       args: {
+        urlUid: 'DGmvKKxZz',
         $injector: injectorMock,
         $scope: {},
         fixUrl: false,
@@ -125,7 +121,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       timeSrv,
       annotationsSrv,
       unsavedChangesSrv,
-      variableSrv,
       dashboardSrv,
       keybindingSrv,
       loaderSrv,
@@ -134,7 +129,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         location: {
           query: {},
         },
-        dashboard: {},
+        dashboard: {
+          initPhase: DashboardInitPhase.Services,
+        },
         user: {},
         explore: {
           left: {
@@ -144,6 +141,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         },
         templating: {
           variables: {},
+          transaction: { uid: 'DGmvKKxZz', status: TransactionStatus.Completed },
         },
       },
       setup: (fn: () => void) => {
@@ -186,8 +184,8 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[3].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[3].payload.title).toBe('New dashboard');
+    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[8].payload.title).toBe('New dashboard');
   });
 
   it('Should initialize services', () => {
@@ -197,28 +195,30 @@ describeInitScenario('Initializing new dashboard', ctx => {
     expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
   });
-
-  it('Should initialize variableSrv if newVariables is disabled', () => {
-    if (getConfig().featureToggles.newVariables) {
-      return expect.assertions(0);
-    }
-    expect(ctx.variableSrv.init).toBeCalled();
-  });
 });
 
 describeInitScenario('Initializing home dashboard', ctx => {
   ctx.setup(() => {
     ctx.args.routeInfo = DashboardRouteInfo.Home;
-    ctx.backendSrv.get.mockReturnValue(
-      Promise.resolve({
-        redirectUri: '/u/123/my-home',
-      })
-    );
+    ctx.backendSrv.get.mockResolvedValue({
+      redirectUri: '/u/123/my-home',
+    });
   });
 
   it('Should redirect to custom home dashboard', () => {
     expect(ctx.actions[1].type).toBe(updateLocation.type);
     expect(ctx.actions[1].payload.path).toBe('/u/123/my-home');
+  });
+});
+
+describeInitScenario('Initializing home dashboard cancelled', ctx => {
+  ctx.setup(() => {
+    ctx.args.routeInfo = DashboardRouteInfo.Home;
+    ctx.backendSrv.get.mockResolvedValue([]);
+  });
+
+  it('Should abort init process', () => {
+    expect(ctx.actions.length).toBe(1);
   });
 });
 
@@ -257,9 +257,8 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    const index = getConfig().featureToggles.newVariables ? 4 : 3;
-    expect(ctx.actions[index].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[index].payload.title).toBe('My cool dashboard');
+    expect(ctx.actions[9].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[9].payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
@@ -270,17 +269,39 @@ describeInitScenario('Initializing existing dashboard', ctx => {
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
   });
 
-  it('Should initialize variableSrv if newVariables is disabled', () => {
-    if (getConfig().featureToggles.newVariables) {
-      return expect.assertions(0);
-    }
-    expect(ctx.variableSrv.init).toBeCalled();
+  it('Should initialize redux variables if newVariables is enabled', () => {
+    expect(ctx.actions[3].type).toBe(variablesInitTransaction.type);
+  });
+});
+
+describeInitScenario('Initializing previously canceled dashboard initialization', ctx => {
+  ctx.setup(() => {
+    ctx.storeState.dashboard.initPhase = DashboardInitPhase.Fetching;
   });
 
-  it('Should initialize redux variables if newVariables is enabled', () => {
-    if (!getConfig().featureToggles.newVariables) {
-      return expect.assertions(0);
-    }
-    expect(ctx.actions[3].type).toBe(addVariable.type);
+  it('Should send action dashboardInitFetching', () => {
+    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+  });
+
+  it('Should send action dashboardInitServices ', () => {
+    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+  });
+
+  it('Should not send action dashboardInitCompleted', () => {
+    const dashboardInitCompletedAction = ctx.actions.find(a => {
+      return a.type === dashboardInitCompleted.type;
+    });
+    expect(dashboardInitCompletedAction).toBe(undefined);
+  });
+
+  it('Should initialize timeSrv and annotationsSrv', () => {
+    expect(ctx.timeSrv.init).toBeCalled();
+    expect(ctx.annotationsSrv.init).toBeCalled();
+  });
+
+  it('Should not initialize other services', () => {
+    expect(ctx.unsavedChangesSrv.init).not.toBeCalled();
+    expect(ctx.keybindingSrv.setupDashboardBindings).not.toBeCalled();
+    expect(ctx.dashboardSrv.setCurrent).not.toBeCalled();
   });
 });

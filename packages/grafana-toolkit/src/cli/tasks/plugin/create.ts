@@ -86,7 +86,7 @@ export const promptPluginDetails = async (name?: string) => {
     promptInput('keywords', 'Keywords (separated by comma)'),
     // Try using git specified username
     promptConfirm('author', `Author (${username})`, username, username !== ''),
-    // Prompt for manual author entry if no git user.name specifed
+    // Prompt for manual author entry if no git user.name specified
     promptInput('author', `Author`, true, undefined, (answers: any) => !answers.author || username === ''),
     promptInput('url', 'Your URL (i.e. organisation url)'),
   ]);

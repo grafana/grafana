@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`FolderPicker should render 1`] = `
-<Fragment>
+<div
+  aria-label="Folder picker select container"
+>
   <div
     className="gf-form-inline"
   >
@@ -26,5 +28,5 @@ exports[`FolderPicker should render 1`] = `
       />
     </div>
   </div>
-</Fragment>
+</div>
 `;

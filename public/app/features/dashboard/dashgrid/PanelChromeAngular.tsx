@@ -16,6 +16,7 @@ import { StoreState } from 'app/types';
 import { DefaultTimeRange, LoadingState, PanelData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
 import { PANEL_BORDER } from 'app/core/constants';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface OwnProps {
   panel: PanelModel;
@@ -77,7 +78,9 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     // subscribe to data events
     const queryRunner = panel.getQueryRunner();
-    this.querySubscription = queryRunner.getData(false).subscribe({
+
+    // we are not displaying any of this data so no need for transforms or field config
+    this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
   }
@@ -238,7 +241,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}

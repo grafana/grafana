@@ -9,10 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-// queryReducer reduces an timeserie to a nullable float
+// queryReducer reduces a timeseries to a nullable float
 type queryReducer struct {
 
-	// Type is how the timeserie should be reduced.
+	// Type is how the timeseries should be reduced.
 	// Ex avg, sum, max, min, count
 	Type string
 }

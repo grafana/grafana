@@ -3,22 +3,19 @@ import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
+
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { Branding } from 'app/core/components/Branding/Branding';
-
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
-import { AngularSubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Icon, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { cleanUpDashboard } from '../state/reducers';
 import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
@@ -30,9 +27,11 @@ import {
 } from 'app/types';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
-import { getConfig } from '../../../core/config';
+import { InspectTab } from '../components/Inspector/types';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
+import { cleanUpDashboardAndVariables } from '../state/actions';
+import { cancelVariables } from '../../variables/state/actions';
 
 export interface Props {
   urlUid?: string;
@@ -52,11 +51,12 @@ export interface Props {
   dashboard: DashboardModel | null;
   initError?: DashboardInitError;
   initDashboard: typeof initDashboard;
-  cleanUpDashboard: typeof cleanUpDashboard;
+  cleanUpDashboardAndVariables: typeof cleanUpDashboardAndVariables;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
   isPanelEditorOpen?: boolean;
+  cancelVariables: typeof cancelVariables;
 }
 
 export interface State {
@@ -91,10 +91,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.props.dashboard) {
-      this.props.cleanUpDashboard();
-      this.setPanelFullscreenClass(false);
-    }
+    this.props.cleanUpDashboardAndVariables();
+    this.setPanelFullscreenClass(false);
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -155,6 +153,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const { dashboard } = this.props;
 
     const panelId = parseInt(urlPanelId!, 10);
+    dashboard!.expandParentRowFor(panelId);
     const panel = dashboard!.getPanelById(panelId);
 
     if (!panel) {
@@ -163,16 +162,14 @@ export class DashboardPage extends PureComponent<Props, State> {
       // Clear url state
       this.props.updateLocation({
         query: {
-          edit: null,
-          fullscreen: null,
-          panelId: null,
+          editPanel: null,
+          viewPanel: null,
         },
         partial: true,
       });
       return;
     }
 
-    dashboard!.expandParentRowFor(panelId);
     callback(panel);
   }
 
@@ -191,11 +188,15 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   setScrollTop = (e: MouseEvent<HTMLElement>): void => {
     const target = e.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop, updateScrollTop: null });
+    this.setState({ scrollTop: target.scrollTop, updateScrollTop: undefined });
   };
 
   onAddPanel = () => {
     const { dashboard } = this.props;
+
+    if (!dashboard) {
+      return;
+    }
 
     // Return if the "Add panel" exists already
     if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
@@ -212,11 +213,24 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
+  cancelVariables = () => {
+    this.props.updateLocation({ path: '/' });
+  };
+
   renderSlowInitState() {
     return (
       <div className="dashboard-loading">
         <div className="dashboard-loading__text">
-          <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+          <VerticalGroup spacing="md">
+            <HorizontalGroup align="center" justify="center" spacing="xs">
+              <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+            </HorizontalGroup>{' '}
+            <HorizontalGroup align="center" justify="center">
+              <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
+                Cancel loading dashboard
+              </Button>
+            </HorizontalGroup>
+          </VerticalGroup>
         </div>
       </div>
     );
@@ -224,6 +238,10 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   renderInitFailedState() {
     const { initError } = this.props;
+
+    if (!initError) {
+      return null;
+    }
 
     return (
       <div className="dashboard-loading">
@@ -265,7 +283,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     } = this.props;
 
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
-    const { featureToggles } = getConfig();
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -274,19 +291,15 @@ export class DashboardPage extends PureComponent<Props, State> {
       return null;
     }
 
-    const gridWrapperClasses = classNames({
-      'dashboard-container': true,
-      'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
-    });
-
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
 
     return (
-      <div>
+      <div className="dashboard-container">
         <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} $injector={$injector} onAddPanel={this.onAddPanel} />
-        <div className="scroll-canvas scroll-canvas--dashboard">
+
+        <div className="dashboard-scroll">
           <CustomScrollbar
             autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
@@ -294,11 +307,10 @@ export class DashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {initError && this.renderInitFailedState()}
+            <div className="dashboard-content">
+              {initError && this.renderInitFailedState()}
+              {!editPanel && <SubMenu dashboard={dashboard} />}
 
-            <div className={gridWrapperClasses}>
-              {!editPanel && !featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
-              {!editPanel && featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}
@@ -338,9 +350,10 @@ export const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = {
   initDashboard,
-  cleanUpDashboard,
+  cleanUpDashboardAndVariables,
   notifyApp,
   updateLocation,
+  cancelVariables,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

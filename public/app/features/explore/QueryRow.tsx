@@ -6,7 +6,7 @@ import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
 // Components
-import QueryEditor from './QueryEditor';
+import AngularQueryEditor from './QueryEditor';
 import { QueryRowActions } from './QueryRowActions';
 // Actions
 import { changeQuery, modifyQueries, runQueries } from './state/actions';
@@ -20,7 +20,6 @@ import {
   TimeRange,
   AbsoluteTimeRange,
   LoadingState,
-  ExploreMode,
 } from '@grafana/data';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
@@ -34,7 +33,7 @@ interface PropsFromParent {
   exploreEvents: Emitter;
 }
 
-interface QueryRowProps extends PropsFromParent {
+export interface QueryRowProps extends PropsFromParent {
   changeQuery: typeof changeQuery;
   className?: string;
   exploreId: ExploreId;
@@ -48,7 +47,6 @@ interface QueryRowProps extends PropsFromParent {
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
-  mode: ExploreMode;
   latency: number;
 }
 
@@ -78,10 +76,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     }
   };
 
-  componentWillUnmount() {
-    console.log('QueryRow will unmount');
-  }
-
   onClickToggleDisabled = () => {
     const { exploreId, index, query } = this.props;
     const newQuery = {
@@ -101,6 +95,68 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
+  setReactQueryEditor = () => {
+    const { datasourceInstance } = this.props;
+    let QueryEditor;
+
+    // TODO:unification
+    if (datasourceInstance.components?.ExploreMetricsQueryField) {
+      QueryEditor = datasourceInstance.components.ExploreMetricsQueryField;
+    } else if (datasourceInstance.components?.ExploreLogsQueryField) {
+      QueryEditor = datasourceInstance.components.ExploreLogsQueryField;
+    } else if (datasourceInstance.components?.ExploreQueryField) {
+      QueryEditor = datasourceInstance.components.ExploreQueryField;
+    } else {
+      QueryEditor = datasourceInstance.components?.QueryEditor;
+    }
+    return QueryEditor;
+  };
+
+  renderQueryEditor = () => {
+    const {
+      datasourceInstance,
+      history,
+      query,
+      exploreEvents,
+      range,
+      absoluteRange,
+      queryResponse,
+      exploreId,
+    } = this.props;
+
+    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
+
+    const ReactQueryEditor = this.setReactQueryEditor();
+
+    if (ReactQueryEditor) {
+      return (
+        <ReactQueryEditor
+          datasource={datasourceInstance}
+          query={query}
+          history={history}
+          onRunQuery={this.onRunQuery}
+          onBlur={noopOnBlur}
+          onChange={this.onChange}
+          data={queryResponse}
+          absoluteRange={absoluteRange}
+          exploreId={exploreId}
+        />
+      );
+    }
+    return (
+      <AngularQueryEditor
+        error={queryErrors}
+        datasource={datasourceInstance}
+        onQueryChange={this.onChange}
+        onExecuteQuery={this.onRunQuery}
+        initialQuery={query}
+        exploreEvents={exploreEvents}
+        range={range}
+        textEditModeEnabled={this.state.textEditModeEnabled}
+      />
+    );
+  };
+
   updateLogsHighlights = debounce((value: DataQuery) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
@@ -111,63 +167,16 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   }, 500);
 
   render() {
-    const {
-      datasourceInstance,
-      history,
-      query,
-      exploreEvents,
-      range,
-      absoluteRange,
-      queryResponse,
-      mode,
-      latency,
-      exploreId,
-    } = this.props;
+    const { datasourceInstance, query, queryResponse, latency } = this.props;
 
-    const canToggleEditorModes =
-      mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const canToggleEditorModes = has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
-    let QueryField;
-
-    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
-      QueryField = datasourceInstance.components.ExploreMetricsQueryField;
-    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
-      QueryField = datasourceInstance.components.ExploreLogsQueryField;
-    } else {
-      QueryField = datasourceInstance.components?.ExploreQueryField;
-    }
 
     return (
       <>
         <div className="query-row">
-          <div className="query-row-field flex-shrink-1">
-            {QueryField ? (
-              <QueryField
-                datasource={datasourceInstance}
-                query={query}
-                history={history}
-                onRunQuery={this.onRunQuery}
-                onBlur={noopOnBlur}
-                onChange={this.onChange}
-                data={queryResponse}
-                absoluteRange={absoluteRange}
-                exploreMode={mode}
-                exploreId={exploreId}
-              />
-            ) : (
-              <QueryEditor
-                error={queryErrors}
-                datasource={datasourceInstance}
-                onQueryChange={this.onChange}
-                onExecuteQuery={this.onRunQuery}
-                initialQuery={query}
-                exploreEvents={exploreEvents}
-                range={range}
-                textEditModeEnabled={this.state.textEditModeEnabled}
-              />
-            )}
-          </div>
+          <div className="query-row-field flex-shrink-1">{this.renderQueryEditor()}</div>
           <QueryRowActions
             canToggleEditorModes={canToggleEditorModes}
             isDisabled={query.hide}
@@ -187,7 +196,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, absoluteRange, mode, queryResponse, latency } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, latency } = item;
   const query = queries[index];
 
   return {
@@ -197,7 +206,6 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     absoluteRange,
     queryResponse,
-    mode,
     latency,
   };
 }

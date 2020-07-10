@@ -23,11 +23,11 @@ import {
   PanelEvents,
   formattedValueToString,
   locationUtil,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
 
-import { CoreEvents } from 'app/types';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
@@ -123,7 +123,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
@@ -156,6 +156,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   onFramesReceived(frames: DataFrame[]) {
     const { panel } = this;
+    this.dataList = frames;
 
     if (frames && frames.length > 1) {
       this.data = {
@@ -204,7 +205,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   processField(fieldInfo: FieldInfo) {
     const { panel, dashboard } = this;
 
-    const name = fieldInfo.field.config.title || fieldInfo.field.name;
+    const name = getFieldDisplayName(fieldInfo.field, fieldInfo.frame.frame, this.dataList as DataFrame[]);
     let calc = panel.valueName;
     let calcField = fieldInfo.field;
     let val: any = undefined;
@@ -404,8 +405,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addGauge() {
       const data: ShowData = ctrl.data;
-      const width = elem.width();
-      const height = elem.height();
+      const width = elem.width() || 10;
+      const height = elem.height() || 10;
+
       // Allow to use a bit more space for wide gauges
       const dimension = Math.min(width, height * 1.3);
 
@@ -500,13 +502,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addSparkline() {
       const data: ShowData = ctrl.data;
-      const width = elem.width();
-      if (width < 30) {
+      const width = elem.width() || 30;
+
+      if (width && width < 30) {
         // element has not gotten it's width yet
         // delay sparkline render
         setTimeout(addSparkline, 30);
         return;
       }
+
       if (!data.sparkline || !data.sparkline.length) {
         // no sparkline data
         return;
@@ -733,7 +737,7 @@ function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
         if (!distinct.first) {
           distinct.first = f;
         }
-        let t = field.config.title;
+        let t = field.config.displayName;
         if (t && !distinct.byName[t]) {
           distinct.byName[t] = f;
           distinct.names.push(t);

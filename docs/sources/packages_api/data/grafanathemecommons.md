@@ -24,7 +24,7 @@ import { GrafanaThemeCommons } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [border](#border-property) | <code>{</code><br/><code>        radius: {</code><br/><code>            sm: string;</code><br/><code>            md: string;</code><br/><code>            lg: string;</code><br/><code>        };</code><br/><code>        width: {</code><br/><code>            sm: string;</code><br/><code>        };</code><br/><code>    }</code> |  |
-|  [breakpoints](#breakpoints-property) | <code>{</code><br/><code>        xs: string;</code><br/><code>        sm: string;</code><br/><code>        md: string;</code><br/><code>        lg: string;</code><br/><code>        xl: string;</code><br/><code>    }</code> |  |
+|  [breakpoints](#breakpoints-property) | <code>{</code><br/><code>        xs: string;</code><br/><code>        sm: string;</code><br/><code>        md: string;</code><br/><code>        lg: string;</code><br/><code>        xl: string;</code><br/><code>        xxl: string;</code><br/><code>    }</code> |  |
 |  [height](#height-property) | <code>{</code><br/><code>        sm: number;</code><br/><code>        md: number;</code><br/><code>        lg: number;</code><br/><code>    }</code> |  |
 |  [name](#name-property) | <code>string</code> |  |
 |  [panelHeaderHeight](#panelheaderheight-property) | <code>number</code> |  |
@@ -61,6 +61,7 @@ breakpoints: {
         md: string;
         lg: string;
         xl: string;
+        xxl: string;
     };
 ```
 

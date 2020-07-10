@@ -1,29 +1,36 @@
 import AzureMonitorDatasource from '../datasource';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { toUtc, DataFrame } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { AzureDataSourceJsonData } from '../types';
+
+const templateSrv = new TemplateSrv();
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => templateSrv,
 }));
 
+interface TestContext {
+  instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
+  ds: AzureMonitorDatasource;
+}
+
 describe('AzureMonitorDatasource', () => {
-  const ctx: any = {
-    templateSrv: new TemplateSrv(),
-  };
+  const ctx: TestContext = {} as TestContext;
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ctx.instanceSettings = {
+    ctx.instanceSettings = ({
+      name: 'test',
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f' },
       cloudName: 'azuremonitor',
-    };
-
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
+    } as unknown) as DataSourceInstanceSettings<AzureDataSourceJsonData>;
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
   describe('When performing testDatasource', () => {
@@ -74,74 +81,6 @@ describe('AzureMonitorDatasource', () => {
         return ctx.ds.testDatasource().then((results: any) => {
           expect(results.status).toEqual('success');
         });
-      });
-    });
-  });
-
-  describe('When performing query', () => {
-    const options = {
-      range: {
-        from: toUtc('2017-08-22T20:00:00Z'),
-        to: toUtc('2017-08-22T23:59:00Z'),
-      },
-      targets: [
-        {
-          apiVersion: '2018-01-01',
-          refId: 'A',
-          queryType: 'Azure Monitor',
-          azureMonitor: {
-            resourceGroup: 'testRG',
-            resourceName: 'testRN',
-            metricDefinition: 'Microsoft.Compute/virtualMachines',
-            metricNamespace: 'default',
-            metricName: 'Percentage CPU',
-            timeGrain: 'PT1H',
-            alias: '{{metric}}',
-          },
-        },
-      ],
-    };
-
-    const response: any = {
-      results: {
-        A: {
-          refId: 'A',
-          meta: {
-            rawQuery:
-              'aggregation=Average&api-version=2018-01-01&interval=PT1M' +
-              '&metricnames=Percentage+CPU&timespan=2019-05-19T15%3A11%3A37Z%2F2019-05-19T21%3A11%3A37Z',
-            unit: 'Percent',
-          },
-          series: [
-            {
-              name: 'Percentage CPU',
-              points: [
-                [2.2075, 1558278660000],
-                [2.29, 1558278720000],
-              ],
-            },
-          ],
-          tables: null,
-        },
-      },
-    };
-
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('/api/tsdb/query');
-        return Promise.resolve({ data: response, status: 200 });
-      });
-    });
-
-    it('should return a list of datapoints', () => {
-      return ctx.ds.query(options).then((results: any) => {
-        expect(results.data.length).toBe(1);
-        const data = results.data[0] as DataFrame;
-        expect(data.name).toEqual('Percentage CPU');
-        expect(data.fields[0].values.get(0)).toEqual(1558278660000);
-        expect(data.fields[1].values.get(0)).toEqual(2.2075);
-        expect(data.fields[0].values.get(1)).toEqual(1558278720000);
-        expect(data.fields[1].values.get(1)).toEqual(2.29);
       });
     });
   });
@@ -626,7 +565,7 @@ describe('AzureMonitorDatasource', () => {
     });
 
     it('should return list of Resource Groups', () => {
-      return ctx.ds.getResourceGroups().then((results: Array<{ text: string; value: string }>) => {
+      return ctx.ds.getResourceGroups('subscriptionId').then((results: Array<{ text: string; value: string }>) => {
         expect(results.length).toEqual(2);
         expect(results[0].text).toEqual('grp1');
         expect(results[0].value).toEqual('grp1');
@@ -992,11 +931,22 @@ describe('AzureMonitorDatasource', () => {
           'Transactions'
         )
         .then((results: any) => {
-          expect(results.dimensions.length).toEqual(4);
-          expect(results.dimensions[0].text).toEqual('None');
-          expect(results.dimensions[0].value).toEqual('None');
-          expect(results.dimensions[1].text).toEqual('Response type');
-          expect(results.dimensions[1].value).toEqual('ResponseType');
+          expect(results.dimensions).toMatchInlineSnapshot(`
+            Array [
+              Object {
+                "text": "Response type",
+                "value": "ResponseType",
+              },
+              Object {
+                "text": "Geo type",
+                "value": "GeoType",
+              },
+              Object {
+                "text": "API name",
+                "value": "ApiName",
+              },
+            ]
+          `);
         });
     });
 

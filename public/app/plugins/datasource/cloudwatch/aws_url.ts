@@ -12,7 +12,7 @@ export interface AwsUrl {
 }
 
 export function encodeUrl(obj: AwsUrl, region: string): string {
-  return `https://${region}.console.aws.amazon.com/cloudwatch/home?region=${region}#logsV2:logs-insights$3FqueryDetail$3D${JSURL.stringify(
+  return `https://${region}.console.aws.amazon.com/cloudwatch/home?region=${region}#logs-insights:queryDetail=${JSURL.stringify(
     obj
   )}`;
 }

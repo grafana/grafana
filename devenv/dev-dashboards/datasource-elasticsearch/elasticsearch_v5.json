@@ -28,7 +28,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1554310560048,
+  "iteration": 1591027589702,
   "links": [
     {
       "asDropdown": true,
@@ -47,7 +47,14 @@
       "datasource": "gdev-elasticsearch-v5-metrics",
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -55,6 +62,7 @@
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 1,
       "legend": {
         "alignAsTable": true,
@@ -71,6 +79,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -170,7 +181,14 @@
       "datasource": "gdev-elasticsearch-v5-metrics",
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 6,
@@ -178,6 +196,7 @@
         "x": 0,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 2,
       "legend": {
         "alignAsTable": true,
@@ -194,6 +213,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -292,7 +314,14 @@
       "datasource": "gdev-elasticsearch-v5-metrics",
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 6,
@@ -300,6 +329,7 @@
         "x": 12,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 3,
       "legend": {
         "alignAsTable": true,
@@ -316,6 +346,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -427,6 +460,12 @@
       "datasource": "gdev-elasticsearch-v5-metrics",
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 7,
@@ -445,11 +484,13 @@
       },
       "styles": [
         {
+          "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "pattern": "@timestamp",
           "type": "date"
         },
         {
+          "align": "auto",
           "colorMode": null,
           "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
@@ -505,7 +546,7 @@
       ],
       "title": "ES Metrics",
       "transform": "table",
-      "type": "table"
+      "type": "table-old"
     },
     {
       "columns": [
@@ -529,6 +570,12 @@
       "datasource": "gdev-elasticsearch-v5-logs",
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 7,
@@ -547,6 +594,7 @@
       },
       "styles": [
         {
+          "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "pattern": "@timestamp",
           "type": "date"
@@ -574,7 +622,7 @@
       ],
       "title": "ES Log query",
       "transform": "json",
-      "type": "table"
+      "type": "table-old"
     },
     {
       "circleMaxSize": 30,
@@ -585,6 +633,12 @@
       "esGeoPoint": "@location",
       "esLocationName": "",
       "esMetric": "Average",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 12,
         "w": 24,
@@ -646,7 +700,7 @@
       "valueName": "total"
     }
   ],
-  "schemaVersion": 18,
+  "schemaVersion": 25,
   "style": "dark",
   "tags": ["elasticsearch", "gdev", "datasource-test"],
   "templating": {
@@ -679,5 +733,5 @@
   "timezone": "browser",
   "title": "Datasource tests - Elasticsearch v5",
   "uid": "8HjT32Bmz",
-  "version": 5
+  "version": 1
 }

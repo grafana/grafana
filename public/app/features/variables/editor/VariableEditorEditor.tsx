@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableModel } from '../../templating/types';
+import { VariableHide, VariableModel } from '../types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';

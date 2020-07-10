@@ -9,12 +9,10 @@ export const QUERY_COMMANDS: CompletionItem[] = [
   { label: 'display', documentation: 'Specifies which fields to display in the query results' },
   {
     label: 'filter',
-    insertText: 'filter',
     documentation: 'Filters the results of a query based on one or more conditions',
   },
   {
     label: 'stats',
-    insertText: 'stats',
     documentation: 'Calculates aggregate statistics based on the values of log fields',
   },
   { label: 'sort', documentation: 'Sorts the retrieved log events' },
@@ -205,7 +203,6 @@ export const IP_FUNCTIONS = [
   },
   {
     label: 'isIpv6InSubnet',
-    insertText: 'isIpv6InSubnet',
     detail: 'isIpv6InSubnet(fieldname, string)',
     documentation: 'Returns true if the field is a valid v6 IP address within the specified v6 subnet.',
   },
@@ -306,14 +303,15 @@ export const NON_AGGREGATION_FUNCS_STATS = [
 export const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
 
 export const KEYWORDS = ['as', 'like', 'by', 'in', 'desc', 'asc'];
-export const FUNCTIONS = [
+export const FIELD_AND_FILTER_FUNCTIONS = [
   ...NUMERIC_OPERATORS,
   ...GENERAL_FUNCTIONS,
   ...STRING_FUNCTIONS,
   ...DATETIME_FUNCTIONS,
   ...IP_FUNCTIONS,
-  ...STATS_FUNCS,
 ];
+
+export const FUNCTIONS = [...FIELD_AND_FILTER_FUNCTIONS, ...STATS_FUNCS];
 
 const tokenizer: Grammar = {
   comment: {
@@ -339,7 +337,7 @@ const tokenizer: Grammar = {
     alias: 'function',
   },
   function: {
-    pattern: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})`, 'i'),
+    pattern: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})\\b`, 'i'),
   },
   keyword: {
     pattern: new RegExp(`(\\s+)(${KEYWORDS.join('|')})(?=\\s+)`, 'i'),

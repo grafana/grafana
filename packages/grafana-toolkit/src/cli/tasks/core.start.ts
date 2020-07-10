@@ -31,6 +31,7 @@ const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTs
       jobs.filter(job => !!job),
       {
         killOthers: ['failure', 'failure'],
+        raw: true,
       }
     );
   } catch (e) {

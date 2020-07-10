@@ -22,7 +22,7 @@ import AccordianLogs from './SpanDetail/AccordianLogs';
 
 import { ViewedBoundsFunctionType } from './utils';
 import { TNil } from '../types';
-import { Span } from '../types/trace';
+import { TraceSpan } from '@grafana/data';
 import { UIPopover } from '../uiElementsContext';
 import { createStyle } from '../Theme';
 
@@ -113,7 +113,7 @@ type TCommonProps = {
       }
     | TNil;
   traceStartTime: number;
-  span: Span;
+  span: TraceSpan;
   className?: string;
   labelClassName?: string;
 };

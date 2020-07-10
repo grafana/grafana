@@ -47,7 +47,7 @@ func init() {
 			factor := 2
 			for i := 0; i < 10; i++ {
 				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-				serie := &tsdb.TimeSeries{Name: strconv.Itoa(start)}
+				ts := &tsdb.TimeSeries{Name: strconv.Itoa(start)}
 				start *= factor
 
 				points := make(tsdb.TimeSeriesPoints, 0)
@@ -57,8 +57,8 @@ func init() {
 					timeWalkerMs += query.IntervalMs * 50
 				}
 
-				serie.Points = points
-				series = append(series, serie)
+				ts.Points = points
+				series = append(series, ts)
 			}
 
 			queryRes := tsdb.NewQueryResult()
@@ -77,7 +77,7 @@ func init() {
 			var series []*tsdb.TimeSeries
 			for i := 0; i < 10; i++ {
 				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-				serie := &tsdb.TimeSeries{Name: strconv.Itoa(i * 10)}
+				ts := &tsdb.TimeSeries{Name: strconv.Itoa(i * 10)}
 
 				points := make(tsdb.TimeSeriesPoints, 0)
 				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
@@ -86,8 +86,8 @@ func init() {
 					timeWalkerMs += query.IntervalMs * 50
 				}
 
-				serie.Points = points
-				series = append(series, serie)
+				ts.Points = points
+				series = append(series, ts)
 			}
 
 			queryRes := tsdb.NewQueryResult()

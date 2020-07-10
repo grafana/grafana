@@ -150,7 +150,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
   };
 
   elem.mouseleave(() => {
-    if (panel.tooltip.shared) {
+    if (panel.tooltip?.shared) {
       const plot = elem.data().plot;
       if (plot) {
         $tooltip.detach();
@@ -207,14 +207,18 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         self.clear(plot);
         return;
       }
+
       pos.pageX = elem.offset().left + pointOffset.left;
       pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
-      const isVisible =
-        pos.pageY >= $(window).scrollTop() && pos.pageY <= $(window).innerHeight() + $(window).scrollTop();
+
+      const scrollTop = $(window).scrollTop() ?? 0;
+      const isVisible = pos.pageY >= scrollTop && pos.pageY <= $(window).innerHeight()! + scrollTop;
+
       if (!isVisible) {
         self.clear(plot);
         return;
       }
+
       plot.setCrosshair(pos);
       allSeriesMode = true;
 

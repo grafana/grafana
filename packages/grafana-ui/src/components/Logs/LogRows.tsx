@@ -26,6 +26,9 @@ export interface Props extends Themeable {
   rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
+  // Passed to fix problems with inactive scrolling in Logs Panel
+  // Can be removed when we unify scrolling for Panel and Explore
+  disableCustomHorizontalScroll?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
@@ -89,6 +92,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       allowDetails,
       previewLimit,
       getFieldLinks,
+      disableCustomHorizontalScroll,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -98,7 +102,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    const horizontalScrollWindow = wrapLogMessage ? '' : logsRowsHorizontalScroll;
+
+    // For horizontal scrolling we can't use CustomScrollbar as it causes the problem with logs context - it is not visible
+    // for top log rows. Therefore we use CustomScrollbar only in LogsPanel and for Explore, we use custom css styling.
+    const horizontalScrollWindow = wrapLogMessage && !disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];

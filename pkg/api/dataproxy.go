@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -37,7 +38,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, hs.Cfg)
 	if err != nil {
-		if errors.Is(err, pluginproxy.URLValidationError{}) {
+		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(400, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
 		} else {
 			c.JsonApiErr(500, "Failed creating data source proxy", err)

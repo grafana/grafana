@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-const rsIdentifier = `([_a-zA-Z0-9]+)`
+const rsIdentifier = `__(timeFilter|timeFrom|timeTo|interval|contains|escapeMulti)`
 const sExpr = `\$` + rsIdentifier + `(?:\(([^\)]*)\))?`
 const escapeMultiExpr = `\$__escapeMulti\(('.*')\)`
 
@@ -17,6 +17,15 @@ type kqlMacroEngine struct {
 	timeRange *tsdb.TimeRange
 	query     *tsdb.Query
 }
+
+//  Macros:
+//   - $__timeFilter() -> timestamp ≥ datetime(2018-06-05T18:09:58.907Z) and timestamp ≤ datetime(2018-06-05T20:09:58.907Z)
+//   - $__timeFilter(datetimeColumn) ->  datetimeColumn  ≥ datetime(2018-06-05T18:09:58.907Z) and datetimeColumn ≤ datetime(2018-06-05T20:09:58.907Z)
+//   - $__from ->  datetime(2018-06-05T18:09:58.907Z)
+//   - $__to -> datetime(2018-06-05T20:09:58.907Z)
+//   - $__interval -> 5m
+//   - $__contains(col, 'val1','val2') -> col in ('val1', 'val2')
+//   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
 //KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
 func KqlInterpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, kql string, defaultTimeField ...string) (string, error) {
@@ -76,17 +85,17 @@ func (m *kqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRang
 
 func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string) (string, error) {
 	switch name {
-	case "__timeFilter":
+	case "timeFilter":
 		timeColumn := defaultTimeField
 		if len(args) > 0 && args[0] != "" {
 			timeColumn = args[0]
 		}
 		return fmt.Sprintf("['%s'] >= datetime('%s') and ['%s'] <= datetime('%s')", timeColumn, m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339), timeColumn, m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
-	case "__timeFrom", "__from":
+	case "timeFrom", "__from":
 		return fmt.Sprintf("datetime('%s')", m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
-	case "__timeTo", "__to":
+	case "timeTo", "__to":
 		return fmt.Sprintf("datetime('%s')", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
-	case "__interval":
+	case "interval":
 		var interval time.Duration
 		if m.query.IntervalMs == 0 {
 			to := m.timeRange.MustGetTo().UnixNano()
@@ -103,7 +112,7 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 			interval = time.Millisecond * time.Duration(m.query.IntervalMs)
 		}
 		return fmt.Sprintf("%dms", int(interval/time.Millisecond)), nil
-	case "__contains":
+	case "contains":
 		if len(args) < 2 || args[0] == "" || args[1] == "" {
 			return "", fmt.Errorf("macro %v needs colName and variableSet", name)
 		}
@@ -114,6 +123,8 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 
 		expression := strings.Join(args[1:], ",")
 		return fmt.Sprintf("['%s'] in (%s)", args[0], expression), nil
+	case "escapeMulti":
+		return "", fmt.Errorf("escapeMulti macro not formatted correctly")
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}

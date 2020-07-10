@@ -19,7 +19,7 @@ function buildMetricTree(parent: string, depth: number): TreeNode[] {
   const chars = ['A', 'B', 'C'];
   const children: TreeNode[] = [];
 
-  if (depth > 3) {
+  if (depth > 5) {
     return [];
   }
 

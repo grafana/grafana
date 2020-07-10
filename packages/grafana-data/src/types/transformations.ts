@@ -25,7 +25,7 @@ export interface DataTransformerConfig<TOptions = any> {
   options: TOptions;
 }
 
-export type FieldMatcher = (field: Field) => boolean;
+export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 export type FrameMatcher = (frame: DataFrame) => boolean;
 
 export interface FieldMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {

@@ -40,14 +40,16 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
   refId?: string;
   meta?: QueryResultMeta;
 
-  private theFields: Field[] = [];
+  fields: Field[] = [];
+  length = 0;
 
   constructor(private source: T[], names?: string[]) {
     super();
 
+    this.length = source.length;
     const first: any = source.length ? source[0] : {};
     if (names) {
-      this.theFields = names.map(name => {
+      this.fields = names.map(name => {
         return {
           name,
           type: guessFieldTypeFromNameAndValue(name, first[name]),
@@ -64,7 +66,7 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
    * Add a field for each property in the object.  This will guess the type
    */
   setFieldsFromObject(obj: any) {
-    this.theFields = Object.keys(obj).map(name => {
+    this.fields = Object.keys(obj).map(name => {
       return {
         name,
         type: guessFieldTypeFromNameAndValue(name, obj[name]),
@@ -92,15 +94,6 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
     }
     (field.values as any).converter = converter ?? NOOP;
     return field;
-  }
-
-  get fields(): Field[] {
-    return this.theFields;
-  }
-
-  // Defined for Vector interface
-  get length() {
-    return this.source.length;
   }
 
   /**

@@ -3,8 +3,6 @@ import { DataQuery, SelectableValue, DataSourceJsonData } from '@grafana/data';
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode: 'Metrics';
 
-  apiMode: 'Logs' | 'Metrics'; // TEMP: Remove when logs/metrics unification is done
-
   id: string;
   region: string;
   namespace: string;
@@ -37,12 +35,11 @@ export enum CloudWatchLogsQueryStatus {
 export interface CloudWatchLogsQuery extends DataQuery {
   queryMode: 'Logs';
 
-  apiMode: 'Logs' | 'Metrics'; // TEMP: Remove when logs/metrics unification is done
   id: string;
   region: string;
-  namespace: string;
-  expression: string;
-  logGroupNames: string[];
+  expression?: string;
+  logGroupNames?: string[];
+  statsGroups?: string[];
 }
 
 export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
@@ -58,6 +55,7 @@ export type SelectableStrings = Array<SelectableValue<string>>;
 export interface CloudWatchJsonData extends DataSourceJsonData {
   timeField?: string;
   assumeRoleArn?: string;
+  externalId?: string;
   database?: string;
   customMetricsNamespaces?: string;
 }
@@ -297,7 +295,7 @@ export interface MetricRequest {
   debug?: boolean;
 }
 
-interface MetricQuery {
+export interface MetricQuery {
   [key: string]: any;
   datasourceId: number;
   refId?: string;

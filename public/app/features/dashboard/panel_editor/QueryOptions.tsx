@@ -1,8 +1,8 @@
 // Libraries
-import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react';
+import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
-import { rangeUtil, DataSourceSelectItem, PanelData } from '@grafana/data';
+import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 
 // Components
 import {
@@ -41,7 +41,7 @@ const emptyToNull = (value: string) => {
 
 interface Props {
   panel: PanelModel;
-  datasource: DataSourceSelectItem;
+  dataSource: DataSourceApi;
   data: PanelData;
 }
 
@@ -49,7 +49,7 @@ interface State {
   relativeTime: string;
   timeShift: string;
   cacheTimeout: string;
-  maxDataPoints: string | ReactText;
+  maxDataPoints: number | string;
   interval: string;
   hideTimeOverride: boolean;
   isOpen: boolean;
@@ -63,7 +63,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       relativeTime: props.panel.timeFrom || '',
       timeShift: props.panel.timeShift || '',
       cacheTimeout: props.panel.cacheTimeout || '',
-      maxDataPoints: props.panel.maxDataPoints || '',
+      maxDataPoints: props.panel.maxDataPoints ?? '',
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
       isOpen: false,
@@ -124,13 +124,27 @@ export class QueryOptions extends PureComponent<Props, State> {
     this.setState({ ...this.state, [panelKey]: event.target.value });
   };
 
+  onMaxDataPointsBlur = () => {
+    const { panel } = this.props;
+
+    const maxDataPoints = parseInt(this.state.maxDataPoints as string, 10);
+
+    if (isNaN(maxDataPoints)) {
+      delete panel.maxDataPoints;
+    } else {
+      panel.maxDataPoints = maxDataPoints;
+    }
+
+    panel.refresh();
+  };
+
   renderCacheTimeoutOption() {
-    const { datasource } = this.props;
+    const { dataSource } = this.props;
     const { cacheTimeout } = this.state;
     const tooltip = `If your time series store has a query cache this option can override the default cache timeout. Specify a
     numeric value in seconds.`;
 
-    if (!datasource.meta.queryOptions?.maxDataPoints) {
+    if (!dataSource.meta.queryOptions?.cacheTimeout) {
       return null;
     }
 
@@ -176,12 +190,12 @@ export class QueryOptions extends PureComponent<Props, State> {
             Max data points
           </InlineFormLabel>
           <Input
-            type="text"
+            type="number"
             className="width-6"
             placeholder={`${realMd}`}
             name={name}
             spellCheck={false}
-            onBlur={this.onDataSourceOptionBlur('maxDataPoints')}
+            onBlur={this.onMaxDataPointsBlur}
             onChange={this.onDataSourceOptionChange('maxDataPoints')}
             value={maxDataPoints}
           />
@@ -197,9 +211,10 @@ export class QueryOptions extends PureComponent<Props, State> {
   }
 
   renderIntervalOption() {
-    const { data } = this.props;
+    const { data, dataSource } = this.props;
     const { interval } = this.state;
     const realInterval = data.request?.interval;
+    const minIntervalOnDs = dataSource.interval ?? 'No limit';
 
     return (
       <>
@@ -220,7 +235,7 @@ export class QueryOptions extends PureComponent<Props, State> {
             <Input
               type="text"
               className="width-6"
-              placeholder={`${realInterval}`}
+              placeholder={`${minIntervalOnDs}`}
               name={name}
               spellCheck={false}
               onBlur={this.onDataSourceOptionBlur('interval')}
@@ -292,7 +307,7 @@ export class QueryOptions extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
-        title="Options"
+        title="Query options"
         headerElement={this.renderCollapsedText(styles)}
         isOpen={isOpen}
         onOpen={this.onOpenOptions}

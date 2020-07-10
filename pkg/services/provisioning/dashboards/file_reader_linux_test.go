@@ -13,7 +13,7 @@ var (
 	symlinkedFolder = "testdata/test-dashboards/symlink"
 )
 
-func TestProvsionedSymlinkedFolder(t *testing.T) {
+func TestProvisionedSymlinkedFolder(t *testing.T) {
 	cfg := &config{
 		Name:    "Default",
 		Type:    "file",

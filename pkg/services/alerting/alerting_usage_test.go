@@ -64,7 +64,7 @@ func TestAlertingUsageStats(t *testing.T) {
 
 	for k := range expected {
 		if expected[k] != result.DatasourceUsage[k] {
-			t.Errorf("result missmatch for %s. got %v expected %v", k, result.DatasourceUsage[k], expected[k])
+			t.Errorf("result mismatch for %s. got %v expected %v", k, result.DatasourceUsage[k], expected[k])
 		}
 	}
 }
@@ -77,7 +77,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 		shouldErr require.ErrorAssertionFunc
 	}{
 		{
-			name:      "can parse singel condition",
+			name:      "can parse single condition",
 			file:      "testdata/settings/one_condition.json",
 			expected:  []int64{3},
 			shouldErr: require.NoError,
@@ -118,7 +118,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 			tc.shouldErr(t, err)
 			diff := cmp.Diff(tc.expected, result)
 			if diff != "" {
-				t.Errorf("result missmatch (-want +got) %s\n", diff)
+				t.Errorf("result mismatch (-want +got) %s\n", diff)
 			}
 		})
 	}

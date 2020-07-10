@@ -292,10 +292,10 @@ func writeMetric(buf *bufio.Writer, m model.Metric, mf *dto.MetricFamily) error 
 		}
 	}
 
-	return addExtentionConventionForRollups(buf, mf, m)
+	return addExtensionConventionForRollups(buf, mf, m)
 }
 
-func addExtentionConventionForRollups(buf *bufio.Writer, mf *dto.MetricFamily, m model.Metric) error {
+func addExtensionConventionForRollups(buf *bufio.Writer, mf *dto.MetricFamily, m model.Metric) error {
 	// Adding `.count` `.sum` suffix makes it possible to configure
 	// different rollup strategies based on metric type
 

@@ -34,15 +34,16 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
         const fields: Field[] = [];
         for (let i = 0; i < series.fields.length; i++) {
           const field = series.fields[i];
+
           if (exclude) {
-            if (exclude(field)) {
+            if (exclude(field, series, data)) {
               continue;
             }
             if (!include) {
               fields.push(field);
             }
           }
-          if (include && include(field)) {
+          if (include && include(field, series, data)) {
             fields.push(field);
           }
         }

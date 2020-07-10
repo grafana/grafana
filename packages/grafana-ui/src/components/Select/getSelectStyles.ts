@@ -22,6 +22,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       flex-direction: row;
+      flex-shrink: 0;
       white-space: nowrap;
       cursor: pointer;
       border-left: 2px solid transparent;

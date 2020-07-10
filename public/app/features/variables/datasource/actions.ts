@@ -5,7 +5,7 @@ import { validateVariableSelectionState } from '../state/actions';
 import { DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getVariable } from '../state/selectors';
-import { DataSourceVariableModel } from '../../templating/types';
+import { DataSourceVariableModel } from '../types';
 import templateSrv from '../../templating/template_srv';
 import _ from 'lodash';
 import { changeVariableEditorExtended } from '../editor/reducer';
@@ -19,7 +19,7 @@ export const updateDataSourceVariableOptions = (
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async (dispatch, getState) => {
   const sources = await dependencies.getDatasourceSrv().getMetricSources({ skipVariables: true });
-  const variableInState = getVariable<DataSourceVariableModel>(identifier.id!, getState());
+  const variableInState = getVariable<DataSourceVariableModel>(identifier.id, getState());
   let regex;
 
   if (variableInState.regex) {

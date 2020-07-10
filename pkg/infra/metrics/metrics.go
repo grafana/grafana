@@ -111,7 +111,7 @@ var (
 	// MDataSourceProxyReqTimer is a metric summary for dataproxy request duration
 	MDataSourceProxyReqTimer prometheus.Summary
 
-	// MAlertingExecutionTime is a metric summary of alert exeuction duration
+	// MAlertingExecutionTime is a metric summary of alert execution duration
 	MAlertingExecutionTime prometheus.Summary
 
 	// MRenderingSummary is a metric summary for image rendering request duration
@@ -156,10 +156,19 @@ var (
 	// StatsTotalActiveAdmins is a metric total amount of active admins
 	StatsTotalActiveAdmins prometheus.Gauge
 
+	// StatsTotalDataSources is a metric total number of defined datasources, labeled by pluginId
+	StatsTotalDataSources *prometheus.GaugeVec
+
+	// StatsTotalAnnotations is a metric of total number of annotations stored in Grafana.
+	StatsTotalAnnotations prometheus.Gauge
+
+	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
+	StatsTotalDashboardVersions prometheus.Gauge
+
 	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
 
-	grafanPluginBuildInfoDesc *prometheus.GaugeVec
+	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
 )
 
 func init() {
@@ -386,7 +395,7 @@ func init() {
 
 	MAlertingExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "alerting_execution_time_milliseconds",
-		Help:       "summary of alert exeuction duration",
+		Help:       "summary of alert execution duration",
 		Objectives: objectiveMap,
 		Namespace:  ExporterName,
 	})
@@ -463,17 +472,35 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	StatsTotalDataSources = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "stat_totals_datasource",
+		Help:      "total number of defined datasources, labeled by pluginId",
+		Namespace: ExporterName,
+	}, []string{"plugin_id"})
+
 	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "build_info",
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
 		Namespace: ExporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
 
-	grafanPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	grafanaPluginBuildInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "plugin_type", "version"})
+
+	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_dashboard_versions",
+		Help:      "total amount of dashboard versions in the database",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalAnnotations = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_annotations",
+		Help:      "total amount of annotations in the database",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -487,7 +514,7 @@ func SetBuildInformation(version, revision, branch string) {
 }
 
 func SetPluginBuildInformation(pluginID, pluginType, version string) {
-	grafanPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version).Set(1)
+	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version).Set(1)
 }
 
 func initMetricVars() {
@@ -538,10 +565,12 @@ func initMetricVars() {
 		StatsTotalActiveViewers,
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
+		StatsTotalDataSources,
 		grafanaBuildVersion,
-		grafanPluginBuildInfoDesc,
+		grafanaPluginBuildInfoDesc,
+		StatsTotalDashboardVersions,
+		StatsTotalAnnotations,
 	)
-
 }
 
 func newCounterVecStartingAtZero(opts prometheus.CounterOpts, labels []string, labelValues ...string) *prometheus.CounterVec {

@@ -11,6 +11,12 @@ type = "docs"
 
 ### dateTimeParse variable
 
+Helper function to parse a number, text or Date to a DateTime value. If a timeZone is supplied the incoming value is parsed with that timeZone as a base. The only exception to this is if the passed value is in a UTC-based format. Then it will use UTC as the base. Examples on UTC-based values are Unix epoch and ISO formatted strings.
+
+It can also parse the Grafana quick date and time format, e.g. now-6h will be parsed as Date.now() - 6 hours and returned as a valid DateTime value.
+
+If no options are supplied, then default values are used. For more details please see [DateTimeOptions](./data/datetimeoptions.md)<!-- -->.
+
 <b>Signature</b>
 
 ```typescript

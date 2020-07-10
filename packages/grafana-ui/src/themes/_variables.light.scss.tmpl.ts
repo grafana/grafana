@@ -126,8 +126,8 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: $gray-5;
-$tight-form-func-highlight-bg: $gray-6;
+$tight-form-func-bg: ${theme.colors.bg2};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
 
 $modal-backdrop-bg: ${theme.colors.bg1};
 $code-tag-bg: $gray-6;
@@ -152,7 +152,7 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: $gray-5; // for striping
+$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
 $table-border: $gray-3; // table and cell border
 
 $table-bg-odd: $gray-6;
@@ -217,7 +217,7 @@ $typeahead-selected-color: $yellow;
 $dropdownBackground: $white;
 $dropdownBorder: $gray-4;
 $dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $white;
+$dropdownDividerBottom: $gray-4;
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -377,12 +377,12 @@ $panel-grid-placeholder-bg: lighten(${theme.palette.blue95}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue95};
 
 // logs
-$logs-color-unkown: $gray-5;
+$logs-color-unknown: $gray-5;
 
 // toggle-group
 $button-toggle-group-btn-active-bg: $brand-primary;
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $white;
-$button-toggle-group-btn-seperator-border: 1px solid $gray-6;
+$button-toggle-group-btn-separator-border: 1px solid $gray-6;
 
 $vertical-resize-handle-bg: $gray-4;
 $vertical-resize-handle-dots: $gray-3;

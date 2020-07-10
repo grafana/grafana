@@ -101,10 +101,10 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         {isLabel && (
           <>
             <td className={style.logsDetailsIcon}>
-              <IconButton name="search-minus" title="Filter for value" onClick={this.filterLabel} />
+              <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
             </td>
             <td className={style.logsDetailsIcon}>
-              <IconButton name="search-plus" title="Filter out value" onClick={this.filterOutLabel} />
+              <IconButton name="search-minus" title="Filter out value" onClick={this.filterOutLabel} />
             </td>
           </>
         )}

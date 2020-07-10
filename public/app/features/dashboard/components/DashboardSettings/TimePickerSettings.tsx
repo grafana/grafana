@@ -1,22 +1,11 @@
 import React, { PureComponent } from 'react';
-import { Select, Input, Tooltip, LegacyForms } from '@grafana/ui';
+import { TimeZonePicker, Input, Tooltip, LegacyForms } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
-import { getTimeZoneGroups, TimeZone, rangeUtil, SelectableValue } from '@grafana/data';
+import { TimeZone, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import kbn from 'app/core/utils/kbn';
 import isEmpty from 'lodash/isEmpty';
-
-const grafanaTimeZones = [
-  { value: '', label: 'Default' },
-  { value: 'browser', label: 'Local browser time' },
-  { value: 'utc', label: 'UTC' },
-];
-
-const timeZones = getTimeZoneGroups().reduce((tzs, group) => {
-  const options = group.options.map(tz => ({ value: tz, label: tz }));
-  tzs.push.apply(tzs, options);
-  return tzs;
-}, grafanaTimeZones);
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   getDashboard: () => DashboardModel;
@@ -96,30 +85,34 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
-  onTimeZoneChange = (timeZone: SelectableValue<string>) => {
-    if (!timeZone || typeof timeZone.value !== 'string') {
+  onTimeZoneChange = (timeZone: string) => {
+    if (typeof timeZone !== 'string') {
       return;
     }
-    this.props.onTimeZoneChange(timeZone.value);
+    this.props.onTimeZoneChange(timeZone);
     this.forceUpdate();
   };
 
   render() {
     const dashboard = this.props.getDashboard();
-    const value = timeZones.find(item => item.value === dashboard.timezone);
 
     return (
       <div className="editor-row">
         <h5 className="section-heading">Time Options</h5>
         <div className="gf-form-group">
-          <div className="gf-form">
+          <div className="gf-form" aria-label={selectors.components.TimeZonePicker.container}>
             <label className="gf-form-label width-7">Timezone</label>
-            <Select isSearchable={true} value={value} onChange={this.onTimeZoneChange} options={timeZones} width={40} />
+            <TimeZonePicker
+              includeInternal={true}
+              value={dashboard.timezone}
+              onChange={this.onTimeZoneChange}
+              width={40}
+            />
           </div>
 
           <div className="gf-form">
             <span className="gf-form-label width-7">Auto-refresh</span>
-            <Input width={60} value={this.getRefreshIntervals()} onChange={this.onRefreshIntervalChange} />
+            <Input width={60} defaultValue={this.getRefreshIntervals()} onBlur={this.onRefreshIntervalChange} />
           </div>
           <div className="gf-form">
             <span className="gf-form-label width-7">Now delay now-</span>
@@ -132,6 +125,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
                 invalid={!this.state.isNowDelayValid}
                 placeholder="0m"
                 onChange={this.onNowDelayChange}
+                defaultValue={dashboard.timepicker.nowDelay}
               />
             </Tooltip>
           </div>

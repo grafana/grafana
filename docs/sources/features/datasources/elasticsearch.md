@@ -91,6 +91,15 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 - **Message field name:**  message
 - **Level field name:** fields.level
 
+### Data links
+
+Data links create a link from a specified field that can be accessed in logs view in Explore.
+
+Each data link configuration consists of: 
+- **Field -** Name of the field used by the data link.
+- **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
+- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selectorallows you to select the target data source. Only tracing data sources are supported.
+
 ## Metric Query editor
 
 ![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
@@ -120,7 +129,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -172,7 +181,7 @@ Example dashboard:
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 

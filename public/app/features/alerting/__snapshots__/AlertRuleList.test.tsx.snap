@@ -30,7 +30,7 @@ exports[`Render should render alert rules 1`] = `
           States
         </label>
         <div
-          className="gf-form-select-wrapper width-13"
+          className="width-13"
         >
           <Select
             onChange={[Function]}
@@ -162,7 +162,7 @@ exports[`Render should render component 1`] = `
           States
         </label>
         <div
-          className="gf-form-select-wrapper width-13"
+          className="width-13"
         >
           <Select
             onChange={[Function]}

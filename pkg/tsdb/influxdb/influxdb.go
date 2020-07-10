@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -43,7 +44,15 @@ func init() {
 }
 
 func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
+	glog.Info("query", "q", tsdbQuery.Queries)
+
+	version := dsInfo.JsonData.Get("version").MustString("")
+	if version == "Flux" {
+		return flux.Query(ctx, dsInfo, tsdbQuery)
+	}
+
+	// NOTE: the following path is currently only called from alerting queries
+	// In dashboards, the request runs through proxy and are managed in the frontend
 
 	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
@@ -92,6 +101,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, response.Err
 	}
 
+	result := &tsdb.Response{}
 	result.Results = make(map[string]*tsdb.QueryResult)
 	result.Results["A"] = e.ResponseParser.Parse(&response, query)
 
@@ -112,8 +122,10 @@ func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Q
 }
 
 func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
-
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "query")
 	httpMode := dsInfo.JsonData.Get("httpMode").MustString("GET")
 

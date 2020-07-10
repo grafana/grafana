@@ -45,7 +45,13 @@ export const valueMappingsOverrideProcessor = (
 };
 
 export interface SelectFieldConfigSettings<T> {
+  allowCustomValue?: boolean;
+
+  /** The default options */
   options: Array<SelectableValue<T>>;
+
+  /** Optionally use the context to define the options */
+  getOptions?: (context: FieldOverrideContext) => Promise<Array<SelectableValue<T>>>;
 }
 
 export const selectOverrideProcessor = (
@@ -73,7 +79,7 @@ export const stringOverrideProcessor = (
     return value;
   }
   if (settings && settings.expandTemplateVars && context.replaceVariables) {
-    return context.replaceVariables(value, context.field!.config.scopedVars);
+    return context.replaceVariables(value, context.field!.state!.scopedVars);
   }
   return `${value}`;
 };
@@ -109,5 +115,7 @@ export const booleanOverrideProcessor = (
 };
 
 export interface ColorFieldConfigSettings {
-  enableNamedColors?: boolean;
+  allowUndefined?: boolean;
+  textWhenUndefined?: string; // Pick Color
+  disableNamedColors?: boolean;
 }

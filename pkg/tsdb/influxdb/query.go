@@ -93,7 +93,6 @@ func (query *Query) renderSelectors(queryContext *tsdb.TsdbQuery) string {
 
 	var selectors []string
 	for _, sel := range query.Selects {
-
 		stk := ""
 		for _, s := range *sel {
 			stk = s.Render(query, queryContext, stk)

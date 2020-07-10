@@ -27,6 +27,8 @@ import { QueryEditorProps } from '@grafana/data';
 |  [datasource](#datasource-property) | <code>DSType</code> |  |
 |  [exploreId](#exploreid-property) | <code>any</code> |  |
 |  [exploreMode](#exploremode-property) | <code>ExploreMode</code> |  |
+|  [history](#history-property) | <code>HistoryItem[]</code> |  |
+|  [onBlur](#onblur-property) | <code>() =&gt; void</code> |  |
 |  [onChange](#onchange-property) | <code>(value: TQuery) =&gt; void</code> |  |
 |  [onRunQuery](#onrunquery-property) | <code>() =&gt; void</code> |  |
 |  [query](#query-property) | <code>TQuery</code> |  |
@@ -63,6 +65,22 @@ exploreId?: any;
 
 ```typescript
 exploreMode?: ExploreMode;
+```
+
+### history property
+
+<b>Signature</b>
+
+```typescript
+history?: HistoryItem[];
+```
+
+### onBlur property
+
+<b>Signature</b>
+
+```typescript
+onBlur?: () => void;
 ```
 
 ### onChange property

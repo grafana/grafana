@@ -97,29 +97,35 @@ go test -v ./pkg/...
 
 ### Run end-to-end tests
 
-The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md). 
+The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md).
 
 To run the tests:
 
 ```
-yarn e2e-tests
+yarn e2e
 ```
 
-By default, the end-to-end tests assume Grafana is available on `localhost:3000`. To use a specific URL, set the `BASE_URL` environment variable:
+By default, the end-to-end tests starts a Grafana instance listening on `localhost:3001`. To use a specific URL, set the `BASE_URL` environment variable:
 
 ```
-BASE_URL=http://localhost:3333 yarn e2e-tests
+BASE_URL=http://localhost:3333 yarn e2e
 ```
 
-To follow the tests in the browser while they're running, use the `yarn e2e-tests:debug` instead.
+To follow the tests in the browser while they're running, use the `yarn e2e:debug`.
 
 ```
-yarn e2e-tests:debug
+yarn e2e:debug
+```
+
+If you want to pick a test first, use the `yarn e2e:dev`, to pick a test and follow the test in the browser while it runs.
+
+```
+yarn e2e:dev
 ```
 
 ## Configure Grafana for development
 
-The default configuration, `grafana.ini`, is located in the `conf` directory. 
+The default configuration, `defaults.ini`, is located in the `conf` directory.
 
 To override the default configuration, create a `custom.ini` file in the `conf` directory. You only need to add the options you wish to override.
 
@@ -178,7 +184,7 @@ Are you having issues with setting up your environment? Here are some tips that 
 
 ### Too many open files when running `make run`
 
-Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a Unix like OS (e.g. Linux/MacOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
+Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a Unix like OS (e.g. Linux/macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
 
 To see how many open files are allowed, run:
 
@@ -198,14 +204,14 @@ The number of files needed may be different on your environment. To determine th
 find ./conf ./pkg ./public/views | wc -l
 ```
 
-Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
+Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory.
 
 To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
 
 * zsh -> ~/.zshrc
 * bash -> ~/.bashrc
 
-Commit your ulimit configuration to your shell initialization file as follows ($LIMIT being your chosen limit and $INIT_FILE being the initialization file for your shell): 
+Commit your ulimit configuration to your shell initialization file as follows ($LIMIT being your chosen limit and $INIT_FILE being the initialization file for your shell):
 
 ```
 echo ulimit -S -n $LIMIT >> $INIT_FILE
@@ -219,7 +225,7 @@ For some people, typically using the bash shell, ulimit fails with an error simi
 ulimit: open files: cannot modify limit: Operation not permitted
 ```
 
-If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initalization files (~/.bashrc typically), if there's already a ulimit command that you can tweak.
+If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (~/.bashrc typically), if there's already a ulimit command that you can tweak.
 
 ## Next steps
 

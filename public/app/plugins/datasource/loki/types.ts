@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, QueryResultMeta } from '@grafana/data';
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -26,7 +26,6 @@ export interface LokiQuery extends DataQuery {
   expr: string;
   liveStreaming?: boolean;
   query?: string;
-  regexp?: string;
   format?: string;
   reverse?: boolean;
   legendFormat?: string;
@@ -39,6 +38,12 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
 }
 
+export interface LokiStats {
+  [component: string]: {
+    [label: string]: number;
+  };
+}
+
 export interface LokiVectorResult {
   metric: { [label: string]: string };
   value: [number, string];
@@ -49,11 +54,12 @@ export interface LokiVectorResponse {
   data: {
     resultType: LokiResultType.Vector;
     result: LokiVectorResult[];
+    stats?: LokiStats;
   };
 }
 
 export interface LokiMatrixResult {
-  metric: { [label: string]: string };
+  metric: Record<string, string>;
   values: Array<[number, string]>;
 }
 
@@ -62,6 +68,7 @@ export interface LokiMatrixResponse {
   data: {
     resultType: LokiResultType.Matrix;
     result: LokiMatrixResult[];
+    stats?: LokiStats;
   };
 }
 
@@ -75,6 +82,7 @@ export interface LokiStreamResponse {
   data: {
     resultType: LokiResultType.Stream;
     result: LokiStreamResult[];
+    stats?: LokiStats;
   };
 }
 
@@ -83,7 +91,7 @@ export interface LokiTailResponse {
   dropped_entries?: Array<{
     labels: Record<string, string>;
     timestamp: string;
-  }>;
+  }> | null;
 }
 
 export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult;
@@ -107,13 +115,14 @@ export type DerivedFieldConfig = {
 };
 
 export interface TransformerOptions {
-  format: string;
-  legendFormat: string;
+  format?: string;
+  legendFormat?: string;
   step: number;
   start: number;
   end: number;
   query: string;
   responseListLength: number;
   refId: string;
+  meta?: QueryResultMeta;
   valueWithRefId?: boolean;
 }

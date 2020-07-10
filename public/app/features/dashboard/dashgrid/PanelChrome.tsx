@@ -26,6 +26,7 @@ import {
   PanelPlugin,
   FieldConfigSource,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -34,7 +35,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isViewing: boolean;
-  isEditing?: boolean;
+  isEditing: boolean;
   isInView: boolean;
   width: number;
   height: number;
@@ -69,10 +70,11 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard, isEditing } = this.props;
+    const { panel, dashboard } = this.props;
 
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
+
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -85,20 +87,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
-    } else {
-      if (isEditing) {
-        this.querySubscription = panel
-          .getQueryRunner()
-          .getData()
-          .subscribe({
-            next: data => this.onDataUpdate(data),
-          });
-      }
-
-      if (!this.wantsQueryExecution) {
-        this.setState({ isFirstLoad: false });
-      }
+      return;
     }
+
+    if (!this.wantsQueryExecution) {
+      this.setState({ isFirstLoad: false });
+    }
+
+    this.querySubscription = panel
+      .getQueryRunner()
+      .getData({ withTransforms: true, withFieldConfig: true })
+      .subscribe({
+        next: data => this.onDataUpdate(data),
+      });
   }
 
   componentWillUnmount() {
@@ -170,7 +171,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
     if (!isInView) {
-      console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
       return;
     }
@@ -180,19 +180,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Issue Query
     if (this.wantsQueryExecution) {
       if (width < 0) {
-        console.log('Refresh skippted, no width yet... wait till we know');
         return;
       }
 
-      const queryRunner = panel.getQueryRunner();
-
-      if (!this.querySubscription) {
-        this.querySubscription = queryRunner.getData().subscribe({
-          next: data => this.onDataUpdate(data),
-        });
-      }
-
-      queryRunner.run({
+      panel.getQueryRunner().run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
@@ -206,6 +197,9 @@ export class PanelChrome extends PureComponent<Props, State> {
         cacheTimeout: panel.cacheTimeout,
         transformations: panel.transformations,
       });
+    } else {
+      // The panel should render on refresh as well if it doesn't have a query, like clock panel
+      this.onRender();
     }
   };
 
@@ -232,10 +226,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { panel } = this.props;
     return panel.snapshotData && panel.snapshotData.length;
   }
-
-  panelHasLastResult = () => {
-    return !!this.props.panel.getQueryRunner().getLastResult();
-  };
 
   get wantsQueryExecution() {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
@@ -265,7 +255,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return null;
     }
 
-    const PanelComponent = plugin.panel;
+    const PanelComponent = plugin.panel!;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
@@ -331,7 +321,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}

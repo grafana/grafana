@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-convertRawToRange: (raw: RawTimeRange) => TimeRange
+convertRawToRange: (raw: RawTimeRange, timeZone?: string | undefined) => TimeRange
 ```
 <b>Import</b>
 

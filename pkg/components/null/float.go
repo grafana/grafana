@@ -60,7 +60,7 @@ func FloatFromString(f string, nullString string) (Float, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 // It supports number and null input.
 // 0 will not be considered a null Float.
-// It also supports unmarshalling a sql.NullFloat64.
+// It also supports unmarshaling a sql.NullFloat64.
 func (f *Float) UnmarshalJSON(data []byte) error {
 	var err error
 	var v interface{}

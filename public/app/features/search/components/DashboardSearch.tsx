@@ -7,24 +7,22 @@ import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
+import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
-export interface Props {
+export interface OwnProps {
   onCloseSearch: () => void;
-  folder?: string;
 }
 
-export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
-  const payload = folder ? { query: `folder:${folder} ` } : {};
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(payload);
+export type Props = OwnProps & ConnectProps & DispatchProps;
+
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateLocation }) => {
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
+    params,
+    updateLocation
+  );
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  // The main search input has own keydown handler, also TagFilter uses input, so
-  // clicking Esc when tagFilter is active shouldn't close the whole search overlay
-  const onClose = () => {
-    onCloseSearch();
-  };
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -32,7 +30,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onClose} size="xxl" tooltip="Close search" />
+            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
@@ -59,6 +57,8 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
     </div>
   );
 });
+
+export default connectWithRouteParams(DashboardSearch);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

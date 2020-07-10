@@ -1,64 +1,68 @@
+import { DeleteDataSourceConfig } from './deleteDataSource';
 import { e2e } from '../index';
 import { fromBaseUrl, getDataSourceId } from '../support/url';
-import { setScenarioContext } from '../support/scenarioContext';
 
 export interface AddDataSourceConfig {
   checkHealth: boolean;
-  expectedAlertMessage: string;
+  expectedAlertMessage: string | RegExp;
   form: Function;
   name: string;
+  type: string;
 }
 
-const DEFAULT_ADD_DATA_SOURCE_CONFIG: AddDataSourceConfig = {
-  checkHealth: false,
-  expectedAlertMessage: 'Data source is working',
-  form: () => {},
-  name: 'TestData DB',
-};
+// @todo this actually returns type `Cypress.Chainable`
+export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
+  const fullConfig = {
+    checkHealth: false,
+    expectedAlertMessage: 'Data source is working',
+    form: () => {},
+    name: `e2e-${Date.now()}`,
+    type: 'TestData DB',
+    ...config,
+  } as AddDataSourceConfig;
 
-export const addDataSource = (config?: Partial<AddDataSourceConfig>): string => {
-  const { checkHealth, expectedAlertMessage, form, name } = { ...DEFAULT_ADD_DATA_SOURCE_CONFIG, ...config };
+  const { checkHealth, expectedAlertMessage, form, name, type } = fullConfig;
 
   e2e().logToConsole('Adding data source with name:', name);
   e2e.pages.AddDataSource.visit();
-  e2e.pages.AddDataSource.dataSourcePlugins(name)
+  e2e.pages.AddDataSource.dataSourcePlugins(type)
     .scrollIntoView()
     .should('be.visible') // prevents flakiness
     .click();
 
-  const dataSourceName = `e2e-${Date.now()}`;
   e2e.pages.DataSource.name().clear();
-  e2e.pages.DataSource.name().type(dataSourceName);
+  e2e.pages.DataSource.name().type(name);
   form();
   e2e.pages.DataSource.saveAndTest().click();
   e2e.pages.DataSource.alert().should('exist');
-  e2e.pages.DataSource.alertMessage().should('contain.text', expectedAlertMessage);
-  e2e().logToConsole('Added data source with name:', dataSourceName);
+  e2e.pages.DataSource.alertMessage().contains(expectedAlertMessage); // assertion
+  e2e().logToConsole('Added data source with name:', name);
 
-  if (checkHealth) {
-    e2e()
-      .url()
-      .then((url: string) => {
-        const dataSourceId = getDataSourceId(url);
+  return e2e()
+    .url()
+    .then((url: string) => {
+      const id = getDataSourceId(url);
 
-        setScenarioContext({
-          lastAddedDataSource: dataSourceName,
-          lastAddedDataSourceId: dataSourceId,
+      e2e.getScenarioContext().then(({ addedDataSources }: any) => {
+        e2e.setScenarioContext({
+          addedDataSources: [...addedDataSources, { id, name } as DeleteDataSourceConfig],
         });
+      });
 
-        const healthUrl = fromBaseUrl(`/api/datasources/${dataSourceId}/health`);
+      if (checkHealth) {
+        const healthUrl = fromBaseUrl(`/api/datasources/${id}/health`);
         e2e().logToConsole(`Fetching ${healthUrl}`);
         e2e()
           .request(healthUrl)
           .its('body')
           .should('have.property', 'status')
           .and('eq', 'OK');
-      });
-  } else {
-    setScenarioContext({
-      lastAddedDataSource: dataSourceName,
-    });
-  }
+      }
 
-  return dataSourceName;
+      // @todo remove `wrap` when possible
+      return e2e().wrap({
+        config: fullConfig,
+        id,
+      });
+    });
 };

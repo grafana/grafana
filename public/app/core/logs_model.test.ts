@@ -8,7 +8,7 @@ import {
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
-import { dataFrameToLogsModel, dedupLogRows } from './logs_model';
+import { dataFrameToLogsModel, dedupLogRows, getSeriesProperties } from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -593,5 +593,41 @@ describe('dataFrameToLogsModel', () => {
         uniqueLabels: { baz: '2' },
       },
     ]);
+  });
+});
+
+describe('getSeriesProperties()', () => {
+  it('sets a minimum bucket size', () => {
+    const result = getSeriesProperties([], 2, undefined, 3, 123);
+    expect(result.bucketSize).toBe(123);
+  });
+
+  it('does not adjust the bucketSize if there is no range', () => {
+    const result = getSeriesProperties([], 30, undefined, 70);
+    expect(result.bucketSize).toBe(2100);
+  });
+
+  it('does not adjust the bucketSize if the logs row times match the given range', () => {
+    const rows: LogRowModel[] = [
+      { entry: 'foo', timeEpochMs: 10 },
+      { entry: 'bar', timeEpochMs: 20 },
+    ] as any;
+    const range = { from: 10, to: 20 };
+    const result = getSeriesProperties(rows, 1, range, 2, 1);
+    expect(result.bucketSize).toBe(2);
+    expect(result.visibleRange).toMatchObject(range);
+  });
+
+  it('clamps the range and adjusts the bucketSize if the logs row times do not completely cover the given range', () => {
+    const rows: LogRowModel[] = [
+      { entry: 'foo', timeEpochMs: 10 },
+      { entry: 'bar', timeEpochMs: 20 },
+    ] as any;
+    const range = { from: 0, to: 30 };
+    const result = getSeriesProperties(rows, 3, range, 2, 1);
+    // Bucketsize 6 gets shortened to 4 because of new visible range is 20ms vs original range being 30ms
+    expect(result.bucketSize).toBe(4);
+    // From time is also aligned to bucketSize (divisible by 4)
+    expect(result.visibleRange).toMatchObject({ from: 8, to: 30 });
   });
 });

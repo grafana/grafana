@@ -34,7 +34,7 @@ echo "press [y] to push the tags"
 read -n 1 confirm
 
 if [ "${confirm}" == "y" ]; then
-    git push origin "${_branch}" --tags
+    git push origin "${_tag}"
 else
     git tag -d "${_tag}"
     echo "Abort! "

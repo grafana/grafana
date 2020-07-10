@@ -259,7 +259,7 @@ func (auth *AuthModuleConversion) FromDB(data []byte) error {
 	return nil
 }
 
-// Just a stub, we don't wanna write to database
+// Just a stub, we don't want to write to database
 func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 	return []byte{}, nil
 }

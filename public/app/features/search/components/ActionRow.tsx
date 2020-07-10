@@ -44,13 +44,13 @@ export const ActionRow: FC<Props> = ({
           {!hideLayout ? (
             <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={query.layout} />
           ) : null}
-          <SortPicker onChange={onSortChange} value={query.sort} />
+          <SortPicker onChange={onSortChange} value={query.sort?.value} />
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">
         {showStarredFilter && (
           <div className={styles.checkboxWrapper}>
-            <Checkbox label="Filter by starred" onChange={onStarredFilterChange} />
+            <Checkbox label="Filter by starred" onChange={onStarredFilterChange} value={query.starred} />
           </div>
         )}
         <TagFilter isClearable tags={query.tag} tagOptions={searchSrv.getDashboardTags} onChange={onTagFilterChange} />

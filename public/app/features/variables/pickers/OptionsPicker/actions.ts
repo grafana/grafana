@@ -1,4 +1,5 @@
 import debounce from 'lodash/debounce';
+import trim from 'lodash/trim';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import {
   QueryVariableModel,
@@ -7,7 +8,7 @@ import {
   VariableTag,
   VariableWithMultiSupport,
   VariableWithOptions,
-} from '../../../templating/types';
+} from '../../types';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../types';
@@ -25,7 +26,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { toVariablePayload } from '../../state/types';
-import { containsSearchFilter } from '../../../templating/utils';
+import { containsSearchFilter } from '../../utils';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -38,7 +39,7 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
     }
 
     if (key === NavigationKey.selectAndClose) {
-      dispatch(toggleOptionByHighlight(clearOthers));
+      dispatch(toggleOptionByHighlight(clearOthers, true));
       return await dispatch(commitChangesToVariable());
     }
 
@@ -54,11 +55,15 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
   };
 };
 
-export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> => {
+export const filterOrSearchOptions = (searchQuery = ''): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { id } = getState().templating.optionsPicker;
-    const { query, options } = getVariable<VariableWithOptions>(id!, getState());
+    const { id, queryValue } = getState().templating.optionsPicker;
+    const { query, options } = getVariable<VariableWithOptions>(id, getState());
     dispatch(updateSearchQuery(searchQuery));
+
+    if (trim(queryValue) === trim(searchQuery)) {
+      return;
+    }
 
     if (containsSearchFilter(query)) {
       return searchForOptionsWithDebounce(dispatch, getState, searchQuery);
@@ -88,12 +93,11 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
   };
 };
 
-export const toggleOptionByHighlight = (clearOthers: boolean): ThunkResult<void> => {
+export const toggleOptionByHighlight = (clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const { id, highlightIndex } = getState().templating.optionsPicker;
-    const variable = getVariable<VariableWithMultiSupport>(id, getState());
-    const option = variable.options[highlightIndex];
-    dispatch(toggleOption({ option, forceSelect: false, clearOthers }));
+    const { highlightIndex, options } = getState().templating.optionsPicker;
+    const option = options[highlightIndex];
+    dispatch(toggleOption({ option, forceSelect, clearOthers }));
   };
 };
 
@@ -155,20 +159,20 @@ const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreSt
 const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
 function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
-  const { options, queryValue: searchQuery, multi } = picker;
+  const { options, selectedValues, queryValue: searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {
     return { text: searchQuery, value: searchQuery, selected: false };
   }
 
   if (!multi) {
-    return options.find(o => o.selected);
+    return selectedValues.find(o => o.selected);
   }
 
   const texts: string[] = [];
   const values: string[] = [];
 
-  for (const option of options) {
+  for (const option of selectedValues) {
     if (!option.selected) {
       continue;
     }

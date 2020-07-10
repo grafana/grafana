@@ -22,7 +22,8 @@ describe('toDataFrame', () => {
       ],
     };
     let series = toDataFrame(input1);
-    expect(series.fields[1].name).toBe(input1.target);
+    expect(series.name).toBe(input1.target);
+    expect(series.fields[1].name).toBe('Value');
 
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;
@@ -69,7 +70,7 @@ describe('toDataFrame', () => {
     });
     expect(input.length).toEqual(2);
 
-    // If the object is alreay a DataFrame, it should not change
+    // If the object is already a DataFrame, it should not change
     const again = toDataFrame(input);
     expect(again).toBe(input);
   });
@@ -96,7 +97,7 @@ describe('toDataFrame', () => {
     ).toThrowError('Expected table rows to be array, got object.');
   });
 
-  it('Guess Colum Types from value', () => {
+  it('Guess Column Types from value', () => {
     expect(guessFieldTypeFromValue(1)).toBe(FieldType.number);
     expect(guessFieldTypeFromValue(1.234)).toBe(FieldType.number);
     expect(guessFieldTypeFromValue(3.125e7)).toBe(FieldType.number);
@@ -106,7 +107,7 @@ describe('toDataFrame', () => {
     expect(guessFieldTypeFromValue(dateTime())).toBe(FieldType.time);
   });
 
-  it('Guess Colum Types from strings', () => {
+  it('Guess Column Types from strings', () => {
     expect(guessFieldTypeFromValue('1')).toBe(FieldType.number);
     expect(guessFieldTypeFromValue('1.234')).toBe(FieldType.number);
     expect(guessFieldTypeFromValue('NaN')).toBe(FieldType.number);
@@ -117,7 +118,7 @@ describe('toDataFrame', () => {
     expect(guessFieldTypeFromValue('xxxx')).toBe(FieldType.string);
   });
 
-  it('Guess Colum Types from series', () => {
+  it('Guess Column Types from series', () => {
     const series = new MutableDataFrame({
       fields: [
         { name: 'A (number)', values: [123, null] },
@@ -146,7 +147,7 @@ describe('toDataFrame', () => {
           '@timestamp': [1570044340458],
           tags: ['deploy', 'website-01'],
           description: 'Torkel deployed website',
-          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolnes: 'very' } },
+          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolness: 'very' } },
           'unescaped-content': 'breaking <br /> the <br /> row',
         },
       ],
@@ -164,7 +165,7 @@ describe('toDataFrame', () => {
   });
 });
 
-describe('SerisData backwards compatibility', () => {
+describe('SeriesData backwards compatibility', () => {
   it('can convert TimeSeries to series and back again', () => {
     const timeseries = {
       target: 'Field Name',
@@ -180,6 +181,24 @@ describe('SerisData backwards compatibility', () => {
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isDataFrame(roundtrip)).toBeFalsy();
     expect(roundtrip.target).toBe(timeseries.target);
+  });
+
+  it('can convert TimeSeries to series and back again with tags should render name with tags', () => {
+    const timeseries = {
+      target: 'Series A',
+      tags: { server: 'ServerA', job: 'app' },
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const series = toDataFrame(timeseries);
+    expect(isDataFrame(timeseries)).toBeFalsy();
+    expect(isDataFrame(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isDataFrame(roundtrip)).toBeFalsy();
+    expect(roundtrip.target).toBe('{job="app", server="ServerA"}');
   });
 
   it('can convert empty table to DataFrame then back to legacy', () => {
@@ -261,7 +280,7 @@ describe('SerisData backwards compatibility', () => {
           '@timestamp': [1570044340458],
           tags: ['deploy', 'website-01'],
           description: 'Torkel deployed website',
-          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolnes: 'very' } },
+          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolness: 'very' } },
           'unescaped-content': 'breaking <br /> the <br /> row',
         },
       ],

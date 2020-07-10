@@ -247,7 +247,7 @@ describe('PanelPlugin', () => {
           });
         });
 
-        it('should ignore defaults that are not specified as availeble properties', () => {
+        it('should ignore defaults that are not specified as available properties', () => {
           const panel = new PanelPlugin(() => {
             return <div>Panel</div>;
           });

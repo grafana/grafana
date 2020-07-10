@@ -9,12 +9,11 @@ import {
   DataQuery,
   FieldType,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { serializeParams } from 'app/core/utils/fetch';
 
 export type JaegerQuery = {
@@ -49,6 +48,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                     values: response?.data?.data || [],
                   },
                 ],
+                meta: {
+                  preferredVisualisationType: 'trace',
+                },
               }),
             ],
           };
@@ -65,6 +67,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                 values: [],
               },
             ],
+            meta: {
+              preferredVisualisationType: 'trace',
+            },
           }),
         ],
       });
@@ -87,7 +92,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     return query.query;
   }
 
-  private _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
+  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
     // Hack for proxying metadata requests
     const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
     const params = data ? serializeParams(data) : '';
@@ -103,7 +108,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
 function getTime(date: string | DateTime, roundUp: boolean) {
   if (typeof date === 'string') {
-    date = dateMath.parse(date, roundUp);
+    date = dateMath.parse(date, roundUp)!;
   }
   return date.valueOf() * 1000;
 }

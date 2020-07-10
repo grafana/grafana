@@ -1,11 +1,9 @@
 import { DashboardModel, PanelModel } from '../../../state';
-import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import {
   closeCompleted,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
   PanelEditorUIState,
-  setEditorPanelData,
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
@@ -16,16 +14,10 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   return dispatch => {
     const panel = dashboard.initEditPanel(sourcePanel);
 
-    const queryRunner = panel.getQueryRunner();
-    const querySubscription = queryRunner.getData(false).subscribe({
-      next: (data: PanelData) => dispatch(setEditorPanelData(data)),
-    });
-
     dispatch(
       updateEditorInitState({
         panel,
         sourcePanel,
-        querySubscription,
       })
     );
   };
@@ -34,7 +26,7 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditor;
+    const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
 
     if (!shouldDiscardChanges) {
       const panel = getPanel();
@@ -47,6 +39,10 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
       sourcePanel.restoreModel(modifiedSaveModel);
 
+      // Loaded plugin is not included in the persisted properties
+      // So is not handled by restoreModel
+      sourcePanel.plugin = panel.plugin;
+
       if (panelTypeChanged) {
         dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
@@ -54,19 +50,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       // Resend last query result on source panel query runner
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
-        const lastResult = panel.getQueryRunner().getLastResult();
-        if (lastResult) {
-          sourcePanel.getQueryRunner().pipeDataToSubject(lastResult);
-        }
+        sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
       }, 20);
     }
 
     if (dashboard) {
       dashboard.exitPanelEditor();
-    }
-
-    if (querySubscription) {
-      querySubscription.unsubscribe();
     }
 
     dispatch(cleanUpEditPanel());

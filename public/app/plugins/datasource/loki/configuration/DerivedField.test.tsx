@@ -2,12 +2,31 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { DerivedField } from './DerivedField';
 import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
+import { DataSourceInstanceSettings } from '@grafana/data';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv() {
     return {
-      getExternal(): any[] {
-        return [];
+      getExternal(): DataSourceInstanceSettings[] {
+        return [
+          {
+            id: 1,
+            uid: 'metrics',
+            name: 'metrics_ds',
+            meta: {
+              tracing: false,
+            } as any,
+          } as any,
+
+          {
+            id: 2,
+            uid: 'tracing',
+            name: 'tracing_ds',
+            meta: {
+              tracing: true,
+            } as any,
+          } as any,
+        ];
       },
     };
   },
@@ -38,5 +57,22 @@ describe('DerivedField', () => {
     };
     const wrapper = shallow(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
     expect(wrapper.find('DataSourceSection').length).toBe(0);
+  });
+
+  it('shows only tracing datasources for internal link', () => {
+    const value = {
+      matcherRegex: '',
+      name: '',
+      datasourceUid: 'test',
+    };
+    const wrapper = shallow(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
+    const dsSection = wrapper.find('DataSourceSection').dive();
+    expect(dsSection.find(DataSourcePicker).props().datasources).toEqual([
+      {
+        meta: { tracing: true },
+        name: 'tracing_ds',
+        value: 'tracing',
+      },
+    ]);
   });
 });

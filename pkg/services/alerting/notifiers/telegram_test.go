@@ -12,7 +12,6 @@ import (
 
 func TestTelegramNotifier(t *testing.T) {
 	Convey("Telegram notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -68,7 +67,6 @@ func TestTelegramNotifier(t *testing.T) {
 			})
 
 			Convey("When generating a message", func() {
-
 				Convey("URL should be skipped if it's too long", func() {
 					evalContext := alerting.NewEvalContext(context.Background(),
 						&alerting.Rule{

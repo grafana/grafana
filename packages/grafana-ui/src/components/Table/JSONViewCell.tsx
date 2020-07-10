@@ -3,6 +3,7 @@ import { css, cx } from 'emotion';
 import { TableCellProps } from './types';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
+import { isString } from 'lodash';
 
 export const JSONViewCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles } = props;
@@ -16,12 +17,20 @@ export const JSONViewCell: FC<TableCellProps> = props => {
     font-family: monospace;
   `;
 
-  const displayValue = JSON.stringify(cell.value);
-  const content = <JSONTooltip value={cell.value} />;
+  let value = cell.value;
+  let displayValue = value;
+  if (isString(value)) {
+    try {
+      value = JSON.parse(value);
+    } catch {} // ignore errors
+  } else {
+    displayValue = JSON.stringify(value);
+  }
+  const content = <JSONTooltip value={value} />;
   return (
     <div className={cx(txt, tableStyles.tableCell)}>
       <Tooltip placement="auto" content={content} theme={'info'}>
-        <span>{displayValue}</span>
+        <div className={tableStyles.overflow}>{displayValue}</div>
       </Tooltip>
     </div>
   );

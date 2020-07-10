@@ -117,6 +117,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size
     `,
     icon: css`
       margin-bottom: 0;
+      vertical-align: baseline;
       display: flex;
     `,
   };

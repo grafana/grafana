@@ -10,7 +10,7 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
     }
     const scaled = scaler(size, decimals, scaledDecimals);
     if (asSuffix) {
-      scaled.suffix = symbol;
+      scaled.suffix = scaled.suffix !== undefined ? `${scaled.suffix}${symbol}` : undefined;
     } else {
       scaled.prefix = symbol;
     }

@@ -83,8 +83,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
     return (
       row.dataFrame.fields
         .map((field, index) => ({ ...field, index }))
-        // Remove Id which we use for react key and entry field which we are showing as the log message.
-        .filter((field, index) => 'id' !== field.name && row.entryFieldIndex !== index)
+        // Remove Id which we use for react key and entry field which we are showing as the log message. Also remove hidden fields.
+        .filter(
+          (field, index) => !('id' === field.name || row.entryFieldIndex === index || field.config.custom?.hidden)
+        )
         // Filter out fields without values. For example in elastic the fields are parsed from the document which can
         // have different structure per row and so the dataframe is pretty sparse.
         .filter(field => {
@@ -106,6 +108,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
     );
   });
 
+  /**
+   * Returns all fields for log row which consists of fields we parse from the message itself and any derived fields
+   * setup in data source config.
+   */
   getAllFields = memoizeOne((row: LogRowModel) => {
     const fields = this.parseMessage(row.entry);
     const derivedFields = this.getDerivedFields(row);
@@ -121,18 +127,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
       }
       return acc;
     }, {} as { [key: string]: FieldDef });
+
     const allFields = Object.values(fieldsMap);
-    allFields.sort((fieldA, fieldB) => {
-      if (fieldA.links?.length && !fieldB.links?.length) {
-        return -1;
-      }
+    allFields.sort(sortFieldsLinkFirst);
 
-      if (!fieldA.links?.length && fieldB.links?.length) {
-        return 1;
-      }
-
-      return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
-    });
     return allFields;
   });
 
@@ -231,6 +229,16 @@ class UnThemedLogDetails extends PureComponent<Props> {
       </tr>
     );
   }
+}
+
+function sortFieldsLinkFirst(fieldA: FieldDef, fieldB: FieldDef) {
+  if (fieldA.links?.length && !fieldB.links?.length) {
+    return -1;
+  }
+  if (!fieldA.links?.length && fieldB.links?.length) {
+    return 1;
+  }
+  return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
 }
 
 export const LogDetails = withTheme(UnThemedLogDetails);

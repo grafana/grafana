@@ -135,7 +135,7 @@ sudo rpm -i --nodeps <local rpm package>
 
 ### Install from binary .tar.gz file
 
-Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
+Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files are extracted into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
 
 ```bash
 wget <tar.gz package url>
@@ -161,10 +161,10 @@ sudo systemctl status grafana-server
 Configure the Grafana server to start at boot:
 
 ```bash
-sudo systemctl enable grafana-server.service
+sudo systemctl enable grafana-server
 ```
 
-> **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then then use the init.d method to configure Grafana to start at boot.
+> **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
 
 ### Start the server with init.d
 
@@ -202,8 +202,8 @@ Start Grafana by running:
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.

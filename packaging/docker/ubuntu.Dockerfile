@@ -28,7 +28,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 # We need curl in the image
-RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl && \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl tzdata && \
     apt-get autoremove -y && rm -rf /var/lib/apt/lists/*;
 
 COPY --from=grafana-builder /tmp/grafana "$GF_PATHS_HOME"
@@ -39,6 +39,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
+             "$GF_PATHS_PROVISIONING/plugins" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

@@ -26,7 +26,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../installation/configuration.md" >}}) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../administration/configuration.md" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 ```bash
@@ -37,8 +37,8 @@ enabled = true
 # Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 config_file = /etc/grafana/ldap.toml
 
-# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
-# false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
+# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if LDAP authentication is ok). If set to
+# false only pre-existing Grafana users will be able to login (if LDAP authentication is ok).
 allow_sign_up = true
 ```
 
@@ -54,11 +54,11 @@ See [configuration examples](#configuration-examples) for more information.
 host = "127.0.0.1"
 # Default port is 389 or 636 if use_ssl = true
 port = 389
-# Set to true if ldap server supports TLS
+# Set to true if LDAP server supports TLS
 use_ssl = false
-# Set to true if connect ldap server with STARTTLS pattern (create connection in insecure, then upgrade to secure connection with TLS)
+# Set to true if connect LDAP server with STARTTLS pattern (create connection in insecure, then upgrade to secure connection with TLS)
 start_tls = false
-# set to true if you want to skip ssl cert validation
+# set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults
 # root_ca_cert = "/path/to/certificate.crt"
@@ -83,7 +83,7 @@ search_base_dns = ["dc=grafana,dc=org"]
 # group_search_filter_user_attribute = "distinguishedName"
 # group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 
-# Specify names of the ldap attributes your ldap uses
+# Specify names of the LDAP attributes your LDAP uses
 [servers.attributes]
 name = "givenName"
 surname = "sn"
@@ -144,7 +144,7 @@ In this case you skip providing a `bind_password` and instead provide a `bind_dn
 The search filter and search bases settings are still needed to perform the LDAP search to retrieve the other LDAP information (like LDAP groups and email).
 
 ### POSIX schema
-If your ldap server does not support the memberOf attribute add these options:
+If your LDAP server does not support the memberOf attribute add these options:
 
 ```bash
 ## Group search filter, to retrieve the groups of which the user is a member (only set if memberOf attribute is not available)
@@ -355,7 +355,7 @@ Please inspect your Active Directory configuration and documentation to find the
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable ldap debug logging in the [main config file]({{< relref "../installation/configuration.md" >}}).
+To troubleshoot and get more log info enable LDAP debug logging in the [main config file]({{< relref "../administration/configuration.md" >}}).
 
 ```bash
 [log]

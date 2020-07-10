@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
-import { CustomVariableModel, VariableWithMultiSupport } from '../../templating/types';
+import { CustomVariableModel, VariableWithMultiSupport } from '../types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';

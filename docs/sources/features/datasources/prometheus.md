@@ -32,7 +32,7 @@ To access Prometheus settings, click the **Configuration** (gear) icon, then cli
 
 ## Prometheus query editor
 
-Open a graph in edit mode by click the title > Edit (or by pressing `e` key while hovering over panel).
+Open a graph in edit mode by clicking the title > Edit (or by pressing `e` key while hovering over panel).
 
 {{< docs-imagebox img="/img/docs/v45/prometheus_query_editor_still.png"
                   animated-gif="/img/docs/v45/prometheus_query_editor.gif" >}}
@@ -55,7 +55,7 @@ Open a graph in edit mode by click the title > Edit (or by pressing `e` key whil
 The Prometheus data source allows you to run "instant" queries, which query only the latest value.
 You can visualize the results in a table panel to see all available labels of a timeseries.
 
-Instant query results are made up only of one data point per series but can be shown in the graph panel with the help of [series overrides]({{< relref "../panels/graph/#series-overrides" >}}).
+Instant query results are made up only of one data point per series but can be shown in the graph panel with the help of [series overrides]({{< relref "../../panels/visualizations/graph-panel.md#series-overrides" >}}).
 To show them in the graph as a latest value point, add a series override and select `Points > true`.
 To show a horizontal line across the whole graph, add a series override and select `Transform > constant`.
 
@@ -67,7 +67,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -89,7 +89,8 @@ For details of what _metric names_, _label names_ and _label values_ are please 
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`, see [Global built-in variables]({{< relref "../../reference/templating/#global-built-in-variables" >}}) for more information. These can be convenient to use in conjunction with the `query_result` function when you need to filter variable queries since
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`, see [Global built-in variables]({{< relref "../../variables/global-variables.md" >}}) for more information. These can be convenient to use in conjunction with the `query_result` function when you need to filter variable queries since
+
 `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
@@ -122,7 +123,7 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.

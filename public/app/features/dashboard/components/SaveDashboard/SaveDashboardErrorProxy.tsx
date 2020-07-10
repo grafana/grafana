@@ -25,7 +25,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
-    if (error.data) {
+    if (error.data && isHandledError(error.data.status)) {
       error.isHandled = true;
     }
   }, []);
@@ -104,6 +104,18 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
       </div>
     </Modal>
   );
+};
+
+const isHandledError = (errorStatus: string) => {
+  switch (errorStatus) {
+    case 'version-mismatch':
+    case 'name-exists':
+    case 'plugin-dashboard':
+      return true;
+
+    default:
+      return false;
+  }
 };
 
 const getConfirmPluginDashboardSaveModalStyles = stylesFactory((theme: GrafanaTheme) => ({

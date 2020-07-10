@@ -3,10 +3,10 @@ import { ThresholdsMode } from '../../types';
 
 export const mockStandardProperties = () => {
   const title = {
-    id: 'title',
-    path: 'title',
-    name: 'Title',
-    description: "Field's title",
+    id: 'displayName',
+    path: 'displayName',
+    name: 'Display name',
+    description: "Field's display name",
     editor: () => null,
     override: () => null,
     process: identityOverrideProcessor,

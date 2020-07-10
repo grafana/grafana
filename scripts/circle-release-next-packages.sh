@@ -11,7 +11,7 @@ function parse_git_hash() {
 }
 
 function prepare_version_commit () {
-  echo $'\nCommiting version changes. This commit will not be checked-in!'
+  echo $'\nCommitting version changes. This commit will not be checked-in!'
   git config --global user.email "circleci@grafana.com"
   git config --global user.name "CirceCI"
   git commit -am "Version commit"
@@ -54,7 +54,7 @@ if [ -z "$count" ]; then
 else
   echo "Changes detected in ${count} packages"
   echo "Releasing packages under ${PACKAGE_VERSION}-${GIT_SHA}"
-  npx lerna version "${PACKAGE_VERSION}-${GIT_SHA}" --no-git-tag-version --no-push --force-publish -y
+  npx lerna version "${PACKAGE_VERSION}-${GIT_SHA}" --exact --no-git-tag-version --no-push --force-publish -y
   echo $'\nGit status:'
   git status -s
 
@@ -67,8 +67,10 @@ else
     start=$(date +%s%N)
     yarn workspace @grafana/"${PACKAGE}" run build
     runtime=$((($(date +%s%N) - start)/1000000))
-    if [ "${CIRCLE_BRANCH}" == "master" ]; then
-      exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB.$PACKAGE=$runtime"
+    if [ "${DRONE_BRANCH}" == "master" ]; then
+      exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.${DRONE_STEP_NAME}.$PACKAGE=$runtime"
+	  elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+      exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.${CIRCLE_JOB}.$PACKAGE=$runtime"
     fi
 
     exit_status=$?

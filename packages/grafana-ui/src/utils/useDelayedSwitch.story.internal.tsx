@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from './storybook/withCenteredStory';
 import { useDelayedSwitch } from './useDelayedSwitch';
 import { boolean, number } from '@storybook/addon-knobs';
@@ -19,8 +18,11 @@ function StoryWrapper() {
   return <div>{valueDelayed ? 'ON' : 'OFF'}</div>;
 }
 
-const story = storiesOf('useDelayedSwitch', module);
-story.addDecorator(withCenteredStory);
-story.add('useDelayedSwitch', () => {
+export default {
+  title: 'useDelayedSwitch',
+  decorators: [withCenteredStory],
+};
+
+export const basic = () => {
   return <StoryWrapper />;
-});
+};

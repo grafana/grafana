@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { renderOrCallToRender, Icon, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
+import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
@@ -28,6 +28,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const theme = useTheme();
   const styles = getQueryOperationRowStyles(theme);
+
   useUpdateEffect(() => {
     if (isContentVisible) {
       if (onOpen) {
@@ -82,11 +83,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: ${theme.spacing.md};
     `,
     header: css`
-      padding: 0 ${theme.spacing.sm};
+      padding: ${theme.spacing.xs} ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
-      height: ${theme.spacing.formInputHeight}px;
-      line-height: ${theme.spacing.formInputHeight}px;
+      min-height: ${theme.spacing.formInputHeight}px;
+      line-height: ${theme.spacing.sm}px;
       display: flex;
       align-items: center;
       justify-content: space-between;

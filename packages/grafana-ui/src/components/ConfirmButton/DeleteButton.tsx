@@ -3,7 +3,7 @@ import { ConfirmButton } from './ConfirmButton';
 import { ComponentSize } from '../../types/size';
 import { Button } from '../Button';
 
-interface Props {
+export interface Props {
   size?: ComponentSize;
   disabled?: boolean;
   onConfirm(): void;

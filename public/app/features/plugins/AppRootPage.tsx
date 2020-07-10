@@ -22,7 +22,7 @@ interface Props {
 
 interface State {
   loading: boolean;
-  plugin?: AppPlugin;
+  plugin?: AppPlugin | null;
   nav: NavModel;
 }
 
@@ -83,7 +83,7 @@ class AppRootPage extends Component<Props, State> {
     return (
       <Page navModel={nav}>
         <Page.Contents isLoading={loading}>
-          {!loading && plugin && (
+          {plugin && plugin.root && (
             <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />
           )}
         </Page.Contents>

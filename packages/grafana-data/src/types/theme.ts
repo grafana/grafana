@@ -12,6 +12,7 @@ export interface GrafanaThemeCommons {
     md: string;
     lg: string;
     xl: string;
+    xxl: string;
   };
   typography: {
     fontFamily: {

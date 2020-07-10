@@ -1,4 +1,5 @@
 #!/bin/sh
+set -eo pipefail
 source "./deploy-common.sh"
 
 # Make libgcc compatible
@@ -9,12 +10,12 @@ rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
 sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
-apk add nodejs npm yarn build-base openssh 
+apk add --no-cache nodejs npm yarn build-base openssh git-lfs perl-utils
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.
 #
-# apk add xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
+# apk add --no-cache xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
 filename="go1.14.linux-amd64.tar.gz"
@@ -22,26 +23,30 @@ get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "08df79b46b0adf49
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-filename="golangci-lint-1.23.7-linux-amd64.tar.gz"
-get_file "https://github.com/golangci/golangci-lint/releases/download/v1.23.7/$filename" \
-    "/tmp/$filename" \
-    "34df1794a2ea8e168b3c98eed3cc0f3e13ed4cba735e4e40ef141df5c41bc086"
-untar_file "/tmp/$filename"
-chmod 755 /usr/local/bin/golangci-lint
-ln -s /usr/local/golangci-lint-1.23.7-linux-amd64/golangci-lint /usr/local/bin/golangci-lint
+GOLANGCILINT_VERSION=1.28.0
+filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
+get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
+    "/tmp/$filename.tar.gz" \
+    "179d34edf4baf6454a7081fbaaf74dc99397a3be8e1a535dee04d835a977bf76"
+untar_file "/tmp/$filename.tar.gz"
+ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
 ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+chmod 755 /usr/local/bin/golangci-lint
 
 # Install dependencies
-apk add fontconfig zip jq
+apk add --no-cache fontconfig zip jq
 
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "38f2442892027f61a07f52c845818750261b2ba58bffb043a582495339d37c05"
+    "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
 chmod +x /usr/local/bin/cc-test-reporter
 
-apk add git
+wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.4.4/grabpl"
+chmod +x /usr/local/bin/grabpl
+
+apk add --no-cache git
 # Install Mage
 mkdir -pv /tmp/mage $HOME/go/bin
 git clone https://github.com/magefile/mage.git /tmp/mage
@@ -56,11 +61,11 @@ for file in $(ls $HOME/go/bin); do
 	mv -v $HOME/go/bin/$file /usr/local/bin/$file
 done
 
-ls -l /usr/local/bin
-revive --help
-file /usr/local/bin/revive
+# Install grafana-toolkit deps
+current_dir=$PWD
+cd /usr/local/grafana-toolkit && yarn install && cd $current_dir
+ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
 
 # Cleanup after yourself
-/bin/rm -rf /tmp/mage 
+/bin/rm -rf /tmp/mage
 /bin/rm -rf $HOME/go
-/bin/rm -rf /var/cache/apk/*

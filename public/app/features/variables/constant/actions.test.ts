@@ -4,10 +4,10 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { updateConstantVariableOptions } from './actions';
 import { getRootReducer } from '../state/helpers';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/types';
+import { ConstantVariableModel, VariableHide, VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
 import { createConstantOptionsFromQuery } from './reducer';
-import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 
 describe('constant actions', () => {
   variableAdapters.setInit(() => [createConstantVariableAdapter()]);

@@ -20,7 +20,7 @@ import { filterAdded, filterRemoved, filtersRestored, filterUpdated } from './re
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { updateLocation } from 'app/core/actions';
 import { DashboardState, LocationState } from 'app/types';
-import { VariableModel } from 'app/features/templating/types';
+import { VariableModel } from 'app/features/variables/types';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 
@@ -421,7 +421,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
@@ -453,7 +453,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(

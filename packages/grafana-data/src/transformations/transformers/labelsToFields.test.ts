@@ -43,38 +43,6 @@ describe('Labels as Columns', () => {
     expect(result[0].fields).toEqual(expected);
   });
 
-  it('data frames where frame name is same as value field name replace field name with name Value', () => {
-    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
-      id: DataTransformerID.labelsToFields,
-      options: {},
-    };
-
-    const oneValueOneLabelA = toDataFrame({
-      name: 'A',
-      fields: [
-        { name: 'time', type: FieldType.time, values: [1000] },
-        { name: 'A', type: FieldType.number, values: [1], labels: { location: 'inside' } },
-      ],
-    });
-
-    const oneValueOneLabelB = toDataFrame({
-      name: 'B',
-      fields: [
-        { name: 'time', type: FieldType.time, values: [2000] },
-        { name: 'B', type: FieldType.number, values: [-1], labels: { location: 'outside' } },
-      ],
-    });
-
-    const result = transformDataFrame([cfg], [oneValueOneLabelA, oneValueOneLabelB]);
-    const expected: Field[] = [
-      { name: 'time', type: FieldType.time, values: new ArrayVector([1000, 2000]), config: {} },
-      { name: 'location', type: FieldType.string, values: new ArrayVector(['inside', 'outside']), config: {} },
-      { name: 'Value', type: FieldType.number, values: new ArrayVector([1, -1]), config: {} },
-    ];
-
-    expect(result[0].fields).toEqual(expected);
-  });
-
   it('data frame with 2 values and 1 label', () => {
     const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
       id: DataTransformerID.labelsToFields,

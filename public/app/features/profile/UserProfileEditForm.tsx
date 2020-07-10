@@ -1,6 +1,5 @@
-import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
-import { Button, InlineFormLabel, LegacyForms, Tooltip, Icon } from '@grafana/ui';
-const { Input } = LegacyForms;
+import React, { FC } from 'react';
+import { Button, Tooltip, Icon, Form, Input, Field, FieldSet } from '@grafana/ui';
 import { User } from 'app/types';
 import config from 'app/core/config';
 import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
@@ -11,96 +10,57 @@ export interface Props {
   updateProfile: (payload: ProfileUpdateFields) => void;
 }
 
-export interface State {
-  name: string;
-  email: string;
-  login: string;
-}
+const { disableLoginForm } = config;
 
-export class UserProfileEditForm extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    const {
-      user: { name, email, login },
-    } = this.props;
-
-    this.state = {
-      name,
-      email,
-      login,
-    };
-  }
-
-  onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ name: event.target.value });
+export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfile }) => {
+  const onSubmitProfileUpdate = (data: ProfileUpdateFields) => {
+    updateProfile(data);
   };
 
-  onEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ email: event.target.value });
-  };
-
-  onLoginChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ login: event.target.value });
-  };
-
-  onSubmitProfileUpdate = (event: MouseEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    this.props.updateProfile({ ...this.state });
-  };
-
-  render() {
-    const { name, email, login } = this.state;
-    const { isSavingUser } = this.props;
-    const { disableLoginForm } = config;
-
-    return (
-      <>
-        <h3 className="page-sub-heading">Edit Profile</h3>
-        <form name="userForm" className="gf-form-group">
-          <div className="gf-form max-width-30">
-            <InlineFormLabel className="width-8">Name</InlineFormLabel>
-            <Input className="gf-form-input max-width-22" type="text" onChange={this.onNameChange} value={name} />
-          </div>
-          <div className="gf-form max-width-30">
-            <InlineFormLabel className="width-8">Email</InlineFormLabel>
-            <Input
-              className="gf-form-input max-width-22"
-              type="text"
-              onChange={this.onEmailChange}
-              value={email}
-              disabled={disableLoginForm}
-            />
-            {disableLoginForm && (
-              <Tooltip content="Login Details Locked - managed in another system.">
-                <Icon name="lock" className="gf-form-icon--right-absolute" />
-              </Tooltip>
-            )}
-          </div>
-          <div className="gf-form max-width-30">
-            <InlineFormLabel className="width-8">Username</InlineFormLabel>
-            <Input
-              className="gf-form-input max-width-22"
-              type="text"
-              onChange={this.onLoginChange}
-              value={login}
-              disabled={disableLoginForm}
-            />
-            {disableLoginForm && (
-              <Tooltip content="Login Details Locked - managed in another system.">
-                <Icon name="lock" className="gf-form-icon--right-absolute" />
-              </Tooltip>
-            )}
-          </div>
-          <div className="gf-form-button-row">
-            <Button variant="primary" onClick={this.onSubmitProfileUpdate} disabled={isSavingUser}>
-              Save
-            </Button>
-          </div>
-        </form>
-      </>
-    );
-  }
-}
+  return (
+    <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
+      {({ register, errors }) => {
+        return (
+          <FieldSet label="Edit Profile">
+            <Field label="Name" invalid={!!errors.name} error="Name is required">
+              <Input name="name" ref={register({ required: true })} placeholder="Name" defaultValue={user.name} />
+            </Field>
+            <Field label="Email" invalid={!!errors.email} error="Email is required" disabled={disableLoginForm}>
+              <Input
+                name="email"
+                ref={register({ required: true })}
+                placeholder="Email"
+                defaultValue={user.email}
+                suffix={<InputSuffix />}
+              />
+            </Field>
+            <Field label="Username" disabled={disableLoginForm}>
+              <Input
+                name="login"
+                ref={register}
+                defaultValue={user.login}
+                placeholder="Username"
+                suffix={<InputSuffix />}
+              />
+            </Field>
+            <div className="gf-form-button-row">
+              <Button variant="primary" disabled={isSavingUser}>
+                Save
+              </Button>
+            </div>
+          </FieldSet>
+        );
+      }}
+    </Form>
+  );
+};
 
 export default UserProfileEditForm;
+
+const InputSuffix: FC = () => {
+  return disableLoginForm ? (
+    <Tooltip content="Login Details Locked - managed in another system.">
+      <Icon name="lock" />
+    </Tooltip>
+  ) : null;
+};

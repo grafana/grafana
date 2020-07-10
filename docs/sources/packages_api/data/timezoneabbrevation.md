@@ -11,6 +11,8 @@ type = "docs"
 
 ### timeZoneAbbrevation variable
 
+Helper function to return only the time zone abbreviation for a given date and time value. If no options are supplied, then default values are used. For more details please see [DateTimeOptions](./data/datetimeoptions.md)<!-- -->.
+
 <b>Signature</b>
 
 ```typescript

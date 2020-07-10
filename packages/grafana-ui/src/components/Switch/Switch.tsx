@@ -1,7 +1,7 @@
-import React, { HTMLProps } from 'react';
+import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, deprecationWarning } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 import { focusCss } from '../../themes/mixins';
 
@@ -77,9 +77,13 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
   ({ value, checked, disabled = false, onChange, ...inputProps }, ref) => {
+    if (checked) {
+      deprecationWarning('Switch', 'checked prop', 'value');
+    }
+
     const theme = useTheme();
     const styles = getSwitchStyles(theme);
-    const switchId = uniqueId('switch-');
+    const switchIdRef = useRef(uniqueId('switch-'));
 
     return (
       <div className={cx(styles.switch)}>
@@ -90,11 +94,11 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
           onChange={event => {
             onChange?.(event);
           }}
-          id={switchId}
+          id={switchIdRef.current}
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchId} />
+        <label htmlFor={switchIdRef.current} />
       </div>
     );
   }

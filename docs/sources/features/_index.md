@@ -8,4 +8,6 @@ identifier = "features"
 weight = 4
 +++
 
+# Grafana features
 
+This section contains pages that describe Grafana features.

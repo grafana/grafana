@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ClipboardButton } from './ClipboardButton';
 import { Input } from '../Forms/Legacy/Input/Input';
@@ -35,6 +34,10 @@ const Wrapper = () => {
   );
 };
 
-const story = storiesOf('Buttons/ClipboardButton', module);
-story.addDecorator(withCenteredStory);
-story.add('copy to clipboard', () => <Wrapper />);
+export default {
+  title: 'Buttons/ClipboardButton',
+  component: ClipboardButton,
+  decorators: [withCenteredStory],
+};
+
+export const copyToClipboard = () => <Wrapper />;

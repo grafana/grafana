@@ -2,9 +2,9 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../templating/types';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
-import { changeVariableProp, setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
@@ -19,7 +19,7 @@ import {
   removeVariableEditorError,
   setIdInEditor,
 } from '../editor/reducer';
-import DefaultVariableQueryEditor from '../../templating/DefaultVariableQueryEditor';
+import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { expect } from 'test/lib/common';
 
 const mocks: Record<string, any> = {
@@ -170,7 +170,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -188,6 +188,32 @@ describe('query actions', () => {
     });
   });
 
+  describe('when updateQueryVariableOptions is dispatched for variable with searchFilter', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: true, useTags: false });
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+
+      mockDatasourceMetrics(variable, optionsMetrics, []);
+
+      const tester = await reduxTester<{ templating: TemplatingState }>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable), 'search'), true);
+
+      const update = { results: optionsMetrics, templatedRegex: '' };
+
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
+        const [clearErrors, updateOptions] = actions;
+        const expectedNumberOfActions = 2;
+
+        expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
+        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
+        return actions.length === expectedNumberOfActions;
+      });
+    });
+  });
+
   describe('when updateQueryVariableOptions is dispatched and fails for variable open in editor', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
@@ -198,7 +224,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {

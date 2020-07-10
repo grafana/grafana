@@ -58,32 +58,32 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature {A}', 'humidity {A}', 'temperature {B}', 'humidity {B}']),
+        values: new ArrayVector(['A temperature', 'A humidity', 'B temperature', 'B humidity']),
         config: {},
       },
       {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3, 1, 11000.1]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3, 1, 11000.1]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6, 7, 11000.7]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6, 7, 11000.7]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 
@@ -104,32 +104,32 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature {A}', 'temperature {B}']),
+        values: new ArrayVector(['A temperature', 'B temperature']),
         config: {},
       },
       {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3, 1]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3, 1]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6, 7]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6, 7]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 
@@ -150,32 +150,32 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature', 'humidity']),
+        values: new ArrayVector(['A temperature', 'A humidity']),
         config: {},
       },
       {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3, 10000.3]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6, 10000.6]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 
@@ -196,32 +196,32 @@ describe('Reducer Transformer', () => {
       {
         name: 'Field',
         type: FieldType.string,
-        values: new ArrayVector(['temperature']),
+        values: new ArrayVector(['A temperature']),
         config: {},
       },
       {
         name: 'first',
         type: FieldType.number,
         values: new ArrayVector([3]),
-        config: { title: 'First' },
+        config: { displayName: 'First' },
       },
       {
         name: 'min',
         type: FieldType.number,
         values: new ArrayVector([3]),
-        config: { title: 'Min' },
+        config: { displayName: 'Min' },
       },
       {
         name: 'max',
         type: FieldType.number,
         values: new ArrayVector([6]),
-        config: { title: 'Max' },
+        config: { displayName: 'Max' },
       },
       {
         name: 'last',
         type: FieldType.number,
         values: new ArrayVector([6]),
-        config: { title: 'Last' },
+        config: { displayName: 'Last' },
       },
     ];
 

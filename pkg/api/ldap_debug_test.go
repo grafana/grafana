@@ -146,7 +146,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 	expected := `
 	{
 		"error": "Unable to find organization with ID '2'",
-		"message": "An oganization was not found - Please verify your LDAP configuration"
+		"message": "An organization was not found - Please verify your LDAP configuration"
 	}
 	`
 	assert.JSONEq(t, expected, sc.resp.Body.String())

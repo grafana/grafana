@@ -80,23 +80,37 @@ func tryParseUnixMsEpoch(val string) (time.Time, bool) {
 }
 
 func (tr *TimeRange) ParseFrom() (time.Time, error) {
-	return parse(tr.From, tr.now, false)
+	return parse(tr.From, tr.now, false, nil)
 }
 
 func (tr *TimeRange) ParseTo() (time.Time, error) {
-	return parse(tr.To, tr.now, true)
+	return parse(tr.To, tr.now, true, nil)
 }
 
-func parse(s string, now time.Time, withRoundUp bool) (time.Time, error) {
+func (tr *TimeRange) ParseFromWithLocation(location *time.Location) (time.Time, error) {
+	return parse(tr.From, tr.now, false, location)
+}
+
+func (tr *TimeRange) ParseToWithLocation(location *time.Location) (time.Time, error) {
+	return parse(tr.To, tr.now, true, location)
+}
+
+func parse(s string, now time.Time, withRoundUp bool, location *time.Location) (time.Time, error) {
 	if res, ok := tryParseUnixMsEpoch(s); ok {
 		return res, nil
 	}
 
-	withoutNow := strings.Replace(s, "now-", "", 1)
-
-	diff, err := time.ParseDuration("-" + withoutNow)
+	diff, err := time.ParseDuration("-" + s)
 	if err != nil {
-		return datemath.ParseAndEvaluate(s, datemath.WithNow(now), datemath.WithRoundUp(withRoundUp))
+		options := []func(*datemath.Options){
+			datemath.WithNow(now),
+			datemath.WithRoundUp(withRoundUp),
+		}
+		if location != nil {
+			options = append(options, datemath.WithLocation(location))
+		}
+
+		return datemath.ParseAndEvaluate(s, options...)
 	}
 
 	return now.Add(diff), nil

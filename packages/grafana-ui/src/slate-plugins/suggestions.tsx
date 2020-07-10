@@ -97,7 +97,15 @@ export function SuggestionsPlugin({
 
           break;
 
-        case 'Enter':
+        case 'Enter': {
+          if (!(keyEvent.shiftKey || keyEvent.ctrlKey) && hasSuggestions) {
+            keyEvent.preventDefault();
+            return typeaheadRef.insertSuggestion();
+          }
+
+          break;
+        }
+
         case 'Tab': {
           if (hasSuggestions) {
             keyEvent.preventDefault();
@@ -108,7 +116,10 @@ export function SuggestionsPlugin({
         }
 
         default: {
-          handleTypeaheadDebounced(editor, setState, onTypeahead, cleanText);
+          // Don't react on meta keys
+          if (keyEvent.key.length === 1) {
+            handleTypeaheadDebounced(editor, setState, onTypeahead, cleanText);
+          }
           break;
         }
       }
@@ -295,8 +306,8 @@ const handleTypeahead = async (
           }
         }
 
-        // Filter out the already typed value (prefix) unless it inserts custom text
-        newGroup.items = newGroup.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
+        // Filter out the already typed value (prefix) unless it inserts custom text not matching the prefix
+        newGroup.items = newGroup.items.filter(c => !(c.insertText === prefix || (c.filterText ?? c.label) === prefix));
       }
 
       if (!group.skipSort) {

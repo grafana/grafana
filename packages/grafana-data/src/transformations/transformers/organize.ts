@@ -29,7 +29,7 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
     const rename = renameFieldsTransformer.transformer(options);
     const order = orderFieldsTransformer.transformer(options);
     const filter = filterFieldsByNameTransformer.transformer({
-      exclude: mapToExcludeArray(options.excludeByName),
+      exclude: { names: mapToExcludeArray(options.excludeByName) },
     });
 
     return (data: DataFrame[]) => rename(order(filter(data)));

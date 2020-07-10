@@ -76,7 +76,7 @@ By popular demand Grafana now includes support for an alert notification channel
 
 Starting from Grafana v5.2, a modified time range or variable are no longer saved by default. To save a modified
 time range or variable, you'll need to actively select that when saving a dashboard, see screenshot.
-This should hopefully make it easier to have sane defaults for time and variables in dashboards and make it more explicit
+This should hopefully make it easier to have same defaults for time and variables in dashboards and make it more explicit
 when you actually want to overwrite those settings.
 
 <div class="clearfix"></div>

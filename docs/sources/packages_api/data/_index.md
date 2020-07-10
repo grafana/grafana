@@ -18,8 +18,9 @@ A library containing most of the core functionality and data types used in Grafa
 |  [AppendedVectors](./appendedvectors/) | This may be more trouble than it is worth. This trades some computation time for RAM -- rather than allocate a new array the size of all previous arrays, this just points the correct index to their original array values |
 |  [AppPlugin](./appplugin/) |  |
 |  [ArrayVector](./arrayvector/) |  |
+|  [BinaryOperationVector](./binaryoperationvector/) |  |
 |  [CircularDataFrame](./circulardataframe/) | This dataframe can have values constantly added, and will never exceed the given capacity |
-|  [CircularVector](./circularvector/) | Circular vector uses a single buffer to capture a stream of values overwriting the oldest value on add.<!-- -->This supports addting to the 'head' or 'tail' and will grow the buffer to match a configured capacity. |
+|  [CircularVector](./circularvector/) | Circular vector uses a single buffer to capture a stream of values overwriting the oldest value on add.<!-- -->This supports adding to the 'head' or 'tail' and will grow the buffer to match a configured capacity. |
 |  [ConstantVector](./constantvector/) |  |
 |  [CSVReader](./csvreader/) |  |
 |  [DataFrameView](./dataframeview/) | <b><i>(BETA)</i></b> This abstraction will present the contents of a DataFrame as if it were a well typed javascript object Vector. |
@@ -28,19 +29,20 @@ A library containing most of the core functionality and data types used in Grafa
 |  [FieldCache](./fieldcache/) |  |
 |  [FieldConfigEditorBuilder](./fieldconfigeditorbuilder/) | Fluent API for declarative creation of field config option editors |
 |  [FieldConfigOptionsRegistry](./fieldconfigoptionsregistry/) |  |
+|  [FormattedVector](./formattedvector/) |  |
 |  [GrafanaPlugin](./grafanaplugin/) |  |
 |  [LanguageProvider](./languageprovider/) |  |
 |  [MutableDataFrame](./mutabledataframe/) |  |
 |  [PanelOptionsEditorBuilder](./paneloptionseditorbuilder/) | Fluent API for declarative creation of panel options |
 |  [PanelPlugin](./panelplugin/) |  |
 |  [Registry](./registry/) |  |
-|  [ScaledVector](./scaledvector/) |  |
 |  [SortedVector](./sortedvector/) | Values are returned in the order defined by the input parameter |
 
 ## Enumerations
 
 |  Enumeration | Description |
 |  --- | --- |
+|  [BinaryOperationID](./binaryoperationid/) |  |
 |  [ColorScheme](./colorscheme/) |  |
 |  [CoreApp](./coreapp/) |  |
 |  [CSVHeaderStyle](./csvheaderstyle/) |  |
@@ -53,6 +55,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [FieldType](./fieldtype/) |  |
 |  [FrameMatcherID](./framematcherid/) | Field name matchers |
 |  [GrafanaThemeType](./grafanathemetype/) |  |
+|  [InternalTimeZones](./internaltimezones/) |  |
 |  [LoadingState](./loadingstate/) | Represent panel data loading state. |
 |  [LogLevel](./loglevel/) | Mapping of log level abbreviation to canonical log level. Supported levels are reduce to limit color variation. |
 |  [LogsDedupDescription](./logsdedupdescription/) |  |
@@ -96,9 +99,11 @@ A library containing most of the core functionality and data types used in Grafa
 |  [getDecimalsForValue(value, decimalOverride)](./getdecimalsforvalue/) |  |
 |  [getDisplayProcessor(options)](./getdisplayprocessor/) |  |
 |  [getDisplayValueAlignmentFactors(values)](./getdisplayvaluealignmentfactors/) |  |
+|  [getFieldDisplayName(field, frame, allFrames)](./getfielddisplayname/) |  |
 |  [getFieldMatcher(config)](./getfieldmatcher/) |  |
 |  [getFlotPairs({ xField, yField, nullValueMode })](./getflotpairs/) |  |
 |  [getFlotPairsConstant(seriesData, range)](./getflotpairsconstant/) | Returns a constant series based on the first value from the provide series. |
+|  [getFrameDisplayName(frame, index)](./getframedisplayname/) | Get an appropriate display title |
 |  [getFrameMatchers(config)](./getframematchers/) |  |
 |  [getLogLevel(line)](./getloglevel/) | Returns the log level of a log line. Parse the line for level words. If no level is found, it returns <code>LogLevel.unknown</code>.<!-- -->Example: <code>getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn</code> |
 |  [getLogLevelFromKey(key)](./getloglevelfromkey/) |  |
@@ -107,17 +112,17 @@ A library containing most of the core functionality and data types used in Grafa
 |  [getValueFormat(id)](./getvalueformat/) |  |
 |  [getValueFormats()](./getvalueformats/) |  |
 |  [getValueFormatterIndex()](./getvalueformatterindex/) |  |
-|  [grafanaDataFrameToArrowTable(data)](./grafanadataframetoarrowtable/) |  |
+|  [grafanaDataFrameToArrowTable(data, keepOriginalNames)](./grafanadataframetoarrowtable/) |  |
 |  [guessFieldTypeForField(field)](./guessfieldtypeforfield/) | Looks at the data to guess the column type. This ignores any existing setting |
 |  [guessFieldTypeFromNameAndValue(name, v)](./guessfieldtypefromnameandvalue/) | Given a name and value, this will pick a reasonable field type |
 |  [guessFieldTypeFromValue(v)](./guessfieldtypefromvalue/) | Given a value this will guess the best column type<!-- -->TODO: better Date/Time support! Look for standard date strings? |
+|  [hasLinks(field)](./haslinks/) |  |
 |  [locale(value, decimals)](./locale/) |  |
 |  [parseFlags(text)](./parseflags/) | Converts any mode modifiers in the text to the Javascript equivalent flag |
 |  [parseLabels(labels)](./parselabels/) | Returns a map of label keys to value from an input selector string.<!-- -->Example: <code>parseLabels('{job=&quot;foo&quot;, instance=&quot;bar&quot;}) // {job: &quot;foo&quot;, instance: &quot;bar&quot;}</code> |
 |  [readCSV(csv, options)](./readcsv/) |  |
 |  [reduceField(options)](./reducefield/) |  |
 |  [renderMarkdown(str)](./rendermarkdown/) |  |
-|  [resultsToDataFrames(rsp)](./resultstodataframes/) |  |
 |  [reverseDataFrame(data)](./reversedataframe/) | Returns a copy with all values reversed |
 |  [scaledUnits(factor, extArray)](./scaledunits/) |  |
 |  [setMarkdownOptions(optionsOverride)](./setmarkdownoptions/) |  |
@@ -128,6 +133,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [stringToJsRegex(str)](./stringtojsregex/) |  |
 |  [stringToMs(str)](./stringtoms/) |  |
 |  [toCSV(data, config)](./tocsv/) |  |
+|  [toDataFrame(data)](./todataframe/) | Inspect any object and return the results as a DataFrame |
 |  [toDataFrameDTO(data)](./todataframedto/) | Returns a copy that does not include functions |
 |  [toFixed(value, decimals)](./tofixed/) |  |
 |  [toFixedScaled(value, decimals, scaledDecimals, additionalDecimals, ext)](./tofixedscaled/) |  |
@@ -153,7 +159,6 @@ A library containing most of the core functionality and data types used in Grafa
 |  [AppRootProps](./approotprops/) |  |
 |  [ArrowDataFrame](./arrowdataframe/) |  |
 |  [BuildInfo](./buildinfo/) | Describes the build information that will be available via the Grafana configuration. |
-|  [CalculateFieldTransformerOptions](./calculatefieldtransformeroptions/) |  |
 |  [ColorFieldConfigSettings](./colorfieldconfigsettings/) |  |
 |  [Column](./column/) |  |
 |  [ConfigOverrideRule](./configoverriderule/) |  |
@@ -164,7 +169,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DataConfigSource](./dataconfigsource/) | Describes and API for exposing panel specific data configurations. |
 |  [DataFrame](./dataframe/) |  |
 |  [DataFrameDTO](./dataframedto/) | Like a DataFrame, but fields may be a FieldDTO |
-|  [DataLink](./datalink/) | Link configuration. The values may contain variables that need to be processed before running |
+|  [DataLink](./datalink/) | Link configuration. The values may contain variables that need to be processed before showing the link to user.<!-- -->TODO: &lt;<!-- -->T extends DataQuery<!-- -->&gt; is not strictly true for internal links as we do not need refId for example but all data source defined queries extend this so this is more for documentation. |
 |  [DataLinkClickEvent](./datalinkclickevent/) | Callback info for DataLink click events |
 |  [DataLinksFieldConfigSettings](./datalinksfieldconfigsettings/) |  |
 |  [DataQuery](./dataquery/) | These are the common properties available to all queries in all datasources Specific implementations will extend this interface adding the required properties for the given context |
@@ -186,9 +191,9 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DateTimeBuiltinFormat](./datetimebuiltinformat/) |  |
 |  [DateTimeDuration](./datetimeduration/) |  |
 |  [DateTimeLocale](./datetimelocale/) |  |
-|  [DateTimeOptions](./datetimeoptions/) |  |
-|  [DateTimeOptionsWhenParsing](./datetimeoptionswhenparsing/) |  |
-|  [DateTimeOptionsWithFormat](./datetimeoptionswithformat/) |  |
+|  [DateTimeOptions](./datetimeoptions/) | The type describing date and time options. Used for all the helper functions available to parse or format date and time values. |
+|  [DateTimeOptionsWhenParsing](./datetimeoptionswhenparsing/) | The type that describes options that can be passed when parsing a date and time value. |
+|  [DateTimeOptionsWithFormat](./datetimeoptionswithformat/) | The type describing the options that can be passed to the [dateTimeFormat](./data/datetimeformat.md) helper function to control how the date and time value passed to the function is formatted. |
 |  [DecimalInfo](./decimalinfo/) |  |
 |  [Dimension](./dimension/) |  |
 |  [DisplayValue](./displayvalue/) |  |
@@ -211,9 +216,8 @@ A library containing most of the core functionality and data types used in Grafa
 |  [FieldOverrideContext](./fieldoverridecontext/) |  |
 |  [FieldOverrideEditorProps](./fieldoverrideeditorprops/) |  |
 |  [FieldReducerInfo](./fieldreducerinfo/) |  |
+|  [FieldState](./fieldstate/) |  |
 |  [FieldWithIndex](./fieldwithindex/) |  |
-|  [FilterFieldsByNameTransformerOptions](./filterfieldsbynametransformeroptions/) |  |
-|  [FilterFramesByRefIdTransformerOptions](./filterframesbyrefidtransformeroptions/) |  |
 |  [FlotDataPoint](./flotdatapoint/) |  |
 |  [FormattedValue](./formattedvalue/) |  |
 |  [FrameMatcherInfo](./framematcherinfo/) |  |
@@ -222,6 +226,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [GrafanaTheme](./grafanatheme/) |  |
 |  [GrafanaThemeCommons](./grafanathemecommons/) |  |
 |  [GraphSeriesXY](./graphseriesxy/) | View model projection of a series |
+|  [GroupedTimeZones](./groupedtimezones/) |  |
 |  [HistoryItem](./historyitem/) |  |
 |  [IntervalValues](./intervalvalues/) |  |
 |  [Labels](./labels/) |  |
@@ -242,7 +247,6 @@ A library containing most of the core functionality and data types used in Grafa
 |  [NavModelBreadcrumb](./navmodelbreadcrumb/) |  |
 |  [NavModelItem](./navmodelitem/) |  |
 |  [NumberFieldConfigSettings](./numberfieldconfigsettings/) |  |
-|  [OrganizeFieldsTransformerOptions](./organizefieldstransformeroptions/) |  |
 |  [PanelData](./paneldata/) |  |
 |  [PanelEditorProps](./paneleditorprops/) |  |
 |  [PanelModel](./panelmodel/) |  |
@@ -270,7 +274,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [RawTimeRange](./rawtimerange/) |  |
 |  [ReadWriteVector](./readwritevector/) | Apache arrow vectors are Read/Write |
 |  [ReduceDataOptions](./reducedataoptions/) | Options for how to turn DataFrames into an array of display values |
-|  [ReduceTransformerOptions](./reducetransformeroptions/) |  |
+|  [RegexpOrNamesMatcherOptions](./regexpornamesmatcheroptions/) |  |
 |  [RegistryItem](./registryitem/) |  |
 |  [RegistryItemWithOptions](./registryitemwithoptions/) |  |
 |  [ScaledValue](./scaledvalue/) |  |
@@ -279,7 +283,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [ScreenshotInfo](./screenshotinfo/) |  |
 |  [SelectableValue](./selectablevalue/) | Used in select elements |
 |  [SelectFieldConfigSettings](./selectfieldconfigsettings/) |  |
-|  [SeriesToColumnsOptions](./seriestocolumnsoptions/) |  |
+|  [StandardEditorContext](./standardeditorcontext/) |  |
 |  [StandardEditorProps](./standardeditorprops/) |  |
 |  [StandardEditorsRegistryItem](./standardeditorsregistryitem/) |  |
 |  [StringFieldConfigSettings](./stringfieldconfigsettings/) |  |
@@ -292,6 +296,8 @@ A library containing most of the core functionality and data types used in Grafa
 |  [TimeOptions](./timeoptions/) |  |
 |  [TimeRange](./timerange/) |  |
 |  [TimeSeries](./timeseries/) |  |
+|  [TimeZoneCountry](./timezonecountry/) |  |
+|  [TimeZoneInfo](./timezoneinfo/) |  |
 |  [TransformerRegistyItem](./transformerregistyitem/) |  |
 |  [TransformerUIProps](./transformeruiprops/) |  |
 |  [UnitFieldConfigSettings](./unitfieldconfigsettings/) |  |
@@ -319,19 +325,19 @@ A library containing most of the core functionality and data types used in Grafa
 
 |  Variable | Description |
 |  --- | --- |
+|  [binaryOperators](./binaryoperators/) |  |
 |  [booleanOverrideProcessor](./booleanoverrideprocessor/) |  |
 |  [createDimension](./createdimension/) |  |
-|  [createOrderFieldsComparer](./createorderfieldscomparer/) |  |
 |  [DataLinkBuiltInVars](./datalinkbuiltinvars/) |  |
 |  [dataLinksOverrideProcessor](./datalinksoverrideprocessor/) |  |
 |  [dateTime](./datetime/) |  |
 |  [dateTimeAsMoment](./datetimeasmoment/) |  |
-|  [dateTimeFormat](./datetimeformat/) |  |
-|  [dateTimeFormatISO](./datetimeformatiso/) |  |
-|  [dateTimeFormatTimeAgo](./datetimeformattimeago/) |  |
-|  [dateTimeFormatWithAbbrevation](./datetimeformatwithabbrevation/) |  |
+|  [dateTimeFormat](./datetimeformat/) | Helper function to format date and time according to the specified options. If no options are supplied, then default values are used. For more details, see [DateTimeOptionsWithFormat](./data/datetimeoptionswithformat.md)<!-- -->. |
+|  [dateTimeFormatISO](./datetimeformatiso/) | Helper function to format date and time according to the standard ISO format e.g. 2013-02-04T22:44:30.652Z. If no options are supplied, then default values are used. For more details, see [DateTimeOptionsWithFormat](./data/datetimeoptionswithformat.md)<!-- -->. |
+|  [dateTimeFormatTimeAgo](./datetimeformattimeago/) | Helper function to return elapsed time since passed date. The returned value will be formatted in a human readable format e.g. 4 years ago. If no options are supplied, then default values are used. For more details, see [DateTimeOptions](./data/datetimeoptions.md)<!-- -->. |
+|  [dateTimeFormatWithAbbrevation](./datetimeformatwithabbrevation/) | Helper function to format date and time according to the Grafana default formatting, but it also appends the time zone abbreviation at the end e.g. 2020-05-20 13:37:00 CET. If no options are supplied, then default values are used. For more details please see [DateTimeOptions](./data/datetimeoptions.md)<!-- -->. |
 |  [dateTimeForTimeZone](./datetimefortimezone/) |  |
-|  [dateTimeParse](./datetimeparse/) |  |
+|  [dateTimeParse](./datetimeparse/) | Helper function to parse a number, text or Date to a DateTime value. If a timeZone is supplied the incoming value is parsed with that timeZone as a base. The only exception to this is if the passed value is in a UTC-based format. Then it will use UTC as the base. Examples on UTC-based values are Unix epoch and ISO formatted strings.<!-- -->It can also parse the Grafana quick date and time format, e.g. now-6h will be parsed as Date.now() - 6 hours and returned as a valid DateTime value.<!-- -->If no options are supplied, then default values are used. For more details please see [DateTimeOptions](./data/datetimeoptions.md)<!-- -->. |
 |  [DEFAULT\_DATE\_TIME\_FORMAT](./default_date_time_format/) |  |
 |  [DEFAULT\_FIELD\_DISPLAY\_VALUES\_LIMIT](./default_field_display_values_limit/) |  |
 |  [DefaultTimeRange](./defaulttimerange/) |  |
@@ -358,6 +364,8 @@ A library containing most of the core functionality and data types used in Grafa
 |  [getSeriesTimeStep](./getseriestimestep/) | Returns minimal time step from series time field |
 |  [getTimeField](./gettimefield/) |  |
 |  [getTimeZoneGroups](./gettimezonegroups/) |  |
+|  [getTimeZoneInfo](./gettimezoneinfo/) |  |
+|  [getTimeZones](./gettimezones/) |  |
 |  [getValueFromDimension](./getvaluefromdimension/) |  |
 |  [guessFieldTypes](./guessfieldtypes/) |  |
 |  [hasMsResolution](./hasmsresolution/) | Checks if series time field has ms resolution |
@@ -381,7 +389,6 @@ A library containing most of the core functionality and data types used in Grafa
 |  [onUpdateDatasourceSecureJsonDataOptionSelect](./onupdatedatasourcesecurejsondataoptionselect/) |  |
 |  [selectOverrideProcessor](./selectoverrideprocessor/) |  |
 |  [setLocale](./setlocale/) |  |
-|  [setTimeZoneResolver](./settimezoneresolver/) |  |
 |  [standardEditorsRegistry](./standardeditorsregistry/) |  |
 |  [standardFieldConfigEditorRegistry](./standardfieldconfigeditorregistry/) |  |
 |  [standardTransformers](./standardtransformers/) |  |
@@ -390,8 +397,10 @@ A library containing most of the core functionality and data types used in Grafa
 |  [textUtil](./textutil/) |  |
 |  [thresholdsOverrideProcessor](./thresholdsoverrideprocessor/) |  |
 |  [TIME\_FORMAT](./time_format/) |  |
-|  [timeZoneAbbrevation](./timezoneabbrevation/) |  |
-|  [toDataFrame](./todataframe/) |  |
+|  [TIME\_SERIES\_TIME\_FIELD\_NAME](./time_series_time_field_name/) |  |
+|  [TIME\_SERIES\_VALUE\_FIELD\_NAME](./time_series_value_field_name/) |  |
+|  [timeZoneAbbrevation](./timezoneabbrevation/) | Helper function to return only the time zone abbreviation for a given date and time value. If no options are supplied, then default values are used. For more details please see [DateTimeOptions](./data/datetimeoptions.md)<!-- -->. |
+|  [timeZoneFormatUserFriendly](./timezoneformatuserfriendly/) |  |
 |  [toDuration](./toduration/) |  |
 |  [toLegacyResponseData](./tolegacyresponsedata/) |  |
 |  [toPascalCase](./topascalcase/) |  |
@@ -405,6 +414,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [valueMappingsOverrideProcessor](./valuemappingsoverrideprocessor/) |  |
 |  [VAR\_CALC](./var_calc/) |  |
 |  [VAR\_CELL\_PREFIX](./var_cell_prefix/) |  |
+|  [VAR\_FIELD\_LABELS](./var_field_labels/) |  |
 |  [VAR\_FIELD\_NAME](./var_field_name/) |  |
 |  [VAR\_SERIES\_NAME](./var_series_name/) |  |
 
@@ -412,15 +422,14 @@ A library containing most of the core functionality and data types used in Grafa
 
 |  Type Alias | Description |
 |  --- | --- |
+|  [BinaryOperation](./binaryoperation/) |  |
 |  [Color](./color/) |  |
 |  [ColorDefinition](./colordefinition/) |  |
 |  [DataQueryResponseData](./dataqueryresponsedata/) |  |
 |  [DataSourceOptionsType](./datasourceoptionstype/) |  |
 |  [DataSourceQueryType](./datasourcequerytype/) |  |
 |  [DataTransformer](./datatransformer/) | Function that transform data frames (AKA transformer) |
-|  [DateTimeFormatter](./datetimeformatter/) |  |
 |  [DateTimeInput](./datetimeinput/) |  |
-|  [DateTimeParser](./datetimeparser/) |  |
 |  [DecimalCount](./decimalcount/) |  |
 |  [Dimensions](./dimensions/) |  |
 |  [DisplayProcessor](./displayprocessor/) |  |
@@ -440,6 +449,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [PanelMigrationHandler](./panelmigrationhandler/) | Called when a panel is first loaded with current panel model |
 |  [PanelOptionEditorsRegistry](./paneloptioneditorsregistry/) |  |
 |  [PanelTypeChangedHandler](./paneltypechangedhandler/) | Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type. |
+|  [PreferredVisualisationType](./preferredvisualisationtype/) |  |
 |  [ScaleCalculator](./scalecalculator/) |  |
 |  [Subtract](./subtract/) |  |
 |  [TimeFragment](./timefragment/) |  |
@@ -447,8 +457,17 @@ A library containing most of the core functionality and data types used in Grafa
 |  [TimeSeriesValue](./timeseriesvalue/) |  |
 |  [TimeZone](./timezone/) |  |
 |  [TimeZoneBrowser](./timezonebrowser/) |  |
-|  [TimeZoneResolver](./timezoneresolver/) |  |
+|  [TimeZoneResolver](./timezoneresolver/) | The type to describe the time zone resolver function that will be used to access the default time zone of a user. |
 |  [TimeZoneUtc](./timezoneutc/) |  |
+|  [Trace](./trace/) |  |
+|  [TraceData](./tracedata/) |  |
+|  [TraceKeyValuePair](./tracekeyvaluepair/) | All timestamps are in microseconds |
+|  [TraceLink](./tracelink/) |  |
+|  [TraceLog](./tracelog/) |  |
+|  [TraceProcess](./traceprocess/) |  |
+|  [TraceSpan](./tracespan/) |  |
+|  [TraceSpanData](./tracespandata/) |  |
+|  [TraceSpanReference](./tracespanreference/) |  |
 |  [UrlQueryMap](./urlquerymap/) | Type to represent the values parsed from the query string. |
 |  [UrlQueryValue](./urlqueryvalue/) | Type to represent the value of a single query variable. |
 |  [ValueConverter](./valueconverter/) |  |

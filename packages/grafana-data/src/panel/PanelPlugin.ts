@@ -29,7 +29,7 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   standardOptions?: FieldConfigProperty[];
 
   /**
-   * Object specyfing standard option properties default values
+   * Object specifying standard option properties default values
    *
    * @example
    * ```typescript
@@ -158,11 +158,14 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     return this._fieldConfigRegistry;
   }
 
-  get optionEditors() {
-    if (!this._optionEditors && this.registerOptionEditors) {
+  get optionEditors(): PanelOptionEditorsRegistry {
+    if (!this._optionEditors) {
       const builder = new PanelOptionsEditorBuilder<TOptions>();
-      this.registerOptionEditors(builder);
       this._optionEditors = builder.getRegistry();
+
+      if (this.registerOptionEditors) {
+        this.registerOptionEditors(builder);
+      }
     }
 
     return this._optionEditors;
@@ -243,7 +246,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
   }
 
   /**
-   * Allows specyfing which standard field config options panel should use and defining default values
+   * Allows specifying which standard field config options panel should use and defining default values
    *
    * @example
    * ```typescript
@@ -314,7 +317,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
 
         for (const customProp of builder.getRegistry().list()) {
           customProp.isCustom = true;
-          customProp.category = ['Custom field options'].concat(customProp.category || []);
+          customProp.category = ['Custom options'].concat(customProp.category || []);
           // need to do something to make the custom items not conflict with standard ones
           // problem is id (registry index) is used as property path
           // so sort of need a property path on the FieldPropertyEditorItem

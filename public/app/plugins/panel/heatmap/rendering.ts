@@ -340,6 +340,7 @@ export class HeatmapRenderer {
 
   addYAxisFromBuckets() {
     const tsBuckets = this.data.tsBuckets;
+    let ticks = Math.ceil(this.chartHeight / DEFAULT_Y_TICK_SIZE_PX);
 
     this.scope.yScale = this.yScale = d3
       .scaleLinear()
@@ -366,11 +367,15 @@ export class HeatmapRenderer {
 
     const yAxis = d3
       .axisLeft(this.yScale)
-      .tickValues(tickValues)
       .tickFormat(tickFormatter)
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
+    if (tickValues && tickValues.length <= ticks) {
+      yAxis.tickValues(tickValues);
+    } else {
+      yAxis.ticks(ticks);
+    }
 
     this.heatmap
       .append('g')

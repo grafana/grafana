@@ -5,9 +5,13 @@ labels: 'type: bug'
 ---
 
 <!--
-Please use this template while reporting a bug and provide as much info as possible.
-Questions should be posted to https://community.grafana.com
-Use query inspector to troubleshoot issues: https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630
+Please use this template to create your bug report. By providing as much info as possible you help us understand the issue, reproduce it and resolve it for you quicker. Therefor take a couple of extra minutes to make sure you have provided all info needed.
+
+PROTIP: record your screen and attach it as a gif to showcase the issue.
+
+* Questions should be posted to: https://community.grafana.com
+* Use query inspector to troubleshoot issues: https://bit.ly/2XNF6YS
+* How to record and attach gif: https://bit.ly/2Mi8T6K
 -->
 
 **What happened**:

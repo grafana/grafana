@@ -3,6 +3,7 @@ import {
   Field,
   formattedValueToString,
   getDisplayProcessor,
+  getFieldDisplayName,
   TimeZone,
   dateTimeFormat,
 } from '@grafana/data';
@@ -91,7 +92,7 @@ export const getMultiSeriesGraphHoverInfo = (
       datapointIndex: hoverIndex,
       seriesIndex: i,
       color: disp.color,
-      label: field.name,
+      label: getFieldDisplayName(field),
       time: time.display ? formattedValueToString(time.display(pointTime)) : pointTime,
     });
   }
@@ -102,8 +103,12 @@ export const getMultiSeriesGraphHoverInfo = (
   };
 };
 
-export const graphTimeFormatter = (timeZone?: TimeZone) => (epoch: number, format: string) =>
-  dateTimeFormat(epoch, { format, timeZone });
+export const graphTickFormatter = (epoch: number, axis: any) => {
+  return dateTimeFormat(epoch, {
+    format: axis?.options?.timeformat,
+    timeZone: axis?.options?.timezone,
+  });
+};
 
 export const graphTimeFormat = (ticks: number | null, min: number | null, max: number | null): string => {
   if (min && max && ticks) {

@@ -1,3 +1,5 @@
+// Package simplejson provides a wrapper for arbitrary JSON objects that adds methods to access properties.
+// Use of this package in place of types and the standard library's encoding/json package is strongly discouraged.
 package simplejson
 
 import (
@@ -50,7 +52,7 @@ func New() *Json {
 	}
 }
 
-// New returns a pointer to a new, empty `Json` object
+// NewFromAny returns a pointer to a new `Json` object with provided data.
 func NewFromAny(data interface{}) *Json {
 	return &Json{data: data}
 }

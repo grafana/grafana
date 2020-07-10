@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -20,8 +22,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -35,6 +35,8 @@ var (
 	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
 	defaultAllowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
 )
+
+const azureMonitorAPIVersion = "2018-01-01"
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
@@ -55,7 +57,6 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		if err != nil {
 			return nil, err
 		}
-		// azlog.Debug("AzureMonitor", "Response", resp)
 
 		err = e.parseResponse(queryRes, resp, query)
 		if err != nil {
@@ -81,31 +82,38 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 	for _, query := range queries {
 		var target string
+		queryBytes, err := query.Model.Encode()
+		if err != nil {
+			return nil, fmt.Errorf("failed to re-encode the Azure Monitor query into JSON: %w", err)
+		}
 
-		azureMonitorTarget := query.Model.Get("azureMonitor").MustMap()
+		queryJSONModel := azureMonitorJSONQuery{}
+		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
+		}
+
+		azJSONModel := queryJSONModel.AzureMonitor
 
 		urlComponents := map[string]string{}
-		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
-		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorTarget["resourceGroup"])
-		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorTarget["metricDefinition"])
-		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorTarget["resourceName"])
+		urlComponents["subscription"] = queryJSONModel.Subscription
+		urlComponents["resourceGroup"] = azJSONModel.ResourceGroup
+		urlComponents["metricDefinition"] = azJSONModel.MetricDefinition
+		urlComponents["resourceName"] = azJSONModel.ResourceName
 
 		ub := urlBuilder{
 			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
-			Subscription:        urlComponents["subscription"],
-			ResourceGroup:       urlComponents["resourceGroup"],
-			MetricDefinition:    urlComponents["metricDefinition"],
-			ResourceName:        urlComponents["resourceName"],
+			Subscription:        queryJSONModel.Subscription,
+			ResourceGroup:       queryJSONModel.AzureMonitor.ResourceGroup,
+			MetricDefinition:    azJSONModel.MetricDefinition,
+			ResourceName:        azJSONModel.ResourceName,
 		}
 		azureURL := ub.Build()
 
-		alias := ""
-		if val, ok := azureMonitorTarget["alias"]; ok {
-			alias = fmt.Sprintf("%v", val)
-		}
+		alias := azJSONModel.Alias
 
-		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
-		timeGrains := azureMonitorTarget["allowedTimeGrainsMs"]
+		timeGrain := azJSONModel.TimeGrain
+		timeGrains := azJSONModel.AllowedTimeGrainsMs
 		if timeGrain == "auto" {
 			timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {
@@ -114,18 +122,33 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		}
 
 		params := url.Values{}
-		params.Add("api-version", "2018-01-01")
+		params.Add("api-version", azureMonitorAPIVersion)
 		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
-		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
-		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
-		params.Add("metricnamespace", fmt.Sprintf("%v", azureMonitorTarget["metricNamespace"]))
+		params.Add("aggregation", azJSONModel.Aggregation)
+		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
+		params.Add("metricnamespace", azJSONModel.MetricNamespace)
 
-		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimension"]))
-		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))
-		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
-			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
-			params.Add("top", fmt.Sprintf("%v", azureMonitorTarget["top"]))
+		// old model
+		dimension := strings.TrimSpace(azJSONModel.Dimension)
+		dimensionFilter := strings.TrimSpace(azJSONModel.DimensionFilter)
+
+		dimSB := strings.Builder{}
+
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionsFilters) == 0 {
+			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+		} else {
+			for i, filter := range azJSONModel.DimensionsFilters {
+				dimSB.WriteString(filter.String())
+				if i != len(azJSONModel.DimensionsFilters)-1 {
+					dimSB.WriteString(" and ")
+				}
+			}
+		}
+
+		if dimSB.String() != "" {
+			params.Add("$filter", dimSB.String())
+			params.Add("top", azJSONModel.Top)
 		}
 
 		target = params.Encode()
@@ -148,7 +171,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, AzureMonitorResponse, error) {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+	queryResult := &tsdb.QueryResult{RefId: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -158,7 +181,6 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
-	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
 	span.SetTag("target", query.Target)
@@ -212,7 +234,10 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -251,25 +276,36 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data AzureMonitorResponse, query *AzureMonitorQuery) error {
-	if len(data.Value) == 0 {
+func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr AzureMonitorResponse, query *AzureMonitorQuery) error {
+	if len(amr.Value) == 0 {
 		return nil
 	}
 
-	for _, series := range data.Value[0].Timeseries {
-		points := []tsdb.TimePoint{}
-
-		metadataName := ""
-		metadataValue := ""
-		if len(series.Metadatavalues) > 0 {
-			metadataName = series.Metadatavalues[0].Name.LocalizedValue
-			metadataValue = series.Metadatavalues[0].Value
+	frames := data.Frames{}
+	for _, series := range amr.Value[0].Timeseries {
+		labels := data.Labels{}
+		for _, md := range series.Metadatavalues {
+			labels[md.Name.LocalizedValue] = md.Value
 		}
-		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue, data.Namespace, data.Value[0].ID)
 
-		for _, point := range series.Data {
+		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame.RefID = query.RefID
+		dataField := frame.Fields[1]
+		dataField.Name = amr.Value[0].Name.LocalizedValue
+		dataField.Labels = labels
+		dataField.SetConfig(&data.FieldConfig{
+			Unit: amr.Value[0].Unit,
+		})
+		if query.Alias != "" {
+			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+		}
+
+		requestedAgg := query.Params.Get("aggregation")
+
+		for i, point := range series.Data {
 			var value float64
-			switch query.Params.Get("aggregation") {
+			switch requestedAgg {
 			case "Average":
 				value = point.Average
 			case "Total":
@@ -283,32 +319,35 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 			default:
 				value = point.Count
 			}
-			points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.TimeStamp).Unix())*1000))
+
+			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   metricName,
-			Points: points,
-		})
+		frames = append(frames, frame)
 	}
-	queryRes.Meta.Set("unit", data.Value[0].Unit)
+
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
 	return nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name
 // Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string) string {
-	if alias == "" {
-		if len(metadataName) > 0 {
-			return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
-		}
-		return fmt.Sprintf("%s.%s", resourceName, metricName)
-	}
-
+func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string, labels data.Labels) string {
 	startIndex := strings.Index(seriesID, "/resourceGroups/") + 16
 	endIndex := strings.Index(seriesID, "/providers")
 	resourceGroup := seriesID[startIndex:endIndex]
+
+	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
+	lowerLabels := data.Labels{}
+	for k, v := range labels {
+		lowerLabels[strings.ToLower(k)] = v
+	}
+	keys := make([]string, 0, len(labels))
+	for k := range lowerLabels {
+		keys = append(keys, k)
+	}
+	keys = sort.StringSlice(keys)
 
 	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
@@ -332,13 +371,16 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		}
 
 		if metaPartName == "dimensionname" {
-			return []byte(metadataName)
+			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
-			return []byte(metadataValue)
+			return []byte(lowerLabels[keys[0]])
 		}
 
+		if v, ok := lowerLabels[metaPartName]; ok {
+			return []byte(v)
+		}
 		return in
 	})
 

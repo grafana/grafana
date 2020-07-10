@@ -22,7 +22,7 @@ import { addVariable, removeVariable, storeNewVariable } from '../state/sharedRe
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
-    dispatch(variableEditorMounted({ name: getVariable(identifier.id!).name }));
+    dispatch(variableEditorMounted({ name: getVariable(identifier.id).name }));
   };
 };
 
@@ -37,7 +37,7 @@ export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResu
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id!, getState());
+    const variableInState = getVariable(identifier.id, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(switchToListMode());
   };

@@ -3,19 +3,20 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var datasourcesLogger = log.New("datasources")
 
 func GetDataSources(c *models.ReqContext) Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId}
@@ -129,12 +130,12 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 	return Success("Data source deleted")
 }
 
-func validateURL(u string) Response {
+func validateURL(tp string, u string) Response {
 	if u != "" {
-		_, err := url.Parse(u)
-		if err != nil {
-			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), errutil.Wrapf(err,
-				"invalid data source URL %q", u))
+		if _, err := datasource.ValidateURL(tp, u); err != nil {
+			datasourcesLogger.Error("Received invalid data source URL as part of data source command",
+				"url", u)
+			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
 		}
 	}
 
@@ -142,8 +143,9 @@ func validateURL(u string) Response {
 }
 
 func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
+	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
-	if resp := validateURL(cmd.Url); resp != nil {
+	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
 	}
 
@@ -165,9 +167,10 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 }
 
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
+	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
-	if resp := validateURL(cmd.Url); resp != nil {
+	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
 	}
 
@@ -222,7 +225,6 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 
 	secureJSONData := ds.SecureJsonData.Decrypt()
 	for k, v := range secureJSONData {
-
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
 		}
@@ -345,28 +347,25 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 
 // CheckDatasourceHealth sends a health check request to the plugin datasource
 // /api/datasource/:id/health
-func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
+func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) Response {
 	datasourceID := c.ParamsInt64("id")
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if err == models.ErrDataSourceAccessDenied {
-			c.JsonApiErr(403, "Access denied to datasource", err)
-			return
+			return Error(403, "Access denied to datasource", err)
 		}
-		c.JsonApiErr(500, "Unable to load datasource metadata", err)
-		return
+		return Error(500, "Unable to load datasource metadata", err)
 	}
 
 	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
 	if !ok {
-		c.JsonApiErr(500, "Unable to find datasource plugin", err)
-		return
+		return Error(500, "Unable to find datasource plugin", err)
 	}
 
 	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
 	if err != nil {
-		c.JsonApiErr(500, "Unable to get datasource model", err)
+		return Error(500, "Unable to get datasource model", err)
 	}
 	pCtx := backend.PluginContext{
 		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
@@ -377,25 +376,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
-		if err == backendplugin.ErrPluginNotRegistered {
-			c.JsonApiErr(404, "Plugin not found", err)
-			return
-		}
-
-		// Return status unknown instead?
-		if err == backendplugin.ErrDiagnosticsNotSupported {
-			c.JsonApiErr(404, "Health check not implemented", err)
-			return
-		}
-
-		// Return status unknown or error instead?
-		if err == backendplugin.ErrHealthCheckFailed {
-			c.JsonApiErr(500, "Plugin health check failed", err)
-			return
-		}
-
-		c.JsonApiErr(500, "Plugin healthcheck returned an unknown error", err)
-		return
+		return translatePluginRequestErrorToAPIError(err)
 	}
 
 	payload := map[string]interface{}{
@@ -408,17 +389,15 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			c.JsonApiErr(500, "Failed to unmarshal detailed response from backend plugin", err)
-			return
+			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
-	if resp.Status != backendplugin.HealthStatusOk {
-		c.JSON(503, payload)
-		return
+	if resp.Status != backend.HealthStatusOk {
+		return JSON(503, payload)
 	}
 
-	c.JSON(200, payload)
+	return JSON(200, payload)
 }

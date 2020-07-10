@@ -1,7 +1,7 @@
-VERSION="dev"
-TAG="grafana/build-container"
-USER_ID=$(shell id -u)
-GROUP_ID=$(shell id -g)
+VERSION = dev
+TAG = grafana/build-container
+USER_ID = $(shell id -u)
+GROUP_ID = $(shell id -g)
 
 all: build deploy
 
@@ -41,7 +41,7 @@ run-with-local-source-copy:
 	docker exec -ti grafana-build bash
 
 update-source:
-	docker cp "${GOPATH}/src/github.com/grafana/grafana" grafana-build:/go/src/github.com/grafana/	
+	docker cp "${GOPATH}/src/github.com/grafana/grafana" grafana-build:/go/src/github.com/grafana/
 
 attach:
 	docker exec -ti grafana-build bash

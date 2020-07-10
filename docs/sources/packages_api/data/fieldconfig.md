@@ -30,6 +30,7 @@ import { FieldConfig } from '@grafana/data';
 |  [color](#color-property) | <code>FieldColor</code> |  |
 |  [custom](#custom-property) | <code>TOptions</code> |  |
 |  [decimals](#decimals-property) | <code>number &#124; null</code> |  |
+|  [displayName](#displayname-property) | <code>string</code> |  |
 |  [filterable](#filterable-property) | <code>boolean</code> |  |
 |  [links](#links-property) | <code>DataLink[]</code> |  |
 |  [mappings](#mappings-property) | <code>ValueMapping[]</code> |  |
@@ -37,9 +38,7 @@ import { FieldConfig } from '@grafana/data';
 |  [min](#min-property) | <code>number &#124; null</code> |  |
 |  [noValue](#novalue-property) | <code>string</code> |  |
 |  [nullValueMode](#nullvaluemode-property) | <code>NullValueMode</code> |  |
-|  [scopedVars](#scopedvars-property) | <code>ScopedVars</code> |  |
 |  [thresholds](#thresholds-property) | <code>ThresholdsConfig</code> |  |
-|  [title](#title-property) | <code>string</code> |  |
 |  [unit](#unit-property) | <code>string</code> |  |
 
 ### color property
@@ -64,6 +63,14 @@ custom?: TOptions;
 
 ```typescript
 decimals?: number | null;
+```
+
+### displayName property
+
+<b>Signature</b>
+
+```typescript
+displayName?: string;
 ```
 
 ### filterable property
@@ -122,28 +129,12 @@ noValue?: string;
 nullValueMode?: NullValueMode;
 ```
 
-### scopedVars property
-
-<b>Signature</b>
-
-```typescript
-scopedVars?: ScopedVars;
-```
-
 ### thresholds property
 
 <b>Signature</b>
 
 ```typescript
 thresholds?: ThresholdsConfig;
-```
-
-### title property
-
-<b>Signature</b>
-
-```typescript
-title?: string;
 ```
 
 ### unit property

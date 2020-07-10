@@ -143,6 +143,16 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
+  addStringArray<TSettings>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string[]>
+  ) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('strings').editor as any,
+    });
+  }
+
   addSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
     config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
   ) {
@@ -178,6 +188,15 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
       ...config,
       id: config.path,
       editor: standardEditorsRegistry.get('color').editor as any,
+      settings: config.settings || {},
+    });
+  }
+
+  addTimeZonePicker<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('timezone').editor as any,
       settings: config.settings || {},
     });
   }

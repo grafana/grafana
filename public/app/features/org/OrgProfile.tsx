@@ -1,43 +1,28 @@
-import React, { ChangeEvent, FC } from 'react';
-import { LegacyForms } from '@grafana/ui';
-const { Input } = LegacyForms;
+import React, { FC } from 'react';
+import { Input, Field, FieldSet, Button, Form } from '@grafana/ui';
 
 export interface Props {
   orgName: string;
-  onSubmit: () => void;
-  onOrgNameChange: (orgName: string) => void;
+  onSubmit: (orgName: string) => void;
 }
 
-const OrgProfile: FC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
+interface FormDTO {
+  orgName: string;
+}
+
+const OrgProfile: FC<Props> = ({ onSubmit, orgName }) => {
   return (
-    <div>
-      <h3 className="page-sub-heading">Organization profile</h3>
-      <form
-        name="orgForm"
-        className="gf-form-group"
-        onSubmit={event => {
-          event.preventDefault();
-          onSubmit();
-        }}
-      >
-        <div className="gf-form-inline">
-          <div className="gf-form max-width-28">
-            <span className="gf-form-label">Organization name</span>
-            <Input
-              className="gf-form-input"
-              type="text"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => onOrgNameChange(event.target.value)}
-              value={orgName}
-            />
-          </div>
-        </div>
-        <div className="gf-form-button-row">
-          <button type="submit" className="btn btn-primary">
-            Save
-          </button>
-        </div>
-      </form>
-    </div>
+    <Form defaultValues={{ orgName }} onSubmit={({ orgName }: FormDTO) => onSubmit(orgName)}>
+      {({ register }) => (
+        <FieldSet label="Organization profile">
+          <Field label="Organization name">
+            <Input name="orgName" type="text" ref={register({ required: true })} />
+          </Field>
+
+          <Button type="submit">Update organization name</Button>
+        </FieldSet>
+      )}
+    </Form>
   );
 };
 

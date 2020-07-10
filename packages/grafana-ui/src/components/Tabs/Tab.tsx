@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { HTMLProps } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,13 +8,48 @@ import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
 import { Counter } from './Counter';
 
-export interface TabProps {
+export interface TabProps extends HTMLProps<HTMLLIElement> {
   label: string;
   active?: boolean;
+  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
+  href?: string;
   icon?: IconName;
-  onChangeTab: () => void;
-  counter?: number;
+  onChangeTab: (event?: React.MouseEvent<HTMLLIElement>) => void;
+  /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
+  counter?: number | null;
 }
+
+export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
+  ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
+    const theme = useTheme();
+    const tabsStyles = getTabStyles(theme);
+    const content = () => (
+      <>
+        {icon && <Icon name={icon} />}
+        {label}
+        {typeof counter === 'number' && <Counter value={counter} />}
+      </>
+    );
+
+    return (
+      <li
+        {...otherProps}
+        className={cx(!href && tabsStyles.padding, tabsStyles.tabItem, active && tabsStyles.activeStyle)}
+        onClick={onChangeTab}
+        aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+        ref={ref}
+      >
+        {href ? (
+          <a href={href} className={tabsStyles.padding}>
+            {content()}
+          </a>
+        ) : (
+          <>{content()}</>
+        )}
+      </li>
+    );
+  }
+);
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = theme.colors;
@@ -22,7 +57,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabItem: css`
       list-style: none;
-      padding: 11px 15px 9px;
       margin-right: ${theme.spacing.md};
       position: relative;
       display: block;
@@ -36,10 +70,17 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         margin-right: ${theme.spacing.sm};
       }
 
+      a {
+        display: block;
+        height: 100%;
+      }
       &:hover,
       &:focus {
         color: ${colors.linkHover};
       }
+    `,
+    padding: css`
+      padding: 11px 15px 9px;
     `,
     activeStyle: css`
       label: activeTabStyle;
@@ -61,20 +102,3 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, counter }) => {
-  const theme = useTheme();
-  const tabsStyles = getTabStyles(theme);
-
-  return (
-    <li
-      className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
-      onClick={onChangeTab}
-      aria-label={selectors.components.Tab.title(label)}
-    >
-      {icon && <Icon name={icon} />}
-      {label}
-      {typeof counter === 'number' && <Counter value={counter} />}
-    </li>
-  );
-};

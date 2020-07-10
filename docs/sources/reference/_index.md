@@ -4,4 +4,6 @@ description: Grafana docs reference
 type: docs
 ---
 
-# Documentation
+# References
+
+This section contains reference pages for Grafana features.

@@ -24,6 +24,7 @@ import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { DashboardModel } from '../state/DashboardModel';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
@@ -35,7 +36,7 @@ interface Props {
   onMoveQuery: (query: DataQuery, direction: number) => void;
   onChange: (query: DataQuery) => void;
   dataSourceValue: string | null;
-  inMixedMode: boolean;
+  inMixedMode?: boolean;
 }
 
 interface State {
@@ -55,7 +56,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     datasource: null,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
-    data: null,
+    data: undefined,
     isOpen: true,
   };
 
@@ -88,7 +89,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   async loadDatasource() {
     const { query, panel } = this.props;
     const dataSourceSrv = getDatasourceSrv();
-    const datasource = await dataSourceSrv.get(query.datasource || panel.datasource);
+    let datasource;
+
+    try {
+      datasource = await dataSourceSrv.get(query.datasource || panel.datasource);
+    } catch (error) {
+      datasource = await dataSourceSrv.get();
+    }
 
     this.setState({
       datasource,
@@ -156,15 +163,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { query, onChange } = this.props;
     const { datasource, data } = this.state;
 
-    if (datasource.components.QueryCtrl) {
+    if (datasource?.components?.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (datasource.components.QueryEditor) {
+    if (datasource?.components?.QueryEditor) {
       const QueryEditor = datasource.components.QueryEditor;
 
       return (
         <QueryEditor
+          key={datasource?.name}
           query={query}
           datasource={datasource}
           onChange={onChange}
@@ -181,7 +189,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     e.stopPropagation();
     if (this.angularScope && this.angularScope.toggleEditorMode) {
       this.angularScope.toggleEditorMode();
-      this.angularQueryEditor.digest();
+      this.angularQueryEditor?.digest();
       if (!isOpen) {
         openRow();
       }
@@ -205,7 +213,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
-    if (datasource.getQueryDisplayText) {
+    if (datasource?.getQueryDisplayText) {
       return datasource.getQueryDisplayText(this.props.query);
     }
 
@@ -253,11 +261,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { query, inMixedMode } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
+
     return (
       <QueryEditorRowTitle
         query={query}
         inMixedMode={inMixedMode}
-        datasource={datasource}
+        datasource={datasource!}
         disabled={isDisabled}
         onClick={e => this.onToggleEditMode(e, props)}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
@@ -282,18 +291,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const editor = this.renderPluginEditor();
 
     return (
-      <QueryOperationRow title={this.renderTitle} actions={this.renderActions} onOpen={this.onOpen}>
-        <div className={rowClasses}>
-          <ErrorBoundaryAlert>{editor}</ErrorBoundaryAlert>
-        </div>
-      </QueryOperationRow>
+      <div aria-label={selectors.components.QueryEditorRows.rows}>
+        <QueryOperationRow title={this.renderTitle} actions={this.renderActions} onOpen={this.onOpen}>
+          <div className={rowClasses}>
+            <ErrorBoundaryAlert>{editor}</ErrorBoundaryAlert>
+          </div>
+        </QueryOperationRow>
+      </div>
     );
   }
 }
 
 // To avoid sending duplicate events for each row we have this global cached object here
 // So we can check if we already emitted this legacy data event
-let globalLastPanelDataCache: PanelData = null;
+let globalLastPanelDataCache: PanelData | null = null;
 
 function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, editor: AngularComponent) {
   if (data === globalLastPanelDataCache) {
@@ -321,7 +332,7 @@ export interface AngularQueryComponentScope {
   events: Emitter;
   refresh: () => void;
   render: () => void;
-  datasource: DataSourceApi;
+  datasource: DataSourceApi | null;
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
   range: TimeRange;

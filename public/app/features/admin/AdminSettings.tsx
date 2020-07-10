@@ -57,7 +57,7 @@ export class AdminSettings extends React.PureComponent<Props, State> {
                   {Object.entries(sectionSettings).map(([settingName, settingValue], j) => (
                     <tr key={`property-${j}`}>
                       <td style={{ paddingLeft: '25px' }}>{settingName}</td>
-                      <td>{settingValue}</td>
+                      <td style={{ whiteSpace: 'break-spaces' }}>{settingValue}</td>
                     </tr>
                   ))}
                 </React.Fragment>

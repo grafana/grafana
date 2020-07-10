@@ -1,9 +1,9 @@
 +++
-title = "Contribute"
-description = "Contribute"
+title = "Developers"
 type = "docs"
-[menu.docs]
-name = "Contribute"
-identifier = "contribute"
-weight = 20
+aliases = ["/docs/plugins/developing/"]
 +++
+
+# Developers
+
+This section of the documentation contains pages with resources for Grafana developers.

@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { IScope } from 'angular';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
 import config from 'app/core/config';
+import { CoreEvents } from 'app/types';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -25,6 +26,7 @@ export class AlertNotificationEditCtrl {
       severity: 'critical',
       uploadImage: true,
     },
+    secureSettings: {},
     isDefault: false,
   };
   getFrequencySuggestion: any;
@@ -71,6 +73,7 @@ export class AlertNotificationEditCtrl {
               this.navModel.breadcrumbs.push({ text: result.name });
               this.navModel.node = { text: result.name };
               result.settings = _.defaults(result.settings, this.defaults.settings);
+              result.secureSettings = _.defaults(result.secureSettings, this.defaults.secureSettings);
               return result;
             });
         })
@@ -118,6 +121,20 @@ export class AlertNotificationEditCtrl {
   }
 
   deleteNotification() {
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Delete',
+      text: 'Do you want to delete this notification channel?',
+      text2: `Deleting this notification channel will not delete from alerts any references to it`,
+      icon: 'trash-alt',
+      confirmText: 'Delete',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.deleteNotificationConfirmed();
+      },
+    });
+  }
+
+  deleteNotificationConfirmed() {
     promiseToDigest(this.$scope)(
       getBackendSrv()
         .delete(`/api/alert-notifications/${this.model.id}`)
@@ -134,6 +151,7 @@ export class AlertNotificationEditCtrl {
 
   typeChanged() {
     this.model.settings = _.defaults({}, this.defaults.settings);
+    this.model.secureSettings = _.defaults({}, this.defaults.secureSettings);
     this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
   }
 
@@ -142,12 +160,17 @@ export class AlertNotificationEditCtrl {
       return;
     }
 
-    const payload = {
+    const payload: any = {
       name: this.model.name,
       type: this.model.type,
       frequency: this.model.frequency,
       settings: this.model.settings,
+      secureSettings: this.model.secureSettings,
     };
+
+    if (this.model.id) {
+      payload.id = this.model.id;
+    }
 
     promiseToDigest(this.$scope)(getBackendSrv().post(`/api/alert-notifications/test`, payload));
   }

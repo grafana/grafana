@@ -17,6 +17,7 @@ interface ValuePickerProps<T> {
   variant?: ButtonVariant;
   size?: ComponentSize;
   isFullWidth?: boolean;
+  menuPlacement?: 'auto' | 'bottom' | 'top';
 }
 
 export function ValuePicker<T>({
@@ -27,6 +28,7 @@ export function ValuePicker<T>({
   variant,
   size = 'sm',
   isFullWidth = true,
+  menuPlacement,
 }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
 
@@ -50,6 +52,7 @@ export function ValuePicker<T>({
             setIsPicking(false);
             onChange(value);
           }}
+          menuPlacement={menuPlacement}
         />
       )}
     </>

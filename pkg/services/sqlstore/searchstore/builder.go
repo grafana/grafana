@@ -113,13 +113,14 @@ func (b *Builder) applyFilters() (ordering string) {
 		b.params = append(b.params, groupParams...)
 	}
 
-	if len(orders) > 0 {
-		orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orders, ", "))
-		b.sql.WriteString(orderBy)
-
-		order := strings.Join(orderJoins, "")
-		order += orderBy
-		return order
+	if len(orders) < 1 {
+		orders = append(orders, TitleSorter{}.OrderBy())
 	}
-	return " ORDER BY dashboard.id"
+
+	orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orders, ", "))
+	b.sql.WriteString(orderBy)
+
+	order := strings.Join(orderJoins, "")
+	order += orderBy
+	return order
 }

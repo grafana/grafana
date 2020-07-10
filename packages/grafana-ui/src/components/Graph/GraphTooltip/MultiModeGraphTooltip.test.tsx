@@ -60,9 +60,9 @@ describe('MultiModeGraphTooltip', () => {
       // We rendered two series rows
       const rows = container.find('SeriesTableRow');
 
-      // We expect A-series(1st row) to be higlighted
+      // We expect A-series(1st row) to be highlighted
       expect(rows.get(0).props.isActive).toBeTruthy();
-      // We expect B-series(2nd row) not to be higlighted
+      // We expect B-series(2nd row) not to be highlighted
       expect(rows.get(1).props.isActive).toBeFalsy();
     });
 
@@ -85,9 +85,9 @@ describe('MultiModeGraphTooltip', () => {
       // We rendered two series rows
       const rows = container.find('SeriesTableRow');
 
-      // We expect A-series(1st row) not to be higlighted
+      // We expect A-series(1st row) not to be highlighted
       expect(rows.get(0).props.isActive).toBeFalsy();
-      // We expect B-series(2nd row) not to be higlighted
+      // We expect B-series(2nd row) not to be highlighted
       expect(rows.get(1).props.isActive).toBeFalsy();
     });
   });

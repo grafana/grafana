@@ -1,38 +1,45 @@
 import React, { FC } from 'react';
 import { Cell } from 'react-table';
 import { Field } from '@grafana/data';
+
 import { getTextAlign } from './utils';
 import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
+import { FilterableTableCell } from './FilterableTableCell';
 
-interface Props {
+export interface Props {
   cell: Cell;
   field: Field;
   tableStyles: TableStyles;
-  onCellClick?: TableFilterActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
-export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) => {
+export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdded }) => {
   const filterable = field.config.filterable;
   const cellProps = cell.getCellProps();
-
-  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
-
-  if (filterable && onCellClick) {
-    if (cellProps.style) {
-      cellProps.style.cursor = 'pointer';
-    }
-
-    onClick = () => onCellClick(cell.column.Header as string, cell.value);
-  }
 
   if (cellProps.style) {
     cellProps.style.textAlign = getTextAlign(field);
   }
 
+  if (filterable && onCellFilterAdded) {
+    return (
+      <FilterableTableCell
+        cell={cell}
+        field={field}
+        tableStyles={tableStyles}
+        onCellFilterAdded={onCellFilterAdded}
+        cellProps={cellProps}
+      />
+    );
+  }
+
   return (
-    <div {...cellProps} onClick={onClick} className={tableStyles.tableCellWrapper}>
-      {cell.render('Cell', { field, tableStyles })}
+    <div {...cellProps} className={tableStyles.tableCellWrapper}>
+      {renderCell(cell, field, tableStyles)}
     </div>
   );
 };
+
+export const renderCell = (cell: Cell, field: Field, tableStyles: TableStyles) =>
+  cell.render('Cell', { field, tableStyles });

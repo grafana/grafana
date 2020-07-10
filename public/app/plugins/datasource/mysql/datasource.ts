@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MysqlQueryForInterpolation } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/utils';
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class MysqlDatasource {
   id: any;
@@ -56,6 +56,7 @@ export class MysqlDatasource {
           ...query,
           datasource: this.name,
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
+          rawQuery: true,
         };
         return expandedQuery;
       });
@@ -189,7 +190,7 @@ export class MysqlDatasource {
         return { status: 'success', message: 'Database Connection OK' };
       })
       .catch((err: any) => {
-        console.log(err);
+        console.error(err);
         if (err.data && err.data.message) {
           return { status: 'error', message: err.data.message };
         } else {

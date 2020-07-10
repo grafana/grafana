@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, PureComponent } from 'react';
 
-import { TextBoxVariableModel } from '../../templating/types';
+import { TextBoxVariableModel } from '../types';
 import { toVariablePayload } from '../state/types';
 import { dispatch } from '../../../store/store';
 import { variableAdapters } from '../adapters';

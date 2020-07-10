@@ -25,17 +25,18 @@ import {
   applyFieldOverrides,
   DataConfigSource,
   TimeZone,
+  LoadingState,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: string | DataSourceApi<TQuery, TOptions>;
+  datasource: string | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
-  timezone?: string;
+  timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   maxDataPoints: number;
@@ -51,12 +52,16 @@ function getNextRequestId() {
   return 'Q' + counter++;
 }
 
+export interface GetDataOptions {
+  withTransforms: boolean;
+  withFieldConfig: boolean;
+}
+
 export class PanelQueryRunner {
-  private subject?: ReplaySubject<PanelData>;
+  private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
-  private timeZone?: TimeZone;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -66,37 +71,39 @@ export class PanelQueryRunner {
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(transform = true): Observable<PanelData> {
+  getData(options: GetDataOptions): Observable<PanelData> {
+    const { withFieldConfig, withTransforms } = options;
+
     return this.subject.pipe(
       map((data: PanelData) => {
         let processedData = data;
 
-        // Apply transformations
-
-        if (transform) {
+        // Apply transformation
+        if (withTransforms) {
           const transformations = this.dataConfigSource.getTransformations();
 
           if (transformations && transformations.length > 0) {
             processedData = {
               ...processedData,
-              series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
+              series: transformDataFrame(transformations, data.series),
             };
           }
         }
 
-        // Apply field defaults & overrides
-        const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-
-        if (fieldConfig) {
-          processedData = {
-            ...processedData,
-            series: applyFieldOverrides({
-              timeZone: this.timeZone,
-              autoMinMax: true,
-              data: processedData.series,
-              ...fieldConfig,
-            }),
-          };
+        if (withFieldConfig) {
+          // Apply field defaults & overrides
+          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          if (fieldConfig) {
+            processedData = {
+              ...processedData,
+              series: applyFieldOverrides({
+                timeZone: data.request!.timezone,
+                autoMinMax: true,
+                data: processedData.series,
+                ...fieldConfig,
+              }),
+            };
+          }
         }
 
         return processedData;
@@ -118,8 +125,6 @@ export class PanelQueryRunner {
       scopedVars,
       minInterval,
     } = options;
-
-    this.timeZone = timezone;
 
     if (isSharedDashboardQuery(datasource)) {
       this.pipeToSubject(runSharedRequest(options));
@@ -172,7 +177,7 @@ export class PanelQueryRunner {
 
       this.pipeToSubject(runRequest(ds, request));
     } catch (err) {
-      console.log('PanelQueryRunner Error', err);
+      console.error('PanelQueryRunner Error', err);
     }
   }
 
@@ -190,10 +195,21 @@ export class PanelQueryRunner {
     });
   }
 
-  pipeDataToSubject = (data: PanelData) => {
-    this.subject.next(data);
-    this.lastResult = data;
-  };
+  cancelQuery() {
+    if (!this.subscription) {
+      return;
+    }
+
+    this.subscription.unsubscribe();
+
+    // If we have an old result with loading state, send it with done state
+    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+      this.subject.next({
+        ...this.lastResult,
+        state: LoadingState.Done,
+      });
+    }
+  }
 
   resendLastResult = () => {
     if (this.lastResult) {
@@ -215,7 +231,16 @@ export class PanelQueryRunner {
     }
   }
 
-  getLastResult(): PanelData {
+  useLastResultFrom(runner: PanelQueryRunner) {
+    this.lastResult = runner.getLastResult();
+
+    if (this.lastResult) {
+      // The subject is a replay subject so anyone subscribing will get this last result
+      this.subject.next(this.lastResult);
+    }
+  }
+
+  getLastResult(): PanelData | undefined {
     return this.lastResult;
   }
 }

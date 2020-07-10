@@ -156,6 +156,29 @@ describe('sharedSingleStatMigrationHandler', () => {
     `);
   });
 
+  it('Rename title to displayName', () => {
+    const panel = {
+      options: {
+        fieldOptions: {
+          stat: 'last',
+          decimals: 5,
+          defaults: {
+            title: 'newTitle',
+            min: 0,
+            max: 100,
+            mappings: [],
+          },
+          override: {},
+        },
+      },
+      title: 'Usage',
+      type: 'bargauge',
+    };
+
+    sharedSingleStatMigrationHandler(panel as any);
+    expect((panel as any).fieldConfig.defaults.displayName).toBe('newTitle');
+  });
+
   it('change from angular singlestat with no enabled gauge', () => {
     const old: any = {
       angular: {
@@ -173,6 +196,18 @@ describe('sharedSingleStatMigrationHandler', () => {
     expect(panel.fieldConfig.defaults.unit).toBe('ms');
     expect(panel.fieldConfig.defaults.min).toBe(undefined);
     expect(panel.fieldConfig.defaults.max).toBe(undefined);
+  });
+
+  it('change from angular singlestat with tableColumn set', () => {
+    const old: any = {
+      angular: {
+        tableColumn: 'info',
+      },
+    };
+    const panel = {} as PanelModel;
+    const newOptions = sharedSingleStatPanelChangedHandler(panel, 'singlestat', old);
+    expect(newOptions.reduceOptions.calcs).toEqual(['mean']);
+    expect(newOptions.reduceOptions.fields).toBe('/^info$/');
   });
 
   it('change from angular singlestat with no enabled gauge', () => {

@@ -19,7 +19,7 @@ import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
 import ViewingLayer from './ViewingLayer';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../..';
-import { Span, Trace } from '../..';
+import { TraceSpan, Trace } from '@grafana/data';
 import { ubPb2, ubPx2, ubRelative } from '../../uberUtilityStyles';
 
 const DEFAULT_HEIGHT = 60;
@@ -45,7 +45,7 @@ type SpanGraphState = {
   }>;
 };
 
-function getItem(span: Span) {
+function getItem(span: TraceSpan) {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,

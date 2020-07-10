@@ -24,6 +24,7 @@ export const basic = () => {
       {(value, updateValue) => {
         return (
           <TimeRangePicker
+            onChangeTimeZone={() => {}}
             timeZone="browser"
             value={value}
             onChange={timeRange => {

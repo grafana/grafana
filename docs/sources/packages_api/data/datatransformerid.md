@@ -28,11 +28,13 @@ import { DataTransformerID } from '@grafana/data';
 |  --- | --- | --- |
 |  append | <code>&quot;append&quot;</code> |  |
 |  calculateField | <code>&quot;calculateField&quot;</code> |  |
+|  ensureColumns | <code>&quot;ensureColumns&quot;</code> |  |
 |  filterByRefId | <code>&quot;filterByRefId&quot;</code> |  |
 |  filterFields | <code>&quot;filterFields&quot;</code> |  |
 |  filterFieldsByName | <code>&quot;filterFieldsByName&quot;</code> |  |
 |  filterFrames | <code>&quot;filterFrames&quot;</code> |  |
 |  labelsToFields | <code>&quot;labelsToFields&quot;</code> |  |
+|  merge | <code>&quot;merge&quot;</code> |  |
 |  noop | <code>&quot;noop&quot;</code> |  |
 |  order | <code>&quot;order&quot;</code> |  |
 |  organize | <code>&quot;organize&quot;</code> |  |
