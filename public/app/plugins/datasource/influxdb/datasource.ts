@@ -62,6 +62,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return from(this.classicQuery(request));
   }
 
+  getQueryDisplayText(query: InfluxQuery) {
+    if (this.is2x) {
+      return query.query;
+    }
+    return new InfluxQueryModel(query).render(false);
+  }
+
   /**
    * Only applied on flux queries
    */

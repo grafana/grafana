@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
 import { InfluxQuery } from '../types';
 import { SelectableValue } from '@grafana/data';
+import { cx, css } from 'emotion';
 import {
   InlineFormLabel,
   LinkButton,
@@ -168,7 +169,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
     return (
       <>
         <CodeEditor
-          height={'250px'}
+          height={'200px'}
           language="sql"
           value={target.query || ''}
           onBlur={this.onFluxQueryChange}
@@ -178,24 +179,29 @@ export class FluxQueryEditor extends PureComponent<Props> {
           getSuggestions={this.getSuggestions}
           onEditorDidMount={this.editorDidMountCallbackHack}
         />
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel width={5} tooltip={helpTooltip}>
-              Help
-            </InlineFormLabel>
-            <Segment options={samples} value="Sample Query" onChange={this.onSampleChange} />
-            <LinkButton
-              icon="external-link-alt"
-              variant="secondary"
-              target="blank"
-              href="https://docs.influxdata.com/flux/latest/introduction/getting-started/"
-            >
-              Flux docs
-            </LinkButton>
-          </div>
+        <div
+          className={cx(
+            'gf-form-inline',
+            css`
+              margin-top: 6px;
+            `
+          )}
+        >
+          <LinkButton
+            icon="external-link-alt"
+            variant="secondary"
+            target="blank"
+            href="https://docs.influxdata.com/flux/latest/introduction/getting-started/"
+          >
+            Flux language syntax
+          </LinkButton>
+          <Segment options={samples} value="Sample Query" onChange={this.onSampleChange} />
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow"></div>
           </div>
+          <InlineFormLabel width={5} tooltip={helpTooltip}>
+            Help
+          </InlineFormLabel>
         </div>
       </>
     );
