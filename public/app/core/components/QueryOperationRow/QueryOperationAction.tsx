@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 interface QueryOperationActionProps {
   icon: IconName;
-  title?: string;
+  title: string;
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
 }

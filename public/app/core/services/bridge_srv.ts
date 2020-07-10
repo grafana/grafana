@@ -80,8 +80,6 @@ export class BridgeSrv {
             this.$location.replace();
           }
         });
-
-        console.log('store updating angular $location.url', url);
       }
 
       // Check for template variable changes on a dashboard
