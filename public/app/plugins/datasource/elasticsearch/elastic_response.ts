@@ -390,93 +390,22 @@ export class ElasticResponse {
     return result;
   }
 
-  getTimeSeries(isV2 = false) {
-    if (isV2) {
-      const dataFrame: DataFrame[] = [];
-
-      for (let n = 0; n < this.response.responses.length; n++) {
-        const response = this.response.responses[n];
-        if (response.error) {
-          throw this.getErrorFromElasticResponse(this.response, response.error);
-        }
-
-        if (response.hits && response.hits.hits.length > 0) {
-          const { propNames, docs } = flattenHits(response.hits.hits);
-          if (docs.length > 0) {
-            const series = createEmptyDataFrame(propNames, this.targets[0].timeField);
-
-            // Add a row for each document
-            for (const doc of docs) {
-              series.add(doc);
-            }
-
-            dataFrame.push(series);
-          }
-        }
-
-        if (response.aggregations) {
-          const aggregations = response.aggregations;
-          const target = this.targets[n];
-          const tmpSeriesList: any[] = [];
-          const table = new TableModel();
-
-          this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
-          this.trimDatapoints(tmpSeriesList, target);
-          this.nameSeries(tmpSeriesList, target);
-
-          if (table.rows.length > 0) {
-            dataFrame.push(toDataFrame(table));
-          }
-
-          for (let y = 0; y < tmpSeriesList.length; y++) {
-            let series = toDataFrame(tmpSeriesList[y]);
-
-            // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
-
-            dataFrame.push(series);
-          }
-        }
-      }
-
-      return { data: dataFrame };
-    } else {
-      const seriesList = [];
-
-      for (let i = 0; i < this.response.responses.length; i++) {
-        const response = this.response.responses[i];
-        if (response.error) {
-          throw this.getErrorFromElasticResponse(this.response, response.error);
-        }
-
-        if (response.hits && response.hits.hits.length > 0) {
-          this.processHits(response.hits, seriesList);
-        }
-
-        if (response.aggregations) {
-          const aggregations = response.aggregations;
-          const target = this.targets[i];
-          const tmpSeriesList: any[] = [];
-          const table = new TableModel();
-
-          this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
-          this.trimDatapoints(tmpSeriesList, target);
-          this.nameSeries(tmpSeriesList, target);
-
-          for (let y = 0; y < tmpSeriesList.length; y++) {
-            seriesList.push(tmpSeriesList[y]);
-          }
-
-          if (table.rows.length > 0) {
-            seriesList.push(table);
-          }
-        }
-      }
-
-      return { data: seriesList };
+  getTimeSeries(processToDataFrames = false): DataQueryResponse {
+    if (processToDataFrames) {
+      return this.processResponseToDataFrames(false);
     }
+    return this.processResponseToSeries();
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+    return this.processResponseToDataFrames(true, logMessageField, logLevelField);
+  }
+
+  processResponseToDataFrames(
+    isLogsRequest: boolean,
+    logMessageField?: string,
+    logLevelField?: string
+  ): DataQueryResponse {
     const dataFrame: DataFrame[] = [];
 
     for (let n = 0; n < this.response.responses.length; n++) {
@@ -485,17 +414,24 @@ export class ElasticResponse {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
-      const { propNames, docs } = flattenHits(response.hits.hits);
-      if (docs.length > 0) {
-        let series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
+      if (response.hits && response.hits.hits.length > 0) {
+        const { propNames, docs } = flattenHits(response.hits.hits);
+        if (docs.length > 0) {
+          const series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
 
-        // Add a row for each document
-        for (const doc of docs) {
-          series.add(doc);
+          // Add a row for each document
+          for (const doc of docs) {
+            if (logLevelField) {
+              // Remap level field based on the datasource config. This field is then used in explore to figure out the
+              // log level. We may rewrite some actual data in the level field if they are different.
+              doc['level'] = doc[logLevelField];
+            }
+
+            series.add(doc);
+          }
+
+          dataFrame.push(series);
         }
-
-        series = addPreferredVisualisationType(series, 'logs');
-        dataFrame.push(series);
       }
 
       if (response.aggregations) {
@@ -508,11 +444,17 @@ export class ElasticResponse {
         this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
 
+        if (table.rows.length > 0) {
+          dataFrame.push(toDataFrame(table));
+        }
+
         for (let y = 0; y < tmpSeriesList.length; y++) {
           let series = toDataFrame(tmpSeriesList[y]);
 
           // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
-          series = addPreferredVisualisationType(series, 'graph');
+          if (isLogsRequest) {
+            series = addPreferredVisualisationType(series, 'graph');
+          }
 
           dataFrame.push(series);
         }
@@ -521,6 +463,42 @@ export class ElasticResponse {
 
     return { data: dataFrame };
   }
+
+  processResponseToSeries = () => {
+    const seriesList = [];
+
+    for (let i = 0; i < this.response.responses.length; i++) {
+      const response = this.response.responses[i];
+      if (response.error) {
+        throw this.getErrorFromElasticResponse(this.response, response.error);
+      }
+
+      if (response.hits && response.hits.hits.length > 0) {
+        this.processHits(response.hits, seriesList);
+      }
+
+      if (response.aggregations) {
+        const aggregations = response.aggregations;
+        const target = this.targets[i];
+        const tmpSeriesList: any[] = [];
+        const table = new TableModel();
+
+        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
+        this.trimDatapoints(tmpSeriesList, target);
+        this.nameSeries(tmpSeriesList, target);
+
+        for (let y = 0; y < tmpSeriesList.length; y++) {
+          seriesList.push(tmpSeriesList[y]);
+        }
+
+        if (table.rows.length > 0) {
+          seriesList.push(table);
+        }
+      }
+    }
+
+    return { data: seriesList };
+  };
 }
 
 type Doc = {
