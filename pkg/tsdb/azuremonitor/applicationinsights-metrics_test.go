@@ -67,7 +67,7 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 			},
 		},
 		{
-			name:       "segmented series",
+			name:       "multi segmented series",
 			testFile:   "applicationinsights/4-application-insights-response-metrics-multi-segmented.json",
 			metric:     "traces/count",
 			agg:        "sum",
@@ -78,12 +78,8 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 						time.Date(2020, 6, 25, 16, 15, 32, 14e7, time.UTC),
 						time.Date(2020, 6, 25, 16, 16, 0, 0, time.UTC),
 					}),
-					data.NewField("traces/count", data.Labels{"client/city": "Washington", "client/countryOrRegion": "United States"}, []*float64{
-						pointer.Float64(2),
+					data.NewField("traces/count", data.Labels{"client/city": "Tokyo", "client/countryOrRegion": "Japan"}, []*float64{
 						nil,
-					}),
-					data.NewField("traces/count", data.Labels{"client/city": "Des Moines", "client/countryOrRegion": "United States"}, []*float64{
-						pointer.Float64(2),
 						pointer.Float64(1),
 					}),
 					data.NewField("traces/count", data.Labels{"client/city": "", "client/countryOrRegion": "United States"}, []*float64{
@@ -94,9 +90,13 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 						nil,
 						pointer.Float64(3),
 					}),
-					data.NewField("traces/count", data.Labels{"client/city": "Tokyo", "client/countryOrRegion": "Japan"}, []*float64{
-						nil,
+					data.NewField("traces/count", data.Labels{"client/city": "Des Moines", "client/countryOrRegion": "United States"}, []*float64{
+						pointer.Float64(2),
 						pointer.Float64(1),
+					}),
+					data.NewField("traces/count", data.Labels{"client/city": "Washington", "client/countryOrRegion": "United States"}, []*float64{
+						pointer.Float64(2),
+						nil,
 					}),
 				)
 
@@ -116,31 +116,28 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 						time.Date(2020, 6, 25, 16, 15, 32, 14e7, time.UTC),
 						time.Date(2020, 6, 25, 16, 16, 0, 0, time.UTC),
 					}),
-
-					data.NewField("traces/count", data.Labels{"client/city": "Washington", "client/countryOrRegion": "United States"}, []*float64{
-						pointer.Float64(2),
+					data.NewField("traces/count", data.Labels{"client/city": "Tokyo", "client/countryOrRegion": "Japan"}, []*float64{
 						nil,
-					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Washington"}),
+						pointer.Float64(1),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: Japan,Tokyo"}),
+					data.NewField("traces/count", data.Labels{"client/city": "", "client/countryOrRegion": "United States"}, []*float64{
+						nil,
+						pointer.Float64(11),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,"}),
+					data.NewField("traces/count", data.Labels{"client/city": "Chicago", "client/countryOrRegion": "United States"}, []*float64{
+						nil,
+						pointer.Float64(3),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Chicago"}),
 
 					data.NewField("traces/count", data.Labels{"client/city": "Des Moines", "client/countryOrRegion": "United States"}, []*float64{
 						pointer.Float64(2),
 						pointer.Float64(1),
 					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Des Moines"}),
 
-					data.NewField("traces/count", data.Labels{"client/city": "", "client/countryOrRegion": "United States"}, []*float64{
+					data.NewField("traces/count", data.Labels{"client/city": "Washington", "client/countryOrRegion": "United States"}, []*float64{
+						pointer.Float64(2),
 						nil,
-						pointer.Float64(11),
-					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,"}),
-
-					data.NewField("traces/count", data.Labels{"client/city": "Chicago", "client/countryOrRegion": "United States"}, []*float64{
-						nil,
-						pointer.Float64(3),
-					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Chicago"}),
-
-					data.NewField("traces/count", data.Labels{"client/city": "Tokyo", "client/countryOrRegion": "Japan"}, []*float64{
-						nil,
-						pointer.Float64(1),
-					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: Japan,Tokyo"}),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Washington"}),
 				)
 
 				return frame
