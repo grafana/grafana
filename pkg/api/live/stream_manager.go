@@ -88,7 +88,6 @@ func NewStream(name string) *Stream {
 }
 
 func (s *Stream) Push(packet *models.StreamPacket) {
-
 	messageBytes, _ := simplejson.NewFromAny(packet).Encode()
 
 	for _, sub := range s.subscribers {

@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.18
+            VERSION=0.4.21
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -667,8 +667,7 @@ jobs:
               # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             else
-              # TODO: Don't ignore errors, temporary workaround until we fix #22955
-              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
       - run:
           name: CI job failed
@@ -813,9 +812,9 @@ jobs:
           name: Install Go linters
           command: |
             pushd /tmp
-            VERSION=1.27.0
+            VERSION=1.28.0
             curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${VERSION}/golangci-lint-${VERSION}-linux-amd64.tar.gz
-            echo 8d345e4e88520e21c113d81978e89ad77fc5b13bfdf20e5bca86b83fc4261272 \
+            echo 179d34edf4baf6454a7081fbaaf74dc99397a3be8e1a535dee04d835a977bf76 \
               golangci-lint-${VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
             tar -xf golangci-lint-${VERSION}-linux-amd64.tar.gz
             sudo mv golangci-lint-${VERSION}-linux-amd64/golangci-lint /usr/local/bin/
@@ -826,7 +825,7 @@ jobs:
           command: |
             # To save memory, run in two batches
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E deadcode -E depguard -E dogsled \
-              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E scopelint ./pkg/...
+              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E exportloopref -E whitespace ./pkg/...
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign \
               -E rowserrcheck -E staticcheck -E structcheck -E typecheck -E unconvert -E unused -E varcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
@@ -925,11 +924,14 @@ jobs:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - install-grabpl
       - run:
           name: Deploy to Kubernetes
           command: |
-            /tmp/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+            cp -r /tmp/workspace/enterprise/dist .
+            /tmp/grabpl deploy-to-k8s
 
   release-packages:
     executor: node

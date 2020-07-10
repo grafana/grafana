@@ -89,7 +89,6 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	}
 
 	for {
-
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
 		ps.mutex.Lock()
 		// Using background here because otherwise if root context was canceled the select later on would

@@ -19,7 +19,7 @@ export function PromExploreExtraField(props: PromExploreExtraFieldProps) {
   return (
     <div className="gf-form-inline" aria-label="Prometheus extra field">
       <div className="gf-form">
-        <InlineFormLabel width={5} tooltip={hasTooltip ? tooltipContent : null}>
+        <InlineFormLabel width={5} tooltip={hasTooltip ? tooltipContent : undefined}>
           {label}
         </InlineFormLabel>
         <input

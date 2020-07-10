@@ -17,7 +17,6 @@ type urlBuilder struct {
 // Build checks the metric definition property to see which form of the url
 // should be returned
 func (ub *urlBuilder) Build() string {
-
 	subscription := ub.Subscription
 
 	if ub.Subscription == "" {

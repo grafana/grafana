@@ -74,16 +74,16 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         return { note: 'Missing Response Data' };
       }
       return this.props.data.series.map(frame => {
-        const fields = frame.fields.map(field => {
-          return chain(field)
-            .omit('values')
-            .omit('calcs')
-            .omit('display')
-            .value();
-        });
+        const { table, fields, ...rest } = frame as any; // remove 'table' from arrow response
         return {
-          ...frame,
-          fields,
+          ...rest,
+          fields: frame.fields.map(field => {
+            return chain(field)
+              .omit('values')
+              .omit('state')
+              .omit('display')
+              .value();
+          }),
         };
       });
     }

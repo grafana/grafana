@@ -104,7 +104,7 @@ describe('graphiteDatasource', () => {
     const query = {
       panelId: 3,
       dashboardId: 5,
-      rangeRaw: { from: 'now-1h', to: 'now' },
+      range: { raw: { from: 'now-1h', to: 'now' } },
       targets: [{ target: 'prod1.count' }, { target: 'prod2.count' }],
       maxDataPoints: 500,
     };
@@ -179,8 +179,8 @@ describe('graphiteDatasource', () => {
       range: {
         from: dateTime(1432288354),
         to: dateTime(1432288401),
+        raw: { from: 'now-24h', to: 'now' },
       },
-      rangeRaw: { from: 'now-24h', to: 'now' },
     };
 
     describe('and tags are returned as string', () => {

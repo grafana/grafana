@@ -37,7 +37,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "../installation/configur
 
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-### MacOS
+### macOS
 
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
@@ -1179,7 +1179,7 @@ Optional URL to send to users in notifications. If the string contains the seque
 
 ### key_file
 
-Path to JSON key file associated with a Google service account to authenticate and authorize.
+Optional path to JSON key file associated with a Google service account to authenticate and authorize. If no value is provided it tries to use the [application default credentials](https://cloud.google.com/docs/authentication/production#finding_credentials_automatically).
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
 Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.

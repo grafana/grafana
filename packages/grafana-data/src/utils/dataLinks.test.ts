@@ -31,7 +31,7 @@ describe('mapInternalLinkToExplore', () => {
       expect.objectContaining({
         title: 'testDS',
         href:
-          '/explore?left={"datasource":"testDS","queries":[{"query":"12344"}],"mode":"Metrics","ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+          '/explore?left={"datasource":"testDS","queries":[{"query":"12344"}],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
         onClick: undefined,
       })
     );

@@ -230,7 +230,7 @@ kbn.interval_to_ms = (str: string) => {
   return info.sec * 1000 * info.count;
 };
 
-kbn.interval_to_seconds = (str: string) => {
+kbn.interval_to_seconds = (str: string): number => {
   const info = kbn.describe_interval(str);
   return info.sec * info.count;
 };

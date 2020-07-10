@@ -32,6 +32,7 @@ If you're looking to build your first plugin, check out these introductory tutor
 
 - [Build a panel plugin]({{< relref "../../../../../tutorials/build-a-panel-plugin.md" >}})
 - [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}})
+- [Build a data source backend plugin]({{< relref "../../../../../tutorials/build-a-data-source-backend-plugin.md" >}})
 
 Ready to learn more? Check out our other tutorials:
 

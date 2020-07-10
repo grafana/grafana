@@ -10,7 +10,6 @@ import (
 )
 
 func TestQuotaCommandsAndQueries(t *testing.T) {
-
 	Convey("Testing Quota commands & queries", t, func() {
 		InitTestDB(t)
 		userId := int64(1)
@@ -101,7 +100,6 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 					}
 					So(res.Limit, ShouldEqual, limit)
 					So(res.Used, ShouldEqual, used)
-
 				}
 			})
 		})

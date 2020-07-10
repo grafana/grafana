@@ -5,7 +5,6 @@ import (
 )
 
 func addQuotaMigration(mg *Migrator) {
-
 	var quotaV1 = Table{
 		Name: "quota",
 		Columns: []*Column{

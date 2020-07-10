@@ -459,7 +459,6 @@ func TestCloudMonitoring(t *testing.T) {
 					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
 				})
 			})
-
 		})
 
 		Convey("Parse queries from frontend and build Google Cloud Monitoring API queries", func() {
@@ -675,7 +674,6 @@ func TestCloudMonitoring(t *testing.T) {
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 
 				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
-
 					query := &cloudMonitoringQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
@@ -689,7 +687,6 @@ func TestCloudMonitoring(t *testing.T) {
 				})
 
 				Convey("and the alias pattern is for metric name", func() {
-
 					query := &cloudMonitoringQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
