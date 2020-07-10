@@ -82,21 +82,23 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-left: 0;
     `,
     pickerInput: cx(
+      inputStyles.input,
+      inputStyles.wrapper,
       css`
         display: flex;
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
+        padding-right: 0;
         ${getFocusStyle(theme)};
-      `,
-      inputStyles.input,
-      inputStyles.wrapper
+      `
     ),
     caretIcon: cx(
+      inputStyles.suffix,
       css`
+        position: relative;
         margin-left: ${theme.spacing.xs};
-      `,
-      inputStyles.suffix
+      `
     ),
   };
 };
