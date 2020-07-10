@@ -4,7 +4,6 @@ import React, { Component } from 'react';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 import { DataQueryRequest, PanelData } from '@grafana/data';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   datasource: PrometheusDatasource;
@@ -36,15 +35,9 @@ export default class PromLink extends Component<Props, State> {
       return '';
     }
 
-    const target = request.targets.length > 0 ? request.targets[0] : ({ datasource: null } as any);
-    const datasourceName = target.datasource;
-    const datasource: PrometheusDatasource = datasourceName
-      ? (((await getDatasourceSrv().get(datasourceName)) as any) as PrometheusDatasource)
-      : (this.props.datasource as PrometheusDatasource);
-
     const range = request.range;
-    const start = datasource.getPrometheusTime(range.from, false);
-    const end = datasource.getPrometheusTime(range.to, true);
+    const start = this.props.datasource.getPrometheusTime(range.from, false);
+    const end = this.props.datasource.getPrometheusTime(range.to, true);
     const rangeDiff = Math.ceil(end - start);
     const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
 
@@ -52,7 +45,7 @@ export default class PromLink extends Component<Props, State> {
       interval: request.interval,
     } as DataQueryRequest<PromQuery>;
 
-    const queryOptions = datasource.createQuery(query, options, start, end);
+    const queryOptions = this.props.datasource.createQuery(query, options, start, end);
     const expr = {
       'g0.expr': queryOptions.expr,
       'g0.range_input': rangeDiff + 's',
@@ -64,7 +57,7 @@ export default class PromLink extends Component<Props, State> {
     const args = _.map(expr, (v: string, k: string) => {
       return k + '=' + encodeURIComponent(v);
     }).join('&');
-    return `${datasource.directUrl}/graph?${args}`;
+    return `${this.props.datasource.directUrl}/graph?${args}`;
   }
 
   render() {
