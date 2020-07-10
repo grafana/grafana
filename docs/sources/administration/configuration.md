@@ -976,40 +976,39 @@ Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
-# Configures for how long alert annotations should be kept. Default is 0 which keeps them for ever
+### max_annotation_age =
 
-max_annotation_age =
+Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
 
-# Configures max number of alert annotations that should be kept. Defaul value is 0 which keeps all alert annotations
+### max_annotations_to_keep =
 
-max_annotations_to_keep =
+Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
 <hr>
 
 ## [annotations.dashboard]
 
-Dashboard annotations means that the annotation are associated with an dashboard.
+Dashboard annotations means that annotation are associated with the dashboard they are created on.
 
 ### max_age
 
-Configures for how long dashboard annotations should be kept. Default is 0 which keeps them for ever
+Configures how long dashboard annotations are stored. Default is 0, which keeps them forever.
 
 ### max_annotations_to_keep
 
-Configures max number of dashboard annotations that should be kept. Defaul value is 0 which keeps all dashboard annotations
+Configures max number of dashboard annotations that Grafana stores. Default value is 0, which keeps all dashboard annotations.
 
 ## [annotations.api]
 
-API annotations means that the annotations have been created using the API without any
-association with a dashboard
+API annotations means that the annotations have been created using the API without any association with a dashboard.
 
 ### max_age
 
-Configures for how long dashboard annotations should be kept. Default is 0 which keeps them for ever
+Configures how long Grafana stores API annotations. Default is 0, which keeps them forever.
 
 ### max_annotations_to_keep
 
-Configures max number of dashboard annotations that should be kept. Defaul value is 0 which keeps all dashboard annotations
+Configures max number of API annotations that Grafana keeps. Default value is 0, which keeps all API annotations.
 
 <hr>
 
