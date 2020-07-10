@@ -491,7 +491,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -529,7 +529,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -570,7 +570,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -608,14 +608,14 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
                   urlState: {
                     ...initialState.left.urlState,
                     ui: {
-                      ...initialState.left.urlState.ui,
+                      ...initialState.left.urlState!.ui,
                       showingGraph: true,
                     },
                   },
