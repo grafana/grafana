@@ -204,7 +204,7 @@ export function getUPlotStuff(props: Props) {
         values: (u, vals, space) => vals.map(v => formattedValueToString(fmt(v))),
         grid: {
           show: !isRight,
-          stroke: theme.palette.gray05, // X grid lines
+          stroke: theme.palette.gray1, // X grid lines
           width: 1 / devicePixelRatio,
         },
         //values: ()

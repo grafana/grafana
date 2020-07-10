@@ -11,6 +11,9 @@ export interface GraphOptions {
   showLines: boolean;
   showPoints: boolean;
   useMicroPlot?: boolean;
+
+  // Reasonable refresh rates for 'live' data
+  refreshRate?: 'data' | '1hz' | '10hz';
 }
 
 export interface Options {

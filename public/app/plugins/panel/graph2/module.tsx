@@ -146,5 +146,18 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
             { value: 'multi', label: 'All series' },
           ],
         },
+      })
+      .addSelect({
+        path: 'refreshRate',
+        name: 'Live refresh rate',
+        description: 'When the dashboard query points to now',
+        defaultValue: 'data',
+        settings: {
+          options: [
+            { value: 'data', label: 'When new data exists' },
+            { value: '1hz', label: 'Every second' },
+            { value: '20hz', label: '20 times a seconds' },
+          ],
+        },
       });
   });
