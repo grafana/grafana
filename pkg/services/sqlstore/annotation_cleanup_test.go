@@ -125,7 +125,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	_, err = session.Insert(a)
 	require.NoError(t, err, "cannot insert annotation")
 
-	// run the clean up task to keep one annotations.
+	// run the clean up task to keep one annotation.
 	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
 	err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 	require.NoError(t, err)
@@ -164,13 +164,13 @@ func createTestAnnotations(t *testing.T, sqlstore *SqlStore, expectedCount int, 
 			Text:        "",
 		}
 
-		// mark every thired as an API annotation
+		// mark every third as an API annotation
 		// that doesnt belong to a dashboard
 		if i%3 == 1 {
 			a.DashboardId = 0
 		}
 
-		// mark every thired annotations as an alert annotation
+		// mark every third annotations as an alert annotation
 		if i%3 == 0 {
 			a.AlertId = 10
 			a.DashboardId = 2

@@ -15,7 +15,7 @@ type AnnotationCleanupService struct {
 	log       log.Logger
 }
 
-var (
+const (
 	alertAnnotationType     = "alert_id <> 0"
 	dashboardAnnotationType = "dashboard_id <> 0 AND alert_id = 0"
 	apiAnnotationType       = "alert_id = 0 AND dashboard_id = 0"
@@ -43,7 +43,7 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, dialect.Limit(acs.batchSize))
 
-		err := acs.executeUtilDoneOrCancelled(ctx, sql)
+		err := acs.executeUntilDoneOrCancelled(ctx, sql)
 		if err != nil {
 			return err
 		}
@@ -53,13 +53,13 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, dialect.LimitOffset(acs.batchSize, cfg.MaxCount))
 		fmt.Println("deleteQuery", "q", sql)
-		return acs.executeUtilDoneOrCancelled(ctx, sql)
+		return acs.executeUntilDoneOrCancelled(ctx, sql)
 	}
 
 	return nil
 }
 
-func (acs *AnnotationCleanupService) executeUtilDoneOrCancelled(ctx context.Context, sql string) error {
+func (acs *AnnotationCleanupService) executeUntilDoneOrCancelled(ctx context.Context, sql string) error {
 	for {
 		select {
 		case <-ctx.Done():
