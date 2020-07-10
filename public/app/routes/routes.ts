@@ -235,7 +235,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
       },
     })
-    .when('/a/:pluginId/', {
+    .when('/a/:pluginId/:page?', {
       // Someday * and will get a ReactRouter under that path!
       template: '<react-container />',
       reloadOnSearch: false,

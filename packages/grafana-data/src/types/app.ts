@@ -1,7 +1,8 @@
-import { ComponentClass } from 'react';
+import { ComponentClass, ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
+import { UrlQueryMap } from '../utils';
 
 export enum CoreApp {
   Dashboard = 'dashboard',
@@ -13,11 +14,6 @@ export interface AppRootProps<T = KeyValue> {
 
   path: string; // The URL path to this page
   query: KeyValue; // The URL query parameters
-
-  /**
-   * Pass the nav model to the container... is there a better way?
-   */
-  onNavChanged: (nav: NavModel) => void;
 }
 
 export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
@@ -26,8 +22,7 @@ export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
 
 export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   // Content under: /a/${plugin-id}/*
-  root?: ComponentClass<AppRootProps<T>>;
-  rootNav?: NavModel; // Initial navigation model
+  root?: ComponentType<AppRootProps<T>>;
 
   // Old style pages
   angularPages?: { [component: string]: any };
@@ -43,9 +38,8 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
    * Set the component displayed under:
    *   /a/${plugin-id}/*
    */
-  setRootPage(root: ComponentClass<AppRootProps<T>>, rootNav?: NavModel) {
+  setRootPage(root: ComponentClass<AppRootProps<T>>) {
     this.root = root;
-    this.rootNav = rootNav;
     return this;
   }
 
@@ -73,6 +67,23 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
       }
     }
   }
+}
+
+export interface PluginPageRouteProps {
+  path: string;
+  component: ComponentType;
+  /*
+   * If nav model then the component get's rendered inside a page & page contents
+   * If not then the component can control full page style
+   */
+  navModel?: NavModel;
+}
+
+export interface PluginPageRouterProps {}
+
+export class PluginPageRouter {
+  static Router: ComponentType<PluginPageRouterProps> = (props: PluginPageRouterProps) => null;
+  static Route: ComponentType<PluginPageRouteProps> = (props: PluginPageRouteProps) => null;
 }
 
 /**

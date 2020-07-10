@@ -6,12 +6,14 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { AppEvents, AppPlugin, AppPluginMeta, NavModel, PluginType, UrlQueryMap } from '@grafana/data';
 
-import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
 import { getLoadingNav } from './PluginPage';
 import { getNotFoundNav, getWarningNav } from 'app/core/nav_model_srv';
 import { appEvents } from 'app/core/core';
+
+// has no exports only sets components exported in grafana/data
+import './PluginPageRouter';
 
 interface Props {
   pluginId: string; // From the angular router
@@ -73,22 +75,18 @@ class AppRootPage extends Component<Props, State> {
 
   render() {
     const { path, query } = this.props;
-    const { loading, plugin, nav } = this.state;
+    const { plugin } = this.state;
 
-    if (plugin && !plugin.root) {
-      // TODO? redirect to plugin page?
-      return <div>No Root App</div>;
+    if (!plugin) {
+      return <div>Loading</div>;
     }
 
-    return (
-      <Page navModel={nav}>
-        <Page.Contents isLoading={loading}>
-          {plugin && plugin.root && (
-            <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />
-          )}
-        </Page.Contents>
-      </Page>
-    );
+    const AppRootPage = plugin.root;
+    if (!AppRootPage) {
+      return <div>No react root app page</div>;
+    }
+
+    return <AppRootPage meta={plugin.meta} query={query} path={path} />;
   }
 }
 
