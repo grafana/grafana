@@ -85,6 +85,8 @@
       link: /administration/provisioning/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
+    - name: Replace home dashboard
+      link: /administration/home_dashboard/
     - name: Troubleshooting
       link: /installation/troubleshooting/
 - name: Manage users
