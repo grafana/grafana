@@ -391,7 +391,7 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_document_v2'))) {
+    if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
