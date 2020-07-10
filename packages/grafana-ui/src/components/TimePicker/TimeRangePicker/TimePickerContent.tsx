@@ -134,7 +134,7 @@ interface Props {
   quickOptions?: TimeOption[];
   otherOptions?: TimeOption[];
   history?: TimeRange[];
-  hideHistory?: boolean;
+  showHistory?: boolean;
   className?: string;
   hideTimeZone?: boolean;
 }
@@ -223,7 +223,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
               isFullscreen={false}
             />
           </div>
-          {!props.hideHistory && (
+          {props.showHistory && (
             <TimeRangeList
               title="Recently used absolute ranges"
               options={props.historyOptions || []}
@@ -255,7 +255,7 @@ const FullScreenForm: React.FC<FormProps> = props => {
         </div>
         <TimeRangeForm value={props.value} timeZone={props.timeZone} onApply={props.onChange} isFullscreen={true} />
       </div>
-      {!props.hideHistory && (
+      {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
             title="Recently used absolute ranges"

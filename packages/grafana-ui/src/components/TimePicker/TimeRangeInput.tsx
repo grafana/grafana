@@ -1,7 +1,7 @@
 import React, { FC, FormEvent, useState } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
-import { useStyles, useTheme } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
@@ -62,7 +62,6 @@ export const TimeRangeInput: FC<Props> = ({
             otherOptions={otherOptions}
             quickOptions={quickOptions}
             onChangeTimeZone={onChangeTimeZone || noop}
-            hideHistory
             className={styles.content}
             hideTimeZone={hideTimeZone}
           />

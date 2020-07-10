@@ -144,6 +144,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
                   otherOptions={otherOptions}
                   quickOptions={quickOptions}
                   history={history}
+                  showHistory
                   onChangeTimeZone={onChangeTimeZone}
                 />
               </ClickOutsideWrapper>
