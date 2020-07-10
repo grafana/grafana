@@ -106,6 +106,11 @@ func InsightsMetricsResultToFrame(mr MetricsResult, metric, agg string, dimensio
 		}
 		rowCounter++
 	}
+
+	if err := data.SortWideFrameFields(frame, dimensions...); err != nil {
+		return nil, err
+	}
+
 	return frame, nil
 }
 
