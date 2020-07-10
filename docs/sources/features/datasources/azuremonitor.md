@@ -232,7 +232,7 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 ## Querying the Azure Log Analytics service
 
-Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.loganalytics.io/index). A Log Analytics query can be formatted as time series data or as table data.
+Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/query-language). A Log Analytics query can be formatted as time series data or as table data.
 
 If your credentials give you access to multiple subscriptions, then choose the appropriate subscription before entering queries.
 
