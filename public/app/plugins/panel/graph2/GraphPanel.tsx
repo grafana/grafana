@@ -37,7 +37,14 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   if (useMicroPlot) {
     return (
       <div>
-        <MicroPlot width={width} height={height} data={data.series[0]} theme={config.theme} />
+        <MicroPlot
+          timeRange={timeRange}
+          timeZone={timeZone}
+          width={width}
+          height={height}
+          data={data.series[0]}
+          theme={config.theme}
+        />
       </div>
     );
   }

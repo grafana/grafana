@@ -7,6 +7,10 @@ import {
   getFieldDisplayName,
   KeyValue,
   formattedValueToString,
+  TimeRange,
+  TimeZone,
+  getTimeZoneInfo,
+  InternalTimeZones,
 } from '@grafana/data';
 
 import uPlot from 'uplot';
@@ -19,6 +23,9 @@ interface Props extends Themeable {
   data: DataFrame; // assume applyFieldOverrides has been set
   width: number;
   height: number;
+
+  timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
+  timeZone?: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
 }
 
 interface State {
@@ -49,7 +56,8 @@ export class MicroPlot extends PureComponent<Props, State> {
   }
 
   init = (element: any) => {
-    const { width, height } = this.props;
+    const { width, height, timeZone } = this.props;
+    const tz = getTimeZoneInfo(timeZone || InternalTimeZones.localBrowserTime, Date.now());
 
     const { series, uData, scales, axes } = getUPlotStuff(this.props);
 
@@ -59,7 +67,7 @@ export class MicroPlot extends PureComponent<Props, State> {
       legend: {
         show: false,
       },
-      tzDate: ts => uPlot.tzDate(new Date(ts * 1000), 'Etc/UTC'),
+      tzDate: ts => uPlot.tzDate(new Date(ts * 1000), tz!.abbreviation),
       scales,
       series,
       axes,
@@ -139,7 +147,7 @@ const defaultFieldConfig: GraphCustomFieldConfig = {
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 export function getUPlotStuff(props: Props) {
-  const { data, theme } = props;
+  const { data, theme, timeZone } = props;
   const series: uPlot.Series[] = [];
   const uData: any[] = [];
   const scales: KeyValue<uPlot.Scale> = {
