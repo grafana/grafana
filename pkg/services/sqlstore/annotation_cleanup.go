@@ -85,4 +85,6 @@ func (acs *AnnotationCleanupService) executeUntilDoneOrCancelled(ctx context.Con
 			}
 		}
 	}
+
+	return nil
 }
