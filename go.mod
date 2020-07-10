@@ -2,6 +2,10 @@ module github.com/grafana/grafana
 
 go 1.14
 
+// Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
+// We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
+replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
+
 require (
 	cloud.google.com/go v0.60.0 // indirect
 	github.com/BurntSushi/toml v0.3.1
@@ -91,6 +95,3 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.1
 )
-
-// Override xorm's outdated go-mssqldb dependency
-replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
