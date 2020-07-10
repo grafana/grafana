@@ -40,7 +40,7 @@ func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *
 func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) error {
 	if cfg.MaxAge > 0 {
 		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
-		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s)`
+		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, dialect.Limit(acs.batchSize))
 
 		err := acs.executeUtilDoneOrCancelled(ctx, sql)
@@ -52,6 +52,7 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 	if cfg.MaxCount > 0 {
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, dialect.LimitOffset(acs.batchSize, cfg.MaxCount))
+		fmt.Println("deleteQuery", "q", sql)
 		return acs.executeUtilDoneOrCancelled(ctx, sql)
 	}
 
