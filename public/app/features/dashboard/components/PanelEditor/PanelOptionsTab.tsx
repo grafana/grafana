@@ -12,7 +12,7 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 interface Props {
   panel: PanelModel;
   plugin: PanelPlugin;
-  data: PanelData;
+  data?: PanelData;
   dashboard: DashboardModel;
   onPanelConfigChange: (configKey: string, value: any) => void;
   onPanelOptionsChanged: (options: any) => void;
@@ -26,7 +26,7 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
-  const visTabInputRef = useRef<HTMLInputElement>();
+  const visTabInputRef = useRef<HTMLInputElement>(null);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,

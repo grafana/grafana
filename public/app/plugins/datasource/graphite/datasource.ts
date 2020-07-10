@@ -581,7 +581,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         return this.funcDefs;
       })
       .catch((err: any) => {
-        console.log('Fetching graphite functions error', err);
+        console.error('Fetching graphite functions error', err);
         this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
         return this.funcDefs;
       });

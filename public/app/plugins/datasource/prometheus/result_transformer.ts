@@ -226,7 +226,7 @@ function sortSeriesByLabel(s1: TimeSeries, s2: TimeSeries): number {
     le1 = parseHistogramLabel(s1.target);
     le2 = parseHistogramLabel(s2.target);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return 0;
   }
 
