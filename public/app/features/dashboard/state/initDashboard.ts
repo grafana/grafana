@@ -89,7 +89,7 @@ async function fetchDashboard(
       case DashboardRouteInfo.Normal: {
         // for old db routes we redirect
         if (args.urlType === 'db') {
-          redirectToNewUrl(args.urlSlug, dispatch, getState().location.path);
+          redirectToNewUrl(args.urlSlug!, dispatch, getState().location.path);
           return null;
         }
 
@@ -187,7 +187,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // template values service needs to initialize completely before the rest of the dashboard can load
-    await dispatch(initVariablesTransaction(args.urlUid, dashboard));
+    await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
 
     if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
