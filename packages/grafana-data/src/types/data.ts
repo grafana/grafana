@@ -15,7 +15,7 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export type PreferredVisualisationType = 'graph' | 'table';
+export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
 
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
@@ -47,6 +47,7 @@ export interface QueryResultMeta {
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
+  instant?: boolean;
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
