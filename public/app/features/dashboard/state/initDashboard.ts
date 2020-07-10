@@ -117,7 +117,7 @@ async function fetchDashboard(
     }
   } catch (err) {
     dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
-    console.log(err);
+    console.error(err);
     return null;
   }
 }
@@ -161,7 +161,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
       dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
-      console.log(err);
+      console.error(err);
       return;
     }
 
@@ -216,7 +216,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
-      console.log(err);
+      console.error(err);
     }
 
     if (storeState.dashboard.modifiedQueries) {
