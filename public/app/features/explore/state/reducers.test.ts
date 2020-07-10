@@ -22,7 +22,6 @@ import {
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
-  changeModeAction,
   changeRangeAction,
   changeRefreshIntervalAction,
   scanStartAction,
@@ -75,21 +74,6 @@ describe('Explore item reducer', () => {
   });
 
   describe('changing datasource', () => {
-    describe('when changeMode is dispatched', () => {
-      it('then it should set correct state', () => {
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, ({} as unknown) as ExploreItemState)
-          .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
-          .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
-            expect(resultingState.mode).toEqual(ExploreMode.Logs);
-            expect(resultingState.logsResult).toBeNull();
-            expect(resultingState.graphResult).toBeNull();
-            expect(resultingState.tableResult).toBeNull();
-            return true;
-          });
-      });
-    });
-
     describe('when updateDatasourceInstanceAction is dispatched', () => {
       describe('and datasourceInstance supports graph, logs, table and has a startpage', () => {
         it('then it should set correct state', () => {
@@ -118,7 +102,6 @@ describe('Explore item reducer', () => {
             logsResult: null,
             tableResult: null,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
-            mode: ExploreMode.Metrics,
             latency: 0,
             loading: false,
             queryResponse: createEmptyQueryResponse(),
@@ -185,7 +168,7 @@ describe('Explore item reducer', () => {
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(({ showingGraph: true, graphResult: [] } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingGraph: false, graphResult: null } as unknown) as ExploreItemState);
+          .thenStateShouldEqual(({ showingGraph: false, graphResult: [] } as unknown) as ExploreItemState);
       });
     });
 
@@ -207,7 +190,7 @@ describe('Explore item reducer', () => {
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(({ showingTable: true, tableResult: table } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingTable: false, tableResult: null } as unknown) as ExploreItemState);
+          .thenStateShouldEqual(({ showingTable: false, tableResult: table } as unknown) as ExploreItemState);
       });
     });
   });
@@ -316,7 +299,6 @@ export const setup = (urlStateOverrides?: any) => {
       from: '',
       to: '',
     },
-    mode: ExploreMode.Metrics,
     ui: {
       dedupStrategy: LogsDedupStrategy.none,
       showingGraph: false,
@@ -509,7 +491,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -547,7 +529,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -588,7 +570,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -626,14 +608,14 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
                   urlState: {
                     ...initialState.left.urlState,
                     ui: {
-                      ...initialState.left.urlState.ui,
+                      ...initialState.left.urlState!.ui,
                       showingGraph: true,
                     },
                   },

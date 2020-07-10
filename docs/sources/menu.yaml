@@ -9,6 +9,8 @@
       link: /getting-started/timeseries/
     - name: Intro to histograms
       link: /getting-started/intro-histograms/
+    - name: Observability strategies
+      link: /getting-started/strategies/
     - name: Glossary
       link: /getting-started/glossary/
 - name: Installation

@@ -429,7 +429,8 @@ class GraphElement {
 
   // Function for rendering panel
   renderPanel() {
-    this.panelWidth = this.elem.width();
+    this.panelWidth = this.elem.width() ?? 0;
+
     if (this.shouldAbortRender()) {
       return;
     }
@@ -529,7 +530,7 @@ class GraphElement {
         delete this.ctrl.error;
       }
     } catch (e) {
-      console.log('flotcharts error', e);
+      console.error('flotcharts error', e);
       this.ctrl.error = e.message || 'Render Error';
       this.ctrl.renderError = true;
     }

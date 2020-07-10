@@ -124,7 +124,6 @@ func valFromLeafAP(ap map[string]interface{}, metric, agg string) (*float64, err
 	metMap, ok := met.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("unexpected type for additional properties not found in leaf segment, want map[string]interface{}, but got %T", met)
-
 	}
 	metVal, ok := metMap[agg]
 	if !ok {

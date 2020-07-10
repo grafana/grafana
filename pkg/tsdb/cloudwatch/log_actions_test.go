@@ -114,7 +114,6 @@ func TestExecuteStartQuery(t *testing.T) {
 
 	assert.Equal(t, expectedResponse, response)
 	assert.Equal(t, fmt.Errorf("invalid time range: start time must be before end time"), err)
-
 }
 
 func TestHandleStartQuery(t *testing.T) {

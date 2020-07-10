@@ -56,7 +56,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.18
+            VERSION=0.4.21
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -667,8 +667,7 @@ jobs:
               # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             else
-              # TODO: Don't ignore errors, temporary workaround until we fix #22955
-              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
       - run:
           name: CI job failed
@@ -826,7 +825,7 @@ jobs:
           command: |
             # To save memory, run in two batches
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E deadcode -E depguard -E dogsled \
-              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E scopelint ./pkg/...
+              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E exportloopref -E whitespace ./pkg/...
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign \
               -E rowserrcheck -E staticcheck -E structcheck -E typecheck -E unconvert -E unused -E varcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
@@ -925,11 +924,14 @@ jobs:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - install-grabpl
       - run:
           name: Deploy to Kubernetes
           command: |
-            /tmp/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+            cp -r /tmp/workspace/enterprise/dist .
+            /tmp/grabpl deploy-to-k8s
 
   release-packages:
     executor: node

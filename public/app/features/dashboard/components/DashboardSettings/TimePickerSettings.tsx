@@ -112,7 +112,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
 
           <div className="gf-form">
             <span className="gf-form-label width-7">Auto-refresh</span>
-            <Input width={60} value={this.getRefreshIntervals()} onChange={this.onRefreshIntervalChange} />
+            <Input width={60} defaultValue={this.getRefreshIntervals()} onBlur={this.onRefreshIntervalChange} />
           </div>
           <div className="gf-form">
             <span className="gf-form-label width-7">Now delay now-</span>

@@ -10,7 +10,6 @@ import (
 func TestQueryTransformer(t *testing.T) {
 	Convey("TestQueryTransformer", t, func() {
 		Convey("when transforming queries", func() {
-
 			executor := &CloudWatchExecutor{}
 			Convey("one cloudwatchQuery is generated when its request query has one stat", func() {
 				requestQueries := []*requestQuery{
