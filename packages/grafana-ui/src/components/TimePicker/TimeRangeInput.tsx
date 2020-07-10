@@ -28,6 +28,7 @@ export const TimeRangeInput: FC<Props> = ({
   timeZone = 'browser',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const styles = useStyles(getStyles);
 
   const onOpen = (event: FormEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -44,20 +45,11 @@ export const TimeRangeInput: FC<Props> = ({
     onChange(timeRange);
   };
 
-  const styles = useStyles(getStyles);
-  const theme = useTheme();
-  const inputStyles = getInputStyles({ theme, invalid: false });
-
   return (
     <div className={styles.container}>
-      <div
-        tabIndex={0}
-        className={cx(inputStyles.input, inputStyles.wrapper, styles.pickerInput)}
-        aria-label="TimePicker Open Button"
-        onClick={onOpen}
-      >
+      <div tabIndex={0} className={styles.pickerInput} aria-label="TimePicker Open Button" onClick={onOpen}>
         <TimePickerButtonLabel value={value} />
-        <span className={cx(inputStyles.suffix, styles.caretIcon)}>
+        <span className={styles.caretIcon}>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
         </span>
       </div>
@@ -69,7 +61,7 @@ export const TimeRangeInput: FC<Props> = ({
             onChange={onRangeChange}
             otherOptions={otherOptions}
             quickOptions={quickOptions}
-            onChangeTimeZone={hideTimeZone ? onChangeTimeZone : noop}
+            onChangeTimeZone={onChangeTimeZone || noop}
             hideHistory
             className={styles.content}
             hideTimeZone={hideTimeZone}
@@ -81,6 +73,7 @@ export const TimeRangeInput: FC<Props> = ({
 };
 
 const getStyles = (theme: GrafanaTheme) => {
+  const inputStyles = getInputStyles({ theme, invalid: false });
   return {
     container: css`
       display: flex;
@@ -89,18 +82,22 @@ const getStyles = (theme: GrafanaTheme) => {
     content: css`
       margin-left: 0;
     `,
-    pickerInput: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-
-      :focus {
+    pickerInput: cx(
+      css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
         ${getFocusStyle(theme)};
-      }
-    `,
-    caretIcon: css`
-      margin-left: ${theme.spacing.xs};
-    `,
+      `,
+      inputStyles.input,
+      inputStyles.wrapper
+    ),
+    caretIcon: cx(
+      css`
+        margin-left: ${theme.spacing.xs};
+      `,
+      inputStyles.suffix
+    ),
   };
 };
