@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { DataFrame, getTimeField, FieldType } from '@grafana/data';
+import { DataFrame, getTimeField, FieldType, getFieldDisplayName, KeyValue } from '@grafana/data';
 
 import uPlot from 'uplot';
 import { colors } from '../../utils';
@@ -16,7 +16,7 @@ interface State {
 }
 
 export class MicroPlot extends PureComponent<Props, State> {
-  plot: any;
+  plot?: uPlot;
 
   componentDidUpdate(oldProps: Props) {
     const { width, height } = this.props;
@@ -43,7 +43,7 @@ export class MicroPlot extends PureComponent<Props, State> {
 
     const { series, uData, scales } = getUPlotStuff(this.props);
 
-    const opts = {
+    const opts: uPlot.Options = {
       width,
       height,
       legend: {
@@ -55,10 +55,19 @@ export class MicroPlot extends PureComponent<Props, State> {
       axes: [
         {
           show: true,
-          // stroke: 'red',
+          stroke: 'red', // X axis
           grid: {
             show: true,
-            //stroke: 'green',
+            stroke: 'green', // X grid lines
+            width: 1,
+          },
+        },
+        {
+          show: true,
+          stroke: 'blue', // Y one
+          grid: {
+            show: true,
+            stroke: 'green', // X grid lines
             width: 1,
           },
         },
@@ -130,12 +139,15 @@ export class MicroPlot extends PureComponent<Props, State> {
       ],
       hooks: {
         init: [
-          (u: any) => {
+          u => {
             u.ctx.canvas.ondblclick = (e: any) => {
               console.log('Double click!', e);
             };
 
             const plot = u.root.querySelector('.over');
+            if (!plot) {
+              return;
+            }
 
             plot.addEventListener('mouseleave', () => {
               console.log('EXIT');
@@ -147,14 +159,14 @@ export class MicroPlot extends PureComponent<Props, State> {
           },
         ],
         setSelect: [
-          (u: any) => {
+          u => {
             const min = u.posToVal(u.select.left, 'x');
             const max = u.posToVal(u.select.left + u.select.width, 'x');
             console.log('SELECT', { min, max }, u.select, u);
           },
         ],
         setCursor: [
-          (u: any) => {
+          u => {
             const { left, top, idx } = u.cursor;
             // const x = u.data[0][idx];
             // const y = u.data[1][idx];
@@ -178,11 +190,13 @@ export class MicroPlot extends PureComponent<Props, State> {
   }
 }
 
+const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+
 export function getUPlotStuff(props: Props) {
   const { data } = props;
-  const series: any[] = [];
+  const series: uPlot.Series[] = [];
   const uData: any[] = [];
-  const scales: any = {
+  const scales: KeyValue<uPlot.Scale> = {
     x: {
       time: true,
     },
@@ -210,12 +224,17 @@ export function getUPlotStuff(props: Props) {
       continue; // only numbers for now...
     }
 
+    const fmt = field.display ?? defaultFormatter;
+
     series.push({
-      label: field.name,
+      label: getFieldDisplayName(field, data),
       stroke: colors[sidx++], // The line color
+
+      value: (u, v) => fmt(v),
       //fill: 'red',
-      width: 1,
+      width: 2,
     });
+
     uData.push(field.values.toArray());
   }
 
