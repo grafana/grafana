@@ -191,23 +191,23 @@ const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; time
   );
 };
 
-export const TimePickerButtonLabel = memo<Pick<Props, 'hideText' | 'value' | 'timeZone'>>(
-  ({ hideText, value, timeZone }) => {
-    const theme = useTheme();
-    const styles = getLabelStyles(theme);
+type LabelProps = Pick<Props, 'hideText' | 'value' | 'timeZone'>;
 
-    if (hideText) {
-      return null;
-    }
+export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone }) => {
+  const theme = useTheme();
+  const styles = getLabelStyles(theme);
 
-    return (
-      <span className={styles.container}>
-        <span>{formattedRange(value, timeZone)}</span>
-        <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
-      </span>
-    );
+  if (hideText) {
+    return null;
   }
-);
+
+  return (
+    <span className={styles.container}>
+      <span>{formattedRange(value, timeZone)}</span>
+      <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
+    </span>
+  );
+});
 
 const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
   const adjustedTimeRange = {
