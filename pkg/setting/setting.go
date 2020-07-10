@@ -1087,7 +1087,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		MaxCount: alerting.Key("max_annotations_to_keep").MustInt64(0),
 	}
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation)
-	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(APIAnnotation)
+	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation)
 
 	return nil
 }
