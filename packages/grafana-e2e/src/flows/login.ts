@@ -13,7 +13,6 @@ export const login = (username: string = 'admin', password: string = 'admin') =>
   e2e()
     .url()
     .then(url => {
-      // TODO: Detect if we're on the page for setting a new password
       e2e.pages.Login.skip()
         .should('be.visible')
         .click();
