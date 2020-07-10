@@ -3,8 +3,9 @@ import { css, cx } from 'emotion';
 import { isString } from 'lodash';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
-import { useTheme } from '../../themes';
+import { useStyles } from '../../themes';
 import { TableCellProps } from './types';
+import { GrafanaTheme } from '@grafana/data';
 
 export const JSONViewCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles } = props;
@@ -42,12 +43,16 @@ interface PopupProps {
 }
 
 const JSONTooltip: FC<PopupProps> = props => {
-  const theme = useTheme();
-  const className = css`
-    padding: ${theme.spacing.xs};
-  `;
+  const styles = useStyles((theme: GrafanaTheme) => {
+    return {
+      container: css`
+        padding: ${theme.spacing.xs};
+      `,
+    };
+  });
+
   return (
-    <div className={className}>
+    <div className={styles.container}>
       <div>
         <JSONFormatter json={props.value} open={4} />
       </div>
