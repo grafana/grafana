@@ -1,6 +1,7 @@
 import React from 'react';
 import { GraphWithLegend, Chart, MicroPlot } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
 import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
@@ -36,7 +37,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   if (useMicroPlot) {
     return (
       <div>
-        <MicroPlot width={width} height={height} data={data.series[0]} />
+        <MicroPlot width={width} height={height} data={data.series[0]} theme={config.theme} />
       </div>
     );
   }

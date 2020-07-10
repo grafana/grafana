@@ -1,11 +1,21 @@
 import React, { PureComponent } from 'react';
 
-import { DataFrame, getTimeField, FieldType, getFieldDisplayName, KeyValue } from '@grafana/data';
+import {
+  DataFrame,
+  getTimeField,
+  FieldType,
+  getFieldDisplayName,
+  KeyValue,
+  formattedValueToString,
+} from '@grafana/data';
 
 import uPlot from 'uplot';
 import { colors } from '../../utils';
+import { renderPlugin } from './renderPlugin';
+import { Themeable } from '../../types';
+import { GraphCustomFieldConfig } from './types';
 
-interface Props {
+interface Props extends Themeable {
   data: DataFrame; // assume applyFieldOverrides has been set
   width: number;
   height: number;
@@ -41,7 +51,7 @@ export class MicroPlot extends PureComponent<Props, State> {
   init = (element: any) => {
     const { width, height } = this.props;
 
-    const { series, uData, scales } = getUPlotStuff(this.props);
+    const { series, uData, scales, axes } = getUPlotStuff(this.props);
 
     const opts: uPlot.Options = {
       width,
@@ -49,94 +59,10 @@ export class MicroPlot extends PureComponent<Props, State> {
       legend: {
         show: false,
       },
-      tzDate: (ts: any) => uPlot.tzDate(new Date(ts * 1000), 'Etc/UTC'),
+      tzDate: ts => uPlot.tzDate(new Date(ts * 1000), 'Etc/UTC'),
       scales,
       series,
-      axes: [
-        {
-          show: true,
-          stroke: 'red', // X axis
-          grid: {
-            show: true,
-            stroke: 'green', // X grid lines
-            width: 1,
-          },
-        },
-        {
-          show: true,
-          stroke: 'blue', // Y one
-          grid: {
-            show: true,
-            stroke: 'green', // X grid lines
-            width: 1,
-          },
-        },
-        // {
-        //   show: true,
-        //   label: 'Population',
-        //   labelSize: 30,
-        //   labelFont: 'bold 12px Arial',
-        //   font: '12px Arial',
-        //   gap: 5,
-        //   size: 50,
-        //   stroke: 'red',
-        //   grid: {
-        //     show: true,
-        //     stroke: '#eee',
-        //     width: 1,
-        //   },
-        //   ticks: {
-        //     show: true,
-        //     stroke: 'pink',
-        //     width: 2,
-        //   },
-        //   //  values: (u: any, vals: any) => vals.map((v: any) => fmtt(v, 0)),
-        // },
-        // {
-        //   show: true,
-        //   label: '0000 Axis AAA',
-        //   labelSize: 30,
-        //   labelFont: 'bold 12px Arial',
-        //   font: '12px Arial',
-        //   gap: 5,
-        //   size: 50,
-        //   stroke: 'red',
-        //   side: 0,
-        // },
-        // {
-        //   show: true,
-        //   label: '2222 Axis BBB',
-        //   labelSize: 30,
-        //   labelFont: 'bold 12px Arial',
-        //   font: '12px Arial',
-        //   gap: 5,
-        //   size: 50,
-        //   stroke: 'red',
-        //   side: 2,
-        // },
-        // {
-        //   show: true,
-        //   label: 'Right Axis CCC',
-        //   labelSize: 30,
-        //   labelFont: 'bold 12px Arial',
-        //   font: '12px Arial',
-        //   gap: 5,
-        //   size: 50,
-        //   stroke: 'red',
-        //   side: 1,
-        // },
-        // {
-        //   show: true,
-        //   label: 'Left axis',
-        //   labelSize: 30,
-        //   labelFont: 'bold 12px Arial',
-        //   font: '12px Arial',
-        //   gap: 5,
-        //   size: 50,
-        //   stroke: 'red',
-        //   side: 3,
-        // },
-      ],
+      axes,
       hooks: {
         init: [
           u => {
@@ -174,6 +100,10 @@ export class MicroPlot extends PureComponent<Props, State> {
           },
         ],
       },
+      // plugins: [
+      //   // List the plugins
+      //   renderPlugin({ spikes: 6 }),
+      // ],
     };
 
     // Should only happen once!
@@ -190,10 +120,26 @@ export class MicroPlot extends PureComponent<Props, State> {
   }
 }
 
+const defaultFieldConfig: GraphCustomFieldConfig = {
+  showLines: true,
+  lineWidth: 1,
+  limeMode: 'connect',
+
+  showPoints: false,
+  pointRadius: 3,
+
+  showBars: false,
+
+  fillAlpha: 0,
+
+  showAxis: true,
+  axisWidth: 0, // Auto?
+};
+
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 export function getUPlotStuff(props: Props) {
-  const { data } = props;
+  const { data, theme } = props;
   const series: uPlot.Series[] = [];
   const uData: any[] = [];
   const scales: KeyValue<uPlot.Scale> = {
@@ -214,6 +160,19 @@ export function getUPlotStuff(props: Props) {
   uData.push(xvals); // make all numbers floating point
   series.push({});
 
+  const axes: uPlot.Axis[] = [
+    {
+      // TIME Index
+      show: true,
+      stroke: theme.colors.text, // X axis
+      grid: {
+        show: true,
+        stroke: theme.palette.gray1, // X grid lines
+        width: 1 / devicePixelRatio,
+      },
+    },
+  ];
+
   let sidx = 0;
   for (let i = 0; i < data.fields.length; i++) {
     if (i === timeIndex) {
@@ -225,18 +184,49 @@ export function getUPlotStuff(props: Props) {
     }
 
     const fmt = field.display ?? defaultFormatter;
+    const meta: GraphCustomFieldConfig = {
+      ...defaultFieldConfig, // defaults
+      ...field.config.custom, // field settings
+    };
+
+    const sid = field.config.unit || '__fixed';
+    if (!scales[sid]) {
+      const isRight = axes.length > 1;
+
+      scales[sid] = {}; // anything?
+      axes.push({
+        scale: sid,
+        show: meta.showAxis,
+        size: meta.axisWidth || 80, //
+        stroke: theme.colors.text,
+        side: isRight ? 1 : 3,
+        label: meta.axisLabel,
+        values: (u, vals, space) => vals.map(v => formattedValueToString(fmt(v))),
+        grid: {
+          show: !isRight,
+          stroke: theme.palette.gray05, // X grid lines
+          width: 1 / devicePixelRatio,
+        },
+        //values: ()
+      });
+    }
+
+    let color = colors[sidx++];
 
     series.push({
       label: getFieldDisplayName(field, data),
-      stroke: colors[sidx++], // The line color
+      stroke: color, // The line color
 
-      value: (u, v) => fmt(v),
-      //fill: 'red',
-      width: 2,
+      scale: sid, // lookup to the scale
+      value: (u, v) => formattedValueToString(fmt(v)),
+
+      fill: meta.fillAlpha ? color : undefined,
+
+      width: meta.showLines ? meta.lineWidth / devicePixelRatio : 0, // lines
     });
 
     uData.push(field.values.toArray());
   }
 
-  return { series, uData, scales };
+  return { series, uData, scales, axes };
 }
