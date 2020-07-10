@@ -420,8 +420,4 @@ export class InfluxQueryCtrl extends QueryCtrl {
     }
     return null;
   }
-
-  getCollapsedText() {
-    return this.queryModel.render(false);
-  }
 }
