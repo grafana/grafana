@@ -70,12 +70,39 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
-		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
-		} else {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
+
+		var opts []oauth2.AuthCodeOption
+		opts = append(opts, oauth2.AccessTypeOnline)
+
+		if setting.OAuthService.OAuthInfos[name].AcrValues != "" {
+			opts = append(opts, oauth2.SetAuthURLParam("acr_values", setting.OAuthService.OAuthInfos[name].AcrValues))
 		}
+
+		if setting.OAuthService.OAuthInfos[name].UseHybridFlow {
+			opts = append(opts, oauth2.SetAuthURLParam("response_type", "code id_token"))
+			opts = append(opts, oauth2.SetAuthURLParam("response_mode", "form_post"))
+			nonce, _ := GenStateString()
+			opts = append(opts, oauth2.SetAuthURLParam("nonce", nonce))
+			cookieOpts := hs.CookieOptionsFromCfg();
+			cookie := http.Cookie{
+				Name:     OauthStateCookieName,
+				MaxAge:   hs.Cfg.OAuthCookieMaxAge,
+				Value:    hashedState,
+				HttpOnly: true,
+				Path:     cookieOpts.Path,
+				Secure:   cookieOpts.Secure,
+				SameSite: http.SameSiteNoneMode,
+			}
+			http.SetCookie(ctx.Resp, &cookie)
+		} else {
+			middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+		}
+	
+		if (setting.OAuthService.OAuthInfos[name].HostedDomain != "") {
+			opts = append(opts, oauth2.SetAuthURLParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain))
+		}
+
+		ctx.Redirect(connect.AuthCodeURL(state, opts...))
 		return
 	}
 
