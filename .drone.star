@@ -52,7 +52,7 @@ def pipeline_set(kind, name):
         # There should be a 'fail' function in Starlark, but won't build
         return []
 
-    return [
+    pipelines = [
         {
             'kind': 'pipeline',
             'type': 'docker',
@@ -370,7 +370,12 @@ def pipeline_set(kind, name):
                 },
             ],
         },
-        {
+    ]
+
+    if kind != pr_kind:
+        # For now at least, we have to disable the enterprise pipeline for PRs, since PRs don't have access
+        # to secrets with Drone (in Circle, you can share secrets with PRs internal to the repo).
+        pipelines.append({
             'kind': 'pipeline',
             'type': 'docker',
             'name': '{}-enterprise'.format(name),
@@ -484,5 +489,6 @@ def pipeline_set(kind, name):
                     # },
                 # },
             ]
-        },
-    ]
+        })
+
+    return pipelines
