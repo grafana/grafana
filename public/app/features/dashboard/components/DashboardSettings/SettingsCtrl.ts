@@ -18,8 +18,8 @@ export class SettingsCtrl {
   json: string;
   alertCount: number;
   canSaveAs: boolean;
-  canSave: boolean;
-  canDelete: boolean;
+  canSave?: boolean;
+  canDelete?: boolean;
   sections: any[];
   hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;

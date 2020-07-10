@@ -76,10 +76,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     }
   };
 
-  componentWillUnmount() {
-    console.log('QueryRow will unmount');
-  }
-
   onClickToggleDisabled = () => {
     const { exploreId, index, query } = this.props;
     const newQuery = {
