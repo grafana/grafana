@@ -35,6 +35,7 @@ export interface DataLink<T extends DataQuery = any> {
   // If dataLink represents internal link this has to be filled. Internal link is defined as a query in a particular
   // datas ource that we want to show to the user. Usually this results in a link to explore but can also lead to
   // more custom onClick behaviour if needed.
+  // @internal and subject to change in future releases
   internal?: {
     query: T;
     datasourceUid: string;

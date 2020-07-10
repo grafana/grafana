@@ -113,6 +113,7 @@ export class BackendSrv implements BackendService {
       }
 
       if (this.noBackendCache) {
+        options.headers = options.headers ?? {};
         options.headers['X-Grafana-NoCache'] = 'true';
       }
     }

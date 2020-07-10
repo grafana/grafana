@@ -71,6 +71,6 @@ describe('when checking template variables', () => {
       'var-test': 'asd',
     };
 
-    expect(findTemplateVarChanges(a, b)['var-test']).toEqual(['test']);
+    expect(findTemplateVarChanges(a, b)!['var-test']).toEqual(['test']);
   });
 });

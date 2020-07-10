@@ -66,7 +66,7 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  console.log('Toggle legend is not implemented yet');
+  console.warn('Toggle legend is not implemented yet');
   // We need to set panel.legend defaults first
   // panel.legend.show = !panel.legend.show;
   refreshPanel(panel);

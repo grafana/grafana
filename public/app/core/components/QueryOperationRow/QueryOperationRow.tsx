@@ -28,6 +28,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const theme = useTheme();
   const styles = getQueryOperationRowStyles(theme);
+
   useUpdateEffect(() => {
     if (isContentVisible) {
       if (onOpen) {
