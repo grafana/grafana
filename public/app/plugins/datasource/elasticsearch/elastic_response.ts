@@ -390,8 +390,8 @@ export class ElasticResponse {
     return result;
   }
 
-  getTimeSeries(processToDataFrames = false): DataQueryResponse {
-    if (processToDataFrames) {
+  getTimeSeries(): DataQueryResponse {
+    if (this.targets.some(target => target.metrics.some(metric => metric.type === 'raw_document_v2'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
