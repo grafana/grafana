@@ -66,9 +66,17 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			Results: map[string]*tsdb.QueryResult{
 				"": {
 					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
-						data.NewFrame("logGroups", data.NewField("logGroupName", nil, []*string{
-							aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
-						})),
+						&data.Frame{
+							Name: "logGroups",
+							Fields: []*data.Field{
+								data.NewField("logGroupName", nil, []*string{
+									aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+								}),
+							},
+							Meta: &data.FrameMeta{
+								PreferredVisualization: "logs",
+							},
+						},
 					}),
 				},
 			},
@@ -111,9 +119,17 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			Results: map[string]*tsdb.QueryResult{
 				"": {
 					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
-						data.NewFrame("logGroups", data.NewField("logGroupName", nil, []*string{
-							aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
-						})),
+						&data.Frame{
+							Name: "logGroups",
+							Fields: []*data.Field{
+								data.NewField("logGroupName", nil, []*string{
+									aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+								}),
+							},
+							Meta: &data.FrameMeta{
+								PreferredVisualization: "logs",
+							},
+						},
 					}),
 				},
 			},
@@ -171,15 +187,20 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	expFrame := data.NewFrame(
-		refID,
-		data.NewField("name", nil, []*string{
-			aws.String("field_a"), aws.String("field_b"), aws.String("field_c"),
-		}),
-		data.NewField("percent", nil, []*int64{
-			aws.Int64(100), aws.Int64(30), aws.Int64(55),
-		}),
-	)
+	expFrame := &data.Frame{
+		Name: refID,
+		Fields: []*data.Field{
+			data.NewField("name", nil, []*string{
+				aws.String("field_a"), aws.String("field_b"), aws.String("field_c"),
+			}),
+			data.NewField("percent", nil, []*int64{
+				aws.Int64(100), aws.Int64(30), aws.Int64(55),
+			}),
+		},
+		Meta: &data.FrameMeta{
+			PreferredVisualization: "logs",
+		},
+	}
 	expFrame.RefID = refID
 	assert.Equal(t, &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{
@@ -301,6 +322,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			Custom: map[string]interface{}{
 				"Region": "default",
 			},
+			PreferredVisualization: "logs",
 		}
 		assert.Equal(t, &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
@@ -364,10 +386,15 @@ func TestQuery_StopQuery(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	expFrame := data.NewFrame(
-		"StopQueryResponse",
-		data.NewField("success", nil, []bool{true}),
-	)
+	expFrame := &data.Frame{
+		Name: "StopQueryResponse",
+		Fields: []*data.Field{
+			data.NewField("success", nil, []bool{true}),
+		},
+		Meta: &data.FrameMeta{
+			PreferredVisualization: "logs",
+		},
+	}
 	assert.Equal(t, &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{
 			"": {
@@ -468,6 +495,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 				RecordsScanned: aws.Float64(1024),
 			},
 		},
+		PreferredVisualization: "logs",
 	}
 
 	assert.Equal(t, &tsdb.Response{
