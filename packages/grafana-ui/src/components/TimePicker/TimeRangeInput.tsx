@@ -14,10 +14,19 @@ export interface Props {
   value: TimeRange;
   timeZone?: TimeZone;
   onChange: (timeRange: TimeRange) => void;
-  onChangeTimeZone: (timeZone: TimeZone) => void;
+  onChangeTimeZone?: (timeZone: TimeZone) => void;
+  hideTimeZone?: boolean;
 }
 
-export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, timeZone = 'browser' }) => {
+const noop = () => {};
+
+export const TimeRangeInput: FC<Props> = ({
+  value,
+  onChange,
+  onChangeTimeZone,
+  hideTimeZone = true,
+  timeZone = 'browser',
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onOpen = (event: FormEvent<HTMLDivElement>) => {
@@ -60,9 +69,10 @@ export const TimeRangeInput: FC<Props> = ({ value, onChange, onChangeTimeZone, t
             onChange={onRangeChange}
             otherOptions={otherOptions}
             quickOptions={quickOptions}
-            onChangeTimeZone={onChangeTimeZone}
+            onChangeTimeZone={hideTimeZone ? onChangeTimeZone : noop}
             hideHistory
             className={styles.content}
+            hideTimeZone={hideTimeZone}
           />
         </ClickOutsideWrapper>
       )}

@@ -136,6 +136,7 @@ interface Props {
   history?: TimeRange[];
   hideHistory?: boolean;
   className?: string;
+  hideTimeZone?: boolean;
 }
 
 interface PropsWithScreenSize extends Props {
@@ -178,7 +179,9 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
           />
         </CustomScrollbar>
       </div>
-      {isFullscreen && <TimePickerFooter timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />}
+      {!props.hideTimeZone && isFullscreen && (
+        <TimePickerFooter timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />
+      )}
     </div>
   );
 };
