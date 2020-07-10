@@ -97,7 +97,7 @@ func NewOAuthService() {
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
 			UseHybridFlow:      sec.Key("use_hybrid_flow").MustBool(),
-			AcrValues           sec.Key("acr_values").String(),
+			AcrValues:          sec.Key("acr_values").String(),
 		}
 
 		if !info.Enabled {
