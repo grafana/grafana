@@ -14,23 +14,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-type cache struct {
-	credential *credentials.Credentials
-	expiration *time.Time
+type envelope struct {
+	credentials *credentials.Credentials
+	expiration  *time.Time
 }
 
-var awsCredentialCache = make(map[string]cache)
-var credentialCacheLock sync.RWMutex
+var awsCredentialCache = map[string]envelope{}
+var credsCacheLock sync.RWMutex
 
 // Session factory.
 // Stubbable by tests.
@@ -52,16 +48,15 @@ var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2meta
 
 func getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
-	credentialCacheLock.RLock()
-	if _, ok := awsCredentialCache[cacheKey]; ok {
-		if awsCredentialCache[cacheKey].expiration != nil &&
-			awsCredentialCache[cacheKey].expiration.After(time.Now().UTC()) {
-			result := awsCredentialCache[cacheKey].credential
-			credentialCacheLock.RUnlock()
+	credsCacheLock.RLock()
+	if env, ok := awsCredentialCache[cacheKey]; ok {
+		if env.expiration != nil && env.expiration.After(time.Now().UTC()) {
+			result := env.credentials
+			credsCacheLock.RUnlock()
 			return result, nil
 		}
 	}
-	credentialCacheLock.RUnlock()
+	credsCacheLock.RUnlock()
 
 	accessKeyID := ""
 	secretAccessKey := ""
@@ -135,12 +130,12 @@ func getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			remoteCredProvider(sess),
 		})
 
-	credentialCacheLock.Lock()
-	awsCredentialCache[cacheKey] = cache{
-		credential: creds,
-		expiration: expiration,
+	credsCacheLock.Lock()
+	awsCredentialCache[cacheKey] = envelope{
+		credentials: creds,
+		expiration:  expiration,
 	}
-	credentialCacheLock.Unlock()
+	credsCacheLock.Unlock()
 
 	return creds, nil
 }
@@ -220,45 +215,4 @@ func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
-	datasourceInfo := e.getDsInfo(region)
-	cfg, err := getAwsConfig(datasourceInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := newSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
-}
-
-func retrieveLogsClient(datasourceInfo *DatasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	cfg, err := getAwsConfig(datasourceInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := newSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
 }
