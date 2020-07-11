@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -183,8 +184,8 @@ func TestQuery_Regions(t *testing.T) {
 			})
 		}
 		rows = append(rows, []interface{}{
-			"xtra-region",
-			"xtra-region",
+			regionName,
+			regionName,
 		})
 		assert.Equal(t, &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
@@ -211,34 +212,86 @@ func TestQuery_Regions(t *testing.T) {
 	})
 }
 
-/*
-	t.Run("When calling handleGetRegions", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
-			clients: &mockClients{
-				ec2: mockedEc2{RespRegions: ec2.DescribeRegionsOutput{
-					Regions: []*ec2.Region{
+func TestQuery_InstanceAttributes(t *testing.T) {
+	origNewEC2Client := newEC2Client
+	t.Cleanup(func() {
+		newEC2Client = origNewEC2Client
+	})
+
+	var cli fakeEC2Client
+
+	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+		return cli
+	}
+
+	t.Run("Get instance ID", func(t *testing.T) {
+		const instanceID = "i-12345678"
+		cli = fakeEC2Client{
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
 						{
-							RegionName: aws.String("ap-northeast-2"),
+							InstanceId: aws.String(instanceID),
+							Tags: []*ec2.Tag{
+								{
+									Key:   aws.String("Environment"),
+									Value: aws.String("production"),
+								},
+							},
 						},
 					},
 				},
-				}},
+			},
 		}
-		jsonData := simplejson.New()
-		jsonData.Set("defaultRegion", "default")
-		executor.DataSource = &models.DataSource{
-			JsonData:       jsonData,
-			SecureJsonData: securejsondata.SecureJsonData{},
-		}
-
-		result, err := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":          "metricFindQuery",
+						"subtype":       "ec2_instance_attribute",
+						"region":        "us-east-1",
+						"attributeName": "InstanceId",
+						"filters": map[string]interface{}{
+							"tag:Environment": []string{"production"},
+						},
+					}),
+				},
+			},
+		})
 		require.NoError(t, err)
 
-		assert.Equal(t, "ap-east-1", result[0].Text)
-		assert.Equal(t, "ap-northeast-1", result[1].Text)
-		assert.Equal(t, "ap-northeast-2", result[2].Text)
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									instanceID,
+									instanceID,
+								},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
 	})
+}
 
+/*
 	t.Run("When calling handleGetEc2InstanceAttribute", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			DataSource: mockDatasource(),

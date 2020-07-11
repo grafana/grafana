@@ -74,7 +74,8 @@ func (c fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn fu
 type fakeEC2Client struct {
 	ec2iface.EC2API
 
-	regions []string
+	regions      []string
+	reservations []*ec2.Reservation
 }
 
 func (c fakeEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
@@ -87,4 +88,12 @@ func (c fakeEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.Describe
 	return &ec2.DescribeRegionsOutput{
 		Regions: regions,
 	}, nil
+}
+
+func (c fakeEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
+	fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+	fn(&ec2.DescribeInstancesOutput{
+		Reservations: c.reservations,
+	}, true)
+	return nil
 }

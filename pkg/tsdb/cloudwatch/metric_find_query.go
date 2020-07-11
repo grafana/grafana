@@ -664,15 +664,10 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	}
 
 	var resp ec2.DescribeInstancesOutput
-	err = client.DescribeInstancesPages(params,
-		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
-			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
-			for _, reservation := range reservations {
-				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
-			}
-			return !lastPage
-		})
-	if err != nil {
+	if err := client.DescribeInstancesPages(params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+		resp.Reservations = append(resp.Reservations, page.Reservations...)
+		return !lastPage
+	}); err != nil {
 		return nil, fmt.Errorf("failed to call ec2:DescribeInstances, %w", err)
 	}
 
