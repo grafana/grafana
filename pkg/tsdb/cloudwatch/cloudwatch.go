@@ -27,11 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-// CloudWatchExecutor executes CloudWatch requests.
-type CloudWatchExecutor struct {
-	*models.DataSource
-}
-
 type DatasourceInfo struct {
 	Profile       string
 	Region        string
@@ -57,6 +52,11 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return &CloudWatchExecutor{}, nil
 	})
+}
+
+// CloudWatchExecutor executes CloudWatch requests.
+type CloudWatchExecutor struct {
+	*models.DataSource
 }
 
 func (e *CloudWatchExecutor) newSession(region string) (*session.Session, error) {
