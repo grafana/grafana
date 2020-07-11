@@ -60,7 +60,7 @@ type CloudWatchExecutor struct {
 }
 
 func (e *CloudWatchExecutor) newSession(region string) (*session.Session, error) {
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 	creds, err := getCredentials(dsInfo)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,8 @@ func (e *CloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 	return newRGTAClient(sess), nil
 }
 
-func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
@@ -243,6 +244,32 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 		},
 	}
 	return response, nil
+}
+
+func (e *CloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
+	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	if region == "default" {
+		region = defaultRegion
+	}
+
+	authType := e.DataSource.JsonData.Get("authType").MustString()
+	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	externalID := e.DataSource.JsonData.Get("externalId").MustString()
+	decrypted := e.DataSource.DecryptedValues()
+	accessKey := decrypted["accessKey"]
+	secretKey := decrypted["secretKey"]
+
+	datasourceInfo := &DatasourceInfo{
+		Region:        region,
+		Profile:       e.DataSource.Database,
+		AuthType:      authType,
+		AssumeRoleArn: assumeRoleArn,
+		ExternalID:    externalID,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+
+	return datasourceInfo
 }
 
 func isTerminated(queryStatus string) bool {

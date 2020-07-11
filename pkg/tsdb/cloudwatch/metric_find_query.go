@@ -310,7 +310,7 @@ func parseMultiSelectValue(input string) []string {
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	const region = "default"
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -385,7 +385,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 		}
 	} else {
 		var err error
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
 		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region); err != nil {
@@ -414,7 +414,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		}
 	} else {
 		var err error
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
 		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
@@ -704,7 +704,7 @@ func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 		return cloudwatch.ListMetricsOutput{}, err
 	}
 
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(dsInfo.Namespace),
 	}
@@ -732,7 +732,7 @@ func (e *CloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
@@ -771,7 +771,7 @@ func (e *CloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]str
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
 		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)

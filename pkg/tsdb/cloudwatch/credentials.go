@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type envelope struct {
@@ -171,34 +170,4 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 
 func ec2RoleProvider(sess *session.Session) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
-}
-
-func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	return retrieveDsInfo(e.DataSource, region)
-}
-
-func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInfo {
-	defaultRegion := datasource.JsonData.Get("defaultRegion").MustString()
-	if region == "default" {
-		region = defaultRegion
-	}
-
-	authType := datasource.JsonData.Get("authType").MustString()
-	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
-	externalID := datasource.JsonData.Get("externalId").MustString()
-	decrypted := datasource.DecryptedValues()
-	accessKey := decrypted["accessKey"]
-	secretKey := decrypted["secretKey"]
-
-	datasourceInfo := &DatasourceInfo{
-		Region:        region,
-		Profile:       datasource.Database,
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
-		ExternalID:    externalID,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
-	}
-
-	return datasourceInfo
 }
