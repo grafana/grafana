@@ -24,7 +24,7 @@ type envelope struct {
 	expiration  *time.Time
 }
 
-var awsCredentialCache = map[string]envelope{}
+var awsCredsCache = map[string]envelope{}
 var credsCacheLock sync.RWMutex
 
 // Session factory.
@@ -48,7 +48,7 @@ var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2meta
 func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
 	credsCacheLock.RLock()
-	if env, ok := awsCredentialCache[cacheKey]; ok {
+	if env, ok := awsCredsCache[cacheKey]; ok {
 		if env.expiration != nil && env.expiration.After(time.Now().UTC()) {
 			result := env.credentials
 			credsCacheLock.RUnlock()
@@ -130,7 +130,7 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 		})
 
 	credsCacheLock.Lock()
-	awsCredentialCache[cacheKey] = envelope{
+	awsCredsCache[cacheKey] = envelope{
 		credentials: creds,
 		expiration:  expiration,
 	}
