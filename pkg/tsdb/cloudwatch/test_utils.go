@@ -11,6 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -112,6 +114,20 @@ func (c fakeEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
 	}
 	fn(&ec2.DescribeInstancesOutput{
 		Reservations: reservations,
+	}, true)
+	return nil
+}
+
+type fakeRGTAClient struct {
+	resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+
+	tagMapping []*resourcegroupstaggingapi.ResourceTagMapping
+}
+
+func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput,
+	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
+	fn(&resourcegroupstaggingapi.GetResourcesOutput{
+		ResourceTagMappingList: c.tagMapping,
 	}, true)
 	return nil
 }

@@ -283,4 +283,6 @@ var newEC2Client = func(provider client.ConfigProvider) ec2iface.EC2API {
 // RGTA client factory.
 //
 // Stubbable by tests.
-var newRGTAClient = resourcegroupstaggingapi.New
+var newRGTAClient = func(provider client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+	return resourcegroupstaggingapi.New(provider)
+}

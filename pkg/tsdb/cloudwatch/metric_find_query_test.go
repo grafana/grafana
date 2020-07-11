@@ -11,6 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
@@ -411,66 +413,89 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 	})
 }
 
-/*
+func TestQuery_ResourceARNs(t *testing.T) {
+	origNewRGTAClient := newRGTAClient
+	t.Cleanup(func() {
+		newRGTAClient = origNewRGTAClient
+	})
 
-	t.Run("When calling handleGetResourceArns", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
-			DataSource: mockDatasource(),
-			clients: &mockClients{
-				rgta: mockedRGTA{
-					Resp: resourcegroupstaggingapi.GetResourcesOutput{
-						ResourceTagMappingList: []*resourcegroupstaggingapi.ResourceTagMapping{
-							{
-								ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
-								Tags: []*resourcegroupstaggingapi.Tag{
-									{
-										Key:   aws.String("Environment"),
-										Value: aws.String("production"),
-									},
+	var cli fakeRGTAClient
+
+	newRGTAClient = func(client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+		return cli
+	}
+
+	t.Run("", func(t *testing.T) {
+		cli = fakeRGTAClient{
+			tagMapping: []*resourcegroupstaggingapi.ResourceTagMapping{
+				{
+					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
+					Tags: []*resourcegroupstaggingapi.Tag{
+						{
+							Key:   aws.String("Environment"),
+							Value: aws.String("production"),
+						},
+					},
+				},
+				{
+					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
+					Tags: []*resourcegroupstaggingapi.Tag{
+						{
+							Key:   aws.String("Environment"),
+							Value: aws.String("production"),
+						},
+					},
+				},
+			},
+		}
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":         "metricFindQuery",
+						"subtype":      "resource_arns",
+						"region":       "us-east-1",
+						"resourceType": "ec2:instance",
+						"tags": map[string]interface{}{
+							"Environment": []string{"production"},
+						},
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 2,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
 								},
 							},
-							{
-								ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
-								Tags: []*resourcegroupstaggingapi.Tag{
-									{
-										Key:   aws.String("Environment"),
-										Value: aws.String("production"),
-									},
+							Rows: []tsdb.RowValues{
+								{
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
+								},
+								{
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
 								},
 							},
 						},
 					},
 				},
 			},
-		}
-
-		json := simplejson.New()
-		json.Set("region", "us-east-1")
-		json.Set("resourceType", "ec2:instance")
-		tags := make(map[string]interface{})
-		tags["Environment"] = []string{"production"}
-		json.Set("tags", tags)
-		result, err := executor.handleGetResourceArns(context.Background(), json, &tsdb.TsdbQuery{})
-		require.NoError(t, err)
-
-		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567", result[0].Text)
-		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567", result[0].Value)
-		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321", result[1].Text)
-		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321", result[1].Value)
+		}, resp)
 	})
 }
-
-func TestParseMultiSelectValue(t *testing.T) {
-	values := parseMultiSelectValue(" i-someInstance ")
-	assert.Equal(t, []string{"i-someInstance"}, values)
-
-	values = parseMultiSelectValue("{i-05}")
-	assert.Equal(t, []string{"i-05"}, values)
-
-	values = parseMultiSelectValue(" {i-01, i-03, i-04} ")
-	assert.Equal(t, []string{"i-01", "i-03", "i-04"}, values)
-
-	values = parseMultiSelectValue("i-{01}")
-	assert.Equal(t, []string{"i-{01}"}, values)
-}
-*/

@@ -512,15 +512,15 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	var filters []*ec2.Filter
 	for k, v := range filterJson {
 		if vv, ok := v.([]interface{}); ok {
-			var vvvvv []*string
+			var values []*string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {
-					vvvvv = append(vvvvv, &vvvv)
+					values = append(values, &vvvv)
 				}
 			}
 			filters = append(filters, &ec2.Filter{
 				Name:   aws.String(k),
-				Values: vvvvv,
+				Values: values,
 			})
 		}
 	}
@@ -591,15 +591,15 @@ func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	var filters []*resourcegroupstaggingapi.TagFilter
 	for k, v := range filterJson {
 		if vv, ok := v.([]interface{}); ok {
-			var vvvvv []*string
+			var values []*string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {
-					vvvvv = append(vvvvv, &vvvv)
+					values = append(values, &vvvv)
 				}
 			}
 			filters = append(filters, &resourcegroupstaggingapi.TagFilter{
 				Key:    aws.String(k),
-				Values: vvvvv,
+				Values: values,
 			})
 		}
 	}
@@ -674,7 +674,8 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	return &resp, nil
 }
 
-func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter, resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter,
+	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
@@ -686,16 +687,12 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	}
 
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	err = client.GetResourcesPages(params,
+	if err := client.GetResourcesPages(params,
 		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-			resources, _ := awsutil.ValuesAtPath(page, "ResourceTagMappingList")
-			for _, resource := range resources {
-				resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, resource.(*resourcegroupstaggingapi.ResourceTagMapping))
-			}
+			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
 			return !lastPage
-		})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call tags:GetResources, %w", err)
+		}); err != nil {
+		return nil, fmt.Errorf("failed to call tags:GetResources, %w", err)
 	}
 
 	return &resp, nil
