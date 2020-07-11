@@ -107,7 +107,8 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	return data, nil
 }
 
-func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
+func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json) (*data.Frame, error) {
 	queryRequest := &cloudwatchlogs.GetLogEventsInput{
 		Limit:         aws.Int64(parameters.Get("limit").MustInt64(10)),
 		StartFromHead: aws.Bool(parameters.Get("startFromHead").MustBool(false)),
@@ -246,7 +247,8 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	return dataFrame, nil
 }
 
-func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*cloudwatchlogs.StopQueryOutput, error) {
+func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json) (*cloudwatchlogs.StopQueryOutput, error) {
 	queryInput := &cloudwatchlogs.StopQueryInput{
 		QueryId: aws.String(parameters.Get("queryId").MustString()),
 	}
@@ -266,7 +268,8 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 	return response, err
 }
 
-func (e *cloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
+func (e *cloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json) (*data.Frame, error) {
 	response, err := e.executeStopQuery(ctx, logsClient, parameters)
 	if err != nil {
 		return nil, err
@@ -276,7 +279,8 @@ func (e *cloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient clo
 	return dataFrame, nil
 }
 
-func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	queryInput := &cloudwatchlogs.GetQueryResultsInput{
 		QueryId: aws.String(parameters.Get("queryId").MustString()),
 	}
@@ -284,7 +288,8 @@ func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 	return logsClient.GetQueryResultsWithContext(ctx, queryInput)
 }
 
-func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, refID string) (*data.Frame, error) {
+func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json, refID string) (*data.Frame, error) {
 	getQueryResultsOutput, err := e.executeGetQueryResults(ctx, logsClient, parameters)
 	if err != nil {
 		return nil, err
@@ -301,7 +306,8 @@ func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 	return dataFrame, nil
 }
 
-func (e *cloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, refID string) (*data.Frame, error) {
+func (e *cloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json, refID string) (*data.Frame, error) {
 	queryInput := &cloudwatchlogs.GetLogGroupFieldsInput{
 		LogGroupName: aws.String(parameters.Get("logGroupName").MustString()),
 		Time:         aws.Int64(parameters.Get("time").MustInt64()),

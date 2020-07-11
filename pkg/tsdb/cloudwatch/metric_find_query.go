@@ -33,13 +33,13 @@ type suggestData struct {
 	Value string
 }
 
-type CustomMetricsCache struct {
+type customMetricsCache struct {
 	Expire time.Time
 	Cache  []string
 }
 
-var customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
-var customMetricsDimensionsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
+var customMetricsMetricsMap = make(map[string]map[string]map[string]*customMetricsCache)
+var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMetricsCache)
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":          {"ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "ExpiredCount", "HeapUsage", "InflightCount", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionsCount", "ProducerCount", "QueueSize", "StorePercentUsage", "TotalConsumerCount", "TotalMessageCount", "TotalProducerCount"},
@@ -735,13 +735,13 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string
 	dsInfo := e.getDSInfo(region)
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
+		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &customMetricsCache{}
 		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 
@@ -774,13 +774,13 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]str
 	dsInfo := e.getDSInfo(region)
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
+		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &customMetricsCache{}
 		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 
