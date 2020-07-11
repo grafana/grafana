@@ -45,7 +45,7 @@ var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2meta
 	return ec2metadata.New(p, cfgs...)
 }
 
-func getCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
+func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
 	credsCacheLock.RLock()
 	if env, ok := awsCredentialCache[cacheKey]; ok {
@@ -172,7 +172,7 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
 }
 
-func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
+func getAwsConfig(dsInfo *datasourceInfo) (*aws.Config, error) {
 	creds, err := getCredentials(dsInfo)
 	if err != nil {
 		return nil, err

@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type DatasourceInfo struct {
+type datasourceInfo struct {
 	Profile       string
 	Region        string
 	AuthType      string
@@ -255,10 +255,9 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	if region == defaultRegion {
-		region = defaultRegion
+		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
 
 	authType := e.DataSource.JsonData.Get("authType").MustString()
@@ -268,7 +267,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
 
-	return &DatasourceInfo{
+	return &datasourceInfo{
 		Region:        region,
 		Profile:       e.DataSource.Database,
 		AuthType:      authType,
@@ -279,8 +278,8 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
 	}
 }
 
-func retrieveLogsClient(datasourceInfo *DatasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	cfg, err := getAwsConfig(datasourceInfo)
+func retrieveLogsClient(dsInfo *datasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
+	cfg, err := getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, err
 	}
