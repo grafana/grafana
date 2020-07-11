@@ -727,6 +727,7 @@ func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 		}
 		return !lastPage
 	})
+
 	return resp, err
 }
 

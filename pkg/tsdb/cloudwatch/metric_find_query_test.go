@@ -1,33 +1,147 @@
 package cloudwatch
 
-/*
-func TestCloudWatchMetrics(t *testing.T) {
-	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
-			DataSource: mockDatasource(),
-			clients: &mockClients{
-				cloudWatch: mockedCloudWatch{
-					Resp: cloudwatch.ListMetricsOutput{
-						Metrics: []*cloudwatch.Metric{
-							{
-								MetricName: aws.String("Test_MetricName"),
-								Dimensions: []*cloudwatch.Dimension{
-									{
-										Name: aws.String("Test_DimensionName"),
-									},
+import (
+	"context"
+	"testing"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestQuery_Metrics(t *testing.T) {
+	origNewCWClient := newCWClient
+	t.Cleanup(func() {
+		newCWClient = origNewCWClient
+	})
+
+	var client fakeCWClient
+
+	newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return client
+	}
+
+	t.Run("Custom metrics", func(t *testing.T) {
+		client = fakeCWClient{
+			metrics: []*cloudwatch.Metric{
+				{
+					MetricName: aws.String("Test_MetricName"),
+					Dimensions: []*cloudwatch.Dimension{
+						{
+							Name: aws.String("Test_DimensionName"),
+						},
+					},
+				},
+			},
+		}
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":      "metricFindQuery",
+						"subtype":   "metrics",
+						"region":    "us-east-1",
+						"namespace": "custom",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"Test_MetricName",
+									"Test_MetricName",
 								},
 							},
 						},
 					},
 				},
 			},
-		}
-		metrics, err := executor.getMetricsForCustomMetrics("us-east-1")
-		require.NoError(t, err)
-
-		assert.Contains(t, metrics, "Test_MetricName")
+		}, resp)
 	})
 
+	t.Run("Dimension keys for custom metrics", func(t *testing.T) {
+		client = fakeCWClient{
+			metrics: []*cloudwatch.Metric{
+				{
+					MetricName: aws.String("Test_MetricName"),
+					Dimensions: []*cloudwatch.Dimension{
+						{
+							Name: aws.String("Test_DimensionName"),
+						},
+					},
+				},
+			},
+		}
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":      "metricFindQuery",
+						"subtype":   "dimension_keys",
+						"region":    "us-east-1",
+						"namespace": "custom",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"Test_DimensionName",
+									"Test_DimensionName",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
+	})
+}
+
+/*
 	t.Run("When calling getDimensionsForCustomMetrics", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			DataSource: mockDatasource(),
