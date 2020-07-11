@@ -79,7 +79,7 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	region := parameters.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getLogsClient(region)
+	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,6 @@ func (e *CloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	case "GetLogEvents":
 		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +158,8 @@ func (e *CloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	return data.NewFrame("logEvents", timestampField, messageField), nil
 }
 
-func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
+func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
+	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json) (*data.Frame, error) {
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix").MustString("")
 
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
@@ -189,7 +189,8 @@ func (e *CloudWatchExecutor) handleDescribeLogGroups(ctx context.Context, logsCl
 	return frame, nil
 }
 
-func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, timeRange *tsdb.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
+func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json, timeRange *tsdb.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -224,7 +225,8 @@ func (e *CloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 
-func (e *CloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
+func (e *CloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
 	if err != nil {
 		return nil, err

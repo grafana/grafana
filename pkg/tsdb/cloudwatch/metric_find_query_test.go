@@ -44,13 +44,16 @@ func (m mockedRGTA) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesI
 
 func TestCloudWatchMetrics(t *testing.T) {
 	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
-		dsInfo := &DatasourceInfo{
-			Region:        "us-east-1",
-			Namespace:     "Foo",
-			Profile:       "default",
-			AssumeRoleArn: "",
+		const region = "us-east-1"
+		e := &CloudWatchExecutor{
+			DataSource: &models.DataSource{
+				Database: "default",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"Region": region,
+				}),
+			},
 		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+		f := func(region string) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{
@@ -64,20 +67,23 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			}, nil
 		}
-		metrics, err := getMetricsForCustomMetrics(dsInfo, f)
+		metrics, err := e.getMetricsForCustomMetrics(region, f)
 		require.NoError(t, err)
 
 		assert.Contains(t, metrics, "Test_MetricName")
 	})
 
 	t.Run("When calling getDimensionsForCustomMetrics", func(t *testing.T) {
-		dsInfo := &DatasourceInfo{
-			Region:        "us-east-1",
-			Namespace:     "Foo",
-			Profile:       "default",
-			AssumeRoleArn: "",
+		const region = "us-east-1"
+		e := &CloudWatchExecutor{
+			DataSource: &models.DataSource{
+				Database: "default",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"Region": region,
+				}),
+			},
 		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+		f := func(region string) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{
@@ -91,7 +97,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			}, nil
 		}
-		dimensionKeys, err := getDimensionsForCustomMetrics(dsInfo, f)
+		dimensionKeys, err := e.getDimensionsForCustomMetrics(region, f)
 		require.NoError(t, err)
 
 		assert.Contains(t, dimensionKeys, "Test_DimensionName")
