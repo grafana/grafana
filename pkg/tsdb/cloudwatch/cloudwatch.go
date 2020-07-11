@@ -40,6 +40,7 @@ type DatasourceInfo struct {
 }
 
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+const defaultRegion = "default"
 
 // Constants also defined in datasource/cloudwatch/datasource.ts
 const logIdentifierInternal = "__log__grafana_internal__"
@@ -50,7 +51,9 @@ var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return &CloudWatchExecutor{}, nil
+		return &CloudWatchExecutor{
+			DataSource: ds,
+		}, nil
 	})
 }
 
@@ -187,8 +190,8 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
 
-	region := queryParams.Get("region").MustString("default")
-	if region == "default" {
+	region := queryParams.Get("region").MustString(defaultRegion)
+	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 		queryParams.Set("region", region)
 	}
@@ -247,9 +250,8 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 }
 
 func (e *CloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
-	if region == "default" {
-		region = defaultRegion
+	if region == defaultRegion {
+		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
 
 	authType := e.DataSource.JsonData.Get("authType").MustString()
@@ -259,7 +261,7 @@ func (e *CloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
 
-	datasourceInfo := &DatasourceInfo{
+	return &DatasourceInfo{
 		Region:        region,
 		Profile:       e.DataSource.Database,
 		AuthType:      authType,
@@ -268,8 +270,6 @@ func (e *CloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
 	}
-
-	return datasourceInfo
 }
 
 func isTerminated(queryStatus string) bool {
