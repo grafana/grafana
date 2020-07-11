@@ -106,7 +106,6 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string) (*cloudwatchlogs.Clo
 
 	dsInfo := e.getDSInfo(region)
 	newLogsClient, err := retrieveLogsClient(dsInfo)
-
 	if err != nil {
 		return nil, err
 	}
