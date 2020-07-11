@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -275,7 +276,9 @@ var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatch
 // EC2 client factory.
 //
 // Stubbable by tests.
-var newEC2Client = ec2.New
+var newEC2Client = func(provider client.ConfigProvider) ec2iface.EC2API {
+	return ec2.New(provider)
+}
 
 // RGTA client factory.
 //

@@ -20,6 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+// Known AWS regions.
+var knownRegions = []string{
+	"ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
+	"ap-southeast-2", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-west-1",
+	"eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-1",
+	"us-iso-east-1", "us-isob-east-1", "us-west-1", "us-west-2",
+}
+
 type suggestData struct {
 	Text  string
 	Value string
@@ -310,16 +318,11 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		}
 	}
 
-	regions := []string{
-		"ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1",
-		"eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2",
-		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
-	}
-
 	client, err := e.getEC2Client(region)
 	if err != nil {
 		return nil, err
 	}
+	regions := knownRegions
 	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility

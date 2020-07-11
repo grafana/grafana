@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -67,4 +69,22 @@ func (c fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn fu
 		Metrics: c.metrics,
 	}, true)
 	return nil
+}
+
+type fakeEC2Client struct {
+	ec2iface.EC2API
+
+	regions []string
+}
+
+func (c fakeEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+	regions := []*ec2.Region{}
+	for _, region := range c.regions {
+		regions = append(regions, &ec2.Region{
+			RegionName: aws.String(region),
+		})
+	}
+	return &ec2.DescribeRegionsOutput{
+		Regions: regions,
+	}, nil
 }

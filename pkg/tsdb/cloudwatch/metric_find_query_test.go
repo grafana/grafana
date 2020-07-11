@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
@@ -141,33 +143,75 @@ func TestQuery_Metrics(t *testing.T) {
 	})
 }
 
-/*
-	t.Run("When calling getDimensionsForCustomMetrics", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
-			DataSource: mockDatasource(),
-			clients: &mockClients{
-				cloudWatch: mockedCloudWatch{
-					Resp: cloudwatch.ListMetricsOutput{
-						Metrics: []*cloudwatch.Metric{
-							{
-								MetricName: aws.String("Test_MetricName"),
-								Dimensions: []*cloudwatch.Dimension{
-									{
-										Name: aws.String("Test_DimensionName"),
-									},
+func TestQuery_Regions(t *testing.T) {
+	origNewEC2Client := newEC2Client
+	t.Cleanup(func() {
+		newEC2Client = origNewEC2Client
+	})
+
+	var cli fakeEC2Client
+
+	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+		return cli
+	}
+
+	t.Run("An extra region", func(t *testing.T) {
+		const regionName = "xtra-region"
+		cli = fakeEC2Client{
+			regions: []string{regionName},
+		}
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":      "metricFindQuery",
+						"subtype":   "regions",
+						"region":    "us-east-1",
+						"namespace": "custom",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		rows := []tsdb.RowValues{}
+		for _, region := range knownRegions {
+			rows = append(rows, []interface{}{
+				region,
+				region,
+			})
+		}
+		rows = append(rows, []interface{}{
+			"xtra-region",
+			"xtra-region",
+		})
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": len(knownRegions) + 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
 								},
 							},
+							Rows: rows,
 						},
 					},
 				},
 			},
-		}
-		dimensionKeys, err := executor.getDimensionsForCustomMetrics("us-east-1")
-		require.NoError(t, err)
-
-		assert.Contains(t, dimensionKeys, "Test_DimensionName")
+		}, resp)
 	})
+}
 
+/*
 	t.Run("When calling handleGetRegions", func(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			clients: &mockClients{
