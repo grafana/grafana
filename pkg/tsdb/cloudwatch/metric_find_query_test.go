@@ -291,106 +291,127 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 	})
 }
 
+func TestQuery_EBSVolumeIDs(t *testing.T) {
+	origNewEC2Client := newEC2Client
+	t.Cleanup(func() {
+		newEC2Client = origNewEC2Client
+	})
+
+	var cli fakeEC2Client
+
+	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+		return cli
+	}
+
+	t.Run("", func(t *testing.T) {
+		const instanceIDs = "{i-1, i-2, i-3}"
+
+		cli = fakeEC2Client{
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId: aws.String("i-1"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
+							},
+						},
+						{
+							InstanceId: aws.String("i-2"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
+							},
+						},
+					},
+				},
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId: aws.String("i-3"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
+							},
+						},
+						{
+							InstanceId: aws.String("i-4"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
+							},
+						},
+					},
+				},
+			},
+		}
+		executor := &CloudWatchExecutor{}
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":       "metricFindQuery",
+						"subtype":    "ebs_volume_ids",
+						"region":     "us-east-1",
+						"instanceId": instanceIDs,
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 6,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"vol-1-1",
+									"vol-1-1",
+								},
+								{
+									"vol-1-2",
+									"vol-1-2",
+								},
+								{
+									"vol-2-1",
+									"vol-2-1",
+								},
+								{
+									"vol-2-2",
+									"vol-2-2",
+								},
+								{
+									"vol-3-1",
+									"vol-3-1",
+								},
+								{
+									"vol-3-2",
+									"vol-3-2",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
+	})
+}
+
 /*
-	t.Run("When calling handleGetEc2InstanceAttribute", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
-			DataSource: mockDatasource(),
-			clients: &mockClients{
-				ec2: mockedEc2{Resp: ec2.DescribeInstancesOutput{
-					Reservations: []*ec2.Reservation{
-						{
-							Instances: []*ec2.Instance{
-								{
-									InstanceId: aws.String("i-12345678"),
-									Tags: []*ec2.Tag{
-										{
-											Key:   aws.String("Environment"),
-											Value: aws.String("production"),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				}},
-		}
-
-		json := simplejson.New()
-		json.Set("region", "us-east-1")
-		json.Set("attributeName", "InstanceId")
-		filters := make(map[string]interface{})
-		filters["tag:Environment"] = []string{"production"}
-		json.Set("filters", filters)
-		result, err := executor.handleGetEc2InstanceAttribute(context.Background(), json, &tsdb.TsdbQuery{})
-		require.NoError(t, err)
-
-		assert.Equal(t, "i-12345678", result[0].Text)
-	})
-
-	t.Run("When calling handleGetEbsVolumeIds", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
-			DataSource: mockDatasource(),
-			clients: &mockClients{
-				ec2: mockedEc2{Resp: ec2.DescribeInstancesOutput{
-					Reservations: []*ec2.Reservation{
-						{
-							Instances: []*ec2.Instance{
-								{
-									InstanceId: aws.String("i-1"),
-									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
-									},
-								},
-								{
-									InstanceId: aws.String("i-2"),
-									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
-									},
-								},
-							},
-						},
-						{
-							Instances: []*ec2.Instance{
-								{
-									InstanceId: aws.String("i-3"),
-									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
-									},
-								},
-								{
-									InstanceId: aws.String("i-4"),
-									BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
-										{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
-									},
-								},
-							},
-						},
-					},
-				},
-				}},
-		}
-
-		json := simplejson.New()
-		json.Set("region", "us-east-1")
-		json.Set("instanceId", "{i-1, i-2, i-3, i-4}")
-		result, err := executor.handleGetEbsVolumeIds(context.Background(), json, &tsdb.TsdbQuery{})
-		require.NoError(t, err)
-
-		require.Len(t, result, 8)
-		assert.Equal(t, "vol-1-1", result[0].Text)
-		assert.Equal(t, "vol-1-2", result[1].Text)
-		assert.Equal(t, "vol-2-1", result[2].Text)
-		assert.Equal(t, "vol-2-2", result[3].Text)
-		assert.Equal(t, "vol-3-1", result[4].Text)
-		assert.Equal(t, "vol-3-2", result[5].Text)
-		assert.Equal(t, "vol-4-1", result[6].Text)
-		assert.Equal(t, "vol-4-2", result[7].Text)
-	})
 
 	t.Run("When calling handleGetResourceArns", func(t *testing.T) {
 		executor := &CloudWatchExecutor{

@@ -92,8 +92,26 @@ func (c fakeEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.Describe
 
 func (c fakeEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
 	fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+	reservations := []*ec2.Reservation{}
+	for _, r := range c.reservations {
+		instances := []*ec2.Instance{}
+		for _, inst := range r.Instances {
+			if len(in.InstanceIds) == 0 {
+				instances = append(instances, inst)
+				continue
+			}
+
+			for _, id := range in.InstanceIds {
+				if *inst.InstanceId == *id {
+					instances = append(instances, inst)
+				}
+			}
+		}
+		reservation := &ec2.Reservation{Instances: instances}
+		reservations = append(reservations, reservation)
+	}
 	fn(&ec2.DescribeInstancesOutput{
-		Reservations: c.reservations,
+		Reservations: reservations,
 	}, true)
 	return nil
 }
