@@ -51,18 +51,18 @@ var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return &CloudWatchExecutor{
+		return &cloudWatchExecutor{
 			DataSource: ds,
 		}, nil
 	})
 }
 
-// CloudWatchExecutor executes CloudWatch requests.
-type CloudWatchExecutor struct {
+// cloudWatchExecutor executes CloudWatch requests.
+type cloudWatchExecutor struct {
 	*models.DataSource
 }
 
-func (e *CloudWatchExecutor) newSession(region string) (*session.Session, error) {
+func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
 	creds, err := getCredentials(dsInfo)
 	if err != nil {
@@ -76,7 +76,7 @@ func (e *CloudWatchExecutor) newSession(region string) (*session.Session, error)
 	return newSession(cfg)
 }
 
-func (e *CloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
+func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (e *CloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 	return newCWClient(sess), nil
 }
 
-func (e *CloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (e *CloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface
 	return newCWLogsClient(sess), nil
 }
 
-func (e *CloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
+func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (e *CloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error
 	return newEC2Client(sess), nil
 }
 
-func (e *CloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
+func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
 	sess, err := e.newSession(region)
 	if err != nil {
@@ -109,7 +109,7 @@ func (e *CloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 	return newRGTAClient(sess), nil
 }
 
-func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
@@ -148,7 +148,7 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 }
 
 // Query executes a CloudWatch query.
-func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	e.DataSource = dsInfo
 
 	/*
@@ -185,7 +185,7 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	return result, err
 }
 
-func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	queryParams := queryContext.Queries[0].Model
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
@@ -249,7 +249,7 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	return response, nil
 }
 
-func (e *CloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
+func (e *cloudWatchExecutor) getDSInfo(region string) *DatasourceInfo {
 	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
