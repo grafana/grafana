@@ -117,7 +117,7 @@ export class PanelModel implements DataConfigSource {
   soloMode?: boolean;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: string;
+  datasource: string | null;
   thresholds?: any;
   pluginVersion?: string;
 
@@ -353,7 +353,7 @@ export class PanelModel implements DataConfigSource {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
-    const wasAngular = !!this.plugin.angularPanelCtrl;
+    const wasAngular = this.isAngularPlugin();
 
     // remove panel type specific  options
     for (const key of _.keys(this)) {
@@ -459,7 +459,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   isAngularPlugin(): boolean {
-    return this.plugin && !!this.plugin.angularPanelCtrl;
+    return (this.plugin && this.plugin.angularPanelCtrl) !== undefined;
   }
 
   destroy() {

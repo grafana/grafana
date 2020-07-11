@@ -124,7 +124,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
       this.setState(state => {
         // Place new traces into the correct service/operation sub-tree
         const serviceOptions = state.serviceOptions.map(serviceOption => {
-          if (serviceOption.value === service) {
+          if (serviceOption.value === service && serviceOption.children) {
             const operationOptions = serviceOption.children.map(operationOption => {
               if (operationOption.value === operationValue) {
                 return {

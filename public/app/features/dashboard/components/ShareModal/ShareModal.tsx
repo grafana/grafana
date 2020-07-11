@@ -89,7 +89,7 @@ export class ShareModal extends React.Component<Props, State> {
 
   getActiveTab() {
     const { tabs, activeTab } = this.state;
-    return tabs.find(t => t.value === activeTab);
+    return tabs.find(t => t.value === activeTab)!;
   }
 
   renderTitle() {
@@ -112,7 +112,7 @@ export class ShareModal extends React.Component<Props, State> {
   render() {
     const { dashboard, panel } = this.props;
     const activeTabModel = this.getActiveTab();
-    const ActiveTab = activeTabModel?.component;
+    const ActiveTab = activeTabModel.component;
 
     return (
       <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.onDismiss}>

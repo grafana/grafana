@@ -152,7 +152,7 @@ const DataSourceSection = (props: DataSourceSectionProps) => {
   );
 };
 
-function useInternalLink(datasourceUid: string): [boolean, Dispatch<SetStateAction<boolean>>] {
+function useInternalLink(datasourceUid?: string): [boolean, Dispatch<SetStateAction<boolean>>] {
   const [showInternalLink, setShowInternalLink] = useState<boolean>(!!datasourceUid);
   const previousUid = usePrevious(datasourceUid);
 
