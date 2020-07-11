@@ -448,7 +448,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
       // @ts-ignore
-      pageClass: 'sidemenu-hidden',
+      pageClass: 'login-page sidemenu-hidden',
     })
     .when('/user/password/reset', {
       template: '<react-container />',
@@ -461,7 +461,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
       //@ts-ignore
-      pageClass: 'sidemenu-hidden',
+      pageClass: 'login-page sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
       template: '<react-container />',
