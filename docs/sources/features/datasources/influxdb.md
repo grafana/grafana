@@ -123,7 +123,7 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 ## Flux support
 
-> Starting in v7.1 grafana will execute Flux queries in addition to InfluxQL queries
+> Starting in v7.1, Grafana can execute Flux queries.
 
 The client supports flux running on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more details and connection details
 
