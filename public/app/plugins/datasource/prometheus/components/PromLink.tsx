@@ -28,7 +28,7 @@ export default class PromLink extends Component<Props, State> {
   }
 
   async getExternalLink(panelData: PanelData): Promise<string> {
-    const { query } = this.props;
+    const { query, datasource } = this.props;
     const { request } = panelData;
 
     if (!request) {
@@ -36,8 +36,8 @@ export default class PromLink extends Component<Props, State> {
     }
 
     const range = request.range;
-    const start = this.props.datasource.getPrometheusTime(range.from, false);
-    const end = this.props.datasource.getPrometheusTime(range.to, true);
+    const start = datasource.getPrometheusTime(range.from, false);
+    const end = datasource.getPrometheusTime(range.to, true);
     const rangeDiff = Math.ceil(end - start);
     const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
 
@@ -45,7 +45,7 @@ export default class PromLink extends Component<Props, State> {
       interval: request.interval,
     } as DataQueryRequest<PromQuery>;
 
-    const queryOptions = this.props.datasource.createQuery(query, options, start, end);
+    const queryOptions = datasource.createQuery(query, options, start, end);
     const expr = {
       'g0.expr': queryOptions.expr,
       'g0.range_input': rangeDiff + 's',
@@ -57,7 +57,7 @@ export default class PromLink extends Component<Props, State> {
     const args = _.map(expr, (v: string, k: string) => {
       return k + '=' + encodeURIComponent(v);
     }).join('&');
-    return `${this.props.datasource.directUrl}/graph?${args}`;
+    return `${datasource.directUrl}/graph?${args}`;
   }
 
   render() {
