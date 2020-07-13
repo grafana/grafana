@@ -140,7 +140,7 @@ You can use the [Flux query and scripting language](https://www.influxdata.com/p
 
 ### Supported macros
 
-The macros are designed to easily support copy+paste from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/)
+The macros support copying and pasting from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/).
 
 Macro example | Description
 ------------ | -------------
