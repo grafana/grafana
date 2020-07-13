@@ -170,7 +170,7 @@ func createTestAnnotations(t *testing.T, sqlstore *SqlStore, expectedCount int, 
 			a.DashboardId = 0
 		}
 
-		// mark every third annotations as an alert annotation
+		// mark every third annotation as an alert annotation
 		if i%3 == 0 {
 			a.AlertId = 10
 			a.DashboardId = 2
