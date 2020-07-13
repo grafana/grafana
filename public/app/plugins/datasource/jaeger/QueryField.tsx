@@ -148,7 +148,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
 
   findOperations = async (service: string) => {
     const { datasource } = this.props;
-    const url = `/api/services/${service}/operations`;
+    const url = `/api/services/${encodeURIComponent(service)}/operations`;
     try {
       return await datasource.metadataRequest(url);
     } catch (error) {
