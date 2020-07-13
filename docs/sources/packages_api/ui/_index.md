@@ -54,7 +54,6 @@ A library containing the different design components of the Grafana ecosystem.
 |  [BigValueColorMode](./bigvaluecolormode/) |  |
 |  [BigValueGraphMode](./bigvaluegraphmode/) |  |
 |  [BigValueJustifyMode](./bigvaluejustifymode/) |  |
-|  [BigValueTextMode](./bigvaluetextmode/) | Options for how the value &amp; title are to be displayed |
 |  [CompletionItemKind](./completionitemkind/) |  |
 |  [EventsWithValidation](./eventswithvalidation/) |  |
 |  [LegacyInputStatus](./legacyinputstatus/) |  |
