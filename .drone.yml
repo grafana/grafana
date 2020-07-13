@@ -9,9 +9,8 @@ platform:
 
 steps:
 - name: initialize
-  image: alpine/git:v2.26.2
+  image: grafana/build-container:1.2.21
   commands:
-  - apk add --no-cache curl
   - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
   - chmod +x grabpl
   - mkdir -p bin

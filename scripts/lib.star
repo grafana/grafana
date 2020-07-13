@@ -362,13 +362,12 @@ def init_step(edition):
 
     return {
         'name': 'initialize',
-        'image': 'alpine/git:v2.26.2',
+        'image': build_image,
         'environment': {
             'GRABPL_VERSION': grabpl_version,
             'DOCKERIZE_VERSION': '0.6.1',
         },
         'commands': [
-            'apk add --no-cache curl',
             'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl',
             'chmod +x grabpl',
             'mkdir -p bin',
