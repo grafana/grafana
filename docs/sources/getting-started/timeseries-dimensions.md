@@ -13,13 +13,13 @@ weight = 300
 
 # Time series dimensions
 
-In at the end of the ["Time series databases" section of "Introduction to time series"]({{< relref "timeseries.md#time-series-databases" >}}) the concepts of tags is introduced:
+In at the end of the ["Time series databases" section of "Introduction to time series"]({{< relref "timeseries.md#time-series-databases" >}}) the concept of Labels (a.k.a tags) is introduced:
 
 > Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. ...
 
-**TODO**: Look at glossary, labels/tags, maybe update quote and original document above to labels.
+With time series data, the data often contains more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
-With time series data, the data often contains more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data. The common case is issuing a single query for a measurement such as temperature as well as requesting an additional property such as location. In this case multiple series are returned back from that single query as a set, where each series in this case has unique location. To uniquely identify these series within the set, Grafana stores this information in _Labels_.
+The common case is issuing a single query for a measurement, such as temperature, as well as requesting an additional property such as the location of the measurement. In this case, multiple series are returned back from that single query. Each series in this case has unique location. To uniquely identify these series within a set of time series, Grafana stores this information in _Labels_.
 
 ## Labels
 
@@ -27,7 +27,7 @@ Each time series in Grafana optionally has Labels. Labels are set a of key/value
 
 Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions. Time series databases (TSDBs) usually natively support dimensionality. In TSDBs such as Graphite or OpenTSDB the term _Tags_ is used - in Prometheus the same term as used as in Grafana - _Labels_. In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
 
-By storing dimensionality as Labels in Grafana it allows for the possibility of data transformations and alerting to also support multiple dimensions.
+By storing dimensionality as Labels for time series in Grafana it allows for the possibility of data transformations and alerting to also support multiple dimensions.
 
 ## Multiple dimensions in table format
 
