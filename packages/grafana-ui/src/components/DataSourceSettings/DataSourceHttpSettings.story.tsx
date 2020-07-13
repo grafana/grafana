@@ -28,6 +28,7 @@ const settingsMock: DataSourceSettings<any, any> = {
   secureJsonData: {
     password: true,
   },
+  secureJsonFields: {},
   readOnly: true,
 };
 

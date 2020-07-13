@@ -1,8 +1,8 @@
 import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiTailResponse } from './types';
-import { finalize, map } from 'rxjs/operators';
+import { finalize, map, catchError } from 'rxjs/operators';
 import { appendResponseToBufferedData } from './result_transformer';
 
 /**
@@ -35,15 +35,18 @@ export class LiveStreams {
     data.addField({ name: 'line', type: FieldType.string }).labels = parseLabels(target.query);
     data.addField({ name: 'labels', type: FieldType.other }); // The labels for each line
     data.addField({ name: 'id', type: FieldType.string });
+    data.meta = { ...data.meta, preferredVisualisationType: 'logs' };
 
     stream = webSocket(target.url).pipe(
-      finalize(() => {
-        delete this.streams[target.url];
-      }),
-
       map((response: LokiTailResponse) => {
         appendResponseToBufferedData(response, data);
         return [data];
+      }),
+      catchError(err => {
+        return throwError(`error: ${err.reason}`);
+      }),
+      finalize(() => {
+        delete this.streams[target.url];
       })
     );
     this.streams[target.url] = stream;

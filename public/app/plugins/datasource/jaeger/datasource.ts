@@ -36,7 +36,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     const id = options.targets[0]?.query;
     if (id) {
       // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-      return this._request(`/api/traces/${id}`).pipe(
+      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
         map(response => {
           return {
             data: [
@@ -48,6 +48,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                     values: response?.data?.data || [],
                   },
                 ],
+                meta: {
+                  preferredVisualisationType: 'trace',
+                },
               }),
             ],
           };
@@ -64,6 +67,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
                 values: [],
               },
             ],
+            meta: {
+              preferredVisualisationType: 'trace',
+            },
           }),
         ],
       });
@@ -102,7 +108,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
 function getTime(date: string | DateTime, roundUp: boolean) {
   if (typeof date === 'string') {
-    date = dateMath.parse(date, roundUp);
+    date = dateMath.parse(date, roundUp)!;
   }
   return date.valueOf() * 1000;
 }

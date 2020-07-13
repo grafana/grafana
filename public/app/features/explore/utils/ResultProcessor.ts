@@ -5,7 +5,6 @@ import {
   FieldType,
   TimeZone,
   getDisplayProcessor,
-  ExploreMode,
   PreferredVisualisationType,
   standardTransformers,
 } from '@grafana/data';
@@ -16,27 +15,51 @@ import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesMode
 import { config } from 'app/core/config';
 
 export class ResultProcessor {
+  graphFrames: DataFrame[] = [];
+  tableFrames: DataFrame[] = [];
+  logsFrames: DataFrame[] = [];
+  traceFrames: DataFrame[] = [];
+
   constructor(
     private state: ExploreItemState,
     private dataFrames: DataFrame[],
     private intervalMs: number,
     private timeZone: TimeZone
-  ) {}
+  ) {
+    this.classifyFrames();
+  }
+
+  private classifyFrames() {
+    for (const frame of this.dataFrames) {
+      if (shouldShowInVisualisationTypeStrict(frame, 'logs')) {
+        this.logsFrames.push(frame);
+      } else if (shouldShowInVisualisationTypeStrict(frame, 'graph')) {
+        this.graphFrames.push(frame);
+      } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
+        this.traceFrames.push(frame);
+      } else if (shouldShowInVisualisationTypeStrict(frame, 'table')) {
+        this.tableFrames.push(frame);
+      } else if (isTimeSeries(frame, this.state.datasourceInstance?.meta.id)) {
+        if (shouldShowInVisualisationType(frame, 'graph')) {
+          this.graphFrames.push(frame);
+        }
+        if (shouldShowInVisualisationType(frame, 'table')) {
+          this.tableFrames.push(frame);
+        }
+      } else {
+        // We fallback to table if we do not have any better meta info about the dataframe.
+        this.tableFrames.push(frame);
+      }
+    }
+  }
 
   getGraphResult(): GraphSeriesXY[] | null {
-    if (this.state.mode !== ExploreMode.Metrics) {
-      return null;
-    }
-
-    const onlyTimeSeries = this.dataFrames.filter(frame => isTimeSeries(frame, this.state.datasourceInstance?.meta.id));
-    const timeSeriesToShowInGraph = onlyTimeSeries.filter(frame => shouldShowInVisualisationType(frame, 'graph'));
-
-    if (timeSeriesToShowInGraph.length === 0) {
+    if (this.graphFrames.length === 0) {
       return null;
     }
 
     return getGraphSeriesModel(
-      timeSeriesToShowInGraph,
+      this.graphFrames,
       this.timeZone,
       {},
       { showBars: false, showLines: true, showPoints: false },
@@ -45,30 +68,24 @@ export class ResultProcessor {
   }
 
   getTableResult(): DataFrame | null {
-    if (this.state.mode !== ExploreMode.Metrics) {
+    if (this.tableFrames.length === 0) {
       return null;
     }
 
-    const onlyTables = this.dataFrames
-      .filter((frame: DataFrame) => shouldShowInVisualisationType(frame, 'table'))
-      .sort((frameA: DataFrame, frameB: DataFrame) => {
-        const frameARefId = frameA.refId!;
-        const frameBRefId = frameB.refId!;
+    this.tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
+      const frameARefId = frameA.refId!;
+      const frameBRefId = frameB.refId!;
 
-        if (frameARefId > frameBRefId) {
-          return 1;
-        }
-        if (frameARefId < frameBRefId) {
-          return -1;
-        }
-        return 0;
-      });
+      if (frameARefId > frameBRefId) {
+        return 1;
+      }
+      if (frameARefId < frameBRefId) {
+        return -1;
+      }
+      return 0;
+    });
 
-    if (onlyTables.length === 0) {
-      return null;
-    }
-
-    const hasOnlyTimeseries = onlyTables.every(df => isTimeSeries(df));
+    const hasOnlyTimeseries = this.tableFrames.every(df => isTimeSeries(df));
 
     // If we have only timeseries we do join on default time column which makes more sense. If we are showing
     // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
@@ -77,7 +94,7 @@ export class ResultProcessor {
       ? standardTransformers.seriesToColumnsTransformer.transformer({})
       : standardTransformers.mergeTransformer.transformer({});
 
-    const data = transformer(onlyTables)[0];
+    const data = transformer(this.tableFrames)[0];
 
     // set display processor
     for (const field of data.fields) {
@@ -92,11 +109,11 @@ export class ResultProcessor {
   }
 
   getLogsResult(): LogsModel | null {
-    if (this.state.mode !== ExploreMode.Logs) {
+    if (this.logsFrames.length === 0) {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
+    const newResults = dataFrameToLogsModel(this.logsFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
@@ -126,6 +143,10 @@ function shouldShowInVisualisationType(frame: DataFrame, visualisation: Preferre
   }
 
   return true;
+}
+
+function shouldShowInVisualisationTypeStrict(frame: DataFrame, visualisation: PreferredVisualisationType) {
+  return frame.meta?.preferredVisualisationType === visualisation;
 }
 
 // TEMP: Temporary hack. Remove when logs/metrics unification is done

@@ -13,11 +13,9 @@ export const login = (username: string = 'admin', password: string = 'admin') =>
   e2e()
     .url()
     .then(url => {
-      if (/^https?:\/\/localhost/.test(url)) {
-        e2e.pages.Login.skip()
-          .should('be.visible')
-          .click();
-      }
+      e2e.pages.Login.skip()
+        .should('be.visible')
+        .click();
     });
 
   e2e()

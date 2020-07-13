@@ -90,7 +90,7 @@ export class DashboardLoaderSrv {
           };
         },
         (err: any) => {
-          console.log('Script dashboard error ' + err);
+          console.error('Script dashboard error ' + err);
           this.$rootScope.appEvent(AppEvents.alertError, [
             'Script Error',
             'Please make sure it exists and returns a valid dashboard',

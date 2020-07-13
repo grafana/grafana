@@ -17,7 +17,7 @@ interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
   plugin?: PanelPlugin | null;
-  defaultTab: InspectTab;
+  defaultTab?: InspectTab;
   tabs: Array<{ label: string; value: InspectTab }>;
   // The last raw response
   data?: PanelData;

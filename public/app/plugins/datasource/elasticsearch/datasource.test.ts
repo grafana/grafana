@@ -233,8 +233,8 @@ describe('ElasticDatasource', function(this: any) {
           },
         ],
       });
-      // 1 for logs and 1 for counts.
-      expect(response.data.length).toBe(2);
+
+      expect(response.data.length).toBe(1);
       const links = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
@@ -873,6 +873,7 @@ describe('enhanceDataFrame', () => {
         },
       ],
     });
+
     enhanceDataFrame(df, [
       {
         field: 'urlField',
@@ -885,13 +886,13 @@ describe('enhanceDataFrame', () => {
       },
     ]);
 
-    expect(df.fields[0].config.links.length).toBe(1);
-    expect(df.fields[0].config.links[0]).toEqual({
+    expect(df.fields[0].config.links!.length).toBe(1);
+    expect(df.fields[0].config.links![0]).toEqual({
       title: '',
       url: 'someUrl',
     });
-    expect(df.fields[1].config.links.length).toBe(1);
-    expect(df.fields[1].config.links[0]).toEqual({
+    expect(df.fields[1].config.links!.length).toBe(1);
+    expect(df.fields[1].config.links![0]).toEqual({
       title: '',
       url: '',
       internal: {
@@ -908,6 +909,7 @@ const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
     dashboardId: 0,
     interval: '',
     panelId: 0,
+    intervalMs: 1,
     scopedVars: {},
     timezone: '',
     app: CoreApp.Dashboard,
