@@ -150,7 +150,7 @@ Macro example | Description
 *`v.defaultBucket`* | Will be replaced with the data source configuration's "Default Bucket" setting
 *`v.organization`* | Will be replaced with the data source configuration's "Organization" setting
 
-For example, the following query will will be interpolated as the query that follows it (with interval and time period values changing according to active time selection):
+For example, the following query will be interpolated as the query that follows it, with interval and time period values changing according to active time selection\):
 
 Grafana Flux query:
 
