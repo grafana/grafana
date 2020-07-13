@@ -53,7 +53,7 @@ The query for this variable basically says, "Give me all servers for the current
 apps.$app.*
 ```
 
-By itself, this query is nonsense, because `$app` has no value. However, if the user selects `backend`, then the query changes to:
+If the user selects `backend`, then the query changes to:
 
 ```
 apps.backend.*
@@ -113,7 +113,7 @@ The query for this variable basically says, "Give me all hosts for the currently
 SHOW TAG VALUES WITH KEY = "hostname" WHERE "datacenter" =~ /^$datacenter$/
 ```
 
-By itself, this query is nonsense, because `$datacenter$` has no value. However, if the user selects `America`, then the query changes to:
+If the user selects `America`, then the query changes to:
 
 ```
 SHOW TAG VALUES WITH KEY = "hostname" WHERE "datacenter" =~ /^America/
@@ -163,7 +163,7 @@ The following practices will make your dashboards and variables easier to use.
 
 You can change the orders of variables in the dashboard variable list by clicking the up and down arrows on the right side of each entry. Grafana lists variable dropdowns left to right according to this list, with the variable at the top on the far left.
 
-- List variables that do not have dependencies at the top.
+- List variables that do not have dependencies at the top, before their child variables.
 - Each variable should follow the one it is dependent on.
 - Remember there is no indication in the UI of which variables have dependency relationships. List the variables in a logical order to make it easy on other users (and yourself).
 
