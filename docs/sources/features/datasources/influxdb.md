@@ -163,7 +163,7 @@ from(bucket: v.defaultBucket)
   |> yield(name: "mean")
 ```
 
-Interpolated Query send to Influx:
+Interpolated query send to Influx:
 
 ```flux
 from(bucket: "grafana")
