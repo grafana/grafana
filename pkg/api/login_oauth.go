@@ -98,7 +98,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		}
 	
-		if (setting.OAuthService.OAuthInfos[name].HostedDomain != "") {
+		if setting.OAuthService.OAuthInfos[name].HostedDomain != "" {
 			opts = append(opts, oauth2.SetAuthURLParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain))
 		}
 
