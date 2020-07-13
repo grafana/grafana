@@ -83,7 +83,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			opts = append(opts, oauth2.SetAuthURLParam("response_mode", "form_post"))
 			nonce, _ := GenStateString()
 			opts = append(opts, oauth2.SetAuthURLParam("nonce", nonce))
-			cookieOpts := hs.CookieOptionsFromCfg();
+			cookieOpts := hs.CookieOptionsFromCfg()
 			cookie := http.Cookie{
 				Name:     OauthStateCookieName,
 				MaxAge:   hs.Cfg.OAuthCookieMaxAge,
