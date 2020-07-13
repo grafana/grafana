@@ -31,17 +31,17 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
-| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                        |
+| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                 |
+| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                         |
 | _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
 | _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
 ### Derived fields
 
-The Derived Fields configuration allows you to:
+The Derived Fields configuration allows you to: 
 
-- Add fields parsed from the log message.
-- Add a link that uses the value of the field.
+* Add fields parsed from the log message. 
+* Add a link that uses the value of the field. 
 
 You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/features/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
@@ -86,15 +86,15 @@ For the label part of the query expression, wrap it in curly braces `{}` and the
 
 The following label matching operators are currently supported:
 
-- `=` exactly equal.
-- `!=` not equal.
-- `=~` regex-match.
-- `!~` do not regex-match.
+* `=` exactly equal.
+* `!=` not equal.
+* `=~` regex-match.
+* `!~` do not regex-match.
 
 Examples:
 
-- `{name=~"mysql.+"}`
-- `{name!~"mysql.+"}`
+* `{name=~"mysql.+"}`
+* `{name!~"mysql.+"}`
 
 The [same rules that apply for Prometheus Label Selectors](https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors) apply for Loki Log Stream Selectors.
 
@@ -106,9 +106,9 @@ After writing the Log Stream Selector, you can filter the results further by wri
 
 Example queries:
 
-- `{job="mysql"} |= "error"`
-- `{name="kafka"} |~ "tsdb-ops.*io:2003"`
-- `{instance=~"kafka-[23]",name="kafka"} != "kafka.server:type=ReplicaManager"`
+* `{job="mysql"} |= "error"`
+* `{name="kafka"} |~ "tsdb-ops.*io:2003"`
+* `{instance=~"kafka-[23]",name="kafka"} != "kafka.server:type=ReplicaManager"`
 
 Filter operators can be chained and will sequentially filter down the expression. The resulting log lines will satisfy every filter.
 
@@ -118,10 +118,10 @@ Filter operators can be chained and will sequentially filter down the expression
 
 The following filter types are currently supported:
 
-- `|=` line contains string.
-- `!=` line doesn't contain string.
-- `|~` line matches regular expression.
-- `!~` line does not match regular expression.
+* `|=` line contains string.
+* `!=` line doesn't contain string.
+* `|~` line matches regular expression.
+* `!~` line does not match regular expression.
 
 > Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/logql.md)
 
@@ -130,7 +130,6 @@ The following filter types are currently supported:
 Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly. The following example for Apache2 can be used for proxying between the browser and the Grafana server:
-
 ```
 ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
 ```
@@ -194,15 +193,14 @@ datasources:
       derivedFields:
         # Field with internal link pointing to data source in Grafana.
         # Right now, Grafana supports only Jaeger and Zipkin data sources as link targets.
-        # datasourceUid value can be anything, but it should be unique across all defined datasource uids
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           # url will be interpreted as query for the datasource
-          url: '$${__value.raw}'
+          url: "$${__value.raw}"
 
         # Field with external link.
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
-          url: 'http://localhost:16686/trace/$${__value.raw}'
+          url: "http://localhost:16686/trace/$${__value.raw}"
 ```
