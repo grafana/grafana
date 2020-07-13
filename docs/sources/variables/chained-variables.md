@@ -85,7 +85,7 @@ Depending on what variable options the user selects, you could get queries like:
 
 ```
 apps.backend.backend_01.cpu.*
-apps.backend.backend_02+backend_03.cpu.*
+apps.{backend.backend_02,backend_03}.cpu.*
 apps.fakesite.web_server_01.cpu.*
 ```
 
