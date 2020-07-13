@@ -5,6 +5,8 @@ source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
 start=$(date +%s)
 
+export TEST_MAX_WORKERS=2
+
 exit_if_fail yarn run prettier:check
 exit_if_fail yarn run packages:typecheck
 exit_if_fail yarn run typecheck

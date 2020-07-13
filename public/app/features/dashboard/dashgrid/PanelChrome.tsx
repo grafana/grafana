@@ -35,7 +35,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isViewing: boolean;
-  isEditing?: boolean;
+  isEditing: boolean;
   isInView: boolean;
   width: number;
   height: number;
@@ -171,7 +171,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
     if (!isInView) {
-      console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
       return;
     }
@@ -181,7 +180,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Issue Query
     if (this.wantsQueryExecution) {
       if (width < 0) {
-        console.log('Refresh skippted, no width yet... wait till we know');
         return;
       }
 
@@ -257,7 +255,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return null;
     }
 
-    const PanelComponent = plugin.panel;
+    const PanelComponent = plugin.panel!;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;

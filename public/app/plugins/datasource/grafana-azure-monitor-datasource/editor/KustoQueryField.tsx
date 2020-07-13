@@ -135,7 +135,6 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(database\(\"(\w+)\"\)\.(.+\b)?$)/i)) {
         typeaheadContext = 'context-database-table';
         const db = this.getDBFromDatabaseFunction(modelPrefix);
-        console.log(db);
         suggestionGroups = this.getTableSuggestions(db);
         prefix = prefix.replace('.', '');
 

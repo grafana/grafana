@@ -146,7 +146,8 @@ export class FolderPickerCtrl {
     const rootFolder: { text: string; value: any } = { text: this.rootName, value: 0 };
 
     this.getOptions('').then((result: any[]) => {
-      let folder: { text: string; value: any };
+      let folder: { text: string; value: any } | undefined;
+
       if (this.initialFolderId) {
         // @ts-ignore
         folder = _.find(result, { value: this.initialFolderId });
