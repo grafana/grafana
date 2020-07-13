@@ -10,8 +10,10 @@ import {
   userMappingInfoLoadedAction,
   userProfileLoadedAction,
   userSessionsLoadedAction,
+  userListAdminReducer,
+  queryChanged,
 } from './reducers';
-import { LdapState, LdapUser, UserAdminState, UserDTO } from 'app/types';
+import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from 'app/types';
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
@@ -27,6 +29,15 @@ const makeInitialUserAdminState = (): UserAdminState => ({
   sessions: [],
   orgs: [],
   isLoading: true,
+});
+
+const makeInitialUserListAdminState = (): UserListAdminState => ({
+  users: [],
+  query: '',
+  page: 0,
+  perPage: 50,
+  totalPages: 1,
+  showPaging: false,
 });
 
 const getTestUserMapping = (): LdapUser => ({
@@ -257,6 +268,26 @@ describe('Edit Admin user page reducer', () => {
               seenAt: '2020-01-01 00:00:00',
             },
           ],
+        });
+    });
+  });
+});
+
+describe('User List Admin reducer', () => {
+  describe('When query changed', () => {
+    it('should reset page to 0', () => {
+      const initialState = {
+        ...makeInitialUserListAdminState(),
+        page: 3,
+      };
+
+      reducerTester<UserListAdminState>()
+        .givenReducer(userListAdminReducer, initialState)
+        .whenActionIsDispatched(queryChanged('test'))
+        .thenStateShouldEqual({
+          ...makeInitialUserListAdminState(),
+          query: 'test',
+          page: 0,
         });
     });
   });
