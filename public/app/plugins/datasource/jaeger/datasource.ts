@@ -36,7 +36,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     const id = options.targets[0]?.query;
     if (id) {
       // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-      return this._request(`/api/traces/${id}`).pipe(
+      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
         map(response => {
           return {
             data: [
