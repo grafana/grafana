@@ -67,7 +67,7 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      console.log('Failed to import plugin module', err);
+      console.error('Failed to import plugin module', err);
       dispatch(initDataSourceSettingsFailed(err));
     }
   };

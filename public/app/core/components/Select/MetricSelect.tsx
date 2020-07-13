@@ -7,7 +7,7 @@ import { Variable } from 'app/types/templates';
 const { Select } = LegacyForms;
 
 export interface Props {
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
   options: Array<SelectableValue<string>>;
   isSearchable: boolean;
   value: string;

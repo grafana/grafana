@@ -231,7 +231,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       this.logQueries[param.refId] = {
         id: param.queryId,
         region: param.region,
-        statsQuery: param.statsGroups?.length > 0 ?? false,
+        statsQuery: (param.statsGroups?.length ?? 0) > 0 ?? false,
       };
     });
     let prevRecordsMatched: Record<string, number> = {};

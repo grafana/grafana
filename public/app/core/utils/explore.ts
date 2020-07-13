@@ -113,6 +113,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
     url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
+
   return url;
 }
 

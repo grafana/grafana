@@ -12,7 +12,7 @@ export function buildInitialState(): NavIndex {
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    navIndex[node.id] = {
+    navIndex[node.id!] = {
       ...node,
       parentItem: parentItem,
     };
@@ -52,8 +52,8 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     const newPages: NavIndex = {};
     const payload = action.payload;
 
-    for (const node of payload.children) {
-      newPages[node.id] = {
+    for (const node of payload.children!) {
+      newPages[node.id!] = {
         ...node,
         parentItem: payload,
       };
