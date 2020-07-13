@@ -1137,7 +1137,9 @@ func TestMSSQL(t *testing.T) {
 }
 
 func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Mssql.DriverName, strings.Replace(sqlutil.TestDB_Mssql.ConnStr, "localhost", serverIP, 1))
+	testDB := sqlutil.MSSQLTestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
+		serverIP, 1))
 	if err != nil {
 		t.Fatalf("Failed to init mssql db %v", err)
 	}

@@ -184,7 +184,7 @@ class DashNav extends PureComponent<Props> {
     `;
 
     const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = dashboard.meta.folderId > 0;
+    const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
 
     return (
       <>

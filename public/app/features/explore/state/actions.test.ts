@@ -273,7 +273,7 @@ const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => vo
     datasource: 'mocked datasource',
     targets: [{ refId: 'A' }],
   };
-  const datasource = new MockDataSourceApi(panel.datasource);
+  const datasource = new MockDataSourceApi(panel.datasource!);
   const get = jest.fn().mockResolvedValue(datasource);
   const getDataSourceSrv = jest.fn().mockReturnValue({ get });
   const getTimeSrv = jest.fn();
