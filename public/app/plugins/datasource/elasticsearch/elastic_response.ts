@@ -571,13 +571,6 @@ const createEmptyDataFrame = (
     }).parse = (v: any) => {
       return v || '';
     };
-  } else {
-    series.addField({
-      name: '_source',
-      type: FieldType.string,
-    }).parse = (v: any) => {
-      return JSON.stringify(v, null, 2);
-    };
   }
 
   if (logLevelField) {
@@ -594,6 +587,10 @@ const createEmptyDataFrame = (
   for (const propName of propNames) {
     // Do not duplicate fields. This can mean that we will shadow some fields.
     if (fieldNames.includes(propName)) {
+      continue;
+    }
+    // Do not add _source field as we are showing each _source field in table instead.
+    if (propName === '_source') {
       continue;
     }
 
