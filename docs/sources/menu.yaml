@@ -77,12 +77,14 @@
           name: Dashboard and Folder
         - link: /permissions/datasource_permissions/
           name: Data source
+    - name: Provisioning
+      link: /administration/provisioning/
     - name: Grafana CLI
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
-    - name: Provisioning
-      link: /administration/provisioning/
+    - name: Jaeger instrumentation
+      link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
     - name: Troubleshooting
