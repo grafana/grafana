@@ -20,7 +20,7 @@ Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin in
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select *InfluxDB* from the *Type* dropdown.
-5. Select *InfluxQL* or *Flux* from the `Query Language` dropdown.
+5. Select *InfluxQL* or *Flux* from the `Query Language` list.
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
