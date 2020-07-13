@@ -19,7 +19,9 @@ In at the end of the ["Time series databases" section of "Introduction to time s
 
 With time series data, the data often contains more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
-The common case is issuing a single query for a measurement, such as temperature, as well as requesting an additional property such as the location of the measurement. In this case, multiple series are returned back from that single query. Each series in this case has unique location. To uniquely identify these series within a set of time series, Grafana stores this information in _Labels_.
+{{< docs-imagebox img="/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
+
+The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example querying a temperature measurement along with a location property as a dimension of the measurement. In this case, multiple series are returned back from that single query. Each series in this case has unique location. To uniquely identify these series within a set of time series, Grafana stores this information in _Labels_.
 
 ## Labels
 
@@ -61,6 +63,8 @@ Individual time series from the set are extracted by using the time typed column
 
 **TODO**: Azure only As 7.1, SQL coming in 7.2
 
+**TODO**: Multiple dimensions are not supported as mapping to multiple alerts in Grafana currently, only as multiple conditions to a single alert.
+
 If the query is updated to select and group by more than just one string column, for example, `GROUP BY BUCKET(StartTime, 1h), Location, Sensor`, then an additional dimension is added:
 
 | StartTime  | Temp | Location | Sensor |
@@ -75,3 +79,7 @@ If the query is updated to select and group by more than just one string column,
 | 10:00      | 22.2 | BOS      | B      |
 
 In this case the Labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
+
+### Multiple values
+
+In the case SQL-like data sources, more than one numeric column cab be selected, without or without additional string columns to be used as dimensions. For example, ` AVG(Temperature) AS AvgTemp,  MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
