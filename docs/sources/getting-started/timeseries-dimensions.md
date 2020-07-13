@@ -25,17 +25,59 @@ With time series data, the data often contains more than a single series, and is
 
 ## Labels
 
-Each time series in Grafana optionally has Labels. Labels are set a of key/value pairs. For example Labels could be `{location=us}` or could be `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series.
+Each time series in Grafana optionally has Labels. Labels are set a of key/value pairs. For example Labels could be `{location=us}` or could be `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}`.
 
-Different source of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into labels. Time series databases (TSBBs) generally natively support for dimensionality. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used - in Prometheus the same term as used as in Grafana - _Labels_.
+Different source of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into labels. Time series databases (TSBBs) generally natively support for dimensionality. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used - in Prometheus the same term as used as in Grafana - _Labels_. In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
 
-In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
-
-By storing dimensionality as Labels in Grafana it allows for the possibility of data transformations and alerting to also support multiple-dimensions.
+By storing dimensionality as Labels in Grafana it allows for the possibility of data transformations and alerting to also support multiple dimensions.
 
 Other terms:
 Tags, Dimensions, Group By, Split on, Factor, Categorical Value
 
-## Multiple-Dimensions in Table Format
+## Multiple dimensions in table format
 
-SQL, spreadsheets
+In SQL or SQL-like databases that return table responses, additional dimensions are generally found as columns in the table that is returned as a response from the query.
+
+### Single Dimension
+
+For example, consider a psudeo query like:
+
+```sql
+SELECT BUCKET(StartTime, 1h), AVG(Temperature) AS Temp, Location FROM T
+  GROUP BY BUCKET(StartTime, 1h), Location
+  ORDER BY time asc
+```
+
+Might return a table like with a 3 columns that each respectively have a type of Time, Number, and String:
+
+| StartTime  | Temp | Location |
+| ---------- | ---- | -------- |
+| 09:00      | 24   | LGA      |
+| 09:00      | 20   | BOS      |
+| 10:00      | 26   | LGA      |
+| 10:00      | 22   | BOS      |
+
+
+The table format is _Long_ formatted time series (aka Tall). It has repeated time stamps, and repeated values in Location. In this case, we have two time series in the set that would be identified as `Temp {Location=LGA}` and `Temp {Location=BOS}`.
+
+Individual time series from the set are extracted by using the time typed column `StartTime` as the time index of the time series, the numeric typed column `Temp` as the series Name, and the name and values of the string typed `Location` column to build the labels, such as Location=LGA.
+
+### Multiple Dimensions
+
+**TODO**: Azure only As 7.1, SQL coming in 7.2
+
+If one were to update the query to select and group by more than just location, `GROUP BY BUCKET(StartTime, 1h), Location, Sensor`, where Sensor is a string column, then an additional dimension is added:
+
+| StartTime  | Temp | Location | Sensor |
+| ---------- | ---- | -------- | ------ |
+| 09:00      | 24   | LGA      | A      |
+| 09:00      | 24.1 | LGA      | B      |
+| 09:00      | 20   | BOS      | A      |
+| 09:00      | 20.2 | BOS      | B      |
+| 10:00      | 26   | LGA      | A      |
+| 10:00      | 26.1 | LGA      | B      |
+| 10:00      | 22   | BOS      | A      |
+| 10:00      | 22.2 | BOS      | B      |
+
+In this case the Labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
+
