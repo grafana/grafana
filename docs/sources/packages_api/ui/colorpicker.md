@@ -5,7 +5,6 @@
 title = "ColorPicker"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ColorPicker variable
@@ -17,7 +16,7 @@ draft = true
 ```typescript
 ColorPicker: React.FunctionComponent<Pick<import("./ColorPickerPopover").Props<import("./ColorPickerPopover").CustomPickersDescriptor> & {
     children?: ColorPickerTriggerRenderer | undefined;
-}, "onChange" | "color" | "children" | "onColorChange" | "enableNamedColors" | "customPickers" | "updatePopperPosition">>
+}, "color" | "onChange" | "children" | "onColorChange" | "enableNamedColors" | "customPickers" | "updatePopperPosition">>
 ```
 <b>Import</b>
 

@@ -14,7 +14,7 @@ const thresholds: ThresholdsConfig = {
 };
 
 export default {
-  title: 'Panel/ThresholdsEditorNew',
+  title: 'Pickers and Editors/ThresholdsEditorNew',
   component: ThresholdsEditor,
   decorators: [withCenteredStory],
   parameters: {

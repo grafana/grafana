@@ -5,7 +5,6 @@
 title = "AppPlugin"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AppPlugin class

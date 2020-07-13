@@ -1,17 +1,17 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, LogsDedupStrategy, toUtc, ExploreUrlState } from '@grafana/data';
 
-import * as Actions from './actions';
-import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
-import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
+import { cancelQueries, loadDatasource, navigateToExplore, refreshExplore } from './actions';
+import { ExploreId, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
+  cancelQueriesAction,
   initializeExploreAction,
   InitializeExplorePayload,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
+  scanStopAction,
   setQueriesAction,
-  updateDatasourceInstanceAction,
   updateUIStateAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
@@ -20,6 +20,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { interval } from 'rxjs';
 
 jest.mock('app/features/plugins/datasource_srv');
 const getDatasourceSrvMock = (DatasourceSrv.getDatasourceSrv as any) as jest.Mock<DatasourceSrv.DatasourceSrv>;
@@ -54,8 +55,8 @@ const testRange = {
   },
 };
 jest.mock('app/core/utils/explore', () => ({
-  ...jest.requireActual('app/core/utils/explore'),
-  getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
+  ...((jest.requireActual('app/core/utils/explore') as unknown) as object),
+  getTimeRangeFromUrl: (range: any) => testRange,
 }));
 
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
@@ -69,7 +70,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     datasource: 'some-datasource',
     queries: [],
     range: range.raw,
-    mode: ExploreMode.Metrics,
     ui,
   };
   const updateDefaults = makeInitialUpdateState();
@@ -174,58 +174,36 @@ describe('refreshExplore', () => {
   });
 });
 
-describe('changing datasource', () => {
-  it('should switch to logs mode when changing from prometheus to loki', async () => {
-    const lokiMock = {
-      testDatasource: () => Promise.resolve({ status: 'success' }),
-      name: 'Loki',
-      init: jest.fn(),
-      meta: { id: 'some id', name: 'Loki' },
-    };
-
-    getDatasourceSrvMock.mockImplementation(
-      () =>
-        ({
-          getExternal: jest.fn().mockReturnValue([]),
-          get: jest.fn().mockReturnValue(lokiMock),
-        } as any)
-    );
-
+describe('running queries', () => {
+  it('should cancel running query when cancelQueries is dispatched', async () => {
+    const unsubscribable = interval(1000);
+    unsubscribable.subscribe();
     const exploreId = ExploreId.left;
-    const name = 'Prometheus';
-    const mockPromDatasourceInstance = {
-      testDatasource: () => Promise.resolve({ status: 'success' }),
-      name,
-      init: jest.fn(),
-      meta: { id: 'some id', name },
-    };
-
     const initialState = {
       explore: {
         [exploreId]: {
-          requestedDatasourceName: 'Loki',
-          datasourceInstance: mockPromDatasourceInstance,
+          datasourceInstance: 'test-datasource',
+          initialized: true,
+          loading: true,
+          querySubscription: unsubscribable,
+          queries: ['A'],
+          range: testRange,
         },
       },
+
       user: {
-        orgId: 1,
+        orgId: 'A',
       },
     };
 
-    jest.spyOn(Actions, 'importQueries').mockImplementationOnce(() => jest.fn);
-    jest.spyOn(Actions, 'loadDatasource').mockImplementationOnce(() => jest.fn);
-    jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
     const dispatchedActions = await thunkTester(initialState)
-      .givenThunk(changeDatasource)
-      .whenThunkIsDispatched(exploreId, name);
+      .givenThunk(cancelQueries)
+      .whenThunkIsDispatched(exploreId);
 
     expect(dispatchedActions).toEqual([
-      updateDatasourceInstanceAction({
-        exploreId,
-        datasourceInstance: lokiMock as any,
-        version: undefined,
-        mode: ExploreMode.Logs,
-      }),
+      scanStopAction({ exploreId }),
+      cancelQueriesAction({ exploreId }),
+      expect.anything(),
     ]);
   });
 });
@@ -295,7 +273,7 @@ const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => vo
     datasource: 'mocked datasource',
     targets: [{ refId: 'A' }],
   };
-  const datasource = new MockDataSourceApi(panel.datasource);
+  const datasource = new MockDataSourceApi(panel.datasource!);
   const get = jest.fn().mockResolvedValue(datasource);
   const getDataSourceSrv = jest.fn().mockReturnValue({ get });
   const getTimeSrv = jest.fn();

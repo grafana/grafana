@@ -11,17 +11,12 @@
   vertical-align: middle;
 }
 
-.gicon--has-hover {
+.icon--has-hover {
   opacity: 0.7;
 
   &:hover {
     opacity: 1;
   }
-}
-
-.mini {
-  width: 0.8em;
-  height: 0.8em;
 }
 
 .gicon-add-annotation {

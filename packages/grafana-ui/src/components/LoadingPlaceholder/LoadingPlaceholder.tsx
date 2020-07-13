@@ -1,4 +1,5 @@
 import React, { SFC } from 'react';
+import { Icon } from '../Icon/Icon';
 
 interface LoadingPlaceholderProps {
   text: string;
@@ -6,6 +7,6 @@ interface LoadingPlaceholderProps {
 
 export const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => (
   <div className="gf-form-group">
-    {text} <i className="fa fa-spinner fa-spin" />
+    {text} <Icon name="fa fa-spinner" className="fa-spin" />
   </div>
 );

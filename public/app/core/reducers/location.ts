@@ -3,7 +3,7 @@ import { Action, createAction } from '@reduxjs/toolkit';
 import { LocationUpdate } from '@grafana/runtime';
 
 import { LocationState } from 'app/types';
-import { renderUrl } from 'app/core/utils/url';
+import { urlUtil } from '@grafana/data';
 
 export const initialState: LocationState = {
   url: '',
@@ -33,7 +33,7 @@ export const locationReducer = (state: LocationState = initialState, action: Act
     }
 
     return {
-      url: renderUrl(path || state.path, query),
+      url: urlUtil.renderUrl(path || state.path, query),
       path: path || state.path,
       query: { ...query },
       routeParams: routeParams || state.routeParams,

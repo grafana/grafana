@@ -1,22 +1,20 @@
 import _ from 'lodash';
+import Mousetrap from 'mousetrap';
+import 'mousetrap-global-bind';
+import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
+import { locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import locationUtil from 'app/core/utils/location_util';
 import { store } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
-
-import Mousetrap from 'mousetrap';
-import { PanelEvents } from '@grafana/data';
-import 'mousetrap-global-bind';
-import { ContextSrv } from './context_srv';
-import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { getLocationSrv } from '@grafana/runtime';
-import { DashboardModel } from '../../features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardModalProxy } from '../../features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -85,7 +83,13 @@ export class KeybindingSrv {
   }
 
   openSearch() {
-    appEvents.emit(CoreEvents.showDashSearch);
+    const search = _.extend(this.$location.search(), { search: 'open' });
+    this.$location.search(search);
+  }
+
+  closeSearch() {
+    const search = _.extend(this.$location.search(), { search: null, ...defaultQueryParams });
+    this.$location.search(search);
   }
 
   openAlerting() {
@@ -126,19 +130,32 @@ export class KeybindingSrv {
       return;
     }
 
-    if (search.editPanel) {
-      delete search.editPanel;
+    if (search.inspect) {
+      delete search.inspect;
+      delete search.inspectTab;
       this.$location.search(search);
       return;
     }
 
-    if (search.fullscreen) {
-      appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
+    if (search.editPanel) {
+      delete search.editPanel;
+      delete search.tab;
+      this.$location.search(search);
+      return;
+    }
+
+    if (search.viewPanel) {
+      delete search.viewPanel;
+      this.$location.search(search);
       return;
     }
 
     if (search.kiosk) {
       this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
+    }
+
+    if (search.search) {
+      this.closeSearch();
     }
   }
 
@@ -211,24 +228,28 @@ export class KeybindingSrv {
 
     // edit panel
     this.bind('e', () => {
+      if (!dashboard.meta.focusPanelId) {
+        return;
+      }
+
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          edit: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+        const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        appEvents.emit(PanelEvents.panelChangeView, {
-          fullscreen: true,
-          panelId: dashboard.meta.focusPanelId,
-          toggle: true,
-        });
+        const search = _.extend(this.$location.search(), { viewPanel: dashboard.meta.focusPanelId });
+        this.$location.search(search);
+      }
+    });
+
+    this.bind('i', () => {
+      if (dashboard.meta.focusPanelId) {
+        const search = _.extend(this.$location.search(), { inspect: dashboard.meta.focusPanelId });
+        this.$location.search(search);
       }
     });
 
@@ -236,7 +257,7 @@ export class KeybindingSrv {
     if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
-          const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          const panel = dashboard.getPanelById(dashboard.meta.focusPanelId)!;
           const datasource = await this.datasourceSrv.get(panel.datasource);
           const url = await getExploreUrl({
             panel,
@@ -245,10 +266,12 @@ export class KeybindingSrv {
             datasourceSrv: this.datasourceSrv,
             timeSrv: this.timeSrv,
           });
-          const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
 
-          if (urlWithoutBase) {
-            this.$timeout(() => this.$location.url(urlWithoutBase));
+          if (url) {
+            const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
+            if (urlWithoutBase) {
+              this.$timeout(() => this.$location.url(urlWithoutBase));
+            }
           }
         }
       });
@@ -256,16 +279,20 @@ export class KeybindingSrv {
 
     // delete panel
     this.bind('p r', () => {
-      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        appEvents.emit(CoreEvents.removePanel, dashboard.meta.focusPanelId);
+      const panelId = dashboard.meta.focusPanelId;
+
+      if (panelId && dashboard.canEditPanelById(panelId)) {
+        appEvents.emit(CoreEvents.removePanel, panelId);
         dashboard.meta.focusPanelId = 0;
       }
     });
 
     // duplicate panel
     this.bind('p d', () => {
-      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
+      const panelId = dashboard.meta.focusPanelId;
+
+      if (panelId && dashboard.canEditPanelById(panelId)) {
+        const panelIndex = dashboard.getPanelInfoById(panelId)!.index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
     });
@@ -285,21 +312,14 @@ export class KeybindingSrv {
       }
     });
 
-    // inspect panel
-    this.bind('p i', () => {
-      if (dashboard.meta.focusPanelId) {
-        getLocationSrv().update({ partial: true, query: { inspect: dashboard.meta.focusPanelId } });
-      }
-    });
-
     // toggle panel legend
     this.bind('p l', () => {
       if (dashboard.meta.focusPanelId) {
-        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId)!;
+
         if (panelInfo.panel.legend) {
-          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
-          panelRef.legend.show = !panelRef.legend.show;
-          panelRef.render();
+          panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
+          panelInfo.panel.render();
         }
       }
     });

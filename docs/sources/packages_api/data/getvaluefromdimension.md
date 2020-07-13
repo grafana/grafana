@@ -5,7 +5,6 @@
 title = "getValueFromDimension"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getValueFromDimension variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-getValueFromDimension: (dimension: Dimension<any>, column: number, row: number) => any
+getValueFromDimension: (dimension: Dimension, column: number, row: number) => any
 ```
 <b>Import</b>
 

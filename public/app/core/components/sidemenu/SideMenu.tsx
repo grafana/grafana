@@ -5,6 +5,7 @@ import BottomSection from './BottomSection';
 import config from 'app/core/config';
 import { CoreEvents } from 'app/types';
 import { Branding } from 'app/core/components/Branding/Branding';
+import { Icon } from '@grafana/ui';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -19,9 +20,9 @@ export class SideMenu extends PureComponent {
         <Branding.MenuLogo />
       </a>,
       <div className="sidemenu__logo_small_breakpoint" onClick={this.toggleSideMenuSmallBreakpoint} key="hamburger">
-        <i className="fa fa-bars" />
+        <Icon name="bars" size="xl" />
         <span className="sidemenu__close">
-          <i className="fa fa-times" />
+          <Icon name="times" />
           &nbsp;Close
         </span>
       </div>,

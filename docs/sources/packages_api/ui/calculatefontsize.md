@@ -5,7 +5,6 @@
 title = "calculateFontSize"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## calculateFontSize() function

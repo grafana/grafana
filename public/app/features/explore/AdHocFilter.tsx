@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
-import { Select, ThemeContext } from '@grafana/ui';
+import { LegacyForms, ThemeContext } from '@grafana/ui';
+const { Select } = LegacyForms;
 import { css, cx } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 

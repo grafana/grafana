@@ -4,11 +4,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+var shadowSearchCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: "db_dashboard",
+		Name:      "search_shadow",
+	},
+	[]string{"equal", "error"},
 )
 
 func init() {
@@ -26,6 +38,8 @@ func init() {
 	bus.AddHandler("sql", ValidateDashboardBeforeSave)
 	bus.AddHandler("sql", HasEditPermissionInFolders)
 	bus.AddHandler("sql", HasAdminPermissionInFolders)
+
+	prometheus.MustRegister(shadowSearchCounter)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -202,29 +216,62 @@ type DashboardSearchProjection struct {
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
-	sb := NewSearchBuilder(query.SignedInUser, query.Limit, query.Page, query.Permission).
-		WithTags(query.Tags).
-		WithDashboardIdsIn(query.DashboardIds)
+	filters := []interface{}{
+		permissions.DashboardPermissionFilter{
+			OrgRole:         query.SignedInUser.OrgRole,
+			OrgId:           query.SignedInUser.OrgId,
+			Dialect:         dialect,
+			UserId:          query.SignedInUser.UserId,
+			PermissionLevel: query.Permission,
+		},
+	}
+
+	filters = append(filters, query.Filters...)
+
+	if query.OrgId != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+	} else if query.SignedInUser.OrgId != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgId})
+	}
+
+	if len(query.Tags) > 0 {
+		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
+	}
+
+	if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{IDs: query.DashboardIds})
+	}
 
 	if query.IsStarred {
-		sb.IsStarred()
+		filters = append(filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserId})
 	}
 
 	if len(query.Title) > 0 {
-		sb.WithTitle(query.Title)
+		filters = append(filters, searchstore.TitleFilter{Dialect: dialect, Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {
-		sb.WithType(query.Type)
+		filters = append(filters, searchstore.TypeFilter{Dialect: dialect, Type: query.Type})
 	}
 
 	if len(query.FolderIds) > 0 {
-		sb.WithFolderIds(query.FolderIds)
+		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
 
 	var res []DashboardSearchProjection
+	sb := &searchstore.Builder{Dialect: dialect, Filters: filters}
 
-	sql, params := sb.ToSql()
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	sql, params := sb.ToSql(limit, page)
 	err := x.SQL(sql, params...).Find(&res)
 	if err != nil {
 		return nil, err

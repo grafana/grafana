@@ -1,14 +1,17 @@
 import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
-
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { KustoSchema, AzureLogsVariable } from '../types';
+import { AzureLogsVariable, KustoSchema } from '../types';
 import { toUtc } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { backendSrv } from 'app/core/services/backend_srv';
 
+const templateSrv = new TemplateSrv();
+
+jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => templateSrv,
 }));
 
 describe('AzureLogAnalyticsDatasource', () => {
@@ -19,9 +22,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     datasourceRequestMock.mockImplementation(jest.fn());
   });
 
-  const ctx: any = {
-    templateSrv: new TemplateSrv(),
-  };
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.instanceSettings = {
@@ -29,7 +30,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       url: 'http://azureloganalyticsapi',
     };
 
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
   describe('When the config option "Same as Azure Monitor" has been chosen', () => {
@@ -68,7 +69,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       ctx.instanceSettings.jsonData.tenantId = 'xxx';
       ctx.instanceSettings.jsonData.clientId = 'xxx';
       ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
-      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
 
       datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
@@ -115,144 +116,6 @@ describe('AzureLogAnalyticsDatasource', () => {
           expect(results.message).toEqual(
             '1. Azure Log Analytics: Bad Request: InvalidApiVersionParameter. An error message. '
           );
-        });
-      });
-    });
-  });
-
-  describe('When performing query', () => {
-    const options = {
-      range: {
-        from: toUtc('2017-08-22T20:00:00Z'),
-        to: toUtc('2017-08-22T23:59:00Z'),
-      },
-      rangeRaw: {
-        from: 'now-4h',
-        to: 'now',
-      },
-      targets: [
-        {
-          apiVersion: '2016-09-01',
-          refId: 'A',
-          queryType: 'Azure Log Analytics',
-          azureLogAnalytics: {
-            resultFormat: 'time_series',
-            query:
-              'AzureActivity | where TimeGenerated > ago(2h) ' +
-              '| summarize count() by Category, bin(TimeGenerated, 5min) ' +
-              '| project TimeGenerated, Category, count_  | order by TimeGenerated asc',
-          },
-        },
-      ],
-    };
-
-    const response = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
-            {
-              name: 'TimeGenerated',
-              type: 'datetime',
-            },
-            {
-              name: 'Category',
-              type: 'string',
-            },
-            {
-              name: 'count_',
-              type: 'long',
-            },
-          ],
-          rows: [
-            ['2018-06-02T20:20:00Z', 'Administrative', 2],
-            ['2018-06-02T20:25:00Z', 'Administrative', 22],
-            ['2018-06-02T20:30:00Z', 'Policy', 20],
-          ],
-        },
-      ],
-    };
-
-    describe('in time series format', () => {
-      describe('and the data is valid (has time, metric and value columns)', () => {
-        beforeEach(() => {
-          datasourceRequestMock.mockImplementation((options: { url: string }) => {
-            expect(options.url).toContain('query=AzureActivity');
-            return Promise.resolve({ data: response, status: 200 });
-          });
-        });
-
-        it('should return a list of datapoints', () => {
-          return ctx.ds.query(options).then((results: any) => {
-            expect(results.data.length).toBe(2);
-            expect(results.data[0].datapoints.length).toBe(2);
-            expect(results.data[0].target).toEqual('Administrative');
-            expect(results.data[0].datapoints[0][1]).toEqual(1527970800000);
-            expect(results.data[0].datapoints[0][0]).toEqual(2);
-            expect(results.data[0].datapoints[1][1]).toEqual(1527971100000);
-            expect(results.data[0].datapoints[1][0]).toEqual(22);
-          });
-        });
-      });
-
-      describe('and the data has no time column)', () => {
-        beforeEach(() => {
-          const invalidResponse = {
-            tables: [
-              {
-                name: 'PrimaryResult',
-                columns: [
-                  {
-                    name: 'Category',
-                    type: 'string',
-                  },
-                  {
-                    name: 'count_',
-                    type: 'long',
-                  },
-                ],
-                rows: [['Administrative', 2]],
-              },
-            ],
-          };
-
-          datasourceRequestMock.mockImplementation((options: { url: string }) => {
-            expect(options.url).toContain('query=AzureActivity');
-            return Promise.resolve({ data: invalidResponse, status: 200 });
-          });
-        });
-
-        it('should throw an exception', () => {
-          ctx.ds.query(options).catch((err: any) => {
-            expect(err.message).toContain('The Time Series format requires a time column.');
-          });
-        });
-      });
-    });
-
-    describe('in tableformat', () => {
-      beforeEach(() => {
-        options.targets[0].azureLogAnalytics.resultFormat = 'table';
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('query=AzureActivity');
-          return Promise.resolve({ data: response, status: 200 });
-        });
-      });
-
-      it('should return a list of columns and rows', () => {
-        return ctx.ds.query(options).then((results: any) => {
-          expect(results.data[0].type).toBe('table');
-          expect(results.data[0].columns.length).toBe(3);
-          expect(results.data[0].rows.length).toBe(3);
-          expect(results.data[0].columns[0].text).toBe('TimeGenerated');
-          expect(results.data[0].columns[0].type).toBe('datetime');
-          expect(results.data[0].columns[1].text).toBe('Category');
-          expect(results.data[0].columns[1].type).toBe('string');
-          expect(results.data[0].columns[2].text).toBe('count_');
-          expect(results.data[0].columns[2].type).toBe('long');
-          expect(results.data[0].rows[0][0]).toEqual('2018-06-02T20:20:00Z');
-          expect(results.data[0].rows[0][1]).toEqual('Administrative');
-          expect(results.data[0].rows[0][2]).toEqual(2);
         });
       });
     });

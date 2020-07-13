@@ -22,17 +22,21 @@ const (
 	DS_MSSQL         = "mssql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
-	DS_STACKDRIVER   = "stackdriver"
-	DS_AZURE_MONITOR = "grafana-azure-monitor-datasource"
-	DS_LOKI          = "loki"
+	// Stackdriver was renamed Google Cloud monitoring 2020-05 but we keep
+	// "stackdriver" to avoid breaking changes in reporting.
+	DS_CLOUD_MONITORING = "stackdriver"
+	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
+	DS_LOKI             = "loki"
 )
 
 var (
-	ErrDataSourceNotFound           = errors.New("Data source not found")
-	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
-	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
-	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration")
-	ErrDataSourceAccessDenied       = errors.New("Data source access denied")
+	ErrDataSourceNotFound                = errors.New("Data source not found")
+	ErrDataSourceNameExists              = errors.New("Data source with the same name already exists")
+	ErrDataSourceUidExists               = errors.New("Data source with the same uid already exists")
+	ErrDataSourceUpdatingOldVersion      = errors.New("Trying to update old version of datasource")
+	ErrDatasourceIsReadOnly              = errors.New("Data source is readonly. Can only be updated from configuration")
+	ErrDataSourceAccessDenied            = errors.New("Data source access denied")
+	ErrDataSourceFailedGenerateUniqueUid = errors.New("Failed to generate unique datasource id")
 )
 
 type DsAccess string
@@ -57,6 +61,7 @@ type DataSource struct {
 	JsonData          *simplejson.Json
 	SecureJsonData    securejsondata.SecureJsonData
 	ReadOnly          bool
+	Uid               string
 
 	Created time.Time
 	Updated time.Time
@@ -94,7 +99,7 @@ var knownDatasourcePlugins = map[string]bool{
 	DS_POSTGRES:                              true,
 	DS_MYSQL:                                 true,
 	DS_MSSQL:                                 true,
-	DS_STACKDRIVER:                           true,
+	DS_CLOUD_MONITORING:                      true,
 	DS_AZURE_MONITOR:                         true,
 	DS_LOKI:                                  true,
 	"opennms":                                true,
@@ -144,6 +149,7 @@ type AddDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
+	Uid               string            `json:"uid"`
 
 	OrgId    int64 `json:"-"`
 	ReadOnly bool  `json:"-"`
@@ -168,6 +174,7 @@ type UpdateDataSourceCommand struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Version           int               `json:"version"`
+	Uid               string            `json:"uid"`
 
 	OrgId    int64 `json:"-"`
 	Id       int64 `json:"-"`

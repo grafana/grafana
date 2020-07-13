@@ -1,6 +1,4 @@
 import React, { PureComponent } from 'react';
-
-import { Select } from '../Select/Select';
 import { Cascader, CascaderOption } from '../Cascader/Cascader';
 import { getValueFormats, SelectableValue } from '@grafana/data';
 
@@ -8,8 +6,6 @@ interface Props {
   onChange: (item?: string) => void;
   value?: string;
   width?: number;
-  /** Temporary flag that uses the new form styles. */
-  useNewForms?: boolean;
 }
 
 function formatCreateLabel(input: string) {
@@ -17,16 +13,12 @@ function formatCreateLabel(input: string) {
 }
 
 export class UnitPicker extends PureComponent<Props> {
-  static defaultProps = {
-    width: 12,
-  };
-
   onChange = (value: SelectableValue<string>) => {
     this.props.onChange(value.value);
   };
 
   render() {
-    const { value, width, useNewForms } = this.props;
+    const { value, width } = this.props;
 
     // Set the current selection
     let current: SelectableValue<string> | undefined = undefined;
@@ -46,16 +38,11 @@ export class UnitPicker extends PureComponent<Props> {
         }
         return sel;
       });
-      if (useNewForms) {
-        return {
-          label: group.text,
-          value: group.text,
-          items: options,
-        };
-      }
+
       return {
         label: group.text,
-        options,
+        value: group.text,
+        items: options,
       };
     });
 
@@ -64,25 +51,15 @@ export class UnitPicker extends PureComponent<Props> {
       current = { value, label: value };
     }
 
-    return useNewForms ? (
+    return (
       <Cascader
+        width={width}
         initialValue={current && current.label}
         allowCustomValue
         formatCreateLabel={formatCreateLabel}
         options={groupOptions as CascaderOption[]}
         placeholder="Choose"
         onSelect={this.props.onChange}
-      />
-    ) : (
-      <Select
-        width={width}
-        defaultValue={current}
-        isSearchable={true}
-        allowCustomValue={true}
-        formatCreateLabel={formatCreateLabel}
-        options={groupOptions}
-        placeholder="Choose"
-        onChange={this.onChange}
       />
     );
   }

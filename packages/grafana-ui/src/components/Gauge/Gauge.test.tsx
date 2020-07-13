@@ -48,7 +48,7 @@ describe('Get thresholds formatted', () => {
       thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color: '#7EB26D' }] },
     });
 
-    expect(instance.getFormattedThresholds()).toEqual([
+    expect(instance.getFormattedThresholds(2)).toEqual([
       { value: 0, color: '#7EB26D' },
       { value: 100, color: '#7EB26D' },
     ]);
@@ -66,7 +66,7 @@ describe('Get thresholds formatted', () => {
       },
     });
 
-    expect(instance.getFormattedThresholds()).toEqual([
+    expect(instance.getFormattedThresholds(2)).toEqual([
       { value: 0, color: '#7EB26D' },
       { value: 50, color: '#7EB26D' },
       { value: 75, color: '#EAB839' },

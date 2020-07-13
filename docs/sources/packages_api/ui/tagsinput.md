@@ -5,7 +5,6 @@
 title = "TagsInput"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## TagsInput class
@@ -30,10 +29,10 @@ import { TagsInput } from '@grafana/ui';
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [onAdd](#onadd-property) |  | <code>(event: React.MouseEvent&lt;Element, MouseEvent&gt;) =&gt; void</code> |  |
+|  [onAdd](#onadd-property) |  | <code>(event: React.MouseEvent) =&gt; void</code> |  |
 |  [onChange](#onchange-property) |  | <code>() =&gt; void</code> |  |
-|  [onKeyboardAdd](#onkeyboardadd-property) |  | <code>(event: React.KeyboardEvent&lt;Element&gt;) =&gt; void</code> |  |
-|  [onNameChange](#onnamechange-property) |  | <code>(event: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; void</code> |  |
+|  [onKeyboardAdd](#onkeyboardadd-property) |  | <code>(event: KeyboardEvent) =&gt; void</code> |  |
+|  [onNameChange](#onnamechange-property) |  | <code>(event: ChangeEvent&lt;HTMLInputElement&gt;) =&gt; void</code> |  |
 |  [onRemove](#onremove-property) |  | <code>(tagToRemove: string) =&gt; void</code> |  |
 |  [setNewTags](#setnewtags-property) |  | <code>() =&gt; void</code> |  |
 
@@ -63,7 +62,7 @@ constructor(props: Props);
 <b>Signature</b>
 
 ```typescript
-onAdd: (event: React.MouseEvent<Element, MouseEvent>) => void;
+onAdd: (event: React.MouseEvent) => void;
 ```
 
 ### onChange property
@@ -79,7 +78,7 @@ onChange: () => void;
 <b>Signature</b>
 
 ```typescript
-onKeyboardAdd: (event: React.KeyboardEvent<Element>) => void;
+onKeyboardAdd: (event: KeyboardEvent) => void;
 ```
 
 ### onNameChange property
@@ -87,7 +86,7 @@ onKeyboardAdd: (event: React.KeyboardEvent<Element>) => void;
 <b>Signature</b>
 
 ```typescript
-onNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
 ```
 
 ### onRemove property

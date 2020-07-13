@@ -5,7 +5,6 @@
 title = "hasMsResolution"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## hasMsResolution variable
@@ -17,7 +16,7 @@ Checks if series time field has ms resolution
 <b>Signature</b>
 
 ```typescript
-hasMsResolution: (timeField: Field<any, import("..").Vector<any>>) => boolean
+hasMsResolution: (timeField: Field) => boolean
 ```
 <b>Import</b>
 

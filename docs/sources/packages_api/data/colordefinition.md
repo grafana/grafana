@@ -5,7 +5,6 @@
 title = "ColorDefinition"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ColorDefinition type

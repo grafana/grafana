@@ -5,7 +5,6 @@
 title = "PluginType"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PluginType enum

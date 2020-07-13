@@ -59,7 +59,7 @@ describe('dataFrameView', () => {
     expect(keys).toEqual(['time', 'name', 'value']);
   });
 
-  it('has a weird side effect that the object values change after interation', () => {
+  it('has a weird side effect that the object values change after interaction', () => {
     expect(vector.length).toEqual(3);
 
     // Get the first value

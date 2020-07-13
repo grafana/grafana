@@ -3,7 +3,7 @@ import { SelectableValue } from '../types/select';
 export interface RegistryItem {
   id: string; // Unique Key -- saved in configs
   name: string; // Display Name, can change without breaking configs
-  description: string;
+  description?: string;
   aliasIds?: string[]; // when the ID changes, we may want backwards compatibility ('current' => 'last')
 
   /**
@@ -46,18 +46,24 @@ export class Registry<T extends RegistryItem> {
 
   getIfExists(id: string | undefined): T | undefined {
     if (!this.initialized) {
-      if (this.init) {
-        for (const ext of this.init()) {
-          this.register(ext);
-        }
-      }
-      this.sort();
-      this.initialized = true;
+      this.initialize();
     }
+
     if (id) {
       return this.byId.get(id);
     }
+
     return undefined;
+  }
+
+  private initialize() {
+    if (this.init) {
+      for (const ext of this.init()) {
+        this.register(ext);
+      }
+    }
+    this.sort();
+    this.initialized = true;
   }
 
   get(id: string): T {
@@ -70,7 +76,7 @@ export class Registry<T extends RegistryItem> {
 
   selectOptions(current?: string[], filter?: (ext: T) => boolean): RegistrySelectInfo {
     if (!this.initialized) {
-      this.getIfExists('xxx'); // will trigger init
+      this.initialize();
     }
 
     const select = {
@@ -78,10 +84,10 @@ export class Registry<T extends RegistryItem> {
       current: [],
     } as RegistrySelectInfo;
 
-    const currentIds: any = {};
+    const currentOptions: Record<string, SelectableValue<string>> = {};
     if (current) {
       for (const id of current) {
-        currentIds[id] = true;
+        currentOptions[id] = {};
       }
     }
 
@@ -100,10 +106,16 @@ export class Registry<T extends RegistryItem> {
       };
 
       select.options.push(option);
-      if (currentIds[ext.id]) {
-        select.current.push(option);
+      if (currentOptions[ext.id]) {
+        currentOptions[ext.id] = option;
       }
     }
+
+    if (current) {
+      // this makes sure we preserve the order of ids
+      select.current = Object.values(currentOptions);
+    }
+
     return select;
   }
 
@@ -111,6 +123,10 @@ export class Registry<T extends RegistryItem> {
    * Return a list of values by ID, or all values if not specified
    */
   list(ids?: any[]): T[] {
+    if (!this.initialized) {
+      this.initialize();
+    }
+
     if (ids) {
       const found: T[] = [];
       for (const id of ids) {
@@ -121,16 +137,23 @@ export class Registry<T extends RegistryItem> {
       }
       return found;
     }
+
+    return this.ordered;
+  }
+
+  isEmpty(): boolean {
     if (!this.initialized) {
-      this.getIfExists('xxx'); // will trigger init
+      this.initialize();
     }
-    return [...this.ordered]; // copy of everythign just in case
+
+    return this.ordered.length === 0;
   }
 
   register(ext: T) {
     if (this.byId.has(ext.id)) {
       throw new Error('Duplicate Key:' + ext.id);
     }
+
     this.byId.set(ext.id, ext);
     this.ordered.push(ext);
 

@@ -5,7 +5,6 @@
 title = "onUpdateDatasourceResetOption"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## onUpdateDatasourceResetOption variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceResetOption: (props: DataSourcePluginOptionsEditorProps<import("../types").DataSourceJsonData, {}>, key: string) => (event: import("react").MouseEvent<HTMLButtonElement, MouseEvent>) => void
+onUpdateDatasourceResetOption: (props: DataSourcePluginOptionsEditorProps, key: string) => (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
 ```
 <b>Import</b>
 

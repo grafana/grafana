@@ -5,7 +5,6 @@
 title = "toLegacyResponseData"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## toLegacyResponseData variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-toLegacyResponseData: (frame: DataFrame) => TableData | TimeSeries
+toLegacyResponseData: (frame: DataFrame) => TimeSeries | TableData
 ```
 <b>Import</b>
 

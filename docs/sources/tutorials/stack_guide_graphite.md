@@ -17,7 +17,7 @@ database has yet to match Graphite's query flexibility and analytics potential.
 Graphite has a reputation for being tricky to install and scale. This guide aims to show
 that is not really the case, or, at least, that it is a lot better than you expect.
 
-> This guides does not only aim to be only be an install guide but to also teach you
+> This guide does not only aim to be only be an install guide but to also teach you
 > of the mechanics of metric collection, aggregation and querying. How Graphite
 > stores and aggregates data is very important to understand in order to not
 > get mislead by graphs.
@@ -29,7 +29,7 @@ install StatsD, but that is optional.
 
 - Carbon is the graphite ingestion daemon responsible for
 receiving metrics and storing them.
-- Graphite-api is light weight version of graphite-web with only the HTTP api and is
+- Graphite-api is light weight version of graphite-web with only the HTTP API and is
 responsible for executing metric queries.
 - Grafana as the frontend to visualize metrics and the tool to help you build metric
 queries that will make the most out of your collected metrics.
@@ -73,7 +73,7 @@ Copy example carbon config:
 cp /opt/graphite/conf/carbon.conf.example /opt/graphite/conf/carbon.conf
 ```
 
-Edit the config file `/opt/graphite/conf/carbon.conf`, find line `ENABLE_UPD_LISTENER` and
+Edit the config file `/opt/graphite/conf/carbon.conf`, find line `ENABLE_UDP_LISTENER` and
 change this setting to `True`.
 
 ### Configure storage-schemas.conf
@@ -94,7 +94,7 @@ This config specifies the resolution of metrics and the retention periods. For e
 roll them up into 10 minute buckets and store those for 1 year, then roll those up into 1 hour buckets and store those for 5 years. For all other metrics
 the default rule will be applied with other retention periods.
 
-This configuration is very important, as the first retention period must match the rate of which you send metrics. The default rule has 10 seconds
+This configuration is very important, as the first retention period must match the rate at which you send metrics. The default rule has 10 seconds
 as its first resolution so when configuring StatsD we should configure it to send metrics every 10 seconds.
 
 > If you send values more frequently than the highest resolution, for example if you send data every second but
@@ -165,14 +165,14 @@ supervisorctl reload
 
 ### Graphite-api
 
-Graphite api is a light weight version of graphite-web with only the api component (no web ui). It is dead simple
+Graphite api is a light weight version of graphite-web with only the API component (no web ui). It is dead simple
 to install.
 
 ```
 pip install gunicorn graphite-api
 ```
 
-You should now have a graphite-api daemon running with an open HTTP api port of 8888.
+You should now have a graphite-api daemon running with an open HTTP API port of 8888.
 
 ### Configuring Graphite-api
 

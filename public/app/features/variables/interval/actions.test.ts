@@ -1,8 +1,7 @@
-import { getTemplatingRootReducer } from '../state/helpers';
+import { getRootReducer } from '../state/helpers';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
-import { initDashboardTemplating } from '../state/actions';
-import { toVariableIdentifier } from '../state/types';
+import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import {
   updateAutoValue,
   UpdateAutoValueDependencies,
@@ -10,7 +9,7 @@ import {
   UpdateIntervalVariableOptionsDependencies,
 } from './actions';
 import { createIntervalOptions } from './reducer';
-import { setCurrentVariableValue } from '../state/sharedReducer';
+import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
 import { variableAdapters } from '../adapters';
 import { createIntervalVariableAdapter } from './adapter';
 import { Emitter } from 'app/core/core';
@@ -18,6 +17,7 @@ import { AppEvents, dateTime } from '@grafana/data';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { intervalBuilder } from '../shared/testing/builders';
+import kbn from 'app/core/utils/kbn';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
@@ -30,8 +30,8 @@ describe('interval actions', () => {
         .build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([interval]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
@@ -65,7 +65,7 @@ describe('interval actions', () => {
         .withId('0')
         .withQuery('1s,1m,1h,1d')
         .withAuto(true)
-        .withAutoMin('1') // illegal interval string
+        .withAutoMin('1xyz') // illegal interval string
         .build();
       const appEventMock = ({
         emit: jest.fn(),
@@ -73,14 +73,16 @@ describe('interval actions', () => {
       const dependencies: UpdateIntervalVariableOptionsDependencies = { appEvents: appEventMock };
 
       await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([interval]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval), dependencies), true);
 
       expect(appEventMock.emit).toHaveBeenCalledTimes(1);
       expect(appEventMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
         'Templating',
-        'Invalid interval string, expecting a number followed by one of "Mwdhmsy"',
+        `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
+          kbn.intervals_in_seconds
+        ).join(', ')}"`,
       ]);
       setTimeSrv(originalTimeSrv);
     });
@@ -116,8 +118,10 @@ describe('interval actions', () => {
         };
 
         await reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(initDashboardTemplating([interval]))
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
+          )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
         expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(0);
@@ -160,8 +164,10 @@ describe('interval actions', () => {
         };
 
         await reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(initDashboardTemplating([interval]))
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
+          )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
         expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(1);

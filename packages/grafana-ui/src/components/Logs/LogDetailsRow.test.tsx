@@ -32,16 +32,16 @@ describe('LogDetailsRow', () => {
   });
   it('should render metrics button', () => {
     const wrapper = setup();
-    expect(wrapper.find('i.fa-signal')).toHaveLength(1);
+    expect(wrapper.find({ title: 'Ad-hoc statistics' }).hostNodes()).toHaveLength(1);
   });
   describe('if props is a label', () => {
     it('should render filter label button', () => {
       const wrapper = setup();
-      expect(wrapper.find('i.fa-search-plus')).toHaveLength(1);
+      expect(wrapper.find({ title: 'Filter for value' }).hostNodes()).toHaveLength(1);
     });
     it('should render filter out label button', () => {
       const wrapper = setup();
-      expect(wrapper.find('i.fa-search-minus')).toHaveLength(1);
+      expect(wrapper.find({ title: 'Filter out value' }).hostNodes()).toHaveLength(1);
     });
   });
 
@@ -66,7 +66,10 @@ describe('LogDetailsRow', () => {
     });
 
     expect(wrapper.find(LogLabelStats).length).toBe(0);
-    wrapper.find({ title: 'Ad-hoc statistics' }).simulate('click');
+    wrapper
+      .find({ title: 'Ad-hoc statistics' })
+      .hostNodes()
+      .simulate('click');
     expect(wrapper.find(LogLabelStats).length).toBe(1);
     expect(wrapper.find(LogLabelStats).contains('another value')).toBeTruthy();
   });

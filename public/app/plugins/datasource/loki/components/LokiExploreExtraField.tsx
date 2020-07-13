@@ -2,7 +2,7 @@
 import React, { memo } from 'react';
 
 // Types
-import { FormLabel } from '@grafana/ui';
+import { InlineFormLabel } from '@grafana/ui';
 
 export interface LokiExploreExtraFieldProps {
   label: string;
@@ -17,12 +17,12 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
   const { label, onChangeFunc, onKeyDownFunc, value, type, min } = props;
 
   return (
-    <div className="gf-form-inline explore-input--ml">
+    <div className="gf-form-inline">
       <div className="gf-form">
-        <FormLabel width={6}>{label}</FormLabel>
+        <InlineFormLabel width={5}>{label}</InlineFormLabel>
         <input
           type={type}
-          className="gf-form-input width-6"
+          className="gf-form-input width-4"
           placeholder={'auto'}
           onChange={onChangeFunc}
           onKeyDown={onKeyDownFunc}

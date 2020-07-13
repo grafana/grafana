@@ -8,11 +8,12 @@ import { TLSAuthSettings } from './TLSAuthSettings';
 import { DataSourceSettings } from '@grafana/data';
 import { HttpSettingsProps } from './types';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
-import { Select } from '../Select/Select';
-import { Input } from '../Input/Input';
+import { Select } from '../Forms/Legacy/Select/Select';
+import { Input } from '../Forms/Legacy/Input/Input';
+import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';
-import { Switch } from '../Switch/Switch';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
@@ -104,7 +105,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
   );
 
   const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${theme.colors.red};
+    box-shadow: inset 0 0px 5px ${theme.palette.red};
   `;
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
@@ -139,7 +140,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
                     onClick={() => setIsAccessHelpVisible(isVisible => !isVisible)}
                   >
                     Help&nbsp;
-                    <i className={`fa fa-caret-${isAccessHelpVisible ? 'down' : 'right'}`} />
+                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
                   </label>
                 </div>
               </div>

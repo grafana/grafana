@@ -2,28 +2,32 @@ package dashboards
 
 import "context"
 
-type Calls struct {
+// Calls is a mock implementation of the provisioner interface
+type calls struct {
 	Provision                   []interface{}
 	PollChanges                 []interface{}
 	GetProvisionerResolvedPath  []interface{}
-	GetAllowUiUpdatesFromConfig []interface{}
+	GetAllowUIUpdatesFromConfig []interface{}
 }
 
-type DashboardProvisionerMock struct {
-	Calls                           *Calls
+// ProvisionerMock is a mock implementation of `Provisioner`
+type ProvisionerMock struct {
+	Calls                           *calls
 	ProvisionFunc                   func() error
 	PollChangesFunc                 func(ctx context.Context)
 	GetProvisionerResolvedPathFunc  func(name string) string
-	GetAllowUiUpdatesFromConfigFunc func(name string) bool
+	GetAllowUIUpdatesFromConfigFunc func(name string) bool
 }
 
-func NewDashboardProvisionerMock() *DashboardProvisionerMock {
-	return &DashboardProvisionerMock{
-		Calls: &Calls{},
+// NewDashboardProvisionerMock returns a new dashboardprovisionermock
+func NewDashboardProvisionerMock() *ProvisionerMock {
+	return &ProvisionerMock{
+		Calls: &calls{},
 	}
 }
 
-func (dpm *DashboardProvisionerMock) Provision() error {
+// Provision is a mock implementation of `Provisioner.Provision`
+func (dpm *ProvisionerMock) Provision() error {
 	dpm.Calls.Provision = append(dpm.Calls.Provision, nil)
 	if dpm.ProvisionFunc != nil {
 		return dpm.ProvisionFunc()
@@ -31,14 +35,16 @@ func (dpm *DashboardProvisionerMock) Provision() error {
 	return nil
 }
 
-func (dpm *DashboardProvisionerMock) PollChanges(ctx context.Context) {
+// PollChanges is a mock implementation of `Provisioner.PollChanges`
+func (dpm *ProvisionerMock) PollChanges(ctx context.Context) {
 	dpm.Calls.PollChanges = append(dpm.Calls.PollChanges, ctx)
 	if dpm.PollChangesFunc != nil {
 		dpm.PollChangesFunc(ctx)
 	}
 }
 
-func (dpm *DashboardProvisionerMock) GetProvisionerResolvedPath(name string) string {
+// GetProvisionerResolvedPath is a mock implementation of `Provisioner.GetProvisionerResolvedPath`
+func (dpm *ProvisionerMock) GetProvisionerResolvedPath(name string) string {
 	dpm.Calls.GetProvisionerResolvedPath = append(dpm.Calls.GetProvisionerResolvedPath, name)
 	if dpm.GetProvisionerResolvedPathFunc != nil {
 		return dpm.GetProvisionerResolvedPathFunc(name)
@@ -46,10 +52,11 @@ func (dpm *DashboardProvisionerMock) GetProvisionerResolvedPath(name string) str
 	return ""
 }
 
-func (dpm *DashboardProvisionerMock) GetAllowUiUpdatesFromConfig(name string) bool {
-	dpm.Calls.GetAllowUiUpdatesFromConfig = append(dpm.Calls.GetAllowUiUpdatesFromConfig, name)
-	if dpm.GetAllowUiUpdatesFromConfigFunc != nil {
-		return dpm.GetAllowUiUpdatesFromConfigFunc(name)
+// GetAllowUIUpdatesFromConfig is a mock implementation of `Provisioner.GetAllowUIUpdatesFromConfig`
+func (dpm *ProvisionerMock) GetAllowUIUpdatesFromConfig(name string) bool {
+	dpm.Calls.GetAllowUIUpdatesFromConfig = append(dpm.Calls.GetAllowUIUpdatesFromConfig, name)
+	if dpm.GetAllowUIUpdatesFromConfigFunc != nil {
+		return dpm.GetAllowUIUpdatesFromConfigFunc(name)
 	}
 	return false
 }

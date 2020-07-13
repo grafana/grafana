@@ -13,8 +13,16 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, FormLabel, Input, Switch, ValidationEvents } from '@grafana/ui';
-import { dateTime, isDateTime, NavModel } from '@grafana/data';
+import {
+  DeleteButton,
+  EventsWithValidation,
+  InlineFormLabel,
+  LegacyForms,
+  ValidationEvents,
+  IconButton,
+} from '@grafana/ui';
+const { Input, Switch } = LegacyForms;
+import { NavModel, dateTimeFormat } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
@@ -150,7 +158,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         {!isAdding && (
           <EmptyListCTA
             title="You haven't added any API Keys yet."
-            buttonIcon="gicon gicon-apikeys"
+            buttonIcon="key-skeleton-alt"
             buttonLink="#"
             onClick={this.onToggleAdding}
             buttonTitle=" New API Key"
@@ -166,11 +174,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     if (!date) {
       return 'No expiration date';
     }
-    date = isDateTime(date) ? date : dateTime(date);
-    format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = getTimeZone(store.getState().user);
-
-    return timezone === 'utc' ? date.utc().format(format) : date.format(format);
+    const timeZone = getTimeZone(store.getState().user);
+    return dateTimeFormat(date, { format, timeZone });
   }
 
   renderAddApiKeyForm() {
@@ -179,9 +184,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return (
       <SlideDown in={isAdding}>
         <div className="cta-form">
-          <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-            <i className="fa fa-close" />
-          </button>
+          <IconButton name="times" className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding} />
           <h5>Add API Key</h5>
           <form className="gf-form-group" onSubmit={this.onAddApiKey}>
             <div className="gf-form-inline">
@@ -214,7 +217,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                 </span>
               </div>
               <div className="gf-form max-width-21">
-                <FormLabel tooltip={tooltipText}>Time to live</FormLabel>
+                <InlineFormLabel tooltip={tooltipText}>Time to live</InlineFormLabel>
                 <Input
                   type="text"
                   className="gf-form-input"

@@ -5,9 +5,9 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
-import Explore from './Explore';
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
 import { resetExploreAction } from './state/actionTypes';
+import Explore from './Explore';
 
 interface WrapperProps {
   split: boolean;

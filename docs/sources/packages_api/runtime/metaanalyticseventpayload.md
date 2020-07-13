@@ -5,130 +5,21 @@
 title = "MetaAnalyticsEventPayload"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
-## MetaAnalyticsEventPayload interface
+## MetaAnalyticsEventPayload type
+
+### MetaAnalyticsEventPayload type
+
+Describes the meta analytics payload passed with the [MetaAnalyticsEvent](./runtime/metaanalyticsevent.md)
 
 <b>Signature</b>
 
 ```typescript
-export interface MetaAnalyticsEventPayload 
+export declare type MetaAnalyticsEventPayload = DashboardViewEventPayload | DataRequestEventPayload;
 ```
 <b>Import</b>
 
 ```typescript
 import { MetaAnalyticsEventPayload } from '@grafana/runtime';
-```
-<b>Properties</b>
-
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  [dashboardId](#dashboardid-property) | <code>number</code> |  |
-|  [dashboardName](#dashboardname-property) | <code>string</code> |  |
-|  [dashboardUid](#dashboarduid-property) | <code>string</code> |  |
-|  [dataSize](#datasize-property) | <code>number</code> |  |
-|  [datasourceId](#datasourceid-property) | <code>number</code> |  |
-|  [datasourceName](#datasourcename-property) | <code>string</code> |  |
-|  [duration](#duration-property) | <code>number</code> |  |
-|  [error](#error-property) | <code>string</code> |  |
-|  [eventName](#eventname-property) | <code>string</code> |  |
-|  [folderName](#foldername-property) | <code>string</code> |  |
-|  [panelId](#panelid-property) | <code>number</code> |  |
-|  [panelName](#panelname-property) | <code>string</code> |  |
-
-### dashboardId property
-
-<b>Signature</b>
-
-```typescript
-dashboardId?: number;
-```
-
-### dashboardName property
-
-<b>Signature</b>
-
-```typescript
-dashboardName?: string;
-```
-
-### dashboardUid property
-
-<b>Signature</b>
-
-```typescript
-dashboardUid?: string;
-```
-
-### dataSize property
-
-<b>Signature</b>
-
-```typescript
-dataSize?: number;
-```
-
-### datasourceId property
-
-<b>Signature</b>
-
-```typescript
-datasourceId?: number;
-```
-
-### datasourceName property
-
-<b>Signature</b>
-
-```typescript
-datasourceName: string;
-```
-
-### duration property
-
-<b>Signature</b>
-
-```typescript
-duration: number;
-```
-
-### error property
-
-<b>Signature</b>
-
-```typescript
-error?: string;
-```
-
-### eventName property
-
-<b>Signature</b>
-
-```typescript
-eventName: string;
-```
-
-### folderName property
-
-<b>Signature</b>
-
-```typescript
-folderName?: string;
-```
-
-### panelId property
-
-<b>Signature</b>
-
-```typescript
-panelId?: number;
-```
-
-### panelName property
-
-<b>Signature</b>
-
-```typescript
-panelName?: string;
 ```

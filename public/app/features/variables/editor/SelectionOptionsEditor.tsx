@@ -1,19 +1,24 @@
 import React, { FunctionComponent, useCallback } from 'react';
-import { Switch } from '@grafana/ui';
-import { e2e } from '@grafana/e2e';
+import { LegacyForms } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
-import { VariableWithMultiSupport } from '../../templating/variable';
+import { VariableWithMultiSupport } from '../types';
 import { VariableEditorProps } from './types';
+import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+
+const { Switch } = LegacyForms;
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
-  extends VariableEditorProps<Model> {}
+  extends VariableEditorProps<Model> {
+  onMultiChanged: (identifier: VariableIdentifier, value: boolean) => void;
+}
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = props => {
   const onMultiChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange({ propName: 'multi', propValue: event.target.checked });
+      props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);
     },
-    [props.onPropChange]
+    [props.onMultiChanged]
   );
 
   const onIncludeAllChanged = useCallback(
@@ -33,7 +38,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
     <div className="section gf-form-group">
       <h5 className="section-heading">Selection Options</h5>
       <div className="section">
-        <div aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsMultiSwitch}>
+        <div aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}>
           <Switch
             label="Multi-value"
             labelClass="width-10"
@@ -42,15 +47,13 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
             tooltip={'Enables multiple values to be selected at the same time'}
           />
         </div>
-        <div
-          aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsIncludeAllSwitch}
-        >
+        <div aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}>
           <Switch
             label="Include All option"
             labelClass="width-10"
             checked={props.variable.includeAll}
             onChange={onIncludeAllChanged}
-            tooltip={'Enables multiple values to be selected at the same time'}
+            tooltip={'Enables an option to include all variables'}
           />
         </div>
       </div>
@@ -63,7 +66,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
             value={props.variable.allValue ?? ''}
             onChange={onAllValueChanged}
             placeholder="blank = auto"
-            aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsCustomAllInput}
+            aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
           />
         </div>
       )}

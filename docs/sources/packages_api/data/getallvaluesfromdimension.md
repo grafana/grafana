@@ -5,7 +5,6 @@
 title = "getAllValuesFromDimension"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getAllValuesFromDimension variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-getAllValuesFromDimension: (dimension: Dimension<any>, column: number, row: number) => any[]
+getAllValuesFromDimension: (dimension: Dimension, column: number, row: number) => any[]
 ```
 <b>Import</b>
 

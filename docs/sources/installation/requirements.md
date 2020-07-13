@@ -39,7 +39,7 @@ Minimum recommended CPU: 1
 Some features might require more memory or CPUs. Features require more resources include:
 
 - [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
-- [Alerting]({{< relref "../alerting/rules" >}})
+- [Alerting]({{< relref "../alerting/alerts-overview" >}})
 - Data source proxy
 
 ## Supported databases
@@ -53,6 +53,8 @@ Grafana supports the following databases:
 - PostgreSQL
 
 By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
+
+> NOTE: PostgreSQL versions 9.5.18, 9.4.23, 9.6.14, 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
 
 ## Supported web browsers
 

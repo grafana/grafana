@@ -1,4 +1,5 @@
 import { TimeZone } from '@grafana/data';
+import { OrgRole } from '.';
 
 export interface OrgUser {
   avatarUrl: string;
@@ -8,7 +9,7 @@ export interface OrgUser {
   login: string;
   name: string;
   orgId: number;
-  role: string;
+  role: OrgRole;
   userId: number;
 }
 
@@ -88,7 +89,7 @@ export interface UserSession {
 export interface UserOrg {
   name: string;
   orgId: number;
-  role: string;
+  role: OrgRole;
 }
 
 export interface UserAdminState {

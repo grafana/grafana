@@ -1,6 +1,6 @@
 import React from 'react';
 import { HttpSettingsBaseProps } from './types';
-import { Switch } from '../Switch/Switch';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
 
 export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceConfig, onChange }) => {
   return (

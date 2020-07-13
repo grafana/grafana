@@ -5,7 +5,6 @@
 title = "ContextMenu"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ContextMenu variable

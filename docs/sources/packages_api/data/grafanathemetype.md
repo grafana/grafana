@@ -5,7 +5,6 @@
 title = "GrafanaThemeType"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## GrafanaThemeType enum

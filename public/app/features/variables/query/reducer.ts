@@ -1,16 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, MetricFindValue, stringToJsRegex } from '@grafana/data';
 
-import {
-  QueryVariableModel,
-  VariableHide,
-  VariableOption,
-  VariableRefresh,
-  VariableSort,
-  VariableTag,
-} from '../../templating/variable';
-import templateSrv from '../../templating/template_srv';
+import { QueryVariableModel, VariableHide, VariableOption, VariableRefresh, VariableSort, VariableTag } from '../types';
+
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
@@ -23,6 +16,11 @@ import {
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+
+interface VariableOptionsUpdate {
+  templatedRegex: string;
+  results: MetricFindValue[];
+}
 
 export interface QueryVariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
@@ -94,8 +92,9 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
   let options: VariableOption[] = [];
 
   if (variableRegEx) {
-    regex = stringToJsRegex(templateSrv.replace(variableRegEx, {}, 'regex'));
+    regex = stringToJsRegex(variableRegEx);
   }
+
   for (i = 0; i < metricNames.length; i++) {
     const item = metricNames[i];
     let text = item.text === undefined || item.text === null ? item.value : item.text;
@@ -132,15 +131,16 @@ export const queryVariableSlice = createSlice({
   name: 'templating/query',
   initialState: initialVariablesState,
   reducers: {
-    updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
-      const results = action.payload.data;
+    updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<VariableOptionsUpdate>>) => {
+      const { results, templatedRegex } = action.payload.data;
       const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
-      const { regex, includeAll, sort } = instanceState;
-      const options = metricNamesToVariableValues(regex, sort, results);
+      const { includeAll, sort } = instanceState;
+      const options = metricNamesToVariableValues(templatedRegex, sort, results);
 
       if (includeAll) {
         options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
       }
+
       if (!options.length) {
         options.push({ text: NONE_VARIABLE_TEXT, value: NONE_VARIABLE_VALUE, isNone: true, selected: false });
       }

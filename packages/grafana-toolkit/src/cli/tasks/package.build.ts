@@ -3,9 +3,11 @@ import execa = require('execa');
 import * as fs from 'fs';
 // @ts-ignore
 import * as path from 'path';
+import { resolve as resolvePath } from 'path';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
+import globby from 'globby';
 
 let distDir: string, cwd: string;
 
@@ -68,6 +70,7 @@ const preparePackage = async (pkg: any) => {
 
 const moveFiles = () => {
   const files = ['README.md', 'CHANGELOG.md', 'index.js'];
+
   // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
@@ -86,6 +89,26 @@ const moveFiles = () => {
   })();
 };
 
+const moveStaticFiles = async (pkg: any, cwd: string) => {
+  if (pkg.name.endsWith('/ui')) {
+    const staticFiles = await globby(resolvePath(process.cwd(), 'src/**/*.+(png|svg|gif|jpg)'));
+    return useSpinner<void>(`Moving static files`, async () => {
+      const promises = staticFiles.map(file => {
+        return new Promise((resolve, reject) => {
+          fs.copyFile(file, `${cwd}/compiled/${file.replace(`${cwd}/src`, '')}`, (err: any) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve();
+          });
+        });
+      });
+
+      await Promise.all(promises);
+    })();
+  }
+};
 interface PackageBuildOptions {
   scope: string;
 }
@@ -107,6 +130,7 @@ const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
 
       await clean();
       await compile();
+      await moveStaticFiles(pkg, cwd);
       await rollup();
       await preparePackage(pkg);
       await moveFiles();

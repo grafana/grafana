@@ -15,7 +15,7 @@ describe('getLoglevel()', () => {
   });
 
   it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('this is information')).toBe(LogLevel.unknown);
+    expect(getLogLevel('who warns us')).toBe(LogLevel.unknown);
   });
 
   it('returns same log level for long and short version', () => {
@@ -45,6 +45,9 @@ describe('getLogLevelFromKey()', () => {
   });
   it('returns correct log level when level is capitalized', () => {
     expect(getLogLevelFromKey('INFO')).toBe(LogLevel.info);
+  });
+  it('returns unknown log level when level is integer', () => {
+    expect(getLogLevelFromKey(1)).toBe(LogLevel.unknown);
   });
 });
 

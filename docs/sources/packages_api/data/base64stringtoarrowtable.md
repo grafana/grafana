@@ -5,7 +5,6 @@
 title = "base64StringToArrowTable"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## base64StringToArrowTable() function

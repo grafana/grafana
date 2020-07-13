@@ -39,7 +39,7 @@ export const ConfigEditor = (props: Props) => {
         <div className="gf-form-inline">
           <div className="gf-form">
             <MaxLinesField
-              value={options.jsonData.maxLines}
+              value={options.jsonData.maxLines || ''}
               onChange={value => onOptionsChange(setMaxLines(options, value))}
             />
           </div>

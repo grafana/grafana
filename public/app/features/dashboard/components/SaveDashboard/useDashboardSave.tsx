@@ -1,18 +1,20 @@
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, locationUtil } from '@grafana/data';
 import { useDispatch, useSelector } from 'react-redux';
 import { SaveDashboardOptions } from './types';
 import { CoreEvents, StoreState } from 'app/types';
 import appEvents from 'app/core/app_events';
-import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/reducers/location';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 
 const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
-  const folderId = options.folderId >= 0 ? options.folderId : dashboard.meta.folderId || saveModel.folderId;
-  return await getBackendSrv().saveDashboard(saveModel, { ...options, folderId });
+  let folderId = options.folderId;
+  if (folderId === undefined) {
+    folderId = dashboard.meta.folderId || saveModel.folderId;
+  }
+  return await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
 };
 
 export const useDashboardSave = (dashboard: DashboardModel) => {

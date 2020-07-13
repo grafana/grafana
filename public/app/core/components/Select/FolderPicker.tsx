@@ -1,15 +1,16 @@
 import React, { PureComponent } from 'react';
-import { Forms } from '@grafana/ui';
-import { AppEvents, SelectableValue } from '@grafana/data';
 import { debounce } from 'lodash';
-import appEvents from '../../app_events';
+import { AsyncSelect } from '@grafana/ui';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit } from '../../../types';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
-  enableCreateNew: boolean;
+  enableCreateNew?: boolean;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;
@@ -43,6 +44,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
+    useNewForms: false,
   };
 
   componentDidMount = async () => {
@@ -109,13 +111,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     let folder: SelectableValue<number> = { value: -1 };
 
-    if (initialFolderId !== undefined && initialFolderId > -1) {
+    if (initialFolderId !== undefined && initialFolderId !== null && initialFolderId > -1) {
       folder = options.find(option => option.value === initialFolderId) || { value: -1 };
     } else if (enableReset && initialTitle) {
       folder = resetFolder;
     }
 
-    if (!folder) {
+    if (folder.value === -1) {
       if (contextSrv.isEditor) {
         folder = rootFolder;
       } else {
@@ -147,9 +149,9 @@ export class FolderPicker extends PureComponent<Props, State> {
     const { enableCreateNew, useNewForms } = this.props;
 
     return (
-      <>
+      <div aria-label={selectors.components.FolderPicker.container}>
         {useNewForms && (
-          <Forms.AsyncSelect
+          <AsyncSelect
             loadingMessage="Loading folders..."
             defaultOptions
             defaultValue={folder}
@@ -158,7 +160,6 @@ export class FolderPicker extends PureComponent<Props, State> {
             loadOptions={this.debouncedSearch}
             onChange={this.onFolderChange}
             onCreateOption={this.createNewFolder}
-            size="sm"
             menuPosition="fixed"
           />
         )}
@@ -166,21 +167,21 @@ export class FolderPicker extends PureComponent<Props, State> {
           <div className="gf-form-inline">
             <div className="gf-form">
               <label className="gf-form-label width-7">Folder</label>
-              <Forms.AsyncSelect
+              <AsyncSelect
                 loadingMessage="Loading folders..."
                 defaultOptions
                 defaultValue={folder}
                 value={folder}
+                className={'width-20'}
                 allowCustomValue={enableCreateNew}
                 loadOptions={this.debouncedSearch}
                 onChange={this.onFolderChange}
                 onCreateOption={this.createNewFolder}
-                size="sm"
               />
             </div>
           </div>
         )}
-      </>
+      </div>
     );
   }
 }

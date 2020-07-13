@@ -36,7 +36,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
     isLoading={false}
   >
     <EmptyListCTA
-      buttonIcon="gicon gicon-apikeys"
+      buttonIcon="key-skeleton-alt"
       buttonLink="#"
       buttonTitle=" New API Key"
       onClick={[Function]}
@@ -49,14 +49,11 @@ exports[`Render should render CTA if there are no API keys 1`] = `
       <div
         className="cta-form"
       >
-        <button
+        <IconButton
           className="cta-form__close btn btn-transparent"
+          name="times"
           onClick={[Function]}
-        >
-          <i
-            className="fa fa-close"
-          />
-        </button>
+        />
         <h5>
           Add API Key
         </h5>

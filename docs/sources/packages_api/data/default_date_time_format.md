@@ -5,7 +5,6 @@
 title = "DEFAULT_DATE_TIME_FORMAT"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DEFAULT\_DATE\_TIME\_FORMAT variable

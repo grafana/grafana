@@ -19,10 +19,10 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	defer session.Close()
 
 	datasources := []*models.DataSource{
-		{Type: "influxdb", Name: "influxdb", Password: "foobar"},
-		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar"},
-		{Type: "prometheus", Name: "prometheus"},
-		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd"},
+		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
+		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},
+		{Type: "prometheus", Name: "prometheus", Uid: "prom"},
+		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd", Uid: "elastic"},
 	}
 
 	// set required default values
@@ -39,22 +39,22 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	}
 
 	_, err := session.Insert(&datasources)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	// force secure_json_data to be null to verify that migration can handle that
 	_, err = session.Exec("update data_source set secure_json_data = null where name = 'influxdb'")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	//run migration
 	c, err := commandstest.NewCliContext(map[string]string{})
 	require.Nil(t, err)
-	err = EncryptDatasourcePaswords(c, sqlstore)
-	assert.Nil(t, err)
+	err = EncryptDatasourcePasswords(c, sqlstore)
+	require.NoError(t, err)
 
 	//verify that no datasources still have password or basic_auth
 	var dss []*models.DataSource
 	err = session.SQL("select * from data_source").Find(&dss)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, len(dss), 4)
 
 	for _, ds := range dss {

@@ -19,11 +19,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"xorm.io/core"
+	"xorm.io/xorm"
 )
+
+// MetaKeyExecutedQueryString is the key where the executed query should get stored
+const MetaKeyExecutedQueryString = "executedQueryString"
 
 // SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -153,7 +156,7 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 			continue
 		}
 
-		queryResult.Meta.Set("sql", rawSQL)
+		queryResult.Meta.Set(MetaKeyExecutedQueryString, rawSQL)
 
 		wg.Add(1)
 

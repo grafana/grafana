@@ -5,7 +5,6 @@
 title = "createDimension"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## createDimension variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-createDimension: (name: string, columns: Field<any, import("..").Vector<any>>[]) => Dimension<any>
+createDimension: (name: string, columns: Field[]) => Dimension
 ```
 <b>Import</b>
 

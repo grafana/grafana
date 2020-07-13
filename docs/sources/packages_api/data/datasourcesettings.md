@@ -5,7 +5,6 @@
 title = "DataSourceSettings"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceSettings interface

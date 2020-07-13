@@ -15,7 +15,7 @@ func (pm *PluginManager) updateAppDashboards() {
 	query := models.GetPluginSettingsQuery{OrgId: 0}
 
 	if err := bus.Dispatch(&query); err != nil {
-		plog.Error("Failed to get all plugin settings", "error", err)
+		pm.log.Error("Failed to get all plugin settings", "error", err)
 		return
 	}
 

@@ -5,7 +5,6 @@
 title = "applyFieldOverrides"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## applyFieldOverrides() function

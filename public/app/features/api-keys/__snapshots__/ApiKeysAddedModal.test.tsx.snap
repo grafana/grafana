@@ -10,8 +10,9 @@ exports[`Render should render component 1`] = `
     <h2
       className="modal-header-title"
     >
-      <i
-        className="fa fa-key"
+      <Icon
+        name="key-skeleton-alt"
+        size="lg"
       />
       <span
         className="p-l-1"
@@ -23,8 +24,8 @@ exports[`Render should render component 1`] = `
       className="modal-header-close"
       ng-click="dismiss();"
     >
-      <i
-        className="fa fa-remove"
+      <Icon
+        name="times"
       />
     </a>
   </div>

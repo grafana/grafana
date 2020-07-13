@@ -23,7 +23,7 @@ export function NewlinePlugin(): Plugin {
         return next();
       }
 
-      if (keyEvent.key === 'Enter' && keyEvent.shiftKey) {
+      if (keyEvent.key === 'Enter') {
         keyEvent.preventDefault();
 
         const { startBlock } = value;

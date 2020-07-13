@@ -17,6 +17,7 @@ import {
 } from '../../slate-plugins';
 
 import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface QueryFieldProps {
   additionalPlugins?: Plugin[];
@@ -25,10 +26,12 @@ export interface QueryFieldProps {
   // We have both value and local state. This is usually an antipattern but we need to keep local state
   // for perf reasons and also have outside value in for example in Explore redux that is mutable from logs
   // creating a two way binding.
-  query: string | null;
+  query?: string | null;
   onRunQuery?: () => void;
   onBlur?: () => void;
   onChange?: (value: string) => void;
+  onRichValueChange?: (value: Value) => void;
+  onClick?: (event: Event, editor: CoreEditor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
@@ -67,10 +70,12 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     // Base plugins
     this.plugins = [
-      NewlinePlugin(),
+      // SuggestionsPlugin and RunnerPlugin need to be before NewlinePlugin
+      // because they override Enter behavior
       SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
-      ClearPlugin(),
       RunnerPlugin({ handler: this.runOnChangeAndRunQuery }),
+      NewlinePlugin(),
+      ClearPlugin(),
       SelectionShortcutsPlugin(),
       IndentationPlugin(),
       ClipboardPlugin(),
@@ -120,6 +125,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   onChange = (value: Value, runQuery?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
+    if (this.props.onRichValueChange) {
+      this.props.onRichValueChange(value);
+    }
 
     // Update local state with new value and optionally change value upstream.
     this.setState({ value }, () => {
@@ -167,6 +175,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
    */
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
     const { onBlur } = this.props;
+
     if (onBlur) {
       onBlur();
     } else {
@@ -189,13 +198,14 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     return (
       <div className={wrapperClassName}>
-        <div className="slate-query-field">
+        <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
           <Editor
             ref={editor => (this.editor = editor!)}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
+            onClick={this.props.onClick}
             // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);

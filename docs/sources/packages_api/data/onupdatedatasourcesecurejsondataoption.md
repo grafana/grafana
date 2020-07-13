@@ -5,7 +5,6 @@
 title = "onUpdateDatasourceSecureJsonDataOption"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## onUpdateDatasourceSecureJsonDataOption variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceSecureJsonDataOption: <J, S extends {} = KeyValue<any>>(props: DataSourcePluginOptionsEditorProps<J, S>, key: string) => (event: import("react").SyntheticEvent<HTMLInputElement | HTMLSelectElement, Event>) => void
+onUpdateDatasourceSecureJsonDataOption: <J, S extends {} = KeyValue<any>>(props: DataSourcePluginOptionsEditorProps<J, S>, key: string) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => void
 ```
 <b>Import</b>
 

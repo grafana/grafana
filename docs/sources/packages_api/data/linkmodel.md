@@ -5,7 +5,6 @@
 title = "LinkModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LinkModel interface
@@ -15,7 +14,7 @@ Processed Link Model. The values are ready to use
 <b>Signature</b>
 
 ```typescript
-export interface LinkModel<T> 
+export interface LinkModel<T = any> 
 ```
 <b>Import</b>
 

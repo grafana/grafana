@@ -5,7 +5,6 @@
 title = "Gauge"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Gauge class
@@ -36,7 +35,7 @@ import { Gauge } from '@grafana/ui';
 |  [componentDidUpdate()](#componentdidupdate-method) |  |  |
 |  [draw()](#draw-method) |  |  |
 |  [getFontScale(length)](#getfontscale-method) |  |  |
-|  [getFormattedThresholds()](#getformattedthresholds-method) |  |  |
+|  [getFormattedThresholds(decimals)](#getformattedthresholds-method) |  |  |
 |  [render()](#render-method) |  |  |
 
 ### canvasElement property
@@ -118,8 +117,14 @@ getFontScale(length: number): number;
 <b>Signature</b>
 
 ```typescript
-getFormattedThresholds(): Threshold[];
+getFormattedThresholds(decimals: number): Threshold[];
 ```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  decimals | <code>number</code> |  |
+
 <b>Returns:</b>
 
 `Threshold[]`

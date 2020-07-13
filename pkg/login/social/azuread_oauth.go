@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -14,9 +15,7 @@ import (
 
 type SocialAzureAD struct {
 	*SocialBase
-	allowedDomains []string
-	allowedGroups  []string
-	allowSignup    bool
+	allowedGroups []string
 }
 
 type azureClaims struct {
@@ -32,34 +31,25 @@ func (s *SocialAzureAD) Type() int {
 	return int(models.AZUREAD)
 }
 
-func (s *SocialAzureAD) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
-}
-
-func (s *SocialAzureAD) IsSignupAllowed() bool {
-	return s.allowSignup
-}
-
 func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		return nil, fmt.Errorf("No id_token found")
+		return nil, fmt.Errorf("no id_token found")
 	}
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing id token")
+		return nil, errutil.Wrapf(err, "error parsing id token")
 	}
 
 	var claims azureClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, fmt.Errorf("Error getting claims from id token")
+		return nil, errutil.Wrapf(err, "error getting claims from id token")
 	}
 
 	email := extractEmail(claims)
-
 	if email == "" {
-		return nil, errors.New("Error getting user info: No email found in access token")
+		return nil, errors.New("error getting user info: no email found in access token")
 	}
 
 	role := extractRole(claims)

@@ -4,7 +4,7 @@ import { KeyValue } from '../types/data';
 export interface Dimension<T = any> {
   // Name of the dimension
   name: string;
-  // Colection of fields representing dimension
+  // Collection of fields representing dimension
   // I.e. in 2d graph we have two dimension- X and Y axes. Both dimensions can represent
   // multiple fields being drawn on the graph.
   // For instance y-axis dimension is a collection of series value fields,

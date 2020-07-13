@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, Icon } from '@grafana/ui';
 import { LdapRole } from 'app/types';
 
 interface Props {
@@ -21,7 +21,7 @@ export const LdapUserGroups: FC<Props> = ({ groups, showAttributeMapping }) => {
                 Organization
                 <Tooltip placement="top" content="Only the first match for an Organization will be used" theme={'info'}>
                   <span className="gf-form-help-icon">
-                    <i className="fa fa-info-circle" />
+                    <Icon name="info-circle" />
                   </span>
                 </Tooltip>
               </th>
@@ -43,7 +43,7 @@ export const LdapUserGroups: FC<Props> = ({ groups, showAttributeMapping }) => {
                               No match
                               <Tooltip placement="top" content="No matching groups found" theme={'info'}>
                                 <span className="gf-form-help-icon">
-                                  <i className="fa fa-info-circle" />
+                                  <Icon name="info-circle" />
                                 </span>
                               </Tooltip>
                             </span>

@@ -13,19 +13,14 @@ import {
   PanelData,
   QueryFixAction,
   TimeRange,
-  ExploreMode,
+  ExploreUIState,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreUIState } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
   index: number;
   query: DataQuery;
-}
-
-export interface ChangeModePayload {
-  exploreId: ExploreId;
-  mode: ExploreMode;
 }
 
 export interface ChangeQueryPayload {
@@ -61,9 +56,8 @@ export interface InitializeExplorePayload {
   eventBridge: Emitter;
   queries: DataQuery[];
   range: TimeRange;
-  mode: ExploreMode;
   ui: ExploreUIState;
-  originPanelId: number;
+  originPanelId?: number | null;
 }
 
 export interface LoadDatasourceMissingPayload {
@@ -148,7 +142,6 @@ export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
   version?: string;
-  mode?: ExploreMode;
 }
 
 export interface ToggleLogLevelPayload {
@@ -191,11 +184,6 @@ export interface ResetExplorePayload {
 export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
 
 /**
- * Change the mode of Explore.
- */
-export const changeModeAction = createAction<ChangeModePayload>('explore/changeMode');
-
-/**
  * Query change handler for the query row with the given index.
  * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
  */
@@ -216,6 +204,11 @@ export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPay
  * Clear all queries and results.
  */
 export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
+
+/**
+ * Cancel running queries.
+ */
+export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
 
 /**
  * Highlight expressions in the log results

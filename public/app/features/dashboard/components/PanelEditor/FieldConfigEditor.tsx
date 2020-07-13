@@ -1,23 +1,25 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, ReactNode } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
-  FieldConfigSource,
   DataFrame,
-  FieldPropertyEditorItem,
-  VariableSuggestionsScope,
-  standardFieldConfigEditorRegistry,
+  FeatureState,
+  FieldConfigPropertyItem,
+  FieldConfigSource,
   PanelPlugin,
   SelectableValue,
+  VariableSuggestionsScope,
 } from '@grafana/data';
-import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
+import { Container, Counter, FeatureInfoBox, Field, fieldMatchersUI, Label, useTheme, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OverrideEditor } from './OverrideEditor';
+import groupBy from 'lodash/groupBy';
+import { OptionsGroup } from './OptionsGroup';
+import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
 
 interface Props {
   plugin: PanelPlugin;
   config: FieldConfigSource;
-  include?: string[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
@@ -28,7 +30,7 @@ interface Props {
  */
 export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   const theme = useTheme();
-
+  const { config } = props;
   const onOverrideChange = (index: number, override: any) => {
     const { config } = props;
     let overrides = cloneDeep(config.overrides);
@@ -61,28 +63,10 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   const renderOverrides = () => {
     const { config, data, plugin } = props;
-    const { customFieldConfigs } = plugin;
+    const { fieldConfigRegistry } = plugin;
 
     if (config.overrides.length === 0) {
       return null;
-    }
-
-    let configPropertiesOptions = standardFieldConfigEditorRegistry.list().map(i => ({
-      label: i.name,
-      value: i.id,
-      description: i.description,
-      custom: false,
-    }));
-
-    if (customFieldConfigs) {
-      configPropertiesOptions = configPropertiesOptions.concat(
-        customFieldConfigs.list().map(i => ({
-          label: i.name,
-          value: i.id,
-          description: i.description,
-          custom: true,
-        }))
-      );
     }
 
     return (
@@ -91,13 +75,13 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           // TODO:  apply matcher to retrieve fields
           return (
             <OverrideEditor
+              name={`Override ${i + 1}`}
               key={`${o.matcher.id}/${i}`}
               data={data}
               override={o}
               onChange={value => onOverrideChange(i, value)}
               onRemove={() => onOverrideRemove(i)}
-              configPropertiesOptions={configPropertiesOptions}
-              customPropertiesRegistry={customFieldConfigs}
+              registry={fieldConfigRegistry}
             />
           );
         })}
@@ -107,36 +91,49 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   const renderAddOverride = () => {
     return (
-      <ValuePicker
-        icon="plus"
-        label="Add override"
-        options={fieldMatchersUI
-          .list()
-          .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
-        onChange={value => onOverrideAdd(value)}
-      />
+      <Container padding="md">
+        <ValuePicker
+          icon="plus"
+          label="Add override"
+          variant="secondary"
+          options={fieldMatchersUI
+            .list()
+            .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
+          onChange={value => onOverrideAdd(value)}
+          isFullWidth={false}
+        />
+      </Container>
     );
   };
 
   return (
-    <div
-      className={css`
-        padding: ${theme.spacing.md};
-      `}
-    >
+    <div aria-label={selectors.components.OverridesConfigEditor.content}>
+      {config.overrides.length === 0 && (
+        <FeatureInfoBox
+          title="Overrides"
+          featureState={FeatureState.beta}
+          // url={getDocsLink(DocsId.FieldConfigOverrides)}
+          className={css`
+            margin: ${theme.spacing.md};
+          `}
+        >
+          Field options overrides give you a fine grained control over how your data is displayed.
+        </FeatureInfoBox>
+      )}
+
       {renderOverrides()}
       {renderAddOverride()}
     </div>
   );
 };
 
-export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onChange, config, plugin }) => {
+export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
   const setDefaultValue = useCallback(
-    (name: string, value: any, custom: boolean) => {
+    (name: string, value: any, isCustom: boolean | undefined) => {
       const defaults = { ...config.defaults };
       const remove = value === undefined || value === null || '';
 
-      if (custom) {
+      if (isCustom) {
         if (defaults.custom) {
           if (remove) {
             defaults.custom = { ...defaults.custom };
@@ -162,46 +159,88 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
   );
 
   const renderEditor = useCallback(
-    (item: FieldPropertyEditorItem, custom: boolean) => {
+    (item: FieldConfigPropertyItem, categoryItemCount: number) => {
+      if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom)) {
+        return null;
+      }
+
       const defaults = config.defaults;
-      const value = custom ? (defaults.custom ? defaults.custom[item.id] : undefined) : (defaults as any)[item.id];
+      const value = item.isCustom
+        ? defaults.custom
+          ? defaults.custom[item.path]
+          : undefined
+        : (defaults as any)[item.path];
+
+      let label: ReactNode | undefined = (
+        <Label description={item.description} category={item.category?.slice(1)}>
+          {item.name}
+        </Label>
+      );
+
+      // hide label if there is only one item and category name is same as item, name
+      if (categoryItemCount === 1 && item.category?.[0] === item.name) {
+        label = undefined;
+      }
 
       return (
-        <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
+        <Field label={label} key={`${item.id}/${item.isCustom}`}>
           <item.editor
             item={item}
             value={value}
-            onChange={v => setDefaultValue(item.id, v, custom)}
+            onChange={v => setDefaultValue(item.path, v, item.isCustom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
             }}
           />
-        </Forms.Field>
+        </Field>
       );
     },
     [config]
   );
 
-  const renderStandardConfigs = useCallback(() => {
-    if (include) {
-      return <>{include.map(f => renderEditor(standardFieldConfigEditorRegistry.get(f), false))}</>;
-    }
-    return <>{standardFieldConfigEditorRegistry.list().map(f => renderEditor(f, false))}</>;
-  }, [plugin, config]);
-
-  const renderCustomConfigs = useCallback(() => {
-    if (!plugin.customFieldConfigs) {
-      return null;
-    }
-
-    return plugin.customFieldConfigs.list().map(f => renderEditor(f, true));
-  }, [plugin, config]);
+  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
 
   return (
-    <>
-      {plugin.customFieldConfigs && renderCustomConfigs()}
-      {renderStandardConfigs()}
-    </>
+    <div aria-label={selectors.components.FieldConfigEditor.content}>
+      {Object.keys(groupedConfigs).map((k, i) => {
+        const groupItemsCounter = countGroupItems(groupedConfigs[k], config);
+
+        return (
+          <OptionsGroup
+            renderTitle={isExpanded => {
+              return (
+                <>
+                  {k} {!isExpanded && groupItemsCounter && <Counter value={groupItemsCounter} />}
+                </>
+              );
+            }}
+            id={`${k}/${i}`}
+            key={`${k}/${i}`}
+          >
+            {groupedConfigs[k].map(c => {
+              return renderEditor(c, groupedConfigs[k].length);
+            })}
+          </OptionsGroup>
+        );
+      })}
+    </div>
   );
+};
+
+const countGroupItems = (group: FieldConfigPropertyItem[], config: FieldConfigSource) => {
+  let counter = 0;
+
+  for (const item of group) {
+    const value = item.isCustom
+      ? config.defaults.custom
+        ? config.defaults.custom[item.path]
+        : undefined
+      : (config.defaults as any)[item.path];
+    if (item.getItemsCount && item.getItemsCount(value) > 0) {
+      counter = counter + item.getItemsCount(value);
+    }
+  }
+
+  return counter === 0 ? undefined : counter;
 };

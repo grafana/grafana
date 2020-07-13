@@ -7,21 +7,22 @@ Array [
     href="/"
     key="logo"
   >
-    <Component />
+    <MenuLogo />
   </a>,
   <div
     className="sidemenu__logo_small_breakpoint"
     key="hamburger"
     onClick={[Function]}
   >
-    <i
-      className="fa fa-bars"
+    <Icon
+      name="bars"
+      size="xl"
     />
     <span
       className="sidemenu__close"
     >
-      <i
-        className="fa fa-times"
+      <Icon
+        name="times"
       />
        Close
     </span>

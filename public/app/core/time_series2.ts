@@ -91,15 +91,15 @@ export default class TimeSeries {
   label: string;
   alias: string;
   aliasEscaped: string;
-  color: string;
+  color?: string;
   valueFormater: any;
   stats: any;
   legend: boolean;
   hideTooltip: boolean;
   allIsNull: boolean;
   allIsZero: boolean;
-  decimals: number;
-  scaledDecimals: number;
+  decimals: DecimalCount;
+  scaledDecimals: DecimalCount;
   hasMsResolution: boolean;
   isOutsideRange: boolean;
 
@@ -348,7 +348,7 @@ export default class TimeSeries {
     this.scaledDecimals = scaledDecimals;
   }
 
-  formatValue(value: number) {
+  formatValue(value: number | null) {
     if (!_.isFinite(value)) {
       value = null; // Prevent NaN formatting
     }

@@ -58,6 +58,7 @@ export interface DateTime extends Object {
   fromNow: (withoutSuffix?: boolean) => string;
   from: (formaInput: DateTimeInput) => string;
   isSame: (input?: DateTimeInput, granularity?: DurationUnit) => boolean;
+  isBefore: (input?: DateTimeInput) => boolean;
   isValid: () => boolean;
   local: () => DateTime;
   locale: (locale: string) => DateTime;

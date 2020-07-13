@@ -143,7 +143,7 @@ Label | Description
 `type/feature-request` | Request for a new feature or enhancement.
 `type/docs` | Documentation problem or enhancement.
 `type/accessibility` | Accessibility problem or enhancement.
-`type/question` | Issue is or perceived as a question.
+`type/question` | Issue is a question or is perceived as such.
 `type/duplicate` | An existing issue of the same subject/request have already been reported.
 `type/works-as-intended` | A reported bug works as intended/by design.
 `type/build-packaging` | Build or packaging problem or enhancement.
@@ -152,7 +152,7 @@ Label | Description
 
 ### Duplicate issue?
 
-Make sure that it's not a duplicate by searching existing issues using related terms from the issue title and description. If you think you know there are an existing issue, but can't find it please reach out to one of the maintainers and ask for help. If you identify that the issue is a duplicate of an existing issue:
+Make sure it's not a duplicate by searching existing issues using related terms from the issue title and description. If you think you know there is an existing issue, but can't find it, please reach out to one of the maintainers and ask for help. If you identify that the issue is a duplicate of an existing issue:
 
 1. Add a comment `Duplicate of #<issue number>`. GitHub will recognize this and add some additional context to the issue activity.
 2. Close the issue and label it with `type/duplicate`.
@@ -188,8 +188,8 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 First, evaluate if the documentation makes sense to be included in the Grafana project:
 
 - Is this something we want/can maintain as a project?
-- Is this referring to usage of some specific integration/tool and in that case are those a popular use case in combination with Grafana?
-- If unsure, kindly and politely add a comment explaining that we would need [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) to identify that lots of other users wants/needs this.
+- Is this referring to usage of some specific integration/tool and in that case is that a popular use case in combination with Grafana?
+- If unsure, kindly and politely add a comment explaining that we would need [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) to identify that lots of other users want/need this.
 
 Second, label the issue `type/docs` and at least one `area/*` or `datasource/*` label.
 
@@ -219,9 +219,9 @@ In general bugs and enhancement issues should be labeled with a priority.
 
 This is the most difficult thing with triaging issues since it requires a lot of knowledge, context and experience before being able to think of and start feel comfortable adding a certain priority label.
 
-The key here is asking for help and discuss issues to understand how more experienced project members thinks and reason. By doing that you learn more and eventually be more and more comfortable with prioritizing issues.
+The key here is asking for help and discuss issues to understand how more experienced project members think and reason. By doing that you learn more and eventually be more and more comfortable with prioritizing issues.
 
-In any case there are uncertainty around the priorization of an issue, please ask the maintainers for help.
+In case there is an uncertainty around the prioritization of an issue, please ask the maintainers for help.
 
 Label | Description
 ------- | --------
@@ -235,7 +235,7 @@ Label | Description
 
 **Critical bug?**
 
-1. If a bug have been categorized and any of the following problems applies the bug should be labeled as critical and must be actively worked on as someone's top priority right now.
+1. If a bug has been categorized and any of the following criteria apply, the bug should be labeled as critical and must be actively worked on as someone's top priority right now.
 
    - Results in any data loss
    - Critical security or performance issues
@@ -273,9 +273,9 @@ Label | Description
 
 ## 5. Requesting help from the community
 
-Depending on the issue and/or priority, it's always a good idea to consider signalling to the community that help from community is appreciated and needed in case an issue is not prioritized to be worked on by maintainers. Use your best judgement. In general, when requesting help from the community it means a contribution has a good chance of getting accepted and merged.
+Depending on the issue and/or priority, it's always a good idea to consider signalling to the community that help from community is appreciated and needed in case an issue is not prioritized to be worked on by maintainers. Use your best judgement. In general, requesting help from the community means that a contribution has a good chance of getting accepted and merged.
 
-In many cases the issue author or community as a whole is more suitable to contribute changes since they're experts in their domain. It's also quite common that someone has tried to get something to work using the documentation without success and made an effort to get it to work and/or reached out to the [community site](https://community.grafana.com/) to get the missing information. In especially these areas it's more likely that there exists experts in their own domain and usually a good idea to request help from contributors:
+In many cases the issue author or community as a whole is more suitable to contribute changes since they're experts in their domain. It's also quite common that someone has tried to get something to work using the documentation without success and made an effort to get it to work and/or reached out to the [community site](https://community.grafana.com/) to get the missing information. Particularly in these areas it's more likely that there exist experts in their own domain and it is usually a good idea to request help from contributors:
 
 - Database setups
 - Authentication like OAuth providers and LDAP setups
@@ -292,11 +292,11 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 ## Investigation of issues
 
-When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending of the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or either put on hold until someone else (maintainer or contributor) picks it up and eventually start investigating it.
+When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending on the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
 
-Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
+Investigating issues can be a very time consuming task, especially for the maintainers, given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services, etc that are being used with Grafana. There is a certain number of combinations that are more common than others, and these are in general easier for maintainers to investigate.
 
-For some other combinations there may not be possible at all for a maintainer to setup a proper test environment for being able to investigate. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
+For some other combinations it may not be possible at all for a maintainer to setup a proper test environment to investigate the issue. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
 Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
 
@@ -306,14 +306,14 @@ Part of issue triage should also be triaging of external PRs. Main goal should b
 
 1. Check new external PRs which do not have a reviewer.
 1. Check if there is a link to an existing issue.
-1. If not and you know which issue it is solving add the link yourself, otherwise ask the author to link the issue or create one.
+1. If not and you know which issue it is solving, add the link yourself, otherwise ask the author to link the issue or create one.
 1. Assign a reviewer based on who was handling the linked issue or what code or feature does the PR touches (look at who was the last to make changes there if all else fails).
 
 ## Appendix
 
 ### Setting up Gmail filters
 
-If you're using Gmail it's highly recommened that you setup filters to automatically remove email from the inbox and label them accordingly to make it easy for you to understand when you need to act upon a notification or process all incoming issues that haven't been triaged.
+If you're using Gmail it's highly recommended that you setup filters to automatically remove email from the inbox and label them accordingly to make it easy for you to understand when you need to act upon a notification or process all incoming issues that haven't been triaged.
 
 This may be setup by personal preference, but here's a working configuration for reference.
 1. Follow instructions in [gist](https://gist.github.com/marefr/9167c2e31466f6316c1cba118874e74f)
@@ -335,6 +335,6 @@ This will give you a structure of labels in the sidebar similar to the following
   - Grafana
 ```
 
-* All notifications you’ll need to read/take action on shows up as unread in Github (mine) and its sub-labels.
-* All other notifications you don’t need to take action on shows up as unread in Github (other) and its sub-labels
+* All notifications you’ll need to read/take action on show up as unread in Github (mine) and its sub-labels.
+* All other notifications you don’t need to take action on show up as unread in Github (other) and its sub-labels
   * This is convenient for issue triage and to follow the activity in the Grafana project.

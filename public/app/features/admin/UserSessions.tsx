@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import { ConfirmButton, ConfirmModal, Forms } from '@grafana/ui';
+import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
 import { UserSession } from 'app/types';
 
 interface Props {
@@ -68,7 +68,7 @@ export class UserSessions extends PureComponent<Props, State> {
                         <div className="pull-right">
                           <ConfirmButton
                             confirmText="Confirm logout"
-                            confirmVariant="danger"
+                            confirmVariant="destructive"
                             onConfirm={this.onSessionRevoke(session.id)}
                           >
                             Force logout
@@ -82,9 +82,9 @@ export class UserSessions extends PureComponent<Props, State> {
           </div>
           <div className={logoutFromAllDevicesClass}>
             {sessions.length > 0 && (
-              <Forms.Button variant="secondary" onClick={this.showLogoutConfirmationModal(true)}>
+              <Button variant="secondary" onClick={this.showLogoutConfirmationModal(true)}>
                 Force logout from all devices
-              </Forms.Button>
+              </Button>
             )}
             <ConfirmModal
               isOpen={showLogoutModal}

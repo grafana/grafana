@@ -80,7 +80,6 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 //nolint:goconst
 func TestAlertmanagerNotifier(t *testing.T) {
 	Convey("Alertmanager notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -97,7 +96,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 			})
 
 			Convey("from settings", func() {
-				json := `{ "url": "http://127.0.0.1:9093/" }`
+				json := `{ "url": "http://127.0.0.1:9093/", "basicAuthUser": "user", "basicAuthPassword": "password" }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &models.AlertNotification{
@@ -110,7 +109,26 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)
-				So(alertmanagerNotifier.URL, ShouldEqual, "http://127.0.0.1:9093/")
+				So(alertmanagerNotifier.BasicAuthUser, ShouldEqual, "user")
+				So(alertmanagerNotifier.BasicAuthPassword, ShouldEqual, "password")
+				So(alertmanagerNotifier.URL, ShouldResemble, []string{"http://127.0.0.1:9093/"})
+			})
+
+			Convey("from settings with multiple alertmanager", func() {
+				json := `{ "url": "http://alertmanager1:9093,http://alertmanager2:9093" }`
+
+				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				model := &models.AlertNotification{
+					Name:     "alertmanager",
+					Type:     "alertmanager",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewAlertmanagerNotifier(model)
+				alertmanagerNotifier := not.(*AlertmanagerNotifier)
+
+				So(err, ShouldBeNil)
+				So(alertmanagerNotifier.URL, ShouldResemble, []string{"http://alertmanager1:9093", "http://alertmanager2:9093"})
 			})
 		})
 	})

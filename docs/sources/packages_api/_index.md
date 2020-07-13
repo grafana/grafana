@@ -5,7 +5,6 @@
 title = "API Reference"
 keywords = ["grafana","documentation","sdk"]
 type = "docs"
-draft = true
 +++
 
 ## API Reference
@@ -16,6 +15,7 @@ draft = true
 |  --- | --- |
 |  [@grafana/data](./data/) | A library containing most of the core functionality and data types used in Grafana. |
 |  [@grafana/e2e](./e2e/) | A library for writing end-to-end tests for Grafana and its ecosystem. |
+|  [@grafana/e2e-selectors](./e2e-selectors/) | A library containing the different design components of the Grafana ecosystem. |
 |  [@grafana/runtime](./runtime/) | A library containing services, configurations etc. used to interact with the Grafana engine. |
 |  [@grafana/ui](./ui/) | A library containing the different design components of the Grafana ecosystem. |
 

@@ -15,7 +15,7 @@ export class SignUpCtrl {
 
     // validate email is semi ok
     if (params.email && !params.email.match(/^\S+@\S+$/)) {
-      console.log('invalid email');
+      console.error('invalid email');
       return;
     }
 
@@ -29,7 +29,7 @@ export class SignUpCtrl {
 
     $scope.navModel = {
       main: {
-        icon: 'gicon gicon-branding',
+        icon: 'grafana',
         text: 'Sign Up',
         subTitle: 'Register your Grafana account',
         breadcrumbs: [{ title: 'Login', url: 'login' }],

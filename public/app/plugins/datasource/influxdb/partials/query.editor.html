@@ -1,4 +1,13 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
+
+<query-editor-row ng-if="ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
+  <flux-query-editor 
+    target="ctrl.target" 
+    change="ctrl.onChange" 
+    refresh="ctrl.onRunQuery"
+  ></flux-query-editor>
+</query-editor-row>
+
+<query-editor-row ng-if="!ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
   <div ng-if="ctrl.target.rawQuery">
     <div class="gf-form">
       <textarea
@@ -135,7 +144,7 @@
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-7">ORDER BY</label>
         <label class="gf-form-label pointer" ng-click="ctrl.removeOrderByTime()"
-          >time <span class="query-keyword">DESC</span> <i class="fa fa-remove"></i
+          >time <span class="query-keyword">DESC</span> <icon name="'times'" style="margin-bottom: 0;"></icon
         ></label>
       </div>
       <div class="gf-form gf-form--grow">

@@ -21,15 +21,18 @@ p {
 
 // Ex: 14px base font * 85% = about 12px
 small {
-  font-size: 85%;
+  font-size: $font-size-sm;
 }
+
 strong {
   font-weight: $font-weight-semi-bold;
 }
+
 em {
   font-style: italic;
   color: $headings-color;
 }
+
 cite {
   font-style: normal;
 }

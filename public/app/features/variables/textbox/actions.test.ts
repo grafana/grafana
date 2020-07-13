@@ -2,13 +2,14 @@ import { variableAdapters } from '../adapters';
 import { createTextBoxVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
-import { updateTextBoxVariableOptions } from './actions';
-import { getTemplatingRootReducer } from '../state/helpers';
-import { TextBoxVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { setTextBoxVariableOptionsFromUrl, updateTextBoxVariableOptions } from './actions';
+import { getRootReducer } from '../state/helpers';
+import { VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
 import { createTextBoxOptions } from './reducer';
-import { setCurrentVariableValue } from '../state/sharedReducer';
-import { initDashboardTemplating } from '../state/actions';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
+import { updateLocation } from 'app/core/actions';
+import { textboxBuilder } from '../shared/testing/builders';
 
 describe('textbox actions', () => {
   variableAdapters.setInit(() => [createTextBoxVariableAdapter()]);
@@ -21,37 +22,45 @@ describe('textbox actions', () => {
         selected: false,
       };
 
-      const variable: TextBoxVariableModel = {
-        type: 'textbox',
-        id: '0',
-        global: false,
-        current: {
-          value: '',
-          text: '',
-          selected: false,
-        },
-        options: [],
-        query: 'A',
-        name: 'textbox',
-        label: '',
-        hide: VariableHide.dontHide,
-        skipUrlSync: false,
-        index: 0,
-      };
+      const variable = textboxBuilder()
+        .withId('textbox')
+        .withName('textbox')
+        .withCurrent('A')
+        .withQuery('A')
+        .build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating([variable]))
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [createAction, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
+      tester.thenDispatchedActionsShouldEqual(
+        createTextBoxOptions(toVariablePayload(variable)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        updateLocation({ query: { 'var-textbox': 'A' } })
+      );
+    });
+  });
 
-        expect(createAction).toEqual(createTextBoxOptions(toVariablePayload(variable)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+  describe('when setTextBoxVariableOptionsFromUrl is dispatched', () => {
+    it('then correct actions are dispatched', async () => {
+      const urlValue = 'bB';
+      const variable = textboxBuilder()
+        .withId('textbox')
+        .withName('textbox')
+        .withCurrent('A')
+        .withQuery('A')
+        .build();
+
+      const tester = await reduxTester<{ templating: TemplatingState }>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenAsyncActionIsDispatched(setTextBoxVariableOptionsFromUrl(toVariablePayload(variable), urlValue), true);
+
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: 'bB' })),
+        setCurrentVariableValue(toVariablePayload(variable, { option: { text: 'bB', value: 'bB', selected: false } }))
+      );
     });
   });
 });

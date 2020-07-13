@@ -15,8 +15,8 @@ const STATS_ROW_LIMIT = 5;
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = selectThemeVariant(
     {
-      light: theme.colors.gray5,
-      dark: theme.colors.dark9,
+      light: theme.palette.gray5,
+      dark: theme.palette.dark9,
     },
     theme.type
   );

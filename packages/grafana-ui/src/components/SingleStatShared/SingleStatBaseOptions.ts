@@ -11,7 +11,7 @@ import {
   MappingType,
   VizOrientation,
   PanelModel,
-  FieldDisplayOptions,
+  ReduceDataOptions,
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
@@ -19,11 +19,11 @@ import {
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
-  fieldOptions: FieldDisplayOptions;
+  reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
 }
 
-const optionsToKeep = ['fieldOptions', 'orientation'];
+const optionsToKeep = ['reduceOptions', 'orientation'];
 
 export function sharedSingleStatPanelChangedHandler(
   panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
@@ -55,23 +55,30 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
   const prevPanel = prevOptions.angular;
   const reducer = fieldReducers.getIfExists(prevPanel.valueName);
   const options = {
-    fieldOptions: {
+    reduceOptions: {
       calcs: [reducer ? reducer.id : ReducerID.mean],
     },
     orientation: VizOrientation.Horizontal,
-  };
+  } as any;
 
   const defaults: FieldConfig = {};
 
   if (prevPanel.format) {
     defaults.unit = prevPanel.format;
   }
+
+  if (prevPanel.tableColumn) {
+    options.reduceOptions.fields = `/^${prevPanel.tableColumn}$/`;
+  }
+
   if (prevPanel.nullPointMode) {
     defaults.nullValueMode = prevPanel.nullPointMode;
   }
+
   if (prevPanel.nullText) {
     defaults.noValue = prevPanel.nullText;
   }
+
   if (prevPanel.decimals || prevPanel.decimals === 0) {
     defaults.decimals = prevPanel.decimals;
   }
@@ -92,6 +99,7 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
         thresholds.push({ value: -Infinity, color });
       }
     }
+
     defaults.thresholds = {
       mode: ThresholdsMode.Absolute,
       steps: thresholds,
@@ -131,9 +139,9 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     options = moveThresholdsAndMappingsToField(options);
   }
 
-  if (previousVersion < 6.6) {
-    const { fieldOptions } = options;
+  const { fieldOptions } = options;
 
+  if (previousVersion < 6.6 && fieldOptions) {
     // discard the old `override` options and enter an empty array
     if (fieldOptions && fieldOptions.override) {
       const { override, ...rest } = options.fieldOptions;
@@ -178,16 +186,33 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     panel.fieldConfig = panel.fieldConfig || { defaults: {}, overrides: [] };
     panel.fieldConfig = {
       defaults:
-        options.fieldOptions && options.fieldOptions.defaults
-          ? { ...panel.fieldConfig.defaults, ...options.fieldOptions.defaults }
+        fieldOptions && fieldOptions.defaults
+          ? { ...panel.fieldConfig.defaults, ...fieldOptions.defaults }
           : panel.fieldConfig.defaults,
       overrides:
-        options.fieldOptions && options.fieldOptions.overrides
-          ? [...panel.fieldConfig.overrides, ...options.fieldOptions.overrides]
+        fieldOptions && fieldOptions.overrides
+          ? [...panel.fieldConfig.overrides, ...fieldOptions.overrides]
           : panel.fieldConfig.overrides,
     };
-    delete options.fieldOptions.defaults;
-    delete options.fieldOptions.overrides;
+
+    if (fieldOptions) {
+      options.reduceOptions = {
+        values: fieldOptions.values,
+        limit: fieldOptions.limit,
+        calcs: fieldOptions.calcs,
+      };
+    }
+
+    delete options.fieldOptions;
+  }
+
+  if (previousVersion < 7.1) {
+    // move title to displayName
+    const oldTitle = (panel.fieldConfig.defaults as any).title;
+    if (oldTitle !== undefined && oldTitle !== null) {
+      panel.fieldConfig.defaults.displayName = oldTitle;
+      delete (panel.fieldConfig.defaults as any).title;
+    }
   }
 
   return options as SingleStatBaseOptions;

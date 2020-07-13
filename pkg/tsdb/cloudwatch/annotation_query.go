@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -49,12 +50,12 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 		resp, err := svc.DescribeAlarms(params)
 		if err != nil {
-			return nil, errors.New("Failed to call cloudwatch:DescribeAlarms")
+			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarms", err)
 		}
 		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistics, period)
 	} else {
 		if region == "" || namespace == "" || metricName == "" || len(statistics) == 0 {
-			return result, errors.New("Invalid annotations query")
+			return result, errors.New("invalid annotations query")
 		}
 
 		var qd []*cloudwatch.Dimension
@@ -80,7 +81,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 			}
 			resp, err := svc.DescribeAlarmsForMetric(params)
 			if err != nil {
-				return nil, errors.New("Failed to call cloudwatch:DescribeAlarmsForMetric")
+				return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmsForMetric", err)
 			}
 			for _, alarm := range resp.MetricAlarms {
 				alarmNames = append(alarmNames, alarm.AlarmName)
@@ -107,7 +108,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 		resp, err := svc.DescribeAlarmHistory(params)
 		if err != nil {
-			return nil, errors.New("Failed to call cloudwatch:DescribeAlarmHistory")
+			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
 		}
 		for _, history := range resp.AlarmHistoryItems {
 			annotation := make(map[string]string)
@@ -158,14 +159,14 @@ func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, met
 		}
 
 		match := true
-		if len(dimensions) == 0 {
-			// all match
-		} else if len(alarm.Dimensions) != len(dimensions) {
-			match = false
-		} else {
-			for _, d := range alarm.Dimensions {
-				if _, ok := dimensions[*d.Name]; !ok {
-					match = false
+		if len(dimensions) != 0 {
+			if len(alarm.Dimensions) != len(dimensions) {
+				match = false
+			} else {
+				for _, d := range alarm.Dimensions {
+					if _, ok := dimensions[*d.Name]; !ok {
+						match = false
+					}
 				}
 			}
 		}
@@ -178,6 +179,7 @@ func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, met
 			for _, s := range statistics {
 				if *alarm.Statistic == s {
 					found = true
+					break
 				}
 			}
 			if !found {

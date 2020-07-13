@@ -1,7 +1,6 @@
 import React from 'react';
 import { Themeable } from '../../types/theme';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { css, cx } from 'emotion';
 import { stylesFactory } from '../../themes';
 
@@ -16,7 +15,7 @@ const getCallToActionCardStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     label: call-to-action-card;
     padding: ${theme.spacing.lg};
-    background: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.grayBlue }, theme.type)};
+    background: ${theme.colors.bg2};
     border-radius: ${theme.border.radius.md};
     display: flex;
     flex-direction: column;

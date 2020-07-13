@@ -5,7 +5,6 @@
 title = "getTimeField"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getTimeField variable
@@ -16,8 +15,8 @@ draft = true
 
 ```typescript
 getTimeField: (series: DataFrame) => {
-    timeField?: Field<any, import("../types").Vector<any>> | undefined;
-    timeIndex?: number | undefined;
+    timeField?: Field;
+    timeIndex?: number;
 }
 ```
 <b>Import</b>

@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { Switch } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 
 interface Props {
   annotations: any[];
@@ -7,7 +8,7 @@ interface Props {
 }
 
 export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotationChanged }) => {
-  const [visibleAnnotations, setVisibleAnnotations] = useState([]);
+  const [visibleAnnotations, setVisibleAnnotations] = useState<any>([]);
   useEffect(() => {
     setVisibleAnnotations(annotations.filter(annotation => annotation.hide !== true));
   }, [annotations]);
@@ -18,7 +19,7 @@ export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotatio
 
   return (
     <>
-      {visibleAnnotations.map(annotation => {
+      {visibleAnnotations.map((annotation: any) => {
         return (
           <div
             key={annotation.name}

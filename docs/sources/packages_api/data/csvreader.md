@@ -5,7 +5,6 @@
 title = "CSVReader"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## CSVReader class

@@ -3,8 +3,8 @@ import _ from 'lodash';
 import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
-  DataQuery,
   CoreApp,
+  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataSourceApi,
@@ -15,24 +15,24 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsModel,
-  PanelModel,
   RawTimeRange,
   TimeFragment,
   TimeRange,
   TimeZone,
   toUtc,
-  ExploreMode,
+  urlUtil,
+  ExploreUrlState,
 } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { PanelModel } from 'app/features/dashboard/state';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -66,17 +66,22 @@ export interface GetExploreUrlArguments {
   datasourceSrv: DataSourceSrv;
   timeSrv: TimeSrv;
 }
-export async function getExploreUrl(args: GetExploreUrlArguments) {
+
+export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
-  let exploreTargets: DataQuery[] = panelTargets;
-  let url: string;
+
+  /** In Explore, we don't have legend formatter and we don't want to keep
+   * legend formatting as we can't change it
+   */
+  let exploreTargets: DataQuery[] = panelTargets.map(t => _.omit(t, 'legendFormat'));
+  let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
-  if (panelDatasource.meta.id === 'mixed' && exploreTargets) {
+  if (panelDatasource.meta?.id === 'mixed' && exploreTargets) {
     // Find first explore datasource among targets
     for (const t of exploreTargets) {
-      const datasource = await datasourceSrv.get(t.datasource);
+      const datasource = await datasourceSrv.get(t.datasource || undefined);
       if (datasource) {
         exploreDatasource = datasource;
         exploreTargets = panelTargets.filter(t => t.datasource === datasource.name);
@@ -105,9 +110,10 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
       };
     }
 
-    const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
-    url = renderUrl('/explore', { left: exploreState });
+    const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
+    url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
+
   return url;
 }
 
@@ -115,7 +121,8 @@ export function buildQueryTransaction(
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
-  scanning: boolean
+  scanning: boolean,
+  timeZone?: TimeZone
 ): QueryTransaction {
   const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
@@ -135,7 +142,7 @@ export function buildQueryTransaction(
     app: CoreApp.Explore,
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
-    timezone: DefaultTimeZone,
+    timezone: timeZone || DefaultTimeZone,
     startTime: Date.now(),
     interval,
     intervalMs,
@@ -183,7 +190,7 @@ enum ParseUiStateIndex {
   Strategy = 3,
 }
 
-export const safeParseJson = (text: string) => {
+export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
   }
@@ -239,10 +246,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const metricProperties = ['expr', 'target', 'datasource', 'query'];
+  const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
   const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
-  const modeObj = parsedSegments.filter(segment => isSegment(segment, 'mode'))[0];
-  const mode = modeObj ? modeObj.mode : ExploreMode.Metrics;
 
   const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
   const ui = uiState
@@ -255,28 +260,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     : DEFAULT_UI_STATE;
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, mode, originPanelId };
-}
-
-export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
-  if (compact) {
-    return JSON.stringify([
-      urlState.range.from,
-      urlState.range.to,
-      urlState.datasource,
-      ...urlState.queries,
-      { mode: urlState.mode },
-      {
-        ui: [
-          !!urlState.ui.showingGraph,
-          !!urlState.ui.showingLogs,
-          !!urlState.ui.showingTable,
-          urlState.ui.dedupStrategy,
-        ],
-      },
-    ]);
-  }
-  return JSON.stringify(urlState);
+  return { datasource, queries, range, ui, originPanelId };
 }
 
 export function generateKey(index = 0): string {
@@ -316,7 +300,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
     }
     return allQueries;
   }
-  return [{ ...generateEmptyQuery(queries) }];
+  return [{ ...generateEmptyQuery(queries ?? []) }];
 }
 
 /**
@@ -345,18 +329,24 @@ export function updateHistory<T extends DataQuery = any>(
   queries: T[]
 ): Array<HistoryItem<T>> {
   const ts = Date.now();
+  let updatedHistory = history;
   queries.forEach(query => {
-    history = [{ query, ts }, ...history];
+    updatedHistory = [{ query, ts }, ...updatedHistory];
   });
 
-  if (history.length > MAX_HISTORY_ITEMS) {
-    history = history.slice(0, MAX_HISTORY_ITEMS);
+  if (updatedHistory.length > MAX_HISTORY_ITEMS) {
+    updatedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
   }
 
   // Combine all queries of a datasource type into one history
   const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.setObject(historyKey, history);
-  return history;
+  try {
+    store.setObject(historyKey, updatedHistory);
+    return updatedHistory;
+  } catch (error) {
+    console.error(error);
+    return history;
+  }
 }
 
 export function clearHistory(datasourceId: string) {
@@ -364,8 +354,8 @@ export function clearHistory(datasourceId: string) {
   store.delete(historyKey);
 }
 
-export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourceApi): string[] => {
-  const queryKeys = queries.reduce((newQueryKeys, query, index) => {
+export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSourceApi | null): string[] => {
+  const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
     const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
     return newQueryKeys.concat(`${primaryKey}-${index}`);
   }, []);
@@ -375,13 +365,13 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any),
-    to: dateMath.parse(rawRange.to, true, timeZone as any),
+    from: dateMath.parse(rawRange.from, false, timeZone as any)!,
+    to: dateMath.parse(rawRange.to, true, timeZone as any)!,
     raw: rawRange,
   };
 };
 
-const parseRawTime = (value: any): TimeFragment => {
+const parseRawTime = (value: any): TimeFragment | null => {
   if (value === null) {
     return null;
   }
@@ -410,13 +400,13 @@ const parseRawTime = (value: any): TimeFragment => {
 
 export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
   const raw = {
-    from: parseRawTime(range.from),
-    to: parseRawTime(range.to),
+    from: parseRawTime(range.from)!,
+    to: parseRawTime(range.to)!,
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone as any),
-    to: dateMath.parse(raw.to, true, timeZone as any),
+    from: dateMath.parse(raw.from, false, timeZone as any)!,
+    to: dateMath.parse(raw.to, true, timeZone as any)!,
     raw,
   };
 };
@@ -442,7 +432,7 @@ export const getValueWithRefId = (value?: any): any => {
   return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]) => {
+export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]): DataQueryError | undefined => {
   if (!errors) {
     return undefined;
   }
@@ -474,6 +464,7 @@ export const getRefIds = (value: any): string[] => {
 };
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
   if (a.timeEpochMs < b.timeEpochMs) {
     return -1;
   }
@@ -482,15 +473,34 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
     return 1;
   }
 
+  // if milliseonds are equal, compare nanoseconds
+  if (a.timeEpochNs < b.timeEpochNs) {
+    return -1;
+  }
+
+  if (a.timeEpochNs > b.timeEpochNs) {
+    return 1;
+  }
+
   return 0;
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  // compare milliseconds
   if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
   }
 
   if (a.timeEpochMs < b.timeEpochMs) {
+    return 1;
+  }
+
+  // if milliseonds are equal, compare nanoseconds
+  if (a.timeEpochNs > b.timeEpochNs) {
+    return -1;
+  }
+
+  if (a.timeEpochNs < b.timeEpochNs) {
     return 1;
   }
 
@@ -507,7 +517,7 @@ export enum SortOrder {
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
 
-export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder): LogsModel => {
+export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
   const rows = logsResult ? logsResult.rows : [];
   sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
@@ -524,13 +534,13 @@ export const convertToWebSocketUrl = (url: string) => {
   return `${backend}${url}`;
 };
 
-export const stopQueryState = (querySubscription: Unsubscribable) => {
+export const stopQueryState = (querySubscription: Unsubscribable | undefined) => {
   if (querySubscription) {
     querySubscription.unsubscribe();
   }
 };
 
-export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }
@@ -542,7 +552,7 @@ export function deduplicateLogRowsById(rows: LogRowModel[]) {
   return _.uniqBy(rows, 'uid');
 }
 
-export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]) => {
+export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
   const refId = getValueWithRefId(queryErrors);
-  return refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
+  return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
 };

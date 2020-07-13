@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
+	"xorm.io/xorm"
 )
 
 var (
@@ -68,7 +68,6 @@ func (ss *SqlStore) Init() error {
 	ss.readConfig()
 
 	engine, err := ss.getEngine()
-
 	if err != nil {
 		return fmt.Errorf("Fail to connect to database: %v", err)
 	}
@@ -102,11 +101,40 @@ func (ss *SqlStore) Init() error {
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 
+	err = ss.logOrgsNotice()
+	if err != nil {
+		return err
+	}
+
 	if ss.skipEnsureDefaultOrgAndUser {
 		return nil
 	}
 
 	return ss.ensureMainOrgAndAdminUser()
+}
+
+func (ss *SqlStore) logOrgsNotice() error {
+	type targetCount struct {
+		Count int64
+	}
+
+	return ss.WithDbSession(context.Background(), func(session *DBSession) error {
+		resp := make([]*targetCount, 0)
+		if err := session.SQL("select count(id) as Count from org").Find(&resp); err != nil {
+			return err
+		}
+
+		if resp[0].Count > 1 {
+			ss.log.Warn(`[Deprecation notice]`)
+			ss.log.Warn(`Fewer than 1% of Grafana installations use organizations, and we feel that most of those`)
+			ss.log.Warn(`users would have a better experience using Teams instead. As such, we are considering de-emphasizing`)
+			ss.log.Warn(`and eventually deprecating Organizations in a future Grafana release. If you would like to provide`)
+			ss.log.Warn(`feedback or describe your need, please do so in the issue linked below`)
+			ss.log.Warn(`https://github.com/grafana/grafana/issues/24588`)
+		}
+
+		return nil
+	})
 }
 
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
@@ -232,7 +260,6 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 
 func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 	connectionString, err := ss.buildConnectionString()
-
 	if err != nil {
 		return nil, err
 	}
@@ -308,9 +335,10 @@ func (ss *SqlStore) readConfig() {
 type ITestDB interface {
 	Helper()
 	Fatalf(format string, args ...interface{})
+	Logf(format string, args ...interface{})
 }
 
-// InitTestDB initiliaze test DB
+// InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}
@@ -322,6 +350,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	// environment variable present for test db?
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		t.Logf("Using database type %q", db)
 		dbType = db
 	}
 
@@ -337,20 +366,21 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	switch dbType {
 	case "mysql":
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	case "postgres":
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Postgres.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	default:
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Sqlite3.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.Sqlite3TestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	}
 
 	// need to get engine to clean db before we init
+	t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 	engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 	if err != nil {
 		t.Fatalf("Failed to init test database: %v", err)
@@ -361,6 +391,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 	// temp global var until we get rid of global vars
 	dialect = sqlstore.Dialect
 
+	t.Logf("Cleaning DB")
 	if err := dialect.CleanDB(); err != nil {
 		t.Fatalf("Failed to clean test db %v", err)
 	}

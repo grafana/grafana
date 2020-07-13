@@ -13,7 +13,7 @@ interface ValueFormatTest {
 }
 
 const formatTests: ValueFormatTest[] = [
-  // Currancy
+  // Currency
   { id: 'currencyUSD', decimals: 2, value: 1532.82, result: '$1.53K' },
   { id: 'currencyKRW', decimals: 2, value: 1532.82, result: '₩1.53K' },
 
@@ -25,6 +25,7 @@ const formatTests: ValueFormatTest[] = [
   { id: 'ms', decimals: 0, value: 1200, result: '1 s' },
   { id: 'short', decimals: 0, scaledDecimals: -1, value: 98765, result: '98.77 K' },
   { id: 'short', decimals: 0, scaledDecimals: 0, value: 9876543, result: '9.876543 Mil' },
+  { id: 'short', decimals: 2, scaledDecimals: null, value: 9876543, result: '9.88 Mil' },
   { id: 'kbytes', decimals: 3, value: 10000000, result: '9.537 GiB' },
   { id: 'deckbytes', decimals: 3, value: 10000000, result: '10.000 GB' },
   { id: 'megwatt', decimals: 3, value: 1000, result: '1.000 GW' },
@@ -47,6 +48,7 @@ const formatTests: ValueFormatTest[] = [
 
   // Prefix (unknown units append to the end)
   { id: 'prefix:b', value: 1532.82, result: 'b1533' },
+  { id: 'suffix:d', value: 1532.82, result: '1533 d' },
 
   // SI Units
   { id: 'si:µF', value: 1234, decimals: 2, result: '1.23 mF' },

@@ -5,7 +5,6 @@
 title = "toFixedUnit"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## toFixedUnit() function

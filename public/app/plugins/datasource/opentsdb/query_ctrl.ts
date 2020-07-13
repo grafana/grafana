@@ -2,6 +2,7 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
+import { textUtil } from '@grafana/data';
 
 export class OpenTsQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -90,7 +91,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
   getTextValues(metricFindResult: any) {
     return _.map(metricFindResult, value => {
-      return value.text;
+      return textUtil.escapeHtml(value.text);
     });
   }
 

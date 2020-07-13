@@ -5,7 +5,6 @@
 title = "deprecationWarning"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## deprecationWarning variable

@@ -5,14 +5,13 @@
 title = "BackendSrvRequest"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## BackendSrvRequest type
 
 ### BackendSrvRequest type
 
-Currently implemented with: https://docs.angularjs.org/api/ng/service/$http\#usage but that will likely change in the future
+Used to initiate a remote call via the [BackendSrv](./runtime/backendsrv.md)
 
 <b>Signature</b>
 

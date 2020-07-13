@@ -5,7 +5,6 @@
 title = "dateTimeForTimeZone"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateTimeForTimeZone variable

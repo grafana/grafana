@@ -4,7 +4,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonCascader } from './ButtonCascader';
 
 export default {
-  title: 'General/ButtonCascader',
+  title: 'Forms/Cascader/ButtonCascader',
   component: ButtonCascader,
   decorators: [withKnobs, withCenteredStory],
 };

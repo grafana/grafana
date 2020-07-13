@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import Page from 'app/core/components/Page/Page';
 import { hot } from 'react-hot-loader';
-import { FormField, Button } from '@grafana/ui';
+import { Button, LegacyForms } from '@grafana/ui';
+const { FormField } = LegacyForms;
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { updateLocation } from '../../core/actions';

@@ -5,7 +5,6 @@
 title = "QueryEditorProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## QueryEditorProps interface
@@ -26,6 +25,10 @@ import { QueryEditorProps } from '@grafana/data';
 |  --- | --- | --- |
 |  [data](#data-property) | <code>PanelData</code> | Contains query response filtered by refId of QueryResultBase and possible query error |
 |  [datasource](#datasource-property) | <code>DSType</code> |  |
+|  [exploreId](#exploreid-property) | <code>any</code> |  |
+|  [exploreMode](#exploremode-property) | <code>ExploreMode</code> |  |
+|  [history](#history-property) | <code>HistoryItem[]</code> |  |
+|  [onBlur](#onblur-property) | <code>() =&gt; void</code> |  |
 |  [onChange](#onchange-property) | <code>(value: TQuery) =&gt; void</code> |  |
 |  [onRunQuery](#onrunquery-property) | <code>() =&gt; void</code> |  |
 |  [query](#query-property) | <code>TQuery</code> |  |
@@ -46,6 +49,38 @@ data?: PanelData;
 
 ```typescript
 datasource: DSType;
+```
+
+### exploreId property
+
+<b>Signature</b>
+
+```typescript
+exploreId?: any;
+```
+
+### exploreMode property
+
+<b>Signature</b>
+
+```typescript
+exploreMode?: ExploreMode;
+```
+
+### history property
+
+<b>Signature</b>
+
+```typescript
+history?: HistoryItem[];
+```
+
+### onBlur property
+
+<b>Signature</b>
+
+```typescript
+onBlur?: () => void;
 ```
 
 ### onChange property

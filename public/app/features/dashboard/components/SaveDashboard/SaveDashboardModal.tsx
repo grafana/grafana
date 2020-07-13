@@ -9,6 +9,7 @@ import { SaveDashboardModalProps } from './types';
 export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboard, onDismiss, onSaveSuccess }) => {
   const { state, onDashboardSave } = useDashboardSave(dashboard);
   const [dashboardSaveModelClone, setDashboardSaveModelClone] = useState();
+
   return (
     <>
       {state.error && (

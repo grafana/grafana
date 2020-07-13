@@ -1,0 +1,236 @@
+---
+kind: pipeline
+type: docker
+name: test-pr-oss
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: install-deps
+  image: grafana/build-container:1.2.21
+  commands:
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
+  - chmod +x grabpl
+  - mkdir -p bin
+  - mv grabpl bin
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  - cp -r $(yarn cache dir) yarn-cache
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+    GRABPL_VERSION: 0.4.15
+
+- name: lint-go
+  image: grafana/build-container:1.2.21
+  commands:
+  - make lint-go
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - install-deps
+
+- name: codespell
+  image: grafana/build-container:1.2.21
+  commands:
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - install-deps
+
+- name: shellcheck
+  image: grafana/build-container:1.2.21
+  commands:
+  - curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v$${VERSION}.linux.x86_64.tar.xz
+  - echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+  - tar xf shellcheck-v$${VERSION}.linux.x86_64.tar.xz
+  - mv shellcheck-v$${VERSION}/shellcheck /usr/local/bin/
+  - rm -rf shellcheck-v$${VERSION}*
+  - ./bin/grabpl shellcheck
+  environment:
+    CHKSUM: beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+    VERSION: 0.7.1
+  depends_on:
+  - install-deps
+
+- name: build-backend
+  image: grafana/build-container:1.2.21
+  commands:
+  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
+  - ./bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  depends_on:
+  - install-deps
+  - lint-go
+  - test-backend
+
+- name: build-frontend
+  image: grafana/build-container:1.2.21
+  commands:
+  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
+  - ./bin/grabpl build-frontend --no-install-deps --github-token "$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  depends_on:
+  - install-deps
+  - test-frontend
+
+- name: test-backend
+  image: grafana/build-container:1.2.21
+  commands:
+  - go test -covermode=atomic ./pkg/...
+  - ./bin/grabpl integration-tests
+  - cp -r $(go env GOCACHE) go-cache
+  depends_on:
+  - install-deps
+  - lint-go
+
+- name: test-frontend
+  image: grafana/build-container:1.2.21
+  commands:
+  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
+  - yarn run prettier:check
+  - yarn run packages:typecheck
+  - yarn run typecheck
+  - yarn run test
+  depends_on:
+  - install-deps
+
+- name: build-plugins
+  image: grafana/build-container:1.2.21
+  commands:
+  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
+  - ./bin/grabpl build-plugins --edition oss --no-install-deps
+  depends_on:
+  - install-deps
+  - lint-go
+
+- name: package
+  image: grafana/build-container:1.2.21
+  commands:
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --github-token "$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  depends_on:
+  - build-backend
+  - build-frontend
+  - build-plugins
+  - test-backend
+  - test-frontend
+  - codespell
+  - shellcheck
+
+- name: end-to-end-tests-server
+  image: grafana/build-container:1.2.21
+  detach: true
+  commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+
+- name: end-to-end-tests
+  image: grafana/ci-e2e:12.18-1
+  commands:
+  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
+  - ./node_modules/.bin/cypress install
+  - ./e2e/wait-for-grafana
+  - ./e2e/run-suite
+  environment:
+    HOST: end-to-end-tests-server
+  depends_on:
+  - end-to-end-tests-server
+
+- name: publish-storybook
+  image: grafana/build-container:1.2.21
+  commands:
+  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
+  - yarn storybook:build
+  depends_on:
+  - package
+
+- name: build-docs-website
+  image: grafana/docs-base:latest
+  commands:
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources /hugo/content/docs/grafana/latest
+  - cd /hugo && make prod
+
+- name: copy-packages-for-docker
+  image: grafana/build-container:1.2.21
+  commands:
+  - cp dist/*.tar.gz packaging/docker/
+  depends_on:
+  - package
+
+- name: build-docker-images
+  image: grafana/drone-grafana-docker:0.2.0
+  settings:
+    archs: amd64
+    dry_run: true
+    edition: oss
+  depends_on:
+  - copy-packages-for-docker
+
+- name: postgres-integration-test
+  image: grafana/build-container:1.2.21
+  commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+
+- name: mysql-integration-test
+  image: grafana/build-container:1.2.21
+  commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
+  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+
+services:
+- name: postgres
+  image: postgres:12.3-alpine
+  environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+
+- name: mysql
+  image: mysql:5.6.48
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+
+trigger:
+  event:
+  - pull_request
+
+...

@@ -5,7 +5,6 @@
 title = "DataQueryRequest"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataQueryRequest interface
@@ -120,7 +119,7 @@ panelId: number;
 <b>Signature</b>
 
 ```typescript
-range?: TimeRange;
+range: TimeRange;
 ```
 
 ### rangeRaw property

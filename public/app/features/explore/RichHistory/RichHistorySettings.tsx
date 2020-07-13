@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme, Forms } from '@grafana/ui';
+import { stylesFactory, useTheme, Select, Button, Switch, Field } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
@@ -63,7 +63,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       title: 'Delete',
       text: 'Are you sure you want to permanently delete your query history?',
       yesText: 'Delete',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       onConfirm: () => {
         deleteRichHistory();
         appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
@@ -73,31 +73,27 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
 
   return (
     <div className={styles.container}>
-      <Forms.Field
+      <Field
         label="History time span"
         description="Select the period of time for which Grafana will save your query history"
         className="space-between"
       >
         <div className={styles.input}>
-          <Forms.Select
-            value={selectedOption}
-            options={retentionPeriodOptions}
-            onChange={onChangeRetentionPeriod}
-          ></Forms.Select>
+          <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
         </div>
-      </Forms.Field>
-      <Forms.Field label="Default active tab" description=" " className="space-between">
+      </Field>
+      <Field label="Default active tab" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={starredTabAsFirstTab} onChange={toggleStarredTabAsFirstTab}></Forms.Switch>
+          <Switch value={starredTabAsFirstTab} onChange={toggleStarredTabAsFirstTab}></Switch>
           <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
         </div>
-      </Forms.Field>
-      <Forms.Field label="Data source behaviour" description=" " className="space-between">
+      </Field>
+      <Field label="Data source behaviour" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Forms.Switch>
+          <Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Switch>
           <div className={styles.label}>Only show queries for data source currently active in Explore</div>
         </div>
-      </Forms.Field>
+      </Field>
       <div
         className={css`
           font-weight: ${theme.typography.weight.bold};
@@ -112,9 +108,9 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       >
         Delete all of your query history, permanently.
       </div>
-      <Forms.Button variant="destructive" onClick={onDelete}>
+      <Button variant="destructive" onClick={onDelete}>
         Clear query history
-      </Forms.Button>
+      </Button>
     </div>
   );
 }

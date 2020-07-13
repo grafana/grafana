@@ -5,7 +5,6 @@
 title = "LinkTarget"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LinkTarget type
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export declare type LinkTarget = '_blank' | '_self';
+export declare type LinkTarget = '_blank' | '_self' | undefined;
 ```
 <b>Import</b>
 

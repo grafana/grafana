@@ -1,4 +1,4 @@
-import ora from 'ora';
+import ora = require('ora');
 
 type FnToSpin<T> = (options: T) => Promise<void>;
 

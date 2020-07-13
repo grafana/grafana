@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
+import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -9,6 +9,8 @@ import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
 import { LogLabelStats } from './LogLabelStats';
+import { IconButton } from '../IconButton/IconButton';
+import { Tag } from '..';
 
 export interface Props extends Themeable {
   parsedValue: string;
@@ -16,7 +18,7 @@ export interface Props extends Themeable {
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  links?: string[];
+  links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
 }
 
@@ -93,24 +95,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
         <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 3}>
-          <i title="Ad-hoc statistics" className={`fa fa-signal ${styles.hoverCursor}`} onClick={this.showStats} />
+          <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
         </td>
 
         {isLabel && (
           <>
             <td className={style.logsDetailsIcon}>
-              <i
-                title="Filter for value"
-                className={`fa fa-search-plus ${styles.hoverCursor}`}
-                onClick={this.filterLabel}
-              />
+              <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
             </td>
             <td className={style.logsDetailsIcon}>
-              <i
-                title="Filter out value"
-                className={`fa fa-search-minus ${styles.hoverCursor}`}
-                onClick={this.filterOutLabel}
-              />
+              <IconButton name="search-minus" title="Filter out value" onClick={this.filterOutLabel} />
             </td>
           </>
         )}
@@ -122,12 +116,10 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           {links &&
             links.map(link => {
               return (
-                <span key={link}>
+                <>
                   &nbsp;
-                  <a href={link} target={'_blank'}>
-                    <i className={'fa fa-external-link'} />
-                  </a>
-                </span>
+                  <FieldLink link={link} />
+                </>
               );
             })}
           {showFieldsStats && (
@@ -143,6 +135,41 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       </tr>
     );
   }
+}
+
+const getLinkStyles = stylesFactory(() => {
+  return {
+    tag: css`
+      margin-left: 6px;
+      font-size: 11px;
+      padding: 2px 6px;
+    `,
+  };
+});
+
+type FieldLinkProps = {
+  link: LinkModel<Field>;
+};
+function FieldLink({ link }: FieldLinkProps) {
+  const styles = getLinkStyles();
+  return (
+    <a
+      href={link.href}
+      target={'_blank'}
+      onClick={
+        link.onClick
+          ? event => {
+              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                event.preventDefault();
+                link.onClick(event);
+              }
+            }
+          : undefined
+      }
+    >
+      <Tag name={link.title} className={styles.tag} colorIndex={6} />
+    </a>
+  );
 }
 
 export const LogDetailsRow = withTheme(UnThemedLogDetailsRow);

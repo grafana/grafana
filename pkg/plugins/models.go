@@ -24,6 +24,16 @@ var (
 	PluginStateBeta  PluginState = "beta"
 )
 
+type PluginSignature string
+
+const (
+	PluginSignatureInternal PluginSignature = "internal" // core plugin, no signature
+	PluginSignatureValid    PluginSignature = "valid"    // signed and accurate MANIFEST
+	PluginSignatureInvalid  PluginSignature = "invalid"  // invalid signature
+	PluginSignatureModified PluginSignature = "modified" // valid signature, but content mismatch
+	PluginSignatureUnsigned PluginSignature = "unsigned" // no MANIFEST file
+)
+
 type PluginNotFoundError struct {
 	PluginId string
 }
@@ -49,6 +59,8 @@ type PluginBase struct {
 	HideFromList bool               `json:"hideFromList,omitempty"`
 	Preload      bool               `json:"preload"`
 	State        PluginState        `json:"state,omitempty"`
+	Signature    PluginSignature    `json:"signature"`
+	Backend      bool               `json:"backend"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`

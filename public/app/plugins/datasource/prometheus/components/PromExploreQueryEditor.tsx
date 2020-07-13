@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, FC } from 'react';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
@@ -11,7 +11,7 @@ import { PromExploreExtraField } from './PromExploreExtraField';
 
 export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
-export function PromExploreQueryEditor(props: Props) {
+export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   const { query, data, datasource, history, onChange, onRunQuery } = props;
 
   function onChangeQueryStep(value: string) {
@@ -48,11 +48,13 @@ export function PromExploreQueryEditor(props: Props) {
           onKeyDownFunc={onReturnKeyDown}
           value={query.interval || ''}
           hasTooltip={true}
-          tooltipContent={'Needs to be a valid time unit string, for example 5s, 1m, 3h, 1d, 1y'}
+          tooltipContent={
+            'Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
+          }
         />
       }
     />
   );
-}
+};
 
 export default memo(PromExploreQueryEditor);

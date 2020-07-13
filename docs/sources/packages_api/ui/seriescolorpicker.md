@@ -5,7 +5,6 @@
 title = "SeriesColorPicker"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## SeriesColorPicker variable
@@ -17,7 +16,7 @@ draft = true
 ```typescript
 SeriesColorPicker: React.FunctionComponent<Pick<import("./SeriesColorPickerPopover").SeriesColorPickerPopoverProps & {
     children?: ColorPickerTriggerRenderer | undefined;
-}, "onChange" | "color" | "children" | "onColorChange" | "enableNamedColors" | "updatePopperPosition" | "yaxis" | "onToggleAxis">>
+}, "color" | "onChange" | "children" | "onColorChange" | "enableNamedColors" | "updatePopperPosition" | "yaxis" | "onToggleAxis">>
 ```
 <b>Import</b>
 

@@ -10,7 +10,7 @@
             {{dash.title}}
           </span>
           <span class="dashlist-star" ng-click="ctrl.starDashboard(dash, $event)">
-            <i class="fa" ng-class="{'fa-star': dash.isStarred, 'fa-star-o': dash.isStarred === false}"></i>
+            <icon name="dash.isStarred ? 'favorite':'star'" type="dash.isStarred ? 'mono':'default'"></icon>
           </span>
         </a>
       </div>

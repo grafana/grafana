@@ -5,7 +5,6 @@
 title = "FormattedValue"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FormattedValue interface

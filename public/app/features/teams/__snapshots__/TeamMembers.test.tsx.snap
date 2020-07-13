@@ -8,7 +8,7 @@ exports[`Render should render component 1`] = `
     <div
       className="gf-form gf-form--grow"
     >
-      <ForwardRef
+      <Component
         inputClassName="gf-form-input"
         labelClassName="gf-form--has-input-icon gf-form--grow"
         onChange={[Function]}
@@ -37,8 +37,8 @@ exports[`Render should render component 1`] = `
         className="cta-form__close btn btn-transparent"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-close"
+        <Icon
+          name="times"
         />
       </button>
       <h5>
@@ -102,7 +102,7 @@ exports[`Render should render team members 1`] = `
     <div
       className="gf-form gf-form--grow"
     >
-      <ForwardRef
+      <Component
         inputClassName="gf-form-input"
         labelClassName="gf-form--has-input-icon gf-form--grow"
         onChange={[Function]}
@@ -131,8 +131,8 @@ exports[`Render should render team members 1`] = `
         className="cta-form__close btn btn-transparent"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-close"
+        <Icon
+          name="times"
         />
       </button>
       <h5>

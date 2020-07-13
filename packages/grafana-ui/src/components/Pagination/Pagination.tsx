@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory } from '../../themes';
-import { Button, ButtonVariant } from '../Forms/Button';
+import { Button, ButtonVariant } from '../Button';
 
 interface Props {
   currentPage: number;

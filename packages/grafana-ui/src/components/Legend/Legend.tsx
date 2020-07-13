@@ -2,6 +2,21 @@ import { DisplayValue } from '@grafana/data';
 
 import { LegendList } from './LegendList';
 import { LegendTable } from './LegendTable';
+import tinycolor from 'tinycolor2';
+
+export const generateLegendItems = (numberOfSeries: number, statsToDisplay?: DisplayValue[]): LegendItem[] => {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+
+  return [...new Array(numberOfSeries)].map((item, i) => {
+    return {
+      label: `${alphabet[i].toUpperCase()}-series`,
+      color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
+      isVisible: true,
+      yAxis: 1,
+      displayValues: statsToDisplay || [],
+    };
+  });
+};
 
 export enum LegendDisplayMode {
   List = 'list',

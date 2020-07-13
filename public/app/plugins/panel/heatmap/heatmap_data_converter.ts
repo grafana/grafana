@@ -59,7 +59,7 @@ function sortSeriesByLabel(s1: { label: string }, s2: { label: string }) {
     label1 = parseHistogramLabel(s1.label);
     label2 = parseHistogramLabel(s2.label);
   } catch (err) {
-    console.log(err.message || err);
+    console.error(err.message || err);
     return 0;
   }
 
@@ -275,7 +275,7 @@ function pushToYBuckets(
   }
   if (buckets[bucketNum]) {
     buckets[bucketNum].values.push(value);
-    buckets[bucketNum].points.push(point);
+    buckets[bucketNum].points?.push(point);
     buckets[bucketNum].count += count;
   } else {
     buckets[bucketNum] = {

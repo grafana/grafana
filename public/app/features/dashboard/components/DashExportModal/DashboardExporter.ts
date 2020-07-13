@@ -5,6 +5,8 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { PanelPluginMeta } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { VariableOption, VariableRefresh } from '../../../variables/types';
+import { isConstant, isQuery } from '../../../variables/guard';
 
 interface Input {
   name: string;
@@ -81,9 +83,9 @@ export class DashboardExporter {
             // add data source type to require list
             requires['datasource' + ds.meta?.id] = {
               type: 'datasource',
-              id: ds.meta?.id,
-              name: ds.meta?.name,
-              version: ds.meta?.info.version || '1.0.0',
+              id: ds.meta.id,
+              name: ds.meta.name,
+              version: ds.meta.info.version || '1.0.0',
             };
 
             // if used via variable we can skip templatizing usage
@@ -144,11 +146,12 @@ export class DashboardExporter {
 
     // templatize template vars
     for (const variable of saveModel.getVariables()) {
-      if (variable.type === 'query') {
+      if (isQuery(variable)) {
         templateizeDatasourceUsage(variable);
         variable.options = [];
-        variable.current = {};
-        variable.refresh = variable.refresh > 0 ? variable.refresh : 1;
+        variable.current = ({} as unknown) as VariableOption;
+        variable.refresh =
+          variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       }
     }
 
@@ -173,7 +176,7 @@ export class DashboardExporter {
 
         // templatize constants
         for (const variable of saveModel.getVariables()) {
-          if (variable.type === 'constant') {
+          if (isConstant(variable)) {
             const refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({
               name: refName,
@@ -187,6 +190,7 @@ export class DashboardExporter {
             variable.options[0] = variable.current = {
               value: variable.query,
               text: variable.query,
+              selected: false,
             };
           }
         }
@@ -200,7 +204,7 @@ export class DashboardExporter {
         return newObj;
       })
       .catch(err => {
-        console.log('Export failed:', err);
+        console.error('Export failed:', err);
         return {
           error: err,
         };

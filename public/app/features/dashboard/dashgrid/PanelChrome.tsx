@@ -26,6 +26,7 @@ import {
   PanelPlugin,
   FieldConfigSource,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -33,9 +34,9 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  isFullscreen: boolean;
+  isViewing: boolean;
+  isEditing: boolean;
   isInView: boolean;
-  isInEditMode?: boolean;
   width: number;
   height: number;
   updateLocation: typeof updateLocation;
@@ -69,9 +70,11 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard, isInEditMode } = this.props;
+    const { panel, dashboard } = this.props;
+
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
+
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -84,20 +87,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
-    } else {
-      if (isInEditMode) {
-        this.querySubscription = panel
-          .getQueryRunner()
-          .getData()
-          .subscribe({
-            next: data => this.onDataUpdate(data),
-          });
-      }
-
-      if (!this.wantsQueryExecution) {
-        this.setState({ isFirstLoad: false });
-      }
+      return;
     }
+
+    if (!this.wantsQueryExecution) {
+      this.setState({ isFirstLoad: false });
+    }
+
+    this.querySubscription = panel
+      .getQueryRunner()
+      .getData({ withTransforms: true, withFieldConfig: true })
+      .subscribe({
+        next: data => this.onDataUpdate(data),
+      });
   }
 
   componentWillUnmount() {
@@ -169,7 +171,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
     if (!isInView) {
-      console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
       return;
     }
@@ -179,19 +180,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Issue Query
     if (this.wantsQueryExecution) {
       if (width < 0) {
-        console.log('Refresh skippted, no width yet... wait till we know');
         return;
       }
 
-      const queryRunner = panel.getQueryRunner();
-
-      if (!this.querySubscription) {
-        this.querySubscription = queryRunner.getData().subscribe({
-          next: data => this.onDataUpdate(data),
-        });
-      }
-
-      queryRunner.run({
+      panel.getQueryRunner().run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
@@ -199,13 +191,15 @@ export class PanelChrome extends PureComponent<Props, State> {
         timezone: this.props.dashboard.getTimezone(),
         timeRange: timeData.timeRange,
         timeInfo: timeData.timeInfo,
-        widthPixels: width,
-        maxDataPoints: panel.maxDataPoints,
+        maxDataPoints: panel.maxDataPoints || width,
         minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
         transformations: panel.transformations,
       });
+    } else {
+      // The panel should render on refresh as well if it doesn't have a query, like clock panel
+      this.onRender();
     }
   };
 
@@ -233,10 +227,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
-  panelHasLastResult = () => {
-    return !!this.props.panel.getQueryRunner().getLastResult();
-  };
-
   get wantsQueryExecution() {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
@@ -254,7 +244,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { theme } = config;
 
     // This is only done to increase a counter that is used by backend
-    // image rendering (phantomjs/headless chrome) to know when to capture image
+    // image rendering to know when to capture image
     const loading = data.state;
     if (loading === LoadingState.Done) {
       profiler.renderingCompleted();
@@ -265,7 +255,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return null;
     }
 
-    const PanelComponent = plugin.panel;
+    const PanelComponent = plugin.panel!;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
@@ -319,7 +309,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, updateLocation } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -331,7 +321,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames}>
+      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
@@ -340,7 +330,8 @@ export class PanelChrome extends PureComponent<Props, State> {
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
-          isFullscreen={isFullscreen}
+          isEditing={isEditing}
+          isViewing={isViewing}
           data={data}
           updateLocation={updateLocation}
         />

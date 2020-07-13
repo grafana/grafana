@@ -6,44 +6,47 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
+	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-type DashboardProvisioner interface {
-	Provision() error
-	PollChanges(ctx context.Context)
-	GetProvisionerResolvedPath(name string) string
-	GetAllowUiUpdatesFromConfig(name string) bool
+type ProvisioningService interface {
+	ProvisionDatasources() error
+	ProvisionPlugins() error
+	ProvisionNotifications() error
+	ProvisionDashboards() error
+	GetDashboardProvisionerResolvedPath(name string) string
+	GetAllowUIUpdatesFromConfig(name string) bool
 }
-
-type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 
 func init() {
 	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) (DashboardProvisioner, error) {
-			return dashboards.NewDashboardProvisionerImpl(path)
+		func(path string) (dashboards.DashboardProvisioner, error) {
+			return dashboards.New(path)
 		},
 		notifiers.Provision,
 		datasources.Provision,
+		plugins.Provision,
 	))
 }
 
 func NewProvisioningServiceImpl(
-	newDashboardProvisioner DashboardProvisionerFactory,
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
+	provisionPlugins func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
+		provisionPlugins:        provisionPlugins,
 	}
 }
 
@@ -51,15 +54,21 @@ type provisioningServiceImpl struct {
 	Cfg                     *setting.Cfg `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner DashboardProvisionerFactory
-	dashboardProvisioner    DashboardProvisioner
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory
+	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
+	provisionPlugins        func(string) error
 	mutex                   sync.Mutex
 }
 
 func (ps *provisioningServiceImpl) Init() error {
 	err := ps.ProvisionDatasources()
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionPlugins()
 	if err != nil {
 		return err
 	}
@@ -76,10 +85,10 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards()
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
+		return err
 	}
 
 	for {
-
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
 		ps.mutex.Lock()
 		// Using background here because otherwise if root context was canceled the select later on would
@@ -105,6 +114,12 @@ func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 	datasourcePath := path.Join(ps.Cfg.ProvisioningPath, "datasources")
 	err := ps.provisionDatasources(datasourcePath)
 	return errutil.Wrap("Datasource provisioning error", err)
+}
+
+func (ps *provisioningServiceImpl) ProvisionPlugins() error {
+	appPath := path.Join(ps.Cfg.ProvisioningPath, "plugins")
+	err := ps.provisionPlugins(appPath)
+	return errutil.Wrap("app provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionNotifications() error {
@@ -138,8 +153,8 @@ func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name stri
 	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
 
-func (ps *provisioningServiceImpl) GetAllowUiUpdatesFromConfig(name string) bool {
-	return ps.dashboardProvisioner.GetAllowUiUpdatesFromConfig(name)
+func (ps *provisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
+	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

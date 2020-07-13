@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 export function infoPopover() {
   return {
     restrict: 'E',
-    template: '<i class="fa fa-info-circle"></i>',
+    template: `<icon name="'info-circle'" style="margin-left: 10px;" size="'xs'"></icon>`,
     transclude: true,
     link: (scope: any, elem: any, attrs: any, ctrl: any, transclude: any) => {
       const offset = attrs.offset || '0 -10px';

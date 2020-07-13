@@ -5,7 +5,6 @@
 title = "DataSourcePluginOptionsEditorProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourcePluginOptionsEditorProps interface

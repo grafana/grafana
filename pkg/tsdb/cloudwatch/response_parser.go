@@ -14,7 +14,6 @@ import (
 
 func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
-
 	for _, mdo := range metricDataOutputs {
 		requestExceededMaxLimit := false
 		for _, message := range mdo.Messages {
@@ -42,20 +41,20 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
 	for id, lr := range mdr {
-		response := &cloudwatchResponse{}
 		series, partialData, err := parseGetMetricDataTimeSeries(lr, queries[id])
 		if err != nil {
-			return cloudWatchResponses, err
+			return nil, err
 		}
 
-		response.series = series
-		response.Period = queries[id].Period
-		response.Expression = queries[id].UsedExpression
-		response.RefId = queries[id].RefId
-		response.Id = queries[id].Id
-		response.RequestExceededMaxLimit = queries[id].RequestExceededMaxLimit
-		response.PartialData = partialData
-
+		response := &cloudwatchResponse{
+			series:                  series,
+			Period:                  queries[id].Period,
+			Expression:              queries[id].UsedExpression,
+			RefId:                   queries[id].RefId,
+			Id:                      queries[id].Id,
+			RequestExceededMaxLimit: queries[id].RequestExceededMaxLimit,
+			PartialData:             partialData,
+		}
 		cloudWatchResponses = append(cloudWatchResponses, response)
 	}
 
@@ -63,14 +62,14 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 }
 
 func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
-	result := tsdb.TimeSeriesSlice{}
-	partialData := false
 	metricDataResultLabels := make([]string, 0)
 	for k := range metricDataResults {
 		metricDataResultLabels = append(metricDataResultLabels, k)
 	}
 	sort.Strings(metricDataResultLabels)
 
+	partialData := false
+	result := tsdb.TimeSeriesSlice{}
 	for _, label := range metricDataResultLabels {
 		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
@@ -79,7 +78,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 
 		for _, message := range metricDataResult.Messages {
 			if *message.Code == "ArithmeticError" {
-				return nil, false, fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value)
+				return nil, false, fmt.Errorf("ArithmeticError in query %q: %s", query.RefId, *message.Value)
 			}
 		}
 
@@ -145,7 +144,8 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 						series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
 					}
 				}
-				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
+				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]),
+					float64(t.Unix())*1000))
 			}
 			result = append(result, &series)
 		}
@@ -169,17 +169,17 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 	if len(query.Alias) == 0 && query.isMathExpression() {
 		return query.Id
 	}
-
 	if len(query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
 		return label
 	}
 
-	data := map[string]string{}
-	data["region"] = region
-	data["namespace"] = namespace
-	data["metric"] = metricName
-	data["stat"] = stat
-	data["period"] = period
+	data := map[string]string{
+		"region":    region,
+		"namespace": namespace,
+		"metric":    metricName,
+		"stat":      stat,
+		"period":    period,
+	}
 	if len(label) != 0 {
 		data["label"] = label
 	}

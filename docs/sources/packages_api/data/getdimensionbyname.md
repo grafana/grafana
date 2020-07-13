@@ -5,7 +5,6 @@
 title = "getDimensionByName"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getDimensionByName variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-getDimensionByName: (dimensions: KeyValue<Dimension<any>>, name: string) => Dimension<any>
+getDimensionByName: (dimensions: Dimensions, name: string) => Dimension<any>
 ```
 <b>Import</b>
 

@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getVariable, getVariables, getNewVariabelIndex } from '../state/selectors';
+import { getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -17,12 +17,12 @@ import {
   VariableIdentifier,
 } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
-import { VariableType } from '../../templating/variable';
+import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
-    dispatch(variableEditorMounted({ name: getVariable(identifier.id!).name }));
+    dispatch(variableEditorMounted({ name: getVariable(identifier.id).name }));
   };
 };
 
@@ -37,7 +37,7 @@ export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResu
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id!, getState());
+    const variableInState = getVariable(identifier.id, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(switchToListMode());
   };

@@ -33,8 +33,8 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
 
   const selectedSwatchBorder = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.black,
+      light: theme.palette.white,
+      dark: theme.palette.black,
     },
     theme.type
   );

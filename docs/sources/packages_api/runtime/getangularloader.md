@@ -5,12 +5,15 @@
 title = "getAngularLoader"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getAngularLoader() function
 
 ### getAngularLoader() function
+
+Used to retrieve the [AngularLoader](./runtime/angularloader.md) that enables the use of Angular components within a React component.
+
+Please see the [AngularComponent](./runtime/angularcomponent.md) for a proper example.
 
 <b>Signature</b>
 

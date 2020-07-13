@@ -16,7 +16,7 @@ export function getOpacityScale(
   options: { cardColor?: null; colorScale?: any; exponent?: any },
   maxValue: number,
   minValue = 0
-) {
+): any {
   let legendOpacityScale;
   if (options.colorScale === 'linear') {
     legendOpacityScale = d3

@@ -5,7 +5,6 @@
 title = "PluginConfigPageProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PluginConfigPageProps interface

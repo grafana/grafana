@@ -1,20 +1,22 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { store } from 'app/store/store';
-import locationUtil from 'app/core/utils/location_util';
+import { dispatch, store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-import { ITimeoutService, ILocationService, IWindowService } from 'angular';
+import { ILocationService, ITimeoutService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { UrlQueryMap } from '@grafana/runtime';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { VariableSrv } from 'app/features/templating/all';
+import { templateVarsChangedInUrl } from 'app/features/variables/state/actions';
+import { isArray, isEqual } from 'lodash';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
   private fullPageReloadRoutes: string[];
   private lastQuery: UrlQueryMap = {};
   private lastPath = '';
+  private angularUrl: string;
+  private lastUrl: string | null = null;
 
   /** @ngInject */
   constructor(
@@ -22,17 +24,19 @@ export class BridgeSrv {
     private $timeout: ITimeoutService,
     private $window: IWindowService,
     private $rootScope: GrafanaRootScope,
-    private $route: any,
-    private variableSrv: VariableSrv
+    private $route: any
   ) {
     this.fullPageReloadRoutes = ['/logout'];
+    this.angularUrl = $location.url();
   }
 
   init() {
     this.$rootScope.$on('$routeUpdate', (evt, data) => {
-      const angularUrl = this.$location.url();
       const state = store.getState();
-      if (state.location.url !== angularUrl) {
+
+      this.angularUrl = this.$location.url();
+
+      if (state.location.url !== this.angularUrl) {
         store.dispatch(
           updateLocation({
             path: this.$location.path(),
@@ -44,6 +48,8 @@ export class BridgeSrv {
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
+      this.angularUrl = this.$location.url();
+
       store.dispatch(
         updateLocation({
           path: this.$location.path(),
@@ -56,9 +62,17 @@ export class BridgeSrv {
     // Listen for changes in redux location -> update angular location
     store.subscribe(() => {
       const state = store.getState();
-      const angularUrl = this.$location.url();
       const url = state.location.url;
-      if (angularUrl !== url) {
+
+      // No url change ignore redux store change
+      if (url === this.lastUrl) {
+        return;
+      }
+
+      if (this.angularUrl !== url) {
+        // store angular url right away as otherwise we end up syncing multiple times
+        this.angularUrl = url;
+
         this.$timeout(() => {
           this.$location.url(url);
           // some state changes should not trigger new browser history
@@ -66,7 +80,6 @@ export class BridgeSrv {
             this.$location.replace();
           }
         });
-        console.log('store updating angular $location.url', url);
       }
 
       // Check for template variable changes on a dashboard
@@ -75,14 +88,14 @@ export class BridgeSrv {
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
           if (dash) {
-            this.variableSrv.templateVarsChangedInUrl(changes);
+            dispatch(templateVarsChangedInUrl(changes));
           }
         }
-        this.lastQuery = state.location.query;
-      } else {
-        this.lastQuery = {};
       }
+
+      this.lastQuery = state.location.query;
       this.lastPath = state.location.path;
+      this.lastUrl = state.location.url;
     });
 
     appEvents.on(CoreEvents.locationChange, payload => {
@@ -100,23 +113,49 @@ export class BridgeSrv {
   }
 }
 
+function getUrlValueForComparison(value: any): any {
+  if (isArray(value)) {
+    if (value.length === 0) {
+      value = undefined;
+    } else if (value.length === 1) {
+      value = value[0];
+    }
+  }
+
+  return value;
+}
+
 export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
   let count = 0;
   const changes: UrlQueryMap = {};
+
   for (const key in query) {
     if (!key.startsWith('var-')) {
       continue;
     }
-    if (query[key] !== old[key]) {
+
+    let oldValue = getUrlValueForComparison(old[key]);
+    let newValue = getUrlValueForComparison(query[key]);
+
+    if (!isEqual(newValue, oldValue)) {
       changes[key] = query[key];
       count++;
     }
   }
+
   for (const key in old) {
     if (!key.startsWith('var-')) {
       continue;
     }
-    if (!query[key]) {
+
+    const value = old[key];
+
+    // ignore empty array values
+    if (isArray(value) && value.length === 0) {
+      continue;
+    }
+
+    if (!query.hasOwnProperty(key)) {
       changes[key] = ''; // removed
       count++;
     }

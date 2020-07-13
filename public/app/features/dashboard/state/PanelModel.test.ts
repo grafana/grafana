@@ -1,33 +1,71 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { ConfigOverrideRule, PanelProps } from '@grafana/data';
+import {
+  FieldConfigProperty,
+  identityOverrideProcessor,
+  PanelProps,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  PanelData,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { ComponentClass } from 'react';
+import { PanelQueryRunner } from './PanelQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 class TablePanelCtrl {}
+
+export const mockStandardProperties = () => {
+  const unit = {
+    id: 'unit',
+    path: 'unit',
+    name: 'Unit',
+    description: 'Value units',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const decimals = {
+    id: 'decimals',
+    path: 'decimals',
+    name: 'Decimals',
+    description: 'Number of decimal to be shown for a value',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const boolean = {
+    id: 'boolean',
+    path: 'boolean',
+    name: 'Boolean',
+    description: '',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  return [unit, decimals, boolean];
+};
+
+standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
+standardEditorsRegistry.setInit(() => mockStandardProperties());
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
     let model: any;
     let modelJson: any;
     let persistedOptionsMock;
-    const defaultOptionsMock = {
-      fieldOptions: {
-        thresholds: [
-          {
-            color: '#F2495C',
-            index: 1,
-            value: 50,
-          },
-          {
-            color: '#73BF69',
-            index: 0,
-            value: null,
-          },
-        ],
-      },
-      arrayWith2Values: [{ value: 'name' }, { value: 'name2' }],
-      showThresholds: true,
-    };
 
     beforeEach(() => {
       persistedOptionsMock = {
@@ -50,6 +88,8 @@ describe('PanelModel', () => {
 
       modelJson = {
         type: 'table',
+        maxDataPoints: 100,
+        interval: '5m',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: persistedOptionsMock,
@@ -70,13 +110,6 @@ describe('PanelModel', () => {
       };
 
       model = new PanelModel(modelJson);
-      const overrideMock: ConfigOverrideRule = {
-        matcher: {
-          id: '2',
-          options: {},
-        },
-        properties: [],
-      };
 
       const panelPlugin = getPanelPlugin(
         {
@@ -85,13 +118,22 @@ describe('PanelModel', () => {
         (null as unknown) as ComponentClass<PanelProps>, // react
         TablePanelCtrl // angular
       );
-      panelPlugin.setDefaults(defaultOptionsMock);
-      panelPlugin.setFieldConfigDefaults({
-        defaults: {
-          unit: 'flop',
-          decimals: 2,
+
+      panelPlugin.setPanelOptions(builder => {
+        builder.addBooleanSwitch({
+          name: 'Show thresholds',
+          path: 'showThresholds',
+          defaultValue: true,
+          description: '',
+        });
+      });
+
+      panelPlugin.useFieldConfig({
+        standardOptions: [FieldConfigProperty.Unit, FieldConfigProperty.Decimals],
+        standardOptionsDefaults: {
+          [FieldConfigProperty.Unit]: 'flop',
+          [FieldConfigProperty.Decimals]: 2,
         },
-        overrides: [overrideMock],
       });
       model.pluginLoaded(panelPlugin);
     });
@@ -108,15 +150,16 @@ describe('PanelModel', () => {
       expect(model.getOptions().arrayWith2Values.length).toBe(1);
     });
 
-    it('should merge override field config options', () => {
-      expect(model.getFieldOverrideOptions().fieldOptions.overrides.length).toBe(2);
-    });
-
     it('should apply field config defaults', () => {
+      setDataSourceSrv({
+        getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+          return undefined;
+        },
+      } as any);
       // default unit is overriden by model
-      expect(model.getFieldOverrideOptions().fieldOptions.defaults.unit).toBe('mpg');
+      expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied
-      expect(model.getFieldOverrideOptions().fieldOptions.defaults.decimals).toBe(2);
+      expect(model.getFieldOverrideOptions().fieldConfig.defaults.decimals).toBe(2);
     });
 
     it('should set model props on instance', () => {
@@ -171,15 +214,32 @@ describe('PanelModel', () => {
     });
 
     describe('when changing panel type', () => {
-      const newPanelPluginDefaults = {
-        showThresholdLabels: false,
-      };
-
       beforeEach(() => {
         const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.setDefaults(newPanelPluginDefaults);
+        newPlugin.setPanelOptions(builder => {
+          builder.addBooleanSwitch({
+            name: 'Show thresholds labels',
+            path: 'showThresholdLabels',
+            defaultValue: false,
+            description: '',
+          });
+        });
+
+        model.editSourceId = 1001;
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
+      });
+
+      it('should keep editSourceId', () => {
+        expect(model.editSourceId).toBe(1001);
+      });
+
+      it('should keep maxDataPoints', () => {
+        expect(model.maxDataPoints).toBe(100);
+      });
+
+      it('should keep interval', () => {
+        expect(model.interval).toBe('5m');
       });
 
       it('should apply next panel option defaults', () => {
@@ -247,6 +307,58 @@ describe('PanelModel', () => {
         model.changePlugin(getPanelPlugin({ id: 'react2' }));
         const sameQueryRunner = model.getQueryRunner();
         expect(panelQueryRunner).toBe(sameQueryRunner);
+      });
+    });
+
+    describe('restoreModel', () => {
+      it('Should clean state and set properties from model', () => {
+        model.restoreModel({
+          title: 'New title',
+          options: { new: true },
+        });
+        expect(model.title).toBe('New title');
+        expect(model.options.new).toBe(true);
+      });
+
+      it('Should delete properties that are now gone on new model', () => {
+        model.someProperty = 'value';
+        model.restoreModel({
+          title: 'New title',
+          options: {},
+        });
+
+        expect(model.someProperty).toBeUndefined();
+      });
+
+      it('Should remove old angular panel specfic props', () => {
+        model.axes = [{ prop: 1 }];
+        model.thresholds = [];
+
+        model.restoreModel({
+          title: 'New title',
+          options: {},
+        });
+
+        expect(model.axes).toBeUndefined();
+        expect(model.thresholds).toBeUndefined();
+      });
+
+      it('Should be able to set defaults back to default', () => {
+        model.transparent = true;
+
+        model.restoreModel({});
+        expect(model.transparent).toBe(false);
+      });
+    });
+
+    describe('destroy', () => {
+      it('Should still preserve last query result', () => {
+        model.getQueryRunner().useLastResultFrom({
+          getLastResult: () => ({} as PanelData),
+        } as PanelQueryRunner);
+
+        model.destroy();
+        expect(model.getQueryRunner().getLastResult()).toBeDefined();
       });
     });
   });

@@ -5,7 +5,6 @@
 title = "PluginMetaInfo"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PluginMetaInfo interface

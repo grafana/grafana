@@ -5,7 +5,6 @@
 title = "KeyValue"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## KeyValue type

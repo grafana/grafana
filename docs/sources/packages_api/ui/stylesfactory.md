@@ -5,7 +5,6 @@
 title = "stylesFactory"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## stylesFactory() function
@@ -28,7 +27,7 @@ import { stylesFactory } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  stylesCreator | <code>ResultFn</code> |  |
+|  stylesCreator | <code>ResultFn</code> | function accepting dependencies based on which styles are created |
 
 <b>Returns:</b>
 

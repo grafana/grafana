@@ -5,7 +5,6 @@
 title = "FieldOverrideContext"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldOverrideContext interface
@@ -13,7 +12,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export interface FieldOverrideContext 
+export interface FieldOverrideContext extends StandardEditorContext<any> 
 ```
 <b>Import</b>
 
@@ -27,8 +26,6 @@ import { FieldOverrideContext } from '@grafana/data';
 |  [data](#data-property) | <code>DataFrame[]</code> |  |
 |  [dataFrameIndex](#dataframeindex-property) | <code>number</code> |  |
 |  [field](#field-property) | <code>Field</code> |  |
-|  [getSuggestions](#getsuggestions-property) | <code>(scope?: VariableSuggestionsScope) =&gt; VariableSuggestion[]</code> |  |
-|  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> |  |
 
 ### data property
 
@@ -52,20 +49,4 @@ dataFrameIndex?: number;
 
 ```typescript
 field?: Field;
-```
-
-### getSuggestions property
-
-<b>Signature</b>
-
-```typescript
-getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
-```
-
-### replaceVariables property
-
-<b>Signature</b>
-
-```typescript
-replaceVariables?: InterpolateFunction;
 ```

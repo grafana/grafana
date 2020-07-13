@@ -1,6 +1,7 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
 import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
+import { Icon } from '../Icon/Icon';
 
 interface Props {
   config?: CSVConfig;
@@ -75,7 +76,7 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
               return (
                 <span key={index}>
                   Rows:{frame.length}, Columns:{frame.fields.length} &nbsp;
-                  <i className="fa fa-check-circle" />
+                  <Icon name="check-circle" />
                 </span>
               );
             })}

@@ -4,16 +4,7 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 // Types
-import {
-  dateMath,
-  DefaultTimeRange,
-  TimeRange,
-  RawTimeRange,
-  TimeZone,
-  toUtc,
-  dateTime,
-  isDateTime,
-} from '@grafana/data';
+import { dateMath, DefaultTimeRange, TimeRange, RawTimeRange, toUtc, dateTime, isDateTime } from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -28,8 +19,8 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
-  oldRefresh: boolean;
-  dashboard: Partial<DashboardModel>;
+  oldRefresh: string | null | undefined;
+  dashboard: DashboardModel;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
 
@@ -56,7 +47,7 @@ export class TimeSrv {
     });
   }
 
-  init(dashboard: Partial<DashboardModel>) {
+  init(dashboard: DashboardModel) {
     this.timer.cancelAll();
 
     this.dashboard = dashboard;
@@ -79,12 +70,7 @@ export class TimeSrv {
       return intervals;
     }
 
-    const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
-
-    if (validIntervals.indexOf(this.contextSrv.minRefreshInterval) === -1) {
-      validIntervals.unshift(this.contextSrv.minRefreshInterval);
-    }
-    return validIntervals;
+    return intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
   }
 
   private parseTime() {
@@ -102,10 +88,15 @@ export class TimeSrv {
       return value;
     }
     if (value.length === 8) {
-      return toUtc(value, 'YYYYMMDD');
-    }
-    if (value.length === 15) {
-      return toUtc(value, 'YYYYMMDDTHHmmss');
+      const utcValue = toUtc(value, 'YYYYMMDD');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
+    } else if (value.length === 15) {
+      const utcValue = toUtc(value, 'YYYYMMDDTHHmmss');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
     }
 
     if (!isNaN(value)) {
@@ -259,7 +250,7 @@ export class TimeSrv {
     this.$timeout(this.refreshDashboard.bind(this), 0);
   }
 
-  timeRangeForUrl() {
+  timeRangeForUrl = () => {
     const range = this.timeRange().raw;
 
     if (isDateTime(range.from)) {
@@ -270,7 +261,7 @@ export class TimeSrv {
     }
 
     return range;
-  }
+  };
 
   timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
@@ -279,11 +270,11 @@ export class TimeSrv {
       to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
     };
 
-    const timezone: TimeZone = this.dashboard ? this.dashboard.getTimezone() : undefined;
+    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
-      from: dateMath.parse(raw.from, false, timezone),
-      to: dateMath.parse(raw.to, true, timezone),
+      from: dateMath.parse(raw.from, false, timezone)!,
+      to: dateMath.parse(raw.to, true, timezone)!,
       raw: raw,
     };
   }

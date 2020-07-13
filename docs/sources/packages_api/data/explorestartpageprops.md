@@ -5,7 +5,6 @@
 title = "ExploreStartPageProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ExploreStartPageProps interface
@@ -25,6 +24,7 @@ import { ExploreStartPageProps } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [datasource](#datasource-property) | <code>DataSourceApi</code> |  |
+|  [exploreId](#exploreid-property) | <code>any</code> |  |
 |  [exploreMode](#exploremode-property) | <code>ExploreMode</code> |  |
 |  [onClickExample](#onclickexample-property) | <code>(query: DataQuery) =&gt; void</code> |  |
 
@@ -34,6 +34,14 @@ import { ExploreStartPageProps } from '@grafana/data';
 
 ```typescript
 datasource?: DataSourceApi;
+```
+
+### exploreId property
+
+<b>Signature</b>
+
+```typescript
+exploreId?: any;
 ```
 
 ### exploreMode property

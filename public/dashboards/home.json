@@ -2,30 +2,24 @@
   "links": [],
   "panels": [
     {
-      "content": "<div class=\"dashboard-header\">\n  <span>Welcome to Grafana</span>\n</div>",
       "datasource": null,
-      "editable": true,
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 0
       },
       "id": 1,
-      "links": [],
-      "mode": "html",
-      "options": {},
-      "style": {},
       "title": "",
-      "transparent": true,
-      "type": "text"
+      "transparent": false,
+      "type": "welcome"
     },
     {
       "datasource": null,
       "folderId": 0,
       "gridPos": {
         "h": 15,
-        "w": 11,
+        "w": 12,
         "x": 0,
         "y": 4
       },
@@ -46,8 +40,8 @@
       "datasource": null,
       "gridPos": {
         "h": 15,
-        "w": 8,
-        "x": 11,
+        "w": 12,
+        "x": 12,
         "y": 4
       },
       "id": 4,
@@ -57,20 +51,6 @@
       },
       "title": "Latest from the blog",
       "type": "news"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 15,
-        "w": 5,
-        "x": 19,
-        "y": 4
-      },
-      "id": 123124,
-      "links": [],
-      "options": {},
-      "title": "Useful links",
-      "type": "homelinks"
     }
   ],
   "schemaVersion": 22,

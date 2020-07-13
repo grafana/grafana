@@ -5,7 +5,6 @@
 title = "TimeFragment"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## TimeFragment type

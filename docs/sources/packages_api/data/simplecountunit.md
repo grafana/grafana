@@ -5,7 +5,6 @@
 title = "simpleCountUnit"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## simpleCountUnit() function

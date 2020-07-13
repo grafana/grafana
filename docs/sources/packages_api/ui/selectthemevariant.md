@@ -5,7 +5,6 @@
 title = "selectThemeVariant"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## selectThemeVariant variable

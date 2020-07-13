@@ -5,7 +5,6 @@
 title = "panelInitialized"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.panelInitialized variable

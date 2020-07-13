@@ -3,12 +3,13 @@ package pluginproxy
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -25,7 +26,7 @@ func TestAccessToken(t *testing.T) {
 	Convey("Plugin with JWT token auth route", t, func() {
 		pluginRoute := &plugins.AppPluginRoute{
 			Path:   "pathwithjwttoken1",
-			Url:    "https://api.jwt.io/some/path",
+			URL:    "https://api.jwt.io/some/path",
 			Method: "GET",
 			JwtTokenAuth: &plugins.JwtTokenAuth{
 				Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
@@ -108,7 +109,7 @@ func TestAccessToken(t *testing.T) {
 
 		pluginRoute := &plugins.AppPluginRoute{
 			Path:   "pathwithtokenauth1",
-			Url:    "",
+			URL:    "",
 			Method: "GET",
 			TokenAuth: &plugins.JwtTokenAuth{
 				Url: server.URL + "/oauth/token",

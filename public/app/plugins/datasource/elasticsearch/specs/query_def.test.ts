@@ -104,13 +104,13 @@ describe('ElasticQueryDef', () => {
 
     describe('using esversion 2', () => {
       test('should get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(2).length).toBe(13);
+        expect(queryDef.getMetricAggTypes(2).length).toBe(14);
       });
     });
 
     describe('using esversion 5', () => {
       test('should get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(5).length).toBe(13);
+        expect(queryDef.getMetricAggTypes(5).length).toBe(14);
       });
     });
   });

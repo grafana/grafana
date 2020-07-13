@@ -1,7 +1,8 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { Switch, FormLabel, Select, Button } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
+const { Select, Switch } = LegacyForms;
 import { AzureDataSourceSettings } from '../types';
 
 export interface State {
@@ -52,7 +53,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
   onAzureLogAnalyticsSameAsChange = () => {
     const { options, onUpdateDatasourceOptions, makeSameAs } = this.props;
 
-    if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData.clientSecret) {
+    if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData!.clientSecret) {
       makeSameAs();
     } else if (!options.jsonData.azureLogAnalyticsSameAs) {
       // if currently off, clear monitor secret
@@ -93,7 +94,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
         jsonData.tenantId &&
         jsonData.clientId &&
         jsonData.subscriptionId &&
-        (secureJsonData.clientSecret || secureJsonFields.clientSecret)
+        (secureJsonData!.clientSecret || secureJsonFields.clientSecret)
       );
     }
 
@@ -103,7 +104,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
       jsonData.logAnalyticsClientId &&
       jsonData.logAnalyticsClientId.length &&
       jsonData.logAnalyticsSubscriptionId &&
-      (secureJsonFields.logAnalyticsClientSecret || secureJsonData.logAnalyticsClientSecret)
+      (secureJsonFields.logAnalyticsClientSecret || secureJsonData!.logAnalyticsClientSecret)
     );
   };
 
@@ -131,14 +132,14 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
       jsonData.azureLogAnalyticsSameAs &&
       secureJsonFields &&
       !secureJsonFields.clientSecret &&
-      !secureJsonData.clientSecret;
+      !secureJsonData!.clientSecret;
 
     return (
       <>
         <h3 className="page-heading">Azure Log Analytics API Details</h3>
         <Switch
           label="Same details as Azure Monitor API"
-          checked={jsonData.azureLogAnalyticsSameAs}
+          checked={jsonData.azureLogAnalyticsSameAs ?? false}
           onChange={this.onAzureLogAnalyticsSameAsChange}
           {...addtlAttrs}
         />
@@ -155,7 +156,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
             selectedSubscription={jsonData.logAnalyticsSubscriptionId}
             tenantId={jsonData.logAnalyticsTenantId}
             clientId={jsonData.logAnalyticsClientId}
-            clientSecret={secureJsonData.logAnalyticsClientSecret}
+            clientSecret={secureJsonData!.logAnalyticsClientSecret}
             clientSecretConfigured={secureJsonFields.logAnalyticsClientSecret}
             onSubscriptionSelectChange={this.onLogAnalyticsSubscriptionSelect}
             onTenantIdChange={this.onLogAnalyticsTenantIdChange}
@@ -168,12 +169,12 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 className="width-12"
                 tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
               >
                 Default Workspace
-              </FormLabel>
+              </InlineFormLabel>
               <div className="width-25">
                 <Select
                   value={workspaces.find(workspace => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}

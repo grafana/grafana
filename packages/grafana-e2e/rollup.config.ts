@@ -16,6 +16,7 @@ const buildCjsPackage = ({ env }) => ({
     exports: 'named',
     globals: {},
   },
+  external: ['@grafana/e2e-selectors'],
   plugins: [
     copy({
       flatten: false,

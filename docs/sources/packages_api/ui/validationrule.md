@@ -5,7 +5,6 @@
 title = "ValidationRule"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ValidationRule interface

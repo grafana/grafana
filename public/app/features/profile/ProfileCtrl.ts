@@ -1,5 +1,5 @@
 import { coreModule, NavModelSrv } from 'app/core/core';
-import { dateTime } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { UserSession } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
@@ -36,8 +36,8 @@ export class ProfileCtrl {
             return {
               id: session.id,
               isActive: session.isActive,
-              seenAt: dateTime(session.seenAt).fromNow(),
-              createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+              seenAt: dateTimeFormatTimeAgo(session.seenAt),
+              createdAt: dateTimeFormat(session.createdAt, { format: 'MMMM DD, YYYY' }),
               clientIp: session.clientIp,
               browser: session.browser,
               browserVersion: session.browserVersion,

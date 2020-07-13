@@ -5,7 +5,6 @@
 title = "addLogLevelToSeries"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## addLogLevelToSeries() function

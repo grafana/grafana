@@ -8,4 +8,6 @@ identifier = "admin"
 weight = 2
 +++
 
+# Administration
 
+This section provides resources for Grafana administrators.

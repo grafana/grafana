@@ -5,7 +5,6 @@
 title = "updateDatasourcePluginSecureJsonDataOption"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## updateDatasourcePluginSecureJsonDataOption variable

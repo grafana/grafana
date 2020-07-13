@@ -5,7 +5,6 @@
 title = "getTimeZoneGroups"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getTimeZoneGroups variable
@@ -15,10 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-getTimeZoneGroups: () => {
-    label: string;
-    options: string[];
-}[]
+getTimeZoneGroups: ((includeInternal?: any) => GroupedTimeZones[]) & import("lodash").MemoizedFunction
 ```
 <b>Import</b>
 

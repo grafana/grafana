@@ -12,12 +12,15 @@ import {
   DataQueryResponseData,
   DataSourceInstanceSettings,
   dateTime,
+  getFieldDisplayName,
   LoadingState,
+  toDataFrame,
 } from '@grafana/data';
 import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { CustomVariable } from 'app/features/templating/custom_variable';
+import { VariableHide } from '../../../features/variables/types';
+import { describe } from '../../../../test/lib/common';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
@@ -445,9 +448,25 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('When interpolating variables', () => {
-    let customVariable: CustomVariable;
+    let customVariable: any;
     beforeEach(() => {
-      customVariable = new CustomVariable({}, {} as any);
+      customVariable = {
+        id: '',
+        global: false,
+        multi: false,
+        includeAll: false,
+        allValue: null,
+        query: '',
+        options: [],
+        current: {},
+        name: '',
+        type: 'custom',
+        label: null,
+        hide: VariableHide.dontHide,
+        skipUrlSync: false,
+        index: -1,
+        initLock: null,
+      };
     });
 
     describe('and value is a string', () => {
@@ -586,8 +605,9 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should return series list', async () => {
+        const frame = toDataFrame(results.data[0]);
         expect(results.data.length).toBe(1);
-        expect(results.data[0].target).toBe('test{job="testjob"}');
+        expect(getFieldDisplayName(frame.fields[1])).toBe('test{job="testjob"}');
       });
     });
 
@@ -730,8 +750,10 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should return series list', () => {
+      const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('test{job="testjob"}');
+      expect(frame.name).toBe('test{job="testjob"}');
+      expect(getFieldDisplayName(frame.fields[1])).toBe('test{job="testjob"}');
     });
   });
 
@@ -1273,7 +1295,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1314,7 +1336,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1355,7 +1377,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=0&end=400&step=100';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1401,7 +1423,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=50&end=400&step=50';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1500,7 +1522,7 @@ describe('PrometheusDatasource', () => {
         '&step=' +
         step;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1550,7 +1572,7 @@ describe('PrometheusDatasource', () => {
         query.targets[0].expr
       )}&start=0&end=3600&step=60`;
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1634,8 +1656,9 @@ describe('PrometheusDatasource for POST', () => {
     });
 
     it('should return series list', () => {
+      const frame = toDataFrame(results.data[0]);
       expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('test{job="testjob"}');
+      expect(getFieldDisplayName(frame.fields[1])).toBe('test{job="testjob"}');
     });
   });
 
@@ -1859,6 +1882,68 @@ describe('prepareTargets', () => {
           instant: false,
           requestId: panelId + target.refId,
         });
+      });
+    });
+  });
+});
+
+describe('modifyQuery', () => {
+  describe('when called with ADD_FILTER', () => {
+    describe('and query has no labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
+        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster"}');
+      });
+    });
+
+    describe('and query has labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
+        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod="pod-123"}');
+      });
+    });
+  });
+
+  describe('when called with ADD_FILTER_OUT', () => {
+    describe('and query has no labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
+        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster!="us-cluster"}');
+      });
+    });
+
+    describe('and query has labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
+        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod!="pod-123"}');
       });
     });
   });

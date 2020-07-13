@@ -1,6 +1,6 @@
 {
   "type": "panel",
-  "name": "News Panel",
+  "name": "News",
   "id": "news",
 
   "skipDataQuery": true,
@@ -9,7 +9,7 @@
 
   "info": {
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

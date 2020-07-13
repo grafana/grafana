@@ -35,7 +35,6 @@ module.exports = function (grunt) {
     config.libc = grunt.option('libc');
   }
 
-  config.phjs = grunt.option('phjsToRelease');
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
 
   console.log('Version', config.pkg.version);

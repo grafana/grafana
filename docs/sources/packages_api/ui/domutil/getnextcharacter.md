@@ -5,7 +5,6 @@
 title = "getNextCharacter"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## DOMUtil.getNextCharacter() function
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function getNextCharacter(global?: any): any;
+export declare function getNextCharacter(global?: any): any;
 ```
 <b>Import</b>
 

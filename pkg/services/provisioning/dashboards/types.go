@@ -1,70 +1,70 @@
 package dashboards
 
 import (
-	"github.com/grafana/grafana/pkg/services/provisioning/values"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
-type DashboardsAsConfig struct {
+type config struct {
 	Name                  string
 	Type                  string
-	OrgId                 int64
+	OrgID                 int64
 	Folder                string
-	FolderUid             string
+	FolderUID             string
 	Editable              bool
 	Options               map[string]interface{}
 	DisableDeletion       bool
 	UpdateIntervalSeconds int64
-	AllowUiUpdates        bool
+	AllowUIUpdates        bool
 }
 
-type DashboardsAsConfigV0 struct {
+type configV0 struct {
 	Name                  string                 `json:"name" yaml:"name"`
 	Type                  string                 `json:"type" yaml:"type"`
-	OrgId                 int64                  `json:"org_id" yaml:"org_id"`
+	OrgID                 int64                  `json:"org_id" yaml:"org_id"`
 	Folder                string                 `json:"folder" yaml:"folder"`
-	FolderUid             string                 `json:"folderUid" yaml:"folderUid"`
+	FolderUID             string                 `json:"folderUid" yaml:"folderUid"`
 	Editable              bool                   `json:"editable" yaml:"editable"`
 	Options               map[string]interface{} `json:"options" yaml:"options"`
 	DisableDeletion       bool                   `json:"disableDeletion" yaml:"disableDeletion"`
 	UpdateIntervalSeconds int64                  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
-	AllowUiUpdates        bool                   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
+	AllowUIUpdates        bool                   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-type ConfigVersion struct {
-	ApiVersion int64 `json:"apiVersion" yaml:"apiVersion"`
+type configVersion struct {
+	APIVersion int64 `json:"apiVersion" yaml:"apiVersion"`
 }
 
-type DashboardAsConfigV1 struct {
-	Providers []*DashboardProviderConfigs `json:"providers" yaml:"providers"`
+type configV1 struct {
+	Providers []*configs `json:"providers" yaml:"providers"`
 }
 
-type DashboardProviderConfigs struct {
+type configs struct {
 	Name                  values.StringValue `json:"name" yaml:"name"`
 	Type                  values.StringValue `json:"type" yaml:"type"`
-	OrgId                 values.Int64Value  `json:"orgId" yaml:"orgId"`
+	OrgID                 values.Int64Value  `json:"orgId" yaml:"orgId"`
 	Folder                values.StringValue `json:"folder" yaml:"folder"`
-	FolderUid             values.StringValue `json:"folderUid" yaml:"folderUid"`
+	FolderUID             values.StringValue `json:"folderUid" yaml:"folderUid"`
 	Editable              values.BoolValue   `json:"editable" yaml:"editable"`
 	Options               values.JSONValue   `json:"options" yaml:"options"`
 	DisableDeletion       values.BoolValue   `json:"disableDeletion" yaml:"disableDeletion"`
 	UpdateIntervalSeconds values.Int64Value  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
-	AllowUiUpdates        values.BoolValue   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
+	AllowUIUpdates        values.BoolValue   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardDTO, error) {
+func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *config, folderID int64) (*dashboards.SaveDashboardDTO, error) {
 	dash := &dashboards.SaveDashboardDTO{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
-	dash.OrgId = cfg.OrgId
-	dash.Dashboard.OrgId = cfg.OrgId
-	dash.Dashboard.FolderId = folderId
+	dash.OrgId = cfg.OrgID
+	dash.Dashboard.OrgId = cfg.OrgID
+	dash.Dashboard.FolderId = folderID
 
 	if dash.Dashboard.Title == "" {
 		return nil, models.ErrDashboardTitleEmpty
@@ -73,44 +73,56 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 	return dash, nil
 }
 
-func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) []*DashboardsAsConfig {
-	var r []*DashboardsAsConfig
+func mapV0ToDashboardsAsConfig(v0 []*configV0) ([]*config, error) {
+	var r []*config
+	seen := make(map[string]bool)
 
 	for _, v := range v0 {
-		r = append(r, &DashboardsAsConfig{
+		if _, ok := seen[v.Name]; ok {
+			return nil, fmt.Errorf("dashboard name %q is not unique", v.Name)
+		}
+		seen[v.Name] = true
+
+		r = append(r, &config{
 			Name:                  v.Name,
 			Type:                  v.Type,
-			OrgId:                 v.OrgId,
+			OrgID:                 v.OrgID,
 			Folder:                v.Folder,
-			FolderUid:             v.FolderUid,
+			FolderUID:             v.FolderUID,
 			Editable:              v.Editable,
 			Options:               v.Options,
 			DisableDeletion:       v.DisableDeletion,
 			UpdateIntervalSeconds: v.UpdateIntervalSeconds,
-			AllowUiUpdates:        v.AllowUiUpdates,
+			AllowUIUpdates:        v.AllowUIUpdates,
 		})
 	}
 
-	return r
+	return r, nil
 }
 
-func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() []*DashboardsAsConfig {
-	var r []*DashboardsAsConfig
+func (dc *configV1) mapToDashboardsAsConfig() ([]*config, error) {
+	var r []*config
+	seen := make(map[string]bool)
 
 	for _, v := range dc.Providers {
-		r = append(r, &DashboardsAsConfig{
+		if _, ok := seen[v.Name.Value()]; ok {
+			return nil, fmt.Errorf("dashboard name %q is not unique", v.Name.Value())
+		}
+		seen[v.Name.Value()] = true
+
+		r = append(r, &config{
 			Name:                  v.Name.Value(),
 			Type:                  v.Type.Value(),
-			OrgId:                 v.OrgId.Value(),
+			OrgID:                 v.OrgID.Value(),
 			Folder:                v.Folder.Value(),
-			FolderUid:             v.FolderUid.Value(),
+			FolderUID:             v.FolderUID.Value(),
 			Editable:              v.Editable.Value(),
 			Options:               v.Options.Value(),
 			DisableDeletion:       v.DisableDeletion.Value(),
 			UpdateIntervalSeconds: v.UpdateIntervalSeconds.Value(),
-			AllowUiUpdates:        v.AllowUiUpdates.Value(),
+			AllowUIUpdates:        v.AllowUIUpdates.Value(),
 		})
 	}
 
-	return r
+	return r, nil
 }

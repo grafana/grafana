@@ -5,7 +5,6 @@
 title = "hasValidationEvent"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## hasValidationEvent variable

@@ -113,7 +113,6 @@ type DashTemplateEvaluator struct {
 }
 
 func (this *DashTemplateEvaluator) findInput(varName string, varType string) *ImportDashboardInput {
-
 	for _, input := range this.inputs {
 		if varType == input.Type && (input.Name == varName || input.Name == "*") {
 			return &input
@@ -146,7 +145,6 @@ func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 }
 
 func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
-
 	sourceValue := source.Interface()
 
 	switch v := sourceValue.(type) {

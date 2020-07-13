@@ -5,7 +5,6 @@
 title = "TableInputCSV"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## TableInputCSV class

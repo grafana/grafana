@@ -82,7 +82,7 @@ Name | Description
 *${__series_name}* | The name of the time series (or table)
 *${__value_time}* | The time of the point your clicking on (in millisecond epoch)
 *${__url_time_range}* | Interpolates as the full time range (i.e. from=21312323412&to=21312312312)
-*${__all_variables}* | Adds all current variables (and current values) to the url
+*${__all_variables}* | Adds all current variables (and current values) to the URL
 
 You can then click on point in the Graph.
 

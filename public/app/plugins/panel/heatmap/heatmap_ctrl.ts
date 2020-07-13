@@ -143,7 +143,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     // Bind grafana panel events
     this.events.on(PanelEvents.render, this.onRender.bind(this));
-    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
@@ -296,7 +296,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   // Directly support DataFrame
   onDataFramesReceived(data: DataFrame[]) {
     this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
-      ts.color = null; // remove whatever the processor set
+      ts.color = undefined; // remove whatever the processor set
       ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
       return ts;
     });

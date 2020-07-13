@@ -16,9 +16,9 @@ const ModalsContext = React.createContext<ModalsContextState>({
 
 interface ModalsProviderProps {
   children: React.ReactNode;
-  /** Set default component to render as modal. Usefull when rendering modals from Angular */
+  /** Set default component to render as modal. Useful when rendering modals from Angular */
   component?: React.ComponentType<any> | null;
-  /** Set default component props. Usefull when rendering modals from Angular */
+  /** Set default component props. Useful when rendering modals from Angular */
   props?: any;
 }
 

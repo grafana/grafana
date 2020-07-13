@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Forms } from '@grafana/ui';
+import { Button, Input, Form, Field } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { createNewFolder } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -37,8 +37,8 @@ export class NewDashboardsFolder extends PureComponent<Props> {
       .then(() => {
         return true;
       })
-      .catch(() => {
-        return 'Folder already exists.';
+      .catch(e => {
+        return e.message;
       });
   };
 
@@ -47,26 +47,26 @@ export class NewDashboardsFolder extends PureComponent<Props> {
       <Page navModel={this.props.navModel}>
         <Page.Contents>
           <h3>New Dashboard Folder</h3>
-          <Forms.Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
+          <Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
             {({ register, errors }) => (
               <>
-                <Forms.Field
+                <Field
                   label="Folder name"
                   invalid={!!errors.folderName}
                   error={errors.folderName && errors.folderName.message}
                 >
-                  <Forms.Input
+                  <Input
                     name="folderName"
                     ref={register({
                       required: 'Folder name is required.',
                       validate: async v => await this.validateFolderName(v),
                     })}
                   />
-                </Forms.Field>
-                <Forms.Button type="submit">Create</Forms.Button>
+                </Field>
+                <Button type="submit">Create</Button>
               </>
             )}
-          </Forms.Form>
+          </Form>
         </Page.Contents>
       </Page>
     );

@@ -55,7 +55,7 @@ export async function setDashboardAcl(dashboardId: any, aclList: any) {
   await client.post(`/dashboards/id/${dashboardId}/permissions`, { items: aclList });
 }
 
-const searchTestDataSetupRunnner: TaskRunner<SearchTestDataSetupOptions> = async ({ count }) => {
+const searchTestDataSetupRunner: TaskRunner<SearchTestDataSetupOptions> = async ({ count }) => {
   const user1 = await getUser({
     name: 'searchTestUser1',
     email: 'searchTestUser@team.com',
@@ -112,5 +112,5 @@ const searchTestDataSetupRunnner: TaskRunner<SearchTestDataSetupOptions> = async
 
 export const searchTestDataSetupTask = new Task<SearchTestDataSetupOptions>(
   'Search test data setup',
-  searchTestDataSetupRunnner
+  searchTestDataSetupRunner
 );

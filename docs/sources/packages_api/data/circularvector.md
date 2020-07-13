@@ -5,19 +5,18 @@
 title = "CircularVector"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## CircularVector class
 
 Circular vector uses a single buffer to capture a stream of values overwriting the oldest value on add.
 
-This supports addting to the 'head' or 'tail' and will grow the buffer to match a configured capacity.
+This supports adding to the 'head' or 'tail' and will grow the buffer to match a configured capacity.
 
 <b>Signature</b>
 
 ```typescript
-export declare class CircularVector<T = any> implements MutableVector<T> 
+export declare class CircularVector<T = any> extends FunctionalVector implements MutableVector<T> 
 ```
 <b>Import</b>
 

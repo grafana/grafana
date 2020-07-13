@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { sanitize } from 'app/core/utils/text';
+import { textUtil } from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -150,7 +150,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
   };
 
   elem.mouseleave(() => {
-    if (panel.tooltip.shared) {
+    if (panel.tooltip?.shared) {
       const plot = elem.data().plot;
       if (plot) {
         $tooltip.detach();
@@ -207,14 +207,18 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         self.clear(plot);
         return;
       }
+
       pos.pageX = elem.offset().left + pointOffset.left;
       pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
-      const isVisible =
-        pos.pageY >= $(window).scrollTop() && pos.pageY <= $(window).innerHeight() + $(window).scrollTop();
+
+      const scrollTop = $(window).scrollTop() ?? 0;
+      const isVisible = pos.pageY >= scrollTop && pos.pageY <= $(window).innerHeight()! + scrollTop;
+
       if (!isVisible) {
         self.clear(plot);
         return;
       }
+
       plot.setCrosshair(pos);
       allSeriesMode = true;
 
@@ -268,10 +272,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         }
 
         series = seriesList[hoverInfo.index];
-        value = sanitize(series.formatValue(hoverInfo.value));
+        value = textUtil.sanitize(series.formatValue(hoverInfo.value));
 
-        const color = sanitize(hoverInfo.color);
-        const label = sanitize(hoverInfo.label);
+        const color = textUtil.sanitize(hoverInfo.color);
+        const label = textUtil.sanitize(hoverInfo.label);
 
         seriesHtml +=
           '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
@@ -283,7 +287,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       self.renderAndShow(absoluteTime, seriesHtml, pos, xMode);
     } else if (item) {
       // single series tooltip
-      const color = sanitize(item.series.color);
+      const color = textUtil.sanitize(item.series.color);
       series = seriesList[item.seriesIndex];
       group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
       group += '<i class="fa fa-minus" style="color:' + color + ';"></i> ' + series.aliasEscaped + ':</div>';
@@ -294,7 +298,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         value = item.datapoint[1];
       }
 
-      value = sanitize(series.formatValue(value));
+      value = textUtil.sanitize(series.formatValue(value));
       absoluteTime = dashboard.formatDate(item.datapoint[0], tooltipFormat);
 
       group += '<div class="graph-tooltip-value">' + value + '</div>';

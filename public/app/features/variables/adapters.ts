@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { Reducer } from 'redux';
-import { UrlQueryValue } from '@grafana/runtime';
+import { Registry, UrlQueryValue, VariableType } from '@grafana/data';
 
 import {
   AdHocVariableModel,
@@ -12,12 +12,10 @@ import {
   TextBoxVariableModel,
   VariableModel,
   VariableOption,
-  VariableType,
-} from '../templating/variable';
+} from './types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';
-import { Registry } from '@grafana/data';
 import { createQueryVariableAdapter } from './query/adapter';
 import { createCustomVariableAdapter } from './custom/adapter';
 import { createTextBoxVariableAdapter } from './textbox/adapter';
@@ -25,6 +23,7 @@ import { createConstantVariableAdapter } from './constant/adapter';
 import { createDataSourceVariableAdapter } from './datasource/adapter';
 import { createIntervalVariableAdapter } from './interval/adapter';
 import { createAdHocVariableAdapter } from './adhoc/adapter';
+import { createSystemVariableAdapter } from './system/adapter';
 
 export interface VariableAdapter<Model extends VariableModel> {
   id: VariableType;
@@ -60,6 +59,7 @@ export const getDefaultVariableAdapters = () => [
   createDataSourceVariableAdapter(),
   createIntervalVariableAdapter(),
   createAdHocVariableAdapter(),
+  createSystemVariableAdapter(),
 ];
 
 export const variableAdapters: VariableTypeRegistry = new Registry<VariableAdapter<VariableModels>>();

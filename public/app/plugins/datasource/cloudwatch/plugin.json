@@ -4,6 +4,7 @@
   "id": "cloudwatch",
   "category": "cloud",
   "metrics": true,
+  "logs": true,
   "alerting": true,
   "annotations": true,
   "includes": [
@@ -21,7 +22,7 @@
   "info": {
     "description": "Data source for Amazon AWS monitoring service",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

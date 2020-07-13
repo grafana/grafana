@@ -116,7 +116,7 @@ func sanitizeMethod(m string) string {
 }
 
 // If the wrapped http.Handler has not set a status code, i.e. the value is
-// currently 0, santizeCode will return 200, for consistency with behavior in
+// currently 0, sanitizeCode will return 200, for consistency with behavior in
 // the stdlib.
 func sanitizeCode(s int) string {
 	switch s {

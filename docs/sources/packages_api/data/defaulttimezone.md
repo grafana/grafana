@@ -5,7 +5,6 @@
 title = "DefaultTimeZone"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DefaultTimeZone variable

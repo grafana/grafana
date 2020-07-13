@@ -5,7 +5,6 @@
 title = "getColumnsFromDimension"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getColumnsFromDimension variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-getColumnsFromDimension: (dimension: Dimension<any>) => Field<any, import("..").Vector<any>>[]
+getColumnsFromDimension: (dimension: Dimension) => Field<any, import("..").Vector<any>>[]
 ```
 <b>Import</b>
 

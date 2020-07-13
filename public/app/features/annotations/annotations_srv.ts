@@ -7,8 +7,8 @@ import coreModule from 'app/core/core_module';
 // Utils & Services
 import { dedupAnnotations } from './events_processing';
 // Types
-import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, PanelModel, TimeRange } from '@grafana/data';
+import { DashboardModel, PanelModel } from '../dashboard/state';
+import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
@@ -36,12 +36,14 @@ export class AnnotationsSrv {
       .then(results => {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = flattenDeep(results[0]);
+        // when in edit mode we need to use this function to get the saved id
+        let panelFilterId = options.panel.getSavedId();
 
         // filter out annotations that do not belong to requesting panel
         annotations = annotations.filter(item => {
           // if event has panel id and query is of type dashboard then panel and requesting panel id must match
           if (item.panelId && item.source.type === 'dashboard') {
-            return item.panelId === options.panel.id;
+            return item.panelId === panelFilterId;
           }
           return true;
         });
@@ -49,7 +51,7 @@ export class AnnotationsSrv {
         annotations = dedupAnnotations(annotations);
 
         // look for alert state for this panel
-        const alertState: any = results[1].find((res: any) => res.panelId === options.panel.id);
+        const alertState: any = results[1].find((res: any) => res.panelId === panelFilterId);
 
         return {
           annotations: annotations,
@@ -60,7 +62,7 @@ export class AnnotationsSrv {
         if (!err.message && err.data && err.data.message) {
           err.message = err.data.message;
         }
-        console.log('AnnotationSrv.query error', err);
+        console.error('AnnotationSrv.query error', err);
         appEvents.emit(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
@@ -119,7 +121,10 @@ export class AnnotationsSrv {
       promises.push(
         datasourcePromise
           .then((datasource: DataSourceApi) => {
-            // issue query against data source
+            if (!datasource.annotationQuery) {
+              return [];
+            }
+
             return datasource.annotationQuery({
               range,
               rangeRaw: range.raw,

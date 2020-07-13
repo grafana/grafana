@@ -65,17 +65,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         });
       }
 
-      function onViewModeChanged() {
-        // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
-        setTimeout(() => {
-          // then wait another cycle (this might not be needed)
-          $timeout(() => {
-            ctrl.render();
-            resizeScrollableContent();
-          });
-        }, 10);
-      }
-
       function onPanelModelRender(payload?: any) {
         ctrl.height = scope.$parent.$parent.size.height;
         ctrl.width = scope.$parent.$parent.size.width;
@@ -89,7 +78,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       panel.events.on(PanelEvents.refresh, onPanelModelRefresh);
       panel.events.on(PanelEvents.render, onPanelModelRender);
       panel.events.on(PanelEvents.panelSizeChanged, onPanelSizeChanged);
-      panel.events.on(PanelEvents.viewModeChanged, onViewModeChanged);
 
       scope.$on('$destroy', () => {
         elem.off();

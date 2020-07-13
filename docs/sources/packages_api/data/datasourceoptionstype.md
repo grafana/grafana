@@ -5,7 +5,6 @@
 title = "DataSourceOptionsType"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataSourceOptionsType type

@@ -5,7 +5,6 @@
 title = "Modal"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Modal variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-Modal: React.FunctionComponent<Pick<Props, "title" | "icon" | "className" | "isOpen" | "onDismiss" | "onClickBackdrop">>
+Modal: React.FunctionComponent<Pick<Props, "title" | "className" | "icon" | "isOpen" | "onDismiss" | "onClickBackdrop">>
 ```
 <b>Import</b>
 

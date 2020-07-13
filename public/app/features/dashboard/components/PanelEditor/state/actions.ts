@@ -1,31 +1,23 @@
-import { PanelModel, DashboardModel } from '../../../state';
-import { PanelData } from '@grafana/data';
+import { DashboardModel, PanelModel } from '../../../state';
 import { ThunkResult } from 'app/types';
 import {
-  setEditorPanelData,
-  updateEditorInitState,
   closeCompleted,
+  PANEL_EDITOR_UI_STATE_STORAGE_KEY,
   PanelEditorUIState,
   setPanelEditorUIState,
-  PANEL_EDITOR_UI_STATE_STORAGE_KEY,
+  updateEditorInitState,
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from '../../../../../core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
-    const panel = dashboard.initPanelEditor(sourcePanel);
-
-    const queryRunner = panel.getQueryRunner();
-    const querySubscription = queryRunner.getData().subscribe({
-      next: (data: PanelData) => dispatch(setEditorPanelData(data)),
-    });
+    const panel = dashboard.initEditPanel(sourcePanel);
 
     dispatch(
       updateEditorInitState({
         panel,
         sourcePanel,
-        querySubscription,
       })
     );
   };
@@ -34,7 +26,8 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
+    const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
+
     if (!shouldDiscardChanges) {
       const panel = getPanel();
       const modifiedSaveModel = panel.getSaveModel();
@@ -46,19 +39,24 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
       sourcePanel.restoreModel(modifiedSaveModel);
 
+      // Loaded plugin is not included in the persisted properties
+      // So is not handled by restoreModel
+      sourcePanel.plugin = panel.plugin;
+
       if (panelTypeChanged) {
-        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin }));
+        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
-        sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
+        sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
       }, 20);
     }
 
-    dashboard.exitPanelEditor();
-    querySubscription.unsubscribe();
+    if (dashboard) {
+      dashboard.exitPanelEditor();
+    }
 
     dispatch(cleanUpEditPanel());
     dispatch(closeCompleted());
@@ -67,8 +65,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
   return (dispatch, getStore) => {
-    const nextState = { ...getStore().panelEditorNew.ui, ...uiState };
+    const nextState = { ...getStore().panelEditor.ui, ...uiState };
     dispatch(setPanelEditorUIState(nextState));
-    store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    try {
+      store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    } catch (error) {
+      console.error(error);
+    }
   };
 }

@@ -7,12 +7,12 @@
     <ol class="alert-rule-list">
       <li class="alert-rule-item" ng-repeat="alert in ctrl.currentAlerts">
         <div class="alert-rule-item__icon  {{alert.stateModel.stateClass}}">
-          <i class="{{alert.stateModel.iconClass}}"></i>
+          <icon name="'{{alert.stateModel.iconClass}}'" size="'xl'" style="margin-right: 4px;"></icon>
         </div>
         <div class="alert-rule-item__body">
           <div class="alert-rule-item__header">
             <p class="alert-rule-item__name">
-              <a href="{{alert.url}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+              <a href="{{alert.url}}?editPanel={{alert.panelId}}&tab=alert">
                 {{alert.name}}
               </a>
             </p>
@@ -30,7 +30,7 @@
     <ol class="alert-rule-list">
       <li class="alert-rule-item" ng-repeat="al in ctrl.alertHistory">
         <div class="alert-rule-item__icon {{al.stateModel.stateClass}}">
-          <i class="{{al.stateModel.iconClass}}"></i>
+          <icon name="'{{al.stateModel.iconClass}}'" size="'xl'"></icon>
         </div>
         <div class="alert-rule-item__body">
           <div class="alert-rule-item__header">

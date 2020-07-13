@@ -14,8 +14,8 @@ var (
 	rangedTypes  = []string{"within_range", "outside_range"}
 )
 
-// AlertEvaluator evaluates the reduced value of a timeserie.
-// Returning true if a timeserie is violating the condition
+// AlertEvaluator evaluates the reduced value of a timeseries.
+// Returning true if a timeseries is violating the condition
 // ex: ThresholdEvaluator, NoValueEvaluator, RangeEvaluator
 type AlertEvaluator interface {
 	Eval(reducedValue null.Float) bool
@@ -140,7 +140,7 @@ func inSlice(a string, list []string) bool {
 	return false
 }
 
-// HumanThresholdType converts a treshold "type" string to a string that matches the UI
+// HumanThresholdType converts a threshold "type" string to a string that matches the UI
 // so errors are less confusing.
 func HumanThresholdType(typ string) string {
 	switch typ {

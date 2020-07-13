@@ -82,10 +82,10 @@ describe('Gauge Panel Migrations', () => {
 
     // Ignored due to the API change
     //@ts-ignore
-    expect(result.fieldOptions.defaults).toBeUndefined();
+    expect(result.reduceOptions.defaults).toBeUndefined();
     // Ignored due to the API change
     //@ts-ignore
-    expect(result.fieldOptions.overrides).toBeUndefined();
+    expect(result.reduceOptions.overrides).toBeUndefined();
 
     expect((panel as PanelModel).fieldConfig).toMatchInlineSnapshot(`
       Object {
@@ -162,24 +162,5 @@ describe('Gauge Panel Migrations', () => {
     expect(panel.fieldConfig.defaults.decimals).toBe(7);
     expect(newOptions.showThresholdMarkers).toBe(true);
     expect(newOptions.showThresholdLabels).toBe(true);
-  });
-
-  it('change from angular singlestatt with no enabled gauge', () => {
-    const old: any = {
-      angular: {
-        format: 'ms',
-        decimals: 7,
-        gauge: {
-          maxValue: 150,
-          minValue: -10,
-          show: false,
-        },
-      },
-    };
-    const panel = {} as PanelModel;
-    gaugePanelChangedHandler(panel, 'singlestat', old);
-    expect(panel.fieldConfig.defaults.unit).toBe('ms');
-    expect(panel.fieldConfig.defaults.min).toBe(undefined);
-    expect(panel.fieldConfig.defaults.max).toBe(undefined);
   });
 });

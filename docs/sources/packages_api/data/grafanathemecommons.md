@@ -5,7 +5,6 @@
 title = "GrafanaThemeCommons"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## GrafanaThemeCommons interface
@@ -25,14 +24,14 @@ import { GrafanaThemeCommons } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [border](#border-property) | <code>{</code><br/><code>        radius: {</code><br/><code>            sm: string;</code><br/><code>            md: string;</code><br/><code>            lg: string;</code><br/><code>        };</code><br/><code>        width: {</code><br/><code>            sm: string;</code><br/><code>        };</code><br/><code>    }</code> |  |
-|  [breakpoints](#breakpoints-property) | <code>{</code><br/><code>        xs: string;</code><br/><code>        sm: string;</code><br/><code>        md: string;</code><br/><code>        lg: string;</code><br/><code>        xl: string;</code><br/><code>    }</code> |  |
-|  [height](#height-property) | <code>{</code><br/><code>        sm: string;</code><br/><code>        md: string;</code><br/><code>        lg: string;</code><br/><code>    }</code> |  |
+|  [breakpoints](#breakpoints-property) | <code>{</code><br/><code>        xs: string;</code><br/><code>        sm: string;</code><br/><code>        md: string;</code><br/><code>        lg: string;</code><br/><code>        xl: string;</code><br/><code>        xxl: string;</code><br/><code>    }</code> |  |
+|  [height](#height-property) | <code>{</code><br/><code>        sm: number;</code><br/><code>        md: number;</code><br/><code>        lg: number;</code><br/><code>    }</code> |  |
 |  [name](#name-property) | <code>string</code> |  |
 |  [panelHeaderHeight](#panelheaderheight-property) | <code>number</code> |  |
 |  [panelPadding](#panelpadding-property) | <code>number</code> |  |
-|  [spacing](#spacing-property) | <code>{</code><br/><code>        insetSquishMd: string;</code><br/><code>        d: string;</code><br/><code>        xxs: string;</code><br/><code>        xs: string;</code><br/><code>        sm: string;</code><br/><code>        md: string;</code><br/><code>        lg: string;</code><br/><code>        xl: string;</code><br/><code>        gutter: string;</code><br/><code>        formSpacingBase: number;</code><br/><code>        formMargin: string;</code><br/><code>        formFieldsetMargin: string;</code><br/><code>        formLegendMargin: string;</code><br/><code>        formInputHeight: string;</code><br/><code>        formButtonHeight: number;</code><br/><code>        formInputPaddingHorizontal: string;</code><br/><code>        formInputAffixPaddingHorizontal: string;</code><br/><code>        formInputMargin: string;</code><br/><code>        formLabelPadding: string;</code><br/><code>        formLabelMargin: string;</code><br/><code>        formValidationMessagePadding: string;</code><br/><code>        formValidationMessageMargin: string;</code><br/><code>    }</code> |  |
+|  [spacing](#spacing-property) | <code>{</code><br/><code>        insetSquishMd: string;</code><br/><code>        d: string;</code><br/><code>        xxs: string;</code><br/><code>        xs: string;</code><br/><code>        sm: string;</code><br/><code>        md: string;</code><br/><code>        lg: string;</code><br/><code>        xl: string;</code><br/><code>        gutter: string;</code><br/><code>        formSpacingBase: number;</code><br/><code>        formMargin: string;</code><br/><code>        formFieldsetMargin: string;</code><br/><code>        formInputHeight: number;</code><br/><code>        formButtonHeight: number;</code><br/><code>        formInputPaddingHorizontal: string;</code><br/><code>        formInputAffixPaddingHorizontal: string;</code><br/><code>        formInputMargin: string;</code><br/><code>        formLabelPadding: string;</code><br/><code>        formLabelMargin: string;</code><br/><code>        formValidationMessagePadding: string;</code><br/><code>        formValidationMessageMargin: string;</code><br/><code>        inlineFormMargin: string;</code><br/><code>    }</code> |  |
 |  [typography](#typography-property) | <code>{</code><br/><code>        fontFamily: {</code><br/><code>            sansSerif: string;</code><br/><code>            monospace: string;</code><br/><code>        };</code><br/><code>        size: {</code><br/><code>            base: string;</code><br/><code>            xs: string;</code><br/><code>            sm: string;</code><br/><code>            md: string;</code><br/><code>            lg: string;</code><br/><code>        };</code><br/><code>        weight: {</code><br/><code>            light: number;</code><br/><code>            regular: number;</code><br/><code>            semibold: number;</code><br/><code>            bold: number;</code><br/><code>        };</code><br/><code>        lineHeight: {</code><br/><code>            xs: number;</code><br/><code>            sm: number;</code><br/><code>            md: number;</code><br/><code>            lg: number;</code><br/><code>        };</code><br/><code>        heading: {</code><br/><code>            h1: string;</code><br/><code>            h2: string;</code><br/><code>            h3: string;</code><br/><code>            h4: string;</code><br/><code>            h5: string;</code><br/><code>            h6: string;</code><br/><code>        };</code><br/><code>        link: {</code><br/><code>            decoration: string;</code><br/><code>            hoverDecoration: string;</code><br/><code>        };</code><br/><code>    }</code> |  |
-|  [zIndex](#zindex-property) | <code>{</code><br/><code>        dropdown: string;</code><br/><code>        navbarFixed: string;</code><br/><code>        sidemenu: string;</code><br/><code>        tooltip: string;</code><br/><code>        modalBackdrop: string;</code><br/><code>        modal: string;</code><br/><code>        typeahead: string;</code><br/><code>    }</code> |  |
+|  [zIndex](#zindex-property) | <code>{</code><br/><code>        dropdown: number;</code><br/><code>        navbarFixed: number;</code><br/><code>        sidemenu: number;</code><br/><code>        tooltip: number;</code><br/><code>        modalBackdrop: number;</code><br/><code>        modal: number;</code><br/><code>        typeahead: number;</code><br/><code>    }</code> |  |
 
 ### border property
 
@@ -62,6 +61,7 @@ breakpoints: {
         md: string;
         lg: string;
         xl: string;
+        xxl: string;
     };
 ```
 
@@ -71,9 +71,9 @@ breakpoints: {
 
 ```typescript
 height: {
-        sm: string;
-        md: string;
-        lg: string;
+        sm: number;
+        md: number;
+        lg: number;
     };
 ```
 
@@ -119,8 +119,7 @@ spacing: {
         formSpacingBase: number;
         formMargin: string;
         formFieldsetMargin: string;
-        formLegendMargin: string;
-        formInputHeight: string;
+        formInputHeight: number;
         formButtonHeight: number;
         formInputPaddingHorizontal: string;
         formInputAffixPaddingHorizontal: string;
@@ -129,6 +128,7 @@ spacing: {
         formLabelMargin: string;
         formValidationMessagePadding: string;
         formValidationMessageMargin: string;
+        inlineFormMargin: string;
     };
 ```
 
@@ -182,12 +182,12 @@ typography: {
 
 ```typescript
 zIndex: {
-        dropdown: string;
-        navbarFixed: string;
-        sidemenu: string;
-        tooltip: string;
-        modalBackdrop: string;
-        modal: string;
-        typeahead: string;
+        dropdown: number;
+        navbarFixed: number;
+        sidemenu: number;
+        tooltip: number;
+        modalBackdrop: number;
+        modal: number;
+        typeahead: number;
     };
 ```

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { css } from 'emotion';
-import { uniqBy } from 'lodash';
+import { uniqBy, debounce } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -10,12 +10,13 @@ import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { SortOrder } from '../../../core/utils/explore';
-import { sortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
+import { filterAndSortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select } from '@grafana/ui';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -24,11 +25,11 @@ export interface Props {
   datasourceFilters: SelectableValue[] | null;
   exploreId: ExploreId;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
+  onSelectDatasourceFilters: (value: SelectableValue[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
   return {
     container: css`
       display: flex;
@@ -39,19 +40,24 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     selectors: css`
       display: flex;
       justify-content: space-between;
+      flex-wrap: wrap;
     `,
     multiselect: css`
-      width: 60%;
+      width: 100%;
+      margin-bottom: ${theme.spacing.sm};
       .gf-form-select-box__multi-value {
         background-color: ${bgColor};
         padding: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.sm};
         border-radius: ${theme.border.radius.sm};
       }
     `,
+    filterInput: css`
+      margin-bottom: ${theme.spacing.sm};
+    `,
     sort: css`
       width: 170px;
     `,
-    feedback: css`
+    footer: css`
       height: 60px;
       margin-top: ${theme.spacing.lg};
       display: flex;
@@ -77,20 +83,40 @@ export function RichHistoryStarredTab(props: Props) {
     exploreId,
   } = props;
 
+  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
+  const [searchInput, setSearchInput] = useState('');
+
   const theme = useTheme();
   const styles = getStyles(theme);
 
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
-
-  const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
-
   const starredQueries = queries.filter(q => q.starred === true);
-  const starredQueriesFilteredByDatasource = datasourceFilters
-    ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-    : starredQueries;
 
-  const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
+  const filterAndSortQueriesDebounced = useCallback(
+    debounce((searchValue: string) => {
+      setFilteredQueries(
+        filterAndSortQueries(
+          starredQueries,
+          sortOrder,
+          datasourceFilters?.map(d => d.value) as string[] | null,
+          searchValue
+        )
+      );
+    }, 300),
+    [queries, sortOrder, datasourceFilters]
+  );
+
+  useEffect(() => {
+    setFilteredQueries(
+      filterAndSortQueries(
+        starredQueries,
+        sortOrder,
+        datasourceFilters?.map(d => d.value) as string[] | null,
+        searchInput
+      )
+    );
+  }, [queries, sortOrder, datasourceFilters]);
 
   return (
     <div className={styles.container}>
@@ -107,6 +133,18 @@ export function RichHistoryStarredTab(props: Props) {
               />
             </div>
           )}
+          <div className={styles.filterInput}>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search queries"
+              value={searchInput}
+              onChange={(value: string) => {
+                setSearchInput(value);
+                filterAndSortQueriesDebounced(value);
+              }}
+            />
+          </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
               options={sortOrderOptions}
@@ -116,7 +154,7 @@ export function RichHistoryStarredTab(props: Props) {
             />
           </div>
         </div>
-        {sortedStarredQueries.map(q => {
+        {filteredQueries.map(q => {
           const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
           return (
             <RichHistoryCard
@@ -128,10 +166,7 @@ export function RichHistoryStarredTab(props: Props) {
             />
           );
         })}
-        <div className={styles.feedback}>
-          Query history is a beta feature. The history is local to your browser and is not shared with others.
-          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
-        </div>
+        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>
   );

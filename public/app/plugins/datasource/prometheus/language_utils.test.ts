@@ -1,4 +1,4 @@
-import { expandRecordingRules, parseSelector } from './language_utils';
+import { expandRecordingRules, fixSummariesMetadata, parseSelector } from './language_utils';
 
 describe('parseSelector()', () => {
   let parsed;
@@ -70,6 +70,33 @@ describe('parseSelector()', () => {
   });
 });
 
+describe('fixSummariesMetadata', () => {
+  it('returns empty metadata', () => {
+    expect(fixSummariesMetadata({})).toEqual({});
+  });
+
+  it('returns unchanged metadata if no summary is present', () => {
+    const metadata = {
+      foo: [{ type: 'not_a_summary', help: 'foo help' }],
+    };
+    expect(fixSummariesMetadata(metadata)).toEqual(metadata);
+  });
+
+  it('returns metadata with added count and sum for a summary', () => {
+    const metadata = {
+      foo: [{ type: 'not_a_summary', help: 'foo help' }],
+      bar: [{ type: 'summary', help: 'bar help' }],
+    };
+    const expected = {
+      foo: [{ type: 'not_a_summary', help: 'foo help' }],
+      bar: [{ type: 'summary', help: 'bar help' }],
+      bar_count: [{ type: 'counter', help: 'Count of events that have been observed for the base metric (bar help)' }],
+      bar_sum: [{ type: 'counter', help: 'Total sum of all observed values for the base metric (bar help)' }],
+    };
+    expect(fixSummariesMetadata(metadata)).toEqual(expected);
+  });
+});
+
 describe('expandRecordingRules()', () => {
   it('returns query w/o recording rules as is', () => {
     expect(expandRecordingRules('metric', {})).toBe('metric');
@@ -89,5 +116,28 @@ describe('expandRecordingRules()', () => {
     expect(expandRecordingRules('metric{}', { metric: 'foo' })).toBe('foo{}');
     expect(expandRecordingRules('metric[]', { metric: 'foo' })).toBe('foo[]');
     expect(expandRecordingRules('metric + foo', { metric: 'foo', foo: 'bar' })).toBe('foo + bar');
+  });
+
+  it('returns query with labels with expanded recording rules', () => {
+    expect(
+      expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', { metricA: 'fooA', metricB: 'fooB' })
+    ).toBe('fooA{label1="value1"} / fooB{label2="value2"}');
+    expect(
+      expandRecordingRules('metricA{label1="value1",label2="value,2"}', {
+        metricA: 'rate(fooA[])',
+      })
+    ).toBe('rate(fooA{label1="value1",label2="value,2"}[])');
+    expect(
+      expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', {
+        metricA: 'rate(fooA[])',
+        metricB: 'rate(fooB[])',
+      })
+    ).toBe('rate(fooA{label1="value1"}[])/ rate(fooB{label2="value2"}[])');
+    expect(
+      expandRecordingRules('metricA{label1="value1",label2="value2"} / metricB{label3="value3"}', {
+        metricA: 'rate(fooA[])',
+        metricB: 'rate(fooB[])',
+      })
+    ).toBe('rate(fooA{label1="value1",label2="value2"}[])/ rate(fooB{label3="value3"}[])');
   });
 });

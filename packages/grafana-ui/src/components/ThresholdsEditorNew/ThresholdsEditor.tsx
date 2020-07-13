@@ -10,14 +10,14 @@ import {
 } from '@grafana/data';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { Input } from '../Forms/Input/Input';
+import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import { Field } from '../Forms/Field';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
+import { Label } from '../Forms/Label';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -182,7 +182,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             {isPercent && <div className={styles.percentIcon}>%</div>}
           </div>
         }
-        suffix={<Icon className={styles.trashIcon} name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
+        suffix={
+          <Icon className={styles.trashIcon} name="trash-alt" onClick={() => this.onRemoveThreshold(threshold)} />
+        }
       />
     );
   }
@@ -198,7 +200,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           return (
             <div className={styles.wrapper}>
               <FullWidthButtonContainer className={styles.addButton}>
-                <Button size="sm" icon="fa fa-plus" onClick={() => this.onAddThreshold()}>
+                <Button size="sm" icon="plus" onClick={() => this.onAddThreshold()} variant="secondary">
                   Add threshold
                 </Button>
               </FullWidthButtonContainer>
@@ -215,11 +217,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                   })}
               </div>
 
-              <Field label="Threshold mode">
+              <div>
+                <Label description="Percentage means thresholds relative to min & max">Thresholds mode</Label>
                 <FullWidthButtonContainer>
                   <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
                 </FullWidthButtonContainer>
-              </Field>
+              </div>
             </div>
           );
         }}
@@ -276,7 +279,7 @@ const getStyles = stylesFactory(
       wrapper: css`
         display: flex;
         flex-direction: column;
-        margin-bottom: -${theme.spacing.formSpacingBase * 2}px;
+        // margin-bottom: -${theme.spacing.formSpacingBase * 2}px;
       `,
       thresholds: css`
         display: flex;

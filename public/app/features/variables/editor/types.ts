@@ -1,4 +1,4 @@
-import { VariableModel } from '../../templating/variable';
+import { VariableModel } from '../types';
 
 export interface OnPropChangeArguments<Model extends VariableModel = VariableModel> {
   propName: keyof Model;

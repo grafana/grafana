@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_version="1.2.4"
+_version="1.2.5"
 _tag="grafana/grafana-ci-deploy:${_version}"
 
 docker build -t $_tag .

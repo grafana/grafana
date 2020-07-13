@@ -28,24 +28,28 @@ func TestSearchJSONForEmail(t *testing.T) {
 			UserInfoJSONResponse []byte
 			EmailAttributePath   string
 			ExpectedResult       string
+			ExpectedError        string
 		}{
 			{
 				Name:                 "Given an invalid user info JSON response",
 				UserInfoJSONResponse: []byte("{"),
 				EmailAttributePath:   "attributes.email",
 				ExpectedResult:       "",
+				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and empty JMES path",
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "",
 				ExpectedResult:       "",
+				ExpectedError:        "no attribute path specified",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and valid JMES path",
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "attributes.email",
 				ExpectedResult:       "",
+				ExpectedError:        "empty user info JSON response provided",
 			},
 			{
 				Name: "Given a simple user info JSON response and valid JMES path",
@@ -87,7 +91,12 @@ func TestSearchJSONForEmail(t *testing.T) {
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
+				actualResult, err := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
 				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
@@ -107,24 +116,28 @@ func TestSearchJSONForRole(t *testing.T) {
 			UserInfoJSONResponse []byte
 			RoleAttributePath    string
 			ExpectedResult       string
+			ExpectedError        string
 		}{
 			{
 				Name:                 "Given an invalid user info JSON response",
 				UserInfoJSONResponse: []byte("{"),
 				RoleAttributePath:    "attributes.role",
 				ExpectedResult:       "",
+				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and empty JMES path",
 				UserInfoJSONResponse: []byte{},
 				RoleAttributePath:    "",
 				ExpectedResult:       "",
+				ExpectedError:        "no attribute path specified",
 			},
 			{
 				Name:                 "Given an empty user info JSON response and valid JMES path",
 				UserInfoJSONResponse: []byte{},
 				RoleAttributePath:    "attributes.role",
 				ExpectedResult:       "",
+				ExpectedError:        "empty user info JSON response provided",
 			},
 			{
 				Name: "Given a simple user info JSON response and valid JMES path",
@@ -141,7 +154,12 @@ func TestSearchJSONForRole(t *testing.T) {
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
+				actualResult, err := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
 				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
@@ -159,7 +177,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 		tests := []struct {
 			Name              string
-			APIURLReponse     interface{}
+			APIURLResponse    interface{}
 			OAuth2Extra       interface{}
 			RoleAttributePath string
 			ExpectedEmail     string
@@ -197,7 +215,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a valid role path, a valid api response, use api response",
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role":  "Admin",
 					"email": "john.doe@example.com",
 				},
@@ -207,7 +225,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, no role path, a valid api response, use api response",
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"email": "john.doe@example.com",
 				},
 				RoleAttributePath: "",
@@ -216,7 +234,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a role path, a valid api response without a role, use api response",
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"email": "john.doe@example.com",
 				},
 				RoleAttributePath: "role",
@@ -235,7 +253,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role":  "FromResponse",
 					"email": "from_response@example.com",
 				},
@@ -249,7 +267,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role":  "FromResponse",
 					"email": "from_response@example.com",
 				},
@@ -263,7 +281,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "role": "Admin" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"email": "from_response@example.com",
 				},
 				RoleAttributePath: "role",
@@ -276,7 +294,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 					// { "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 				},
-				APIURLReponse: map[string]interface{}{
+				APIURLResponse: map[string]interface{}{
 					"role": "FromResponse",
 				},
 				RoleAttributePath: "role",
@@ -288,11 +306,13 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				response, _ := json.Marshal(test.APIURLReponse)
+				response, err := json.Marshal(test.APIURLResponse)
+				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json")
-					_, _ = io.WriteString(w, string(response))
+					_, err = io.WriteString(w, string(response))
+					require.NoError(t, err)
 				}))
 				provider.apiUrl = ts.URL
 				staticToken := oauth2.Token{
@@ -303,7 +323,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, _ := provider.UserInfo(ts.Client(), token)
+				actualResult, err := provider.UserInfo(ts.Client(), token)
+				require.NoError(t, err)
 				require.Equal(t, test.ExpectedEmail, actualResult.Email)
 				require.Equal(t, test.ExpectedEmail, actualResult.Login)
 				require.Equal(t, test.ExpectedRole, actualResult.Role)

@@ -1,46 +1,52 @@
 <page-header model="navModel"></page-header>
 
 <div class="page-container page-body">
-	<h3 class="page-sub-heading">Edit Organization</h3>
+  <h3 class="page-sub-heading">Edit Organization</h3>
 
-	<form name="orgDetailsForm" class="gf-form-group">
-		<div class="gf-form">
-			<span class="gf-form-label width-10">Name</span>
-			<input type="text" required ng-model="org.name" class="gf-form-input max-width-14" >
-		</div>
+  <form name="orgDetailsForm" class="gf-form-group">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Name</span>
+      <input type="text" required ng-model="org.name" class="gf-form-input max-width-14" />
+    </div>
 
-		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-primary" ng-click="update()" ng-show="!createMode">Update</button>
-		</div>
-	</form>
+    <div class="gf-form-button-row">
+      <button type="submit" class="btn btn-primary" ng-click="update()" ng-show="!createMode">Update</button>
+    </div>
+  </form>
 
-	<h3 class="page-heading">Organization Users</h3>
+  <h3 class="page-heading">Organization Users</h3>
 
-	<table class="filter-table">
-		<tr>
-			<th>Username</th>
-			<th>Email</th>
-			<th>Role</th>
-			<th></th>
-		</tr>
-		<tr ng-repeat="orgUser in orgUsers">
-			<td>{{orgUser.login}}</td>
-			<td>{{orgUser.email}}</td>
-			<td>
+  <table class="filter-table">
+    <tr>
+      <th>Username</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th></th>
+    </tr>
+    <tr ng-repeat="orgUser in orgUsers">
+      <td>{{orgUser.login}}</td>
+      <td>{{orgUser.email}}</td>
+      <td>
         <div class="gf-form">
           <span class="gf-form-select-wrapper">
-              <select type="text" ng-model="orgUser.role" class="gf-form-input max-width-8" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
-              </select>
+            <select
+              type="text"
+              ng-model="orgUser.role"
+              class="gf-form-input max-width-8"
+              ng-options="f for f in ['Viewer', 'Editor', 'Admin']"
+              ng-change="updateOrgUser(orgUser)"
+            >
+            </select>
           </span>
         </div>
-			</td>
-			<td style="width: 1%">
-				<a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-small">
-					<i class="fa fa-remove"></i>
-				</a>
-			</td>
-		</tr>
-	</table>
+      </td>
+      <td style="width: 1%">
+        <a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-small">
+          <icon name="'times'" style="margin-bottom: 0;"></icon>
+        </a>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <footer />

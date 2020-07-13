@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import { Button, DataLinkBuiltInVars, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, VariableOrigin } from '@grafana/data';
+import { Button, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 import { DerivedFieldConfig } from '../types';
 import { DerivedField } from './DerivedField';
 import { DebugSection } from './DebugSection';
@@ -20,6 +20,7 @@ type Props = {
   value?: DerivedFieldConfig[];
   onChange: (value: DerivedFieldConfig[]) => void;
 };
+
 export const DerivedFields = (props: Props) => {
   const { value, onChange } = props;
   const theme = useTheme();
@@ -66,11 +67,11 @@ export const DerivedFields = (props: Props) => {
           })}
         <div>
           <Button
-            variant={'inverse'}
+            variant="secondary"
             className={css`
               margin-right: 10px;
             `}
-            icon="fa fa-plus"
+            icon="plus"
             onClick={event => {
               event.preventDefault();
               const newDerivedFields = [...(value || []), { name: '', matcherRegex: '' }];
@@ -81,7 +82,7 @@ export const DerivedFields = (props: Props) => {
           </Button>
 
           {value && value.length > 0 && (
-            <Button variant="inverse" onClick={() => setShowDebug(!showDebug)}>
+            <Button variant="secondary" onClick={() => setShowDebug(!showDebug)}>
               {showDebug ? 'Hide example log message' : 'Show example log message'}
             </Button>
           )}

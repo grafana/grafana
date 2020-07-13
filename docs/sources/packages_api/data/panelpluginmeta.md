@@ -5,7 +5,6 @@
 title = "PanelPluginMeta"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelPluginMeta interface
@@ -24,11 +23,13 @@ import { PanelPluginMeta } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [hideFromList](#hidefromlist-property) | <code>boolean</code> |  |
-|  [skipDataQuery](#skipdataquery-property) | <code>boolean</code> |  |
-|  [sort](#sort-property) | <code>number</code> |  |
+|  [hideFromList](#hidefromlist-property) | <code>boolean</code> | Indicates that panel should not be available in visualisation picker |
+|  [skipDataQuery](#skipdataquery-property) | <code>boolean</code> | Indicates that panel does not issue queries |
+|  [sort](#sort-property) | <code>number</code> | Sort order |
 
 ### hideFromList property
+
+Indicates that panel should not be available in visualisation picker
 
 <b>Signature</b>
 
@@ -38,6 +39,8 @@ hideFromList?: boolean;
 
 ### skipDataQuery property
 
+Indicates that panel does not issue queries
+
 <b>Signature</b>
 
 ```typescript
@@ -45,6 +48,8 @@ skipDataQuery?: boolean;
 ```
 
 ### sort property
+
+Sort order
 
 <b>Signature</b>
 

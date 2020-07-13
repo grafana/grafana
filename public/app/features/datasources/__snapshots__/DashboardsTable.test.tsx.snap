@@ -19,8 +19,8 @@ exports[`Render should render table 1`] = `
       <td
         className="width-1"
       >
-        <i
-          className="gicon gicon-dashboard"
+        <Icon
+          name="apps"
         />
       </td>
       <td>
@@ -49,8 +49,8 @@ exports[`Render should render table 1`] = `
       <td
         className="width-1"
       >
-        <i
-          className="gicon gicon-dashboard"
+        <Icon
+          name="apps"
         />
       </td>
       <td>
@@ -77,8 +77,8 @@ exports[`Render should render table 1`] = `
           className="btn btn-danger btn-small"
           onClick={[Function]}
         >
-          <i
-            className="fa fa-trash"
+          <Icon
+            name="trash-alt"
           />
         </button>
       </td>

@@ -5,7 +5,6 @@
 title = "panelSizeChanged"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelEvents.panelSizeChanged variable

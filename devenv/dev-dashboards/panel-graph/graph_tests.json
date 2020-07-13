@@ -454,7 +454,7 @@
       "yaxes": [
         {
           "format": "percent",
-          "label": "Perecent",
+          "label": "Percent",
           "logBase": 1,
           "max": null,
           "min": null,

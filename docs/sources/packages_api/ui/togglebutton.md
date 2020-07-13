@@ -5,7 +5,6 @@
 title = "ToggleButton"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ToggleButton variable

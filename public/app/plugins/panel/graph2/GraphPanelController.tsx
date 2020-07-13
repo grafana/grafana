@@ -42,7 +42,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
       graphSeriesModel: getGraphSeriesModel(
         props.data.series,
         props.timeZone,
-        props.options.series,
+        props.options.series || {},
         props.options.graph,
         props.options.legend,
         props.fieldConfig
@@ -56,7 +56,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
       graphSeriesModel: getGraphSeriesModel(
         props.data.series,
         props.timeZone,
-        props.options.series,
+        props.options.series || {},
         props.options.graph,
         props.options.legend,
         props.fieldConfig

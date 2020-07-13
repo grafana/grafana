@@ -24,6 +24,7 @@ datasources:
       tlsClientKey: "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A=="
     editable: true
     version: 10
+    uid: "test_uid"
 
 deleteDatasources:
   - name: old-graphite3

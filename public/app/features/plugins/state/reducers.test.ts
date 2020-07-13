@@ -6,11 +6,9 @@ import {
   pluginDashboardsLoaded,
   pluginsLoaded,
   pluginsReducer,
-  setPluginsLayoutMode,
   setPluginsSearchQuery,
 } from './reducers';
 import { PluginMetaInfo, PluginType } from '@grafana/data';
-import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 
 describe('pluginsReducer', () => {
   describe('when pluginsLoaded is dispatched', () => {
@@ -54,18 +52,6 @@ describe('pluginsReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           searchQuery: 'A query',
-        });
-    });
-  });
-
-  describe('when setPluginsLayoutMode is dispatched', () => {
-    it('then state should be correct', () => {
-      reducerTester<PluginsState>()
-        .givenReducer(pluginsReducer, { ...initialState })
-        .whenActionIsDispatched(setPluginsLayoutMode(LayoutModes.List))
-        .thenStateShouldEqual({
-          ...initialState,
-          layoutMode: LayoutModes.List,
         });
     });
   });

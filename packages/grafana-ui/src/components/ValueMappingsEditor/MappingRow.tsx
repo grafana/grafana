@@ -1,10 +1,9 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { HorizontalGroup } from '../Layout/Layout';
-import Forms from '../Forms';
-import { MappingType, RangeMap, ValueMap, ValueMapping } from '@grafana/data';
-import { styleMixins } from '../../themes/mixins';
-import { useTheme } from '../../themes';
-import { FieldConfigItemHeaderTitle } from '../FieldConfigs/FieldConfigItemHeaderTitle';
+import { IconButton, Label, RadioButtonGroup } from '../index';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
+import { MappingType, RangeMap, SelectableValue, ValueMap, ValueMapping } from '@grafana/data';
 
 export interface Props {
   valueMapping: ValueMapping;
@@ -12,33 +11,38 @@ export interface Props {
   removeValueMapping: () => void;
 }
 
-const MAPPING_OPTIONS = [
+const MAPPING_OPTIONS: Array<SelectableValue<MappingType>> = [
   { value: MappingType.ValueToText, label: 'Value' },
   { value: MappingType.RangeToText, label: 'Range' },
 ];
 
 export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, removeValueMapping }) => {
-  const theme = useTheme();
   const { type } = valueMapping;
 
-  const onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, value: event.target.value });
+  const onMappingValueChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, value: value });
   };
 
-  const onMappingFromChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, from: event.target.value });
+  const onMappingFromChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, from: value });
   };
 
-  const onMappingToChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, to: event.target.value });
+  const onMappingToChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, to: value });
   };
 
-  const onMappingTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    updateValueMapping({ ...valueMapping, text: event.target.value });
+  const onMappingTextChange = (value: string) => {
+    updateValueMapping({ ...valueMapping, text: value });
   };
 
   const onMappingTypeChange = (mappingType: MappingType) => {
     updateValueMapping({ ...valueMapping, type: mappingType });
+  };
+
+  const onKeyDown = (handler: (value: string) => void) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handler(e.currentTarget.value);
+    }
   };
 
   const renderRow = () => {
@@ -46,50 +50,74 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
       return (
         <>
           <HorizontalGroup>
-            <Forms.Field label="From">
-              <Forms.Input type="number" defaultValue={(valueMapping as RangeMap).from!} onBlur={onMappingFromChange} />
-            </Forms.Field>
-            <Forms.Field label="To">
-              <Forms.Input type="number" defaultValue={(valueMapping as RangeMap).to} onBlur={onMappingToChange} />
-            </Forms.Field>
+            <Field label="From">
+              <Input
+                type="number"
+                defaultValue={(valueMapping as RangeMap).from!}
+                onBlur={e => onMappingFromChange(e.currentTarget.value)}
+                onKeyDown={onKeyDown(onMappingFromChange)}
+              />
+            </Field>
+            <Field label="To">
+              <Input
+                type="number"
+                defaultValue={(valueMapping as RangeMap).to}
+                onBlur={e => onMappingToChange(e.currentTarget.value)}
+                onKeyDown={onKeyDown(onMappingToChange)}
+              />
+            </Field>
           </HorizontalGroup>
 
-          <Forms.Field label="Text">
-            <Forms.Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
-          </Forms.Field>
+          <Field label="Text">
+            <Input
+              defaultValue={valueMapping.text}
+              onBlur={e => onMappingTextChange(e.currentTarget.value)}
+              onKeyDown={onKeyDown(onMappingTextChange)}
+            />
+          </Field>
         </>
       );
     }
 
     return (
       <>
-        <Forms.Field label="Value">
-          <Forms.Input type="number" defaultValue={(valueMapping as ValueMap).value} onBlur={onMappingValueChange} />
-        </Forms.Field>
+        <Field label="Value">
+          <Input
+            defaultValue={(valueMapping as ValueMap).value}
+            onBlur={e => onMappingValueChange(e.currentTarget.value)}
+            onKeyDown={onKeyDown(onMappingValueChange)}
+          />
+        </Field>
 
-        <Forms.Field label="Text">
-          <Forms.Input defaultValue={valueMapping.text} onBlur={onMappingTextChange} />
-        </Forms.Field>
+        <Field label="Text">
+          <Input
+            defaultValue={valueMapping.text}
+            onBlur={e => onMappingTextChange(e.currentTarget.value)}
+            onKeyDown={onKeyDown(onMappingTextChange)}
+          />
+        </Field>
       </>
     );
   };
 
-  const styles = styleMixins.panelEditorNestedListStyles(theme);
-
+  const label = (
+    <HorizontalGroup justify="space-between" align="center">
+      <Label>Mapping type</Label>
+      <IconButton name="times" onClick={removeValueMapping} aria-label="ValueMappingsEditor remove button" />
+    </HorizontalGroup>
+  );
   return (
-    <div className={styles.wrapper}>
-      <FieldConfigItemHeaderTitle title="Mapping type" onRemove={removeValueMapping}>
-        <div className={styles.itemContent}>
-          <Forms.Select
-            placeholder="Choose type"
-            isSearchable={false}
-            options={MAPPING_OPTIONS}
-            value={MAPPING_OPTIONS.find(o => o.value === type)}
-            onChange={type => onMappingTypeChange(type.value!)}
-          />
-        </div>
-      </FieldConfigItemHeaderTitle>
-      <div className={styles.content}>{renderRow()}</div>
+    <div>
+      <Field label={label}>
+        <RadioButtonGroup
+          options={MAPPING_OPTIONS}
+          value={type}
+          onChange={type => {
+            onMappingTypeChange(type!);
+          }}
+        />
+      </Field>
+      {renderRow()}
     </div>
   );
 };

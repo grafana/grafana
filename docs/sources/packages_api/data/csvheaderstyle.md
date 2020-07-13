@@ -5,7 +5,6 @@
 title = "CSVHeaderStyle"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## CSVHeaderStyle enum

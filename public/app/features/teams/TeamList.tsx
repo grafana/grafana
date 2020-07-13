@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
-import { DeleteButton } from '@grafana/ui';
+import { DeleteButton, LinkButton } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { OrgRole, StoreState, Team } from 'app/types';
@@ -23,8 +23,8 @@ export interface Props {
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
   setSearchQuery: typeof setSearchQuery;
-  editorsCanAdmin?: boolean;
-  signedInUser?: User;
+  editorsCanAdmin: boolean;
+  signedInUser: User;
 }
 
 export class TeamList extends PureComponent<Props, any> {
@@ -77,7 +77,7 @@ export class TeamList extends PureComponent<Props, any> {
     return (
       <EmptyListCTA
         title="You haven't created any teams yet."
-        buttonIcon="gicon gicon-team"
+        buttonIcon="users-alt"
         buttonLink="org/teams/new"
         buttonTitle=" New team"
         proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
@@ -109,9 +109,9 @@ export class TeamList extends PureComponent<Props, any> {
 
           <div className="page-action-bar__spacer" />
 
-          <a className={`btn btn-primary${disabledClass}`} href={newTeamHref}>
-            New team
-          </a>
+          <LinkButton className={disabledClass} href={newTeamHref}>
+            New Team
+          </LinkButton>
         </div>
 
         <div className="admin-list-table">
@@ -133,7 +133,11 @@ export class TeamList extends PureComponent<Props, any> {
   }
 
   renderList() {
-    const { teamsCount } = this.props;
+    const { teamsCount, hasFetched } = this.props;
+
+    if (!hasFetched) {
+      return null;
+    }
 
     if (teamsCount > 0) {
       return this.renderTeamList();
@@ -147,7 +151,7 @@ export class TeamList extends PureComponent<Props, any> {
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>{hasFetched && this.renderList()}</Page.Contents>
+        <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
       </Page>
     );
   }

@@ -12,8 +12,13 @@ weight = 3
 
 # Generic OAuth Authentication
 
-You can configure many different oauth2 authentication services with Grafana using the generic oauth2 feature. Below you
-can find examples using Okta, BitBucket, OneLogin and Azure.
+You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
+- [Auth0](#set-up-oauth2-with-auth0)
+- [Azure AD]({{< relref "azuread.md" >}})
+- [BitBucket](#set-up-oauth2-with-bitbucket) 
+- [Centrify](#set-up-oauth2-with-centrify)
+- [Okta]({{< relref "okta.md" >}}) 
+- [OneLogin](#set-up-oauth2-with-onelogin)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
@@ -54,23 +59,31 @@ Check for the presence of a role using the [JMESPath](http://jmespath.org/exampl
 
 See [JMESPath examples](#jmespath-examples) for more information.
 
-## Set up OAuth2 with Okta
+## Set up OAuth2 with Auth0
 
-First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
+1.  Create a new Client in Auth0
+    - Name: Grafana
+    - Type: Regular Web Application
 
-Finally set up the generic oauth module like this:
+2.  Go to the Settings tab and set:
+    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
 
-```bash
-[auth.generic_oauth]
-name = Okta
-enabled = true
-scopes = openid profile email
-client_id = <okta application Client ID>
-client_secret = <okta application Client Secret>
-auth_url = https://<okta domain>/oauth2/v1/authorize
-token_url = https://<okta domain>/oauth2/v1/token
-api_url = https://<okta domain>/oauth2/v1/userinfo
-```
+3. Click Save Changes, then use the values at the top of the page to configure Grafana:
+
+    ```bash
+    [auth.generic_oauth]
+    enabled = true
+    allow_sign_up = true
+    team_ids =
+    allowed_organizations =
+    name = Auth0
+    client_id = <client id>
+    client_secret = <client secret>
+    scopes = openid profile email
+    auth_url = https://<domain>/authorize
+    token_url = https://<domain>/oauth/token
+    api_url = https://<domain>/userinfo
+    ```
 
 ## Set up OAuth2 with Bitbucket
 
@@ -88,6 +101,37 @@ api_url = https://api.bitbucket.org/2.0/user
 team_ids =
 allowed_organizations =
 ```
+
+## Set up OAuth2 with Centrify
+
+1.  Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
+
+2.  Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
+
+3.  Put in other basic configuration (name, description, logo, category)
+
+4.  On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
+
+5.  Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
+
+6.  Add an authorized Redirect URI like https://your-grafana-server/login/generic_oauth
+
+7.  Set up permissions, policies, etc. just like any other Centrify app
+
+8.  Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = Centrify
+    enabled = true
+    allow_sign_up = true
+    client_id = <OpenID Connect Client ID from Centrify>
+    client_secret = <your generated OpenID Connect Client Secret"
+    scopes = openid profile email
+    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
+    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
+    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
+    ```
 
 ## Set up OAuth2 with OneLogin
 
@@ -117,108 +161,11 @@ allowed_organizations =
     client_id = <client id>
     client_secret = <client secret>
     scopes = openid email name
-    auth_url = https://<onelogin domain>.onelogin.com/oidc/auth
-    token_url = https://<onelogin domain>.onelogin.com/oidc/token
-    api_url = https://<onelogin domain>.onelogin.com/oidc/me
+    auth_url = https://<onelogin domain>.onelogin.com/oidc/2/auth
+    token_url = https://<onelogin domain>.onelogin.com/oidc/2/token
+    api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
     team_ids =
     allowed_organizations =
-    ```
-
-## Set up OAuth2 with Auth0
-
-1.  Create a new Client in Auth0
-    - Name: Grafana
-    - Type: Regular Web Application
-
-2.  Go to the Settings tab and set:
-    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
-
-3. Click Save Changes, then use the values at the top of the page to configure Grafana:
-
-    ```bash
-    [auth.generic_oauth]
-    enabled = true
-    allow_sign_up = true
-    team_ids =
-    allowed_organizations =
-    name = Auth0
-    client_id = <client id>
-    client_secret = <client secret>
-    scopes = openid profile email
-    auth_url = https://<domain>/authorize
-    token_url = https://<domain>/oauth/token
-    api_url = https://<domain>/userinfo
-    ```
-
-## Set up OAuth2 with Azure Active Directory
-
-1.  Log in to portal.azure.com and click "Azure Active Directory" in the side menu, then click the "Properties" sub-menu item.
-
-2.  Copy the "Directory ID", this is needed for setting URLs later
-
-3.  Click "App Registrations" and add a new application registration:
-    - Name: Grafana
-    - Application type: Web app / API
-    - Sign-on URL: `https://<grafana domain>/login/generic_oauth`
-
-4.  Click the name of the new application to open the application details page.
-
-5.  Note down the "Application ID", this will be the OAuth client id.
-
-6.  Click "Certificates & secrets" and add a new entry under Client secrets
-    - Description: Grafana OAuth
-    - Expires: Never
-
-7.  Click Add then copy the key value, this will be the OAuth client secret.
-
-8.  Configure Grafana as follows:
-
-    ```bash
-    [auth.generic_oauth]
-    name = Azure AD
-    enabled = true
-    allow_sign_up = true
-    client_id = <application id>
-    client_secret = <key value>
-    scopes = openid email name
-    auth_url = https://login.microsoftonline.com/<directory id>/oauth2/authorize
-    token_url = https://login.microsoftonline.com/<directory id>/oauth2/token
-    api_url =
-    team_ids =
-    allowed_organizations =
-    ```
-
-> Note: It's important to ensure that the [root_url]({{< relref "../installation/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
-
-## Set up OAuth2 with Centrify
-
-1.  Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
-
-2.  Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
-
-3.  Put in other basic configuration (name, description, logo, category)
-
-4.  On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
-
-5.  Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
-
-6.  Add an authorized Redirect URI like https://your-grafana-server/login/generic_oauth
-
-7.  Set up permissions, policies, etc. just like any other Centrify app
-
-8.  Configure Grafana as follows:
-
-    ```bash
-    [auth.generic_oauth]
-    name = Centrify
-    enabled = true
-    allow_sign_up = true
-    client_id = <OpenID Connect Client ID from Centrify>
-    client_secret = <your generated OpenID Connect Client Sercret"
-    scopes = openid profile email
-    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
-    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
-    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
     ```
 
 ## JMESPath examples

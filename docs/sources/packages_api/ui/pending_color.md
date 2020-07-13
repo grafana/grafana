@@ -5,7 +5,6 @@
 title = "PENDING_COLOR"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## PENDING\_COLOR variable

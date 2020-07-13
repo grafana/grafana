@@ -3,12 +3,11 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import _ from 'lodash';
 import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
-import { dateMath, AppEvents } from '@grafana/data';
+import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
 import impressionSrv from 'app/core/services/impression_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from './DashboardSrv';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { UrlQueryValue } from '@grafana/runtime';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class DashboardLoaderSrv {
@@ -91,7 +90,7 @@ export class DashboardLoaderSrv {
           };
         },
         (err: any) => {
-          console.log('Script dashboard error ' + err);
+          console.error('Script dashboard error ' + err);
           this.$rootScope.appEvent(AppEvents.alertError, [
             'Script Error',
             'Please make sure it exists and returns a valid dashboard',

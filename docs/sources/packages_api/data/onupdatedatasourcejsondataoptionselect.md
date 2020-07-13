@@ -5,7 +5,6 @@
 title = "onUpdateDatasourceJsonDataOptionSelect"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## onUpdateDatasourceJsonDataOptionSelect variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceJsonDataOptionSelect: <J, S, K extends keyof J>(props: DataSourcePluginOptionsEditorProps<J, S>, key: K) => (selected: SelectableValue<any>) => void
+onUpdateDatasourceJsonDataOptionSelect: <J, S, K extends keyof J>(props: DataSourcePluginOptionsEditorProps<J, S>, key: K) => (selected: SelectableValue) => void
 ```
 <b>Import</b>
 

@@ -5,7 +5,6 @@
 title = "NO_DATA_COLOR"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## NO\_DATA\_COLOR variable

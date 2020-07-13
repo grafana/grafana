@@ -10,8 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/licensing"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -19,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -109,12 +108,16 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 
 	oauthError := errors.New("User not a member of one of the required organizations")
 	encryptedError, _ := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	expCookiePath := "/"
+	if len(setting.AppSubUrl) > 0 {
+		expCookiePath = setting.AppSubUrl
+	}
 	cookie := http.Cookie{
 		Name:     LoginErrorCookieName,
 		MaxAge:   60,
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
+		Path:     expCookiePath,
 		Secure:   hs.Cfg.CookieSecure,
 		SameSite: hs.Cfg.CookieSameSiteMode,
 	}
@@ -204,18 +207,64 @@ func TestLoginViewRedirect(t *testing.T) {
 			appURL:      "http://localhost:3000/",
 			status:      302,
 		},
+		{
+			desc:        "non-Grafana URL without scheme",
+			url:         "example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "non-Grafana URL without scheme",
+			url:         "www.example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "URL path is a host with two leading slashes",
+			url:         "//example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "URL path is a host with three leading slashes",
+			url:         "///example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "URL path is an IP address with two leading slashes",
+			url:         "//0.0.0.0",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
+		{
+			desc:        "URL path is an IP address with three leading slashes",
+			url:         "///0.0.0.0",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
+		},
 	}
 
 	for _, c := range redirectCases {
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
+			expCookiePath := "/"
+			if len(hs.Cfg.AppSubUrl) > 0 {
+				expCookiePath = hs.Cfg.AppSubUrl
+			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     hs.Cfg.AppSubUrl + "/",
+				Path:     expCookiePath,
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -225,7 +274,7 @@ func TestLoginViewRedirect(t *testing.T) {
 			if c.status == 302 {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
-				assert.Equal(t, location[0], c.redirectURL)
+				assert.Equal(t, c.redirectURL, location[0])
 
 				setCookie, ok := sc.resp.Header()["Set-Cookie"]
 				assert.True(t, ok, "Set-Cookie exists")
@@ -238,7 +287,7 @@ func TestLoginViewRedirect(t *testing.T) {
 					expCookieValue = ""
 					expCookieMaxAge = 0
 				}
-				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, hs.Cfg.AppSubUrl+"/", expCookieMaxAge)
+				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, expCookiePath, expCookieMaxAge)
 				for _, cookieValue := range setCookie {
 					if cookieValue == expCookie {
 						redirectToCookieFound = true
@@ -326,18 +375,64 @@ func TestLoginPostRedirect(t *testing.T) {
 			appURL: "https://localhost:3000/",
 			err:    login.ErrAbsoluteRedirectTo,
 		},
+		{
+			desc:   "invalid URL",
+			url:    ":foo",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrInvalidRedirectTo,
+		},
+		{
+			desc:   "non-Grafana URL without scheme",
+			url:    "example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "non-Grafana URL without scheme",
+			url:    "www.example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "URL path is a host with two leading slashes",
+			url:    "//example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "URL path is a host with three leading slashes",
+			url:    "///example.com",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "URL path is an IP address with two leading slashes",
+			url:    "//0.0.0.0",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
+		{
+			desc:   "URL path is an IP address with three leading slashes",
+			url:    "///0.0.0.0",
+			appURL: "http://localhost:3000/",
+			err:    login.ErrForbiddenRedirectTo,
+		},
 	}
 
 	for _, c := range redirectCases {
 		hs.Cfg.AppUrl = c.appURL
 		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
+			expCookiePath := "/"
+			if len(hs.Cfg.AppSubUrl) > 0 {
+				expCookiePath = hs.Cfg.AppSubUrl
+			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     hs.Cfg.AppSubUrl + "/",
+				Path:     expCookiePath,
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -358,7 +453,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			assert.True(t, ok, "Set-Cookie exists")
 			assert.Greater(t, len(setCookie), 0)
 			var redirectToCookieFound bool
-			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", hs.Cfg.AppSubUrl+"/")
+			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", expCookiePath)
 			for _, cookieValue := range setCookie {
 				if cookieValue == expCookieValue {
 					redirectToCookieFound = true

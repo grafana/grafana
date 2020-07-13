@@ -1,13 +1,15 @@
 import React, { MouseEvent, PureComponent } from 'react';
+import { Icon } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { StoreState } from '../../../types';
-import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { getVariableClones } from '../state/selectors';
-import { VariableModel } from '../../templating/variable';
+import { getEditorVariables } from '../state/selectors';
+import { VariableModel } from '../types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 
@@ -68,24 +70,24 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           <h3 className="dashboard-settings__header">
             <a
               onClick={this.onChangeToListMode}
-              aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.headerLink}
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.headerLink}
             >
               Variables
             </a>
             {this.props.idInEditor === NEW_VARIABLE_ID && (
               <span>
-                <i
-                  className="fa fa-fw fa-chevron-right"
-                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelNew}
+                <Icon
+                  name="angle-right"
+                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.modeLabelNew}
                 />
                 New
               </span>
             )}
             {this.props.idInEditor && this.props.idInEditor !== NEW_VARIABLE_ID && (
               <span>
-                <i
-                  className="fa fa-fw fa-chevron-right"
-                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelEdit}
+                <Icon
+                  name="angle-right"
+                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.modeLabelEdit}
                 />
                 Edit
               </span>
@@ -98,7 +100,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
               type="button"
               className="btn btn-primary"
               onClick={this.onNewVariable}
-              aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.newButton}
+              aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
             >
               New
             </a>
@@ -122,7 +124,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getVariableClones(state, true),
+  variables: getEditorVariables(state),
   idInEditor: state.templating.editor.id,
 });
 

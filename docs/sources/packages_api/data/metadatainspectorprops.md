@@ -5,7 +5,6 @@
 title = "MetadataInspectorProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## MetadataInspectorProps interface

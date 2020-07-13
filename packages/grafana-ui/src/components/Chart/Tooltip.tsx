@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import { Portal } from '../Portal/Portal';
-import { Dimensions } from '@grafana/data';
+import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { TooltipContainer } from './TooltipContainer';
 
@@ -10,7 +10,7 @@ export type TooltipMode = 'single' | 'multi';
 // Describes active dimensions user interacts with
 // It's a key-value pair where:
 // - key is the name of the dimension
-// - value is a tuple addresing which column and row from given dimension is active.
+// - value is a tuple addressing which column and row from given dimension is active.
 //   If row is undefined, it means that we are not hovering over a datapoint
 export type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
@@ -21,7 +21,7 @@ export interface TooltipContentProps<T extends Dimensions = any> {
   // TODO: type this better, no good idea how yet
   dimensions: T; // Dimension[]
   activeDimensions?: ActiveDimensions<T>;
-  // timeZone: TimeZone;
+  timeZone?: TimeZone;
   pos: FlotPosition;
   mode: TooltipMode;
 }

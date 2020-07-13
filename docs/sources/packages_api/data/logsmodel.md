@@ -5,7 +5,6 @@
 title = "LogsModel"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogsModel interface
@@ -28,6 +27,7 @@ import { LogsModel } from '@grafana/data';
 |  [meta](#meta-property) | <code>LogsMetaItem[]</code> |  |
 |  [rows](#rows-property) | <code>LogRowModel[]</code> |  |
 |  [series](#series-property) | <code>GraphSeriesXY[]</code> |  |
+|  [visibleRange](#visiblerange-property) | <code>AbsoluteTimeRange</code> |  |
 
 ### hasUniqueLabels property
 
@@ -59,4 +59,12 @@ rows: LogRowModel[];
 
 ```typescript
 series?: GraphSeriesXY[];
+```
+
+### visibleRange property
+
+<b>Signature</b>
+
+```typescript
+visibleRange?: AbsoluteTimeRange;
 ```

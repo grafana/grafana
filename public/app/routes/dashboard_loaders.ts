@@ -1,9 +1,8 @@
 import coreModule from 'app/core/core_module';
-import locationUtil from 'app/core/utils/location_util';
-import { UrlQueryMap } from '@grafana/runtime';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { ILocationService } from 'angular';
-import { Scope, CoreEvents, AppEventEmitter } from 'app/types';
+import { AppEventEmitter, CoreEvents, Scope } from 'app/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 export class LoadDashboardCtrl {

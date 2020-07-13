@@ -5,10 +5,11 @@
 title = "EchoEvent"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## EchoEvent interface
+
+Describes an echo event.
 
 <b>Signature</b>
 
@@ -25,7 +26,7 @@ import { EchoEvent } from '@grafana/runtime';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [meta](#meta-property) | <code>EchoMeta</code> |  |
-|  [payload](#payload-property) | <code>P</code> |  |
+|  [payload](#payload-property) | <code>P</code> | Event payload containing event specific data. |
 |  [type](#type-property) | <code>EchoEventType</code> |  |
 
 ### meta property
@@ -37,6 +38,8 @@ meta: EchoMeta;
 ```
 
 ### payload property
+
+Event payload containing event specific data.
 
 <b>Signature</b>
 

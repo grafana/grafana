@@ -13,7 +13,6 @@ import (
 )
 
 func TestPluginProxy(t *testing.T) {
-
 	Convey("When getting proxy headers", t, func() {
 		route := &plugins.AppPluginRoute{
 			Headers: []plugins.AppPluginRouteHeader{
@@ -95,7 +94,7 @@ func TestPluginProxy(t *testing.T) {
 
 	Convey("When getting templated url", t, func() {
 		route := &plugins.AppPluginRoute{
-			Url:    "{{.JsonData.dynamicUrl}}",
+			URL:    "{{.JsonData.dynamicUrl}}",
 			Method: "GET",
 		}
 
@@ -126,10 +125,9 @@ func TestPluginProxy(t *testing.T) {
 			So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com")
 		})
 		Convey("Route url should not be modified", func() {
-			So(route.Url, ShouldEqual, "{{.JsonData.dynamicUrl}}")
+			So(route.URL, ShouldEqual, "{{.JsonData.dynamicUrl}}")
 		})
 	})
-
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
@@ -138,13 +136,13 @@ func getPluginProxiedRequest(ctx *models.ReqContext, cfg *setting.Cfg, route *pl
 	if route == nil {
 		route = &plugins.AppPluginRoute{
 			Path:    "api/v4/",
-			Url:     "https://www.google.com",
+			URL:     "https://www.google.com",
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
 	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
 
-	req, err := http.NewRequest(http.MethodGet, route.Url, nil)
+	req, err := http.NewRequest(http.MethodGet, route.URL, nil)
 	So(err, ShouldBeNil)
 	proxy.Director(req)
 	return req

@@ -5,10 +5,11 @@
 title = "ThresholdsConfig"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ThresholdsConfig interface
+
+Config that is passed to the ThresholdsEditor
 
 <b>Signature</b>
 
@@ -25,7 +26,7 @@ import { ThresholdsConfig } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [mode](#mode-property) | <code>ThresholdsMode</code> |  |
-|  [steps](#steps-property) | <code>Threshold[]</code> |  |
+|  [steps](#steps-property) | <code>Threshold[]</code> | Must be sorted by 'value', first value is always -Infinity |
 
 ### mode property
 
@@ -36,6 +37,8 @@ mode: ThresholdsMode;
 ```
 
 ### steps property
+
+Must be sorted by 'value', first value is always -Infinity
 
 <b>Signature</b>
 

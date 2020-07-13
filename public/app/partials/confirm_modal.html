@@ -1,34 +1,51 @@
 <div class="modal-body" ng-cloak>
-	<div class="modal-header">
-		<h2 class="modal-header-title">
-			<i class="fa {{icon}}"></i>
-			<span class="p-l-1">
-				{{title}}
-			</span>
-		</h2>
+  <div class="modal-header">
+    <h2 class="modal-header-title">
+      <icon name="'{{icon}}'" size="'lg'"></icon>
+      <span class="p-l-1">
+        {{title}}
+      </span>
+    </h2>
 
-		<a class="modal-header-close" ng-click="dismiss();">
-			<i class="fa fa-remove"></i>
-		</a>
-	</div>
+    <a class="modal-header-close" ng-click="dismiss();">
+      <icon name="'times'"></icon>
+    </a>
+  </div>
 
-	<div class="modal-content text-center">
-
-		<div class="confirm-modal-text">
-			{{text}}
-			<div ng-if="text2 && text2htmlBind" class="confirm-modal-text2" ng-bind-html="text2"></div>
+  <div class="modal-content text-center">
+    <div class="confirm-modal-text">
+      {{text}}
+      <div ng-if="text2 && text2htmlBind" class="confirm-modal-text2" ng-bind-html="text2"></div>
       <div ng-if="text2 && !text2htmlBind" class="confirm-modal-text2">{{text2}}</div>
-		</div>
+    </div>
 
-		<div class="modal-content-confirm-text" ng-if="confirmText">
-			<input type="text" class="gf-form-input width-16" style="display: inline-block;" placeholder="Type {{confirmText}} to confirm" ng-model="confirmInput" ng-change="updateConfirmText(confirmInput)">
-		</div>
+    <div class="modal-content-confirm-text" ng-if="confirmText">
+      <input
+        type="text"
+        class="gf-form-input width-16"
+        style="display: inline-block;"
+        placeholder="Type {{confirmText}} to confirm"
+        ng-model="confirmInput"
+        ng-change="updateConfirmText(confirmInput)"
+      />
+    </div>
 
-		<div class="confirm-modal-buttons">
-			<button ng-show="onAltAction" type="button" class="btn btn-primary" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
-			<button ng-show="onConfirm" type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();" ng-disabled="!confirmTextValid" give-focus="true" aria-label={{selectors.delete}}>{{yesText}}</button>
-			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
-		</div>
-	</div>
-
+    <div class="confirm-modal-buttons">
+      <button ng-show="onAltAction" type="button" class="btn btn-primary" ng-click="dismiss();onAltAction();">
+        {{altActionText}}
+      </button>
+      <button
+        ng-show="onConfirm"
+        type="button"
+        class="btn btn-danger"
+        ng-click="onConfirm();dismiss();"
+        ng-disabled="!confirmTextValid"
+        give-focus="true"
+        aria-label="{{selectors.delete}}"
+      >
+        {{yesText}}
+      </button>
+      <button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
+    </div>
+  </div>
 </div>

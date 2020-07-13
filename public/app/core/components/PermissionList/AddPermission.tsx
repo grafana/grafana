@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { Select } from '@grafana/ui';
+import { LegacyForms, Icon } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { User } from 'app/types';
 import {
@@ -12,6 +12,7 @@ import {
   NewDashboardAclItem,
   OrgRole,
 } from 'app/types/acl';
+const { Select } = LegacyForms;
 
 export interface Props {
   onAddPermission: (item: NewDashboardAclItem) => void;
@@ -63,7 +64,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   };
 
   onPermissionChanged = (permission: SelectableValue<PermissionLevel>) => {
-    this.setState({ permission: permission.value });
+    this.setState({ permission: permission.value! });
   };
 
   onSubmit = async (evt: React.SyntheticEvent) => {
@@ -90,7 +91,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     return (
       <div className="gf-form-inline cta-form">
         <button className="cta-form__close btn btn-transparent" onClick={onCancel}>
-          <i className="fa fa-close" />
+          <Icon name="times" />
         </button>
         <form name="addPermission" onSubmit={this.onSubmit}>
           <h5>Add Permission For</h5>

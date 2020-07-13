@@ -3,9 +3,9 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "rootDirs": ["."],
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types", "types"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "../../public/app/types/jquery/*.ts"]
+  "include": ["src/**/*.ts*", "../../public/app/types/jquery/*.ts", "../../public/app/types/sanitize-url.d.ts"]
 }

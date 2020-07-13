@@ -5,7 +5,6 @@
 title = "listItem"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## styleMixins.listItem() function
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function listItem(theme: GrafanaTheme): string;
+export declare function listItem(theme: GrafanaTheme): string;
 ```
 <b>Import</b>
 

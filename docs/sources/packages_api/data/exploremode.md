@@ -5,7 +5,6 @@
 title = "ExploreMode"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ExploreMode enum
@@ -29,4 +28,5 @@ import { ExploreMode } from '@grafana/data';
 |  --- | --- | --- |
 |  Logs | <code>&quot;Logs&quot;</code> |  |
 |  Metrics | <code>&quot;Metrics&quot;</code> |  |
+|  Tracing | <code>&quot;Tracing&quot;</code> |  |
 

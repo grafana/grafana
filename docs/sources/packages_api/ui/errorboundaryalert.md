@@ -5,7 +5,6 @@
 title = "ErrorBoundaryAlert"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ErrorBoundaryAlert class

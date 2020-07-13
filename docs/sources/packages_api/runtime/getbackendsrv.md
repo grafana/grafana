@@ -5,12 +5,13 @@
 title = "getBackendSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getBackendSrv variable
 
 ### getBackendSrv variable
+
+Used to retrieve the [BackendSrv](./runtime/backendsrv.md) that can be used to communicate via http(s) to a remote backend such as the Grafana backend, a datasource etc.
 
 <b>Signature</b>
 

@@ -5,7 +5,6 @@
 title = "List"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## List class

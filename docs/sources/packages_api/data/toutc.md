@@ -5,7 +5,6 @@
 title = "toUtc"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## toUtc variable

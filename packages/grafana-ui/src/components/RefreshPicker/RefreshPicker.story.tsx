@@ -1,15 +1,16 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { RefreshPicker } from './RefreshPicker';
 
-const RefreshSelectStories = storiesOf('Panel/RefreshPicker', module);
+export default {
+  title: 'Pickers and Editors/RefreshPicker',
+  component: RefreshPicker,
+  decorators: [withCenteredStory],
+};
 
-RefreshSelectStories.addDecorator(withCenteredStory);
-
-RefreshSelectStories.add('default', () => {
+export const basic = () => {
   return (
     <UseState initialState={'1h'}>
       {(value, updateValue) => {
@@ -29,4 +30,4 @@ RefreshSelectStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};

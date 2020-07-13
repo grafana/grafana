@@ -7,7 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var counter = 1
@@ -34,17 +35,12 @@ func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, in
 }
 
 func TestGetMetricDataExecutorTest(t *testing.T) {
-	Convey("TestGetMetricDataExecutorTest", t, func() {
-		Convey("pagination works", func() {
-			executor := &CloudWatchExecutor{}
-			inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
-			res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{}, inputs)
-			So(err, ShouldBeNil)
-			So(len(res), ShouldEqual, 2)
-			So(len(res[0].MetricDataResults[0].Values), ShouldEqual, 2)
-			So(*res[0].MetricDataResults[0].Values[1], ShouldEqual, 23.5)
-			So(*res[1].MetricDataResults[0].Values[0], ShouldEqual, 100)
-		})
-	})
-
+	executor := &CloudWatchExecutor{}
+	inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
+	res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{}, inputs)
+	require.NoError(t, err)
+	require.Len(t, res, 2)
+	require.Len(t, res[0].MetricDataResults[0].Values, 2)
+	assert.Equal(t, 23.5, *res[0].MetricDataResults[0].Values[1])
+	assert.Equal(t, 100.0, *res[1].MetricDataResults[0].Values[0])
 }

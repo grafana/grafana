@@ -9,7 +9,11 @@ export function setStore(newStore: Store<StoreState>) {
 
 export function getState(): StoreState {
   if (!store || !store.getState) {
-    return {} as StoreState; // used by tests
+    return {
+      templating: {
+        variables: {},
+      },
+    } as StoreState; // used by tests
   }
 
   return store.getState();

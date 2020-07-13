@@ -5,7 +5,6 @@
 title = "AlphaNotice"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## AlphaNotice variable

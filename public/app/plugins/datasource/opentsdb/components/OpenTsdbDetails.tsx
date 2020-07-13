@@ -1,5 +1,6 @@
 import React, { SyntheticEvent } from 'react';
-import { FormLabel, Select, Input } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { OpenTsdbOptions } from '../types';
 
@@ -26,7 +27,7 @@ export const OpenTsdbDetails = (props: Props) => {
     <>
       <h5>OpenTSDB settings</h5>
       <div className="gf-form">
-        <FormLabel width={7}>Version</FormLabel>
+        <InlineFormLabel width={7}>Version</InlineFormLabel>
         <Select
           options={tsdbVersions}
           value={tsdbVersions.find(version => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
@@ -34,7 +35,7 @@ export const OpenTsdbDetails = (props: Props) => {
         />
       </div>
       <div className="gf-form">
-        <FormLabel width={7}>Resolution</FormLabel>
+        <InlineFormLabel width={7}>Resolution</InlineFormLabel>
         <Select
           options={tsdbResolutions}
           value={
@@ -44,7 +45,7 @@ export const OpenTsdbDetails = (props: Props) => {
         />
       </div>
       <div className="gf-form">
-        <FormLabel width={7}>Lookup Limit</FormLabel>
+        <InlineFormLabel width={7}>Lookup Limit</InlineFormLabel>
         <Input
           type="number"
           value={value.jsonData.lookupLimit ?? 1000}

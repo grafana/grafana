@@ -13,9 +13,7 @@ describe('TimeRegionManager', () => {
         },
         panelCtrl: {
           range: {},
-          dashboard: {
-            isTimezoneUtc: () => false,
-          },
+          dashboard: {},
         },
       };
 

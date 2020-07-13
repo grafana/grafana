@@ -1,9 +1,13 @@
 import React from 'react';
 
-import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { InfoTooltip } from './InfoTooltip';
+import { Tooltip } from '../Chart/Tooltip';
 
-const story = storiesOf('General/Tooltip', module);
-story.addDecorator(withCenteredStory);
-story.add('InfoTooltip', () => <InfoTooltip>This is the content of the tooltip</InfoTooltip>);
+export default {
+  title: 'Overlays/Tooltip',
+  component: Tooltip,
+  decorators: [withCenteredStory],
+};
+
+export const basic = () => <InfoTooltip>This is the content of the tooltip</InfoTooltip>;

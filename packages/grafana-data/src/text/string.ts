@@ -1,3 +1,4 @@
+import { camelCase } from 'lodash';
 const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
 
 export const escapeStringForRegex = (value: string) => {
@@ -89,3 +90,8 @@ export function toFloatOrUndefined(value: string): number | undefined {
   const v = parseFloat(value);
   return isNaN(v) ? undefined : v;
 }
+
+export const toPascalCase = (string: string) => {
+  const str = camelCase(string);
+  return str.charAt(0).toUpperCase() + str.substring(1);
+};

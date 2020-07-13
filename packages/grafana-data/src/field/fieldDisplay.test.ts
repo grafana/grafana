@@ -4,7 +4,7 @@ import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { MappingType, FieldConfig } from '../types';
+import { FieldConfig, MappingType } from '../types';
 import { validateFieldConfig } from './fieldOverrides';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -26,13 +26,13 @@ describe('FieldDisplay', () => {
 
   it('show first numeric values', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         calcs: [ReducerID.first],
       },
       fieldConfig: {
         overrides: [],
         defaults: {
-          title: '$__cell_0 * $__field_name * $__series_name',
+          displayName: '$__cell_0 * $__field_name * $__series_name',
         },
       },
     });
@@ -42,7 +42,7 @@ describe('FieldDisplay', () => {
 
   it('show last numeric values', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         calcs: [ReducerID.last],
       },
     });
@@ -52,7 +52,7 @@ describe('FieldDisplay', () => {
 
   it('show all numeric values', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         values: true, //
         limit: 1000,
         calcs: [],
@@ -64,7 +64,7 @@ describe('FieldDisplay', () => {
 
   it('show 2 numeric values (limit)', () => {
     const options = createDisplayOptions({
-      fieldOptions: {
+      reduceOptions: {
         values: true, //
         limit: 2,
         calcs: [],
@@ -161,6 +161,18 @@ describe('FieldDisplay', () => {
     expect(display[0].display.numeric).toEqual(0);
   });
 
+  it('Should always return defaults with min/max 0 when there is no data', () => {
+    const options = createEmptyDisplayOptions({
+      fieldConfig: {
+        defaults: {},
+      },
+    });
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toEqual(0);
+    expect(display[0].field.max).toEqual(0);
+  });
+
   describe('Value mapping', () => {
     it('should apply value mapping', () => {
       const mappingConfig = [
@@ -173,12 +185,8 @@ describe('FieldDisplay', () => {
         },
       ];
       const options = createDisplayOptions({
-        fieldOptions: {
+        reduceOptions: {
           calcs: [ReducerID.first],
-          override: {},
-          defaults: {
-            mappings: mappingConfig,
-          },
         },
       });
 
@@ -202,12 +210,9 @@ describe('FieldDisplay', () => {
         },
       ];
       const options = createDisplayOptions({
-        fieldOptions: {
+        reduceOptions: {
+          calcs: [ReducerID.first],
           values: true,
-          override: {},
-          defaults: {
-            mappings: mappingConfig,
-          },
         },
       });
 
@@ -252,7 +257,7 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
     replaceVariables: (value: string) => {
       return value;
     },
-    fieldOptions: {
+    reduceOptions: {
       calcs: [],
     },
     fieldConfig: {

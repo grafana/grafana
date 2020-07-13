@@ -3,13 +3,19 @@ package search
 import (
 	"sort"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 )
 
 func init() {
-	registry.RegisterService(&SearchService{})
+	registry.Register(&registry.Descriptor{
+		Name:         "SearchService",
+		Instance:     &SearchService{},
+		InitPriority: 20,
+	})
 }
 
 type Query struct {
@@ -24,6 +30,7 @@ type Query struct {
 	DashboardIds []int64
 	FolderIds    []int64
 	Permission   models.PermissionType
+	Sort         string
 
 	Result HitList
 }
@@ -41,15 +48,25 @@ type FindPersistedDashboardsQuery struct {
 	Page         int64
 	Permission   models.PermissionType
 
+	Filters []interface{}
+
 	Result HitList
 }
 
 type SearchService struct {
-	Bus bus.Bus `inject:""`
+	Bus bus.Bus      `inject:""`
+	Cfg *setting.Cfg `inject:""`
+
+	sortOptions map[string]SortOption
 }
 
 func (s *SearchService) Init() error {
 	s.Bus.AddHandler(s.searchHandler)
+	s.sortOptions = map[string]SortOption{
+		sortAlphaAsc.Name:  sortAlphaAsc,
+		sortAlphaDesc.Name: sortAlphaDesc,
+	}
+
 	return nil
 }
 
@@ -67,11 +84,20 @@ func (s *SearchService) searchHandler(query *Query) error {
 		Permission:   query.Permission,
 	}
 
+	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
+		for _, filter := range sortOpt.Filter {
+			dashboardQuery.Filters = append(dashboardQuery.Filters, filter)
+		}
+	}
+
 	if err := bus.Dispatch(&dashboardQuery); err != nil {
 		return err
 	}
 
-	hits := sortedHits(dashboardQuery.Result)
+	hits := dashboardQuery.Result
+	if query.Sort == "" {
+		hits = sortedHits(hits)
+	}
 
 	if err := setStarredDashboards(query.SignedInUser.UserId, hits); err != nil {
 		return err

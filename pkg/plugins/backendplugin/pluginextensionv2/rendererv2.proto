@@ -1,0 +1,29 @@
+syntax = "proto3";
+package pluginextensionv2;
+
+option go_package = ".;pluginextensionv2";
+
+message StringList {
+  repeated string values = 1;
+}
+
+message RenderRequest {
+  string url = 1;
+  int32 width = 2;
+  int32 height = 3;
+  float deviceScaleFactor = 4;
+  string filePath = 5;
+  string renderKey = 6;
+  string domain = 7;
+  int32 timeout = 8;
+  string timezone = 9;
+  map<string, StringList> headers = 10;
+}
+
+message RenderResponse {
+  string error = 1;
+}
+
+service Renderer {
+  rpc Render(RenderRequest) returns (RenderResponse);
+}

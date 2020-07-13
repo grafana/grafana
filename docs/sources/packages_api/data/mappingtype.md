@@ -5,7 +5,6 @@
 title = "MappingType"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## MappingType enum

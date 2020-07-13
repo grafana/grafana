@@ -30,7 +30,7 @@
   "info": {
     "description": "Open source time series database & alerting",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

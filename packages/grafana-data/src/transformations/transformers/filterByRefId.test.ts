@@ -1,6 +1,8 @@
 import { DataTransformerID } from './ids';
-import { transformDataFrame } from '../transformers';
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { filterFramesByRefIdTransformer } from './filterByRefId';
+import { transformDataFrame } from '../transformDataFrame';
 
 export const allSeries = [
   toDataFrame({
@@ -18,6 +20,9 @@ export const allSeries = [
 ];
 
 describe('filterByRefId transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([filterFramesByRefIdTransformer]);
+  });
   it('returns all series if no options provided', () => {
     const cfg = {
       id: DataTransformerID.filterByRefId,

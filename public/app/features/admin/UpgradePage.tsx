@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
 import { LicenseChrome } from './LicenseChrome';
-import { Forms } from '@grafana/ui';
+import { LinkButton } from '@grafana/ui';
 import { hot } from 'react-hot-loader';
 import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -69,13 +69,13 @@ const GetEnterprise: React.FC = () => {
 
 const CallToAction: React.FC = () => {
   return (
-    <Forms.LinkButton
+    <LinkButton
       variant="primary"
       size="lg"
       href="https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page"
     >
       Contact us and get a free trial
-    </Forms.LinkButton>
+    </LinkButton>
   );
 };
 
@@ -105,6 +105,8 @@ const ServiceInfo: React.FC = () => {
         <br />
         Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
       </div>
+
+      <GetEnterprise />
     </div>
   );
 };
@@ -114,8 +116,6 @@ const FeatureInfo: React.FC = () => {
     <div style={{ paddingRight: '11px' }}>
       <h4>Enhanced Functionality</h4>
       <FeatureListing />
-
-      <GetEnterprise />
     </div>
   );
 };
@@ -127,8 +127,16 @@ const FeatureListing: React.FC = () => {
       <Item title="Reporting" />
       <Item title="SAML Authentication" />
       <Item title="Enhanced LDAP Integration" />
-      <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy</Item>
+      <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy, Okta</Item>
       <Item title="White labeling" />
+      <Item title="Grafana usage insights">
+        <List nested={true}>
+          <Item title="Sort dashboards by popularity in search" />
+          <Item title="Find unused dashboards" />
+          <Item title="Dashboard usage stats drawer" />
+          <Item title="Dashboard presence indicators" />
+        </List>
+      </Item>
       <Item title="Enterprise Plugins">
         <List nested={true}>
           <Item title="Oracle" />

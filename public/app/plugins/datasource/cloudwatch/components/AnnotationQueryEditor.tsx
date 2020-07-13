@@ -1,9 +1,10 @@
 import React, { ChangeEvent } from 'react';
-import { Switch } from '@grafana/ui';
+import { LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 import { PanelData } from '@grafana/data';
-import { CloudWatchQuery, AnnotationQuery } from '../types';
-import CloudWatchDatasource from '../datasource';
-import { QueryField, QueryFieldsEditor } from './';
+import { AnnotationQuery } from '../types';
+import { CloudWatchDatasource } from '../datasource';
+import { QueryField, PanelQueryEditor } from './';
 
 export type Props = {
   query: AnnotationQuery;
@@ -16,11 +17,12 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
   const { query, onChange } = props;
   return (
     <>
-      <QueryFieldsEditor
+      <PanelQueryEditor
         {...props}
-        onChange={(editorQuery: CloudWatchQuery) => onChange({ ...query, ...editorQuery })}
-        hideWilcard
-      ></QueryFieldsEditor>
+        onChange={(editorQuery: AnnotationQuery) => onChange({ ...query, ...editorQuery })}
+        onRunQuery={() => {}}
+        history={[]}
+      ></PanelQueryEditor>
       <div className="gf-form-inline">
         <Switch
           label="Enable Prefix Matching"

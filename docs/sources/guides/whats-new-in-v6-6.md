@@ -103,7 +103,7 @@ The time picker has gotten a major design update. Key changes:
 
 ## Cookie management modifications
 
-In order to align with a [change in Chrome 80](https://www.chromestatus.com/feature/5088147346030592), a breaking change has been introduced to Grafana's [`cookie_samesite` setting]({{< relref "../installation/configuration.md#cookie-samesite" >}}). Grafana now properly renders cookies with the `SameSite=None` attribute when this setting is `none`. The previous behavior of `none` was to omit the `SameSite` attribute from cookies. Grafana will use the previous behavior when `cookie_samesite` is set to `disabled`.
+In order to align with a [change in Chrome 80](https://www.chromestatus.com/feature/5088147346030592), a breaking change has been introduced to Grafana's [`cookie_samesite` setting]({{< relref "../administration/configuration.md#cookie-samesite" >}}). Grafana now properly renders cookies with the `SameSite=None` attribute when this setting is `none`. The previous behavior of `none` was to omit the `SameSite` attribute from cookies. Grafana will use the previous behavior when `cookie_samesite` is set to `disabled`.
 
 Read more about this in the [upgrade notes]({{< relref "../installation/upgrading/#important-changes-regarding-samesite-cookie-attribute" >}}).
 
@@ -188,7 +188,7 @@ From now on it will be possible to utilize meta data label in group bys, filters
 
 ## CloudWatch: Calculate period based on time range
 
-When the period field was left blank in Grafana 6.5, it would default to 60 seconds. In case users issued queries with a large time span, there was a high risk that they would reach the 100,800 data points per request limit in the Get Metric Data (GMD) api. When the period field is left blank in Grafana 6.6, the period will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. This will reduce the risk for receiving a `Too many datapoints requested` error in the panel.
+When the period field was left blank in Grafana 6.5, it would default to 60 seconds. In case users issued queries with a large time span, there was a high risk that they would reach the 100,800 data points per request limit in the Get Metric Data (GMD) API. When the period field is left blank in Grafana 6.6, the period will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. This will reduce the risk for receiving a `Too many datapoints requested` error in the panel.
 
 ## CloudWatch: Display partial result in graph when max data points per call limit is reached
 

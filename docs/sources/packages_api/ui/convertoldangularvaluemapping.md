@@ -5,7 +5,6 @@
 title = "convertOldAngularValueMapping"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## convertOldAngularValueMapping() function

@@ -10,7 +10,7 @@ export class ValidationSrv {
   rootName = 'general';
 
   validateNewDashboardName(folderId: any, name: string) {
-    return this.validate(folderId, name, 'A dashboard in this folder with the same name already exists');
+    return this.validate(folderId, name, 'A dashboard or a folder with the same name already exists');
   }
 
   validateNewFolderName(name: string) {

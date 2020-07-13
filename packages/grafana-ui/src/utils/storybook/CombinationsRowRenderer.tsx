@@ -42,8 +42,8 @@ const CombinationsRowRenderer: React.FunctionComponent<CombinationsRowRendererPr
 
   const borderColor = selectThemeVariant(
     {
-      dark: theme.colors.dark8,
-      light: theme.colors.gray5,
+      dark: theme.palette.dark8,
+      light: theme.palette.gray5,
     },
     theme.type
   );

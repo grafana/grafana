@@ -2,12 +2,14 @@ package usagestats
 
 import (
 	"bytes"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"io/ioutil"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/licensing"
 
 	"net/http"
 	"net/http/httptest"
@@ -31,7 +33,6 @@ func TestMetrics(t *testing.T) {
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
 		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
-
 			query.Result = &models.SystemStats{
 				Dashboards:            1,
 				Datasources:           2,
@@ -48,6 +49,8 @@ func TestMetrics(t *testing.T) {
 				Snapshots:             13,
 				Teams:                 14,
 				AuthTokens:            15,
+				DashboardVersions:     16,
+				Annotations:           17,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -143,6 +146,8 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		uss.AlertingUsageStats = &alertingUsageMock{}
+
 		var wg sync.WaitGroup
 		var responseBuffer *bytes.Buffer
 		var req *http.Request
@@ -234,6 +239,8 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.teams.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Teams)
 				So(metrics.Get("stats.total_auth_token.count").MustInt64(), ShouldEqual, 15)
 				So(metrics.Get("stats.avg_auth_token_per_user.count").MustInt64(), ShouldEqual, 5)
+				So(metrics.Get("stats.dashboard_versions.count").MustInt64(), ShouldEqual, 16)
+				So(metrics.Get("stats.annotations.count").MustInt64(), ShouldEqual, 17)
 
 				So(metrics.Get("stats.ds."+models.DS_ES+".count").MustInt(), ShouldEqual, 9)
 				So(metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt(), ShouldEqual, 10)
@@ -244,6 +251,11 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.ds_access."+models.DS_PROMETHEUS+".proxy.count").MustInt(), ShouldEqual, 3)
 				So(metrics.Get("stats.ds_access.other.direct.count").MustInt(), ShouldEqual, 6+7)
 				So(metrics.Get("stats.ds_access.other.proxy.count").MustInt(), ShouldEqual, 4+8)
+
+				So(metrics.Get("stats.alerting.ds.prometheus.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.alerting.ds.graphite.count").MustInt(), ShouldEqual, 2)
+				So(metrics.Get("stats.alerting.ds.mysql.count").MustInt(), ShouldEqual, 5)
+				So(metrics.Get("stats.alerting.ds.other.count").MustInt(), ShouldEqual, 90)
 
 				So(metrics.Get("stats.alert_notifiers.slack.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.alert_notifiers.webhook.count").MustInt(), ShouldEqual, 2)
@@ -260,7 +272,6 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
 
 				So(metrics.Get("stats.packaging.deb.count").MustInt(), ShouldEqual, 1)
-
 			})
 		})
 
@@ -325,4 +336,17 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 	case <-time.After(timeout):
 		return true // timed out
 	}
+}
+
+type alertingUsageMock struct{}
+
+func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
+	return &alerting.UsageStats{
+		DatasourceUsage: map[string]int{
+			"prometheus":         1,
+			"graphite":           2,
+			"mysql":              5,
+			"unknown-datasource": 90,
+		},
+	}, nil
 }

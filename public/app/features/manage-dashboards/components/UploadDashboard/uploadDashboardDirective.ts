@@ -30,7 +30,7 @@ export function uploadDashboardDirective(timer: any, $location: ILocationService
             try {
               dash = JSON.parse(e.target.result);
             } catch (err) {
-              console.log(err);
+              console.error(err);
               appEvents.emit(AppEvents.alertError, [
                 'Import failed',
                 'JSON -> JS Serialization failed: ' + err.message,

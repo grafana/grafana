@@ -1,9 +1,10 @@
-import { e2e } from '../index';
+import { e2e } from '../';
+import { Flows } from '../flows';
 
 export interface ScenarioArguments {
   describeName: string;
   itName: string;
-  scenario: () => void;
+  scenario: Function;
   skipScenario?: boolean;
   addScenarioDataSource?: boolean;
   addScenarioDashBoard?: boolean;
@@ -19,34 +20,28 @@ export const e2eScenario = ({
 }: ScenarioArguments) => {
   describe(describeName, () => {
     if (skipScenario) {
-      it.skip(itName, () => {
-        // @ts-ignore yarn start in root throws error otherwise
-        expect(false).equals(true);
+      it.skip(itName, () => scenario());
+    } else {
+      before(() => Flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD')));
+
+      beforeEach(() => {
+        Cypress.Cookies.preserveOnce('grafana_session');
+
+        if (addScenarioDataSource) {
+          Flows.addDataSource();
+        }
+        if (addScenarioDashBoard) {
+          Flows.addDashboard();
+        }
       });
-      return;
+
+      afterEach(() => Flows.revertAllChanges());
+      after(() => e2e().clearCookies());
+
+      it(itName, () => scenario());
+
+      // @todo remove when possible: https://github.com/cypress-io/cypress/issues/2831
+      it('temporary', () => {});
     }
-
-    beforeEach(() => {
-      e2e.flows.login('admin', 'admin');
-      if (addScenarioDataSource) {
-        e2e.flows.addDataSource('TestData DB');
-      }
-      if (addScenarioDashBoard) {
-        e2e.flows.addDashboard();
-      }
-    });
-
-    afterEach(() => {
-      if (e2e.context().get('lastAddedDataSource')) {
-        e2e.flows.deleteDataSource(e2e.context().get('lastAddedDataSource'));
-      }
-      if (e2e.context().get('lastAddedDashboardUid')) {
-        e2e.flows.deleteDashboard(e2e.context().get('lastAddedDashboardUid'));
-      }
-    });
-
-    it(itName, () => {
-      scenario();
-    });
   });
 };
