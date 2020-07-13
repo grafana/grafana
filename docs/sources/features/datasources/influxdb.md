@@ -138,7 +138,7 @@ Name | Description
 You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
 
 
-### Supported Macros
+### Supported macros
 
 The macros are designed to easily support copy+paste from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/)
 
