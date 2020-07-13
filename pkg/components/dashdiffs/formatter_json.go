@@ -240,7 +240,6 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 	positionStr := position.String()
 	if len(matchedDeltas) > 0 {
 		for _, matchedDelta := range matchedDeltas {
-
 			switch matchedDelta := matchedDelta.(type) {
 			case *diff.Object:
 				switch value.(type) {
@@ -314,7 +313,6 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 			default:
 				return errors.New("Unknown Delta type detected")
 			}
-
 		}
 	} else {
 		f.printRecursive(positionStr, value, ChangeUnchanged)

@@ -241,5 +241,4 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			So(result, ShouldEqual, "cn=test,dc=grafana,dc=org")
 		})
 	})
-
 }

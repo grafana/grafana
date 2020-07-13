@@ -159,11 +159,12 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
+export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
-export { FormLabel as InlineFormLabel } from './FormLabel/FormLabel';
+export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';

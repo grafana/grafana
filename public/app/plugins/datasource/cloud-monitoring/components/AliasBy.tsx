@@ -4,11 +4,11 @@ import { QueryInlineField } from '.';
 
 export interface Props {
   onChange: (alias: any) => void;
-  value: string;
+  value?: string;
 }
 
 export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
-  const [alias, setAlias] = useState(value);
+  const [alias, setAlias] = useState(value ?? '');
 
   const propagateOnChange = debounce(onChange, 1000);
 

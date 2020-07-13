@@ -89,7 +89,6 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 
 		qm.Target = qm.Params.Encode()
 		iaQueries = append(iaQueries, &qm)
-
 	}
 
 	return iaQueries, nil

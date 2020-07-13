@@ -53,7 +53,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
             labelClass="width-10"
             checked={props.variable.includeAll}
             onChange={onIncludeAllChanged}
-            tooltip={'Enables multiple values to be selected at the same time'}
+            tooltip={'Enables an option to include all variables'}
           />
         </div>
       </div>
