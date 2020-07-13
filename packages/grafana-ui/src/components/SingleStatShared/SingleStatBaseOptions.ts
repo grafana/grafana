@@ -16,11 +16,15 @@ import {
   ThresholdsConfig,
   validateFieldConfig,
   FieldColorMode,
+  DisplayValueAlignmentFactors,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
+
+  // Optionally force the display reference text
+  fixAlignment?: DisplayValueAlignmentFactors;
 }
 
 const optionsToKeep = ['reduceOptions', 'orientation'];
