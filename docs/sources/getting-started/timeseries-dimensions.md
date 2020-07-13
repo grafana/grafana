@@ -13,34 +13,29 @@ weight = 300
 
 # Time series dimensions
 
-In at the end of the [Time series databases section of "Introduction to time series"](TODO://link) the concepts of tags is introduced:
+In at the end of the ["Time series databases" section of "Introduction to time series"]({{< relref "timeseries.md#time-series-databases" >}}) the concepts of tags is introduced:
 
 > Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. ...
 
 **TODO**: Look at glossary, labels/tags, maybe update quote and original document above to labels.
 
-**TODO**: Example of data, table probably.
-
 With time series data, the data often contains more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data. The common case is issuing a single query for a measurement such as temperature as well as requesting an additional property such as location. In this case multiple series are returned back from that single query as a set, where each series in this case has unique location. To uniquely identify these series within the set, Grafana stores this information in _Labels_.
 
 ## Labels
 
-Each time series in Grafana optionally has Labels. Labels are set a of key/value pairs. For example Labels could be `{location=us}` or could be `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}`.
+Each time series in Grafana optionally has Labels. Labels are set a of key/value pairs for identifying dimensions. Example Labels could are `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}`.
 
-Different source of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into labels. Time series databases (TSBBs) generally natively support for dimensionality. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used - in Prometheus the same term as used as in Grafana - _Labels_. In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
+Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions. Time series databases (TSDBs) usually natively support dimensionality. In TSDBs such as Graphite or OpenTSDB the term _Tags_ is used - in Prometheus the same term as used as in Grafana - _Labels_. In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
 
 By storing dimensionality as Labels in Grafana it allows for the possibility of data transformations and alerting to also support multiple dimensions.
-
-Other terms:
-Tags, Dimensions, Group By, Split on, Factor, Categorical Value
 
 ## Multiple dimensions in table format
 
 In SQL or SQL-like databases that return table responses, additional dimensions are generally found as columns in the table that is returned as a response from the query.
 
-### Single Dimension
+### Single dimension
 
-For example, consider a psudeo query like:
+For example, consider a pseudo query like:
 
 ```sql
 SELECT BUCKET(StartTime, 1h), AVG(Temperature) AS Temp, Location FROM T
@@ -62,11 +57,11 @@ The table format is _Long_ formatted time series (aka Tall). It has repeated tim
 
 Individual time series from the set are extracted by using the time typed column `StartTime` as the time index of the time series, the numeric typed column `Temp` as the series Name, and the name and values of the string typed `Location` column to build the labels, such as Location=LGA.
 
-### Multiple Dimensions
+### Multiple dimensions
 
 **TODO**: Azure only As 7.1, SQL coming in 7.2
 
-If one were to update the query to select and group by more than just location, `GROUP BY BUCKET(StartTime, 1h), Location, Sensor`, where Sensor is a string column, then an additional dimension is added:
+If the query is updated to select and group by more than just one string column, for example, `GROUP BY BUCKET(StartTime, 1h), Location, Sensor`, then an additional dimension is added:
 
 | StartTime  | Temp | Location | Sensor |
 | ---------- | ---- | -------- | ------ |
@@ -80,4 +75,3 @@ If one were to update the query to select and group by more than just location, 
 | 10:00      | 22.2 | BOS      | B      |
 
 In this case the Labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
-
