@@ -21,17 +21,20 @@ In at the end of the [Time series databases section of "Introduction to time ser
 
 **TODO**: Example of data, table probably.
 
-With time series data, the data often contains more than a single series and is a set of multiple time series. Many Grafana data sources support this type of data. The common case is issuing a single query for a measurement such as temperature as well an requesting an additional property such as location. In this case multiple series are returned back from that single query as a set, where each series in this case has unique location. To uniquely identify these series, Grafana stores this information in _Labels_.
+With time series data, the data often contains more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data. The common case is issuing a single query for a measurement such as temperature as well as requesting an additional property such as location. In this case multiple series are returned back from that single query as a set, where each series in this case has unique location. To uniquely identify these series within the set, Grafana stores this information in _Labels_.
 
 ## Labels
 
+Each time series in Grafana optionally has Labels. Labels are set a of key/value pairs. For example Labels could be `{location=us}` or could be `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series.
 
-How dimensions are stored as Labels
+Different source of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into labels. Time series databases (TSBBs) generally natively support for dimensionality. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used - in Prometheus the same term as used as in Grafana - _Labels_.
+
+In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
+
+By storing dimensionality as Labels in Grafana it allows for the possibility of data transformations and alerting to also support multiple-dimensions.
 
 Other terms:
 Tags, Dimensions, Group By, Split on, Factor, Categorical Value
-
-Dimension examples from TSDBs.
 
 ## Multiple-Dimensions in Table Format
 
