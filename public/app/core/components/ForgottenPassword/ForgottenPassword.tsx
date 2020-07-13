@@ -3,6 +3,7 @@ import { Form, Field, Input, Button, Legend, Container, useStyles, HorizontalGro
 import { getBackendSrv } from '@grafana/runtime';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { getConfig } from 'app/core/config';
 
 interface EmailDTO {
   userOrEmail: string;
@@ -32,7 +33,7 @@ export const ForgottenPassword: FC = () => {
       <div>
         <p>An email with a reset link has been sent to the email address. You should receive it shortly.</p>
         <Container margin="md" />
-        <LinkButton variant="primary" href="/login">
+        <LinkButton variant="primary" href={getConfig().appSubUrl + '/login'}>
           Back to login
         </LinkButton>
       </div>
@@ -53,7 +54,7 @@ export const ForgottenPassword: FC = () => {
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>
-            <LinkButton variant="link" href="/login">
+            <LinkButton variant="link" href={getConfig().appSubUrl + '/login'}>
               Back to login
             </LinkButton>
           </HorizontalGroup>
