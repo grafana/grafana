@@ -12,11 +12,11 @@ weight = 100
 # Templates and variables
 
 A variable is a placeholder for a value. You can use variables in metric queries and in panel titles. So when you change
-the value, using the dropdown at the top of the dashboard, your panel's metric queries will change to reflect the new value.
+the value, using the drop-down list at the top of the dashboard, your panel's metric queries will change to reflect the new value.
 
 Variables allow you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
-and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
-the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+and sensor names in your metric queries, you can use variables in their place. Variables are displayed as drop-down lists at the top of
+the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
 
 {{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}
 
@@ -80,6 +80,8 @@ Query variables allow you to write a data source query that might return a list 
 
 For instructions, refer to [Add a query variable]({{< relref "add-query-variable.md" >}}).
 
+Queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
+
 ### Custom
 
 Define the variable options manually using a comma-separated list.
@@ -113,3 +115,7 @@ summarize($myinterval, sum, false)
 ### Ad hoc filters
 
 Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources. This variable type allows you to add key/value filters that are automatically added to all metric queries that use the specified data source.
+
+## Variable best practices
+
+- Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings. Consider putting the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
