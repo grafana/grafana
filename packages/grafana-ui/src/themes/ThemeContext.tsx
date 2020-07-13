@@ -1,6 +1,6 @@
 import { GrafanaTheme, GrafanaThemeType } from '@grafana/data';
 import hoistNonReactStatics from 'hoist-non-react-statics';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Themeable } from '../types/theme';
 import { getTheme } from './getTheme';
 import { stylesFactory } from './stylesFactory';
@@ -14,7 +14,7 @@ type Subtract<T, K> = Omit<T, keyof K>;
 let ThemeContextMock: React.Context<GrafanaTheme> | null = null;
 
 // Used by useStyles()
-const memoizedStyleCreators = new Map();
+export const memoizedStyleCreators = new WeakMap();
 
 // Use Grafana Dark theme by default
 export const ThemeContext = React.createContext(getTheme(GrafanaThemeType.Dark));
@@ -56,6 +56,12 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
     memoizedStyleCreator = stylesFactory(getStyles);
     memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
   }
+
+  useEffect(() => {
+    return () => {
+      memoizedStyleCreators.delete(getStyles);
+    };
+  }, [getStyles]);
 
   return memoizedStyleCreator(theme);
 }
