@@ -5,15 +5,14 @@ const url = '/whatever?a=1&b=2';
 
 describe('getForcedLoginUrl', () => {
   it.each`
-    appUrl                                     | appSubUrl     | expected
-    ${'http://server.onmydomain.com/grafana/'} | ${'/grafana'} | ${'http://server.onmydomain.com/grafana/whatever?a=1&b=2&forceLogin=true'}
-    ${'http://server.onmydomain.com/'}         | ${''}         | ${'http://server.onmydomain.com/whatever?a=1&b=2&forceLogin=true'}
-    ${'http://localhost:3000/'}                | ${''}         | ${'http://localhost:3000/whatever?a=1&b=2&forceLogin=true'}
+    appSubUrl          | expected
+    ${''}              | ${'/whatever?a=1&b=2&forceLogin=true'}
+    ${'/grafana'}      | ${'/grafana/whatever?a=1&b=2&forceLogin=true'}
+    ${'/grafana/test'} | ${'/grafana/test/whatever?a=1&b=2&forceLogin=true'}
   `(
     "when appUrl set to '$appUrl' and appSubUrl set to '$appSubUrl' then result should be '$expected'",
-    ({ appUrl, appSubUrl, expected }) => {
+    ({ appSubUrl, expected }) => {
       updateConfig({
-        appUrl,
         appSubUrl,
       });
 
