@@ -174,7 +174,7 @@ from(bucket: "grafana")
   |> yield(name: "mean")
 ```
 
-The interpolated version of a query can be viewed using the Query Inspector.
+You can view the interpolated version of a query with the Query Inspector.
 
 ## Querying Logs (BETA)
 
