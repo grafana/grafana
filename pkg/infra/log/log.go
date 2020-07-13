@@ -264,7 +264,6 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 
 func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.Handler) log15.Handler {
 	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-
 		if len(filters) > 0 {
 			for i := 0; i < len(r.Ctx); i += 2 {
 				key, ok := r.Ctx[i].(string)

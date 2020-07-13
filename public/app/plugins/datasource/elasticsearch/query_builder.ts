@@ -221,7 +221,7 @@ export class ElasticQueryBuilder {
      * Check if metric type is raw_document. If metric doesn't have size (or size is 0), update size to 500.
      * Otherwise it will not be a valid query and error will be thrown.
      */
-    if (target.metrics[0].type === 'raw_document') {
+    if (target.metrics?.[0]?.type === 'raw_document') {
       metric = target.metrics[0];
       const size = (metric.settings && metric.settings.size !== 0 && metric.settings.size) || 500;
       return this.documentQuery(query, size);

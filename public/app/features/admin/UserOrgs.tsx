@@ -189,7 +189,7 @@ interface AddToOrgModalProps {
 }
 
 interface AddToOrgModalState {
-  selectedOrg: Organization;
+  selectedOrg: Organization | null;
   role: OrgRole;
 }
 
@@ -211,11 +211,13 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
 
   onAddUserToOrg = () => {
     const { selectedOrg, role } = this.state;
-    this.props.onOrgAdd(selectedOrg.id, role);
+    this.props.onOrgAdd(selectedOrg!.id, role);
   };
 
   onCancel = () => {
-    this.props.onDismiss();
+    if (this.props.onDismiss) {
+      this.props.onDismiss();
+    }
   };
 
   render() {

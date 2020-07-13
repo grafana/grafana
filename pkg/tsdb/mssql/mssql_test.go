@@ -306,7 +306,6 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				So(points[6][0].Valid, ShouldBeFalse)
-
 			})
 
 			Convey("When doing a metric query using timeGroup and $__interval", func() {
@@ -705,7 +704,6 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 				So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
-
 			})
 
 			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
@@ -1139,7 +1137,9 @@ func TestMSSQL(t *testing.T) {
 }
 
 func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Mssql.DriverName, strings.Replace(sqlutil.TestDB_Mssql.ConnStr, "localhost", serverIP, 1))
+	testDB := sqlutil.MSSQLTestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
+		serverIP, 1))
 	if err != nil {
 		t.Fatalf("Failed to init mssql db %v", err)
 	}

@@ -118,17 +118,17 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve([]);
     }
 
-    const aiResult = this.appInsightsDatasource.metricFindQuery(query);
+    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
     if (aiResult) {
       return aiResult;
     }
 
-    const amResult = this.azureMonitorDatasource.metricFindQuery(query);
+    const amResult = this.azureMonitorDatasource.metricFindQueryInternal(query);
     if (amResult) {
       return amResult;
     }
 
-    const alaResult = this.azureLogAnalyticsDatasource.metricFindQuery(query);
+    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
     if (alaResult) {
       return alaResult;
     }

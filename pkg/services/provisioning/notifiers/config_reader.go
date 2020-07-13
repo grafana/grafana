@@ -140,7 +140,6 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 }
 
 func validateNotifications(notifications []*notificationsAsConfig) error {
-
 	for i := range notifications {
 		if notifications[i].Notifications == nil {
 			continue

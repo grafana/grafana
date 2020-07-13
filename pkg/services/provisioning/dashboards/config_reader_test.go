@@ -18,7 +18,6 @@ var (
 
 func TestDashboardsAsConfig(t *testing.T) {
 	t.Run("Dashboards as configuration", func(t *testing.T) {
-
 		logger := log.New("test-logger")
 
 		t.Run("default values should be applied", func(t *testing.T) {

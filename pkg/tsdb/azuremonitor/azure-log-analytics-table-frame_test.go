@@ -131,10 +131,8 @@ func TestLogTableToFrame(t *testing.T) {
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
-
 		})
 	}
-
 }
 
 func loadLogAnalyticsTestFileWithNumber(name string) (AzureLogAnalyticsResponse, error) {

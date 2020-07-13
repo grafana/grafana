@@ -101,6 +101,7 @@ RUN apt-get update && \
     apt-get install -yq  \
         build-essential clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
+        python-pip      \
         ca-certificates \
         curl            \
         libfontconfig1  \
@@ -126,7 +127,8 @@ RUN apt-get update && \
     apt-get update && apt-get install -yq yarn=${YARNVERSION} && \
     curl -fL https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz \
       | tar -xz -C /usr/local && \
-    git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
+    git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1 && \
+    pip install codespell
 
 # We build our own musl cross-compilers via the musl-cross-make project, on the same OS as this image's base image,
 # to ensure compatibility. We also make sure to target musl 1.1.x, since musl 1.2.x introduces 64-bit time types
