@@ -293,6 +293,9 @@ $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
+$popover-code-bg: ${theme.colors.bg1};
+$popover-code-boxshadow: 0 0 5px $gray60;
+
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
 

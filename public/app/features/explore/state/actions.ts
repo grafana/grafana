@@ -372,7 +372,7 @@ export const loadDatasource = (exploreId: ExploreId, instance: DataSourceApi, or
       try {
         instance.init();
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }
 

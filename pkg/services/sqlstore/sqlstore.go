@@ -336,9 +336,10 @@ func (ss *SqlStore) readConfig() {
 type ITestDB interface {
 	Helper()
 	Fatalf(format string, args ...interface{})
+	Logf(format string, args ...interface{})
 }
 
-// InitTestDB initialize test DB.
+// InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}
@@ -350,6 +351,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	// environment variable present for test db?
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		t.Logf("Using database type %q", db)
 		dbType = db
 	}
 
@@ -365,20 +367,21 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	switch dbType {
 	case "mysql":
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	case "postgres":
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Postgres.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	default:
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Sqlite3.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.Sqlite3TestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	}
 
 	// need to get engine to clean db before we init
+	t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 	engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 	if err != nil {
 		t.Fatalf("Failed to init test database: %v", err)
@@ -389,6 +392,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 	// temp global var until we get rid of global vars
 	dialect = sqlstore.Dialect
 
+	t.Logf("Cleaning DB")
 	if err := dialect.CleanDB(); err != nil {
 		t.Fatalf("Failed to clean test db %v", err)
 	}

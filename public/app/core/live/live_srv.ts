@@ -27,11 +27,9 @@ export class LiveSrv {
     }
 
     this.initPromise = new Promise((resolve, reject) => {
-      console.log('Live: connecting...');
       this.conn = new WebSocket(this.getWebSocketUrl());
 
       this.conn.onclose = (evt: any) => {
-        console.log('Live: websocket onclose', evt);
         reject({ message: 'Connection closed' });
 
         this.initPromise = null;
@@ -45,11 +43,9 @@ export class LiveSrv {
       this.conn.onerror = (evt: any) => {
         this.initPromise = null;
         reject({ message: 'Connection error' });
-        console.log('Live: websocket error', evt);
       };
 
       this.conn.onopen = (evt: any) => {
-        console.log('opened');
         this.initPromise = null;
         resolve(this.conn);
       };
@@ -62,7 +58,7 @@ export class LiveSrv {
     message = JSON.parse(message);
 
     if (!message.stream) {
-      console.log('Error: stream message without stream!', message);
+      console.error('Error: stream message without stream!', message);
       return;
     }
 
@@ -80,8 +76,6 @@ export class LiveSrv {
     if (_.keys(this.observers).length === 0) {
       return;
     }
-
-    console.log('LiveSrv: Reconnecting');
 
     this.getConnection().then((conn: any) => {
       _.each(this.observers, (value, key) => {
@@ -103,7 +97,6 @@ export class LiveSrv {
   }
 
   removeObserver(stream: any, observer: any) {
-    console.log('unsubscribe', stream);
     delete this.observers[stream];
 
     this.getConnection().then((conn: any) => {
@@ -112,8 +105,6 @@ export class LiveSrv {
   }
 
   subscribe(streamName: string) {
-    console.log('LiveSrv.subscribe: ' + streamName);
-
     return Observable.create((observer: any) => {
       this.addObserver(streamName, observer);
 

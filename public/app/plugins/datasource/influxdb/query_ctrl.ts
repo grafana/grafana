@@ -263,7 +263,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     try {
       this.target.query = this.queryModel.render(false);
     } catch (err) {
-      console.log('query render error');
+      console.error('query render error');
     }
     this.target.rawQuery = !this.target.rawQuery;
   }
@@ -419,9 +419,5 @@ export class InfluxQueryCtrl extends QueryCtrl {
       return '=';
     }
     return null;
-  }
-
-  getCollapsedText() {
-    return this.queryModel.render(false);
   }
 }

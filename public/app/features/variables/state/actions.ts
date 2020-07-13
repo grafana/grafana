@@ -561,7 +561,7 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {
     dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
-    console.log(err);
+    console.error(err);
   }
 };
 

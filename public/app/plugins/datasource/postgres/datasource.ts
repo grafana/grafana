@@ -178,7 +178,7 @@ export class PostgresDatasource {
         return { status: 'success', message: 'Database Connection OK' };
       })
       .catch((err: any) => {
-        console.log(err);
+        console.error(err);
         if (err.data && err.data.message) {
           return { status: 'error', message: err.data.message };
         } else {

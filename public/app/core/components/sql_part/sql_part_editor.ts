@@ -39,7 +39,7 @@ export function sqlPartEditorDirective(templateSrv: any) {
         const $input = $link.next();
 
         $input.val(part.params[paramIndex]);
-        $input.css('width', $link.width() + 16 + 'px');
+        $input.css('width', $link.width()! + 16 + 'px');
 
         $link.hide();
         $input.show();
