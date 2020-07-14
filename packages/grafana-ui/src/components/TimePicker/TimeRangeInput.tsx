@@ -1,6 +1,6 @@
-import React, { FC, FormEvent, useState } from 'react';
+import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from 'emotion';
-import { dateTime, GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
+import { DateTime, dateTime, GrafanaTheme, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { useStyles } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
@@ -17,6 +17,12 @@ export const defaultTimeRange: TimeRange = {
   raw: { from: 'now-6h', to: 'now' },
 };
 
+interface InputTimeRange {
+  from: DateTime | string;
+  to: DateTime | string;
+  raw: RawTimeRange;
+}
+
 const isValidTimeRange = (range: any) => {
   return isValid(range.from) && isValid(range.to);
 };
@@ -24,10 +30,11 @@ const isValidTimeRange = (range: any) => {
 export interface Props {
   value: TimeRange;
   timeZone?: TimeZone;
-  onChange: (timeRange: TimeRange) => void;
+  onChange: (timeRange: InputTimeRange) => void;
   onChangeTimeZone?: (timeZone: TimeZone) => void;
   hideTimeZone?: boolean;
-  placeholder: string;
+  placeholder?: string;
+  clearable?: boolean;
 }
 
 const noop = () => {};
@@ -36,6 +43,7 @@ export const TimeRangeInput: FC<Props> = ({
   value,
   onChange,
   onChangeTimeZone,
+  clearable,
   hideTimeZone = true,
   timeZone = 'browser',
   placeholder = 'Select time range',
@@ -58,6 +66,13 @@ export const TimeRangeInput: FC<Props> = ({
     onChange(timeRange);
   };
 
+  const onRangeClear = (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    const from = '';
+    const to = '';
+    onChange({ from, to, raw: { from, to } });
+  };
+
   return (
     <div className={styles.container}>
       <div tabIndex={0} className={styles.pickerInput} aria-label="TimePicker Open Button" onClick={onOpen}>
@@ -66,7 +81,11 @@ export const TimeRangeInput: FC<Props> = ({
         ) : (
           <span className={styles.placeholder}>{placeholder}</span>
         )}
+
         <span className={styles.caretIcon}>
+          {isValidTimeRange(value) && clearable && (
+            <Icon className={styles.clearIcon} name="times" size="lg" onClick={onRangeClear} />
+          )}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
         </span>
       </div>
@@ -117,6 +136,12 @@ const getStyles = (theme: GrafanaTheme) => {
         margin-left: ${theme.spacing.xs};
       `
     ),
+    clearIcon: css`
+      margin-right: ${theme.spacing.xs};
+      &:hover {
+        color: ${theme.palette.white};
+      }
+    `,
     placeholder: css`
       color: ${theme.colors.formInputPlaceholderText};
       opacity: 1;
