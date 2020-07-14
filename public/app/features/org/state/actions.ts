@@ -1,6 +1,7 @@
 import { ThunkResult } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { organizationLoaded } from './reducers';
+import { updateConfigurationSubtitle } from 'app/core/actions';
 
 export function loadOrganization(): ThunkResult<any> {
   return async dispatch => {
@@ -18,5 +19,6 @@ export function updateOrganization(): ThunkResult<any> {
     await getBackendSrv().put('/api/org', { name: organization.name });
 
     dispatch(loadOrganization());
+    dispatch(updateConfigurationSubtitle(organization.name));
   };
 }

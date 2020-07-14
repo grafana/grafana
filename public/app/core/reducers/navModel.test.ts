@@ -1,8 +1,8 @@
 import { reducerTester } from '../../../test/core/redux/reducerTester';
-import { initialState, navIndexReducer, updateNavIndex } from './navModel';
+import { initialState, navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
 import { NavIndex } from '@grafana/data';
 
-describe('applicationReducer', () => {
+describe('navModelReducer', () => {
   describe('when updateNavIndex is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<NavIndex>()
@@ -36,6 +36,28 @@ describe('applicationReducer', () => {
             },
           },
         });
+    });
+  });
+
+  describe('when updateConfigurationSubtitle is dispatched', () => {
+    it('then state should be correct', () => {
+      const orgName = 'New Org Name';
+      const newCfgState = { ...initialState.cfg, subTitle: `Organization: ${orgName}` };
+      const expectedState = {
+        ...initialState,
+        cfg: newCfgState,
+        datasources: { ...initialState.datasources, parentItem: newCfgState },
+        users: { ...initialState.users, parentItem: newCfgState },
+        teams: { ...initialState.teams, parentItem: newCfgState },
+        plugins: { ...initialState.plugins, parentItem: newCfgState },
+        ['org-settings']: { ...initialState['org-settings'], parentItem: newCfgState },
+        apikeys: { ...initialState.apikeys, parentItem: newCfgState },
+      };
+
+      reducerTester<NavIndex>()
+        .givenReducer(navIndexReducer, { ...initialState })
+        .whenActionIsDispatched(updateConfigurationSubtitle(orgName))
+        .thenStateShouldEqual(expectedState);
     });
   });
 });
