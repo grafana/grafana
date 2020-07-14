@@ -14,7 +14,6 @@ import (
 )
 
 func TestUserDataAccess(t *testing.T) {
-
 	Convey("Testing DB", t, func() {
 		ss := InitTestDB(t)
 

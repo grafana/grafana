@@ -4,7 +4,7 @@ import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { LoadingState, DefaultTimeRange, DataQuery, PanelData, DataSourceApi } from '@grafana/data';
 
-export function isSharedDashboardQuery(datasource: string | DataSourceApi) {
+export function isSharedDashboardQuery(datasource: string | DataSourceApi | null) {
   if (!datasource) {
     // default datasource
     return false;
@@ -23,15 +23,15 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
 
     if (!listenToPanelId) {
       subscriber.next(getQueryError('Missing panel reference ID'));
-      return null;
+      return undefined;
     }
 
-    const currentPanel = dashboard.getPanelById(options.panelId);
+    const currentPanel = dashboard.getPanelById(options.panelId)!;
     const listenToPanel = dashboard.getPanelById(listenToPanelId);
 
     if (!listenToPanel) {
       subscriber.next(getQueryError('Unknown Panel: ' + listenToPanelId));
-      return null;
+      return undefined;
     }
 
     const listenToRunner = listenToPanel.getQueryRunner();
@@ -55,7 +55,6 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     return () => {
-      console.log('runSharedRequest unsubscribe');
       subscription.unsubscribe();
     };
   });

@@ -5,11 +5,11 @@ type = "docs"
 
 # Add support for annotations
 
-This guide explains how to add support for [annotations]({{< relref "../../reference/annotations.md" >}}) to an existing data source plugin.
+This guide explains how to add support for [annotations]({{< relref "../../dashboards/annotations.md" >}}) to an existing data source plugin.
 
 This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
 
-Data sources in Grafana can support [Annotations]({{< relref "../../reference/annotations.md" >}}) by handling _annotation queries_.
+Data sources in Grafana can support [Annotations]({{< relref "../../dashboards/annotations.md" >}}) by handling _annotation queries_.
 
 Handling annotation queries is similar to how you'd handle a metrics query. The difference is that instead of returning [data frames]({{< relref "data-frames.md" >}}), an annotation query returns _annotation events_.
 
@@ -65,7 +65,7 @@ async annotationQuery(options: AnnotationQueryRequest<MyQuery>): Promise<Annotat
 
 ## Region annotations
 
-[Region annotations]({{< relref "../../reference/annotations.md#adding-regions-events" >}}) have a start and end time. This can for example be used to annotate maintenance windows or downtime.
+[Region annotations]({{< relref "../../dashboards/annotations.md#adding-regions-events" >}}) have a start and end time. This can for example be used to annotate maintenance windows or downtime.
 
 To return a region annotation, set the `timeEnd`, and `isRegion` properties.
 

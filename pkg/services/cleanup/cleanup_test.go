@@ -38,5 +38,4 @@ func TestCleanUpTmpFiles(t *testing.T) {
 			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse)
 		})
 	})
-
 }

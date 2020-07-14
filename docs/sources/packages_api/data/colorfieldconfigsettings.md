@@ -23,12 +23,30 @@ import { ColorFieldConfigSettings } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [enableNamedColors](#enablenamedcolors-property) | <code>boolean</code> |  |
+|  [allowUndefined](#allowundefined-property) | <code>boolean</code> |  |
+|  [disableNamedColors](#disablenamedcolors-property) | <code>boolean</code> |  |
+|  [textWhenUndefined](#textwhenundefined-property) | <code>string</code> |  |
 
-### enableNamedColors property
+### allowUndefined property
 
 <b>Signature</b>
 
 ```typescript
-enableNamedColors?: boolean;
+allowUndefined?: boolean;
+```
+
+### disableNamedColors property
+
+<b>Signature</b>
+
+```typescript
+disableNamedColors?: boolean;
+```
+
+### textWhenUndefined property
+
+<b>Signature</b>
+
+```typescript
+textWhenUndefined?: string;
 ```

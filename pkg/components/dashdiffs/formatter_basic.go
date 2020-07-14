@@ -162,7 +162,6 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 				// know there's a change somewhere in the JSON tree, but we
 				// don't know exactly where, so we go deeper.
 			} else {
-
 				// if the change is anything but unchanged, continue processing
 				//
 				// we keep "narrowing" the key as we go deeper, in order to

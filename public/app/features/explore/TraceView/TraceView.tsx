@@ -63,6 +63,7 @@ export function TraceView(props: Props) {
       } as ThemeOptions),
     [theme]
   );
+
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
       childrenHiddenIDs,
@@ -70,10 +71,14 @@ export function TraceView(props: Props) {
       hoverIndentGuideIds,
       shouldScrollToFirstUiFindMatch: false,
       spanNameColumnWidth,
-      traceID: traceProp.traceID,
+      traceID: traceProp?.traceID,
     }),
-    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp.traceID]
+    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
+
+  if (!traceProp) {
+    return null;
+  }
 
   return (
     <ThemeProvider value={traceTheme}>

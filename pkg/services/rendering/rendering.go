@@ -218,7 +218,6 @@ func (rs *RenderingService) getURL(path string) string {
 
 		// &render=1 signals to the legacy redirect layer to
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
-
 	}
 
 	protocol := setting.Protocol

@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import _, { defaults } from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
@@ -557,8 +557,7 @@ export class DashboardMigrator {
             continue;
           }
 
-          const currentValue = currents[tag];
-          newTags.push({ text: tag, selected: false, ...currentValue });
+          newTags.push(defaults(currents[tag], { text: tag, selected: false }));
         }
         variable.tags = newTags;
       }
@@ -621,7 +620,8 @@ export class DashboardMigrator {
       const rowGridHeight = getGridHeight(height);
 
       const rowPanel: any = {};
-      let rowPanelModel: PanelModel;
+      let rowPanelModel: PanelModel | undefined;
+
       if (showRows) {
         // add special row panel
         rowPanel.id = nextRowId;

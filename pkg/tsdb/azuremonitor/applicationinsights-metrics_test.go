@@ -18,6 +18,7 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 		name          string
 		testFile      string
 		metric        string
+		alias         string
 		agg           string
 		dimensions    []string
 		expectedFrame func() *data.Frame
@@ -66,7 +67,7 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 			},
 		},
 		{
-			name:       "segmented series",
+			name:       "multi segmented series",
 			testFile:   "applicationinsights/4-application-insights-response-metrics-multi-segmented.json",
 			metric:     "traces/count",
 			agg:        "sum",
@@ -77,12 +78,8 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 						time.Date(2020, 6, 25, 16, 15, 32, 14e7, time.UTC),
 						time.Date(2020, 6, 25, 16, 16, 0, 0, time.UTC),
 					}),
-					data.NewField("traces/count", data.Labels{"client/city": "Washington", "client/countryOrRegion": "United States"}, []*float64{
-						pointer.Float64(2),
+					data.NewField("traces/count", data.Labels{"client/city": "Tokyo", "client/countryOrRegion": "Japan"}, []*float64{
 						nil,
-					}),
-					data.NewField("traces/count", data.Labels{"client/city": "Des Moines", "client/countryOrRegion": "United States"}, []*float64{
-						pointer.Float64(2),
 						pointer.Float64(1),
 					}),
 					data.NewField("traces/count", data.Labels{"client/city": "", "client/countryOrRegion": "United States"}, []*float64{
@@ -93,10 +90,54 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 						nil,
 						pointer.Float64(3),
 					}),
+					data.NewField("traces/count", data.Labels{"client/city": "Des Moines", "client/countryOrRegion": "United States"}, []*float64{
+						pointer.Float64(2),
+						pointer.Float64(1),
+					}),
+					data.NewField("traces/count", data.Labels{"client/city": "Washington", "client/countryOrRegion": "United States"}, []*float64{
+						pointer.Float64(2),
+						nil,
+					}),
+				)
+
+				return frame
+			},
+		},
+		{
+			name:       "segmented series with alias",
+			testFile:   "applicationinsights/4-application-insights-response-metrics-multi-segmented.json",
+			metric:     "traces/count",
+			alias:      "{{ metric }}: Country,City: {{ client/countryOrRegion }},{{ client/city }}",
+			agg:        "sum",
+			dimensions: []string{"client/countryOrRegion", "client/city"},
+			expectedFrame: func() *data.Frame {
+				frame := data.NewFrame("",
+					data.NewField("StartTime", nil, []time.Time{
+						time.Date(2020, 6, 25, 16, 15, 32, 14e7, time.UTC),
+						time.Date(2020, 6, 25, 16, 16, 0, 0, time.UTC),
+					}),
 					data.NewField("traces/count", data.Labels{"client/city": "Tokyo", "client/countryOrRegion": "Japan"}, []*float64{
 						nil,
 						pointer.Float64(1),
-					}),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: Japan,Tokyo"}),
+					data.NewField("traces/count", data.Labels{"client/city": "", "client/countryOrRegion": "United States"}, []*float64{
+						nil,
+						pointer.Float64(11),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,"}),
+					data.NewField("traces/count", data.Labels{"client/city": "Chicago", "client/countryOrRegion": "United States"}, []*float64{
+						nil,
+						pointer.Float64(3),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Chicago"}),
+
+					data.NewField("traces/count", data.Labels{"client/city": "Des Moines", "client/countryOrRegion": "United States"}, []*float64{
+						pointer.Float64(2),
+						pointer.Float64(1),
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Des Moines"}),
+
+					data.NewField("traces/count", data.Labels{"client/city": "Washington", "client/countryOrRegion": "United States"}, []*float64{
+						pointer.Float64(2),
+						nil,
+					}).SetConfig(&data.FieldConfig{DisplayName: "traces/count: Country,City: United States,Washington"}),
 				)
 
 				return frame
@@ -110,13 +151,14 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 
 			frame, err := InsightsMetricsResultToFrame(res, tt.metric, tt.agg, tt.dimensions)
 			require.NoError(t, err)
+
+			applyInsightsMetricAlias(frame, tt.alias)
+
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
-
 		})
 	}
-
 }
 
 func loadInsightsMetricsResponse(name string) (MetricsResult, error) {

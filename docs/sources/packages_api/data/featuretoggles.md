@@ -25,11 +25,20 @@ import { FeatureToggles } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [datasourceInsights](#datasourceinsights-property) | <code>boolean</code> |  |
 |  [expressions](#expressions-property) | <code>boolean</code> |  |
 |  [meta](#meta-property) | <code>boolean</code> |  |
 |  [newEdit](#newedit-property) | <code>boolean</code> |  |
-|  [newVariables](#newvariables-property) | <code>boolean</code> |  |
+|  [reportGrid](#reportgrid-property) | <code>boolean</code> |  |
 |  [transformations](#transformations-property) | <code>boolean</code> |  |
+
+### datasourceInsights property
+
+<b>Signature</b>
+
+```typescript
+datasourceInsights: boolean;
+```
 
 ### expressions property
 
@@ -59,12 +68,12 @@ Available only in Grafana Enterprise
 newEdit: boolean;
 ```
 
-### newVariables property
+### reportGrid property
 
 <b>Signature</b>
 
 ```typescript
-newVariables: boolean;
+reportGrid: boolean;
 ```
 
 ### transformations property

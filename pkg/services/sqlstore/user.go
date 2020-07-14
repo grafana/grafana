@@ -213,7 +213,6 @@ func GetUserByEmail(query *models.GetUserByEmailQuery) error {
 
 func UpdateUser(cmd *models.UpdateUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
@@ -240,7 +239,6 @@ func UpdateUser(cmd *models.UpdateUserCommand) error {
 
 func ChangeUserPassword(cmd *models.ChangeUserPasswordCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
@@ -614,7 +612,6 @@ func UpdateUserPermissions(cmd *models.UpdateUserPermissionsCommand) error {
 
 func SetUserHelpFlag(cmd *models.SetUserHelpFlagCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Id:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,

@@ -224,7 +224,6 @@ func TestDashboardService(t *testing.T) {
 				_, err := service.SaveProvisionedDashboard(dto, nil)
 				So(err, ShouldBeNil)
 				So(dto.Dashboard.Data.Get("refresh").MustString(), ShouldEqual, "5m")
-
 			})
 		})
 

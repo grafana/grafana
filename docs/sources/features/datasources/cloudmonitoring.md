@@ -265,7 +265,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
 
 With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:
@@ -324,3 +324,14 @@ datasources:
     jsonData:
       authenticationType: gce
 ```
+
+## Deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console
+
+Only available in Grafana v7.1+.
+
+{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+
+> **Note:** This feature is only available for Metric queries.
+
+Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
+The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
