@@ -21,7 +21,7 @@ With time series data, the data often contains more than a single series, and is
 
 {{< docs-imagebox img="/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
 
-The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example querying a temperature measurement along with a location property as a dimension of the measurement. In this case, multiple series are returned back from that single query. Each series in this case has unique location. To uniquely identify these series within a set of time series, Grafana stores this information in _Labels_.
+The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property as a dimension of the measurement. In this case, multiple series are returned back from that single query. Each series in this case has unique location. To uniquely identify these series within a set of time series, Grafana stores this information in _labels_.
 
 ## Labels
 
