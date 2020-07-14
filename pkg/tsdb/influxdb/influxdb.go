@@ -43,35 +43,16 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func AllFlux(queries *tsdb.TsdbQuery) (bool, error) {
-	var hasFlux bool
-	var allFlux bool
-	for i, q := range queries.Queries {
-		qType := q.Model.Get("queryType").MustString("")
-		if qType == "Flux" {
-			hasFlux = true
-			if i == 0 && hasFlux {
-				allFlux = true
-				continue
-			}
-		}
-		if allFlux && qType != "Flux" {
-			return true, fmt.Errorf("when using flux, all queries must be a flux query")
-		}
-	}
-	return allFlux, nil
-}
-
 func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
-	allFlux, err := AllFlux(tsdbQuery)
-	if err != nil {
-		return nil, err
-	}
+	glog.Info("query", "q", tsdbQuery.Queries)
 
-	if allFlux {
+	version := dsInfo.JsonData.Get("version").MustString("")
+	if version == "Flux" {
 		return flux.Query(ctx, dsInfo, tsdbQuery)
 	}
+
+	// NOTE: the following path is currently only called from alerting queries
+	// In dashboards, the request runs through proxy and are managed in the frontend
 
 	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
@@ -120,6 +101,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, response.Err
 	}
 
+	result := &tsdb.Response{}
 	result.Results = make(map[string]*tsdb.QueryResult)
 	result.Results["A"] = e.ResponseParser.Parse(&response, query)
 
@@ -140,8 +122,10 @@ func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Q
 }
 
 func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
-
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "query")
 	httpMode := dsInfo.JsonData.Get("httpMode").MustString("GET")
 

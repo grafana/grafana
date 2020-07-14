@@ -3,7 +3,6 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addTagMigration(mg *Migrator) {
-
 	tagTable := Table{
 		Name: "tag",
 		Columns: []*Column{

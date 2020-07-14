@@ -37,11 +37,25 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
+
+	if to.Host != "" {
+		return login.ErrForbiddenRedirectTo
+	}
+
+	// path should have exactly one leading slash
+	if !strings.HasPrefix(to.Path, "/") {
+		return login.ErrForbiddenRedirectTo
+	}
+	if strings.HasPrefix(to.Path, "//") {
+		return login.ErrForbiddenRedirectTo
+	}
+
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
 	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
 		return login.ErrInvalidRedirectTo
 	}
+
 	return nil
 }
 

@@ -163,7 +163,8 @@ func supportsCurrentArch(version *models.Version) bool {
 }
 
 func latestSupportedVersion(plugin *models.Plugin) *models.Version {
-	for _, ver := range plugin.Versions {
+	for _, v := range plugin.Versions {
+		ver := v
 		if supportsCurrentArch(&ver) {
 			return &ver
 		}
@@ -307,7 +308,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 	}()
 
 	_, err = io.Copy(dst, src)
-	return
+	return err
 }
 
 // isPathSafe checks if the filePath does not resolve outside of destination. This is used to prevent

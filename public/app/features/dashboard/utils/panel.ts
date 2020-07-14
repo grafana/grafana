@@ -25,8 +25,8 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
-    const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : null;
-    const confirmText = panel.alert ? 'YES' : null;
+    const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : undefined;
+    const confirmText = panel.alert ? 'YES' : undefined;
 
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Remove Panel',
@@ -66,7 +66,7 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  console.log('Toggle legend is not implemented yet');
+  console.warn('Toggle legend is not implemented yet');
   // We need to set panel.legend defaults first
   // panel.legend.show = !panel.legend.show;
   refreshPanel(panel);
@@ -92,11 +92,11 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
     }
 
     if (_isString(timeRange.raw.from)) {
-      const timeFromDate = dateMath.parse(timeFromInfo.from);
+      const timeFromDate = dateMath.parse(timeFromInfo.from)!;
       newTimeData.timeInfo = timeFromInfo.display;
       newTimeData.timeRange = {
         from: timeFromDate,
-        to: dateMath.parse(timeFromInfo.to),
+        to: dateMath.parse(timeFromInfo.to)!,
         raw: {
           from: timeFromInfo.from,
           to: timeFromInfo.to,
@@ -115,8 +115,8 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
 
     const timeShift = '-' + timeShiftInterpolated;
     newTimeData.timeInfo += ' timeshift ' + timeShift;
-    const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false);
-    const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true);
+    const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false)!;
+    const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true)!;
 
     newTimeData.timeRange = {
       from,

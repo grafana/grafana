@@ -119,7 +119,7 @@ func FormatDuration(inter time.Duration) string {
 }
 
 func roundInterval(interval time.Duration) time.Duration {
-	switch true {
+	switch {
 	// 0.015s
 	case interval <= 15*time.Millisecond:
 		return time.Millisecond * 10 // 0.01s

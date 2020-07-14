@@ -14,7 +14,7 @@ import {
   FieldColorMode,
 } from '@grafana/data';
 
-// Compontents
+// Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
@@ -605,9 +605,6 @@ function getValueStyles(
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
-
-    // adjust width of title box
-    styles.width = measureText(formattedValueString, styles.fontSize).width + VALUE_LEFT_PADDING * 2;
   }
 
   return styles;

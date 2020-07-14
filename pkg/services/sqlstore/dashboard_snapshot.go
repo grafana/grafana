@@ -39,7 +39,6 @@ func DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCommand) error {
 
 func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		// never
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {

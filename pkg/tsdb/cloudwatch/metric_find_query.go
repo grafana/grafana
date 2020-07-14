@@ -20,18 +20,26 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+// Known AWS regions.
+var knownRegions = []string{
+	"ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
+	"ap-southeast-2", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-west-1",
+	"eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-1",
+	"us-iso-east-1", "us-isob-east-1", "us-west-1", "us-west-2",
+}
+
 type suggestData struct {
 	Text  string
 	Value string
 }
 
-type CustomMetricsCache struct {
+type customMetricsCache struct {
 	Expire time.Time
 	Cache  []string
 }
 
-var customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
-var customMetricsDimensionsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
+var customMetricsMetricsMap = make(map[string]map[string]map[string]*customMetricsCache)
+var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMetricsCache)
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":          {"ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "ExpiredCount", "HeapUsage", "InflightCount", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionsCount", "ProducerCount", "QueueSize", "StorePercentUsage", "TotalConsumerCount", "TotalMessageCount", "TotalProducerCount"},
@@ -86,9 +94,10 @@ var metricsMap = map[string][]string{
 	"AWS/Lex":               {"BotChannelAuthErrors", "BotChannelConfigurationErrors", "BotChannelInboundThrottledEvents", "BotChannelOutboundThrottledEvents", "BotChannelRequestCount", "BotChannelResponseCardErrors", "BotChannelSystemErrors", "MissedUtteranceCount", "RuntimeInvalidLambdaResponses", "RuntimeLambdaErrors", "RuntimePollyErrors", "RuntimeRequestCount", "RuntimeSucessfulRequestLatency", "RuntimeSystemErrors", "RuntimeThrottledEvents", "RuntimeUserErrors"},
 	"AWS/Logs":              {"DeliveryErrors", "DeliveryThrottling", "ForwardedBytes", "ForwardedLogEvents", "IncomingBytes", "IncomingLogEvents"},
 	"AWS/ML":                {"PredictCount", "PredictFailureCount"},
-	"AWS/MediaConnect":      {"ARQRecovered", "ARQRequests", "CATError", "CRCError", "ConnectedOutputs", "ContinuityCounter", "FECPackets", "FECRecovered", "NotRecoveredPackets", "OverflowPackets", "PATError", "PCRAccuracyError", "PCRError", "PIDError", "PMTError", "PTSError", "PacketLossPercent", "RecoveredPackets", "RoundTripTime", "SourceBitRate", "TSByteError", "TSSyncLoss", "TransportError"},
+	"AWS/MediaConnect":      {"ARQRecovered", "ARQRequests", "BitRate", "CATError", "CRCError", "Connected", "ConnectedOutputs", "ContinuityCounter", "Disconnections", "DroppedPackets", "FECPackets", "FECRecovered", "NotRecoveredPackets", "OutputConnected", "OutputDisconnections", "OverflowPackets", "PATError", "PCRAccuracyError", "PCRError", "PIDError", "PMTError", "PTSError", "PacketLossPercent", "RecoveredPackets", "RoundTripTime", "SourceARQRecovered", "SourceARQRequests", "SourceBitRate", "SourceCATError", "SourceCRCError", "SourceConnected", "SourceContinuityCounter", "SourceDisconnections", "SourceDroppedPackets", "SourceFECPackets", "SourceFECRecovered", "SourceNotRecoveredPackets", "SourceOverflowPackets", "SourcePATError", "SourcePCRAccuracyError", "SourcePCRError", "SourcePIDError", "SourcePMTError", "SourcePTSError", "SourcePacketLossPercent", "SourceRecoveredPackets", "SourceRoundTripTime", "SourceTSByteError", "SourceTSSyncLoss", "SourceTotalPackets", "SourceTransportError", "TSByteError", "TSSyncLoss", "TotalPackets", "TransportError"},
 	"AWS/MediaConvert":      {"AudioOutputSeconds", "Errors", "HDOutputSeconds", "JobsCompletedCount", "JobsErroredCount", "SDOutputSeconds", "StandbyTime", "TranscodingTime", "UHDOutputSeconds"},
 	"AWS/MediaPackage":      {"ActiveInput", "EgressBytes", "EgressRequestCount", "EgressResponseTime", "IngressBytes", "IngressResponseTime"},
+	"AWS/MediaStore":        {"RequestCount", "4xxErrorCount", "5xxErrorCount", "BytesUploaded", "BytesDownloaded", "TotalTime", "TurnaroundTime"},
 	"AWS/MediaTailor":       {"AdDecisionServer.Ads", "AdDecisionServer.Duration", "AdDecisionServer.Errors", "AdDecisionServer.FillRate", "AdDecisionServer.Timeouts", "AdNotReady", "Avails.Duration", "Avails.FillRate", "Avails.FilledDuration", "GetManifest.Errors", "Origin.Errors", "Origin.Timeouts"},
 	"AWS/NATGateway":        {"ActiveConnectionCount", "BytesInFromDestination", "BytesInFromSource", "BytesOutToDestination", "BytesOutToSource", "ConnectionAttemptCount", "ConnectionEstablishedCount", "ErrorPortAllocation", "IdleTimeoutCount", "PacketsDropCount", "PacketsInFromDestination", "PacketsInFromSource", "PacketsOutToDestination", "PacketsOutToSource"},
 	"AWS/Neptune":           {"CPUUtilization", "ClusterReplicaLag", "ClusterReplicaLagMaximum", "ClusterReplicaLagMinimum", "EngineUptime", "FreeLocalStorage", "FreeableMemory", "GremlinErrors", "GremlinHttp1xx", "GremlinHttp2xx", "GremlinHttp4xx", "GremlinHttp5xx", "GremlinRequests", "GremlinRequestsPerSec", "GremlinWebSocketAvailableConnections", "GremlinWebSocketClientErrors", "GremlinWebSocketServerErrors", "GremlinWebSocketSuccess", "Http100", "Http101", "Http1xx", "Http200", "Http2xx", "Http400", "Http403", "Http405", "Http413", "Http429", "Http4xx", "Http500", "Http501", "Http5xx", "LoaderErrors", "LoaderRequests", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "SparqlErrors", "SparqlHttp1xx", "SparqlHttp2xx", "SparqlHttp4xx", "SparqlHttp5xx", "SparqlRequests", "SparqlRequestsPerSec", "StatusErrors", "StatusRequests", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs"},
@@ -101,6 +110,7 @@ var metricsMap = map[string][]string{
 	"AWS/Route53Resolver":   {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
 	"AWS/S3":                {"4xxErrors", "5xxErrors", "AllRequests", "BucketSizeBytes", "BytesDownloaded", "BytesUploaded", "DeleteRequests", "FirstByteLatency", "GetRequests", "HeadRequests", "ListRequests", "NumberOfObjects", "PostRequests", "PutRequests", "SelectRequests", "SelectReturnedBytes", "SelectScannedBytes", "TotalRequestLatency"},
 	"AWS/SDKMetrics":        {"CallCount", "ClientErrorCount", "EndToEndLatency", "ConnectionErrorCount", "ServerErrorCount", "ThrottleCount"},
+	"AWS/ServiceCatalog":    {"ProvisionedProductLaunch"},
 	"AWS/SES":               {"Bounce", "Clicks", "Complaint", "Delivery", "Opens", "Reject", "Rendering Failures", "Reputation.BounceRate", "Reputation.ComplaintRate", "Send"},
 	"AWS/SNS":               {"NumberOfMessagesPublished", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed", "NumberOfNotificationsFilteredOut", "NumberOfNotificationsFilteredOut-InvalidAttributes", "NumberOfNotificationsFilteredOut-NoMessageAttributes", "PublishSize", "SMSMonthToDateSpentUSD", "SMSSuccessRate"},
 	"AWS/SQS":               {"ApproximateAgeOfOldestMessage", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesNotVisible", "ApproximateNumberOfMessagesVisible", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "NumberOfMessagesReceived", "NumberOfMessagesSent", "SentMessageSize"},
@@ -177,9 +187,10 @@ var dimensionsMap = map[string][]string{
 	"AWS/Lex":               {"BotAlias", "BotChannelName", "BotName", "BotVersion", "InputMode", "Operation", "Source"},
 	"AWS/Logs":              {"DestinationType", "FilterName", "LogGroupName"},
 	"AWS/ML":                {"MLModelId", "RequestMode"},
-	"AWS/MediaConnect":      {},
+	"AWS/MediaConnect":      {"AvailabilityZone", "FlowARN", "SourceARN", "OutputARN"},
 	"AWS/MediaConvert":      {"Job", "Operation", "Queue"},
 	"AWS/MediaPackage":      {"Channel", "No Dimension", "OriginEndpoint", "StatusCodeRange"},
+	"AWS/MediaStore":        {"ContainerName", "ObjectGroupName", "RequestType"},
 	"AWS/MediaTailor":       {"Configuration Name"},
 	"AWS/NATGateway":        {"NatGatewayId"},
 	"AWS/Neptune":           {"DBClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
@@ -192,6 +203,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Route53Resolver":   {"EndpointId"},
 	"AWS/S3":                {"BucketName", "FilterId", "StorageType"},
 	"AWS/SDKMetrics":        {"DestinationRegion", "Service"},
+	"AWS/ServiceCatalog":    {"State", "ProductId", "ProvisioningArtifactId"},
 	"AWS/SES":               {},
 	"AWS/SNS":               {"Application", "Country", "Platform", "SMSType", "TopicName"},
 	"AWS/SQS":               {"QueueName"},
@@ -217,7 +229,7 @@ var dimensionsMap = map[string][]string{
 
 var regionCache sync.Map
 
-func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	firstQuery := queryContext.Queries[0]
 
 	parameters := firstQuery.Model
@@ -296,8 +308,9 @@ func parseMultiSelectValue(input string) []string {
 
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	dsInfo := e.getDsInfo("default")
+func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	const region = "default"
+	dsInfo := e.getDSInfo(region)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -346,7 +359,7 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	keys := []string{}
 	for key := range metricsMap {
 		keys = append(keys, key)
@@ -365,7 +378,7 @@ func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -377,7 +390,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 		}
 	} else {
 		var err error
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
 		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region); err != nil {
@@ -394,7 +407,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -406,7 +419,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		}
 	} else {
 		var err error
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
 		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
@@ -423,7 +436,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -496,7 +509,7 @@ func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -504,15 +517,15 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	var filters []*ec2.Filter
 	for k, v := range filterJson {
 		if vv, ok := v.([]interface{}); ok {
-			var vvvvv []*string
+			var values []*string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {
-					vvvvv = append(vvvvv, &vvvv)
+					values = append(values, &vvvv)
 				}
 			}
 			filters = append(filters, &ec2.Filter{
 				Name:   aws.String(k),
-				Values: vvvvv,
+				Values: values,
 			})
 		}
 	}
@@ -553,7 +566,7 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
 				} else if attr, ok := v.Interface().(*time.Time); ok {
-					data = (*attr).String()
+					data = attr.String()
 				} else {
 					return nil, errors.New("invalid attribute path")
 				}
@@ -583,15 +596,15 @@ func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	var filters []*resourcegroupstaggingapi.TagFilter
 	for k, v := range filterJson {
 		if vv, ok := v.([]interface{}); ok {
-			var vvvvv []*string
+			var values []*string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {
-					vvvvv = append(vvvvv, &vvvv)
+					values = append(values, &vvvv)
 				}
 			}
 			filters = append(filters, &resourcegroupstaggingapi.TagFilter{
 				Key:    aws.String(k),
-				Values: vvvvv,
+				Values: values,
 			})
 		}
 	}
@@ -644,7 +657,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 	return &resp, nil
 }
 
-func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
@@ -671,7 +684,8 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	return &resp, nil
 }
 
-func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter, resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter,
+	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
@@ -685,14 +699,10 @@ func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	var resp resourcegroupstaggingapi.GetResourcesOutput
 	err = client.GetResourcesPages(params,
 		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-			resources, _ := awsutil.ValuesAtPath(page, "ResourceTagMappingList")
-			for _, resource := range resources {
-				resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, resource.(*resourcegroupstaggingapi.ResourceTagMapping))
-			}
+			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
 			return !lastPage
-		})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call tags:GetResources, %w", err)
+		}); err != nil {
+		return nil, fmt.Errorf("failed to call tags:GetResources, %w", err)
 	}
 
 	return &resp, nil
@@ -735,13 +745,13 @@ func (e *CloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string
 	dsInfo := e.getDsInfo(region)
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
+		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &customMetricsCache{}
 		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 
@@ -774,13 +784,13 @@ func (e *CloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]str
 	dsInfo := e.getDsInfo(region)
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
+		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
 	}
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &customMetricsCache{}
 		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 

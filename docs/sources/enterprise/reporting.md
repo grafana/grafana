@@ -21,7 +21,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../installation/configuration.md#smtp" >}}) in [Configuration]({{< relref "../installation/configuration.md" >}}) for more information.
+* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
 * The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
 
 ## Create or update a report
@@ -69,7 +69,7 @@ Hourly reports are generated once per hour. All fields are required.
 
 Daily reports are generated once per day. All fields are required.
 
-* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time -** Time the report is sent, in 24-hour format.
 * **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
@@ -77,7 +77,17 @@ Daily reports are generated once per day. All fields are required.
 Weekly reports are generated once per week. All fields are required.
 
 * **Day -** Weekday which the report should be sent on.
-* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time -** Time the report is sent, in 24-hour format.
+* **Time zone -** Time zone for the **Time** field.
+
+#### Monthly
+
+> Only available in Grafana Enterprise v7.1+.
+
+Monthly reports are generated once per month. All fields are required.
+
+* **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
+* **Time -** Time the report is sent, in 24-hour format.
 * **Time zone -** Time zone for the **Time** field.
 
 #### Never
@@ -109,7 +119,7 @@ When generating reports, each panel renders separately before being collected in
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
- These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+ These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
 ```ini
 [reporting]
@@ -132,7 +142,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ## Troubleshoot reporting
 
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md#filters" >}}) for more information.
 
 ```bash
 [log]

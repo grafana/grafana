@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "7.1.0-pre.0",
+  "version": "7.2.0-pre.0",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -26,7 +26,7 @@
     "@braintree/sanitize-url": "4.0.0",
     "apache-arrow": "0.16.0",
     "lodash": "4.17.15",
-    "rxjs": "6.5.5",
+    "rxjs": "6.6.0",
     "xss": "1.0.6"
   },
   "devDependencies": {
@@ -37,7 +37,7 @@
     "@rollup/plugin-node-resolve": "7.1.1",
     "@types/braintree__sanitize-url": "4.0.0",
     "@types/jest": "23.3.14",
-    "@types/jquery": "1.10.35",
+    "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.123",
     "@types/node": "10.14.1",
     "@types/papaparse": "4.5.9",
@@ -51,6 +51,6 @@
     "rollup-plugin-typescript2": "0.26.0",
     "rollup-plugin-visualizer": "3.3.1",
     "sinon": "8.1.1",
-    "typescript": "3.7.5"
+    "typescript": "3.9.3"
   }
 }

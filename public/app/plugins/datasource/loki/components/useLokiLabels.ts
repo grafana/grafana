@@ -21,7 +21,7 @@ export const useLokiLabels = (
   const mounted = useRefMounted();
 
   // State
-  const [logLabelOptions, setLogLabelOptions] = useState([]);
+  const [logLabelOptions, setLogLabelOptions] = useState<any>([]);
   const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
   /**
    * Holds information about currently selected option from rc-cascader to perform effect
@@ -56,7 +56,7 @@ export const useLokiLabels = (
     if (languageProviderInitialised) {
       const targetOption = activeOption[activeOption.length - 1];
       if (targetOption) {
-        const nextOptions = logLabelOptions.map(option => {
+        const nextOptions = logLabelOptions.map((option: any) => {
           if (option.value === targetOption.value) {
             return {
               ...option,

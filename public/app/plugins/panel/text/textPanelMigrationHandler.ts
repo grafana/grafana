@@ -11,5 +11,9 @@ export const textPanelMigrationHandler = (panel: PanelModel<TextOptions>): Parti
     return { content, mode };
   }
 
-  return panel.options as TextOptions;
+  if (panel.options.mode === 'text') {
+    return { content: panel.options.content, mode: 'markdown' };
+  }
+
+  return panel.options;
 };

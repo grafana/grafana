@@ -1,6 +1,6 @@
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { toUtc, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { PromOptions } from './types';
 
@@ -12,7 +12,7 @@ jest.mock('app/features/templating/template_srv', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 

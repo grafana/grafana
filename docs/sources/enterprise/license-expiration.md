@@ -16,7 +16,7 @@ If your license has expired most of Grafana keeps working as normal. Some enterp
 
 ## Update your license
 
-1. Locate your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration](https://grafana.com/docs/grafana/latest/installation/configuration/).
+1. Locate your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/).
     ```ini
     [enterprise]
     license_path = /path/to/your/license.jwt
@@ -57,3 +57,7 @@ The white labeling feature is turned off, meaning that any white labeling option
 ## Usage insights
 
 All the usage insights features are turned off, meaning that you won't be able to look at dashboard usage, presence indicator or to use improved search. Grafana still collects usage data and you will have access to it as soon as you update your license.
+
+## Vault integration
+
+Vault integration is not affected by an expired license.

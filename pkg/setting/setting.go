@@ -227,6 +227,7 @@ type Cfg struct {
 	AppUrl           string
 	AppSubUrl        string
 	ServeFromSubPath bool
+	StaticRootPath   string
 
 	// build
 	BuildVersion string
@@ -272,6 +273,9 @@ type Cfg struct {
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
+	// Dashboards
+	DefaultHomeDashboardPath string
+
 	// Auth
 	LoginCookieName              string
 	LoginMaxInactiveLifetimeDays int
@@ -296,11 +300,18 @@ type Cfg struct {
 
 	// Use to enable new features which may still be in alpha/beta stage.
 	FeatureToggles map[string]bool
+
+	AnonymousHideVersion bool
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
 func (c Cfg) IsExpressionsEnabled() bool {
 	return c.FeatureToggles["expressions"]
+}
+
+// IsStandaloneAlertsEnabled returns whether the standalone alerts feature is enabled.
+func (c Cfg) IsStandaloneAlertsEnabled() bool {
+	return c.FeatureToggles["standaloneAlerts"]
 }
 
 type CommandLineArgs struct {
@@ -697,6 +708,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
+	cfg.StaticRootPath = StaticRootPath
 
 	if err := cfg.validateStaticRootPath(); err != nil {
 		return err
@@ -775,6 +787,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -873,6 +887,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")

@@ -6,8 +6,9 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"golang.org/x/crypto/pbkdf2"
 	"strings"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // GetRandomString generate random string by specify chars.

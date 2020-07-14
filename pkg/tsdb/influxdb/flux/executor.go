@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	influxdb2 "github.com/influxdata/influxdb-client-go"
+	"github.com/influxdata/influxdb-client-go/api"
 )
 
 // ExecuteQuery runs a flux query using the QueryModel to interpolate the query and the runner to execute it.
@@ -25,6 +25,11 @@ func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 	tables, err := runner.runQuery(ctx, flux)
 	if err != nil {
 		dr.Error = err
+		metaFrame := data.NewFrame("meta for error")
+		metaFrame.Meta = &data.FrameMeta{
+			ExecutedQueryString: flux,
+		}
+		dr.Frames = append(dr.Frames, metaFrame)
 		return
 	}
 
@@ -40,7 +45,7 @@ func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 	return dr
 }
 
-func readDataFrames(result *influxdb2.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {
+func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 
 	builder := &FrameBuilder{

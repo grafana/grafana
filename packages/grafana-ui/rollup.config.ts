@@ -13,19 +13,29 @@ const buildCjsPackage = ({ env }) => {
     input: `compiled/index.js`,
     output: [
       {
-        file: `dist/index.${env}.js`,
+        dir: 'dist',
         name: libraryName,
         format: 'cjs',
         sourcemap: true,
         strict: false,
         exports: 'named',
+        chunkFileNames: `[name].${env}.js`,
         globals: {
           react: 'React',
           'prop-types': 'PropTypes',
         },
       },
     ],
-    external: ['react', 'react-dom', '@grafana/data', 'moment', '@grafana/e2e-selectors'],
+    external: [
+      'react',
+      'react-dom',
+      '@grafana/data',
+      '@grafana/e2e-selectors',
+      'moment',
+      'monaco-editor', // Monaco should not be used directly
+      'monaco-editor/esm/vs/editor/editor.api', // Monaco should not be used directly
+      'react-monaco-editor',
+    ],
     plugins: [
       commonjs({
         include: /node_modules/,
@@ -46,6 +56,9 @@ const buildCjsPackage = ({ env }) => {
             'uniqueId',
             'zip',
             'omit',
+            'isString',
+            'isEmpty',
+            'toLower',
           ],
           '../../node_modules/react-color/lib/components/common': ['Saturation', 'Hue', 'Alpha'],
           '../../node_modules/immutable/dist/immutable.js': [

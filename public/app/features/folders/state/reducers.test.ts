@@ -9,6 +9,8 @@ function getTestFolder(): FolderDTO {
     uid: 'asd',
     url: 'url',
     canSave: true,
+    canEdit: true,
+    canAdmin: true,
     version: 0,
   };
 }

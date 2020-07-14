@@ -20,7 +20,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [ArrayVector](./arrayvector/) |  |
 |  [BinaryOperationVector](./binaryoperationvector/) |  |
 |  [CircularDataFrame](./circulardataframe/) | This dataframe can have values constantly added, and will never exceed the given capacity |
-|  [CircularVector](./circularvector/) | Circular vector uses a single buffer to capture a stream of values overwriting the oldest value on add.<!-- -->This supports addting to the 'head' or 'tail' and will grow the buffer to match a configured capacity. |
+|  [CircularVector](./circularvector/) | Circular vector uses a single buffer to capture a stream of values overwriting the oldest value on add.<!-- -->This supports adding to the 'head' or 'tail' and will grow the buffer to match a configured capacity. |
 |  [ConstantVector](./constantvector/) |  |
 |  [CSVReader](./csvreader/) |  |
 |  [DataFrameView](./dataframeview/) | <b><i>(BETA)</i></b> This abstraction will present the contents of a DataFrame as if it were a well typed javascript object Vector. |
@@ -29,6 +29,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [FieldCache](./fieldcache/) |  |
 |  [FieldConfigEditorBuilder](./fieldconfigeditorbuilder/) | Fluent API for declarative creation of field config option editors |
 |  [FieldConfigOptionsRegistry](./fieldconfigoptionsregistry/) |  |
+|  [FormattedVector](./formattedvector/) |  |
 |  [GrafanaPlugin](./grafanaplugin/) |  |
 |  [LanguageProvider](./languageprovider/) |  |
 |  [MutableDataFrame](./mutabledataframe/) |  |
@@ -54,6 +55,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [FieldType](./fieldtype/) |  |
 |  [FrameMatcherID](./framematcherid/) | Field name matchers |
 |  [GrafanaThemeType](./grafanathemetype/) |  |
+|  [InternalTimeZones](./internaltimezones/) |  |
 |  [LoadingState](./loadingstate/) | Represent panel data loading state. |
 |  [LogLevel](./loglevel/) | Mapping of log level abbreviation to canonical log level. Supported levels are reduce to limit color variation. |
 |  [LogsDedupDescription](./logsdedupdescription/) |  |
@@ -110,7 +112,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [getValueFormat(id)](./getvalueformat/) |  |
 |  [getValueFormats()](./getvalueformats/) |  |
 |  [getValueFormatterIndex()](./getvalueformatterindex/) |  |
-|  [grafanaDataFrameToArrowTable(data)](./grafanadataframetoarrowtable/) |  |
+|  [grafanaDataFrameToArrowTable(data, keepOriginalNames)](./grafanadataframetoarrowtable/) |  |
 |  [guessFieldTypeForField(field)](./guessfieldtypeforfield/) | Looks at the data to guess the column type. This ignores any existing setting |
 |  [guessFieldTypeFromNameAndValue(name, v)](./guessfieldtypefromnameandvalue/) | Given a name and value, this will pick a reasonable field type |
 |  [guessFieldTypeFromValue(v)](./guessfieldtypefromvalue/) | Given a value this will guess the best column type<!-- -->TODO: better Date/Time support! Look for standard date strings? |
@@ -167,7 +169,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [DataConfigSource](./dataconfigsource/) | Describes and API for exposing panel specific data configurations. |
 |  [DataFrame](./dataframe/) |  |
 |  [DataFrameDTO](./dataframedto/) | Like a DataFrame, but fields may be a FieldDTO |
-|  [DataLink](./datalink/) | Link configuration. The values may contain variables that need to be processed before running |
+|  [DataLink](./datalink/) | Link configuration. The values may contain variables that need to be processed before showing the link to user.<!-- -->TODO: &lt;<!-- -->T extends DataQuery<!-- -->&gt; is not strictly true for internal links as we do not need refId for example but all data source defined queries extend this so this is more for documentation. |
 |  [DataLinkClickEvent](./datalinkclickevent/) | Callback info for DataLink click events |
 |  [DataLinksFieldConfigSettings](./datalinksfieldconfigsettings/) |  |
 |  [DataQuery](./dataquery/) | These are the common properties available to all queries in all datasources Specific implementations will extend this interface adding the required properties for the given context |
@@ -224,6 +226,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [GrafanaTheme](./grafanatheme/) |  |
 |  [GrafanaThemeCommons](./grafanathemecommons/) |  |
 |  [GraphSeriesXY](./graphseriesxy/) | View model projection of a series |
+|  [GroupedTimeZones](./groupedtimezones/) |  |
 |  [HistoryItem](./historyitem/) |  |
 |  [IntervalValues](./intervalvalues/) |  |
 |  [Labels](./labels/) |  |
@@ -280,6 +283,7 @@ A library containing most of the core functionality and data types used in Grafa
 |  [ScreenshotInfo](./screenshotinfo/) |  |
 |  [SelectableValue](./selectablevalue/) | Used in select elements |
 |  [SelectFieldConfigSettings](./selectfieldconfigsettings/) |  |
+|  [StandardEditorContext](./standardeditorcontext/) |  |
 |  [StandardEditorProps](./standardeditorprops/) |  |
 |  [StandardEditorsRegistryItem](./standardeditorsregistryitem/) |  |
 |  [StringFieldConfigSettings](./stringfieldconfigsettings/) |  |
@@ -292,6 +296,8 @@ A library containing most of the core functionality and data types used in Grafa
 |  [TimeOptions](./timeoptions/) |  |
 |  [TimeRange](./timerange/) |  |
 |  [TimeSeries](./timeseries/) |  |
+|  [TimeZoneCountry](./timezonecountry/) |  |
+|  [TimeZoneInfo](./timezoneinfo/) |  |
 |  [TransformerRegistyItem](./transformerregistyitem/) |  |
 |  [TransformerUIProps](./transformeruiprops/) |  |
 |  [UnitFieldConfigSettings](./unitfieldconfigsettings/) |  |
@@ -358,6 +364,8 @@ A library containing most of the core functionality and data types used in Grafa
 |  [getSeriesTimeStep](./getseriestimestep/) | Returns minimal time step from series time field |
 |  [getTimeField](./gettimefield/) |  |
 |  [getTimeZoneGroups](./gettimezonegroups/) |  |
+|  [getTimeZoneInfo](./gettimezoneinfo/) |  |
+|  [getTimeZones](./gettimezones/) |  |
 |  [getValueFromDimension](./getvaluefromdimension/) |  |
 |  [guessFieldTypes](./guessfieldtypes/) |  |
 |  [hasMsResolution](./hasmsresolution/) | Checks if series time field has ms resolution |
@@ -451,6 +459,15 @@ A library containing most of the core functionality and data types used in Grafa
 |  [TimeZoneBrowser](./timezonebrowser/) |  |
 |  [TimeZoneResolver](./timezoneresolver/) | The type to describe the time zone resolver function that will be used to access the default time zone of a user. |
 |  [TimeZoneUtc](./timezoneutc/) |  |
+|  [Trace](./trace/) |  |
+|  [TraceData](./tracedata/) |  |
+|  [TraceKeyValuePair](./tracekeyvaluepair/) | All timestamps are in microseconds |
+|  [TraceLink](./tracelink/) |  |
+|  [TraceLog](./tracelog/) |  |
+|  [TraceProcess](./traceprocess/) |  |
+|  [TraceSpan](./tracespan/) |  |
+|  [TraceSpanData](./tracespandata/) |  |
+|  [TraceSpanReference](./tracespanreference/) |  |
 |  [UrlQueryMap](./urlquerymap/) | Type to represent the values parsed from the query string. |
 |  [UrlQueryValue](./urlqueryvalue/) | Type to represent the value of a single query variable. |
 |  [ValueConverter](./valueconverter/) |  |

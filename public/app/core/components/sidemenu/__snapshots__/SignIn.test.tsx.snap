@@ -6,7 +6,7 @@ exports[`Render should render component 1`] = `
 >
   <a
     className="sidemenu-link"
-    href="login?redirect=%2F"
+    href="/whatever?forceLogin=true"
     target="_self"
   >
     <span
@@ -19,7 +19,7 @@ exports[`Render should render component 1`] = `
     </span>
   </a>
   <a
-    href="login?redirect=%2F"
+    href="/whatever?forceLogin=true"
     target="_self"
   >
     <ul

@@ -46,7 +46,6 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	setting.ERR_TEMPLATE_NAME = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
-
 		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
 			setting.XSSProtectionHeader = true
 			sc.fakeReq("GET", "/api/").exec()
@@ -623,7 +622,9 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
 
 	foundLoginCookie := false
-	for _, c := range rr.Result().Cookies() {
+	resp := rr.Result()
+	defer resp.Body.Close()
+	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
 
@@ -667,3 +668,6 @@ func (mw mockWriter) Status() int               { return 0 }
 func (mw mockWriter) Size() int                 { return 0 }
 func (mw mockWriter) Written() bool             { return false }
 func (mw mockWriter) Before(macaron.BeforeFunc) {}
+func (mw mockWriter) Push(target string, opts *http.PushOptions) error {
+	return nil
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../../../Icon/Icon';
 
-// Ignoring because I couldn't get @types/react-select work wih Torkel's fork
+// Ignoring because I couldn't get @types/react-select work with Torkel's fork
 // @ts-ignore
 import { components } from '@torkelo/react-select';
 import { OptionProps } from 'react-select';

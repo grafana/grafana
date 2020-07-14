@@ -153,6 +153,8 @@ describe('DashboardPage', () => {
     });
 
     it('Should update model state normal state', () => {
+      expect(ctx.dashboard).toBeDefined();
+      // @ts-ignore typescript doesn't understand that dashboard must be defined to reach the row below
       expect(ctx.dashboard.panelInEdit).toBeUndefined();
     });
 

@@ -13,7 +13,6 @@ import (
 )
 
 func TestPluginProxy(t *testing.T) {
-
 	Convey("When getting proxy headers", t, func() {
 		route := &plugins.AppPluginRoute{
 			Headers: []plugins.AppPluginRouteHeader{
@@ -129,7 +128,6 @@ func TestPluginProxy(t *testing.T) {
 			So(route.URL, ShouldEqual, "{{.JsonData.dynamicUrl}}")
 		})
 	})
-
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.

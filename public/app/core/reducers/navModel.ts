@@ -1,5 +1,5 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
-import { NavIndex, NavModelItem } from '@grafana/data';
+import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 
 import config from 'app/core/config';
 
@@ -12,7 +12,7 @@ export function buildInitialState(): NavIndex {
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    navIndex[node.id] = {
+    navIndex[node.id!] = {
       ...node,
       parentItem: parentItem,
     };
@@ -21,6 +21,21 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
       buildNavIndex(navIndex, node.children, node);
     }
   }
+
+  navIndex['not-found'] = { ...buildWarningNav('Page not found', '404 Error').node };
+}
+
+function buildWarningNav(text: string, subTitle?: string): NavModel {
+  const node = {
+    text,
+    subTitle,
+    icon: 'exclamation-triangle',
+  };
+  return {
+    breadcrumbs: [node],
+    node: node,
+    main: node,
+  };
 }
 
 export const initialState: NavIndex = {};
@@ -37,8 +52,8 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     const newPages: NavIndex = {};
     const payload = action.payload;
 
-    for (const node of payload.children) {
-      newPages[node.id] = {
+    for (const node of payload.children!) {
+      newPages[node.id!] = {
         ...node,
         parentItem: payload,
       };

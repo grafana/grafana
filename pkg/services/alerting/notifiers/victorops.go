@@ -23,6 +23,7 @@ func init() {
 		Type:        "victorops",
 		Name:        "VictorOps",
 		Description: "Sends notifications to VictorOps",
+		Heading:     "VictorOps settings",
 		Factory:     NewVictoropsNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">VictorOps settings</h3>
@@ -47,6 +48,22 @@ func init() {
         </gf-form-switch>
       </div>
     `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "VictorOps url",
+				PropertyName: "url",
+				Required:     true,
+			},
+			{
+				Label:        "Auto resolve incidents",
+				Description:  "Resolve incidents in VictorOps once the alert goes back to ok.",
+				Element:      alerting.ElementTypeSwitch,
+				PropertyName: "autoResolve",
+			},
+		},
 	})
 }
 
