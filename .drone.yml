@@ -1,14 +1,14 @@
 ---
 kind: pipeline
 type: docker
-name: test-pr-oss
+name: test-pr
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-- name: install-deps
+- name: initialize
   image: grafana/build-container:1.2.21
   commands:
   - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
@@ -22,16 +22,16 @@ steps:
   - cp -r $(yarn cache dir) yarn-cache
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.4.15
+    GRABPL_VERSION: 0.4.24
 
-- name: lint-go
+- name: lint-backend
   image: grafana/build-container:1.2.21
   commands:
   - make lint-go
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - install-deps
+  - initialize
 
 - name: codespell
   image: grafana/build-container:1.2.21
@@ -39,7 +39,7 @@ steps:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
-  - install-deps
+  - initialize
 
 - name: shellcheck
   image: grafana/build-container:1.2.21
@@ -54,31 +54,29 @@ steps:
     CHKSUM: beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
     VERSION: 0.7.1
   depends_on:
-  - install-deps
+  - initialize
 
 - name: build-backend
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
-  - ./bin/grabpl build-backend --github-token "$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64
+  - ./bin/grabpl build-backend --edition $${GF_EDITION} --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+    GF_EDITION: oss
   depends_on:
-  - install-deps
-  - lint-go
+  - initialize
+  - lint-backend
   - test-backend
 
 - name: build-frontend
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
-  - ./bin/grabpl build-frontend --no-install-deps --github-token "$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER
+  - ./bin/grabpl build-frontend --no-install-deps --edition $${GF_EDITION} --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+    GF_EDITION: oss
   depends_on:
-  - install-deps
+  - initialize
   - test-frontend
 
 - name: test-backend
@@ -88,8 +86,8 @@ steps:
   - ./bin/grabpl integration-tests
   - cp -r $(go env GOCACHE) go-cache
   depends_on:
-  - install-deps
-  - lint-go
+  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.2.21
@@ -100,24 +98,25 @@ steps:
   - yarn run typecheck
   - yarn run test
   depends_on:
-  - install-deps
+  - initialize
 
 - name: build-plugins
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
-  - ./bin/grabpl build-plugins --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --edition $${GF_EDITION} --no-install-deps
+  environment:
+    GF_EDITION: oss
   depends_on:
-  - install-deps
-  - lint-go
+  - initialize
+  - lint-backend
 
 - name: package
   image: grafana/build-container:1.2.21
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --github-token "$${GITHUB_TOKEN}" --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition $${GF_EDITION} --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+    GF_EDITION: oss
   depends_on:
   - build-backend
   - build-frontend
