@@ -7,6 +7,7 @@ import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
+import { DashboardLink } from '../../state/DashboardModel';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -14,6 +15,7 @@ interface OwnProps {
 
 interface ConnectedProps {
   variables: VariableModel[];
+  links: DashboardLink[];
 }
 
 interface DispatchProps {}
@@ -66,9 +68,17 @@ class SubMenuUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getSubMenuVariables(state.templating.variables),
-});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+  return {
+    variables: getSubMenuVariables(state.templating.variables),
+
+    /** Haven't found any other way to force links being passed to the links menu. Not spreading into new array makes
+     * the DashboardLinks not re-render as it gets reference to the same array in the model.
+     * Ref: https://github.com/grafana/grafana/issues/26289
+     */
+    links: [...state.dashboard.getModel()?.links],
+  };
+};
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
 SubMenu.displayName = 'SubMenu';
