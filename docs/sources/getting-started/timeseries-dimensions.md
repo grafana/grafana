@@ -25,9 +25,9 @@ The common case is issuing a single query for a measurement with one or more add
 
 ## Labels
 
-Each time series in Grafana optionally has Labels. Labels are set a of key/value pairs for identifying dimensions. Example Labels could are `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}`.
+Each time series in Grafana optionally has labels. labels are set a of key/value pairs for identifying dimensions. Example labels could are `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}`.
 
-Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions. Time series databases (TSDBs) usually natively support dimensionality. In TSDBs such as Graphite or OpenTSDB the term _Tags_ is used - in Prometheus the same term as used as in Grafana - _Labels_. In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
+Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions. Time series databases (TSDBs) usually natively support dimensionality. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used - in Prometheus the same term as used as in Grafana - _labels_. In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
 
 By storing dimensionality as labels for time series in Grafana, you can transform data and alert across multiple dimensions.
 
@@ -78,7 +78,7 @@ If the query is updated to select and group by more than just one string column,
 | 10:00      | 22   | BOS      | A      |
 | 10:00      | 22.2 | BOS      | B      |
 
-In this case the Labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
+In this case the labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
 
 ### Multiple values
 
