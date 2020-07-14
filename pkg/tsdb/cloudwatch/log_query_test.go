@@ -356,3 +356,124 @@ func TestGroupingResults(t *testing.T) {
 	require.NoError(t, err)
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }
+
+func TestGroupingResultsWithNumericField(t *testing.T) {
+	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
+	require.NoError(t, err)
+	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
+	require.NoError(t, err)
+	timeC, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 17:04:05.000")
+	require.NoError(t, err)
+	timeVals := []*time.Time{
+		&timeA, &timeA, &timeA, &timeB, &timeB, &timeB, &timeC, &timeC, &timeC,
+	}
+	timeField := data.NewField("@timestamp", data.Labels{}, timeVals)
+
+	httpResponseField := data.NewField("httpresponse", data.Labels{}, []*float64{
+		aws.Float64(400),
+		aws.Float64(404),
+		aws.Float64(500),
+		aws.Float64(400),
+		aws.Float64(404),
+		aws.Float64(500),
+		aws.Float64(400),
+		aws.Float64(404),
+		aws.Float64(500),
+	})
+
+	countField := data.NewField("count", data.Labels{}, []*string{
+		aws.String("100"),
+		aws.String("150"),
+		aws.String("20"),
+		aws.String("34"),
+		aws.String("57"),
+		aws.String("62"),
+		aws.String("105"),
+		aws.String("200"),
+		aws.String("99"),
+	})
+
+	fakeDataFrame := &data.Frame{
+		Name: "CloudWatchLogsResponse",
+		Fields: []*data.Field{
+			timeField,
+			httpResponseField,
+			countField,
+		},
+		RefID: "",
+	}
+
+	groupedTimeVals := []*time.Time{
+		&timeA, &timeB, &timeC,
+	}
+	groupedTimeField := data.NewField("@timestamp", data.Labels{}, groupedTimeVals)
+	groupedHttpResponseFieldA := data.NewField("httpresponse", data.Labels{}, []*string{
+		aws.String("400"),
+		aws.String("400"),
+		aws.String("400"),
+	})
+
+	groupedCountFieldA := data.NewField("count", data.Labels{}, []*string{
+		aws.String("100"),
+		aws.String("34"),
+		aws.String("105"),
+	})
+
+	groupedHttpResponseFieldB := data.NewField("httpresponse", data.Labels{}, []*string{
+		aws.String("404"),
+		aws.String("404"),
+		aws.String("404"),
+	})
+
+	groupedCountFieldB := data.NewField("count", data.Labels{}, []*string{
+		aws.String("150"),
+		aws.String("57"),
+		aws.String("200"),
+	})
+
+	groupedHttpResponseFieldC := data.NewField("httpresponse", data.Labels{}, []*string{
+		aws.String("500"),
+		aws.String("500"),
+		aws.String("500"),
+	})
+
+	groupedCountFieldC := data.NewField("count", data.Labels{}, []*string{
+		aws.String("20"),
+		aws.String("62"),
+		aws.String("99"),
+	})
+
+	expectedGroupedFrames := []*data.Frame{
+		{
+			Name: "400",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedHttpResponseFieldA,
+				groupedCountFieldA,
+			},
+			RefID: "",
+		},
+		{
+			Name: "404",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedHttpResponseFieldB,
+				groupedCountFieldB,
+			},
+			RefID: "",
+		},
+		{
+			Name: "500",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedHttpResponseFieldC,
+				groupedCountFieldC,
+			},
+			RefID: "",
+		},
+	}
+
+	groupedResults, err := groupResults(fakeDataFrame, []string{"httpresponse"})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
+}
