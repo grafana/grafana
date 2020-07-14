@@ -45,7 +45,7 @@ SELECT BUCKET(StartTime, 1h), AVG(Temperature) AS Temp, Location FROM T
   ORDER BY time asc
 ```
 
-Might return a table like with a 3 columns that each respectively have a type of Time, Number, and String:
+Might return a table with three columns that each respectively have a type of time, number, and string.
 
 | StartTime  | Temp | Location |
 | ---------- | ---- | -------- |
