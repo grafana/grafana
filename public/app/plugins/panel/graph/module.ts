@@ -253,7 +253,6 @@ export class GraphCtrl extends MetricsPanelCtrl {
               tip: 'Data exists, but is not timeseries',
               actionText: 'Switch to table view',
               action: () => {
-                console.log('Change from graph to table');
                 dispatch(changePanelPlugin(this.panel, 'table'));
               },
             };

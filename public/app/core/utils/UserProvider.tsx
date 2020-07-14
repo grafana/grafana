@@ -172,7 +172,7 @@ export class UserProvider extends PureComponent<Props, State> {
     await getBackendSrv()
       .put('/api/user', payload)
       .then(this.loadUser)
-      .catch(e => console.log(e))
+      .catch(e => console.error(e))
       .finally(() => {
         this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: false } });
       });

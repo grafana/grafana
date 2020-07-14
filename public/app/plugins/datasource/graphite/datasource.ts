@@ -100,11 +100,15 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return this.doGraphiteRequest(httpOptions).then(this.convertResponseToDataFrames);
   }
 
-  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId: any; panelId: any }) {
+  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
-      httpOptions.headers['X-Panel-Id'] = options.panelId;
+      if (options.dashboardId) {
+        httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      }
+      if (options.panelId) {
+        httpOptions.headers['X-Panel-Id'] = options.panelId;
+      }
     }
   }
 
@@ -577,7 +581,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         return this.funcDefs;
       })
       .catch((err: any) => {
-        console.log('Fetching graphite functions error', err);
+        console.error('Fetching graphite functions error', err);
         this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
         return this.funcDefs;
       });
