@@ -8,25 +8,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type CloudWatchExecutor struct {
-	*models.DataSource
-
-	// clients is our interface to access AWS service-specific API clients
-	clients clientCache
-}
-
-type DatasourceInfo struct {
+type datasourceInfo struct {
 	Profile       string
 	Region        string
 	AuthType      string
@@ -45,32 +35,28 @@ const defaultRegion = "default"
 const logIdentifierInternal = "__log__grafana_internal__"
 const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
-func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &CloudWatchExecutor{
-		clients: awsCredentialCache,
-	}, nil
+var plog = log.New("tsdb.cloudwatch")
+var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+
+func init() {
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return &cloudWatchExecutor{
+			DataSource: ds,
+			clients:    awsCredsCache,
+		}, nil
+	})
 }
 
-func (e *cloudWatchExecutor) getCWLogsClient(region string) (*cloudwatchlogs.CloudWatchLogs, error) {
-	e.mux.Lock()
-	defer e.mux.Unlock()
+// cloudWatchExecutor executes CloudWatch requests.
+type cloudWatchExecutor struct {
+	*models.DataSource
 
-	if logsClient, ok := e.logsClientsByRegion[region]; ok {
-		return logsClient, nil
-	}
-
-	dsInfo := e.getDSInfo(region)
-	newLogsClient, err := retrieveLogsClient(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	e.logsClientsByRegion[region] = newLogsClient
-
-	return newLogsClient, nil
+	// clients is our interface to access AWS service-specific API clients
+	clients clientCache
 }
 
-func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
@@ -156,7 +142,7 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 		queryParams.Set("region", region)
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDsInfo(region))
+	logsClient, err := e.clients.logsClient(e.getDSInfo(region))
 	if err != nil {
 		return nil, err
 	}
@@ -230,26 +216,6 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
 	}
-}
-
-func retrieveLogsClient(dsInfo *datasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := newSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
 }
 
 func isTerminated(queryStatus string) bool {

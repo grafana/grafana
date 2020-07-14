@@ -309,8 +309,7 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	const region = "default"
-	dsInfo := e.getDSInfo(region)
+	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -318,16 +317,11 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		}
 	}
 
-	regions := []string{
-		"ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1",
-		"eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2",
-		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
-	}
-
 	client, err := e.clients.ec2Client(dsInfo)
 	if err != nil {
 		return nil, err
 	}
+	regions := knownRegions
 	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
@@ -487,7 +481,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
@@ -588,7 +582,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
@@ -626,8 +620,8 @@ func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	svc, err := e.clients.cloudWatchClient(e.getDsInfo(region))
+func (e *cloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
+	svc, err := e.clients.cloudWatchClient(e.getDSInfo(region))
 	if err != nil {
 		return nil, err
 	}
@@ -663,22 +657,17 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.clients.ec2Client(e.getDsInfo(region))
+	client, err := e.clients.ec2Client(e.getDSInfo(region))
 	if err != nil {
 		return nil, err
 	}
 
 	var resp ec2.DescribeInstancesOutput
-	err = client.DescribeInstancesPages(params,
-		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
-			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
-			for _, reservation := range reservations {
-				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
-			}
-			return !lastPage
-		})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:DescribeInstances, %w", err)
+	if err := client.DescribeInstancesPages(params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+		resp.Reservations = append(resp.Reservations, page.Reservations...)
+		return !lastPage
+	}); err != nil {
+		return nil, fmt.Errorf("failed to call ec2:DescribeInstances, %w", err)
 	}
 
 	return &resp, nil
@@ -691,27 +680,26 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 		TagFilters:          filters,
 	}
 
-	client, err := e.clients.rgtaClient(e.getDsInfo(region))
+	client, err := e.clients.rgtaClient(e.getDSInfo(region))
 	if err != nil {
 		return nil, err
 	}
 
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	err = client.GetResourcesPages(params,
-		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
-			return !lastPage
-		}); err != nil {
+	if err := client.GetResourcesPages(params, func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
+		resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
+		return !lastPage
+	}); err != nil {
 		return nil, fmt.Errorf("failed to call tags:GetResources, %w", err)
 	}
 
 	return &resp, nil
 }
 
-func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
-	dsInfo := e.getDsInfo(region)
+func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
+	dsInfo := e.getDSInfo(region)
 
-	svc, err := e.clients.cloudWatchClient(dsInfo)
+	cli, err := e.clients.cloudWatchClient(dsInfo)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
@@ -721,7 +709,7 @@ func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 	}
 
 	var resp cloudwatch.ListMetricsOutput
-	err = svc.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+	err = cli.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		metrics.MAwsCloudWatchListMetrics.Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
 		if err != nil {
@@ -738,11 +726,11 @@ func (e *CloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 
 var metricsCacheLock sync.Mutex
 
-func (e *CloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string, error) {
+func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string, error) {
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
@@ -777,11 +765,11 @@ func (e *CloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string
 
 var dimensionsCacheLock sync.Mutex
 
-func (e *CloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]string, error) {
+func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	dsInfo := e.getDsInfo(region)
+	dsInfo := e.getDSInfo(region)
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
 		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)

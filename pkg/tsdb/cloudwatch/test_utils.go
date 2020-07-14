@@ -103,18 +103,18 @@ type mockClients struct {
 	logs       cloudwatchlogsiface.CloudWatchLogsAPI
 }
 
-func (m *mockClients) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
+func (m *mockClients) cloudWatchClient(dsInfo *datasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
 	return m.cloudWatch, nil
 }
 
-func (m *mockClients) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) {
+func (m *mockClients) ec2Client(dsInfo *datasourceInfo) (ec2iface.EC2API, error) {
 	return m.ec2, nil
 }
 
-func (m *mockClients) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
+func (m *mockClients) rgtaClient(dsInfo *datasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
 	return m.rgta, nil
 }
 
-func (m *mockClients) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+func (m *mockClients) logsClient(dsInfo *datasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
 	return m.logs, nil
 }

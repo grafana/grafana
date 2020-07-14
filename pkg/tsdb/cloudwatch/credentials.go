@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
@@ -25,25 +26,26 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // clientCache represents the interface a CloudWatchExecutor needs to access
 // AWS service-specific clients in order to perform API requests.
 type clientCache interface {
-	cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error)
-	ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error)
-	rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error)
-	logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error)
+	cloudWatchClient(dsInfo *datasourceInfo) (cloudwatchiface.CloudWatchAPI, error)
+	ec2Client(dsInfo *datasourceInfo) (ec2iface.EC2API, error)
+	rgtaClient(dsInfo *datasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error)
+	logsClient(dsInfo *datasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error)
 }
 
-type sharedCache map[string]cache
-
-type cache struct {
-	credential *credentials.Credentials
-	expiration *time.Time
+type envelope struct {
+	credentials *credentials.Credentials
+	expiration  *time.Time
 }
 
-func (c sharedCache) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
+type sharedCache map[string]envelope
+
+func (c sharedCache) cloudWatchClient(dsInfo *datasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
 	cfg, err := getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func (c sharedCache) cloudWatchClient(dsInfo *DatasourceInfo) (cloudwatchiface.C
 	return client, nil
 }
 
-func (c sharedCache) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) {
+func (c sharedCache) ec2Client(dsInfo *datasourceInfo) (ec2iface.EC2API, error) {
 	cfg, err := getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
@@ -75,7 +77,7 @@ func (c sharedCache) ec2Client(dsInfo *DatasourceInfo) (ec2iface.EC2API, error) 
 	return ec2.New(sess, cfg), nil
 }
 
-func (c sharedCache) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
+func (c sharedCache) rgtaClient(dsInfo *datasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
 	cfg, err := getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
@@ -87,7 +89,7 @@ func (c sharedCache) rgtaClient(dsInfo *DatasourceInfo) (resourcegroupstaggingap
 	return resourcegroupstaggingapi.New(sess, cfg), nil
 }
 
-func (c sharedCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+func (c sharedCache) logsClient(dsInfo *datasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
 	cfg, err := getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, err
@@ -108,8 +110,8 @@ func (c sharedCache) logsClient(dsInfo *DatasourceInfo) (cloudwatchlogsiface.Clo
 
 }
 
-var awsCredentialCache = make(sharedCache)
-var credentialCacheLock sync.RWMutex
+var awsCredsCache = make(sharedCache)
+var credsCacheLock sync.RWMutex
 
 // Session factory.
 // Stubbable by tests.
