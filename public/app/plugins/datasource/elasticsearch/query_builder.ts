@@ -212,7 +212,6 @@ export class ElasticQueryBuilder {
     // If target doesn't have bucketAggs and type is not raw_document, it is invalid query.
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
-
       if (!metric || metric.type !== 'raw_document') {
         throw { message: 'Invalid query' };
       }
