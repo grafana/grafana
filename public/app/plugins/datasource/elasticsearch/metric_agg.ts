@@ -103,8 +103,7 @@ export class ElasticMetricAggCtrl {
         }
         case 'raw_document': {
           $scope.agg.settings.size = $scope.agg.settings.size || 500;
-          $scope.agg.settings.useNewFormat =
-            $scope.agg.settings.useNewFormat === undefined ? true : $scope.agg.settings.useNewFormat;
+          $scope.agg.settings.useNewFormat = $scope.agg.settings.useNewFormat || false;
           $scope.settingsLinkText = 'Size: ' + $scope.agg.settings.size;
           $scope.target.metrics.splice(0, $scope.target.metrics.length, $scope.agg);
 
