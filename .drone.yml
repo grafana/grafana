@@ -160,6 +160,8 @@ steps:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources /hugo/content/docs/grafana/latest
   - cd /hugo && make prod
+  depends_on:
+  - initialize
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.21
