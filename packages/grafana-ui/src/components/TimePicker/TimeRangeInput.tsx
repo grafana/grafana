@@ -28,7 +28,7 @@ const isValidTimeRange = (range: any) => {
 };
 
 export interface Props {
-  value: TimeRange;
+  value: InputTimeRange;
   timeZone?: TimeZone;
   onChange: (timeRange: InputTimeRange) => void;
   onChangeTimeZone?: (timeZone: TimeZone) => void;
@@ -77,7 +77,7 @@ export const TimeRangeInput: FC<Props> = ({
     <div className={styles.container}>
       <div tabIndex={0} className={styles.pickerInput} aria-label="TimePicker Open Button" onClick={onOpen}>
         {isValidTimeRange(value) ? (
-          <TimePickerButtonLabel value={value} />
+          <TimePickerButtonLabel value={value as TimeRange} />
         ) : (
           <span className={styles.placeholder}>{placeholder}</span>
         )}
@@ -93,7 +93,7 @@ export const TimeRangeInput: FC<Props> = ({
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <TimePickerContent
             timeZone={timeZone}
-            value={isValidTimeRange(value) ? value : defaultTimeRange}
+            value={isValidTimeRange(value) ? (value as TimeRange) : defaultTimeRange}
             onChange={onRangeChange}
             otherOptions={otherOptions}
             quickOptions={quickOptions}
