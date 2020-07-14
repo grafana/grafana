@@ -68,12 +68,12 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         name: 'Text Sizes',
         description: 'text size is dynamically calculated',
         editor: AlignmentFactorsEditor,
-        options: {
-          getValues: () => {
-            console.log('XXX');
-            return [];
-          },
-        },
+        // options: {
+        //   getValues: () => {
+        //     console.log('XXX');
+        //     return [];
+        //   },
+        // },
       });
   })
   .setNoPadding()

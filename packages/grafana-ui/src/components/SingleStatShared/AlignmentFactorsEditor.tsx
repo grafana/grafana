@@ -1,17 +1,17 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme, StandardEditorProps, DisplayValueAlignmentFactors, FieldDisplay } from '@grafana/data';
 
 export interface AlignmentFactorsEditorOptions {
   getValues: () => FieldDisplay[];
 }
 
-export const AlignmentFactorsEditor: FC<StandardEditorProps<DisplayValueAlignmentFactors, any>> = ({
-  value,
-  onChange,
-  context,
-}) => {
+export const AlignmentFactorsEditor: FC<StandardEditorProps<
+  DisplayValueAlignmentFactors,
+  any,
+  AlignmentFactorsEditorOptions
+>> = ({ value, onChange, context }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
