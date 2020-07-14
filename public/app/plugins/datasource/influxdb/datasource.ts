@@ -62,6 +62,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return from(this.classicQuery(request));
   }
 
+  getQueryDisplayText(query: InfluxQuery) {
+    if (this.is2x) {
+      return query.query;
+    }
+    return new InfluxQueryModel(query).render(false);
+  }
+
   /**
    * Only applied on flux queries
    */
@@ -321,18 +328,18 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         .toPromise()
         .then((res: DataQueryResponse) => {
           if (!res || !res.data || res.state !== LoadingState.Done) {
-            console.log('InfluxDB Error', res);
+            console.error('InfluxDB Error', res);
             return { status: 'error', message: 'Error reading InfluxDB' };
           }
           const first = res.data[0];
           if (first && first.length) {
             return { status: 'success', message: `${first.length} buckets found` };
           }
-          console.log('InfluxDB Error', res);
+          console.error('InfluxDB Error', res);
           return { status: 'error', message: 'Error reading buckets' };
         })
         .catch((err: any) => {
-          console.log('InfluxDB Error', err);
+          console.error('InfluxDB Error', err);
           return { status: 'error', message: err.message };
         });
     }
