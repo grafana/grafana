@@ -1,3 +1,5 @@
+// +build integration
+
 package mysql
 
 import (
@@ -1040,7 +1042,9 @@ func TestMySQL(t *testing.T) {
 }
 
 func InitMySQLTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, strings.Replace(sqlutil.TestDB_Mysql.ConnStr, "/grafana_tests", "/grafana_ds_tests", 1))
+	testDB := sqlutil.MySQLTestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "/grafana_tests",
+		"/grafana_ds_tests", 1))
 	if err != nil {
 		t.Fatalf("Failed to init mysql db %v", err)
 	}

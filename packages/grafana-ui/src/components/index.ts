@@ -160,6 +160,7 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
+export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 
 // Legacy forms
 
