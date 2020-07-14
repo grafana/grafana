@@ -17,7 +17,7 @@ export const defaultTimeRange: TimeRange = {
   raw: { from: 'now-6h', to: 'now' },
 };
 
-interface InputTimeRange {
+export interface InputTimeRange {
   from: DateTime | string;
   to: DateTime | string;
   raw: RawTimeRange;
