@@ -1,5 +1,5 @@
 // Libraries
-import { isEmpty, map as lodashMap } from 'lodash';
+import { isEmpty, map as lodashMap, cloneDeep } from 'lodash';
 import { Observable, from, merge, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 
@@ -500,7 +500,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return of(err);
     }
 
-    throw err;
+    const error = this.processError(err, target);
+    throw error;
+  }
+
+  processError(err: FetchError, target: LokiQuery) {
+    let error = cloneDeep(err);
+    if (err.data.message.includes('escape') && target.expr.includes('\\')) {
+      error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.`;
+    }
+    return error;
   }
 
   adjustInterval(interval: number, range: number) {
