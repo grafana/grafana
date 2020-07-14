@@ -13,10 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Session factory.
@@ -55,37 +51,7 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
 }
 
-func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	return retrieveDsInfo(e.DataSource, region)
-}
-
-func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInfo {
-	defaultRegion := datasource.JsonData.Get("defaultRegion").MustString()
-	if region == "default" {
-		region = defaultRegion
-	}
-
-	authType := datasource.JsonData.Get("authType").MustString()
-	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
-	externalID := datasource.JsonData.Get("externalId").MustString()
-	decrypted := datasource.DecryptedValues()
-	accessKey := decrypted["accessKey"]
-	secretKey := decrypted["secretKey"]
-
-	datasourceInfo := &DatasourceInfo{
-		Region:        region,
-		Profile:       datasource.Database,
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
-		ExternalID:    externalID,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
-	}
-
-	return datasourceInfo
-}
-
-func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
+func newAWSSession(dsInfo *datasourceInfo) (*session.Session, error) {
 	regionCfg := &aws.Config{Region: aws.String(dsInfo.Region)}
 	cfgs := []*aws.Config{
 		regionCfg,
@@ -136,36 +102,4 @@ func newAWSSession(dsInfo *DatasourceInfo) (*session.Session, error) {
 
 	plog.Debug("Successfully authenticated towards AWS")
 	return sess, nil
-}
-
-func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
-	datasourceInfo := e.getDsInfo(region)
-	sess, err := newAWSSession(datasourceInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
-}
-
-func retrieveLogsClient(datasourceInfo *DatasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	plog.Debug("Creating CloudWatch logs client")
-	sess, err := newAWSSession(datasourceInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
 }

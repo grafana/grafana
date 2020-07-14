@@ -47,8 +47,13 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", newcloudWatchExecutor)
 }
 
-	dsInfo := retrieveDsInfo(e.DataSource, region)
-	newLogsClient, err := retrieveLogsClient(dsInfo)
+func newcloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	e := &cloudWatchExecutor{
+		DataSource: datasource,
+	}
+
+	dsInfo := e.getDSInfo(defaultRegion)
+	defaultLogsClient, err := retrieveLogsClient(dsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -71,18 +76,13 @@ type cloudWatchExecutor struct {
 }
 
 func (e *cloudWatchExecutor) getCWClient(region string) (*cloudwatch.CloudWatch, error) {
-	datasourceInfo := e.getDSInfo(region)
-	cfg, err := getAwsConfig(datasourceInfo)
+	dsInfo := e.getDSInfo(region)
+	sess, err := newAWSSession(dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	sess, err := newSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess, cfg)
+	client := cloudwatch.New(sess)
 
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
@@ -273,17 +273,12 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 }
 
 func retrieveLogsClient(dsInfo *datasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	cfg, err := getAwsConfig(dsInfo)
+	sess, err := newAWSSession(dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	sess, err := newSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess, cfg)
+	client := cloudwatchlogs.New(sess)
 
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

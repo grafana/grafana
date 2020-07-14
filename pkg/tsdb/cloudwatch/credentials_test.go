@@ -80,7 +80,7 @@ func TestNewAWSSession_AssumeRole(t *testing.T) {
 	t.Run("Without external ID", func(t *testing.T) {
 		const roleARN = "test"
 
-		sess, err := newAWSSession(&DatasourceInfo{
+		sess, err := newAWSSession(&datasourceInfo{
 			AuthType:      "sdk",
 			AssumeRoleArn: roleARN,
 		})
@@ -98,7 +98,7 @@ func TestNewAWSSession_AssumeRole(t *testing.T) {
 		const roleARN = "test"
 		const externalID = "external"
 
-		sess, err := newAWSSession(&DatasourceInfo{
+		sess, err := newAWSSession(&datasourceInfo{
 			AuthType:      "sdk",
 			AssumeRoleArn: roleARN,
 			ExternalID:    externalID,

@@ -309,8 +309,7 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	const region = "default"
-	dsInfo := e.getDSInfo(region)
+	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -484,7 +483,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 
 func (e *cloudWatchExecutor) ensureClientSession(region string) error {
 	if e.ec2Svc == nil {
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		sess, err := newAWSSession(dsInfo)
 		if err != nil {
 			return err
@@ -607,7 +606,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 
 func (e *cloudWatchExecutor) ensureRGTAClientSession(region string) error {
 	if e.rgtaSvc == nil {
-		dsInfo := e.getDsInfo(region)
+		dsInfo := e.getDSInfo(region)
 		sess, err := newAWSSession(dsInfo)
 		if err != nil {
 			return err
@@ -727,8 +726,9 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	return &resp, nil
 }
 
-func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	sess, err := newAWSSession(cwData)
+func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
+	dsInfo := e.getDSInfo(region)
+	sess, err := newAWSSession(dsInfo)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
