@@ -55,7 +55,7 @@ Might return a table with three columns that each respectively have a type of ti
 | 10:00      | 22   | BOS      |
 
 
-The table format is _Long_ formatted time series (aka Tall). It has repeated time stamps, and repeated values in Location. In this case, we have two time series in the set that would be identified as `Temp {Location=LGA}` and `Temp {Location=BOS}`.
+The table format is _long_ formatted time series, also called _tall_. It has repeated time stamps, and repeated values in Location. In this case, we have two time series in the set that would be identified as `Temp {Location=LGA}` and `Temp {Location=BOS}`.
 
 Individual time series from the set are extracted by using the time typed column `StartTime` as the time index of the time series, the numeric typed column `Temp` as the series name, and the name and values of the string typed `Location` column to build the labels, such as Location=LGA.
 
