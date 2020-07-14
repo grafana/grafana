@@ -174,7 +174,6 @@ func numericFieldToStringField(field *data.Field) (*data.Field, error) {
 	strings := make([]*string, field.Len())
 	for i := 0; i < field.Len(); i++ {
 		floatVal, err := field.FloatAt(i)
-
 		if err != nil {
 			return nil, err
 		}
