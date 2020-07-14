@@ -12,7 +12,7 @@ weight = 200
 
 # Install on Debian or Ubuntu
 
-This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your Debian or Ubuntu system, and the installation package details.
+This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your Debian or Ubuntu system, and also describes the installation package details.
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
@@ -31,7 +31,7 @@ If you install from the APT repository, then Grafana is automatically updated ev
 | Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
 | Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main` |
 
-> We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
+> We recommend all users install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
 
 #### To install the latest Enterprise edition:
 
@@ -105,7 +105,7 @@ sudo dpkg -i grafana<edition>_<version>_amd64.deb
 
 ## Install from binary .tar.gz file
 
-Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
+Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
 
 ```bash
 wget <tar.gz package url>
