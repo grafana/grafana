@@ -33,7 +33,7 @@ By storing dimensionality as labels for time series in Grafana, you can transfor
 
 ## Multiple dimensions in table format
 
-In SQL or SQL-like databases that return table responses, additional dimensions are generally found as columns in the table that is returned as a response from the query.
+In SQL or SQL-like databases that return table responses, additional dimensions usually columns in the query response table.
 
 ### Single dimension
 
