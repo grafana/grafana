@@ -65,7 +65,7 @@ export class DashLinksEditorCtrl {
   }
 
   saveLink() {
-    this.dashboard.links = [...this.dashboard.links];
+    this.dashboard.links = _.cloneDeep(this.dashboard.links);
     this.backToList();
   }
 
