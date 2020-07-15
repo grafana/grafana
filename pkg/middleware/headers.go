@@ -19,7 +19,6 @@ func HandleNoCacheHeader() macaron.Handler {
 
 func AddSeceureResponseHeaders() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
-
 		secureMiddleware := secure.New(createSecureOptions())
 
 		nonce, _ := secureMiddleware.ProcessAndReturnNonce(res, req)
