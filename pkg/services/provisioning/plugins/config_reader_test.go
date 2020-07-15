@@ -13,7 +13,6 @@ var (
 	incorrectSettings = "./testdata/test-configs/incorrect-settings"
 	brokenYaml        = "./testdata/test-configs/broken-yaml"
 	emptyFolder       = "./testdata/test-configs/empty_folder"
-	unknownApp        = "./testdata/test-configs/unknown-app"
 	correctProperties = "./testdata/test-configs/correct-properties"
 )
 
