@@ -184,6 +184,6 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	mg.AddMigration("Create alert_rule_notification table v1", NewAddTableMigration(alertRuleNotificationTable))
-	mg.AddMigration("Add unique index alert_rule_notification.alert_id_alert_notification_id", NewAddIndexMigration(alertRuleNotificationTable, alertRuleTagTable.Indices[0]))
+	mg.AddMigration("Add unique index alert_rule_notification.alert_id_alert_notification_id", NewAddIndexMigration(alertRuleNotificationTable, alertRuleNotificationTable.Indices[0]))
 
 }
