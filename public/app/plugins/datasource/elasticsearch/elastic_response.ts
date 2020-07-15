@@ -417,7 +417,7 @@ export class ElasticResponse {
       if (response.hits && response.hits.hits.length > 0) {
         const { propNames, docs } = flattenHits(response.hits.hits);
         if (docs.length > 0) {
-          const series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
+          let series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
 
           // Add a row for each document
           for (const doc of docs) {
@@ -429,8 +429,10 @@ export class ElasticResponse {
 
             series.add(doc);
           }
-          const seriesWithVis = addPreferredVisualisationType(series, 'graph');
-          dataFrame.push(seriesWithVis);
+          if (isLogsRequest) {
+            series = addPreferredVisualisationType(series, 'logs');
+          }
+          dataFrame.push(series);
         }
       }
 
