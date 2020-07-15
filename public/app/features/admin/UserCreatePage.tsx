@@ -36,7 +36,12 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
           {({ register, errors }) => {
             return (
               <>
-                <Field label="Name" required invalid={!!errors.name} error={!!errors.name && 'Name is required'}>
+                <Field
+                  label="Name"
+                  required
+                  invalid={!!errors.name}
+                  error={errors.name ? 'Name is required' : undefined}
+                >
                   <Input name="name" ref={register({ required: true })} />
                 </Field>
 
@@ -51,7 +56,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                   label="Password"
                   required
                   invalid={!!errors.password}
-                  error={!!errors.password && 'Password is required and must contain at least 4 characters'}
+                  error={errors.password ? 'Password is required and must contain at least 4 characters' : undefined}
                 >
                   <Input
                     type="password"

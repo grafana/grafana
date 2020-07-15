@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
-import { CloudWatchQuery, SelectableStrings, CloudWatchMetricsQuery } from '../types';
+import { SelectableStrings, CloudWatchMetricsQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { Stats, Dimensions, QueryInlineField } from '.';
 
 export type Props = {
-  query: CloudWatchQuery;
+  query: CloudWatchMetricsQuery;
   datasource: CloudWatchDatasource;
   onRunQuery?: () => void;
-  onChange: (value: CloudWatchQuery) => void;
+  onChange: (value: CloudWatchMetricsQuery) => void;
 };
 
 interface State {
@@ -66,7 +66,7 @@ export function MetricsQueryFieldsEditor({
 
   const toOption = (value: any) => ({ label: value, value });
 
-  const onQueryChange = (query: CloudWatchQuery) => {
+  const onQueryChange = (query: CloudWatchMetricsQuery) => {
     onChange(query);
     onRunQuery();
   };
@@ -94,11 +94,11 @@ export function MetricsQueryFieldsEditor({
           placeholder="Select region"
           options={regions}
           allowCustomValue
-          onChange={({ value: region }) => onQueryChange({ ...query, region })}
+          onChange={({ value: region }) => onQueryChange({ ...query, region: region! })}
         />
       </QueryInlineField>
 
-      {query.expression.length === 0 && (
+      {query.expression?.length === 0 && (
         <>
           <QueryInlineField label="Namespace">
             <Segment
@@ -106,7 +106,7 @@ export function MetricsQueryFieldsEditor({
               placeholder="Select namespace"
               allowCustomValue
               options={namespaces}
-              onChange={({ value: namespace }) => onQueryChange({ ...query, namespace })}
+              onChange={({ value: namespace }) => onQueryChange({ ...query, namespace: namespace! })}
             />
           </QueryInlineField>
 

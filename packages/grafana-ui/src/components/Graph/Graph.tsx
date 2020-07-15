@@ -355,7 +355,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         flotOptions
       );
     } catch (err) {
-      console.log('Graph rendering error', err, flotOptions, series);
+      console.error('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');
     }
   }

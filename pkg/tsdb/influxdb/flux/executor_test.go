@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/xorcare/pointer"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go"
@@ -48,15 +50,22 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 	return client.QueryApi("x").Query(ctx, q)
 }
 
+func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
+	runner := &MockRunner{
+		testDataPath: name + ".csv",
+	}
+
+	dr := ExecuteQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
+	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
+	return &dr, err
+}
+
 func TestExecuteSimple(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Simple Test", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "simple.csv",
+		dr, err := verifyGoldenResponse("simple")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -85,14 +94,11 @@ func TestExecuteSimple(t *testing.T) {
 }
 
 func TestExecuteMultiple(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Multiple Test", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "multiple.csv",
+		dr, err := verifyGoldenResponse("multiple")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -121,14 +127,11 @@ func TestExecuteMultiple(t *testing.T) {
 }
 
 func TestExecuteGrouping(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Grouping Test", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "grouping.csv",
+		dr, err := verifyGoldenResponse("grouping")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -157,16 +160,10 @@ func TestExecuteGrouping(t *testing.T) {
 }
 
 func TestAggregateGrouping(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Grouping Test", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "aggregate.csv",
-		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
-		if dr.Error != nil {
-			t.Fatal(dr.Error)
+		dr, err := verifyGoldenResponse("aggregate")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
 
 		if len(dr.Frames) != 1 {
@@ -210,16 +207,10 @@ func TestAggregateGrouping(t *testing.T) {
 }
 
 func TestNonStandardTimeColumn(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Time Column", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "non_standard_time_column.csv",
-		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
-		if dr.Error != nil {
-			t.Fatal(dr.Error)
+		dr, err := verifyGoldenResponse("non_standard_time_column")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
 
 		if len(dr.Frames) != 1 {
@@ -255,14 +246,11 @@ func TestNonStandardTimeColumn(t *testing.T) {
 }
 
 func TestBuckets(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Buckes", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "buckets.csv",
+		dr, err := verifyGoldenResponse("buckets")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -271,5 +259,14 @@ func TestBuckets(t *testing.T) {
 		st, _ := dr.Frames[0].StringTable(-1, -1)
 		fmt.Println(st)
 		fmt.Println("----------------------")
+	})
+}
+
+func TestGoldenFiles(t *testing.T) {
+	t.Run("Renamed", func(t *testing.T) {
+		_, err := verifyGoldenResponse("renamed")
+		if err != nil {
+			t.Fatal(err.Error())
+		}
 	})
 }

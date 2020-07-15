@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
@@ -36,7 +36,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	actionPrefix := parameters.Get("actionPrefix").MustString("")
 	alarmNamePrefix := parameters.Get("alarmNamePrefix").MustString("")
 
-	svc, err := e.getClient(region)
+	cli, err := e.getCWClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 			ActionPrefix:    aws.String(actionPrefix),
 			AlarmNamePrefix: aws.String(alarmNamePrefix),
 		}
-		resp, err := svc.DescribeAlarms(params)
+		resp, err := cli.DescribeAlarms(params)
 		if err != nil {
 			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarms", err)
 		}
@@ -79,7 +79,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 				Statistic:  aws.String(s),
 				Period:     aws.Int64(period),
 			}
-			resp, err := svc.DescribeAlarmsForMetric(params)
+			resp, err := cli.DescribeAlarmsForMetric(params)
 			if err != nil {
 				return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmsForMetric", err)
 			}
@@ -106,7 +106,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 			EndDate:    aws.Time(endTime),
 			MaxRecords: aws.Int64(100),
 		}
-		resp, err := svc.DescribeAlarmHistory(params)
+		resp, err := cli.DescribeAlarmHistory(params)
 		if err != nil {
 			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
 		}

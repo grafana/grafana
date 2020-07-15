@@ -338,6 +338,17 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 	endIndex := strings.Index(seriesID, "/providers")
 	resourceGroup := seriesID[startIndex:endIndex]
 
+	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
+	lowerLabels := data.Labels{}
+	for k, v := range labels {
+		lowerLabels[strings.ToLower(k)] = v
+	}
+	keys := make([]string, 0, len(labels))
+	for k := range lowerLabels {
+		keys = append(keys, k)
+	}
+	keys = sort.StringSlice(keys)
+
 	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
@@ -359,23 +370,15 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 			return []byte(metricName)
 		}
 
-		keys := make([]string, 0, len(labels))
-		if metaPartName == "dimensionname" || metaPartName == "dimensionvalue" {
-			for k := range labels {
-				keys = append(keys, k)
-			}
-			keys = sort.StringSlice(keys)
-		}
-
 		if metaPartName == "dimensionname" {
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
-			return []byte(labels[keys[0]])
+			return []byte(lowerLabels[keys[0]])
 		}
 
-		if v, ok := labels[metaPartName]; ok {
+		if v, ok := lowerLabels[metaPartName]; ok {
 			return []byte(v)
 		}
 		return in

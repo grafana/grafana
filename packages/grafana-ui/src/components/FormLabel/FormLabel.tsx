@@ -41,3 +41,5 @@ export const FormLabel: FunctionComponent<Props> = ({
     </label>
   );
 };
+
+export const InlineFormLabel = FormLabel;
