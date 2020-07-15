@@ -270,8 +270,6 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 		return AzureLogAnalyticsResponse{}, err
 	}
 
-	azlog.Debug(string(body))
-
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, fmt.Errorf("Request failed status: %v: %w", res.Status, fmt.Errorf(string(body)))
