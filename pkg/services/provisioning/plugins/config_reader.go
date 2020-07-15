@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"gopkg.in/yaml.v2"
 )
 
@@ -55,11 +54,6 @@ func (cr *configReaderImpl) readConfig(path string) ([]*pluginsAsConfig, error) 
 
 	checkOrgIDAndOrgName(apps)
 
-	err = validatePluginsConfig(apps)
-	if err != nil {
-		return nil, err
-	}
-
 	return apps, nil
 }
 
@@ -97,22 +91,6 @@ func validateRequiredField(apps []*pluginsAsConfig) error {
 
 		if len(errStrings) != 0 {
 			return fmt.Errorf(strings.Join(errStrings, "\n"))
-		}
-	}
-
-	return nil
-}
-
-func validatePluginsConfig(apps []*pluginsAsConfig) error {
-	for i := range apps {
-		if apps[i].Apps == nil {
-			continue
-		}
-
-		for _, app := range apps[i].Apps {
-			if !plugins.IsAppInstalled(app.PluginID) {
-				return fmt.Errorf("app plugin not installed: %s", app.PluginID)
-			}
 		}
 	}
 
