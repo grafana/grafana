@@ -75,6 +75,18 @@ describe('state functions', () => {
         },
       });
     });
+
+    it('should return queries if queryType is present in the url', () => {
+      const paramValue = '%5B"now-1h","now","x-ray-datasource",%7B"queryType":"getTraceSummaries"%7D,"ui"%5D';
+      expect(parseUrlState(paramValue)).toMatchObject({
+        datasource: 'x-ray-datasource',
+        queries: [{ queryType: 'getTraceSummaries' }],
+        range: {
+          from: 'now-1h',
+          to: 'now',
+        },
+      });
+    });
   });
 
   describe('serializeStateToUrlParam', () => {
