@@ -17,7 +17,7 @@ func HandleNoCacheHeader() macaron.Handler {
 	}
 }
 
-func AddSeceureResponseHeaders() macaron.Handler {
+func AddSecureResponseHeaders() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		secureMiddleware := secure.New(createSecureOptions())
 
