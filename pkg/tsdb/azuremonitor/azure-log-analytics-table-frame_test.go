@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -115,6 +116,21 @@ func TestLogTableToFrame(t *testing.T) {
 				frame.Meta = &data.FrameMeta{
 					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"bool", "string", "datetime",
 						"dynamic", "guid", "int", "long", "real", "timespan"}},
+				}
+				return frame
+			},
+		},
+		{
+			name:     "nan and infinity in real response",
+			testFile: "loganalytics/8-log-analytics-response-nan-inf.json",
+			expectedFrame: func() *data.Frame {
+				frame := data.NewFrame("",
+					data.NewField("XInf", nil, []*float64{pointer.Float64(math.Inf(0))}),
+					data.NewField("XInfNeg", nil, []*float64{pointer.Float64(math.Inf(-2))}),
+					data.NewField("XNan", nil, []*float64{pointer.Float64(math.NaN())}),
+				)
+				frame.Meta = &data.FrameMeta{
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"real", "real", "real"}},
 				}
 				return frame
 			},
