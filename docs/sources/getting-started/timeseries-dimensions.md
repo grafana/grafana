@@ -35,8 +35,6 @@ Time series databases (TSDBs) usually natively support dimensionality. Prometheu
 
 In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
 
-By storing dimensionality as labels for time series in Grafana, you can transform data and alert across multiple dimensions.
-
 ## Multiple dimensions in table format
 
 In SQL or SQL-like databases that return table responses, additional dimensions usually columns in the query response table.
@@ -59,7 +57,6 @@ Might return a table with three columns that each respectively have a type of ti
 | 09:00      | 20   | BOS      |
 | 10:00      | 26   | LGA      |
 | 10:00      | 22   | BOS      |
-
 
 The table format is _long_ formatted time series, also called _tall_. It has repeated time stamps, and repeated values in Location. In this case, we have two time series in the set that would be identified as `Temp {Location=LGA}` and `Temp {Location=BOS}`.
 
