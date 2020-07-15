@@ -9,15 +9,12 @@ import {
   formattedValueToString,
   TimeRange,
   TimeZone,
-  getTimeZoneInfo,
-  InternalTimeZones,
   RawTimeRange,
   rangeUtil,
 } from '@grafana/data';
 
 import uPlot from 'uplot';
 import { colors } from '../../utils';
-import { renderPlugin } from './renderPlugin';
 import { Themeable } from '../../types';
 import { GraphCustomFieldConfig } from './types';
 
@@ -58,18 +55,14 @@ export class MicroPlot extends PureComponent<Props, State> {
   }
 
   renderLoop = () => {
-    requestAnimationFrame(this.renderLoop);
-
     if (!this.plot) {
       return;
     }
-
-    const ctx = this.plot.ctx;
-    ctx.save(); //Freeze redraw
-
     this.plot.redraw(true);
 
-    ctx.restore(); //And now do the redraw
+    setTimeout(() => {
+      requestAnimationFrame(this.renderLoop);
+    }, 50);
   };
 
   getTimeRange = (u: uPlot, min: number, max: number) => {
