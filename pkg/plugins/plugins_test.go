@@ -160,7 +160,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Empty(t, pm.scanningErrors)
+		require.Empty(t, pm.scanningErrors)
 		assert.Equal(t, []string{"gel"}, fm.registeredPlugins)
 	})
 }
