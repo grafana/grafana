@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -1002,7 +1003,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			dash := GetDashboardShouldReturn200WithConfig(sc, mock)
 
 			Convey("Should return relative path to provisioning file", func() {
-				So(dash.Meta.ProvisionedExternalId, ShouldEqual, "test/dashboard1.json")
+				So(dash.Meta.ProvisionedExternalId, ShouldEqual, filepath.Join("test", "dashboard1.json"))
 			})
 		})
 
