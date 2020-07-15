@@ -11,6 +11,8 @@ import {
   TimeZone,
   getTimeZoneInfo,
   InternalTimeZones,
+  RawTimeRange,
+  rangeUtil,
 } from '@grafana/data';
 
 import uPlot from 'uplot';
@@ -44,9 +46,9 @@ export class MicroPlot extends PureComponent<Props, State> {
 
     // Update if the data changes
     if (this.props.data !== oldProps.data) {
-      const { series, uData } = getUPlotStuff(this.props);
+      const { uData } = getUPlotStuff(this.props, [0, 1]);
       this.plot.setData(uData);
-      console.log('DATA changed!', uData, series);
+      // console.log('DATA changed!', uData, series);
       // Assume same structure?? this.plot.setSeries(series);
     }
 
@@ -55,11 +57,30 @@ export class MicroPlot extends PureComponent<Props, State> {
     }
   }
 
-  init = (element: any) => {
-    const { width, height, timeZone } = this.props;
-    const tz = getTimeZoneInfo(timeZone || InternalTimeZones.localBrowserTime, Date.now());
+  renderLoop = () => {
+    requestAnimationFrame(this.renderLoop);
 
-    const { series, uData, scales, axes } = getUPlotStuff(this.props);
+    if (!this.plot) {
+      return;
+    }
+
+    const ctx = this.plot.ctx;
+    ctx.save(); //Freeze redraw
+
+    this.plot.redraw(true);
+
+    ctx.restore(); //And now do the redraw
+  };
+
+  getTimeRange = (u: uPlot, min: number, max: number) => {
+    return rangeToMinMax(this.props.timeRange.raw);
+  };
+
+  init = (element: any) => {
+    const { width, height } = this.props;
+    //  const tz = getTimeZoneInfo(timeZone || InternalTimeZones.localBrowserTime, Date.now());
+
+    const { series, uData, scales, axes } = getUPlotStuff(this.props, this.getTimeRange);
 
     const opts: uPlot.Options = {
       width,
@@ -67,7 +88,7 @@ export class MicroPlot extends PureComponent<Props, State> {
       legend: {
         show: false,
       },
-      tzDate: ts => uPlot.tzDate(new Date(ts * 1000), tz!.abbreviation),
+      tzDate: ts => new Date(ts * 1000), //uPlot.tzDate(new Date(ts * 1000), tz!.abbreviation),
       scales,
       series,
       axes,
@@ -102,9 +123,11 @@ export class MicroPlot extends PureComponent<Props, State> {
         setCursor: [
           u => {
             const { left, top, idx } = u.cursor;
-            // const x = u.data[0][idx];
-            // const y = u.data[1][idx];
-            console.log('CURSOR', { left, top, idx });
+            if (idx) {
+              // const x = u.data[0][idx];
+              // const y = u.data[1][idx];
+              console.log('CURSOR', { left, top, idx });
+            }
           },
         ],
       },
@@ -117,6 +140,9 @@ export class MicroPlot extends PureComponent<Props, State> {
     // Should only happen once!
     console.log('INIT Plot', series, scales, uData);
     this.plot = new uPlot(opts, uData, element);
+
+    // keep drawing
+    this.renderLoop();
   };
 
   render() {
@@ -128,7 +154,7 @@ export class MicroPlot extends PureComponent<Props, State> {
   }
 }
 
-const defaultFieldConfig: GraphCustomFieldConfig = {
+const defaultFieldConfig: Partial<GraphCustomFieldConfig> = {
   showLines: true,
   lineWidth: 1,
   limeMode: 'connect',
@@ -146,13 +172,20 @@ const defaultFieldConfig: GraphCustomFieldConfig = {
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-export function getUPlotStuff(props: Props) {
-  const { data, theme, timeZone } = props;
+function rangeToMinMax(timeRange: RawTimeRange) {
+  const v = rangeUtil.convertRawToRange(timeRange);
+  return [v.from.valueOf() / 1000, v.to.valueOf() / 1000];
+}
+
+export function getUPlotStuff(props: Props, range: any) {
+  const { data, theme } = props;
+
   const series: uPlot.Series[] = [];
   const uData: any[] = [];
   const scales: KeyValue<uPlot.Scale> = {
     x: {
       time: true,
+      range: range as uPlot.MinMax, // uPlot.MinMax
     },
   };
 
