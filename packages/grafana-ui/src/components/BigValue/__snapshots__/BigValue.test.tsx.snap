@@ -40,6 +40,8 @@ exports[`BigValue Render with basic options should render 1`] = `
         Object {
           "numeric": 25,
           "text": "25",
+          "titleToAlignTo": undefined,
+          "valueToAlignTo": "25",
         }
       }
     />

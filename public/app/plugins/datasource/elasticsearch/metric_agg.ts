@@ -89,7 +89,7 @@ export class ElasticMetricAggCtrl {
               }
               return memo;
             },
-            []
+            [] as string[]
           );
 
           $scope.settingsLinkText = 'Stats: ' + stats.join(', ');

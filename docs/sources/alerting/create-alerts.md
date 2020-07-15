@@ -83,7 +83,7 @@ If a query returns multiple series then the aggregation function and threshold c
 - Alert condition with query that returns 2 series: **server1** and **server2**
 - **server1** series causes the alert rule to fire and switch to state `Alerting`
 - Notifications are sent out with message: _load peaking (server1)_
-- In a subsequence evaluation of the same alert rule the **server2** series also cause the alert rule to fire
+- In a subsequent evaluation of the same alert rule, the **server2** series also causes the alert rule to fire
 - No new notifications are sent as the alert rule is already in state `Alerting`.
 
 So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series we plan to track state **per series** in a future release.

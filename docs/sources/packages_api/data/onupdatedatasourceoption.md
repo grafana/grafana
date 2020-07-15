@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceOption: (props: DataSourcePluginOptionsEditorProps<import("../types").DataSourceJsonData, {}>, key: "type" | "name" | "id" | "orgId" | "typeLogoUrl" | "access" | "url" | "password" | "user" | "database" | "basicAuth" | "basicAuthPassword" | "basicAuthUser" | "isDefault" | "jsonData" | "secureJsonData" | "secureJsonFields" | "readOnly" | "withCredentials" | "version") => (event: import("react").SyntheticEvent<HTMLInputElement | HTMLSelectElement, Event>) => void
+onUpdateDatasourceOption: (props: DataSourcePluginOptionsEditorProps, key: keyof DataSourceSettings) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => void
 ```
 <b>Import</b>
 

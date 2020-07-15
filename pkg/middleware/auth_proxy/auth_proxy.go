@@ -102,7 +102,6 @@ func New(options *Options) *AuthProxy {
 
 // IsEnabled checks if the proxy auth is enabled
 func (auth *AuthProxy) IsEnabled() bool {
-
 	// Bail if the setting is not enabled
 	return auth.enabled
 }

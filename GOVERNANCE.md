@@ -143,7 +143,7 @@ For public discussions, anyone interested is encouraged to participate. Formal p
 
 ### Consensus
 
-The default decision making mechanism for the Grafana project is [rough][rough] consensus. This means that any decision on technical issues is considered supported by the [team][team] as long as nobody objects or the objection has been considered but not necessarily accomodated.
+The default decision making mechanism for the Grafana project is [rough][rough] consensus. This means that any decision on technical issues is considered supported by the [team][team] as long as nobody objects or the objection has been considered but not necessarily accommodated.
 
 Silence on any consensus decision is implicit agreement and equivalent to explicit agreement. Explicit agreement may be stated at will. Decisions may, but do not need to be called out and put up for decision on the [developers mailing list][devs] at any time and by anyone.
 

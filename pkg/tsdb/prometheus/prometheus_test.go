@@ -155,6 +155,5 @@ func TestPrometheus(t *testing.T) {
 				})
 			})
 		})
-
 	})
 }

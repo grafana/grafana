@@ -52,7 +52,7 @@ func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverte
 	}
 
 	fic.Frame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{"azureColumnTypes": colTypes},
+		Custom: &LogAnalyticsMeta{ColumnTypes: colTypes},
 	}
 
 	return fic, nil

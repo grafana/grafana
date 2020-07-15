@@ -133,8 +133,8 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: $dark-9;
-$tight-form-func-highlight-bg: $dark-10;
+$tight-form-func-bg: ${theme.colors.bg2};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
 
 $modal-backdrop-bg: ${theme.colors.bg3};
 $code-tag-bg: $dark-1;
@@ -299,6 +299,9 @@ $popover-shadow: 0 0 20px black;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;
 $popover-error-bg: $btn-danger-bg;
+
+$popover-code-bg: $popover-bg;
+$popover-code-boxshadow: $tooltipShadow;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';

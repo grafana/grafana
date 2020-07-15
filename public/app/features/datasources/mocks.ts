@@ -19,5 +19,6 @@ export function createDatasourceSettings<T>(jsonData: T): DataSourceSettings<T> 
     jsonData,
     readOnly: false,
     withCredentials: false,
+    secureJsonFields: {},
   };
 }

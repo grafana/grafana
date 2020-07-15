@@ -24,6 +24,7 @@ import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { VariableModel } from 'app/features/variables/types';
 import { getVariables } from 'app/features/variables/state/selectors';
@@ -54,6 +55,7 @@ interface DispatchProps {
   panelEditorCleanUp: typeof panelEditorCleanUp;
   setDiscardChanges: typeof setDiscardChanges;
   updatePanelEditorUIState: typeof updatePanelEditorUIState;
+  updateTimeZoneForSession: typeof updateTimeZoneForSession;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -220,7 +222,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState, variables } = this.props;
+    const { dashboard, location, uiState, variables, updateTimeZoneForSession } = this.props;
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
@@ -228,7 +230,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
           <HorizontalGroup>
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <DashNavTimeControls
+              dashboard={dashboard}
+              location={location}
+              onChangeTimeZone={updateTimeZoneForSession}
+            />
             {!uiState.isPanelOptionsVisible && (
               <DashNavButton
                 onClick={this.onTogglePanelOptions}
@@ -362,6 +368,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   panelEditorCleanUp,
   setDiscardChanges,
   updatePanelEditorUIState,
+  updateTimeZoneForSession,
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);

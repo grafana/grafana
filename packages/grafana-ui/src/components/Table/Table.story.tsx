@@ -90,6 +90,7 @@ function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): Da
     },
     theme,
     replaceVariables: (value: string) => value,
+    getDataSourceSettingsByUid: (value: string) => ({} as any),
   })[0];
 }
 

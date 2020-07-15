@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
+func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
 	for _, mdo := range metricDataOutputs {
 		requestExceededMaxLimit := false
@@ -144,7 +144,8 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 						series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
 					}
 				}
-				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
+				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]),
+					float64(t.Unix())*1000))
 			}
 			result = append(result, &series)
 		}
