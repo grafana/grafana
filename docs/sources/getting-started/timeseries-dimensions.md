@@ -81,7 +81,7 @@ In this case the labels that represent the dimensions will have two keys based o
 
 **Note:** More than one dimension for SQL data sources is currently only supported in the Analytics services with the Azure monitor service as of version 7.1. Support for SQL data sources such as MySQL, Postgres, and MSSQL is planned to be added for 7.2.
 
-**Note:**: Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/create-alerts.md#multiple-series" >}}).
+**Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/create-alerts.md#multiple-series" >}}).
 
 ### Multiple values
 
