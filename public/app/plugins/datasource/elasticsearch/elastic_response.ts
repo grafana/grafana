@@ -417,13 +417,7 @@ export class ElasticResponse {
       if (response.hits && response.hits.hits.length > 0) {
         const { propNames, docs } = flattenHits(response.hits.hits);
         if (docs.length > 0) {
-          const series = createEmptyDataFrame(
-            propNames,
-            this.targets[0].timeField,
-            isLogsRequest,
-            logMessageField,
-            logLevelField
-          );
+          const series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
 
           // Add a row for each document
           for (const doc of docs) {
@@ -560,7 +554,6 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
 const createEmptyDataFrame = (
   propNames: string[],
   timeField: string,
-  isLogsRequest: boolean,
   logMessageField?: string,
   logLevelField?: string
 ): MutableDataFrame => {
@@ -596,8 +589,8 @@ const createEmptyDataFrame = (
     if (fieldNames.includes(propName)) {
       continue;
     }
-    // Do not add _source field (besides logs) as we are showing each _source field in table instead.
-    if (!isLogsRequest && propName === '_source') {
+    // Do not add _source field as we are showing each _source field in table instead.
+    if (propName === '_source') {
       continue;
     }
 
