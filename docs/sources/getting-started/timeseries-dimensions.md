@@ -21,13 +21,19 @@ With time series data, the data often contains more than a single series, and is
 
 {{< docs-imagebox img="/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
 
-The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property as a dimension of the measurement. In this case, multiple series are returned back from that single query. Each series in this case has unique location. To uniquely identify these series within a set of time series, Grafana stores this information in _labels_.
+The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property. In this case, multiple series are returned back from that single query and each series has unique location as a dimension.
+
+To identify unique series within a set of time series, Grafana stores dimensions in _labels_.
 
 ## Labels
 
 Each time series in Grafana optionally has labels. labels are set a of key/value pairs for identifying dimensions. Example labels could are `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}`.
 
-Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions. Time series databases (TSDBs) usually natively support dimensionality. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used - in Prometheus the same term as used as in Grafana - _labels_. In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
+Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions.
+
+Time series databases (TSDBs) usually natively support dimensionality. Prometheus also stores dimensions in _labels_. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used instead.
+
+In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
 
 By storing dimensionality as labels for time series in Grafana, you can transform data and alert across multiple dimensions.
 
@@ -37,7 +43,7 @@ In SQL or SQL-like databases that return table responses, additional dimensions 
 
 ### Single dimension
 
-For example, consider a pseudo query like:
+For example, consider a query like:
 
 ```sql
 SELECT BUCKET(StartTime, 1h), AVG(Temperature) AS Temp, Location FROM T
