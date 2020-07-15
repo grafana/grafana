@@ -17,7 +17,7 @@ At the end of the ["Time series databases" section of "Introduction to time seri
 
 > Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. ...
 
-With time series data, the data often contains more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
+With time series data, the data often contain more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
 {{< docs-imagebox img="/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
 
