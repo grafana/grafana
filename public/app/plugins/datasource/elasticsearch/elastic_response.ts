@@ -417,7 +417,13 @@ export class ElasticResponse {
       if (response.hits && response.hits.hits.length > 0) {
         const { propNames, docs } = flattenHits(response.hits.hits);
         if (docs.length > 0) {
-          let series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
+          let series = createEmptyDataFrame(
+            propNames,
+            this.targets[0].timeField,
+            isLogsRequest,
+            logMessageField,
+            logLevelField
+          );
 
           // Add a row for each document
           for (const doc of docs) {
@@ -556,6 +562,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
 const createEmptyDataFrame = (
   propNames: string[],
   timeField: string,
+  isLogsRequest: boolean,
   logMessageField?: string,
   logLevelField?: string
 ): MutableDataFrame => {
@@ -573,13 +580,6 @@ const createEmptyDataFrame = (
     }).parse = (v: any) => {
       return v || '';
     };
-  } else {
-    series.addField({
-      name: '_source',
-      type: FieldType.string,
-    }).parse = (v: any) => {
-      return JSON.stringify(v, null, 2);
-    };
   }
 
   if (logLevelField) {
@@ -596,6 +596,10 @@ const createEmptyDataFrame = (
   for (const propName of propNames) {
     // Do not duplicate fields. This can mean that we will shadow some fields.
     if (fieldNames.includes(propName)) {
+      continue;
+    }
+    // Do not add _source field (besides logs) as we are showing each _source field in table instead.
+    if (!isLogsRequest && propName === '_source') {
       continue;
     }
 
