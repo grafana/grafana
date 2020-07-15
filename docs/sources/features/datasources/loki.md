@@ -193,7 +193,7 @@ datasources:
       derivedFields:
         # Field with internal link pointing to data source in Grafana.
         # Right now, Grafana supports only Jaeger and Zipkin data sources as link targets.
-        # datasourceUid value can be anything, but it should be unique across all defined datasource uids
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
