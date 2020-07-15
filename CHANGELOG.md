@@ -1,3 +1,23 @@
+# 7.1.0-beta3 (2020-07-13)
+
+### Features / Enhancements
+* **Explore**: Unification of logs/metrics/traces user interface. [#25890](https://github.com/grafana/grafana/pull/25890), [@aocenas](https://github.com/aocenas)
+* **Graph panel**: Move Stacking and null values before Hover tooltip options (#26035). [#26037](https://github.com/grafana/grafana/pull/26037), [@jsoref](https://github.com/jsoref)
+* **LDAP**: Get all groups for all group base search DNs. [#25825](https://github.com/grafana/grafana/pull/25825), [@Annegies](https://github.com/Annegies)
+* **Table**: JSON Cell should try to convert strings to JSON. [#26024](https://github.com/grafana/grafana/pull/26024), [@ryantxu](https://github.com/ryantxu)
+* **Transform**: adding missing "table"-transform and "series to rows"-transform to Grafana v7-transforms. [#26042](https://github.com/grafana/grafana/pull/26042), [@mckn](https://github.com/mckn)
+
+### Bug Fixes
+* **AdminUsersTable**: Fix width issues. [#26019](https://github.com/grafana/grafana/pull/26019), [@tskarhed](https://github.com/tskarhed)
+* **BarGauge**: Fix space bug in single series mode. [#26176](https://github.com/grafana/grafana/pull/26176), [@torkelo](https://github.com/torkelo)
+* **Dashboard**: Allow removing min refresh interval from refresh options (5s or other). [#26150](https://github.com/grafana/grafana/pull/26150), [@torkelo](https://github.com/torkelo)
+* **DataLinks**: Fixed interpolation of repeated variables used in Graph data links. [#26147](https://github.com/grafana/grafana/pull/26147), [@torkelo](https://github.com/torkelo)
+* **Do not break dashboard settings UI when time intervals end with trailing comma**. [#26126](https://github.com/grafana/grafana/pull/26126), [@dprokop](https://github.com/dprokop)
+* **Elastic**: Display correct log message based on selected log field. [#26020](https://github.com/grafana/grafana/pull/26020), [@ivanahuckova](https://github.com/ivanahuckova)
+* **InfluxDB**: Fixed new group by dropdown now showing after first use. [#26031](https://github.com/grafana/grafana/pull/26031), [@torkelo](https://github.com/torkelo)
+* **StatPanel**: Fixes issue with name showing for single series / field results. [#26070](https://github.com/grafana/grafana/pull/26070), [@torkelo](https://github.com/torkelo)
+* **Templating**: Fix recursive loop of template variable queries when changing ad-hoc-variable. [#26191](https://github.com/grafana/grafana/pull/26191), [@torkelo](https://github.com/torkelo)
+
 # 7.0.6 (2020-07-09)
 
 ### Bug fixes
