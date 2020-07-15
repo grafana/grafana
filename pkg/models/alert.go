@@ -247,3 +247,63 @@ type ValidateDashboardAlertsCommand struct {
 	Dashboard *Dashboard
 	User      *SignedInUser
 }
+
+type DeleteAlertCommand struct {
+	Id int64
+}
+
+type alertCondition struct {
+	Evaluator struct {
+		Params []int64 `json:"params"`
+		Type   string  `json:"type"`
+	} `json:"evaluator"`
+	Operator struct {
+		Type string `json:"type"`
+	} `json:"operator"`
+	Query   *conditionQuery `json:"query"`
+	Reducer struct {
+		Params []string `json:"params"`
+		Type   string   `json:"type"`
+	} `json:"reducer"`
+	Type string `json:"type"`
+}
+
+type conditionQuery struct {
+	DatasourceID int64 `json:"datasourceId"`
+	Model        struct {
+		data interface{}
+	} `json:"model"`
+	Params []string `json:"params"`
+}
+
+type AlertJSONModel struct {
+	Conditions []*alertCondition `json:"conditions"`
+}
+
+type AlertSettings struct {
+	AlertRuleTags       map[string]string `json:"alertRuleTags"`
+	Conditions          []*alertCondition `json:"conditions"`
+	ExecutionErrorState AlertStateType    `json:"executionErrorState"`
+	For                 string            `json:"for"`
+	Frequency           AlertSeverityType `json:"frequency"`
+	Handler             int64             `json:"handler"`
+	Name                string            `json:"name"`
+	NoDataState         NoDataOption      `json:"noDataState"`
+	Notifications       []struct {
+		UID string `json:"uid"`
+	}
+}
+
+type CreateAlertCommand struct {
+	Name      string        `json:"name"  binding:"Required"`
+	Message   string        `json:"message"`
+	Severity  string        `json:"severity"`
+	Handler   int64         `json:"handler"`
+	Silenced  bool          `json:"silenced"`
+	Frequency int64         `json:"frequency"`
+	For       time.Duration `json:"for"`
+	Settings  AlertSettings `json:"settings"`
+
+	OrgId  int64 `json:"-"`
+	Result *Alert
+}

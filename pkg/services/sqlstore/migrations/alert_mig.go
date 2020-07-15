@@ -171,4 +171,19 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Add column secure_settings in alert_notification", NewAddColumnMigration(alert_notification, &Column{
 		Name: "secure_settings", Type: DB_Text, Nullable: true,
 	}))
+
+	alertRuleNotificationTable := Table{
+		Name: "alert_rule_notification",
+		Columns: []*Column{
+			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
+			{Name: "alert_notification_id", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"alert_id", "alert_notification_id"}, Type: UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("Create alert_rule_notification table v1", NewAddTableMigration(alertRuleNotificationTable))
+	mg.AddMigration("Add unique index alert_rule_notification.alert_id_alert_notification_id", NewAddIndexMigration(alertRuleNotificationTable, alertRuleTagTable.Indices[0]))
+
 }

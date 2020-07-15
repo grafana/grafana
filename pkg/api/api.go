@@ -348,6 +348,12 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, Wrap(GetAlert))
 			alertsRoute.Get("/", Wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
+
+			if hs.Cfg.IsStandaloneAlertsEnabled() {
+				// alertsRoute.Put("/:alertId", reqEditorRole, bind(models.UpdateAlertCommand{}), ValidateAlert, Wrap(UpdateAlert))
+				alertsRoute.Post("/", reqEditorRole, bind(models.CreateAlertCommand{}), Wrap(CreateAlert))
+				alertsRoute.Delete("/:alertId", reqEditorRole, Wrap(DeleteAlert))
+			}
 		})
 
 		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))

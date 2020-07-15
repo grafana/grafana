@@ -508,3 +508,25 @@ func PauseAllAlerts(c *models.ReqContext, dto dtos.PauseAllAlertsCommand) Respon
 
 	return JSON(200, result)
 }
+
+func DeleteAlert(c *models.ReqContext) Response {
+	cmd := models.DeleteAlertCommand{
+		Id: c.ParamsInt64("alertId"),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return Error(500, "Failed to delete alert", err)
+	}
+
+	return Success("Alert deleted")
+}
+
+func CreateAlert(c *models.ReqContext, cmd models.CreateAlertCommand) Response {
+	cmd.OrgId = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return Error(500, "Failed to create alert notification", err)
+	}
+
+	return JSON(200, &cmd.Result)
+}

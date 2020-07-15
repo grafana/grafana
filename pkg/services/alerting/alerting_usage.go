@@ -77,7 +77,7 @@ func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAl
 
 func (ae *AlertEngine) parseAlertRuleModel(settings *simplejson.Json) ([]int64, error) {
 	datasourceIDs := []int64{}
-	model := alertJSONModel{}
+	model := models.AlertJSONModel{}
 
 	if settings == nil {
 		return datasourceIDs, nil
@@ -98,16 +98,4 @@ func (ae *AlertEngine) parseAlertRuleModel(settings *simplejson.Json) ([]int64, 
 	}
 
 	return datasourceIDs, nil
-}
-
-type alertCondition struct {
-	Query *conditionQuery `json:"query"`
-}
-
-type conditionQuery struct {
-	DatasourceID int64 `json:"datasourceId"`
-}
-
-type alertJSONModel struct {
-	Conditions []*alertCondition `json:"conditions"`
 }

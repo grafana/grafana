@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -22,6 +23,9 @@ func init() {
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
 	bus.AddHandler("sql", PauseAlert)
 	bus.AddHandler("sql", PauseAllAlerts)
+
+	bus.AddHandler("sql", CreateAlert)
+	bus.AddHandler("sql", DeleteAlert)
 }
 
 func GetAlertById(query *models.GetAlertByIdQuery) error {
@@ -229,19 +233,37 @@ func updateAlerts(existingAlerts []*models.Alert, cmd *models.SaveAlertsCommand,
 		if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.Id); err != nil {
 			return err
 		}
-		if tags != nil {
-			tags, err := EnsureTagsExist(sess, tags)
-			if err != nil {
+		insertTags(sess, tags, alert.Id)
+	}
+
+	return nil
+}
+
+func insertTags(sess *DBSession, tags []*models.Tag, alertID int64) error {
+	if tags != nil {
+		tags, err := EnsureTagsExist(sess, tags)
+		if err != nil {
+			return err
+		}
+		for _, tag := range tags {
+			if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alertID, tag.Id); err != nil {
 				return err
-			}
-			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.Id, tag.Id); err != nil {
-					return err
-				}
 			}
 		}
 	}
+	return nil
+}
 
+func insertNotifications(sess *DBSession, settings models.AlertSettings, orgID int64, alertID int64) error {
+	for _, n := range settings.Notifications {
+		if _, err := sess.Exec(fmt.Sprintf(
+			`INSERT INTO alert_rule_notification (alert_id, alert_notification_id)
+			 SELECT '%d', alert_notification_id 
+			 FROM alert_notification 
+			 WHERE alert_notification_org_id = ? AND alert_notification_uid = ?`, alertID), orgID, n.UID); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -384,4 +406,50 @@ func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) e
 	err := x.SQL(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	return err
+}
+
+// DeleteAlert deletes alert identifyied by cmd.Id
+func DeleteAlert(cmd *models.DeleteAlertCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		if err := deleteAlertByIdInternal(cmd.Id, "Alert deletion requested from the API", sess); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// CreateAlert creates a new standalone alert not associated with a dashboard
+func CreateAlert(cmd *models.CreateAlertCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		cmd.Settings.ExecutionErrorState = "" // override whatever state
+
+		alert := &models.Alert{
+			OrgId:     cmd.OrgId,
+			Name:      cmd.Name,
+			Message:   cmd.Message,
+			Severity:  cmd.Severity,
+			Frequency: cmd.Frequency,
+			For:       cmd.For,
+			Settings:  simplejson.NewFromAny(cmd.Settings), // unmarshalling and marshalling again is costly
+			State:     models.AlertStateUnknown,
+			Created:   timeNow(),
+			Updated:   timeNow(),
+		}
+
+		alertID, err := sess.MustCols("message", "for").Insert(alert)
+		if err != nil {
+			return err
+		}
+
+		tags := []*models.Tag{}
+		for key, value := range cmd.Settings.AlertRuleTags {
+			tags = append(tags, &models.Tag{Key: key, Value: value})
+		}
+		insertTags(sess, tags, alertID)
+
+		insertNotifications(sess, cmd.Settings, cmd.OrgId, alertID)
+
+		cmd.Result = alert
+		return nil
+	})
 }
