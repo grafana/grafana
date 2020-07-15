@@ -21,7 +21,12 @@ func AddSecureResponseHeaders() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		secureMiddleware := secure.New(createSecureOptions())
 
-		nonce, _ := secureMiddleware.ProcessAndReturnNonce(res, req)
+		nonce, err := secureMiddleware.ProcessAndReturnNonce(res, req)
+
+		if err != nil {
+			return
+		}
+
 		ctx, ok := c.Data["ctx"].(*models.ReqContext)
 		if !ok {
 			return
