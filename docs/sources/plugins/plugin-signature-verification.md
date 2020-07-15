@@ -9,7 +9,7 @@ Plugin signature verification (signing) is a security measure to make sure plugi
 
 ## How it works
 
-For Grafana to be able to verify the digital signature of a plugin, the plugin must include a signed manifest file, _MANIFEST.txt_. The signed manifest file contains two sections:
+For Grafana to verify the digital signature of a plugin, the plugin must include a signed manifest file, _MANIFEST.txt_. The signed manifest file contains two sections:
 
 - **Signed message -** The signed message contains plugin metadata and plugin files with their respective checksums (SHA256).
 - **Digital signature -**  The digital signature is created by encrypting the signed message using a private key. Grafana has a public key built-in that can be used to verify that the digital signature have been encrypted using expected private key. 

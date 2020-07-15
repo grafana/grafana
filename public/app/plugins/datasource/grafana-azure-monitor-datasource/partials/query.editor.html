@@ -1,16 +1,15 @@
 <query-editor-row
   query-ctrl="ctrl"
   can-collapse="false"
-  has-text-edit-mode="ctrl.target.queryType === 'Application Insights'"
 >
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label query-keyword width-9">Service</label>
       <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
         <select
-          class="gf-form-input service-dropdown"
+          class="gf-form-input service-dropdown min-width-12"
           ng-model="ctrl.target.queryType"
-          ng-options="f as f for f in ['Application Insights', 'Azure Monitor', 'Azure Log Analytics']"
+          ng-options="f as f for f in ['Application Insights', 'Azure Monitor', 'Azure Log Analytics', 'Insights Analytics']"
           ng-change="ctrl.onQueryTypeChange()"
         ></select>
       </div>
@@ -101,7 +100,7 @@
         >
         </gf-form-dropdown>
       </div>
-      <div class="gf-form gf-form--grow aggregation-dropdown-wrapper">
+      <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Aggregation</label>
         <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
           <select
@@ -111,6 +110,9 @@
             ng-change="ctrl.refresh()"
           ></select>
         </div>
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
       </div>
     </div>
     <div class="gf-form-inline">
@@ -133,44 +135,73 @@
         <div class="gf-form-label gf-form-label--grow"></div>
       </div>
     </div>
-    <div class="gf-form-inline" ng-show="ctrl.target.azureMonitor.dimensions.length > 0">
-      <div class="gf-form">
-        <label class="gf-form-label query-keyword width-9">Dimension</label>
-        <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-          <select
-            class="gf-form-input min-width-12"
-            ng-model="ctrl.target.azureMonitor.dimension"
-            ng-options="f.value as f.text for f in ctrl.target.azureMonitor.dimensions"
-            ng-change="ctrl.refresh()"
-          ></select>
+
+    <!-- NO Filters-->
+    <ng-container ng-if="ctrl.target.azureMonitor.dimensionFilters.length < 1">
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">Dimension</label>
+        </div>
+        <div class="gf-form">
+          <a ng-click="ctrl.azureMonitorAddDimensionFilter()" class="gf-form-label query-part"><icon name="'plus'"></icon></a>
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
         </div>
       </div>
-      <div class="gf-form">
-        <label class="gf-form-label query-keyword width-3">eq</label>
-        <input
-          type="text"
-          class="gf-form-input width-17"
-          ng-model="ctrl.target.azureMonitor.dimensionFilter"
-          spellcheck="false"
-          placeholder="auto"
-          ng-blur="ctrl.refresh()"
-        />
+    </ng-container>
+
+    <!-- YES Filters-->
+    <ng-container ng-if="ctrl.target.azureMonitor.dimensionFilters.length > 0">
+      <div ng-repeat="dim in ctrl.target.azureMonitor.dimensionFilters track by $index" class="gf-form-inline">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">Dimension</label>
+          <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
+            <select
+              class="gf-form-input min-width-12"
+              ng-model="dim.dimension"
+              ng-options="f.value as f.text for f in ctrl.target.azureMonitor.dimensions"
+              ng-change="ctrl.refresh()"
+            ></select>
+          </div>
+          <label class="gf-form-label query-keyword width-3">eq</label>
+          <input
+            type="text"
+            class="gf-form-input width-17"
+            ng-model="dim.filter"
+            spellcheck="false"
+            placeholder="Anything (*)"
+            ng-blur="ctrl.refresh()"
+          />
+        </div>
+        <div class="gf-form">
+          <a ng-click="ctrl.azureMonitorRemoveDimensionFilter($index)" class="gf-form-label query-part"><icon name="'minus'"></icon></a>
+        </div>
+        <div class="gf-form" ng-if="$last">
+          <a ng-click="ctrl.azureMonitorAddDimensionFilter()" class="gf-form-label query-part"><icon name="'plus'"></icon></a>
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
       </div>
-      <div class="gf-form">
-        <label class="gf-form-label query-keyword width-9">Top</label>
-        <input
-          type="text"
-          class="gf-form-input width-3"
-          ng-model="ctrl.target.azureMonitor.top"
-          spellcheck="false"
-          placeholder="10"
-          ng-blur="ctrl.refresh()"
-        />
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">Top</label>
+          <input
+            type="text"
+            class="gf-form-input width-3"
+            ng-model="ctrl.target.azureMonitor.top"
+            spellcheck="false"
+            placeholder="10"
+            ng-blur="ctrl.refresh()"
+          />
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
       </div>
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
+    </ng-container>
+
     <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Legend Format</label>
@@ -300,8 +331,39 @@
     </div>
   </div>
 
+  <div ng-if="ctrl.target.queryType === 'Insights Analytics'">
+      <div class="gf-form gf-form--grow">
+        <kusto-editor
+          class="gf-form gf-form--grow"
+          query="ctrl.target.insightsAnalytics.query"
+          placeholder="'Application Insights Query'"
+          change="ctrl.onInsightsAnalyticsQueryChange"
+          execute="ctrl.onQueryExecute"
+          variables="ctrl.templateVariables"
+          getSchema="ctrl.getAppInsightsQuerySchema"
+        />
+      </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">Format As</label>
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input gf-size-auto"
+            ng-model="ctrl.target.insightsAnalytics.resultFormat"
+            ng-options="f.value as f.text for f in ctrl.resultFormats"
+            ng-change="ctrl.refresh()"
+          ></select>
+        </div>
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+
+  </div>
+
   <div ng-if="ctrl.target.queryType === 'Application Insights'">
-    <div ng-show="!ctrl.target.appInsights.rawQuery">
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">Metric</label>
@@ -333,27 +395,30 @@
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">Group By</label>
+        </div>
+        <div ng-repeat="d in ctrl.target.appInsights.dimension track by $index" 
+          class="gf-form" 
+          ng-click="ctrl.removeGroupBy($index);"
+          onmouseover="this.style['text-decoration'] = 'line-through';"
+          onmouseout="this.style['text-decoration'] = '';">
+          <label class="gf-form-label" 
+          style="cursor: pointer;">{{d}} <icon name="'times'"></icon></label>
+        </div>
+        <div>
           <gf-form-dropdown
             allow-custom="true"
-            ng-hide="ctrl.target.appInsights.dimension !== 'none'"
-            model="ctrl.target.appInsights.dimension"
             lookup-text="true"
+            placeholder="Add"
+            model="ctrl.dummyDiminsionString"
             get-options="ctrl.getAppInsightsGroupBySegments($query)"
-            on-change="ctrl.refresh()"
-            css-class="min-width-20"
+            on-change="ctrl.getAppInsightsGroupBySegments"
+            css-class="min-width-5"
           >
           </gf-form-dropdown>
-          <label
-            class="gf-form-label min-width-20 pointer"
-            ng-hide="ctrl.target.appInsights.dimension === 'none'"
-            ng-click="ctrl.resetAppInsightsGroupBy()"
-            >{{ctrl.target.appInsights.dimension}}
-            <icon name="'times'"></icon>
-          </label>
         </div>
         <div class="gf-form-inline">
           <div class="gf-form">
-            <label class="gf-form-label query-keyword width-9">Filter</label>
+            <label class="gf-form-label query-keyword">Filter</label>
             <input
               type="text"
               class="gf-form-input width-17"
@@ -426,73 +491,12 @@
             ng-blur="ctrl.refresh()"
           />
         </div>
-      </div>
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
-    <div ng-show="ctrl.target.appInsights.rawQuery">
-      <!-- <div class="gf-form">
-        <textarea rows="3" class="gf-form-input" ng-model="ctrl.target.appInsights.rawQueryString" spellcheck="false"
-          placeholder="Application Insights Query" ng-model-onblur ng-change="ctrl.refresh()"></textarea>
-      </div> -->
-      <div class="gf-form gf-form--grow">
-        <kusto-editor
-          class="gf-form gf-form--grow"
-          query="ctrl.target.appInsights.rawQueryString"
-          placeholder="'Application Insights Query'"
-          change="ctrl.onAppInsightsQueryChange"
-          execute="ctrl.onAppInsightsQueryExecute"
-          variables="ctrl.templateVariables"
-          getSchema="ctrl.getAppInsightsQuerySchema"
-        />
-      </div>
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <label class="gf-form-label query-keyword width-9">X-axis</label>
-          <gf-form-dropdown
-            model="ctrl.target.appInsights.timeColumn"
-            allow-custom="true"
-            placeholder="eg. 'timestamp'"
-            get-options="ctrl.getAppInsightsColumns($query)"
-            on-change="ctrl.onAppInsightsColumnChange()"
-            css-class="min-width-20"
-          >
-          </gf-form-dropdown>
-        </div>
-        <div class="gf-form">
-          <label class="gf-form-label query-keyword width-9">Y-axis</label>
-          <gf-form-dropdown
-            model="ctrl.target.appInsights.valueColumn"
-            allow-custom="true"
-            get-options="ctrl.getAppInsightsColumns($query)"
-            on-change="ctrl.onAppInsightsColumnChange()"
-            css-class="min-width-20"
-          >
-          </gf-form-dropdown>
-        </div>
         <div class="gf-form gf-form--grow">
           <div class="gf-form-label gf-form-label--grow"></div>
         </div>
       </div>
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <label class="gf-form-label query-keyword width-9">Split On</label>
-          <gf-form-dropdown
-            model="ctrl.target.appInsights.segmentColumn"
-            allow-custom="true"
-            get-options="ctrl.getAppInsightsColumns($query)"
-            on-change="ctrl.onAppInsightsColumnChange()"
-            css-class="min-width-20"
-          >
-          </gf-form-dropdown>
-        </div>
-        <div class="gf-form gf-form--grow">
-          <div class="gf-form-label gf-form-label--grow"></div>
-        </div>
-      </div>
-    </div>
   </div>
+
   <div class="gf-form" ng-show="ctrl.lastQueryError">
     <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
   </div>

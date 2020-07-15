@@ -1,7 +1,12 @@
-import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
+import {
+  SingleStatBaseOptions,
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+} from '@grafana/ui';
 import {
   ReducerID,
-  SelectableValue,
   standardEditorsRegistry,
   FieldOverrideContext,
   getFieldDisplayName,
@@ -14,22 +19,8 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
   graphMode: BigValueGraphMode;
   colorMode: BigValueColorMode;
   justifyMode: BigValueJustifyMode;
+  textMode: BigValueTextMode;
 }
-
-export const colorModes: Array<SelectableValue<BigValueColorMode>> = [
-  { value: BigValueColorMode.Value, label: 'Value' },
-  { value: BigValueColorMode.Background, label: 'Background' },
-];
-
-export const graphModes: Array<SelectableValue<BigValueGraphMode>> = [
-  { value: BigValueGraphMode.None, label: 'None' },
-  { value: BigValueGraphMode.Area, label: 'Area graph' },
-];
-
-export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
-  { value: BigValueJustifyMode.Auto, label: 'Auto' },
-  { value: BigValueJustifyMode.Center, label: 'Center' },
-];
 
 export function addStandardDataReduceOptions(
   builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
@@ -65,7 +56,7 @@ export function addStandardDataReduceOptions(
   builder.addCustomEditor({
     id: 'reduceOptions.calcs',
     path: 'reduceOptions.calcs',
-    name: 'Value',
+    name: 'Calculation',
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
     defaultValue: [ReducerID.mean],

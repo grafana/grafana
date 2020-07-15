@@ -2,7 +2,14 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataQueryResponse, DataFrame, toDataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import {
+  DataQueryResponse,
+  DataFrame,
+  toDataFrame,
+  FieldType,
+  MutableDataFrame,
+  PreferredVisualisationType,
+} from '@grafana/data';
 import { ElasticsearchAggregation } from './types';
 
 export class ElasticResponse {
@@ -12,7 +19,8 @@ export class ElasticResponse {
   }
 
   processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
-    let metric, y, i, newSeries, bucket, value;
+    let metric, y, i, bucket, value;
+    let newSeries: any;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -127,8 +135,8 @@ export class ElasticResponse {
       table.addColumn({ text: metricName });
       values.push(value);
     };
-
-    for (const bucket of esAgg.buckets) {
+    const buckets = _.isArray(esAgg.buckets) ? esAgg.buckets : [esAgg.buckets];
+    for (const bucket of buckets) {
       const values = [];
 
       for (const propValues of _.values(props)) {
@@ -174,6 +182,10 @@ export class ElasticResponse {
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
               metricName += ' ' + metric.field;
+              if (metric.type === 'bucket_script') {
+                //Use the formula in the column name
+                metricName = metric.settings.script;
+              }
             }
 
             addMetricValue(values, metricName, bucket[metric.id].value);
@@ -425,7 +437,7 @@ export class ElasticResponse {
 
       const { propNames, docs } = flattenHits(response.hits.hits);
       if (docs.length > 0) {
-        const series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
+        let series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
 
         // Add a row for each document
         for (const doc of docs) {
@@ -438,6 +450,7 @@ export class ElasticResponse {
           series.add(doc);
         }
 
+        series = addPreferredVisualisationType(series, 'logs');
         dataFrame.push(series);
       }
 
@@ -486,7 +499,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
   let propNames: string[] = [];
 
   for (const hit of hits) {
-    const flattened = hit._source ? flatten(hit._source, null) : {};
+    const flattened = hit._source ? flatten(hit._source) : {};
     const doc = {
       _id: hit._id,
       _type: hit._type,
@@ -573,7 +586,7 @@ const createEmptyDataFrame = (
   return series;
 };
 
-const addPreferredVisualisationType = (series: any, type: string) => {
+const addPreferredVisualisationType = (series: any, type: PreferredVisualisationType) => {
   let s = series;
   s.meta
     ? (s.meta.preferredVisualisationType = type)

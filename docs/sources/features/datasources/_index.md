@@ -24,7 +24,7 @@ The following data sources are officially supported:
 * [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
 * [Azure Monitor]({{< relref "azuremonitor.md" >}})
 * [Elasticsearch]({{< relref "elasticsearch.md" >}})
-* [Google Stackdriver]({{< relref "stackdriver.md" >}})
+* [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
 * [Graphite]({{< relref "graphite.md" >}})
 * [InfluxDB]({{< relref "influxdb.md" >}})
 * [Loki]({{< relref "loki.md" >}})

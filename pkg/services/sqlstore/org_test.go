@@ -114,7 +114,6 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(orgUsersQuery.Result[1].Role, ShouldEqual, models.ROLE_ADMIN)
-
 				})
 
 				Convey("Can get logged in user projection", func() {
@@ -282,7 +281,6 @@ func TestAccountDataAccess(t *testing.T) {
 							So(permQuery.Result[0].OrgId, ShouldEqual, ac3.OrgId)
 							So(permQuery.Result[0].UserId, ShouldEqual, ac3.Id)
 						})
-
 					})
 				})
 			})
@@ -292,7 +290,8 @@ func TestAccountDataAccess(t *testing.T) {
 
 func testHelperUpdateDashboardAcl(dashboardId int64, items ...models.DashboardAcl) error {
 	cmd := models.UpdateDashboardAclCommand{DashboardId: dashboardId}
-	for _, item := range items {
+	for _, i := range items {
+		item := i
 		item.Created = time.Now()
 		item.Updated = time.Now()
 		cmd.Items = append(cmd.Items, &item)

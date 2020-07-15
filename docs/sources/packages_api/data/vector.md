@@ -30,7 +30,7 @@ import { Vector } from '@grafana/data';
 |  Method | Description |
 |  --- | --- |
 |  [get(index)](#get-method) | Access the value by index (Like an array) |
-|  [toArray()](#toarray-method) | Get the resutls as an array. |
+|  [toArray()](#toarray-method) | Get the results as an array. |
 
 ### length property
 
@@ -61,7 +61,7 @@ get(index: number): T;
 
 ### toArray method
 
-Get the resutls as an array.
+Get the results as an array.
 
 <b>Signature</b>
 

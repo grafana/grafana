@@ -16,11 +16,8 @@ import (
 )
 
 func TestQueryCondition(t *testing.T) {
-
 	Convey("when evaluating query condition", t, func() {
-
 		queryConditionScenario("Given avg() and > 100", func(ctx *queryConditionTestContext) {
-
 			ctx.reducer = `{"type": "avg"}`
 			ctx.evaluator = `{"type": "gt", "params": [100]}`
 
@@ -216,7 +213,6 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
-
 		bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil

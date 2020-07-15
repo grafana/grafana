@@ -1,0 +1,21 @@
+import { Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { TimeRangeInput } from './TimeRangeInput';
+
+# TimeRangeInput
+
+A variant of `TimeRangePicker` for use in forms.
+
+### Usage
+
+```jsx
+import { TimeRangeInput } from '@grafana/ui';
+
+<TimeRangeInput
+  value={timeRange}
+  onChange={range => console.log('range', range)}
+  onChangeTimeZone={tz => console.log('timezone', tz)}
+/>
+```
+
+### Props
+<Props of={TimeRangeInput} />

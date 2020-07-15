@@ -114,7 +114,6 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, 
 	teams := make([]GithubTeam, 0)
 
 	for hasMore {
-
 		response, err := HttpGet(client, url)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
@@ -136,7 +135,6 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, 
 }
 
 func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
-
 	value, exists := headers["Link"]
 	if !exists {
 		return "", false
@@ -152,7 +150,6 @@ func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
 	url := matches[1]
 
 	return url, true
-
 }
 
 func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
@@ -181,7 +178,6 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 }
 
 func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`
