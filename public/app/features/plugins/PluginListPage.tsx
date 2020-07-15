@@ -35,7 +35,6 @@ export class PluginListPage extends PureComponent<Props> {
     const linkButton = {
       href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
       title: 'Find more plugins on Grafana.com',
-      target: '_blank',
     };
 
     return (
@@ -46,6 +45,7 @@ export class PluginListPage extends PureComponent<Props> {
               searchQuery={searchQuery}
               setSearchQuery={query => setPluginsSearchQuery(query)}
               linkButton={linkButton}
+              target="_blank"
             />
             {hasFetched && plugins && plugins && <PluginList plugins={plugins} />}
           </>

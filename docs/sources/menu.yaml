@@ -77,12 +77,14 @@
           name: Dashboard and Folder
         - link: /permissions/datasource_permissions/
           name: Data source
+    - name: Provisioning
+      link: /administration/provisioning/
     - name: Grafana CLI
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
-    - name: Provisioning
-      link: /administration/provisioning/
+    - name: Jaeger instrumentation
+      link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
     - name: Troubleshooting
@@ -247,14 +249,22 @@
   children:
     - link: /variables/templates-and-variables/
       name: Overview
+    - link: /variables/add-query-variable/
+      name: Add a query variable
     - link: /variables/global-variables/
       name: Global variables
     - link: /variables/url-variables/
       name: URL variables
     - link: /variables/advanced-variable-format-options/
       name: Advanced variable formats
+    - link: /variables/formatting-multi-value-variables/
+      name: Formatting multi-value variables
+    - link: /variables/filter-variables-with-regex/
+      name: Filter variables with regex
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
+    - link: /variables/chained-variables/
+      name: Chained variables
 - name: What's new in Grafana
   link: /whatsnew/
   children:

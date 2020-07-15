@@ -62,7 +62,7 @@ export class AnnotationsSrv {
         if (!err.message && err.data && err.data.message) {
           err.message = err.data.message;
         }
-        console.log('AnnotationSrv.query error', err);
+        console.error('AnnotationSrv.query error', err);
         appEvents.emit(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
