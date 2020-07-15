@@ -429,8 +429,8 @@ export class ElasticResponse {
 
             series.add(doc);
           }
-
-          dataFrame.push(series);
+          const seriesWithVis = addPreferredVisualisationType(series, 'graph');
+          dataFrame.push(seriesWithVis);
         }
       }
 
