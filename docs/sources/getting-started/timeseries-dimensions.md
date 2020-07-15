@@ -64,10 +64,6 @@ Individual time series from the set are extracted by using the time typed column
 
 ### Multiple dimensions
 
-**TODO**: Azure only As 7.1, SQL coming in 7.2
-
-**TODO**: Multiple dimensions are not supported as mapping to multiple alerts in Grafana currently, only as multiple conditions to a single alert.
-
 If the query is updated to select and group by more than just one string column, for example, `GROUP BY BUCKET(StartTime, 1h), Location, Sensor`, then an additional dimension is added:
 
 | StartTime  | Temp | Location | Sensor |
@@ -82,6 +78,10 @@ If the query is updated to select and group by more than just one string column,
 | 10:00      | 22.2 | BOS      | B      |
 
 In this case the labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
+
+**Note:** More than one dimension for SQL data sources is currently only supported in the Analytics services with the Azure monitor service as of version 7.1. Support for SQL data sources such as MySQL, Postgres, and MSSQL is planned to be added for 7.2.
+
+**Note:**: Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/create-alerts.md#multiple-series" >}}).
 
 ### Multiple values
 
