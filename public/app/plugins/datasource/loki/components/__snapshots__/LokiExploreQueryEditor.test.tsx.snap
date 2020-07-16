@@ -24,6 +24,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         "app": "Grafana",
         "dashboardId": 1,
         "interval": "1s",
+        "intervalMs": 1000,
         "panelId": 1,
         "range": Object {
           "from": "2020-01-01T00:00:00.000Z",

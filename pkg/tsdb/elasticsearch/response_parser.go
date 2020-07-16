@@ -372,6 +372,10 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 
 				if len(otherMetrics) > 1 {
 					metricName += " " + metric.Field
+					if metric.Type == "bucket_script" {
+						//Use the formula in the column name
+						metricName = metric.Settings.Get("script").MustString("")
+					}
 				}
 
 				addMetricValue(&values, metricName, castToNullFloat(bucket.GetPath(metric.ID, "value")))

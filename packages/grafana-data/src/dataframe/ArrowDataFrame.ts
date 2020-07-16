@@ -75,7 +75,7 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
           break;
         }
         default:
-          console.log('UNKNOWN Type:', schema);
+          console.error('UNKNOWN Type:', schema);
       }
 
       fields.push({

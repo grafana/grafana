@@ -46,8 +46,6 @@ export function getPanelMenu(
   };
 
   const onInspectPanel = (tab?: string) => {
-    event.preventDefault();
-
     getLocationSrv().update({
       partial: true,
       query: {
@@ -198,7 +196,7 @@ export function getPanelMenu(
   }
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing) {
-    menu.push({ type: 'divider' });
+    menu.push({ type: 'divider', text: '' });
 
     menu.push({
       text: 'Remove',
