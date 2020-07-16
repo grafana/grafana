@@ -279,7 +279,9 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 			if err != nil {
 				return nil, errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
 			}
-			f.Close()
+			if err := f.Close(); err != nil {
+				return nil, errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+			}
 		} else {
 			fi, err := os.Lstat(ss.dbCfg.Path)
 			if err != nil {
