@@ -29,9 +29,9 @@ func NewFromReader(r io.Reader) (*Json, error) {
 
 // Float64 coerces into a float64
 func (j *Json) Float64() (float64, error) {
-	switch j.data.(type) {
+	switch n := j.data.(type) {
 	case json.Number:
-		return j.data.(json.Number).Float64()
+		return n.Float64()
 	case float32, float64:
 		return reflect.ValueOf(j.data).Float(), nil
 	case int, int8, int16, int32, int64:
@@ -44,10 +44,13 @@ func (j *Json) Float64() (float64, error) {
 
 // Int coerces into an int
 func (j *Json) Int() (int, error) {
-	switch j.data.(type) {
+	switch n := j.data.(type) {
 	case json.Number:
-		i, err := j.data.(json.Number).Int64()
-		return int(i), err
+		i, err := n.Int64()
+		if err != nil {
+			return 0, err
+		}
+		return int(i), nil
 	case float32, float64:
 		return int(reflect.ValueOf(j.data).Float()), nil
 	case int, int8, int16, int32, int64:
@@ -60,9 +63,9 @@ func (j *Json) Int() (int, error) {
 
 // Int64 coerces into an int64
 func (j *Json) Int64() (int64, error) {
-	switch j.data.(type) {
+	switch n := j.data.(type) {
 	case json.Number:
-		return j.data.(json.Number).Int64()
+		return n.Int64()
 	case float32, float64:
 		return int64(reflect.ValueOf(j.data).Float()), nil
 	case int, int8, int16, int32, int64:
@@ -75,9 +78,9 @@ func (j *Json) Int64() (int64, error) {
 
 // Uint64 coerces into an uint64
 func (j *Json) Uint64() (uint64, error) {
-	switch j.data.(type) {
+	switch n := j.data.(type) {
 	case json.Number:
-		return strconv.ParseUint(j.data.(json.Number).String(), 10, 64)
+		return strconv.ParseUint(n.String(), 10, 64)
 	case float32, float64:
 		return uint64(reflect.ValueOf(j.data).Float()), nil
 	case int, int8, int16, int32, int64:

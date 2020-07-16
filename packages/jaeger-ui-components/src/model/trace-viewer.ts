@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Span } from '@grafana/data';
+import { TraceSpan } from '@grafana/data';
 
-export function getTraceName(spans: Span[]): string {
+export function getTraceName(spans: TraceSpan[]): string {
   const span = spans.filter(sp => !sp.references || !sp.references.length)[0];
   return span ? `${span.process.serviceName}: ${span.operationName}` : '';
 }

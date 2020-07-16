@@ -313,6 +313,24 @@ export function toDurationInHoursMinutesSeconds(size: number): FormattedValue {
   return { text: strings.join(':') };
 }
 
+export function toDurationInDaysHoursMinutesSeconds(size: number): FormattedValue {
+  if (size < 0) {
+    const v = toDurationInDaysHoursMinutesSeconds(-size);
+    if (!v.suffix) {
+      v.suffix = '';
+    }
+    v.suffix += ' ago';
+    return v;
+  }
+  let dayString = '';
+  const numDays = Math.floor(size / (24 * 3600));
+  if (numDays > 0) {
+    dayString = numDays + ' d ';
+  }
+  const hmsString = toDurationInHoursMinutesSeconds(size - numDays * 24 * 3600);
+  return { text: dayString + hmsString.text };
+}
+
 export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount): FormattedValue {
   return toSeconds(size / 100, decimals, scaledDecimals);
 }

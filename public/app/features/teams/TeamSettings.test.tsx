@@ -12,7 +12,7 @@ const setup = (propOverrides?: object) => {
   Object.assign(props, propOverrides);
 
   const wrapper = shallow(<TeamSettings {...props} />);
-  const instance = wrapper.instance() as TeamSettings;
+  const instance = wrapper.instance() as any;
 
   return {
     wrapper,
@@ -25,20 +25,5 @@ describe('Render', () => {
     const { wrapper } = setup();
 
     expect(wrapper).toMatchSnapshot();
-  });
-});
-
-describe('Functions', () => {
-  it('should update team', () => {
-    const { instance } = setup();
-    const mockEvent = { preventDefault: jest.fn() };
-
-    instance.setState({
-      name: 'test11',
-    });
-
-    instance.onUpdate(mockEvent);
-
-    expect(instance.props.updateTeam).toHaveBeenCalledWith('test11', 'test@test.com');
   });
 });

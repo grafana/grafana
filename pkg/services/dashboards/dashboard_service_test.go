@@ -1,9 +1,10 @@
 package dashboards
 
 import (
+	"testing"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -223,7 +224,6 @@ func TestDashboardService(t *testing.T) {
 				_, err := service.SaveProvisionedDashboard(dto, nil)
 				So(err, ShouldBeNil)
 				So(dto.Dashboard.Data.Get("refresh").MustString(), ShouldEqual, "5m")
-
 			})
 		})
 

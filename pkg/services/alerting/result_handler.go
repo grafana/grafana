@@ -71,7 +71,6 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 			handler.log.Error("Failed to save state", "error", err)
 		} else {
-
 			// StateChanges is used for de duping alert notifications
 			// when two servers are raising. This makes sure that the server
 			// with the last state change always sends a notification.
@@ -101,11 +100,12 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	}
 
 	if err := handler.notifier.SendIfNeeded(evalContext); err != nil {
-		if xerrors.Is(err, context.Canceled) {
+		switch {
+		case xerrors.Is(err, context.Canceled):
 			handler.log.Debug("handler.notifier.SendIfNeeded returned context.Canceled")
-		} else if xerrors.Is(err, context.DeadlineExceeded) {
+		case xerrors.Is(err, context.DeadlineExceeded):
 			handler.log.Debug("handler.notifier.SendIfNeeded returned context.DeadlineExceeded")
-		} else {
+		default:
 			handler.log.Error("handler.notifier.SendIfNeeded failed", "err", err)
 		}
 	}

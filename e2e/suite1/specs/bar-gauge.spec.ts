@@ -8,7 +8,7 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // open Panel Tests - Bar Gauge
-    e2e.flows.openDashboard('O6f11TZWk');
+    e2e.flows.openDashboard({ uid: 'O6f11TZWk' });
 
     e2e()
       .get('#panel-6 .bar-gauge__value')

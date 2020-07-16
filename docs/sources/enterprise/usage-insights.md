@@ -28,7 +28,7 @@ When more users are active on a dashboard than can fit in the presence indicator
 
 {{< docs-imagebox img="/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-You can choose your own definition of "recent" by setting it in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+You can choose your own definition of "recent" by setting it in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
 ```ini
 [analytics.views]

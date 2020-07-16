@@ -1,60 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div>
-  <h3
-    className="page-sub-heading"
+<Component>
+  <Component
+    label="Team Settings"
   >
-    Team Settings
-  </h3>
-  <form
-    className="gf-form-group"
-    name="teamDetailsForm"
-    onSubmit={[Function]}
-  >
-    <div
-      className="gf-form max-width-30"
+    <Form
+      defaultValues={
+        Object {
+          "avatarUrl": "some/url/",
+          "email": "test@test.com",
+          "id": 1,
+          "memberCount": 1,
+          "name": "test",
+          "permission": 0,
+        }
+      }
+      onSubmit={[Function]}
     >
-      <Component>
-        Name
-      </Component>
-      <Input
-        className="gf-form-input max-width-22"
-        onChange={[Function]}
-        required={true}
-        type="text"
-        value="test"
-      />
-    </div>
-    <div
-      className="gf-form max-width-30"
-    >
-      <Component
-        tooltip="This is optional and is primarily used to set the team profile avatar (via gravatar service)"
-      >
-        Email
-      </Component>
-      <Input
-        className="gf-form-input max-width-22"
-        onChange={[Function]}
-        placeholder="team@email.com"
-        type="email"
-        value="test@test.com"
-      />
-    </div>
-    <div
-      className="gf-form-button-row"
-    >
-      <button
-        className="btn btn-primary"
-        type="submit"
-      >
-        Update
-      </button>
-    </div>
-  </form>
+      <Component />
+    </Form>
+  </Component>
   <SharedPreferences
     resourceUri="teams/1"
   />
-</div>
+</Component>
 `;

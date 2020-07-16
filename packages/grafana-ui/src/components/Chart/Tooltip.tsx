@@ -10,7 +10,7 @@ export type TooltipMode = 'single' | 'multi';
 // Describes active dimensions user interacts with
 // It's a key-value pair where:
 // - key is the name of the dimension
-// - value is a tuple addresing which column and row from given dimension is active.
+// - value is a tuple addressing which column and row from given dimension is active.
 //   If row is undefined, it means that we are not hovering over a datapoint
 export type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 

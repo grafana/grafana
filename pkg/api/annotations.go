@@ -11,7 +11,6 @@ import (
 )
 
 func GetAnnotations(c *models.ReqContext) Response {
-
 	query := &annotations.ItemQuery{
 		From:        c.QueryInt64("from"),
 		To:          c.QueryInt64("to"),

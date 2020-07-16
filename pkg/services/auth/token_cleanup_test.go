@@ -10,7 +10,6 @@ import (
 )
 
 func TestUserAuthTokenCleanup(t *testing.T) {
-
 	Convey("Test user auth token cleanup", t, func() {
 		ctx := createTestContext(t)
 		ctx.tokenService.Cfg.LoginMaxInactiveLifetimeDays = 7

@@ -23,6 +23,27 @@ const ComponentA = () => (
 );
 ```
 
+### Styling with theme
+
+To access the theme in your styles, use the `useStyles` hook. It provides basic memoization and access to the theme object.
+
+```tsx
+import React, { FC } from 'react';
+import { GrafanaTheme } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
+import { css } from 'emotion';
+
+const getComponentStyles = (theme: GrafanaTheme) => css`
+  padding: ${theme.spacing.md};
+`;
+
+const Foo: FC<FooProps> = () => {
+  const styles = useStyles(getComponentsStyles);
+
+  // Use styles with className
+};
+```
+
 ### Styling complex components
 
 In more complex cases, especially when you need to style multiple DOM elements in one component, or when using styles that depend on properties and/or state, you should create a helper function that returns an object of styles. This function should also be wrapped in the `stylesFactory` helper function, which will provide basic memoization.
@@ -36,10 +57,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backgroundColor = selectThemeVariant(
-    { light: theme.colors.red, dark: theme.colors.blue },
-    theme.type
-  );
+  const backgroundColor = selectThemeVariant({ light: theme.colors.red, dark: theme.colors.blue }, theme.type);
 
   return {
     wrapper: css`

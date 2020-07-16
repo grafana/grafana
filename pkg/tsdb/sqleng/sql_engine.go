@@ -55,6 +55,8 @@ var engineCache = engineCacheType{
 
 var sqlIntervalCalculator = tsdb.NewIntervalCalculator(nil)
 
+//nolint:gocritic
+// NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
 }
@@ -481,7 +483,7 @@ func ConvertSqlTimeColumnToEpochMs(values tsdb.RowValues, timeIndex int) {
 			values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
 		case *time.Time:
 			if value != nil {
-				values[timeIndex] = float64((*value).UnixNano()) / float64(time.Millisecond)
+				values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
 			}
 		case int64:
 			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))

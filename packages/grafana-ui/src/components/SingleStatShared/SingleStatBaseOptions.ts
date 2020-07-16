@@ -55,7 +55,7 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
   const prevPanel = prevOptions.angular;
   const reducer = fieldReducers.getIfExists(prevPanel.valueName);
   const options = {
-    fieldOptions: {
+    reduceOptions: {
       calcs: [reducer ? reducer.id : ReducerID.mean],
     },
     orientation: VizOrientation.Horizontal,
@@ -65,6 +65,10 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
 
   if (prevPanel.format) {
     defaults.unit = prevPanel.format;
+  }
+
+  if (prevPanel.tableColumn) {
+    options.reduceOptions.fields = `/^${prevPanel.tableColumn}$/`;
   }
 
   if (prevPanel.nullPointMode) {
