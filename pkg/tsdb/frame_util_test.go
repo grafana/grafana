@@ -100,19 +100,19 @@ func TestFrameToSeriesSlice(t *testing.T) {
 					},
 				},
 				&TimeSeries{
-					Name: "Values Int64",
-					Tags: map[string]string{"Animal Factor": "cat", "Location": "Florida"},
-					Points: TimeSeriesPoints{
-						TimePoint{null.FloatFrom(1), null.FloatFrom(1577934240000)},
-						TimePoint{null.FloatFrom(3), null.FloatFrom(1577934270000)},
-					},
-				},
-				&TimeSeries{
 					Name: "Values Floats",
 					Tags: map[string]string{"Animal Factor": "sloth", "Location": "Central & South America"},
 					Points: TimeSeriesPoints{
 						TimePoint{null.FloatFrom(2), null.FloatFrom(1577934240000)},
 						TimePoint{null.FloatFrom(4), null.FloatFrom(1577934270000)},
+					},
+				},
+				&TimeSeries{
+					Name: "Values Int64",
+					Tags: map[string]string{"Animal Factor": "cat", "Location": "Florida"},
+					Points: TimeSeriesPoints{
+						TimePoint{null.FloatFrom(1), null.FloatFrom(1577934240000)},
+						TimePoint{null.FloatFrom(3), null.FloatFrom(1577934270000)},
 					},
 				},
 				&TimeSeries{
@@ -128,7 +128,6 @@ func TestFrameToSeriesSlice(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			seriesSlice, err := FrameToSeriesSlice(tt.frame)
 			tt.Err(t, err)

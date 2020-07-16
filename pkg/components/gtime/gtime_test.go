@@ -26,7 +26,6 @@ func TestParseInterval(t *testing.T) {
 	}
 
 	for i, tc := range tcs {
-		tc := tc
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
 			res, err := ParseInterval(tc.interval)
 			if tc.err == "" {

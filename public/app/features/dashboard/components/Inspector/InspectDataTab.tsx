@@ -62,9 +62,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     // Replace the time field with a formatted time
     const { timeIndex, timeField } = getTimeField(dataFrame);
+
     if (timeField) {
       // Use the configurd date or standandard time display
-      let processor: DisplayProcessor = timeField.display;
+      let processor: DisplayProcessor | undefined = timeField.display;
       if (!processor) {
         processor = getDisplayProcessor({
           field: timeField,
@@ -78,7 +79,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
       };
 
       const fields = [...dataFrame.fields];
-      fields[timeIndex] = formattedDateField;
+      fields[timeIndex!] = formattedDateField;
+
       dataFrame = {
         ...dataFrame,
         fields,
@@ -87,8 +89,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const dataFrameCsv = toCSV([dataFrame]);
 
-    const blob = new Blob([dataFrameCsv], {
-      type: 'application/csv;charset=utf-8',
+    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
+      type: 'text/csv;charset=utf-8',
     });
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
     const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
@@ -100,8 +102,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
       transformId:
         item.value === DataTransformerID.seriesToColumns ? DataTransformerID.seriesToColumns : DataTransformerID.noop,
       dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
-      selectedDataFrame: item.value,
+      selectedDataFrame: item.value!,
     });
+
     this.props.onOptionsChange({
       ...this.props.options,
     });
@@ -126,6 +129,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
   getProcessedData(): DataFrame[] {
     const { options } = this.props;
     let data = this.props.data;
+
+    if (!data) {
+      return [];
+    }
 
     if (this.state.transformId !== DataTransformerID.noop) {
       data = this.getTransformedData();
@@ -152,16 +159,21 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   }
 
-  getActiveString = () => {
+  getActiveString() {
     const { selectedDataFrame } = this.state;
     const { options, data } = this.props;
-
     let activeString = '';
+
+    if (!data) {
+      return activeString;
+    }
+
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
       activeString = 'series joined by time';
     } else {
       activeString = getFrameDisplayName(data[selectedDataFrame as number]);
     }
+
     if (options.withTransforms || options.withFieldConfig) {
       activeString += ' - applied ';
       if (options.withTransforms) {
@@ -176,10 +188,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
         activeString += 'field configuration';
       }
     }
-    return activeString;
-  };
 
-  renderDataOptions = (dataFrames: DataFrame[]) => {
+    return activeString;
+  }
+
+  renderDataOptions(dataFrames: DataFrame[]) {
     const { options, onOptionsChange, panel, data } = this.props;
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
 
@@ -193,7 +206,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     let dataSelect = dataFrames;
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
-      dataSelect = data;
+      dataSelect = data!;
     }
 
     const choices = dataSelect.map((frame, index) => {
@@ -222,7 +235,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               className={css`
                 margin-bottom: 0;
               `}
-              disabled={!(data.length > 1)}
+              disabled={data!.length < 2}
             >
               <Select
                 options={selectableOptions}
@@ -260,7 +273,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
       </QueryOperationRow>
     );
-  };
+  }
 
   render() {
     const { isLoading } = this.props;

@@ -263,8 +263,8 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
     return this.api.get(`${this.templateSrv.replace(projectName)}/services`, {
       responseMap: ({ name }: { name: string }) => ({
-        value: name.match(/([^\/]*)\/*$/)[1],
-        label: name.match(/([^\/]*)\/*$/)[1],
+        value: name.match(/([^\/]*)\/*$/)![1],
+        label: name.match(/([^\/]*)\/*$/)![1],
       }),
     });
   }
@@ -276,7 +276,7 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     let { projectName: p, serviceId: s } = this.interpolateProps({ projectName, serviceId });
     return this.api.get(`${p}/services/${s}/serviceLevelObjectives`, {
       responseMap: ({ name, displayName, goal }: { name: string; displayName: string; goal: number }) => ({
-        value: name.match(/([^\/]*)\/*$/)[1],
+        value: name.match(/([^\/]*)\/*$/)![1],
         label: displayName,
         goal,
       }),
@@ -323,7 +323,7 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
       return false;
     }
 
-    if (query.queryType && query.queryType === QueryType.SLO) {
+    if (query.queryType && query.queryType === QueryType.SLO && query.sloQuery) {
       const { selectorName, serviceId, sloId, projectName } = query.sloQuery;
       return !!selectorName && !!serviceId && !!sloId && !!projectName;
     }

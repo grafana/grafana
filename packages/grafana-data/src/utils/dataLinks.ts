@@ -2,7 +2,6 @@ import {
   DataLink,
   DataQuery,
   DataSourceInstanceSettings,
-  ExploreMode,
   Field,
   InterpolateFunction,
   LinkModel,
@@ -82,7 +81,6 @@ function generateInternalHref<T extends DataQuery = any>(datasourceName: string,
       queries: [query],
       // This should get overwritten if datasource does not support that mode and we do not know what mode is
       // preferred anyway.
-      mode: ExploreMode.Metrics,
       ui: {
         showingGraph: true,
         showingTable: true,

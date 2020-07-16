@@ -130,11 +130,11 @@ func (db *Postgres) CleanDB() error {
 	defer sess.Close()
 
 	if _, err := sess.Exec("DROP SCHEMA public CASCADE;"); err != nil {
-		return fmt.Errorf("Failed to drop schema public")
+		return errutil.Wrap("failed to drop schema public", err)
 	}
 
 	if _, err := sess.Exec("CREATE SCHEMA public;"); err != nil {
-		return fmt.Errorf("Failed to create schema public")
+		return errutil.Wrap("failed to create schema public", err)
 	}
 
 	return nil

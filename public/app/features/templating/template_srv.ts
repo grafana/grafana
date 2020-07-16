@@ -265,9 +265,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variableName;
   }
 
-  variableExists(expression: string) {
+  variableExists(expression: string): boolean {
     const name = this.getVariableName(expression);
-    return name && this.getVariableAtIndex(name) !== void 0;
+    return (name && this.getVariableAtIndex(name)) !== undefined;
   }
 
   highlightVariablesAsHtml(str: string) {
@@ -318,9 +318,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string {
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
     if (!target) {
-      return target;
+      return target ?? '';
     }
 
     this.regex.lastIndex = 0;

@@ -13,7 +13,6 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   componentWillUnmount() {
     if (this.completionCancel) {
-      console.log('dispose of the custom completion stuff');
       this.completionCancel.dispose();
     }
   }

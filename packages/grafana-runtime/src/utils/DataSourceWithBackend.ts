@@ -7,7 +7,8 @@ import {
   DataSourceJsonData,
   ScopedVars,
 } from '@grafana/data';
-import { Observable, from, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { config } from '..';
 import { getBackendSrv } from '../services';
 import { toDataQueryResponse } from './queryResponse';
@@ -101,36 +102,22 @@ export class DataSourceWithBackend<
       body.to = range.to.valueOf().toString();
     }
 
-    const req: Promise<DataQueryResponse> = getBackendSrv()
-      .datasourceRequest({
+    return getBackendSrv()
+      .fetch({
         url: '/api/ds/query',
         method: 'POST',
         data: body,
         requestId,
       })
-      .then((rsp: any) => {
-        const dqs = toDataQueryResponse(rsp);
-        if (this.processResponse) {
-          return this.processResponse(dqs);
-        }
-        return dqs;
-      })
-      .catch(err => {
-        err.isHandled = true; // Avoid extra popup warning
-        const dqs = toDataQueryResponse(err);
-        if (this.processResponse) {
-          return this.processResponse(dqs);
-        }
-        return dqs;
-      });
-
-    return from(req);
+      .pipe(
+        map((rsp: any) => {
+          return toDataQueryResponse(rsp);
+        }),
+        catchError(err => {
+          return of(toDataQueryResponse(err));
+        })
+      );
   }
-
-  /**
-   * Optionally augment the response before returning the results to the
-   */
-  processResponse?(res: DataQueryResponse): Promise<DataQueryResponse>;
 
   /**
    * Override to skip executing a query
@@ -171,12 +158,11 @@ export class DataSourceWithBackend<
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
     return getBackendSrv()
-      .get(`/api/datasources/${this.id}/health`)
+      .request({ method: 'GET', url: `/api/datasources/${this.id}/health`, showErrorAlert: false })
       .then(v => {
         return v as HealthCheckResult;
       })
       .catch(err => {
-        err.isHandled = true; // Avoid extra popup warning
         return err.data as HealthCheckResult;
       });
   }

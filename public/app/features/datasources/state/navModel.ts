@@ -5,7 +5,7 @@ import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
   const pluginMeta = plugin.meta;
 
-  const navModel = {
+  const navModel: NavModelItem = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.id,
     subTitle: `Type: ${pluginMeta.name}`,
@@ -25,7 +25,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
 
   if (plugin.configPages) {
     for (const page of plugin.configPages) {
-      navModel.children.push({
+      navModel.children!.push({
         active: false,
         text: page.title,
         icon: page.icon,
@@ -36,7 +36,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (pluginMeta.includes && hasDashboards(pluginMeta.includes)) {
-    navModel.children.push({
+    navModel.children!.push({
       active: false,
       icon: 'apps',
       id: `datasource-dashboards-${dataSource.id}`,
@@ -46,7 +46,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (config.licenseInfo.hasLicense) {
-    navModel.children.push({
+    navModel.children!.push({
       active: false,
       icon: 'lock',
       id: `datasource-permissions-${dataSource.id}`,
@@ -55,7 +55,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
 
     if (config.featureToggles.datasourceInsights) {
-      navModel.children.push({
+      navModel.children!.push({
         active: false,
         icon: 'info-circle',
         id: `datasource-insights-${dataSource.id}`,
@@ -88,6 +88,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       typeLogoUrl: 'public/img/icn-datasource.svg',
       url: '',
       user: '',
+      secureJsonFields: {},
     },
     {
       meta: {
@@ -113,14 +114,14 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         module: '',
         baseUrl: '',
       },
-    } as GenericDataSourcePlugin
+    } as any
   );
 
   let node: NavModelItem;
 
   // find active page
-  for (const child of main.children) {
-    if (child.id.indexOf(pageName) > 0) {
+  for (const child of main.children!) {
+    if (child.id!.indexOf(pageName) > 0) {
       child.active = true;
       node = child;
       break;
@@ -129,7 +130,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
 
   return {
     main: main,
-    node: node,
+    node: node!,
   };
 }
 

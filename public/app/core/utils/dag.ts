@@ -60,9 +60,6 @@ export class Edge {
     if (pos > -1) {
       onode.inputEdges.splice(pos, 1);
     }
-
-    this.inputNode = null;
-    this.outputNode = null;
   }
 }
 
@@ -79,7 +76,7 @@ export class Node {
     this.outputEdges = [];
   }
 
-  getEdgeFrom(from: string | Node): Edge {
+  getEdgeFrom(from: string | Node): Edge | null | undefined {
     if (!from) {
       return null;
     }
@@ -91,7 +88,7 @@ export class Node {
     return this.inputEdges.find(e => e.inputNode.name === from);
   }
 
-  getEdgeTo(to: string | Node): Edge {
+  getEdgeTo(to: string | Node): Edge | null | undefined {
     if (!to) {
       return null;
     }

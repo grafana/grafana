@@ -101,7 +101,7 @@ export class GrafanaCtrl {
 
       let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
-        console.log('warning rootScope onAppEvent called without localscope');
+        console.warn('warning rootScope onAppEvent called without localscope');
       }
       if (localScope) {
         callerScope = localScope;

@@ -89,7 +89,6 @@ func TestSearchJSONForEmail(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			test := test
 			provider.emailAttributePath = test.EmailAttributePath
 			t.Run(test.Name, func(t *testing.T) {
 				actualResult, err := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
@@ -153,7 +152,6 @@ func TestSearchJSONForRole(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			test := test
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
 				actualResult, err := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
@@ -306,7 +304,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			test := test
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
 				response, err := json.Marshal(test.APIURLResponse)

@@ -35,7 +35,7 @@ const options: Array<SelectableValue<ShowContent>> = [
 interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
-  data: PanelData;
+  data?: PanelData;
   onClose: () => void;
 }
 
@@ -54,9 +54,9 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   }
 
   onSelectChanged = (item: SelectableValue<ShowContent>) => {
-    const show = this.getJSONObject(item.value);
+    const show = this.getJSONObject(item.value!);
     const text = getPrettyJSON(show);
-    this.setState({ text, show: item.value });
+    this.setState({ text, show: item.value! });
   };
 
   // Called onBlur
@@ -64,16 +64,17 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.setState({ text });
   };
 
-  getJSONObject = (show: ShowContent): any => {
+  getJSONObject(show: ShowContent) {
     if (show === ShowContent.PanelData) {
       return this.props.data;
     }
+
     if (show === ShowContent.DataStructure) {
       const series = this.props.data?.series;
       if (!series) {
         return { note: 'Missing Response Data' };
       }
-      return this.props.data.series.map(frame => {
+      return this.props.data!.series.map(frame => {
         const { table, fields, ...rest } = frame as any; // remove 'table' from arrow response
         return {
           ...rest,
@@ -87,12 +88,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         };
       });
     }
+
     if (show === ShowContent.PanelJSON) {
       return this.props.panel.getSaveModel();
     }
 
     return { note: `Unknown Object: ${show}` };
-  };
+  }
 
   onApplyPanelModel = () => {
     const { panel, dashboard, onClose } = this.props;
@@ -107,7 +109,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
       }
     } catch (err) {
-      console.log('Error applyign updates', err);
+      console.error('Error applying updates', err);
       appEvents.emit(AppEvents.alertError, ['Invalid JSON text']);
     }
 
@@ -142,7 +144,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
                 height={height}
                 language="json"
                 showLineNumbers={true}
-                showMiniMap={text && text.length > 100}
+                showMiniMap={(text && text.length) > 100}
                 value={text || ''}
                 readOnly={!isPanelJSON}
                 onBlur={this.onTextChanged}
