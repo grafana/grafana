@@ -29,18 +29,21 @@ var credsCacheLock sync.RWMutex
 
 // Session factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
 	return session.NewSession(cfgs...)
 }
 
 // STS service factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) stsiface.STSAPI {
 	return sts.New(p, cfgs...)
 }
 
 // EC2Metadata service factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
 	return ec2metadata.New(p, cfgs...)
 }

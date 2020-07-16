@@ -190,7 +190,7 @@ func (f permissionFlags) String() string {
 		r = append(r, "<no access>")
 	}
 
-	return strings.Join(r[:], ", ")
+	return strings.Join(r, ", ")
 }
 
 func (sc *scenarioContext) reportSuccess() {

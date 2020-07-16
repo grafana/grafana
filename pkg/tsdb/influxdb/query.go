@@ -63,11 +63,12 @@ func (query *Query) renderTags() []string {
 
 		// quote value unless regex or number
 		var textValue string
-		if tag.Operator == "=~" || tag.Operator == "!~" {
+		switch tag.Operator {
+		case "=~", "!~":
 			textValue = tag.Value
-		} else if tag.Operator == "<" || tag.Operator == ">" {
+		case "<", ">":
 			textValue = tag.Value
-		} else {
+		default:
 			textValue = fmt.Sprintf("'%s'", strings.Replace(tag.Value, `\`, `\\`, -1))
 		}
 
