@@ -7,6 +7,8 @@
       link: /getting-started/getting-started/
     - name: Intro to time series
       link: /getting-started/timeseries/
+    - name: Time series dimensions
+      link: /getting-started/timeseries-dimensions/
     - name: Intro to histograms
       link: /getting-started/intro-histograms/
     - name: Observability strategies

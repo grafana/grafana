@@ -3,6 +3,7 @@ package azuremonitor
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -115,7 +116,21 @@ var realConverter = data.FieldConverter{
 		}
 		jN, ok := v.(json.Number)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected json.Number but got %T", v)
+			s, sOk := v.(string)
+			if sOk {
+				switch s {
+				case "Infinity":
+					f := math.Inf(0)
+					return &f, nil
+				case "-Infinity":
+					f := math.Inf(-1)
+					return &f, nil
+				case "NaN":
+					f := math.NaN()
+					return &f, nil
+				}
+			}
+			return nil, fmt.Errorf("unexpected type, expected json.Number but got type %T for value %v", v, v)
 		}
 		f, err := jN.Float64()
 		if err != nil {

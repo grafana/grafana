@@ -44,12 +44,13 @@ to{
 }`;
 
 export const getLoginStyles = (theme: GrafanaTheme) => {
+  const bgColor = theme.isDark ? theme.palette.black : theme.palette.white;
   return {
     container: css`
       min-height: 100vh;
       background-position: center;
       background-repeat: no-repeat;
-      background-color: ${theme.palette.black};
+      background-color: ${bgColor};
       min-width: 100%;
       margin-left: 0;
       display: flex;
