@@ -176,7 +176,9 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(
         jest.fn().mockReturnValueOnce(
           Promise.reject({
-            data: 'parse error at line 1, col 6: invalid char escape',
+            data: {
+              message: 'parse error at line 1, col 6: invalid char escape',
+            },
             status: 400,
             statusText: 'Bad Request',
           })
@@ -189,7 +191,7 @@ describe('LokiDatasource', () => {
       try {
         await ds.query(options).toPromise();
       } catch (err) {
-        expect(err.message).toBe(
+        expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.'
         );
       }

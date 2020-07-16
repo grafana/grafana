@@ -54,7 +54,7 @@ export class DashLinksEditorCtrl {
   };
 
   addLink() {
-    this.dashboard.links.push(this.link);
+    this.dashboard.links = [...this.dashboard.links, this.link];
     this.mode = 'list';
     this.dashboard.updateSubmenuVisibility();
   }
@@ -65,6 +65,7 @@ export class DashLinksEditorCtrl {
   }
 
   saveLink() {
+    this.dashboard.links = _.cloneDeep(this.dashboard.links);
     this.backToList();
   }
 
