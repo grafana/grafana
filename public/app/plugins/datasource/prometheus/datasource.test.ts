@@ -21,6 +21,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { VariableHide } from '../../../features/variables/types';
 import { describe } from '../../../../test/lib/common';
+import { QueryOptions } from 'app/types';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
@@ -1683,7 +1684,7 @@ describe('PrometheusDatasource for POST', () => {
   });
 });
 
-const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp) => {
+const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp, queryOptions?: Partial<QueryOptions>) => {
   const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
@@ -1694,7 +1695,9 @@ const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp) => {
   const start = 0;
   const end = 1;
   const panelId = '2';
-  const options = ({ targets: [target], interval: '1s', panelId, app } as any) as DataQueryRequest<PromQuery>;
+  const options = ({ targets: [target], interval: '1s', panelId, app, ...queryOptions } as any) as DataQueryRequest<
+    PromQuery
+  >;
 
   const ds = new PrometheusDatasource(instanceSettings);
   const { queries, activeTargets } = ds.prepareTargets(options, start, end);
@@ -1744,11 +1747,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: true,
-          showingTable: true,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: true,
+          showingTable: true,
+        });
 
         expect(queries.length).toBe(2);
         expect(activeTargets.length).toBe(2);
@@ -1817,11 +1821,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: false,
-          showingTable: true,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: false,
+          showingTable: true,
+        });
 
         expect(queries.length).toBe(1);
         expect(activeTargets.length).toBe(1);
@@ -1854,11 +1859,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: true,
-          showingTable: false,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: true,
+          showingTable: false,
+        });
 
         expect(queries.length).toBe(1);
         expect(activeTargets.length).toBe(1);
@@ -1958,7 +1964,6 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
         start: dateTime().subtract(5, 'minutes'),
         end: dateTime(),
         expr: 'test',
-        showingGraph: true,
         ...t,
       };
     }),
@@ -1967,6 +1972,7 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
       to: dateTime(),
     },
     interval: '15s',
+    showingGraph: true,
   };
 
   return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;

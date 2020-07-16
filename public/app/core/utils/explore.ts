@@ -124,7 +124,6 @@ export function buildQueryTransaction(
   scanning: boolean,
   timeZone?: TimeZone
 ): QueryTransaction {
-  const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
     combinedKey += query.key;
     return combinedKey;
@@ -149,7 +148,7 @@ export function buildQueryTransaction(
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
     // issues down the road.
     panelId: panelId as any,
-    targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
+    targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
     requestId: 'explore',
     rangeRaw: range.raw,
@@ -159,6 +158,9 @@ export function buildQueryTransaction(
     },
     maxDataPoints: queryOptions.maxDataPoints,
     exploreMode: queryOptions.mode,
+    liveStreaming: queryOptions.liveStreaming,
+    showingGraph: queryOptions.showingGraph,
+    showingTable: queryOptions.showingTable,
   };
 
   return {
