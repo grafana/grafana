@@ -261,3 +261,12 @@ func TestBuckets(t *testing.T) {
 		fmt.Println("----------------------")
 	})
 }
+
+func TestGoldenFiles(t *testing.T) {
+	t.Run("Renamed", func(t *testing.T) {
+		_, err := verifyGoldenResponse("renamed")
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+	})
+}
