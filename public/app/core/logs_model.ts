@@ -186,11 +186,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
 }
 
 function isLogsData(series: DataFrame) {
-  return (
-    series.fields.length &&
-    series.fields.some(f => f.type === FieldType.time) &&
-    series.fields.some(f => f.type === FieldType.string)
-  );
+  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
 }
 
 /**
@@ -337,10 +333,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
-    if (!info) {
-      break;
-    }
-
     const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
     const labels = stringField.labels;
     const uniqueLabels = findUniqueLabels(labels, commonLabels);
@@ -460,12 +452,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 }
 
 function hasFields(logSeries: DataFrame[]): boolean {
-  for (const series of logSeries) {
-    if (series.fields.length) {
-      return true;
-    }
-  }
-  return false;
+  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

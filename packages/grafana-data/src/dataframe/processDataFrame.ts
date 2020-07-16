@@ -251,10 +251,6 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
  * @param guessDefined Whether to guess types of fields with already defined types
  */
 export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFrame => {
-  if (!series.fields.length) {
-    return series;
-  }
-
   for (const field of series.fields) {
     if (!field.type || field.type === FieldType.other || guessDefined) {
       // Something is missing a type, return a modified copy
