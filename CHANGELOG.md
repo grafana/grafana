@@ -15,7 +15,7 @@
 * **Jaeger/Zipkin**: URL-encode service names and trace ids for API calls. [#26115](https://github.com/grafana/grafana/pull/26115), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Prometheus**: Fix prom links in mixed mode. [#26244](https://github.com/grafana/grafana/pull/26244), [@zoltanbedi](https://github.com/zoltanbedi)
 * **Provisioning**: Fix bug when provision app plugins using Enterprise edition. [#26340](https://github.com/grafana/grafana/pull/26340), [@marefr](https://github.com/marefr)
-* **SignIn button - use correct url**. [#26239](https://github.com/grafana/grafana/pull/26239), [@dprokop](https://github.com/dprokop)
+* **Sign In** Use correct url for the Sign In button. [#26239](https://github.com/grafana/grafana/pull/26239), [@dprokop](https://github.com/dprokop)
 
 # 7.1.0-beta3 (2020-07-13)
 
