@@ -42,7 +42,7 @@ import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
-export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
+export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 
@@ -143,7 +143,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = Math.ceil(this.adjustInterval(options.intervalMs || 1000, rangeMs) / 1000);
+      const step = Math.ceil(
+        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000
+      );
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -160,7 +162,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       ...DEFAULT_QUERY_PARAMS,
       ...range,
       query,
-      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
+      limit: Math.min((options as DataQueryRequest<LokiQuery>).maxDataPoints || Infinity, this.maxLines),
     };
   }
 
@@ -182,7 +184,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let linesLimit = 0;
     if (target.maxLines === undefined) {
       // no target.maxLines, using options.maxDataPoints
-      linesLimit = Math.min(options.maxDataPoints || Infinity, this.maxLines);
+      linesLimit = Math.min((options as DataQueryRequest<LokiQuery>).maxDataPoints || Infinity, this.maxLines);
     } else {
       // using target.maxLines
       if (isNaN(target.maxLines)) {
@@ -193,7 +195,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     const queryOptions = { ...options, maxDataPoints: linesLimit };
-    if (target.liveStreaming) {
+    if ((options as DataQueryRequest<LokiQuery>).liveStreaming) {
       return this.runLiveQuery(target, queryOptions);
     }
     const query = this.createRangeQuery(target, queryOptions);
@@ -207,7 +209,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           responseListLength,
           linesLimit,
           this.instanceSettings.jsonData,
-          options.reverse
+          (options as DataQueryRequest<LokiQuery>).reverse
         )
       )
     );
