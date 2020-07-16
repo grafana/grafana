@@ -132,7 +132,7 @@ const getStyles = (theme: GrafanaTheme) => {
     clearIcon: css`
       margin-right: ${theme.spacing.xs};
       &:hover {
-        color: ${theme.palette.white};
+        color: ${theme.colors.linkHover};
       }
     `,
     placeholder: css`
