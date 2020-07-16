@@ -272,7 +272,7 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 			return nil, errutil.Wrapf(err, "can't check for existence of %q", ss.dbCfg.Path)
 		}
 
-		const perms = 0600
+		const perms = 0640
 		if !exists {
 			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
 			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
