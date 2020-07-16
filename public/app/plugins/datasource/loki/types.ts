@@ -24,7 +24,6 @@ export enum LokiResultType {
 
 export interface LokiQuery extends DataQuery {
   expr: string;
-  liveStreaming?: boolean;
   query?: string;
   format?: string;
   reverse?: boolean;

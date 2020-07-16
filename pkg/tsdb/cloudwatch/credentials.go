@@ -17,14 +17,17 @@ import (
 
 // Session factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newSession = session.NewSession
 
 // STS credentials factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newSTSCredentials = stscreds.NewCredentials
 
 // EC2Metadata service factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newEC2Metadata = ec2metadata.New
 
 func remoteCredProvider(sess *session.Session) credentials.Provider {
