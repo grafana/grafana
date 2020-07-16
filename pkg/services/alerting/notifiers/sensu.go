@@ -130,11 +130,12 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("output", "Grafana Metric Condition Met")
 	bodyJSON.Set("evalMatches", evalContext.EvalMatches)
 
-	if evalContext.Rule.State == "alerting" {
+	switch evalContext.Rule.State {
+	case "alerting":
 		bodyJSON.Set("status", 2)
-	} else if evalContext.Rule.State == "no_data" {
+	case "no_data":
 		bodyJSON.Set("status", 1)
-	} else {
+	default:
 		bodyJSON.Set("status", 0)
 	}
 

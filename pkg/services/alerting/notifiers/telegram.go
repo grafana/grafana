@@ -125,16 +125,16 @@ func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalCo
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
-		message = message + fmt.Sprintf("URL: %s\n", ruleURL)
+		message += fmt.Sprintf("URL: %s\n", ruleURL)
 	}
 
 	if evalContext.ImagePublicURL != "" {
-		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicURL)
+		message += fmt.Sprintf("Image: %s\n", evalContext.ImagePublicURL)
 	}
 
 	metrics := generateMetricsMessage(evalContext)
 	if metrics != "" {
-		message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
+		message += fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
 	}
 
 	return tn.generateTelegramCmd(message, "text", "sendMessage", func(w *multipart.Writer) {
