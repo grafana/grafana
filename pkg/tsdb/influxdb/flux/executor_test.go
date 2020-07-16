@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/xorcare/pointer"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go"
@@ -46,6 +48,16 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 
 	client := influxdb2.NewClient(server.URL, "a")
 	return client.QueryApi("x").Query(ctx, q)
+}
+
+func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
+	runner := &MockRunner{
+		testDataPath: name + ".csv",
+	}
+
+	dr := ExecuteQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
+	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
+	return &dr, err
 }
 
 func TestExecuteSimple(t *testing.T) {
@@ -271,5 +283,14 @@ func TestBuckets(t *testing.T) {
 		st, _ := dr.Frames[0].StringTable(-1, -1)
 		fmt.Println(st)
 		fmt.Println("----------------------")
+	})
+}
+
+func TestGoldenFiles(t *testing.T) {
+	t.Run("Renamed", func(t *testing.T) {
+		_, err := verifyGoldenResponse("renamed")
+		if err != nil {
+			t.Fatal(err.Error())
+		}
 	})
 }
