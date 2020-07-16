@@ -281,14 +281,14 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 			}
 			f.Close()
 		} else {
-			ss.log.Info("Setting permissions on SQLite database file", "path", ss.dbCfg.Path)
 			fi, err := os.Lstat(ss.dbCfg.Path)
 			if err != nil {
 				return nil, errutil.Wrapf(err, "failed to stat SQLite database file %q", ss.dbCfg.Path)
 			}
-			m := fi.Mode()
-			if err := os.Chmod(ss.dbCfg.Path, m&perms); err != nil {
-				return nil, errutil.Wrapf(err, "failed to set permissions on SQLite database file %q", ss.dbCfg.Path)
+			m := fi.Mode() & os.ModePerm
+			if m|perms != perms {
+				ss.log.Warn("SQLite database file has broader permissions than it should",
+					"path", ss.dbCfg.Path, "mode", m, "expected", os.FileMode(perms))
 			}
 		}
 	}
