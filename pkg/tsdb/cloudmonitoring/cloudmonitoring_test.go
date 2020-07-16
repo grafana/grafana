@@ -1019,6 +1019,9 @@ func verifyDeepLink(dl string, expectedTimeSelection map[string]string, expected
 	params, err = url.ParseQuery(u.RawQuery)
 	So(err, ShouldBeNil)
 
+	deepLinkParam := params.Get("Grafana_deeplink")
+	So(deepLinkParam, ShouldNotBeEmpty)
+
 	pageStateStr := params.Get("pageState")
 	So(pageStateStr, ShouldNotBeEmpty)
 
