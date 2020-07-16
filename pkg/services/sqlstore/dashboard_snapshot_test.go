@@ -12,7 +12,6 @@ import (
 )
 
 func TestDashboardSnapshotDBAccess(t *testing.T) {
-
 	Convey("Testing DashboardSnapshot data access", t, func() {
 		InitTestDB(t)
 

@@ -68,6 +68,8 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .click();
     closeOptionsGroup('type');
 
+    closeOptions();
+
     queriesForm(fullConfig);
 
     e2e().wait('@chartData');
@@ -76,8 +78,6 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
     //e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content').contains('No data');
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
-
-    closeOptions();
 
     e2e()
       .get('button[title="Apply changes and go back to dashboard"]')

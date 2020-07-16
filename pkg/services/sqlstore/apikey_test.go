@@ -27,7 +27,6 @@ func TestApiKeyDataAccess(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotNil(t, query.Result)
 			})
-
 		})
 
 		t.Run("Add non expiring key", func(t *testing.T) {

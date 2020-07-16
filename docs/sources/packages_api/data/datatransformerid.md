@@ -34,6 +34,7 @@ import { DataTransformerID } from '@grafana/data';
 |  filterFieldsByName | <code>&quot;filterFieldsByName&quot;</code> |  |
 |  filterFrames | <code>&quot;filterFrames&quot;</code> |  |
 |  labelsToFields | <code>&quot;labelsToFields&quot;</code> |  |
+|  merge | <code>&quot;merge&quot;</code> |  |
 |  noop | <code>&quot;noop&quot;</code> |  |
 |  order | <code>&quot;order&quot;</code> |  |
 |  organize | <code>&quot;organize&quot;</code> |  |

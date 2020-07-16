@@ -22,18 +22,17 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Log in to [Azure Portal](https://portal.azure.com) and click **Azure Active Directory** in the side menu.
 
-1. Click **App Registrations** and add a new application registration:
-   - Name: Grafana
-   - Application type: Web app / API
-   - Sign-on URL: `https://<grafana domain>/login/azuread`
+1. Click **App Registrations** and add a new application registration with a fitting name.
+   
+1. Click on **Authentication** then **Add a platform** and pick **Web App**.
 
-1. Click the name of the new application to open the application details page.
+1. Add the redirect URL `https://<grafana domain>/login/azuread`.
 
-1. Click **Endpoints**.
+1. Click **Overview** and then **Endpoints**.
    - Note down the **OAuth 2.0 authorization endpoint (v2)**, this will be the auth URL.
    - Note down the **OAuth 2.0 token endpoint (v2)**, this will be the token URL.
 
-1. Close the Endpoints page to come back to the application details page.
+1. Close the Endpoints page to come back to the application overview.
 
 1. Note down the "Application ID", this will be the OAuth client id.
 
@@ -88,9 +87,9 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
         	],
         ```
 
-1. Click Overview and then on **Managed application in local directory** to show the Enterprise Application details.
+1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
-1. Click on **Users and groups** and add Users/Groups to the Grafana roles by using **Add User**.
+1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**. 
 
 ## Enable Azure AD OAuth in Grafana
 

@@ -82,6 +82,38 @@
 </div>
 
 <div class="gf-form-group">
+  <h5 class="section-heading">Stacking and null value</h5>
+  <gf-form-switch
+    class="gf-form"
+    label="Stack"
+    label-class="width-7"
+    checked="ctrl.panel.stack"
+    on-change="ctrl.render()"
+  >
+  </gf-form-switch>
+  <gf-form-switch
+    class="gf-form"
+    ng-show="ctrl.panel.stack"
+    label="Percent"
+    label-class="width-7"
+    checked="ctrl.panel.percentage"
+    on-change="ctrl.render()"
+  >
+  </gf-form-switch>
+  <div class="gf-form">
+    <label class="gf-form-label width-7">Null value</label>
+    <div class="gf-form-select-wrapper">
+      <select
+        class="gf-form-input max-width-9"
+        ng-model="ctrl.panel.nullPointMode"
+        ng-options="f for f in ['connected', 'null', 'null as zero']"
+        ng-change="ctrl.render()"
+      ></select>
+    </div>
+  </div>
+</div>
+
+<div class="gf-form-group">
   <h5 class="section-heading">Hover tooltip</h5>
   <div class="gf-form">
     <label class="gf-form-label width-9">Mode</label>
@@ -112,38 +144,6 @@
         class="gf-form-input"
         ng-model="ctrl.panel.tooltip.value_type"
         ng-options="f for f in ['cumulative','individual']"
-        ng-change="ctrl.render()"
-      ></select>
-    </div>
-  </div>
-</div>
-
-<div class="gf-form-group">
-  <h5 class="section-heading">Stacking and null value</h5>
-  <gf-form-switch
-    class="gf-form"
-    label="Stack"
-    label-class="width-7"
-    checked="ctrl.panel.stack"
-    on-change="ctrl.render()"
-  >
-  </gf-form-switch>
-  <gf-form-switch
-    class="gf-form"
-    ng-show="ctrl.panel.stack"
-    label="Percent"
-    label-class="width-7"
-    checked="ctrl.panel.percentage"
-    on-change="ctrl.render()"
-  >
-  </gf-form-switch>
-  <div class="gf-form">
-    <label class="gf-form-label width-7">Null value</label>
-    <div class="gf-form-select-wrapper">
-      <select
-        class="gf-form-input max-width-9"
-        ng-model="ctrl.panel.nullPointMode"
-        ng-options="f for f in ['connected', 'null', 'null as zero']"
         ng-change="ctrl.render()"
       ></select>
     </div>

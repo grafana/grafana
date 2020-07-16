@@ -11,7 +11,6 @@ import (
 
 func TestTimeRange(t *testing.T) {
 	Convey("Time range", t, func() {
-
 		now := time.Now()
 
 		Convey("Can parse 5m, now", func() {

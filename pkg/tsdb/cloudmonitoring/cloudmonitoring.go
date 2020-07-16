@@ -139,6 +139,7 @@ func (query *cloudMonitoringQuery) buildDeepLink() string {
 
 	q := u.Query()
 	q.Set("project", query.ProjectName)
+	q.Set("Grafana_deeplink", "true")
 
 	pageState := map[string]interface{}{
 		"xyChart": map[string]interface{}{

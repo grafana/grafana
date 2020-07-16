@@ -13,9 +13,7 @@ import (
 )
 
 func TestAlertRuleExtraction(t *testing.T) {
-
 	Convey("Parsing alert rules  from dashboard json", t, func() {
-
 		RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
 			return &FakeCondition{}, nil
 		})
@@ -80,7 +78,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Parsing and validating dashboard containing graphite alerts", func() {
-
 			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 

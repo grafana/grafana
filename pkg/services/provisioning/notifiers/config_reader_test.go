@@ -257,7 +257,6 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt := notificationsQuery.Result[0]
 			So(nt.Name, ShouldEqual, "default-notification-create")
 			So(nt.OrgId, ShouldEqual, existingOrg2.Result.Id)
-
 		})
 
 		Convey("Config doesn't contain required field", func() {
