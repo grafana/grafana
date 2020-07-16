@@ -208,23 +208,7 @@ def pipelines(kind, name, edition):
                         './e2e/run-suite',
                     ],
                 },
-                {
-                    'name': 'publish-storybook',
-                    'image': build_image,
-                    'depends_on': [
-                        # Best to ensure that this step doesn't mess with what's getting built and packaged
-                        'package',
-                    ],
-                    'commands': [
-                        restore_yarn_cache,
-                        'yarn storybook:build',
-                        # TODO: Enable the following for non-forked PRs
-                        # - echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-                        # - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-                        # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
-                        # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
-                    ],
-                },
+                build_storybook_step(edition),
                 {
                     'name': 'build-docs-website',
                     # Use latest revision here, since we want to catch if it breaks
@@ -412,5 +396,24 @@ def lint_backend_step(edition):
         ],
         'commands': [
             cmd,
+        ],
+    }
+
+def build_storybook_step(edition):
+    return {
+        'name': 'build-storybook',
+        'image': build_image,
+        'depends_on': [
+            # Best to ensure that this step doesn't mess with what's getting built and packaged
+            'package',
+        ],
+        'commands': [
+            restore_yarn_cache,
+            'yarn storybook:build',
+            # TODO: Enable the following for OSS master builds
+            # - echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            # - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+            # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
         ],
     }

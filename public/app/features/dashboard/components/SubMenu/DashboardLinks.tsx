@@ -10,16 +10,17 @@ import { iconMap } from '../DashLinks/DashLinksEditorCtrl';
 
 export interface Props {
   dashboard: DashboardModel;
+  links: DashboardLink[];
 }
 
-export const DashboardLinks: FC<Props> = ({ dashboard }) => {
-  if (!dashboard.links.length) {
+export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
+  if (!links.length) {
     return null;
   }
 
   return (
     <>
-      {dashboard.links.map((link: DashboardLink, index: number) => {
+      {links.map((link: DashboardLink, index: number) => {
         const linkInfo = getLinkSrv().getAnchorInfo(link);
         const key = `${link.title}-$${index}`;
 

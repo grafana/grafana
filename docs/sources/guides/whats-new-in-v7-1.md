@@ -23,6 +23,8 @@ The main highlights are:
 - [**Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) datasource**]({{< relref "#deep-linking-for-google-cloud-monitoring-formerly-named-google-stackdriver-datasource" >}})
 - [**Transforms**]({{< relref "#transforms" >}})
 - [**Stat panel text mode**]({{< relref "#stat-panel-text-mode" >}})
+- [**Unification of Explore modes**]({{< relref "#explore-modes-unified" >}})
+- [**Time range picker update**]({{< relref "#time-range-picker-update" >}})
 - [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
   - [**Support for HashiCorp Vault**]({{< relref "#support-for-hashicorp-vault" >}})
   - [**Internal links for Elastic**]({{< relref "#internal-links-for-elastic" >}})
@@ -72,6 +74,19 @@ By default, the Stat panel displays:
 You can use the Text mode option to control what text the panel renders. If the value is not important, only name and color is, then change the `Text mode` to **Name**. The value will still be used to determine color and is displayed in a tooltip.
 
 {{< docs-imagebox img="/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat panel" >}}
+
+## Explore modes unified
+
+Grafana 7.1 includes a major change to Explore: it removes the query mode selector.
+
+Many data sources tell Grafana whether a response contains time series data or logs data. Using this information, Explore chooses which visualization to use for that data. This means that you don't need to switch back and forth between Logs and Metrics modes depending on the type of query that you want to make. 
+
+## Time range picker update
+
+With 7.1 we are updating the dashboard's time range picker to allow time zone selection. You no longer need to go to dashboard settings to change the dashboard's time zone.
+
+The time zone picker itself also got UX improvements. Now you can search for the timezone using country or city name, time zone abbreviations, or UTC offsets.    
+
 
 ## Grafana Enterprise features
 

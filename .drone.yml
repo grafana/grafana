@@ -146,7 +146,7 @@ steps:
   depends_on:
   - end-to-end-tests-server
 
-- name: publish-storybook
+- name: build-storybook
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
