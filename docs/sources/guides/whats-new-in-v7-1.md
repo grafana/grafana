@@ -37,7 +37,7 @@ In Grafana v 7.1 we are introducing search functionality in Query history. You c
 
 ## Provisioning of apps
 
-Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. Read more about provisioning of app plugins [here]({{ < relref "../administration/provisioning.md#plugins" >}}).
+Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. Read more about provisioning of app plugins [here]({{<relref "../administration/provisioning.md#plugins" >}}).
 
 ## Azure Monitor Datasource
 
