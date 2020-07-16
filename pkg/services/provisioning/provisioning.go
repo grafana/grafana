@@ -25,14 +25,18 @@ type ProvisioningService interface {
 }
 
 func init() {
-	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
-			return dashboards.New(path)
-		},
-		notifiers.Provision,
-		datasources.Provision,
-		plugins.Provision,
-	))
+	registry.Register(&registry.Descriptor{
+		Name: "ProvisioningService",
+		Instance: NewProvisioningServiceImpl(
+			func(path string) (dashboards.DashboardProvisioner, error) {
+				return dashboards.New(path)
+			},
+			notifiers.Provision,
+			datasources.Provision,
+			plugins.Provision,
+		),
+		InitPriority: registry.Low,
+	})
 }
 
 func NewProvisioningServiceImpl(
