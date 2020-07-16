@@ -7,6 +7,8 @@
       link: /getting-started/getting-started/
     - name: Intro to time series
       link: /getting-started/timeseries/
+    - name: Time series dimensions
+      link: /getting-started/timeseries-dimensions/
     - name: Intro to histograms
       link: /getting-started/intro-histograms/
     - name: Observability strategies
@@ -263,6 +265,8 @@
       name: Filter variables with regex
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
+    - link: /variables/chained-variables/
+      name: Chained variables
 - name: What's new in Grafana
   link: /whatsnew/
   children:

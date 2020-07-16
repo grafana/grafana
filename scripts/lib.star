@@ -45,8 +45,7 @@ def pipelines(kind, name, edition):
                     },
                 },
             ],
-            'steps': [
-                init_step(edition),
+            'steps': init_steps(edition) + [
                 lint_backend_step(edition),
                 {
                     'name': 'codespell',
@@ -209,27 +208,14 @@ def pipelines(kind, name, edition):
                         './e2e/run-suite',
                     ],
                 },
-                {
-                    'name': 'publish-storybook',
-                    'image': build_image,
-                    'depends_on': [
-                        # Best to ensure that this step doesn't mess with what's getting built and packaged
-                        'package',
-                    ],
-                    'commands': [
-                        restore_yarn_cache,
-                        'yarn storybook:build',
-                        # TODO: Enable the following for non-forked PRs
-                        # - echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-                        # - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-                        # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
-                        # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
-                    ],
-                },
+                build_storybook_step(edition),
                 {
                     'name': 'build-docs-website',
                     # Use latest revision here, since we want to catch if it breaks
                     'image': 'grafana/docs-base:latest',
+                    'depends_on': [
+                        'initialize',
+                    ],
                     'commands': [
                         'mkdir -p /hugo/content/docs/grafana',
                         'cp -r docs/sources /hugo/content/docs/grafana/latest',
@@ -328,7 +314,7 @@ def pipelines(kind, name, edition):
 
     return pipelines
 
-def init_step(edition):
+def init_steps(edition):
     grabpl_version = '0.4.24'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
@@ -339,41 +325,59 @@ def init_step(edition):
         'cp -r $(yarn cache dir) yarn-cache',
     ]
     if edition == 'enterprise':
-        return {
+        return [
+            {
+                'name': 'clone',
+                'image': 'alpine/git:v2.26.2',
+                'environment': {
+                    'GITHUB_TOKEN': {
+                        'from_secret': 'github_token',
+                    },
+                },
+                'commands': [
+                    'git clone https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git',
+                    'cd grafana-enterprise',
+                    'git checkout ${DRONE_COMMIT}',
+                ],
+            },
+            {
+                'name': 'initialize',
+                'image': build_image,
+                'environment': {
+                    'GRABPL_VERSION': grabpl_version,
+                    'DOCKERIZE_VERSION': '0.6.1',
+                },
+                'depends_on': [
+                    'clone',
+                ],
+                'commands': [
+                    'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl',
+                    'chmod +x grabpl',
+                    'mv grabpl /tmp',
+                    'mv grafana-enterprise /tmp/',
+                    '/tmp/grabpl init-enterprise /tmp/grafana-enterprise',
+                    'mkdir bin',
+                    'mv /tmp/grabpl bin/'
+                ] + common_cmds,
+            },
+        ]
+
+    return [
+        {
             'name': 'initialize',
             'image': build_image,
             'environment': {
                 'GRABPL_VERSION': grabpl_version,
                 'DOCKERIZE_VERSION': '0.6.1',
-                'GITHUB_TOKEN': {
-                    'from_secret': 'github_token',
-                },
             },
             'commands': [
-                # Have grabpl clone Grafana OSS and pull enterprise extensions into it
                 'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl',
                 'chmod +x grabpl',
-                'mv grabpl /tmp',
-                '/tmp/grabpl init-enterprise ${DRONE_COMMIT} $${GITHUB_TOKEN}',
-                'mkdir bin',
-                'mv /tmp/grabpl bin/'
+                'mkdir -p bin',
+                'mv grabpl bin',
             ] + common_cmds,
-        }
-
-    return {
-        'name': 'initialize',
-        'image': build_image,
-        'environment': {
-            'GRABPL_VERSION': grabpl_version,
-            'DOCKERIZE_VERSION': '0.6.1',
         },
-        'commands': [
-            'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl',
-            'chmod +x grabpl',
-            'mkdir -p bin',
-            'mv grabpl bin',
-        ] + common_cmds,
-    }
+    ]
 
 def lint_backend_step(edition):
     cmd = 'make lint-go'
@@ -392,5 +396,24 @@ def lint_backend_step(edition):
         ],
         'commands': [
             cmd,
+        ],
+    }
+
+def build_storybook_step(edition):
+    return {
+        'name': 'build-storybook',
+        'image': build_image,
+        'depends_on': [
+            # Best to ensure that this step doesn't mess with what's getting built and packaged
+            'package',
+        ],
+        'commands': [
+            restore_yarn_cache,
+            'yarn storybook:build',
+            # TODO: Enable the following for OSS master builds
+            # - echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            # - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+            # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
         ],
     }
