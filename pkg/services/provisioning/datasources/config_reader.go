@@ -99,7 +99,7 @@ func validateDefaultUniqueness(datasources []*configs) error {
 			}
 
 			if ds.IsDefault {
-				defaultCount[ds.OrgID] = defaultCount[ds.OrgID] + 1
+				defaultCount[ds.OrgID]++
 				if defaultCount[ds.OrgID] > 1 {
 					return ErrInvalidConfigToManyDefault
 				}

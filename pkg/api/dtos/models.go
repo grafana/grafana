@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
+
 type AnyId struct {
 	Id int64 `json:"id"`
 }
@@ -73,13 +75,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 		return GetGravatarUrl(text)
 	}
 
-	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-
-	if err != nil {
-		return ""
-	}
-
-	text = reg.ReplaceAllString(defaultText, "") + "@localhost"
+	text = regNonAlphaNumeric.ReplaceAllString(defaultText, "") + "@localhost"
 
 	return GetGravatarUrl(text)
 }
