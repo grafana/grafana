@@ -1,6 +1,6 @@
 import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from 'emotion';
-import { DateTime, dateTime, GrafanaTheme, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
+import { dateTime, GrafanaTheme, TimeRange, TimeZone, dateMath } from '@grafana/data';
 import { useStyles } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
@@ -9,7 +9,6 @@ import { getFocusStyle } from '../Forms/commonStyles';
 import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { otherOptions, quickOptions } from './rangeOptions';
-import { isValid } from './TimeRangePicker/TimeRangeForm';
 
 export const defaultTimeRange: TimeRange = {
   from: dateTime().subtract(6, 'hour'),
@@ -17,20 +16,14 @@ export const defaultTimeRange: TimeRange = {
   raw: { from: 'now-6h', to: 'now' },
 };
 
-export interface InputTimeRange {
-  from: DateTime | string;
-  to: DateTime | string;
-  raw: RawTimeRange;
-}
-
 const isValidTimeRange = (range: any) => {
-  return isValid(range.from) && isValid(range.to);
+  return dateMath.isValid(range.from) && dateMath.isValid(range.to);
 };
 
 export interface Props {
-  value: InputTimeRange;
+  value: TimeRange;
   timeZone?: TimeZone;
-  onChange: (timeRange: InputTimeRange) => void;
+  onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone?: (timeZone: TimeZone) => void;
   hideTimeZone?: boolean;
   placeholder?: string;
@@ -68,8 +61,8 @@ export const TimeRangeInput: FC<Props> = ({
 
   const onRangeClear = (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    const from = '';
-    const to = '';
+    const from = dateTime(null);
+    const to = dateTime(null);
     onChange({ from, to, raw: { from, to } });
   };
 

@@ -143,7 +143,7 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   return value;
 }
 
-export function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {
+function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {
   if (isDateTime(value)) {
     return value.isValid();
   }

@@ -3,7 +3,7 @@ import { action } from '@storybook/addon-actions';
 import { dateTime, TimeFragment } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { InputTimeRange, TimeRangeInput } from './TimeRangeInput';
+import { TimeRangeInput } from './TimeRangeInput';
 import mdx from './TimeRangeInput.mdx';
 
 export default {
@@ -20,13 +20,11 @@ export default {
 export const basic = () => {
   return (
     <UseState
-      initialState={
-        {
-          from: dateTime(),
-          to: dateTime(),
-          raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
-        } as InputTimeRange
-      }
+      initialState={{
+        from: dateTime(),
+        to: dateTime(),
+        raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
+      }}
     >
       {(value, updateValue) => {
         return (
@@ -46,13 +44,11 @@ export const basic = () => {
 export const clearable = () => {
   return (
     <UseState
-      initialState={
-        {
-          from: dateTime(),
-          to: dateTime(),
-          raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
-        } as InputTimeRange
-      }
+      initialState={{
+        from: dateTime(),
+        to: dateTime(),
+        raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
+      }}
     >
       {(value, updateValue) => {
         return (
