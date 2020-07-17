@@ -127,8 +127,28 @@ table_schema IN (
         break;
       }
       case 'value': {
-        query += " AND data_type IN ('bigint','integer','double precision','real')";
         query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
+        // Check for either known data_type names or user-defined types with user-defined
+        //   aggregations that look like things we could graph.
+        query += `
+        AND (
+          data_type IN ('bigint','integer','double precision','real')
+          OR (
+            data_type = 'USER-DEFINED'
+            AND udt_name in (
+              select pg_argtype.typname as aggregatable_type
+              from pg_aggregate
+                join pg_proc on pg_aggregate.aggfnoid = pg_proc.oid
+                join pg_type pg_argtype on proargtypes[0] = pg_argtype.oid
+                join pg_type pg_rettype on prorettype = pg_rettype.oid
+              where
+                pronargs = 1
+                and proname in ('min', 'max', 'sum', 'count', 'avg')
+                and pg_rettype.typname in ('numeric', 'float4', 'float8', 'int2', 'int4', 'int8')
+            )
+          )
+        )
+        `;
         break;
       }
       case 'group': {

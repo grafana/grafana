@@ -116,6 +116,9 @@ avg(tx_bytes) OVER (ORDER BY "time" ROWS 5 PRECEDING) AS "tx_bytes"
 
 You may add further value columns by clicking the plus button and selecting `Column` from the menu. Multiple value columns will be plotted as separate series in the graph panel.
 
+Additional columns may be autocompleted in the column field, provided that you add data types (with CREATE TYPE) and define aggregates (with CREATE AGGREGATE) for it named min, max, sum, count, avg or count.
+These aggregates should take a single parameter, your custom type, and return a numeric data type.
+
 ### Filter data (WHERE)
 To add a filter click the plus icon to the right of the `WHERE` condition. You can remove filters by clicking on
 the filter and selecting `Remove`. A filter for the current selected timerange is automatically added to new queries.
