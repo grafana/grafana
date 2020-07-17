@@ -201,7 +201,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []float64{
 						2.0875, 2.1525, 2.155, 3.6925, 2.44,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -221,7 +221,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []float64{
 						8.26, 8.7, 14.82, 10.07, 8.52,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -241,7 +241,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 14, 26, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []float64{
 						3.07, 2.92, 2.87, 2.27, 2.52,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -261,7 +261,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 14, 43, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []float64{
 						1.51, 2.38, 1.69, 2.27, 1.96,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -281,7 +281,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []float64{
 						4, 4, 4, 4, 4,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -333,7 +333,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []float64{
 						8.26, 8.7, 14.82, 10.07, 8.52,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent", DisplayName: "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU"})),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", DisplayName: "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU"})),
 			},
 		},
 		{
