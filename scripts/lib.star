@@ -240,7 +240,7 @@ def build_storybook_step(edition, publish=False):
 
     return {
         'name': 'build-storybook',
-        'image': build_image,
+        'image': publish_image,
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
