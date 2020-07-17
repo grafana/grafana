@@ -77,7 +77,7 @@ You can use the Text mode option to control what text the panel renders. If the 
 
 Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. Read more about provisioning of app plugins [here]({{<relref "../administration/provisioning.md#plugins" >}}).
 
-## Azure Monitor Datasource
+## Azure Monitor data source
 
 Support for multiple dimensions has been added to all services in the Azure Monitor datasource. This means you can now group by more than one dimension with time series queries. With the Kusto based services, Log Analytics and Application Insights Analytics, you can also select multiple metrics as well as multiple dimensions.
 
