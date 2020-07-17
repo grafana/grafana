@@ -467,7 +467,7 @@ steps:
   image: grafana/build-container:1.2.21
   commands:
   - npx lerna bootstrap
-  - echo //registry.npmjs.org/:_authToken=$${NPM_TOKEN} >> ~/.npmrc"
+  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc"
   - echo ./scripts/circle-release-next-packages.sh
   environment:
     NPM_TOKEN:
