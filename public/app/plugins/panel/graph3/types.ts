@@ -9,7 +9,7 @@ export interface SeriesOptions {
 
 export interface GraphOptions {
   // Redraw as time passes
-  continuousRender?: boolean;
+  realTimeUpdates?: boolean;
 }
 
 export interface Options {

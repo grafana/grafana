@@ -30,6 +30,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
     <MicroPlot
       timeRange={timeRange}
       timeZone={timeZone}
+      realTimeUpdates={options.graph.realTimeUpdates}
       width={width}
       height={height}
       data={data.series[0]}

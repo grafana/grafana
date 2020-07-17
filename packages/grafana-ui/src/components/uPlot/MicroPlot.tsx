@@ -23,6 +23,7 @@ interface Props extends Themeable {
   width: number;
   height: number;
 
+  realTimeUpdates?: boolean;
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   timeZone?: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
 }
@@ -39,40 +40,70 @@ interface NeedsUpdate {
 
 export class MicroPlot extends PureComponent<Props, State> {
   plot?: uPlot;
+  renderInterval = -1;
+  renderTimeout: any = false;
+
+  componentDidMount() {
+    this.updateRenderInterval();
+  }
 
   componentDidUpdate(oldProps: Props) {
     const { width, height } = this.props;
     if (!this.plot) {
-      console.log('NO plot yet...');
       return;
     }
-
+    const rtChanged = this.props.realTimeUpdates !== oldProps.realTimeUpdates;
     const update: NeedsUpdate = {
-      timeRange: this.props.timeRange !== oldProps.timeRange,
+      timeRange: rtChanged || this.props.timeRange !== oldProps.timeRange,
       data: this.props.data !== oldProps.data,
     };
+    if (update.timeRange) {
+      this.updateRenderInterval();
+    }
 
+    let hasRedrawn = false;
     if (update.data) {
       // TODO: chcek if structure changed
-
       const { uData } = getUPlotStuff(this.props, [0, 1]);
       this.plot.setData(uData);
+      hasRedrawn = true;
     }
 
     if (width !== oldProps.width || height !== oldProps.height) {
+      this.updateRenderInterval();
       this.plot.setSize({ width, height });
+      hasRedrawn = true;
+    }
+
+    // Force an update
+    if (rtChanged && !hasRedrawn) {
+      this.renderSoon();
     }
   }
 
-  renderLoop = () => {
+  /**
+   * Finds an appropriate render interval and returns true if it should continuously update
+   */
+  updateRenderInterval = (): boolean => {
+    const { width, timeRange, realTimeUpdates } = this.props;
+    if (realTimeUpdates && rangeUtil.isRelativeTimeRane(timeRange.raw)) {
+      this.renderInterval = rangeUtil.calculateIntervalMS(timeRange, width);
+      return true;
+    }
+    this.renderInterval = -1;
+    return false;
+  };
+
+  renderNow = () => {
     if (!this.plot) {
       return;
     }
-    this.plot.redraw(true);
 
-    setTimeout(() => {
-      requestAnimationFrame(this.renderLoop);
-    }, 50);
+    this.plot.redraw(true);
+  };
+
+  renderSoon = () => {
+    requestAnimationFrame(this.renderNow);
   };
 
   getTimeRange = (u: uPlot, min: number, max: number) => {
@@ -96,6 +127,17 @@ export class MicroPlot extends PureComponent<Props, State> {
       series,
       axes,
       hooks: {
+        draw: [
+          u => {
+            if (this.renderTimeout) {
+              clearTimeout(this.renderTimeout);
+              this.renderTimeout = false;
+            }
+            if (this.props.realTimeUpdates && this.renderInterval > 10) {
+              this.renderTimeout = setTimeout(this.renderSoon, this.renderInterval);
+            }
+          },
+        ],
         init: [
           u => {
             u.ctx.canvas.ondblclick = (e: any) => {
@@ -144,8 +186,9 @@ export class MicroPlot extends PureComponent<Props, State> {
     console.log('INIT Plot', series, scales, uData);
     this.plot = new uPlot(opts, uData, element);
 
-    // keep drawing
-    this.renderLoop();
+    if (this.updateRenderInterval()) {
+      this.renderSoon();
+    }
   };
 
   render() {

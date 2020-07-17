@@ -111,18 +111,11 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
           ],
         },
       })
-      .addSelect({
-        path: 'refreshRate',
-        name: 'Live refresh rate',
-        description: 'When the dashboard query points to now',
-        defaultValue: 'data',
-        settings: {
-          options: [
-            { value: 'data', label: 'When new data exists' },
-            { value: '1hz', label: 'Every second' },
-            { value: '20hz', label: '20 times a seconds' },
-          ],
-        },
+      .addBooleanSwitch({
+        path: 'graph.realTimeUpdates',
+        name: 'Real time updates',
+        description: 'continue to update the graph so the time axis matches the clock.',
+        defaultValue: false,
       })
       .addBooleanSwitch({
         category: ['Legend'],
