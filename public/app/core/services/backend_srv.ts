@@ -219,7 +219,7 @@ export class BackendSrv implements BackendService {
     }
 
     // is showErrorAlert is undefined we only show alerts non data query and local api requests
-    if (config.showErrorAlert === undefined || isDataQuery(config.url) || !isLocalUrl(config.url)) {
+    if (config.showErrorAlert === undefined && (isDataQuery(config.url) || !isLocalUrl(config.url))) {
       return;
     }
 
