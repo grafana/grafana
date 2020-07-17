@@ -8,8 +8,8 @@ export interface SeriesOptions {
 }
 
 export interface GraphOptions {
-  // Reasonable refresh rates for 'live' data
-  continuousRefresh?: 'data' | '1hz' | '10hz';
+  // Redraw as time passes
+  continuousRender?: boolean;
 }
 
 export interface Options {
