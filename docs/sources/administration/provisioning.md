@@ -378,12 +378,16 @@ notifiers:
     send_reminder: true
     frequency: 1h
     disable_resolve_message: false
-    # See `Supported Settings` section for settings supporter for each
+    # See `Supported Settings` section for settings supported for each
     # alert notification type.
     settings:
       recipient: 'XXX'
-      token: 'xoxb'
       uploadImage: true
+      token: 'xoxb' # legacy setting since Grafana v7.2 (stored non-encrypted)
+      url: https://slack.com # legacy setting since Grafana v7.2 (stored non-encrypted)
+    # Secure settings that will be encrypted in the database (supported since Grafana v7.2). See `Supported Settings` section for secure settings supported for each notifier.
+    secure_settings:
+      token: 'xoxb'
       url: https://slack.com
 
 delete_notifiers:
@@ -399,7 +403,9 @@ delete_notifiers:
 
 ### Supported Settings
 
-The following sections detail the supported settings for each alert notification type.
+The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
+
+> **Note**: Secure settings is supported since Grafana v7.2.
 
 #### Alert notification `pushover`
 
@@ -413,18 +419,18 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `slack`
 
-| Name           |
-| -------------- |
-| url            |
-| recipient      |
-| username       |
-| icon_emoji     |
-| icon_url       |
-| uploadImage    |
-| mentionUsers   |
-| mentionGroups  |
-| mentionChannel |
-| token          |
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes |
+| recipient      | |
+| username       | |
+| icon_emoji     | |
+| icon_url       | |
+| uploadImage    | |
+| mentionUsers   | |
+| mentionGroups  | |
+| mentionChannel | |
+| token          | yes |
 
 #### Alert notification `victorops`
 
@@ -448,10 +454,10 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `pagerduty`
 
-| Name           |
-| -------------- |
-| integrationKey |
-| autoResolve    |
+| Name           | Secure setting |
+| -------------- | - |
+| integrationKey | yes |
+| autoResolve    | |
 
 #### Alert notification `sensu`
 
@@ -465,11 +471,11 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `prometheus-alertmanager`
 
-| Name              |
-| ----------------- |
-| url               |
-| basicAuthUser     |
-| basicAuthPassword |
+| Name              | Secure setting |
+| ----------------- | - |
+| url               | |
+| basicAuthUser     | |
+| basicAuthPassword | yes |
 
 #### Alert notification `teams`
 
@@ -525,11 +531,11 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `webhook`
 
-| Name     |
-| -------- |
-| url      |
-| username |
-| password |
+| Name     | Secure setting |
+| -------- | - |
+| url      | |
+| username | |
+| password | yes |
 
 #### Alert notification `googlechat`
 
