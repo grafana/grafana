@@ -96,7 +96,8 @@ def master_pipelines(edition):
         package_step(edition=edition),
         e2e_tests_server_step(),
         e2e_tests_step(),
-        build_storybook_step(edition=edition, publish=True),
+        build_storybook_step(edition=edition),
+        publish_storybook_step(edition=edition),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition),
@@ -220,24 +221,7 @@ def lint_backend_step(edition):
         ],
     }
 
-def build_storybook_step(edition, publish=False):
-    commands = [
-        restore_yarn_cache,
-        'yarn storybook:build',
-    ]
-    env = {}
-    if edition != 'enterprise' and publish:
-        commands.extend([
-            'echo $${GCP_KEY} > /tmp/gcpkey.json',
-            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
-            'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
-        ])
-        env = {
-            'GCP_KEY': {
-                'from_secret': 'gcp_key',
-            },
-        }
-
+def build_storybook_step(edition):
     return {
         'name': 'build-storybook',
         'image': build_image,
@@ -245,8 +229,32 @@ def build_storybook_step(edition, publish=False):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
-        'environment': env,
-        'commands': commands,
+        'commands': [
+            restore_yarn_cache,
+            'yarn storybook:build',
+        ],
+    }
+
+def publish_storybook_step(edition):
+    if edition == 'enterprise':
+        return None
+
+    return {
+        'name': 'publish-storybook',
+        'image': publish_image,
+        'depends_on': [
+            'build-storybook',
+        ],
+        'environment': {
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+        },
+        'commands': [
+            'echo $${GCP_KEY} > /tmp/gcpkey.json',
+            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
+            'echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
+        ],
     }
 
 def build_backend_step(edition, variants=None):
