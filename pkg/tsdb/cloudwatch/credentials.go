@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// clientCache represents the interface a CloudWatchExecutor needs to access
+// clientCache represents the interface a cloudWatchExecutor needs to access
 // AWS service-specific clients in order to perform API requests.
 type clientCache interface {
 	cloudWatchClient(dsInfo *datasourceInfo) (cloudwatchiface.CloudWatchAPI, error)
@@ -107,7 +107,6 @@ func (c sharedCache) logsClient(dsInfo *datasourceInfo) (cloudwatchlogsiface.Clo
 	})
 
 	return client, nil
-
 }
 
 var awsCredsCache = make(sharedCache)

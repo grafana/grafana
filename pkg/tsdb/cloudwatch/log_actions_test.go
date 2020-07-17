@@ -32,7 +32,7 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsEmpty(t *testing.T) {
 			},
 		},
 	}
-	executor := &CloudWatchExecutor{
+	executor := &cloudWatchExecutor{
 		DataSource: mockDatasource(),
 		clients: &mockClients{
 			logs: logs,
@@ -68,7 +68,7 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 			},
 		},
 	}
-	executor := &CloudWatchExecutor{
+	executor := &cloudWatchExecutor{
 		DataSource: mockDatasource(),
 		clients: &mockClients{
 			logs: logs,
@@ -106,7 +106,7 @@ func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 			},
 		},
 	}
-	executor := &CloudWatchExecutor{
+	executor := &cloudWatchExecutor{
 		DataSource: mockDatasource(),
 		clients: &mockClients{
 			logs: logs,
@@ -131,7 +131,7 @@ func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 
 func TestExecuteStartQuery(t *testing.T) {
 	logs := mockedLogs{}
-	executor := &CloudWatchExecutor{
+	executor := &cloudWatchExecutor{
 		DataSource: mockDatasource(),
 		clients: &mockClients{
 			logs: logs,
@@ -159,7 +159,7 @@ func TestExecuteStartQuery(t *testing.T) {
 
 func TestHandleStartQuery(t *testing.T) {
 	logs := mockedLogs{}
-	executor := &CloudWatchExecutor{
+	executor := &cloudWatchExecutor{
 		DataSource: mockDatasource(),
 		clients: &mockClients{
 			logs: logs,
@@ -194,7 +194,7 @@ func TestHandleStartQuery(t *testing.T) {
 
 func TestHandleStopQuery(t *testing.T) {
 	logs := mockedLogs{}
-	executor := &CloudWatchExecutor{
+	executor := &cloudWatchExecutor{
 		DataSource: mockDatasource(),
 		clients: &mockClients{
 			logs: logs,
@@ -258,7 +258,7 @@ func TestHandleGetQueryResults(t *testing.T) {
 			Status: aws.String("Complete"),
 		},
 	}
-	executor := &CloudWatchExecutor{
+	executor := &cloudWatchExecutor{
 		DataSource: mockDatasource(),
 		clients: &mockClients{
 			logs: logs,

@@ -18,7 +18,7 @@ import (
 
 func TestCloudWatchMetrics(t *testing.T) {
 	t.Run("When calling getMetricsForCustomMetrics", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
+		executor := &cloudWatchExecutor{
 			DataSource: mockDatasource(),
 			clients: &mockClients{
 				cloudWatch: mockedCloudWatch{
@@ -44,7 +44,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	t.Run("When calling getDimensionsForCustomMetrics", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
+		executor := &cloudWatchExecutor{
 			DataSource: mockDatasource(),
 			clients: &mockClients{
 				cloudWatch: mockedCloudWatch{
@@ -70,7 +70,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	t.Run("When calling handleGetRegions", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
+		executor := &cloudWatchExecutor{
 			clients: &mockClients{
 				ec2: mockedEc2{RespRegions: ec2.DescribeRegionsOutput{
 					Regions: []*ec2.Region{
@@ -97,7 +97,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	t.Run("When calling handleGetEc2InstanceAttribute", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
+		executor := &cloudWatchExecutor{
 			DataSource: mockDatasource(),
 			clients: &mockClients{
 				ec2: mockedEc2{Resp: ec2.DescribeInstancesOutput{
@@ -133,7 +133,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	t.Run("When calling handleGetEbsVolumeIds", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
+		executor := &cloudWatchExecutor{
 			DataSource: mockDatasource(),
 			clients: &mockClients{
 				ec2: mockedEc2{Resp: ec2.DescribeInstancesOutput{
@@ -197,7 +197,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	t.Run("When calling handleGetResourceArns", func(t *testing.T) {
-		executor := &CloudWatchExecutor{
+		executor := &cloudWatchExecutor{
 			DataSource: mockDatasource(),
 			clients: &mockClients{
 				rgta: mockedRGTA{
