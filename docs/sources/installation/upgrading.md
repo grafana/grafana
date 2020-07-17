@@ -274,6 +274,6 @@ Currently the following alert notifiers have been updated to support storing the
 - Webhook (Password)
 - Prometheus Alertmanager (Basic Auth Password)
 
-For existing alert notification channels there are no automatic migration of storing sensitive settings encrypted and they will continue to work as before. Migration have to be done manually. Opening a configured alert notification channel in the UI and saving it will store sensitive settings encrypted and at the same time reset the historic unencrypted setting of that alert notification channel in the database.
+For existing alert notification channels, there is no automatic migration of storing sensitive settings encrypted, and they will continue to work as before. Migration must be done manually. Opening a configured alert notification channel in the UI and saving it will store sensitive settings encrypted and at the same time reset the historic unencrypted setting of that alert notification channel in the database.
 
 For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administation/provisioning.md#alert-notification-channels" >}}).
