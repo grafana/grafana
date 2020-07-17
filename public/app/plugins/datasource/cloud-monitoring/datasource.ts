@@ -8,9 +8,14 @@ import {
   ScopedVars,
   SelectableValue,
   toDataFrame,
+  TimeRange,
+  FieldType,
+  DataFrame,
+  MutableDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import flatten from 'app/core/utils/flatten';
 
 import {
   CloudMonitoringQuery,
@@ -43,44 +48,18 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
   }
 
   async query(options: DataQueryRequest<CloudMonitoringQuery>): Promise<DataQueryResponseData> {
-    const result: DataQueryResponseData[] = [];
-    const data = await this.getTimeSeries(options);
-    if (data.results) {
-      Object.values(data.results).forEach((queryRes: any) => {
-        if (!queryRes.series) {
-          return;
-        }
-        const unit = this.resolvePanelUnitFromTargets(options.targets);
-        queryRes.series.forEach((series: any) => {
-          let timeSerie: any = {
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          };
-          if (unit) {
-            timeSerie = { ...timeSerie, unit };
-          }
-          const df = toDataFrame(timeSerie);
-
-          for (const field of df.fields) {
-            if (queryRes.meta?.deepLink && queryRes.meta?.deepLink.length > 0) {
-              field.config.links = [
-                {
-                  url: queryRes.meta?.deepLink,
-                  title: 'View in Metrics Explorer',
-                  targetBlank: true,
-                },
-              ];
-            }
-          }
-          result.push(df);
-        });
+    await this.ensureGCEDefaultProject();
+    const queries = options.targets.map(this.migrateQuery).filter(this.shouldRunQuery);
+    const logQueries = queries.filter(({ queryType }) => queryType === QueryType.LOGS);
+    const timeSeriesQueries = queries.filter(({ queryType }) => queryType !== QueryType.LOGS);
+    return Promise.all([
+      this.getTimeSeries(options, timeSeriesQueries).then(res => this.mapTimeSeriesResult(options, res)),
+      ...logQueries.map(query => this.getLogs(options.range!, query)),
+    ])
+      .then((queryResults: DataQueryResponseData[]) => ({ data: _.flatten(queryResults) }))
+      .catch(error => {
+        return { data: null, error };
       });
-      return { data: result };
-    } else {
-      return { data: [] };
-    }
   }
 
   async annotationQuery(options: any) {
@@ -131,29 +110,105 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     return cloudMonitoringMetricFindQuery.execute(query);
   }
 
-  async getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>) {
-    await this.ensureGCEDefaultProject();
-    const queries = options.targets
-      .map(this.migrateQuery)
-      .filter(this.shouldRunQuery)
-      .map(q => this.prepareTimeSeriesQuery(q, options.scopedVars))
-      .map(q => ({ ...q, intervalMs: options.intervalMs, type: 'timeSeriesQuery' }));
-
+  async getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>, queries: CloudMonitoringQuery[]) {
     if (queries.length > 0) {
       const { data } = await this.api.post({
         from: options.range.from.valueOf().toString(),
         to: options.range.to.valueOf().toString(),
-        queries,
+        queries: queries
+          .map(q => this.prepareTimeSeriesQuery(q, options.scopedVars))
+          .map(q => ({ ...q, intervalMs: options.intervalMs, type: 'timeSeriesQuery' })),
       });
       return data;
     } else {
-      return { results: [] };
+      return [];
     }
   }
 
+  createEmptyDataFrame(propNames: string[], timeField: string): MutableDataFrame {
+    const series = new MutableDataFrame({ fields: [] });
+
+    series.addField({
+      name: timeField,
+      type: FieldType.time,
+    });
+
+    const fieldNames = series.fields.map(field => field.name);
+
+    for (const propName of propNames) {
+      if (fieldNames.includes(propName)) {
+        continue;
+      }
+
+      series.addField({
+        name: propName,
+        type: FieldType.string,
+      }).parse = (v: any) => {
+        return v || '';
+      };
+    }
+
+    return series;
+  }
+
+  flattenHits(entries: any): { rows: Array<Record<string, any>>; propNames: string[] } {
+    const rows: any[] = [];
+    let propNames: string[] = [];
+
+    for (const entry of entries) {
+      const flattened = flatten(entry);
+      const row = {
+        ...flattened,
+      };
+
+      for (const propName of Object.keys(row)) {
+        if (propNames.indexOf(propName) === -1) {
+          propNames.push(propName);
+        }
+      }
+
+      rows.push(row);
+    }
+
+    propNames.sort();
+    return { rows, propNames };
+  }
+
+  async getLogs({ from, to }: TimeRange, query: CloudMonitoringQuery): Promise<DataQueryResponseData> {
+    const dataFrame: DataFrame[] = [];
+
+    if (!query.logsQuery) {
+      return dataFrame;
+    }
+    const { projectName, filter, ...body } = query.logsQuery;
+    const { data } = await this.api.post(
+      {
+        ...body,
+        filter: `${filter} AND timestamp>="${from.toISOString()}" AND timestamp<="${to.toISOString()}"`,
+        resourceNames: [`projects/${projectName}`],
+      },
+      `${this.instanceSettings.url}/cloudlogging/v2/entries:list`
+    );
+    if (!data.entries) {
+      return dataFrame;
+    }
+
+    const { propNames, rows } = this.flattenHits(data.entries);
+    let series = this.createEmptyDataFrame(propNames, 'timestamp');
+
+    for (const row of rows) {
+      series.add(row);
+    }
+    dataFrame.push(series);
+
+    return dataFrame;
+  }
+
   async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
-    const response = await this.getTimeSeries({
-      targets: [
+    await this.ensureGCEDefaultProject();
+    const response = await this.getTimeSeries(
+      { range: this.timeSrv.timeRange() } as DataQueryRequest<CloudMonitoringQuery>,
+      [
         {
           refId,
           datasourceId: this.id,
@@ -165,10 +220,9 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
             crossSeriesReducer: 'REDUCE_NONE',
             view: 'HEADERS',
           },
-        },
-      ],
-      range: this.timeSrv.timeRange(),
-    } as DataQueryRequest<CloudMonitoringQuery>);
+        } as CloudMonitoringQuery,
+      ]
+    );
     const result = response.results[refId];
     return result && result.meta ? result.meta.labels : {};
   }
@@ -309,6 +363,46 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     return query;
   }
 
+  mapTimeSeriesResult(options: DataQueryRequest<CloudMonitoringQuery>, data: any): DataQueryResponseData[] {
+    const result: DataQueryResponseData[] = [];
+    if (data.results) {
+      Object.values(data.results).forEach((queryRes: any) => {
+        if (!queryRes.series) {
+          return;
+        }
+        const unit = this.resolvePanelUnitFromTargets(options.targets);
+        queryRes.series.forEach((series: any) => {
+          let timeSerie: any = {
+            target: series.name,
+            datapoints: series.points,
+            refId: queryRes.refId,
+            meta: queryRes.meta,
+          };
+          if (unit) {
+            timeSerie = { ...timeSerie, unit };
+          }
+          const df = toDataFrame(timeSerie);
+
+          for (const field of df.fields) {
+            if (queryRes.meta?.deepLink && queryRes.meta?.deepLink.length > 0) {
+              field.config.links = [
+                {
+                  url: queryRes.meta?.deepLink,
+                  title: 'View in Metrics Explorer',
+                  targetBlank: true,
+                },
+              ];
+            }
+          }
+          result.push(df);
+        });
+      });
+      return result;
+    } else {
+      return [];
+    }
+  }
+
   interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
     return Object.entries(object).reduce((acc, [key, value]) => {
       return {
@@ -326,6 +420,9 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     if (query.queryType && query.queryType === QueryType.SLO && query.sloQuery) {
       const { selectorName, serviceId, sloId, projectName } = query.sloQuery;
       return !!selectorName && !!serviceId && !!sloId && !!projectName;
+    } else if (query.queryType && query.queryType === QueryType.LOGS && query.logsQuery) {
+      const { filter, projectName } = query.logsQuery;
+      return !!filter && !!projectName;
     }
 
     const { metricType } = query.metricQuery;

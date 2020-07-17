@@ -11,5 +11,6 @@ export { Aggregations } from './Aggregations';
 export { SimpleSelect } from './SimpleSelect';
 export { MetricQueryEditor } from './MetricQueryEditor';
 export { SLOQueryEditor } from './SLOQueryEditor';
+export { LogsQueryEditor } from './LogsQueryEditor';
 export { QueryTypeSelector } from './QueryType';
 export { QueryInlineField, QueryField } from './Fields';
