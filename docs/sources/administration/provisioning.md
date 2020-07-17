@@ -307,7 +307,7 @@ By default Grafana will delete dashboards in the database if the file is removed
 ### Provision folders structure from filesystem to Grafana
 If you already store your dashboards using folders in a git repo or on a filesystem, and also you want to have the same folder names in the Grafana menu, you can use `foldersFromFilesStructure` option.
 
-For example, to replicate these dashboards structure from the filesystem to Grafana, 
+For example, to replicate these dashboards structure from the filesystem to Grafana,
 ```
 /etc/dashboards
 ├── /server
@@ -320,7 +320,7 @@ For example, to replicate these dashboards structure from the filesystem to Graf
 you need to specify just this short provision configuration file.
 ```yaml
 apiVersion: 1
-    
+
 providers:
 - name: dashboards
   type: file
