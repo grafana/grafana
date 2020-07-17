@@ -30,7 +30,7 @@ The main highlights are:
   - [**Secret management with HashiCorp Vault**]({{< relref "#support-for-hashicorp-vault" >}})
   - [**Monthly schedules in reports**]({{< relref "#support-for-monthly-schedules-in-reports" >}})
 
-## Influx Datasource
+## Influx data source
 
 Support for Flux and Influx v2 has been added. The InfluxData blog post, [How to Build Grafana Dashboards with InfluxDB, Flux and InfluxQL](https://www.influxdata.com/blog/how-grafana-dashboard-influxdb-flux-influxql/) explains the changes in depth.
 
