@@ -83,7 +83,7 @@ Support for multiple dimensions has been added to all services in the Azure Moni
 
 Additionally, the Raw Edit mode for Application Insights Analytics has been replaced with a new service in the drop down for the data source and is called Insights Analytics. The new query editor behaves in the same way as Log Analytics.
 
-## Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) datasource
+## Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) data source
 
 A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Gooogle Cloud Console]({{<relref "../features/datasources/cloudmonitoring.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-google-cloud-console">}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
 
