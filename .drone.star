@@ -1,4 +1,5 @@
-load('scripts/lib.star', 'pr_pipelines')
+load('scripts/lib.star', 'pr_pipelines', 'master_pipelines')
 
 def main(ctx):
-    return pr_pipelines(edition='oss')
+    edition = 'oss'
+    return pr_pipelines(edition=edition) + master_pipelines(edition=edition)
