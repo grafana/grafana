@@ -22,7 +22,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Log in to [Azure Portal](https://portal.azure.com) and click **Azure Active Directory** in the side menu. If you have access to more than one tenant, select your account in the upper right. Set your session to the Azure AD tenant you wish to use.
 
-1. Click **Manage**, **App Registrations** and then **New Registration**. Provide a fitting name.
+1. Under **Manage** in the side menu, click **App Registrations** and then **New Registration**. Provide a fitting name.
 
 1. Under **Redirect URI**, select **Web** as the app type. 
 
