@@ -1,318 +1,139 @@
 build_image = 'grafana/build-container:1.2.21'
+publish_image = 'grafana/grafana-ci-deploy:1.2.5'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
-
-pr_kind = 'pr'
+alpine_image = 'alpine:3.12'
 
 restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
 
 def pr_pipelines(edition):
-    return pipelines(kind=pr_kind, name='test-pr', edition=edition)
-
-def pipelines(kind, name, edition):
-    """Generate a certain kind of pipeline set."""
-    if kind not in [
-        pr_kind,
-    ]:
-        # There should be a 'fail' function in Starlark, but won't build
-        return []
-
-    pipelines = [
+    repo = 'grafana/grafana'
+    if edition == 'enterprise':
+        repo = 'grafana/grafana-enterprise'
+    services = [
         {
-            'kind': 'pipeline',
-            'type': 'docker',
-            'name': name,
-            'trigger': {
-                'event': ['pull_request',],
+            'name': 'postgres',
+            'image': 'postgres:12.3-alpine',
+            'environment': {
+              'POSTGRES_USER': 'grafanatest',
+              'POSTGRES_PASSWORD': 'grafanatest',
+              'POSTGRES_DB': 'grafanatest',
             },
-            'services': [
-                {
-                    'name': 'postgres',
-                    'image': 'postgres:12.3-alpine',
-                    'environment': {
-                      'POSTGRES_USER': 'grafanatest',
-                      'POSTGRES_PASSWORD': 'grafanatest',
-                      'POSTGRES_DB': 'grafanatest',
-                    },
-                },
-                {
-                    'name': 'mysql',
-                    'image': 'mysql:5.6.48',
-                    'environment': {
-                        'MYSQL_ROOT_PASSWORD': 'rootpass',
-                        'MYSQL_DATABASE': 'grafana_tests',
-                        'MYSQL_USER': 'grafana',
-                        'MYSQL_PASSWORD': 'password',
-                    },
-                },
-            ],
-            'steps': init_steps(edition) + [
-                lint_backend_step(edition),
-                {
-                    'name': 'codespell',
-                    'image': build_image,
-                    'depends_on': [
-                        'initialize',
-                    ],
-                    'commands': [
-                        # Important: all words have to be in lowercase, and separated by "\n".
-                        'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt',
-                        'codespell -I words_to_ignore.txt docs/',
-                    ],
-                },
-                {
-                    'name': 'shellcheck',
-                    'image': build_image,
-                    'depends_on': [
-                        'initialize',
-                    ],
-                    'environment': {
-                        'VERSION': '0.7.1',
-                        'CHKSUM': 'beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0' +
-                            '311406c255084cf7283a3b8fce644c340c2f6aa910b9f',
-                    },
-                    'commands': [
-                        'curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-' +
-                            'v$${VERSION}.linux.x86_64.tar.xz',
-                        'echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status',
-                        'tar xf shellcheck-v$${VERSION}.linux.x86_64.tar.xz',
-                        'mv shellcheck-v$${VERSION}/shellcheck /usr/local/bin/',
-                        'rm -rf shellcheck-v$${VERSION}*',
-                        './bin/grabpl shellcheck',
-                    ],
-                },
-                {
-                    'name': 'build-backend',
-                    'image': build_image,
-                    'environment': {
-                        'GF_EDITION': edition,
-                    },
-                    'depends_on': [
-                        'initialize',
-                        'lint-backend',
-                        'test-backend',
-                    ],
-                    'commands': [
-                        'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
-                        './bin/grabpl build-backend --edition $${GF_EDITION} --build-id $DRONE_BUILD_NUMBER ' +
-                            '--variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise',
-                    ],
-                },
-                {
-                    'name': 'build-frontend',
-                    'image': build_image,
-                    'environment': {
-                        'GF_EDITION': edition,
-                    },
-                    'depends_on': [
-                        'initialize',
-                        'test-frontend',
-                    ],
-                    'commands': [
-                        restore_yarn_cache,
-                        './bin/grabpl build-frontend --no-install-deps --edition $${GF_EDITION} ' +
-                            '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise',
-                    ],
-                },
-                {
-                    'name': 'test-backend',
-                    'image': build_image,
-                    'depends_on': [
-                        'initialize',
-                        'lint-backend',
-                    ],
-                    'commands': [
-                        # First execute non-integration tests in parallel, since it should be safe
-                        'go test -covermode=atomic ./pkg/...',
-                        # Then execute integration tests in serial
-                        './bin/grabpl integration-tests',
-                        # Keep the test cache
-                        'cp -r $(go env GOCACHE) go-cache',
-                    ],
-                },
-                {
-                    'name': 'test-frontend',
-                    'image': build_image,
-                    'depends_on': [
-                        'initialize',
-                    ],
-                    'commands': [
-                        restore_yarn_cache,
-                        'yarn run prettier:check',
-                        'yarn run packages:typecheck',
-                        'yarn run typecheck',
-                        'yarn run test',
-                    ],
-                },
-                {
-                    'name': 'build-plugins',
-                    'image': build_image,
-                    'environment': {
-                        'GF_EDITION': edition,
-                    },
-                    'depends_on': [
-                        'initialize',
-                        'lint-backend',
-                    ],
-                    'commands': [
-                        restore_yarn_cache,
-                        './bin/grabpl build-plugins --edition $${GF_EDITION} --no-install-deps',
-                    ],
-                },
-                {
-                    'name': 'package',
-                    'image': build_image,
-                    'environment': {
-                        'GF_EDITION': edition,
-                    },
-                    'depends_on': [
-                        'build-backend',
-                        'build-frontend',
-                        'build-plugins',
-                        'test-backend',
-                        'test-frontend',
-                        'codespell',
-                        'shellcheck',
-                    ],
-                    'commands': [
-                        '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition $${GF_EDITION} ' +
-                            '--build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 ' +
-                            '--no-pull-enterprise',
-                    ],
-                },
-                {
-                    'name': 'end-to-end-tests-server',
-                    'image': build_image,
-                    'detach': True,
-                    'depends_on': [
-                        'package',
-                    ],
-                    'commands': [
-                        './e2e/start-server',
-                    ],
-                },
-                {
-                    'name': 'end-to-end-tests',
-                    'image': 'grafana/ci-e2e:12.18-1',
-                    'depends_on': [
-                        'end-to-end-tests-server',
-                    ],
-                    'environment': {
-                        'HOST': 'end-to-end-tests-server',
-                    },
-                    'commands': [
-                        restore_yarn_cache,
-                        # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
-                        # even though the Yarn cache directory is beneath /usr/local/share somewhere
-                        './node_modules/.bin/cypress install',
-                        './e2e/wait-for-grafana',
-                        './e2e/run-suite',
-                    ],
-                },
-                build_storybook_step(edition),
-                {
-                    'name': 'build-docs-website',
-                    # Use latest revision here, since we want to catch if it breaks
-                    'image': 'grafana/docs-base:latest',
-                    'depends_on': [
-                        'initialize',
-                    ],
-                    'commands': [
-                        'mkdir -p /hugo/content/docs/grafana',
-                        'cp -r docs/sources /hugo/content/docs/grafana/latest',
-                        'cd /hugo && make prod',
-                    ],
-                },
-                {
-                    'name': 'copy-packages-for-docker',
-                    'image': build_image,
-                    'depends_on': [
-                        'package',
-                    ],
-                    'commands': [
-                        'cp dist/*.tar.gz packaging/docker/',
-                    ],
-                },
-                {
-                    'name': 'build-docker-images',
-                    'image': grafana_docker_image,
-                    'depends_on': [
-                        'copy-packages-for-docker',
-                    ],
-                    'settings': {
-                        'dry_run': True,
-                        'edition': edition,
-                        'archs': 'amd64',
-                    },
-                },
-                # {
-                    # 'name': 'build-ubuntu-docker-images',
-                    # 'image': grafana_docker_image,
-                    # 'depends_on': [
-                        # 'copy-packages-for-docker',
-                    # ],
-                    # 'settings': {
-                        # 'dry_run': True,
-                        # 'edition': edition,
-                        # 'ubuntu': True,
-                    # },
-                # },
-                {
-                    'name': 'postgres-integration-test',
-                    'image': build_image,
-                    'depends_on': [
-                        'test-backend',
-                        'test-frontend',
-                    ],
-                    'environment': {
-                        'PGPASSWORD': 'grafanatest',
-                        'GRAFANA_TEST_DB': 'postgres',
-                        'POSTGRES_HOST': 'postgres',
-                    },
-                    'commands': [
-                        'apt-get update',
-                        'apt-get install -yq postgresql-client',
-                        './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
-                        'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
-                            'devenv/docker/blocks/postgres_tests/setup.sql',
-                        'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
-                        # Make sure that we don't use cached results for another database
-                        'go clean -testcache',
-                        './bin/grabpl integration-tests --database postgres',
-                    ],
-                },
-                {
-                    'name': 'mysql-integration-test',
-                    'image': build_image,
-                    'depends_on': [
-                        'test-backend',
-                        'test-frontend',
-                    ],
-                    'environment': {
-                        'GRAFANA_TEST_DB': 'mysql',
-                        'MYSQL_HOST': 'mysql',
-                    },
-                    'commands': [
-                        'apt-get update',
-                        'apt-get install -yq default-mysql-client',
-                        './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
-                        'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-                        'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
-                        # Make sure that we don't use cached results for another database
-                        'go clean -testcache',
-                        './bin/grabpl integration-tests --database mysql',
-                    ],
-                },
-            ],
+        },
+        {
+            'name': 'mysql',
+            'image': 'mysql:5.6.48',
+            'environment': {
+                'MYSQL_ROOT_PASSWORD': 'rootpass',
+                'MYSQL_DATABASE': 'grafana_tests',
+                'MYSQL_USER': 'grafana',
+                'MYSQL_PASSWORD': 'password',
+            },
         },
     ]
+    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64',]
+    steps = [
+        lint_backend_step(edition),
+        codespell_step(),
+        shellcheck_step(),
+        build_backend_step(edition=edition, variants=variants),
+        build_frontend_step(edition=edition),
+        test_backend_step(),
+        test_frontend_step(),
+        build_plugins_step(edition=edition),
+        package_step(edition=edition, variants=variants),
+        e2e_tests_server_step(),
+        e2e_tests_step(),
+        build_storybook_step(edition),
+        build_docs_website_step(),
+        copy_packages_for_docker_step(),
+        build_docker_images_step(edition=edition, archs=['amd64',]),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
+    ]
+    return [
+        pipeline(
+            name='test-pr', edition=edition, trigger={
+                'event': ['pull_request',],
+                'repo': repo,
+            }, services=services, steps=steps
+        ),
+    ]
 
-    for pipeline in pipelines:
-        if edition == 'enterprise':
-            pipeline['clone'] = {
-                'disable': True,
-            }
+def master_pipelines(edition):
+    repo = 'grafana/grafana'
+    if edition == 'enterprise':
+        repo = 'grafana/grafana-enterprise'
+    services = [
+        {
+            'name': 'postgres',
+            'image': 'postgres:12.3-alpine',
+            'environment': {
+              'POSTGRES_USER': 'grafanatest',
+              'POSTGRES_PASSWORD': 'grafanatest',
+              'POSTGRES_DB': 'grafanatest',
+            },
+        },
+        {
+            'name': 'mysql',
+            'image': 'mysql:5.6.48',
+            'environment': {
+                'MYSQL_ROOT_PASSWORD': 'rootpass',
+                'MYSQL_DATABASE': 'grafana_tests',
+                'MYSQL_USER': 'grafana',
+                'MYSQL_PASSWORD': 'password',
+            },
+        },
+    ]
+    steps = [
+        lint_backend_step(edition),
+        codespell_step(),
+        shellcheck_step(),
+        build_backend_step(edition=edition),
+        build_frontend_step(edition=edition),
+        test_backend_step(),
+        test_frontend_step(),
+        build_plugins_step(edition=edition),
+        package_step(edition=edition),
+        e2e_tests_server_step(),
+        e2e_tests_step(),
+        build_storybook_step(edition=edition, publish=True),
+        build_docs_website_step(),
+        copy_packages_for_docker_step(),
+        build_docker_images_step(edition=edition),
+        build_docker_images_step(edition=edition, ubuntu=True),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
+        build_windows_installer_step(),
+        release_next_npm_packages_step(edition),
+        publish_packages_step(edition),
+        deploy_to_kubernetes_step(edition),
+    ]
+    return [
+        pipeline(
+            name='test-master', edition=edition, trigger={
+                'event': ['push',],
+                'branch': 'master',
+                'repo': repo,
+            }, services=services, steps=steps
+        ),
+    ]
 
-    return pipelines
+def pipeline(name, edition, trigger, steps, services=[]):
+    pipeline = {
+        'kind': 'pipeline',
+        'type': 'docker',
+        'name': name,
+        'trigger': trigger,
+        'services': services,
+        'steps': init_steps(edition) + steps,
+    }
+    if edition == 'enterprise':
+        # We have a custom clone step for enterprise
+        pipeline['clone'] = {
+            'disable': True,
+        }
+
+    return pipeline
 
 def init_steps(edition):
     grabpl_version = '0.4.24'
@@ -399,7 +220,24 @@ def lint_backend_step(edition):
         ],
     }
 
-def build_storybook_step(edition):
+def build_storybook_step(edition, publish=False):
+    commands = [
+        restore_yarn_cache,
+        'yarn storybook:build',
+    ]
+    env = {}
+    if edition != 'enterprise' and publish:
+        commands.extend([
+            'echo $${GCP_KEY} > /tmp/gcpkey.json',
+            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
+            'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
+        ])
+        env = {
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+        }
+
     return {
         'name': 'build-storybook',
         'image': build_image,
@@ -407,13 +245,350 @@ def build_storybook_step(edition):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
+        'environment': env,
+        'commands': commands,
+    }
+
+def build_backend_step(edition, variants=None):
+    if variants:
+        variants_str = ' --variants {} --no-pull-enterprise'.format(','.join(variants))
+    else:
+        variants_str = ''
+    return {
+        'name': 'build-backend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+            'lint-backend',
+            'test-backend',
+        ],
+        'commands': [
+            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
+            './bin/grabpl build-backend --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(edition, variants_str),
+        ],
+    }
+
+def build_frontend_step(edition):
+    return {
+        'name': 'build-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+            'test-frontend',
+        ],
         'commands': [
             restore_yarn_cache,
-            'yarn storybook:build',
-            # TODO: Enable the following for OSS master builds
-            # - echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            # - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-            # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
-            # - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
+            './bin/grabpl build-frontend --no-install-deps --edition {} '.format(edition) +
+                '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise',
+        ],
+    }
+
+def build_plugins_step(edition):
+    return {
+        'name': 'build-plugins',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+            'lint-backend',
+        ],
+        'commands': [
+            restore_yarn_cache,
+            './bin/grabpl build-plugins --edition {} --no-install-deps'.format(edition),
+        ],
+    }
+
+def test_backend_step():
+    return {
+        'name': 'test-backend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+            'lint-backend',
+        ],
+        'commands': [
+            # First execute non-integration tests in parallel, since it should be safe
+            'go test -covermode=atomic ./pkg/...',
+            # Then execute integration tests in serial
+            './bin/grabpl integration-tests',
+            # Keep the test cache
+            'cp -r $(go env GOCACHE) go-cache',
+        ],
+    }
+
+def test_frontend_step():
+    return {
+        'name': 'test-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'commands': [
+            restore_yarn_cache,
+            'yarn run prettier:check',
+            'yarn run packages:typecheck',
+            'yarn run typecheck',
+            'yarn run test',
+        ],
+    }
+
+def codespell_step():
+    return {
+        'name': 'codespell',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'commands': [
+            # Important: all words have to be in lowercase, and separated by "\n".
+            'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt',
+            'codespell -I words_to_ignore.txt docs/',
+        ],
+    }
+
+def shellcheck_step():
+    return {
+        'name': 'shellcheck',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'VERSION': '0.7.1',
+            'CHKSUM': 'beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0' +
+                '311406c255084cf7283a3b8fce644c340c2f6aa910b9f',
+        },
+        'commands': [
+            'curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-' +
+                'v$${VERSION}.linux.x86_64.tar.xz',
+            'echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status',
+            'tar xf shellcheck-v$${VERSION}.linux.x86_64.tar.xz',
+            'mv shellcheck-v$${VERSION}/shellcheck /usr/local/bin/',
+            'rm -rf shellcheck-v$${VERSION}*',
+            './bin/grabpl shellcheck',
+        ],
+    }
+
+def package_step(edition, variants=None):
+    if variants:
+        variants_str = ' --variants {}'.format(','.join(variants))
+    else:
+        variants_str = ''
+    return {
+        'name': 'package',
+        'image': build_image,
+        'depends_on': [
+            'build-backend',
+            'build-frontend',
+            'build-plugins',
+            'test-backend',
+            'test-frontend',
+            'codespell',
+            'shellcheck',
+        ],
+        'commands': [
+            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition {} '.format(edition) +
+                '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise' + variants_str,
+        ],
+    }
+
+def e2e_tests_server_step():
+    return {
+        'name': 'end-to-end-tests-server',
+        'image': build_image,
+        'detach': True,
+        'depends_on': [
+            'package',
+        ],
+        'commands': [
+            './e2e/start-server',
+        ],
+    }
+
+def e2e_tests_step():
+    return {
+        'name': 'end-to-end-tests',
+        'image': 'grafana/ci-e2e:12.18-1',
+        'depends_on': [
+            'end-to-end-tests-server',
+        ],
+        'environment': {
+            'HOST': 'end-to-end-tests-server',
+        },
+        'commands': [
+            restore_yarn_cache,
+            # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
+            # even though the Yarn cache directory is beneath /usr/local/share somewhere
+            './node_modules/.bin/cypress install',
+            './e2e/wait-for-grafana',
+            './e2e/run-suite',
+        ],
+    }
+
+def build_docs_website_step():
+    return {
+        'name': 'build-docs-website',
+        # Use latest revision here, since we want to catch if it breaks
+        'image': 'grafana/docs-base:latest',
+        'depends_on': [
+            'initialize',
+        ],
+        'commands': [
+            'mkdir -p /hugo/content/docs/grafana',
+            'cp -r docs/sources /hugo/content/docs/grafana/latest',
+            'cd /hugo && make prod',
+        ],
+    }
+
+def copy_packages_for_docker_step():
+    return {
+        'name': 'copy-packages-for-docker',
+        'image': build_image,
+        'depends_on': [
+            'package',
+        ],
+        'commands': [
+            'cp dist/*.tar.gz packaging/docker/',
+        ],
+    }
+
+def build_docker_images_step(edition, archs=None, ubuntu=False):
+    sfx = ''
+    if ubuntu:
+        sfx = '-ubuntu'
+    settings = {
+        'dry_run': True,
+        'edition': edition,
+        'ubuntu': ubuntu,
+    }
+    if archs:
+        settings['archs'] = ','.join(archs)
+    return {
+        'name': 'build-docker-images' + sfx,
+        'image': grafana_docker_image,
+        'depends_on': [
+            'copy-packages-for-docker',
+        ],
+        'settings': settings,
+    }
+
+def postgres_integration_tests_step():
+    return {
+        'name': 'postgres-integration-tests',
+        'image': build_image,
+        'depends_on': [
+            'test-backend',
+            'test-frontend',
+        ],
+        'environment': {
+            'PGPASSWORD': 'grafanatest',
+            'GRAFANA_TEST_DB': 'postgres',
+            'POSTGRES_HOST': 'postgres',
+        },
+        'commands': [
+            'apt-get update',
+            'apt-get install -yq postgresql-client',
+            './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
+            'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
+                'devenv/docker/blocks/postgres_tests/setup.sql',
+            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+            './bin/grabpl integration-tests --database postgres',
+        ],
+    }
+
+def mysql_integration_tests_step():
+    return {
+        'name': 'mysql-integration-tests',
+        'image': build_image,
+        'depends_on': [
+            'test-backend',
+            'test-frontend',
+        ],
+        'environment': {
+            'GRAFANA_TEST_DB': 'mysql',
+            'MYSQL_HOST': 'mysql',
+        },
+        'commands': [
+            'apt-get update',
+            'apt-get install -yq default-mysql-client',
+            './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
+            'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
+            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+            './bin/grabpl integration-tests --database mysql',
+        ],
+    }
+
+def release_next_npm_packages_step(edition):
+    if edition == 'enterprise':
+        return None
+
+    return {
+        'name': 'release-next-npm-packages',
+        'image': build_image,
+        'depends_on': [
+            'end-to-end-tests',
+        ],
+        'environment': {
+            'NPM_TOKEN': {
+                'from_secret': 'npm_token',
+            },
+        },
+        'commands': [
+            'npx lerna bootstrap',
+            'echo //registry.npmjs.org/:_authToken=$${NPM_TOKEN} >> ~/.npmrc"',
+            # TODO: Enable
+            'echo ./scripts/circle-release-next-packages.sh',
+        ],
+    }
+
+def deploy_to_kubernetes_step(edition):
+    if edition != 'enterprise':
+        return None
+
+    return {
+        'name': 'deploy-to-kubernetes',
+        'image': alpine_image,
+        'depends_on': [
+            'build-docker-images',
+        ],
+        'commands': [
+            # TODO: Enable
+            'echo ./bin/grabpl deploy-to-k8s',
+        ],
+    }
+
+def publish_packages_step(edition):
+    return {
+        'name': 'publish-packages',
+        'image': publish_image,
+        'depends_on': [
+            'package',
+            # TODO
+            # 'build-windows-installer',
+            'end-to-end-tests',
+            'mysql-integration-tests',
+            'postgres-integration-tests',
+        ],
+        'commands': [
+            # TODO: Enable
+            'echo ./bin/grabpl publish-packages --edition {}'.format(edition),
+        ],
+    }
+
+def build_windows_installer_step():
+    # TODO: Build Windows installer, waiting on Brian to fix the build image
+    return {
+        'name': 'build-windows-installer',
+        # TODO: Need new image that can execute as root
+        'image': 'grafana/wix-toolset-ci:v3',
+        'depends_on': [
+            'package',
+        ],
+        'commands': [
+          # TODO: Enable. Waiting on Brian to fix image.
+          'echo ./scripts/build/ci-msi-build/ci-msi-build-oss.sh',
         ],
     }
