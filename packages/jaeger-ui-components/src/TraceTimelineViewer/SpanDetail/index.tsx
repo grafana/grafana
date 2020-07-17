@@ -107,6 +107,7 @@ type SpanDetailProps = {
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
   warningsToggle: (spanID: string) => void;
+  stackTraceToggle: (spanID: string) => void;
   referencesToggle: (spanID: string) => void;
   focusSpan: (uiFind: string) => void;
 };
@@ -122,11 +123,30 @@ export default function SpanDetail(props: SpanDetailProps) {
     tagsToggle,
     traceStartTime,
     warningsToggle,
+    stackTraceToggle,
     referencesToggle,
     focusSpan,
   } = props;
-  const { isTagsOpen, isProcessOpen, logs: logsState, isWarningsOpen, isReferencesOpen } = detailState;
-  const { operationName, process, duration, relativeStartTime, spanID, logs, tags, warnings, references } = span;
+  const {
+    isTagsOpen,
+    isProcessOpen,
+    logs: logsState,
+    isWarningsOpen,
+    isReferencesOpen,
+    isStackTraceOpen,
+  } = detailState;
+  const {
+    operationName,
+    process,
+    duration,
+    relativeStartTime,
+    spanID,
+    logs,
+    tags,
+    warnings,
+    references,
+    stackTrace,
+  } = span;
   const overviewItems = [
     {
       key: 'svc',
@@ -193,6 +213,14 @@ export default function SpanDetail(props: SpanDetailProps) {
             data={warnings}
             isOpen={isWarningsOpen}
             onToggle={() => warningsToggle(spanID)}
+          />
+        )}
+        {stackTrace && (
+          <AccordianText
+            label={<span>Stack trace</span>}
+            data={[stackTrace]}
+            isOpen={isStackTraceOpen}
+            onToggle={() => stackTraceToggle(spanID)}
           />
         )}
         {references && references.length > 1 && (

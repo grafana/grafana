@@ -33,6 +33,7 @@ export function TraceView(props: Props) {
     detailReferencesToggle,
     detailTagsToggle,
     detailWarningsToggle,
+    detailStackTraceToggle,
   } = useDetailState();
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
@@ -126,6 +127,7 @@ export function TraceView(props: Props) {
           detailLogItemToggle={detailLogItemToggle}
           detailLogsToggle={detailLogsToggle}
           detailWarningsToggle={detailWarningsToggle}
+          detailStackTraceToggle={detailStackTraceToggle}
           detailReferencesToggle={detailReferencesToggle}
           detailProcessToggle={detailProcessToggle}
           detailTagsToggle={detailTagsToggle}
