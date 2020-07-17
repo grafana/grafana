@@ -181,6 +181,14 @@ export class Logs extends PureComponent<Props, State> {
       });
     }
 
+    if (logRows.some(r => r.entry.length > 5000)) {
+      meta.push({
+        label: 'Highlighting',
+        value: 'Logs with more than 5000 characters could not be hightlighted',
+        kind: LogsMetaKind.String,
+      });
+    }
+
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const series = logsSeries ? logsSeries : [];
 

@@ -17,6 +17,8 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { LogRowContext } from './LogRowContext';
 import { LogMessageAnsi } from './LogMessageAnsi';
 
+const MAX_CHARACTERS = 5000;
+
 interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
@@ -110,7 +112,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {needsHighlighter ? (
+            {needsHighlighter && entry.length < MAX_CHARACTERS ? (
               <Highlighter
                 textToHighlight={entry}
                 searchWords={highlights}
