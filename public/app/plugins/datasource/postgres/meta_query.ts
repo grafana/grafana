@@ -129,7 +129,7 @@ table_schema IN (
       case 'value': {
         query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
         // Check for either known data_type names or user-defined types with user-defined
-        //   aggregations that look like things we could graph.
+        // aggregations that look like things we could graph.
         query += `
         AND (
           data_type IN ('bigint','integer','double precision','real')
