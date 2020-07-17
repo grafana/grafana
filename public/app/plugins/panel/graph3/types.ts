@@ -6,10 +6,10 @@ export interface SeriesOptions {
   yAxis?: YAxis;
   [key: string]: any;
 }
+
 export interface GraphOptions {
-  showBars: boolean;
-  showLines: boolean;
-  showPoints: boolean;
+  // Reasonable refresh rates for 'live' data
+  continuousRefresh?: 'data' | '1hz' | '10hz';
 }
 
 export interface Options {
@@ -23,9 +23,9 @@ export interface Options {
 
 export const defaults: Options = {
   graph: {
-    showBars: false,
-    showLines: true,
-    showPoints: false,
+    // showBars: false,
+    // showLines: true,
+    // showPoints: false,
   },
   legend: {
     asTable: false,

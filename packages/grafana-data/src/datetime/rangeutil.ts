@@ -4,7 +4,7 @@ import groupBy from 'lodash/groupBy';
 import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime } from './moment_wrapper';
+import { isDateTime, DateTime } from './moment_wrapper';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 import { dateTimeParse } from './parser';
 
@@ -221,3 +221,14 @@ export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeR
 
   return { from, to, raw: { from, to } };
 };
+
+function isRelativeTime(v: DateTime | string) {
+  if (v === 'string') {
+    return (v as string).indexOf('now') >= 0;
+  }
+  return false;
+}
+
+export function isRelativeTimeRane(raw: RawTimeRange): boolean {
+  return isRelativeTime(raw.from) || isRelativeTime(raw.to);
+}

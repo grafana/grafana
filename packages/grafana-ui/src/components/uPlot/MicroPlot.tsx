@@ -31,6 +31,12 @@ interface State {
   // ?? over info?
 }
 
+interface NeedsUpdate {
+  data?: boolean;
+  timeRange?: boolean;
+  axis?: boolean;
+}
+
 export class MicroPlot extends PureComponent<Props, State> {
   plot?: uPlot;
 
@@ -41,12 +47,16 @@ export class MicroPlot extends PureComponent<Props, State> {
       return;
     }
 
-    // Update if the data changes
-    if (this.props.data !== oldProps.data) {
+    const update: NeedsUpdate = {
+      timeRange: this.props.timeRange !== oldProps.timeRange,
+      data: this.props.data !== oldProps.data,
+    };
+
+    if (update.data) {
+      // TODO: chcek if structure changed
+
       const { uData } = getUPlotStuff(this.props, [0, 1]);
       this.plot.setData(uData);
-      // console.log('DATA changed!', uData, series);
-      // Assume same structure?? this.plot.setSeries(series);
     }
 
     if (width !== oldProps.width || height !== oldProps.height) {

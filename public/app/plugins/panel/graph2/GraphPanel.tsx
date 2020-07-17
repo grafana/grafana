@@ -1,7 +1,6 @@
 import React from 'react';
-import { GraphWithLegend, Chart, MicroPlot } from '@grafana/ui';
+import { GraphWithLegend, Chart } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
 import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
@@ -18,9 +17,8 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   fieldConfig,
   onOptionsChange,
   onChangeTimeRange,
-  replaceVariables,
 }) => {
-  if (!data || !data.series?.length) {
+  if (!data) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
@@ -29,26 +27,10 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   }
 
   const {
-    graph: { showLines, showBars, showPoints, useMicroPlot },
+    graph: { showLines, showBars, showPoints },
     legend: legendOptions,
     tooltipOptions,
   } = options;
-
-  if (useMicroPlot) {
-    return (
-      <div>
-        <MicroPlot
-          timeRange={timeRange}
-          timeZone={timeZone}
-          width={width}
-          height={height}
-          data={data.series[0]}
-          theme={config.theme}
-        />
-      </div>
-    );
-  }
-  console.log('Using flot... in react', options);
 
   const graphProps = {
     showBars,
