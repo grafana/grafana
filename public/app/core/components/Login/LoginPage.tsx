@@ -17,6 +17,7 @@ const forgottenPasswordStyles = css`
 `;
 
 export const LoginPage: FC = () => {
+  document.title = Branding.AppTitle;
   return (
     <LoginLayout>
       <LoginCtrl>
