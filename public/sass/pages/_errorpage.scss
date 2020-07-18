@@ -22,13 +22,13 @@
 }
 
 .graph-box {
-  width: 62%;
+  width: 40%;
   padding: $space-xl $space-md;
 }
 
 .info-box {
-  width: 38%;
-  padding: $space-xl $space-md;
+  width: 60%;
+  padding: $space-xl 0;
 }
 
 .graph-percentage {
@@ -58,7 +58,12 @@
 }
 
 .error-link {
-  color: $orange;
+  color: white;
+  background: $orange;
+  padding: 0.1rem 1rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+  margin: 0 5px;
 }
 
 .error-minus {
@@ -102,5 +107,35 @@
 
   .error-full-width {
     width: 100%;
+  }
+}
+
+/**
+  Custom 404 Page Design
+*/
+.error-container {
+  border: none;
+
+  .error-right {
+    margin: 5rem 0;
+    display: block;
+    border: 2px solid $orange;
+    line-height: 1.5;
+    background-color: #141414;
+    padding: 2rem;
+    border-radius: 7px;
+    h3 {
+      font-size: 4rem;
+      span {
+        font-size: 1rem;
+        margin-left: 1rem;
+      }
+    }
+    h4 {
+      font-size: 1.5rem;
+    }
+    p {
+      margin-top: 1rem;
+    }
   }
 }
