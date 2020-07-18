@@ -40,6 +40,8 @@ interface NeedsUpdate {
 
 export class MicroPlot extends PureComponent<Props, State> {
   plot?: uPlot;
+
+  // Refresh updates
   renderInterval = -1;
   renderTimeout: any = false;
 
@@ -192,11 +194,7 @@ export class MicroPlot extends PureComponent<Props, State> {
   };
 
   render() {
-    return (
-      <div>
-        <div ref={this.init} />
-      </div>
-    );
+    return <div ref={this.init} />;
   }
 }
 
