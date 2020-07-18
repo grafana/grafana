@@ -251,7 +251,7 @@ def publish_storybook_step(edition):
             },
         },
         'commands': [
-            'echo "$${GCP_KEY}" > /tmp/gcpkey.json',
+            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
             'echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
         ],
