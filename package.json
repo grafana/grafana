@@ -225,6 +225,7 @@
     "core-js": "3.6.4",
     "d3": "5.15.0",
     "d3-scale-chromatic": "1.5.0",
+    "dangerously-set-html-content": "1.0.6",
     "emotion": "10.0.27",
     "eventemitter3": "4.0.0",
     "fast-text-encoding": "^1.0.0",

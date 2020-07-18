@@ -29,8 +29,31 @@ export const basic = () => {
       {(value, updateValue) => {
         return (
           <TimeRangeInput
-            onChangeTimeZone={tz => action('onTimeZoneChange fired')(tz)}
-            timeZone="browser"
+            value={value}
+            onChange={timeRange => {
+              action('onChange fired')(timeRange);
+              updateValue(timeRange);
+            }}
+          />
+        );
+      }}
+    </UseState>
+  );
+};
+
+export const clearable = () => {
+  return (
+    <UseState
+      initialState={{
+        from: dateTime(),
+        to: dateTime(),
+        raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
+      }}
+    >
+      {(value, updateValue) => {
+        return (
+          <TimeRangeInput
+            clearable
             value={value}
             onChange={timeRange => {
               action('onChange fired')(timeRange);
