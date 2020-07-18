@@ -50,7 +50,7 @@ describe('navModelReducer', () => {
         users: { ...initialState.users, parentItem: newCfgState },
         teams: { ...initialState.teams, parentItem: newCfgState },
         plugins: { ...initialState.plugins, parentItem: newCfgState },
-        ['org-settings']: { ...initialState['org-settings'], parentItem: newCfgState },
+        'org-settings': { ...initialState['org-settings'], parentItem: newCfgState },
         apikeys: { ...initialState.apikeys, parentItem: newCfgState },
       };
 

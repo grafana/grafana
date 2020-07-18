@@ -72,7 +72,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       users: { ...state.users, parentItem: newCfgState },
       teams: { ...state.teams, parentItem: newCfgState },
       plugins: { ...state.plugins, parentItem: newCfgState },
-      ['org-settings']: { ...state['org-settings'], parentItem: newCfgState },
+      'org-settings': { ...state['org-settings'], parentItem: newCfgState },
       apikeys: { ...state.apikeys, parentItem: newCfgState },
     };
   }
