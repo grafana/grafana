@@ -6,9 +6,9 @@ alpine_image = 'alpine:3.12'
 restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
 
 def pr_pipelines(edition):
-    repo = 'grafana/grafana'
+    repo = 'aknuds1/grafana'
     if edition == 'enterprise':
-        repo = 'grafana/grafana-enterprise'
+        repo = 'aknuds1/grafana-enterprise'
     services = [
         {
             'name': 'postgres',
@@ -60,9 +60,9 @@ def pr_pipelines(edition):
     ]
 
 def master_pipelines(edition):
-    repo = 'grafana/grafana'
+    repo = 'aknuds1/grafana'
     if edition == 'enterprise':
-        repo = 'grafana/grafana-enterprise'
+        repo = 'aknuds1/grafana-enterprise'
     services = [
         {
             'name': 'postgres',

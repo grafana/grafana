@@ -226,7 +226,7 @@ trigger:
   event:
   - pull_request
   repo:
-  - grafana/grafana
+  - aknuds1/grafana
 
 ---
 kind: pipeline
@@ -507,6 +507,6 @@ trigger:
   event:
   - push
   repo:
-  - grafana/grafana
+  - aknuds1/grafana
 
 ...
