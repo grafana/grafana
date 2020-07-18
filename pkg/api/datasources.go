@@ -225,7 +225,6 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 
 	secureJSONData := ds.SecureJsonData.Decrypt()
 	for k, v := range secureJSONData {
-
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
 		}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataTransformerID, standardTransformers, TransformerRegistyItem, TransformerUIProps } from '@grafana/data';
-import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge/merge';
+import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge';
 
 export const MergeTransformerEditor: React.FC<TransformerUIProps<MergeTransformerOptions>> = ({
   input,
@@ -14,7 +14,7 @@ export const mergeTransformerRegistryItem: TransformerRegistyItem<MergeTransform
   id: DataTransformerID.merge,
   editor: MergeTransformerEditor,
   transformation: standardTransformers.mergeTransformer,
-  name: 'Merge on time',
-  description: `Merge series/tables by time and return a single table with values as rows. 
-                Useful for showing multiple time series, tables or a combination of both visualized in a table.`,
+  name: 'Merge',
+  description: `Merge many series/tables and return a single table where mergeable values will be combined into the same row. 
+                Useful for showing multiple series, tables or a combination of both visualized in a table.`,
 };

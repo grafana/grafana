@@ -1,0 +1,370 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TimePickerContent renders correctly in full screen 1`] = `
+<div
+  className="css-1py9bjs"
+>
+  <div
+    className="css-ooqtr4"
+  >
+    <div
+      className="css-dlnzj7"
+    >
+      <FullScreenForm
+        historyOptions={Array []}
+        isFullscreen={true}
+        onChange={[Function]}
+        onChangeTimeZone={[Function]}
+        timeZone="utc"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+        visible={true}
+      />
+    </div>
+    <CustomScrollbar
+      autoHeightMax="100%"
+      autoHeightMin="0"
+      autoHide={false}
+      autoHideDuration={200}
+      autoHideTimeout={200}
+      className="css-1o1b8dr"
+      hideTracksWhenNotNeeded={false}
+      setScrollTop={[Function]}
+    >
+      <NarrowScreenForm
+        historyOptions={Array []}
+        isFullscreen={true}
+        onChange={[Function]}
+        onChangeTimeZone={[Function]}
+        timeZone="utc"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+        visible={false}
+      />
+      <Component
+        onSelect={[Function]}
+        options={Array []}
+        timeZone="utc"
+        title="Relative time ranges"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+      />
+      <div
+        className="css-1ogeuxc"
+      />
+      <Component
+        onSelect={[Function]}
+        options={Array []}
+        timeZone="utc"
+        title="Other quick ranges"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+      />
+    </CustomScrollbar>
+  </div>
+  <Component
+    onChangeTimeZone={[Function]}
+    timeZone="utc"
+  />
+</div>
+`;
+
+exports[`TimePickerContent renders correctly in narrow screen 1`] = `
+<div
+  className="css-1py9bjs"
+>
+  <div
+    className="css-ooqtr4"
+  >
+    <div
+      className="css-dlnzj7"
+    >
+      <FullScreenForm
+        historyOptions={Array []}
+        isFullscreen={false}
+        onChange={[Function]}
+        onChangeTimeZone={[Function]}
+        timeZone="utc"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+        visible={false}
+      />
+    </div>
+    <CustomScrollbar
+      autoHeightMax="100%"
+      autoHeightMin="0"
+      autoHide={false}
+      autoHideDuration={200}
+      autoHideTimeout={200}
+      className="css-1o1b8dr"
+      hideTracksWhenNotNeeded={false}
+      setScrollTop={[Function]}
+    >
+      <NarrowScreenForm
+        historyOptions={Array []}
+        isFullscreen={false}
+        onChange={[Function]}
+        onChangeTimeZone={[Function]}
+        timeZone="utc"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+        visible={true}
+      />
+      <Component
+        onSelect={[Function]}
+        options={Array []}
+        timeZone="utc"
+        title="Relative time ranges"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+      />
+      <div
+        className="css-1ogeuxc"
+      />
+      <Component
+        onSelect={[Function]}
+        options={Array []}
+        timeZone="utc"
+        title="Other quick ranges"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+      />
+    </CustomScrollbar>
+  </div>
+</div>
+`;
+
+exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
+<div
+  className="css-1py9bjs"
+>
+  <div
+    className="css-ooqtr4"
+  >
+    <div
+      className="css-dlnzj7"
+    >
+      <FullScreenForm
+        history={
+          Array [
+            Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "raw": Object {
+                "from": "2019-12-17T07:48:27.433Z",
+                "to": "2019-12-18T07:48:27.433Z",
+              },
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            Object {
+              "from": "2019-10-17T07:48:27.433Z",
+              "raw": Object {
+                "from": "2019-10-17T07:48:27.433Z",
+                "to": "2019-10-18T07:48:27.433Z",
+              },
+              "to": "2019-10-18T07:48:27.433Z",
+            },
+          ]
+        }
+        historyOptions={
+          Array [
+            Object {
+              "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
+              "from": "2019-12-17T07:48:27Z",
+              "section": 3,
+              "to": "2019-12-18T07:48:27Z",
+            },
+            Object {
+              "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
+              "from": "2019-10-17T07:48:27Z",
+              "section": 3,
+              "to": "2019-10-18T07:48:27Z",
+            },
+          ]
+        }
+        isFullscreen={true}
+        onChange={[Function]}
+        onChangeTimeZone={[Function]}
+        timeZone="utc"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+        visible={true}
+      />
+    </div>
+    <CustomScrollbar
+      autoHeightMax="100%"
+      autoHeightMin="0"
+      autoHide={false}
+      autoHideDuration={200}
+      autoHideTimeout={200}
+      className="css-1o1b8dr"
+      hideTracksWhenNotNeeded={false}
+      setScrollTop={[Function]}
+    >
+      <NarrowScreenForm
+        history={
+          Array [
+            Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "raw": Object {
+                "from": "2019-12-17T07:48:27.433Z",
+                "to": "2019-12-18T07:48:27.433Z",
+              },
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            Object {
+              "from": "2019-10-17T07:48:27.433Z",
+              "raw": Object {
+                "from": "2019-10-17T07:48:27.433Z",
+                "to": "2019-10-18T07:48:27.433Z",
+              },
+              "to": "2019-10-18T07:48:27.433Z",
+            },
+          ]
+        }
+        historyOptions={
+          Array [
+            Object {
+              "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
+              "from": "2019-12-17T07:48:27Z",
+              "section": 3,
+              "to": "2019-12-18T07:48:27Z",
+            },
+            Object {
+              "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
+              "from": "2019-10-17T07:48:27Z",
+              "section": 3,
+              "to": "2019-10-18T07:48:27Z",
+            },
+          ]
+        }
+        isFullscreen={true}
+        onChange={[Function]}
+        onChangeTimeZone={[Function]}
+        timeZone="utc"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+        visible={false}
+      />
+      <Component
+        onSelect={[Function]}
+        options={Array []}
+        timeZone="utc"
+        title="Relative time ranges"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+      />
+      <div
+        className="css-1ogeuxc"
+      />
+      <Component
+        onSelect={[Function]}
+        options={Array []}
+        timeZone="utc"
+        title="Other quick ranges"
+        value={
+          Object {
+            "from": "2019-12-17T07:48:27.433Z",
+            "raw": Object {
+              "from": "2019-12-17T07:48:27.433Z",
+              "to": "2019-12-18T07:48:27.433Z",
+            },
+            "to": "2019-12-18T07:48:27.433Z",
+          }
+        }
+      />
+    </CustomScrollbar>
+  </div>
+  <Component
+    onChangeTimeZone={[Function]}
+    timeZone="utc"
+  />
+</div>
+`;

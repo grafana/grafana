@@ -36,7 +36,7 @@ func (s *queryReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 			}
 		}
 		if validPointsCount > 0 {
-			value = value / float64(validPointsCount)
+			value /= float64(validPointsCount)
 		}
 	case "sum":
 		for _, point := range series.Points {

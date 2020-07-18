@@ -6,8 +6,12 @@ import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
 import config from 'app/core/config';
 // Types
 import { TextOptions } from './types';
+import { stylesFactory } from '@grafana/ui';
+import { css, cx } from 'emotion';
+import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 
 interface Props extends PanelProps<TextOptions> {}
+
 interface State {
   html: string;
 }
@@ -75,7 +79,15 @@ export class TextPanel extends PureComponent<Props, State> {
 
   render() {
     const { html } = this.state;
-
-    return <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />;
+    const styles = getStyles();
+    return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.content)} />;
   }
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    content: css`
+      height: 100%;
+    `,
+  };
+});

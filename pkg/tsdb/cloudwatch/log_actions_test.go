@@ -21,7 +21,7 @@ import (
 //***
 
 func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsEmpty(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 
 	logsClient := &FakeLogsClient{
 		Config: aws.Config{
@@ -43,7 +43,7 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsEmpty(t *testing.T) {
 }
 
 func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 
 	logsClient := &FakeLogsClient{
 		Config: aws.Config{
@@ -64,7 +64,7 @@ func TestHandleDescribeLogGroups_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 }
 
 func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 
 	logsClient := &FakeLogsClient{
 		Config: aws.Config{
@@ -89,7 +89,7 @@ func TestHandleGetLogGroupFields_WhenLogGroupNamePrefixIsNotEmpty(t *testing.T) 
 }
 
 func TestExecuteStartQuery(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 
 	logsClient := &FakeLogsClient{
 		Config: aws.Config{
@@ -114,11 +114,10 @@ func TestExecuteStartQuery(t *testing.T) {
 
 	assert.Equal(t, expectedResponse, response)
 	assert.Equal(t, fmt.Errorf("invalid time range: start time must be before end time"), err)
-
 }
 
 func TestHandleStartQuery(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 
 	logsClient := &FakeLogsClient{
 		Config: aws.Config{
@@ -153,7 +152,7 @@ func TestHandleStartQuery(t *testing.T) {
 }
 
 func TestHandleStopQuery(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 
 	logsClient := &FakeLogsClient{
 		Config: aws.Config{
@@ -175,7 +174,7 @@ func TestHandleStopQuery(t *testing.T) {
 }
 
 func TestHandleGetQueryResults(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 
 	logsClient := &FakeLogsClient{
 		Config: aws.Config{

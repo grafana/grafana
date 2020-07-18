@@ -17,7 +17,6 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
 	bus.AddHandler("test", func(q *models.GetUserOrgListQuery) error {
-
 		q.Result = createUserOrgDTO()
 
 		return nil
@@ -53,7 +52,6 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
 	bus.AddHandler("test", func(q *models.GetUserOrgListQuery) error {
-
 		q.Result = createUserOrgDTO()
 
 		return nil
