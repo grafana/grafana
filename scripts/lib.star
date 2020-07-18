@@ -6,9 +6,9 @@ alpine_image = 'alpine:3.12'
 restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
 
 def pr_pipelines(edition):
-    repo = 'grafana/grafana'
+    repo = 'aknuds1/grafana'
     if edition == 'enterprise':
-        repo = 'grafana/grafana-enterprise'
+        repo = 'aknuds1/grafana-enterprise'
     services = [
         {
             'name': 'postgres',
@@ -60,9 +60,9 @@ def pr_pipelines(edition):
     ]
 
 def master_pipelines(edition):
-    repo = 'grafana/grafana'
+    repo = 'aknuds1/grafana'
     if edition == 'enterprise':
-        repo = 'grafana/grafana-enterprise'
+        repo = 'aknuds1/grafana-enterprise'
     services = [
         {
             'name': 'postgres',
@@ -243,7 +243,7 @@ def publish_storybook_step(edition):
         'name': 'publish-storybook',
         'image': publish_image,
         'depends_on': [
-            'build-storybook',
+            'initialize',
         ],
         'environment': {
             'GCP_KEY': {
@@ -251,7 +251,7 @@ def publish_storybook_step(edition):
             },
         },
         'commands': [
-            'echo "$${GCP_KEY}" > /tmp/gcpkey.json',
+            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
             'echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
         ],
