@@ -157,7 +157,7 @@ def init_steps(edition):
                     },
                 },
                 'commands': [
-                    'git clone https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git',
+                    'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout ${DRONE_COMMIT}',
                 ],
@@ -251,7 +251,7 @@ def publish_storybook_step(edition):
             },
         },
         'commands': [
-            'echo $${GCP_KEY} > /tmp/gcpkey.json',
+            'echo "$${GCP_KEY}" > /tmp/gcpkey.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
             'echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
         ],
@@ -546,7 +546,7 @@ def release_next_npm_packages_step(edition):
         },
         'commands': [
             'npx lerna bootstrap',
-            'echo //registry.npmjs.org/:_authToken=$${NPM_TOKEN} >> ~/.npmrc"',
+            'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
             # TODO: Enable
             'echo ./scripts/circle-release-next-packages.sh',
         ],
