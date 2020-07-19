@@ -25,11 +25,134 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
    * be applied, just return the input series
    */
   transformer: (options: OccurrencesTransformerOptions) => {
+    console.log('options:', options);
+    const groupByFieldName = options.byField || '';
+    const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
+
+    console.log('calculationsByField:', calculationsByField);
+
+    return (data: DataFrame[]) => {
+      const processed: DataFrame[] = [];
+
+      //
+      // First, group the data in a way we can easily work with
+      //
+
+      /*
+        Something like this:
+        {
+          "value1": {fieldName1:[values], fieldname2:[values]},
+          "value2": {fieldName1:[values], fieldname2:[values]},
+          "value3": {fieldName1:[values], fieldname2:[values]},
+          ...
+        }
+      */
+
+      for (let frame of data) {
+        const groupedData = new Map(); // Using map because its key supports multiple format unlike objects
+        let groupByField = null;
+        for (let field of frame.fields) {
+          if (getFieldDisplayName(field) === groupByFieldName) {
+            groupByField = field;
+            break;
+          }
+        }
+
+        if (groupByField === null) {
+          continue; // No group by field in this frame, ignore frame
+        }
+
+        for (let rowIndex = 0; rowIndex < groupByField.values.length; rowIndex++) {
+          const value = groupByField.values.get(rowIndex);
+
+          let rowDataByField = groupedData.get(value);
+          if (!rowDataByField) {
+            rowDataByField = {};
+            groupedData.set(value, rowDataByField);
+          }
+
+          for (let field of frame.fields) {
+            if (field === groupByField) {
+              continue;
+            }
+
+            const fieldName = getFieldDisplayName(field);
+
+            if (!rowDataByField[fieldName]) {
+              rowDataByField[fieldName] = [];
+            }
+
+            rowDataByField[fieldName].push(field.values.get(rowIndex));
+          }
+          // console.log('groupedData', groupedData);
+        }
+
+        //
+        // Create the field (column) for the GroupBy field
+        //
+
+        const fields: Field[] = [];
+        const groupByValues = [...groupedData.keys()];
+        console.log('groupByValues', groupByValues);
+        let mainField = {
+          name: groupByField.name,
+          type: groupByField.type,
+          values: new ArrayVector(groupByValues),
+          config: {
+            ...groupByField.config,
+          },
+        };
+
+        console.log('mainField', mainField);
+        fields.push(mainField);
+
+        //
+        // Then for each calculations configured, compute and add a new field (column)
+        //
+
+        for (let [fieldName, calculations] of calculationsByField) {
+          if (fieldName === null) {
+            continue;
+          }
+
+          console.log('fieldName', fieldName);
+
+          for (let calc of calculations) {
+            let values = [];
+
+            // Process to this calculation for each grouped value
+            for (let val of groupByValues) {
+              let d = groupedData.get(val); //.get(fieldName);
+
+              console.log('d', d);
+
+              let result = 0; // Reduce
+
+              values.push(result);
+            }
+
+            fields.push({
+              name: fieldName + ' (' + calc + ')',
+              type: FieldType.other, // TODO : guess type or take type from reduce function
+              values: new ArrayVector(values),
+            });
+          }
+        }
+
+        processed.push({
+          fields,
+          length: groupByValues.length,
+        });
+      }
+
+      console.log('processed', processed);
+
+      return processed;
+    };
+
+    /*
     const keyFieldMatch = options.byField || '';
     let keyField: any = null;
-
-    console.log('options:', options);
-
     return (data: DataFrame[]) => {
       const processed: DataFrame[] = [];
       const fields: Field[] = [];
@@ -97,5 +220,6 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
 
       return processed;
     };
+    //*/
   },
 };
