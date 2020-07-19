@@ -152,7 +152,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		Convey("invalid access should warn about invalid value and return 'proxy'", func() {
 			reader := &configReader{log: logger}
-			configs, _ := reader.readConfig(invalidAccess)
+			configs, err := reader.readConfig(invalidAccess)
+			So(err, ShouldBeNil)
 			So(configs[0].Datasources[0].Access, ShouldEqual, models.DS_ACCESS_PROXY)
 		})
 
