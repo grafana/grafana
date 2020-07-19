@@ -89,6 +89,8 @@
       link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
+    - name: Change home dashboard
+      link: /administration/change-home-dashboard/
     - name: Troubleshooting
       link: /installation/troubleshooting/
 - name: Manage users
