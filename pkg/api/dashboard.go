@@ -267,35 +267,22 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 }
 
 func dashboardSaveErrorToApiResponse(err error) Response {
-	if err == models.ErrDashboardTitleEmpty ||
-		err == models.ErrDashboardWithSameNameAsFolder ||
-		err == models.ErrDashboardFolderWithSameNameAsDashboard ||
-		err == models.ErrDashboardTypeMismatch ||
-		err == models.ErrDashboardInvalidUid ||
-		err == models.ErrDashboardUidToLong ||
-		err == models.ErrDashboardWithSameUIDExists ||
-		err == models.ErrFolderNotFound ||
-		err == models.ErrDashboardFolderCannotHaveParent ||
-		err == models.ErrDashboardFolderNameExists ||
-		err == models.ErrDashboardRefreshIntervalTooShort ||
-		err == models.ErrDashboardCannotSaveProvisionedDashboard {
-		return Error(400, err.Error(), nil)
+	if dashboardErr, ok := err.(models.DashboardErr); ok {
+		if len(dashboardErr.Status) > 0 {
+			return JSON(dashboardErr.StatusCode, dashboardErr.Body())
+		}
+		if dashboardErr == models.ErrDashboardUpdateAccessDenied {
+			return Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+		}
+		return Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
 	}
 
-	if err == models.ErrDashboardUpdateAccessDenied {
-		return Error(403, err.Error(), err)
+	if err == models.ErrFolderNotFound {
+		return Error(400, err.Error(), nil)
 	}
 
 	if validationErr, ok := err.(alerting.ValidationError); ok {
 		return Error(422, validationErr.Error(), nil)
-	}
-
-	if err == models.ErrDashboardWithSameNameInFolderExists {
-		return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-	}
-
-	if err == models.ErrDashboardVersionMismatch {
-		return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 	}
 
 	if pluginErr, ok := err.(models.UpdatePluginDashboardError); ok {
@@ -305,10 +292,6 @@ func dashboardSaveErrorToApiResponse(err error) Response {
 			message = "The dashboard belongs to plugin " + pluginDef.Name + "."
 		}
 		return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
-	}
-
-	if err == models.ErrDashboardNotFound {
-		return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
 	}
 
 	return Error(500, "Failed to save dashboard", err)
