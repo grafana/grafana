@@ -228,7 +228,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SaveDashboard(&cmd)
-				So(err, ShouldEqual, models.ErrDashboardNotFound)
+				So(err, ShouldResemble, models.ErrDashboardNotFound)
 			})
 
 			Convey("Should not return error if no dashboard is found for update when dashboard id is zero", func() {
