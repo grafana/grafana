@@ -300,19 +300,19 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
-						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "short"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
-						[]float64{1, 1, 1, 1, 1, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+						[]float64{1, 1, 1, 1, 1, 0}).SetConfig(&data.FieldConfig{Unit: "short"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
-						[]float64{0, 0, 0, 0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+						[]float64{0, 0, 0, 0, 0, 0}).SetConfig(&data.FieldConfig{Unit: "short"})),
 			},
 		},
 		{
@@ -353,21 +353,21 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
-						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "Count", DisplayName: "blobtype=PageBlob"})),
+						[]float64{3, 3, 3, 3, 3, 0}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=PageBlob"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"}, []float64{
 						1, 1, 1, 1, 1, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count", DisplayName: "blobtype=BlockBlob"})),
+					}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=BlockBlob"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"}, []float64{
 						0, 0, 0, 0, 0, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count", DisplayName: "blobtype=Azure Data Lake Storage"})),
+					}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=Azure Data Lake Storage"})),
 			},
 		},
 		{
