@@ -4,7 +4,7 @@ import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
-import { /*fieldReducers, reduceField,*/ ReducerID } from '../fieldReducer';
+import { /*fieldReducers,*/ reduceField, ReducerID } from '../fieldReducer';
 
 export interface OccurrencesTransformerOptions {
   byField?: string;
@@ -46,6 +46,8 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
           "value3": {fieldName1:[values], fieldname2:[values]},
           ...
         }
+
+        where "value1", "value2", ... are the group by field values
       */
 
       for (let frame of data) {
@@ -111,12 +113,61 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
         //
 
         for (let [fieldName, calculations] of calculationsByField) {
-          if (fieldName === null) {
+          if (fieldName === null || fieldName === groupByFieldName) {
             continue;
           }
 
-          console.log('fieldName', fieldName);
+          // This won't be so intuitive as way to build the result, but if we want to take advantage
+          // of the reduceField function, we'll have to loop on the data this way. We will build a few
+          // fields (columns) at the time, corresponding the each field we want to make some calculations on.
 
+          let calculationResults = {};
+          for (let calc of calculations) {
+            calculationResults[calc] = [];
+          }
+
+          // The we need to loop on each group of values to get the result and append each
+          // result to the new fields
+          for (let val of groupByValues) {
+            let d = groupedData.get(val)[fieldName];
+
+            // We need a field object to call reduceField
+            let field: Field = {
+              name: fieldName,
+              length: d.length,
+              values: new ArrayVector(d),
+              config: {},
+            };
+
+            console.log('myField', field);
+
+            // reduceField will return an object will all the calculations from the specified list, possibly more
+            let results = reduceField({
+              field,
+              reducers: calculations,
+            });
+
+            console.log('results', results);
+
+            for (let calc of calculations) {
+              calculationResults[calc].push(results[calc]);
+            }
+          }
+
+          // Now we add the fields to the global results
+          for (let calc of calculations) {
+            let f = {
+              name: fieldName + ' (' + calc + ')',
+              values: new ArrayVector(calculationResults[calc]),
+              type: FieldType.other, // TODO : guess type or take type from reduce function
+              config: {},
+            };
+
+            f.type = guessFieldTypeForField(f);
+            fields.push(f);
+          }
+
+          /*
           for (let calc of calculations) {
             let values = [];
 
@@ -137,6 +188,7 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
               values: new ArrayVector(values),
             });
           }
+          */
         }
 
         processed.push({
