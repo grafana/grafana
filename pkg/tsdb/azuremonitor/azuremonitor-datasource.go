@@ -294,7 +294,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		dataField.Name = amr.Value[0].Name.LocalizedValue
 		dataField.Labels = labels
 		dataField.SetConfig(&data.FieldConfig{
-			Unit: amr.Value[0].Unit,
+			Unit: toGrafanaUnit(amr.Value[0].Unit),
 		})
 		if query.Alias != "" {
 			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
@@ -385,4 +385,26 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 	})
 
 	return string(result)
+}
+
+// Map values from:
+//   https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported#microsoftanalysisservicesservers
+// to
+//   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
+func toGrafanaUnit(unit string) string {
+	switch unit {
+	case "Percent":
+		return "percent"
+	case "Count":
+		return "short" // this is used for integers
+	case "Bytes":
+		return "decbytes" // or ICE
+	case "BytesPerSecond":
+		return "Bps"
+	case "CountPerSecond":
+		return "cps"
+	case "Milliseconds":
+		return "ms"
+	}
+	return unit // this will become a suffix in the display
 }
