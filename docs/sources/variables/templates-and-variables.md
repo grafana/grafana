@@ -88,7 +88,7 @@ Define the variable options manually using a comma-separated list. For instructi
 
 ### Text box
 
-Text box variables display as a free text input field with an optional default value.
+Text box variables display a free text input field with an optional default value. For instructions, refer to [Add a Text box variable]({{< relref "add-text-box-variable.md" >}}).
 
 ### Constant
 
