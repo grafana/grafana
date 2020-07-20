@@ -111,6 +111,10 @@ type DashboardErr struct {
 	Reason     string
 }
 
+func (e DashboardErr) Equal(o DashboardErr) bool {
+	return o.StatusCode == e.StatusCode && o.Status == e.Status && o.Reason == e.Reason
+}
+
 // Error returns the error message.
 func (e DashboardErr) Error() string {
 	if e.Reason != "" {

@@ -69,7 +69,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("It should result in not found error", func() {
 					So(err, ShouldNotBeNil)
-					So(err, ShouldResemble, models.ErrDashboardNotFound)
+					So(err, ShouldEqual, models.ErrDashboardNotFound)
 				})
 			})
 
@@ -92,7 +92,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should result in not found error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardNotFound)
+						So(err, ShouldEqual, models.ErrDashboardNotFound)
 					})
 				})
 
@@ -143,7 +143,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for General Folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -166,7 +166,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for other folder with correct arguments and rsult in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -189,7 +189,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedFolder.Id)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -213,7 +213,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedFolder.Id)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -237,7 +237,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedDashInGeneralFolder.Id)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -261,7 +261,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedDashInFolder.Id)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -285,7 +285,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -309,7 +309,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -333,7 +333,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -357,7 +357,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
-						So(err, ShouldResemble, models.ErrDashboardUpdateAccessDenied)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
@@ -527,7 +527,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in version mismatch error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardVersionMismatch)
+							So(err, ShouldEqual, models.ErrDashboardVersionMismatch)
 						})
 					})
 
@@ -572,7 +572,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in version mismatch error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardVersionMismatch)
+							So(err, ShouldEqual, models.ErrDashboardVersionMismatch)
 						})
 					})
 
@@ -617,7 +617,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in dashboard with same name in folder error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardWithSameNameInFolderExists)
+							So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
 						})
 					})
 
@@ -636,7 +636,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in dashboard with same name in folder error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardWithSameNameInFolderExists)
+							So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
 						})
 					})
 
@@ -655,7 +655,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in dashboard with same name in folder error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardWithSameNameInFolderExists)
+							So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
 						})
 					})
 				})
@@ -755,7 +755,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in same uid exists error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardWithSameUIDExists)
+							So(err, ShouldEqual, models.ErrDashboardWithSameUIDExists)
 						})
 					})
 
@@ -828,7 +828,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardTypeMismatch)
+							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
 						})
 					})
 
@@ -847,7 +847,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardTypeMismatch)
+							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
 						})
 					})
 
@@ -866,7 +866,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardTypeMismatch)
+							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
 						})
 					})
 
@@ -885,7 +885,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardTypeMismatch)
+							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
 						})
 					})
 
@@ -903,7 +903,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in dashboard with same name as folder error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardWithSameNameAsFolder)
+							So(err, ShouldEqual, models.ErrDashboardWithSameNameAsFolder)
 						})
 					})
 
@@ -921,7 +921,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in folder with same name as dashboard error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldResemble, models.ErrDashboardFolderWithSameNameAsDashboard)
+							So(err, ShouldEqual, models.ErrDashboardFolderWithSameNameAsDashboard)
 						})
 					})
 				})

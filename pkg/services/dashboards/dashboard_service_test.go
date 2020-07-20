@@ -33,7 +33,7 @@ func TestDashboardService(t *testing.T) {
 				for _, title := range titles {
 					dto.Dashboard = models.NewDashboard(title)
 					_, err := service.SaveDashboard(dto, false)
-					So(err, ShouldResemble, models.ErrDashboardTitleEmpty)
+					So(err, ShouldEqual, models.ErrDashboardTitleEmpty)
 				}
 			})
 
@@ -41,13 +41,13 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboardFolder("Folder")
 				dto.Dashboard.FolderId = 1
 				_, err := service.SaveDashboard(dto, false)
-				So(err, ShouldResemble, models.ErrDashboardFolderCannotHaveParent)
+				So(err, ShouldEqual, models.ErrDashboardFolderCannotHaveParent)
 			})
 
 			Convey("Should return validation error if folder is named General", func() {
 				dto.Dashboard = models.NewDashboardFolder("General")
 				_, err := service.SaveDashboard(dto, false)
-				So(err, ShouldResemble, models.ErrDashboardFolderNameExists)
+				So(err, ShouldEqual, models.ErrDashboardFolderNameExists)
 			})
 
 			Convey("When saving a dashboard should validate uid", func() {
@@ -84,7 +84,7 @@ func TestDashboardService(t *testing.T) {
 					dto.User = &models.SignedInUser{}
 
 					_, err := service.buildSaveDashboardCommand(dto, true, false)
-					So(err, ShouldResemble, tc.Error)
+					So(err, ShouldEqual, tc.Error)
 				}
 			})
 
@@ -110,7 +110,7 @@ func TestDashboardService(t *testing.T) {
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(dto, false)
 				So(provisioningValidated, ShouldBeTrue)
-				So(err, ShouldResemble, models.ErrDashboardCannotSaveProvisionedDashboard)
+				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 
 			Convey("Should not return validation error if dashboard is provisioned but UI updates allowed", func() {
@@ -260,7 +260,7 @@ func TestDashboardService(t *testing.T) {
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.ImportDashboard(dto)
 				So(provisioningValidated, ShouldBeTrue)
-				So(err, ShouldResemble, models.ErrDashboardCannotSaveProvisionedDashboard)
+				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 		})
 
@@ -275,7 +275,7 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("DeleteDashboard should fail to delete it", func() {
 				err := service.DeleteDashboard(1, 1)
-				So(err, ShouldResemble, models.ErrDashboardCannotDeleteProvisionedDashboard)
+				So(err, ShouldEqual, models.ErrDashboardCannotDeleteProvisionedDashboard)
 				So(result.deleteWasCalled, ShouldBeFalse)
 			})
 		})
