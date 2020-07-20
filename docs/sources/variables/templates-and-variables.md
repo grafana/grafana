@@ -76,7 +76,7 @@ You can also define the following types of variables in Grafana.
 
 ### Query
 
-Query variables allow you to write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, data centers, etc.
+Query variables allow you to write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, data centers, and so on.
 
 For instructions, refer to [Add a query variable]({{< relref "add-query-variable.md" >}}).
 
