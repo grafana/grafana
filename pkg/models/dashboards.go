@@ -81,7 +81,7 @@ var (
 		Reason:     "uid contains illegal characters",
 		StatusCode: 400,
 	}
-	ErrDashboardUidToLong = DashboardErr{
+	ErrDashboardUidTooLong = DashboardErr{
 		Reason:     "uid too long, max 40 characters",
 		StatusCode: 400,
 	}
