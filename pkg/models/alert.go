@@ -78,6 +78,7 @@ type Alert struct {
 	ExecutionError string
 	Frequency      int64
 	For            time.Duration
+	AlertQuery     string
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
