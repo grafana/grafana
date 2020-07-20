@@ -225,8 +225,6 @@ services:
 trigger:
   event:
   - pull_request
-  repo:
-  - aknuds1/grafana
 
 ---
 kind: pipeline
@@ -386,7 +384,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   depends_on:
-  - initialize
+  - build-storybook
 
 - name: build-docs-website
   image: grafana/docs-base:latest
@@ -506,7 +504,5 @@ trigger:
   - master
   event:
   - push
-  repo:
-  - aknuds1/grafana
 
 ...
