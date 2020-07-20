@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -195,9 +196,15 @@ func deleteDashboard(c *models.ReqContext) Response {
 	}
 
 	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
-	if err == models.ErrDashboardCannotDeleteProvisionedDashboard {
-		return Error(400, "Dashboard cannot be deleted because it was provisioned", err)
-	} else if err != nil {
+	if err != nil {
+		var dashboardErr models.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			// XXX: Should we allow other dashboard errors also?
+			if errors.Is(err, models.ErrDashboardCannotDeleteProvisionedDashboard) {
+				return Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+			}
+		}
+
 		return Error(500, "Failed to delete dashboard", err)
 	}
 
@@ -267,29 +274,32 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 }
 
 func dashboardSaveErrorToApiResponse(err error) Response {
-	if dashboardErr, ok := err.(models.DashboardErr); ok {
-		if len(dashboardErr.Status) > 0 {
-			return JSON(dashboardErr.StatusCode, dashboardErr.Body())
+	var dashboardErr models.DashboardErr
+	if ok := errors.As(err, &dashboardErr); ok {
+		if body := dashboardErr.Body(); body != nil {
+			return JSON(dashboardErr.StatusCode, body)
 		}
-		if dashboardErr == models.ErrDashboardUpdateAccessDenied {
+		if errors.Is(dashboardErr, models.ErrDashboardUpdateAccessDenied) {
 			return Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 		}
 		return Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
 	}
 
-	if err == models.ErrFolderNotFound {
+	if errors.Is(err, models.ErrFolderNotFound) {
 		return Error(400, err.Error(), nil)
 	}
 
-	if validationErr, ok := err.(alerting.ValidationError); ok {
+	var validationErr alerting.ValidationError
+	if ok := errors.As(err, &validationErr); ok {
 		return Error(422, validationErr.Error(), nil)
 	}
 
-	if pluginErr, ok := err.(models.UpdatePluginDashboardError); ok {
-		message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
+	var pluginErr models.UpdatePluginDashboardError
+	if ok := errors.As(err, &pluginErr); ok {
+		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
 		if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
-			message = "The dashboard belongs to plugin " + pluginDef.Name + "."
+			message = fmt.Sprintf("The dashboard belongs to plugin %s.", pluginDef.Name)
 		}
 		return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
 	}

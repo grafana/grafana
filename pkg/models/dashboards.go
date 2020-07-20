@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -16,101 +15,117 @@ import (
 // Typed errors
 var (
 	ErrDashboardNotFound = DashboardErr{
-		Err:        errors.New("Dashboard not found"),
+		Reason:     "Dashboard not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
+	ErrDashboardFolderNotFound = DashboardErr{
+		Reason:     "Folder not found",
+		StatusCode: 404,
+	}
+	ErrDashboardSnapshotNotFound = DashboardErr{
+		Reason:     "Dashboard snapshot not found",
+		StatusCode: 404,
+	}
 	ErrDashboardWithSameUIDExists = DashboardErr{
-		Err:        errors.New("A dashboard with the same uid already exists"),
+		Reason:     "A dashboard with the same uid already exists",
 		StatusCode: 400,
 	}
 	ErrDashboardWithSameNameInFolderExists = DashboardErr{
-		Err:        errors.New("A dashboard with the same name in the folder already exists"),
+		Reason:     "A dashboard with the same name in the folder already exists",
 		StatusCode: 412,
 		Status:     "name-exists",
 	}
 	ErrDashboardVersionMismatch = DashboardErr{
-		Err:        errors.New("The dashboard has been changed by someone else"),
+		Reason:     "The dashboard has been changed by someone else",
 		StatusCode: 412,
 		Status:     "version-mismatch",
 	}
 	ErrDashboardTitleEmpty = DashboardErr{
-		Err:        errors.New("Dashboard title cannot be empty"),
+		Reason:     "Dashboard title cannot be empty",
 		StatusCode: 400,
 	}
 	ErrDashboardFolderCannotHaveParent = DashboardErr{
-		Err:        errors.New("A Dashboard Folder cannot be added to another folder"),
+		Reason:     "A Dashboard Folder cannot be added to another folder",
 		StatusCode: 400,
 	}
 	ErrDashboardsWithSameSlugExists = DashboardErr{
-		Err:        errors.New("Multiple dashboards with the same slug exists"),
+		Reason:     "Multiple dashboards with the same slug exists",
 		StatusCode: 412,
 	}
 	ErrDashboardFailedGenerateUniqueUid = DashboardErr{
-		Err:        errors.New("Failed to generate unique dashboard id"),
+		Reason:     "Failed to generate unique dashboard id",
 		StatusCode: 500,
 	}
 	ErrDashboardTypeMismatch = DashboardErr{
-		Err:        errors.New("Dashboard cannot be changed to a folder"),
+		Reason:     "Dashboard cannot be changed to a folder",
 		StatusCode: 400,
 	}
 	ErrDashboardFolderWithSameNameAsDashboard = DashboardErr{
-		Err:        errors.New("Folder name cannot be the same as one of its dashboards"),
+		Reason:     "Folder name cannot be the same as one of its dashboards",
 		StatusCode: 400,
 	}
 	ErrDashboardWithSameNameAsFolder = DashboardErr{
-		Err:        errors.New("Dashboard name cannot be the same as folder"),
+		Reason:     "Dashboard name cannot be the same as folder",
 		StatusCode: 400,
 	}
 	ErrDashboardFolderNameExists = DashboardErr{
-		Err:        errors.New("A folder with that name already exists"),
+		Reason:     "A folder with that name already exists",
 		StatusCode: 400,
 	}
 	ErrDashboardUpdateAccessDenied = DashboardErr{
-		Err:        errors.New("Access denied to save dashboard"),
+		Reason:     "Access denied to save dashboard",
 		StatusCode: 403,
 	}
 	ErrDashboardInvalidUid = DashboardErr{
-		Err:        errors.New("uid contains illegal characters"),
+		Reason:     "uid contains illegal characters",
 		StatusCode: 400,
 	}
 	ErrDashboardUidToLong = DashboardErr{
-		Err:        errors.New("uid to long. max 40 characters"),
+		Reason:     "uid too long, max 40 characters",
 		StatusCode: 400,
 	}
 	ErrDashboardCannotSaveProvisionedDashboard = DashboardErr{
-		Err:        errors.New("Cannot save provisioned dashboard"),
+		Reason:     "Cannot save provisioned dashboard",
 		StatusCode: 400,
 	}
 	ErrDashboardRefreshIntervalTooShort = DashboardErr{
-		Err:        errors.New("Dashboard refresh interval is too low"),
+		Reason:     "Dashboard refresh interval is too low",
 		StatusCode: 400,
 	}
 	ErrDashboardCannotDeleteProvisionedDashboard = DashboardErr{
-		Err:        errors.New("provisioned dashboard cannot be deleted"),
+		Reason:     "provisioned dashboard cannot be deleted",
 		StatusCode: 400,
 	}
-	ErrDashboardIdentifierNotSet = errors.New("Unique identifier needed to be able to get a dashboard")
-	ErrDashboardFolderNotFound   = errors.New("Folder not found")
-	ErrDashboardSnapshotNotFound = errors.New("Dashboard snapshot not found")
-	RootFolderName               = "General"
+	ErrDashboardIdentifierNotSet = DashboardErr{
+		Reason:     "Unique identifier needed to be able to get a dashboard",
+		StatusCode: 400,
+	}
+	RootFolderName = "General"
 )
 
+// DashboardErr represents a dashboard error.
 type DashboardErr struct {
 	StatusCode int
 	Status     string
-	Err        error
+	Reason     string
 }
 
-func (v DashboardErr) Error() string {
-	if v.Err != nil {
-		return v.Err.Error()
+// Error returns the error message.
+func (e DashboardErr) Error() string {
+	if e.Reason != "" {
+		return e.Reason
 	}
 	return "Dashboard Error"
 }
 
-func (v DashboardErr) Body() util.DynMap {
-	return util.DynMap{"status": v.Status, "message": v.Error()}
+// Body returns the error's response body, if applicable.
+func (e DashboardErr) Body() util.DynMap {
+	if e.Status == "" {
+		return nil
+	}
+
+	return util.DynMap{"status": e.Status, "message": e.Error()}
 }
 
 type UpdatePluginDashboardError struct {
