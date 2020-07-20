@@ -616,9 +616,29 @@ describe('templateSrv', () => {
       } as TimeRange);
     });
 
-    it('should replace ${__from} with epoch from', () => {
+    it('should replace ${__from} with ms epoch value', () => {
       const target = _templateSrv.replace('${__from}');
       expect(target).toBe('1594671549254');
+    });
+
+    it('should replace ${__from:date:seconds} with epoch in seconds', () => {
+      const target = _templateSrv.replace('${__from:date:seconds}');
+      expect(target).toBe('1594671549');
+    });
+
+    it('should replace ${__from:date} with iso date', () => {
+      const target = _templateSrv.replace('${__from:date}');
+      expect(target).toBe('2020-07-13T20:19:09.254Z');
+    });
+
+    it('should replace ${__from:date:iso} with iso date', () => {
+      const target = _templateSrv.replace('${__from:date:iso}');
+      expect(target).toBe('2020-07-13T20:19:09.254Z');
+    });
+
+    it('should replace ${__from:date:YYYY-MM} using custom format', () => {
+      const target = _templateSrv.replace('${__from:date:YYYY-MM}');
+      expect(target).toBe('2020-07');
     });
   });
 });

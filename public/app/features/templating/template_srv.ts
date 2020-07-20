@@ -1,6 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { deprecationWarning, ScopedVars, textUtil, TimeRange } from '@grafana/data';
+import { deprecationWarning, ScopedVars, textUtil, TimeRange, dateTime } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
@@ -154,6 +154,19 @@ export class TemplateSrv implements BaseTemplateSrv {
       return format(value, variable, this.formatValue);
     }
 
+    if (!format) {
+      format = 'glob';
+    }
+
+    // some formats have arguments that come after ':' character
+    let args = format.split(':');
+    if (args.length > 1) {
+      format = args[0];
+      args = args.slice(1);
+    } else {
+      args = [];
+    }
+
     switch (format) {
       case 'regex': {
         if (typeof value === 'string') {
@@ -227,12 +240,30 @@ export class TemplateSrv implements BaseTemplateSrv {
         }
         return `'${_.replace(value, regExp, "''")}'`;
       }
-      default: {
+      case 'date': {
+        return this.formatDate(value, args);
+      }
+      case 'glob': {
         if (_.isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';
         }
         return value;
       }
+    }
+  }
+
+  formatDate(value: any, args: string[]): string {
+    const arg = args[0] ?? 'iso';
+
+    switch (arg) {
+      case 'ms':
+        return value;
+      case 'seconds':
+        return `${Math.round(parseInt(value, 10)! / 1000)}`;
+      case 'iso':
+        return dateTime(parseInt(value, 10)).toISOString();
+      default:
+        return dateTime(parseInt(value, 10)).format(arg);
     }
   }
 
