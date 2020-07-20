@@ -80,11 +80,11 @@ Query variables allow you to write a data source query that might return a list 
 
 For instructions, refer to [Add a query variable]({{< relref "add-query-variable.md" >}}).
 
-Queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
+Variable queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
 
 ### Custom
 
-Define the variable options manually using a comma-separated list.
+Define the variable options manually using a comma-separated list. For instructions, refer to [Add a custom variable]({{< relref "add-custom-variable.md" >}}).
 
 ### Text box
 
