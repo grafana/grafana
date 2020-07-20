@@ -11,7 +11,7 @@ import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEdito
 import { Select, StatsPicker, Button } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { OccurrencesTransformerOptions } from '@grafana/data/src/transformations/transformers/occurrences';
+import { GroupByTransformerOptions } from '@grafana/data/src/transformations/transformers/groupBy';
 
 function FieldCalculationsSelector(props: any) {
   const { fieldNameOptions, onDelete, onConfigChange, config } = props;
@@ -53,7 +53,7 @@ function FieldCalculationsSelector(props: any) {
   );
 }
 
-export const OccurrencesTransformerEditor: React.FC<TransformerUIProps<OccurrencesTransformerOptions>> = ({
+export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransformerOptions>> = ({
   input,
   options,
   onChange,
@@ -126,10 +126,10 @@ export const OccurrencesTransformerEditor: React.FC<TransformerUIProps<Occurrenc
   );
 };
 
-export const occurrencesTransformRegistryItem: TransformerRegistyItem<OccurrencesTransformerOptions> = {
-  id: DataTransformerID.occurrences,
-  editor: OccurrencesTransformerEditor,
-  transformation: standardTransformers.occurrencesTransformer,
-  name: standardTransformers.occurrencesTransformer.name,
-  description: standardTransformers.occurrencesTransformer.description,
+export const groupByTransformRegistryItem: TransformerRegistyItem<GroupByTransformerOptions> = {
+  id: DataTransformerID.groupBy,
+  editor: GroupByTransformerEditor,
+  transformation: standardTransformers.groupByTransformer,
+  name: standardTransformers.groupByTransformer.name,
+  description: standardTransformers.groupByTransformer.description,
 };

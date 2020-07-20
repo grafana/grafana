@@ -6,16 +6,16 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { /*fieldReducers,*/ reduceField, ReducerID } from '../fieldReducer';
 
-export interface OccurrencesTransformerOptions {
+export interface GroupByTransformerOptions {
   byField?: string;
   reducers: ReducerID[];
   calculationsByField: Array<[string | null, ReducerID[]]>;
 }
 
-export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerOptions> = {
-  id: DataTransformerID.occurrences,
-  name: 'Number of Occurrences',
-  description: 'Calculates the number of occurrences of each value for a specified field',
+export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
+  id: DataTransformerID.groupBy,
+  name: 'Group By',
+  description: 'Group the data by a field values then process calculations for each group',
   defaultOptions: {
     calculationsByField: [[null, [ReducerID.count]]],
   },
@@ -24,7 +24,7 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: OccurrencesTransformerOptions) => {
+  transformer: (options: GroupByTransformerOptions) => {
     console.log('options:', options);
     const groupByFieldName = options.byField || '';
     const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
@@ -89,7 +89,6 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
 
             rowDataByField[fieldName].values.push(field.values.get(rowIndex));
           }
-          // console.log('groupedData', groupedData);
         }
 
         //

@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { occurrencesTransformer } from './occurrences';
+import { groupByTransformer } from './groupBy';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
@@ -15,14 +15,14 @@ const testSeries = toDataFrame({
   ],
 });
 
-describe('Occurrences Transformer', () => {
+describe('GroupBy Transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([occurrencesTransformer]);
+    mockTransformationsRegistry([groupByTransformer]);
   });
 
   it('should calculate the occurrences of each value of the specified field (string values)', () => {
-    const cfg: DataTransformerConfig<OccurrencesTransformerOptions> = {
-      id: DataTransformerID.occurrences,
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
       options: {
         byField: 'message',
       },
@@ -49,8 +49,8 @@ describe('Occurrences Transformer', () => {
   });
 
   it('should calculate the occurrences of each value of the specified field (number values)', () => {
-    const cfg: DataTransformerConfig<OccurrencesTransformerOptions> = {
-      id: DataTransformerID.occurrences,
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
       options: {
         byField: 'values',
       },
