@@ -298,7 +298,8 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   variableExists(expression: string) {
     const name = this.getVariableName(expression);
-    return name && this.getVariableAtIndex(name) !== void 0;
+    const variable = name && this.getVariableAtIndex(name);
+    return variable !== null && variable !== undefined;
   }
 
   highlightVariablesAsHtml(str: string) {
@@ -458,7 +459,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return value.join(',');
   }
 
-  private getVariableAtIndex = (name: string): any => {
+  private getVariableAtIndex(name: string) {
     if (!name) {
       return;
     }
@@ -468,11 +469,11 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     return this.index[name];
-  };
+  }
 
-  private getAdHocVariables = (): any[] => {
+  private getAdHocVariables(): any[] {
     return this.dependencies.getFilteredVariables(isAdHoc);
-  };
+  }
 }
 
 // Expose the template srv
