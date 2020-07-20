@@ -132,7 +132,7 @@ func toFolderError(err error) Response {
 		err == models.ErrFolderWithSameUIDExists ||
 		err == models.ErrDashboardTypeMismatch ||
 		err == models.ErrDashboardInvalidUid ||
-		err == models.ErrDashboardUidToLong {
+		err == models.ErrDashboardUidTooLong {
 		return Error(400, err.Error(), nil)
 	}
 
