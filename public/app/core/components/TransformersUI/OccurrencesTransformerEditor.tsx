@@ -27,7 +27,7 @@ function FieldCalculationsSelector(props: any) {
           value={config[0]}
           onChange={value => {
             console.log('onChange', value);
-            console.log(onConfigChange([value, config[1]]));
+            console.log(onConfigChange([value.value, config[1]]));
           }}
           isClearable
           menuPlacement="bottom"
