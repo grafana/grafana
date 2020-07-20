@@ -39,9 +39,9 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
       /*
         Something like this:
         {
-          "value1": {fieldName1:[values], fieldname2:[values]},
-          "value2": {fieldName1:[values], fieldname2:[values]},
-          "value3": {fieldName1:[values], fieldname2:[values]},
+          "value1": {fieldName1:Field, fieldname2:Field},
+          "value2": {fieldName1:Field, fieldname2:Field},
+          "value3": {fieldName1:Field, fieldname2:Field},
           ...
         }
 
@@ -79,10 +79,15 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
             const fieldName = getFieldDisplayName(field);
 
             if (!rowDataByField[fieldName]) {
-              rowDataByField[fieldName] = [];
+              rowDataByField[fieldName] = {
+                name: getFieldDisplayName(field),
+                type: field.type,
+                config: {},
+                values: [],
+              };
             }
 
-            rowDataByField[fieldName].push(field.values.get(rowIndex));
+            rowDataByField[fieldName].values.push(field.values.get(rowIndex));
           }
           // console.log('groupedData', groupedData);
         }
@@ -103,7 +108,6 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
           },
         };
 
-        console.log('mainField', mainField);
         fields.push(mainField);
 
         //
@@ -131,10 +135,8 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
 
             // We need a field object to call reduceField
             let field: Field = {
-              name: fieldName,
-              length: d.length,
-              values: new ArrayVector(d),
-              config: {},
+              ...d,
+              values: new ArrayVector(d.values),
             };
 
             // reduceField will return an object will all the calculations from the specified list, possibly more
@@ -153,7 +155,7 @@ export const occurrencesTransformer: DataTransformerInfo<OccurrencesTransformerO
             let f = {
               name: fieldName + ' (' + calc + ')',
               values: new ArrayVector(calculationResults[calc]),
-              type: FieldType.other, // TODO : guess type or take type from reduce function
+              type: FieldType.other,
               config: {},
             };
 
