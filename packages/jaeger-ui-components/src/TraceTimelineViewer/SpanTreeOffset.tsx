@@ -53,7 +53,7 @@ export const getStyles = createStyle((theme: Theme) => {
     `,
     indentGuideActive: css`
       label: indentGuideActive;
-      border-left: 3px solid darkgrey;
+      border-color: ${autoColor(theme, 'darkgrey')};
       &::before {
         background-color: transparent;
       }
