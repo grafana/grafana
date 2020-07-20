@@ -199,7 +199,6 @@ func deleteDashboard(c *models.ReqContext) Response {
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
-			// XXX: Should we allow other dashboard errors also?
 			if errors.Is(err, models.ErrDashboardCannotDeleteProvisionedDashboard) {
 				return Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 			}
