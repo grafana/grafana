@@ -76,7 +76,7 @@ type SpanDetailRowProps = {
   processToggle: (spanID: string) => void;
   referencesToggle: (spanID: string) => void;
   warningsToggle: (spanID: string) => void;
-  stackTraceToggle: (spanID: string) => void;
+  stackTracesToggle: (spanID: string) => void;
   span: TraceSpan;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
@@ -107,7 +107,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       processToggle,
       referencesToggle,
       warningsToggle,
-      stackTraceToggle,
+      stackTracesToggle,
       span,
       tagsToggle,
       traceStartTime,
@@ -149,7 +149,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               processToggle={processToggle}
               referencesToggle={referencesToggle}
               warningsToggle={warningsToggle}
-              stackTraceToggle={stackTraceToggle}
+              stackTracesToggle={stackTracesToggle}
               span={span}
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}

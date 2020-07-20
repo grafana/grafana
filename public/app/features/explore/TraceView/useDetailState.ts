@@ -44,7 +44,7 @@ export function useDetailState() {
     detailWarningsToggle: useCallback(makeDetailSubsectionToggle('warnings', detailStates, setDetailStates), [
       detailStates,
     ]),
-    detailStackTraceToggle: useCallback(makeDetailSubsectionToggle('stackTrace', detailStates, setDetailStates), [
+    detailStackTracesToggle: useCallback(makeDetailSubsectionToggle('stackTraces', detailStates, setDetailStates), [
       detailStates,
     ]),
     detailReferencesToggle: useCallback(makeDetailSubsectionToggle('references', detailStates, setDetailStates), [
@@ -58,7 +58,7 @@ export function useDetailState() {
 }
 
 function makeDetailSubsectionToggle(
-  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTrace',
+  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTraces',
   detailStates: Map<string, DetailState>,
   setDetailStates: (detailStates: Map<string, DetailState>) => void
 ) {
@@ -76,8 +76,8 @@ function makeDetailSubsectionToggle(
       detailState = old.toggleWarnings();
     } else if (subSection === 'references') {
       detailState = old.toggleReferences();
-    } else if (subSection === 'stackTrace') {
-      detailState = old.toggleStackTrace();
+    } else if (subSection === 'stackTraces') {
+      detailState = old.toggleStackTraces();
     } else {
       detailState = old.toggleLogs();
     }

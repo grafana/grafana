@@ -22,7 +22,7 @@ export default class DetailState {
   isProcessOpen: boolean;
   logs: { isOpen: boolean; openedItems: Set<TraceLog> };
   isWarningsOpen: boolean;
-  isStackTraceOpen: boolean;
+  isStackTracesOpen: boolean;
   isReferencesOpen: boolean;
 
   constructor(oldState?: DetailState) {
@@ -31,14 +31,14 @@ export default class DetailState {
       isProcessOpen,
       isReferencesOpen,
       isWarningsOpen,
-      isStackTraceOpen,
+      isStackTracesOpen,
       logs,
     }: DetailState | Record<string, undefined> = oldState || {};
     this.isTagsOpen = Boolean(isTagsOpen);
     this.isProcessOpen = Boolean(isProcessOpen);
     this.isReferencesOpen = Boolean(isReferencesOpen);
     this.isWarningsOpen = Boolean(isWarningsOpen);
-    this.isStackTraceOpen = Boolean(isStackTraceOpen);
+    this.isStackTracesOpen = Boolean(isStackTracesOpen);
     this.logs = {
       isOpen: Boolean(logs && logs.isOpen),
       openedItems: logs && logs.openedItems ? new Set(logs.openedItems) : new Set(),
@@ -69,9 +69,9 @@ export default class DetailState {
     return next;
   }
 
-  toggleStackTrace() {
+  toggleStackTraces() {
     const next = new DetailState(this);
-    next.isStackTraceOpen = !this.isStackTraceOpen;
+    next.isStackTracesOpen = !this.isStackTracesOpen;
     return next;
   }
 
