@@ -120,13 +120,21 @@ def master_pipelines(edition):
     ]
 
 def pipeline(name, edition, trigger, steps, services=[]):
+    steps = init_steps(edition) + steps
+    # For each step, prepend command to remove /root/.netrc as a security measure
+    # TODO: Remove when no longer necessary
+    for step in steps:
+        if not step:
+            continue
+        if 'commands' in step:
+            step['commands'] = ['rm -f /root/.netrc',] + step['commands']
     pipeline = {
         'kind': 'pipeline',
         'type': 'docker',
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': init_steps(edition) + steps,
+        'steps': steps,
     }
     if edition == 'enterprise':
         # We have a custom clone step for enterprise

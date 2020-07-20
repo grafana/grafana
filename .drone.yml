@@ -11,6 +11,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
   - chmod +x grabpl
   - mkdir -p bin
@@ -27,6 +28,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - make lint-go
   environment:
     CGO_ENABLED: 1
@@ -36,6 +38,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
@@ -44,6 +47,7 @@ steps:
 - name: shellcheck
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v$${VERSION}.linux.x86_64.tar.xz
   - echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
   - tar xf shellcheck-v$${VERSION}.linux.x86_64.tar.xz
@@ -59,6 +63,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - ./bin/grabpl build-backend --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
@@ -69,6 +74,7 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-frontend --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
@@ -78,6 +84,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - go test -covermode=atomic ./pkg/...
   - ./bin/grabpl integration-tests
   - cp -r $(go env GOCACHE) go-cache
@@ -88,6 +95,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn run prettier:check
   - yarn run packages:typecheck
@@ -99,6 +107,7 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-plugins --edition oss --no-install-deps
   depends_on:
@@ -108,6 +117,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
   depends_on:
   - build-backend
@@ -122,6 +132,7 @@ steps:
   image: grafana/build-container:1.2.21
   detach: true
   commands:
+  - rm -f /root/.netrc
   - ./e2e/start-server
   depends_on:
   - package
@@ -129,6 +140,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.18-1
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./node_modules/.bin/cypress install
   - ./e2e/wait-for-grafana
@@ -141,6 +153,7 @@ steps:
 - name: build-storybook
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn storybook:build
   depends_on:
@@ -149,6 +162,7 @@ steps:
 - name: build-docs-website
   image: grafana/docs-base:latest
   commands:
+  - rm -f /root/.netrc
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources /hugo/content/docs/grafana/latest
   - cd /hugo && make prod
@@ -158,6 +172,7 @@ steps:
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - cp dist/*.tar.gz packaging/docker/
   depends_on:
   - package
@@ -174,6 +189,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - apt-get update
   - apt-get install -yq postgresql-client
   - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -192,6 +208,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - apt-get update
   - apt-get install -yq default-mysql-client
   - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
@@ -241,6 +258,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
   - chmod +x grabpl
   - mkdir -p bin
@@ -257,6 +275,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - make lint-go
   environment:
     CGO_ENABLED: 1
@@ -266,6 +285,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
@@ -274,6 +294,7 @@ steps:
 - name: shellcheck
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v$${VERSION}.linux.x86_64.tar.xz
   - echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
   - tar xf shellcheck-v$${VERSION}.linux.x86_64.tar.xz
@@ -289,6 +310,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - ./bin/grabpl build-backend --edition oss --build-id $DRONE_BUILD_NUMBER
   depends_on:
@@ -299,6 +321,7 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-frontend --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
@@ -308,6 +331,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - go test -covermode=atomic ./pkg/...
   - ./bin/grabpl integration-tests
   - cp -r $(go env GOCACHE) go-cache
@@ -318,6 +342,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn run prettier:check
   - yarn run packages:typecheck
@@ -329,6 +354,7 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-plugins --edition oss --no-install-deps
   depends_on:
@@ -338,6 +364,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - build-backend
@@ -352,6 +379,7 @@ steps:
   image: grafana/build-container:1.2.21
   detach: true
   commands:
+  - rm -f /root/.netrc
   - ./e2e/start-server
   depends_on:
   - package
@@ -359,6 +387,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.18-1
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./node_modules/.bin/cypress install
   - ./e2e/wait-for-grafana
@@ -371,6 +400,7 @@ steps:
 - name: build-storybook
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn storybook:build
   depends_on:
@@ -379,6 +409,7 @@ steps:
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.5
   commands:
+  - rm -f /root/.netrc
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
   - echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
@@ -391,6 +422,7 @@ steps:
 - name: build-docs-website
   image: grafana/docs-base:latest
   commands:
+  - rm -f /root/.netrc
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources /hugo/content/docs/grafana/latest
   - cd /hugo && make prod
@@ -400,6 +432,7 @@ steps:
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - cp dist/*.tar.gz packaging/docker/
   depends_on:
   - package
@@ -424,6 +457,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - apt-get update
   - apt-get install -yq postgresql-client
   - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -442,6 +476,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - apt-get update
   - apt-get install -yq default-mysql-client
   - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
@@ -459,6 +494,7 @@ steps:
 - name: build-windows-installer
   image: grafana/wix-toolset-ci:v3
   commands:
+  - rm -f /root/.netrc
   - echo ./scripts/build/ci-msi-build/ci-msi-build-oss.sh
   depends_on:
   - package
@@ -466,6 +502,7 @@ steps:
 - name: release-next-npm-packages
   image: grafana/build-container:1.2.21
   commands:
+  - rm -f /root/.netrc
   - npx lerna bootstrap
   - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
   - echo ./scripts/circle-release-next-packages.sh
@@ -478,6 +515,7 @@ steps:
 - name: publish-packages
   image: grafana/grafana-ci-deploy:1.2.5
   commands:
+  - rm -f /root/.netrc
   - echo ./bin/grabpl publish-packages --edition oss
   depends_on:
   - package
