@@ -217,7 +217,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         )}
         {stackTrace && (
           <AccordianText
-            label={<span>Stack trace</span>}
+            label="Stack trace"
             data={[stackTrace]}
             isOpen={isStackTraceOpen}
             onToggle={() => stackTraceToggle(spanID)}

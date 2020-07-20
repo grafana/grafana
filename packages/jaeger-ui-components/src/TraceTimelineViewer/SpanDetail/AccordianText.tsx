@@ -45,7 +45,7 @@ type AccordianTextProps = {
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
-  label: React.ReactNode;
+  label: React.ReactNode | string;
   onToggle?: null | (() => void);
 };
 
@@ -68,7 +68,8 @@ export default function AccordianText(props: AccordianTextProps) {
   return (
     <div className={className || ''}>
       <div className={cx(styles.header, headerClassName)} {...headerProps} data-test-id="AccordianText--header">
-        {arrow} <strong>{label}</strong> ({data.length})
+        {arrow}
+        <strong>{label}</strong> ({data.length})
       </div>
       {isOpen && <TextList data={data} />}
     </div>
