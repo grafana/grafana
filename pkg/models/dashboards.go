@@ -111,6 +111,7 @@ type DashboardErr struct {
 	Reason     string
 }
 
+// Equal returns whether equal to another DashboardErr.
 func (e DashboardErr) Equal(o DashboardErr) bool {
 	return o.StatusCode == e.StatusCode && o.Status == e.Status && o.Reason == e.Reason
 }
