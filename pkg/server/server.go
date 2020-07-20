@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -43,8 +43,18 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// NewServer returns a new instance of Server.
-func NewServer(configFile, homePath, pidFile string) *Server {
+// Config contains parameters for the New function.
+type Config struct {
+	ConfigFile  string
+	HomePath    string
+	PidFile     string
+	Version     string
+	Commit      string
+	BuildBranch string
+}
+
+// New returns a new instance of Server.
+func New(cfg Config) *Server {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
@@ -55,9 +65,12 @@ func NewServer(configFile, homePath, pidFile string) *Server {
 		log:           log.New("server"),
 		cfg:           setting.NewCfg(),
 
-		configFile: configFile,
-		homePath:   homePath,
-		pidFile:    pidFile,
+		configFile:  cfg.ConfigFile,
+		homePath:    cfg.HomePath,
+		pidFile:     cfg.PidFile,
+		version:     cfg.Version,
+		commit:      cfg.Commit,
+		buildBranch: cfg.BuildBranch,
 	}
 }
 
@@ -71,9 +84,12 @@ type Server struct {
 	shutdownReason     string
 	shutdownInProgress bool
 
-	configFile string
-	homePath   string
-	pidFile    string
+	configFile  string
+	homePath    string
+	pidFile     string
+	version     string
+	commit      string
+	buildBranch string
 
 	RouteRegister routing.RouteRegister `inject:""`
 	HTTPServer    *api.HTTPServer       `inject:""`
@@ -230,6 +246,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 
 	// Provide services and their dependencies to the graph.
 	for _, obj := range objs {
+		s.log.Info("Injecting service", "service", obj)
 		if err := serviceGraph.Provide(&inject.Object{Value: obj}); err != nil {
 			return errutil.Wrapf(err, "Failed to provide object to the graph")
 		}
@@ -257,9 +274,9 @@ func (s *Server) loadConfiguration() {
 	}
 
 	s.log.Info("Starting "+setting.ApplicationName,
-		"version", version,
-		"commit", commit,
-		"branch", buildBranch,
+		"version", s.version,
+		"commit", s.commit,
+		"branch", s.buildBranch,
 		"compiled", time.Unix(setting.BuildStamp, 0),
 	)
 
