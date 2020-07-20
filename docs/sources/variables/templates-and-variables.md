@@ -118,4 +118,5 @@ Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch 
 
 ## Variable best practices
 
-- Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings. Consider putting the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings.
+- Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
