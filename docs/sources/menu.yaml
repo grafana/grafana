@@ -255,6 +255,10 @@
       name: Overview
     - link: /variables/add-query-variable/
       name: Add a query variable
+    - name: Selection options
+      link: /variables/variable-selection-options/
+    - name: Value groups/tags
+      link: /variables/variable-value-tags/
     - link: /variables/global-variables/
       name: Global variables
     - link: /variables/url-variables/
