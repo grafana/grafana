@@ -5,7 +5,7 @@ type = "docs"
 weight = 800
 +++
 
-# Enter variable Selection Options
+# Enter variable selection options
 
 **Selection Options** are a feature you can use to manage variable option selections. All selection options are optional, and they are off by default.
 
