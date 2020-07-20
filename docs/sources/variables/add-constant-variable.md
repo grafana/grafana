@@ -9,9 +9,9 @@ weight = 500
 
 _Constant_ variables allow you to define a hidden constant. This is useful for metric path prefixes for dashboards you want to share. When you export a dashboard, constant variables are converted to import options.
 
-Custom variables are not flexible. Each constant variable only holds one value, and it cannot be updated unless you update the variable settings. 
+Constant variables are _not_ flexible. Each constant variable only holds one value, and it cannot be updated unless you update the variable settings. 
 
-Constant variables are useful when you have complex values that you need to include in queries but don't want to retype every time. For example, if you had a server path called `i-0b6a61efe2ab843gg`, you could replace it with a variable called `$path_gg`.
+Constant variables are useful when you have complex values that you need to include in queries but don't want to retype in every single query. For example, if you had a server path called `i-0b6a61efe2ab843gg`, then you could replace it with a variable called `$path_gg`.
 
 ## Enter General options
 
@@ -28,5 +28,5 @@ Constant variables are useful when you have complex values that you need to incl
 ## Enter Constant options
 
 1. In the **Value** field, enter the variable value.
-2. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
-3. Click **Add** to add the variable to the dashboard.
+1. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
+1. Click **Add** to add the variable to the dashboard.
