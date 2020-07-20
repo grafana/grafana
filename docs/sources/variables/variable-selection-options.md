@@ -7,7 +7,7 @@ weight = 800
 
 # Enter variable Selection Options
 
-Selection Options are a feature you can use to organize variable option selections. All selection options are optional, and they are off by default.
+**Selection Options** are a feature you can use to manage variable option selections. All selection options are optional, and they are off by default.
 
 ## Multi-value
 
