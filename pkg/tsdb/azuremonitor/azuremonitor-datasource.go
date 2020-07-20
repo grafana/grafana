@@ -398,11 +398,11 @@ func toGrafanaUnit(unit string) string {
 	case "Count":
 		return "short" // this is used for integers
 	case "Bytes":
-		return "bytes(Metric)" // or ICE
+		return "decbytes" // or ICE
 	case "BytesPerSecond":
-		return "bytes/sec"
+		return "Bps"
 	case "CountPerSecond":
-		return "counts/sec (cps)"
+		return "cps"
 	case "Milliseconds":
 		return "ms"
 	}

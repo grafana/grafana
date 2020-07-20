@@ -388,21 +388,21 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "PageBlob", "tier": "Standard"},
 						[]float64{675530, 675530, 675530}).SetConfig(
-						&data.FieldConfig{Unit: "Bytes", DisplayName: "danieltest {Blob Type=PageBlob, Tier=Standard}"})),
+						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=PageBlob, Tier=Standard}"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "BlockBlob", "tier": "Hot"},
 						[]float64{0, 0, 0}).SetConfig(
-						&data.FieldConfig{Unit: "Bytes", DisplayName: "danieltest {Blob Type=BlockBlob, Tier=Hot}"})),
+						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=BlockBlob, Tier=Hot}"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
 						[]float64{0, 0, 0}).SetConfig(
-						&data.FieldConfig{Unit: "Bytes", DisplayName: "danieltest {Blob Type=Azure Data Lake Storage, Tier=Cool}"})),
+						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=Azure Data Lake Storage, Tier=Cool}"})),
 			},
 		},
 	}
