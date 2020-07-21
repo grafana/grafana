@@ -11,7 +11,7 @@ Value groups/tags are a feature you can use to organize variable options. If you
 
 {{< docs-imagebox img="/img/docs/v50/variable_dropdown_tags.png" max-width="300px" >}}
 
-This feature is off by default. Click **Enabled** to turn on the feature.
+This feature is off by default. Click **Enabled** to turn the feature on.
 
 ## Tags query
 
