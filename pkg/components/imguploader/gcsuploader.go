@@ -83,14 +83,14 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		}
 	}
 
-	err = u.uploadFileWithSDK(ctx, client, imageDiskPath, key)
+	err = u.uploadFile(ctx, client, imageDiskPath, key)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
 }
 
-func (u *GCSUploader) uploadFileWithSDK(
+func (u *GCSUploader) uploadFile(
 	ctx context.Context,
 	client *storage.Client,
 	imageDiskPath,
