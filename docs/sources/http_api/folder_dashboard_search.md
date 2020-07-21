@@ -101,7 +101,7 @@ Content-Type: application/json
 
 The most basic example for a dashboard for which there is no authentication required is:
 
-```curl
+```
 curl 'https://play.grafana.org/api/search'
 ```
 
