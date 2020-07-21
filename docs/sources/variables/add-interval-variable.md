@@ -3,7 +3,6 @@ title = "Add an interval variable"
 type = "docs"
 [menu.docs]
 weight = 500
-draft = "true"
 +++
 
 # Add an interval variable
