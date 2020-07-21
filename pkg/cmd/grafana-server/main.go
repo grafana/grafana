@@ -111,14 +111,18 @@ func main() {
 
 	metrics.SetBuildInformation(version, commit, buildBranch)
 
-	s := server.New(server.Config{
+	s, err := server.New(server.Config{
 		ConfigFile: *configFile, HomePath: *homePath, PidFile: *pidFile,
 		Version: version, Commit: commit, BuildBranch: buildBranch,
 	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 
 	go listenToSystemSignals(s)
 
-	err := s.Run()
+	err = s.Run()
 	code := 0
 	if err != nil {
 		code = s.ExitCode(err)

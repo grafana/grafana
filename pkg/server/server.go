@@ -51,14 +51,15 @@ type Config struct {
 	Version     string
 	Commit      string
 	BuildBranch string
+	Listener    net.Listener
 }
 
 // New returns a new instance of Server.
-func New(cfg Config) *Server {
+func New(cfg Config) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
-	return &Server{
+	s := &Server{
 		context:       childCtx,
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
@@ -72,6 +73,13 @@ func New(cfg Config) *Server {
 		commit:      cfg.Commit,
 		buildBranch: cfg.BuildBranch,
 	}
+	if cfg.Listener != nil {
+		if err := s.init(&cfg); err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
 }
 
 // Server is responsible for managing the lifecycle of services.
@@ -83,6 +91,7 @@ type Server struct {
 	cfg                *setting.Cfg
 	shutdownReason     string
 	shutdownInProgress bool
+	isInitialized      bool
 
 	configFile  string
 	homePath    string
@@ -95,9 +104,12 @@ type Server struct {
 	HTTPServer    *api.HTTPServer       `inject:""`
 }
 
-// Run initializes and starts services. This will block until all services have
-// exited. To initiate shutdown, call the Shutdown method in another goroutine.
-func (s *Server) Run() (err error) {
+// init initializes the server and its services.
+func (s *Server) init(cfg *Config) error {
+	if s.isInitialized {
+		return nil
+	}
+
 	s.loadConfiguration()
 	s.writePIDFile()
 
@@ -105,9 +117,8 @@ func (s *Server) Run() (err error) {
 	social.NewOAuthService()
 
 	services := registry.GetServices()
-
-	if err = s.buildServiceGraph(services); err != nil {
-		return
+	if err := s.buildServiceGraph(services); err != nil {
+		return err
 	}
 
 	// Initialize services.
@@ -116,12 +127,28 @@ func (s *Server) Run() (err error) {
 			continue
 		}
 
-		s.log.Debug("Initializing " + service.Name)
-
+		if cfg != nil && cfg.Listener != nil {
+			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
+				s.log.Debug("Using provided listener for HTTP server")
+				httpS.Listener = cfg.Listener
+			}
+		}
 		if err := service.Instance.Init(); err != nil {
 			return errutil.Wrapf(err, "Service init failed")
 		}
 	}
+
+	return nil
+}
+
+// Run initializes and starts services. This will block until all services have
+// exited. To initiate shutdown, call the Shutdown method in another goroutine.
+func (s *Server) Run() (err error) {
+	if err = s.init(nil); err != nil {
+		return
+	}
+
+	services := registry.GetServices()
 
 	// Start background services.
 	for _, svc := range services {
@@ -173,7 +200,7 @@ func (s *Server) Run() (err error) {
 
 	s.notifySystemd("READY=1")
 
-	return err
+	return nil
 }
 
 func (s *Server) Shutdown(reason string) {
