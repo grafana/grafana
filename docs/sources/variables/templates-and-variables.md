@@ -76,23 +76,23 @@ You can also define the following types of variables in Grafana.
 
 ### Query
 
-Query variables allow you to write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, data centers, etc.
+Write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, data centers, and so on.
 
 For instructions, refer to [Add a query variable]({{< relref "add-query-variable.md" >}}).
 
-Queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
+Variable queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
 
 ### Custom
 
-Define the variable options manually using a comma-separated list.
+Define the variable options manually using a comma-separated list. For instructions, refer to [Add a custom variable]({{< relref "add-custom-variable.md" >}}).
 
 ### Text box
 
-Text box variables display as a free text input field with an optional default value.
+Display a free text input field with an optional default value. For instructions, refer to [Add a text box variable]({{< relref "add-text-box-variable.md" >}}).
 
 ### Constant
 
-Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables are made into an import option.
+Define a hidden constant. For instructions, refer to [Add a constant variable]({{< relref "add-constant-variable.md" >}}).
 
 ### Data source
 
@@ -118,4 +118,5 @@ Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch 
 
 ## Variable best practices
 
-- Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings. Consider putting the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings.
+- Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
