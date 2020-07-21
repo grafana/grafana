@@ -30,6 +30,7 @@ import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
+import { TextArea } from '@grafana/ui';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -93,6 +94,9 @@ const getStyles = createStyle((theme: Theme) => {
     AccordianWarningsLabel: css`
       label: AccordianWarningsLabel;
       color: ${autoColor(theme, '#d36c08')};
+    `,
+    Textarea: css`
+      word-break: break-all;
     `,
   };
 });
@@ -220,6 +224,9 @@ export default function SpanDetail(props: SpanDetailProps) {
             label="Stack trace"
             data={stackTraces}
             isOpen={isStackTracesOpen}
+            TextComponent={textComponentProps => (
+              <TextArea className={styles.Textarea} readOnly cols={10} rows={10} value={textComponentProps.data} />
+            )}
             onToggle={() => stackTracesToggle(spanID)}
           />
         )}
