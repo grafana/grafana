@@ -5,24 +5,15 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 	"time"
-
-	"golang.org/x/oauth2/jwt"
 
 	"cloud.google.com/go/storage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
-)
-
-const (
-	tokenUrl         string = "https://www.googleapis.com/auth/devstorage.read_write" // #nosec
-	uploadUrl        string = "https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s"
-	publicReadOption string = "&predefinedAcl=publicRead"
-	bodySizeLimit           = 1 << 20
+	"google.golang.org/api/option"
 )
 
 type GCSUploader struct {
@@ -65,8 +56,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 	fileName += pngExt
 	key := path.Join(u.path, fileName)
 
-	var client *http.Client
-
+	var client *storage.Client
 	if u.keyFile != "" {
 		u.log.Debug("Opening key file ", u.keyFile)
 		data, err := ioutil.ReadFile(u.keyFile)
@@ -74,67 +64,38 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 			return "", err
 		}
 
-		u.log.Debug("Creating JWT conf")
-		conf, err := google.JWTConfigFromJSON(data, tokenUrl)
+		u.log.Debug("Creating google Credentials from json")
+		cred, err := google.CredentialsFromJSON(ctx, data)
 		if err != nil {
 			return "", err
 		}
 
-		u.log.Debug("Creating HTTP client")
-		client = conf.Client(ctx)
+		u.log.Debug("Creating gcs client")
+		client, err = storage.NewClient(ctx, option.WithCredentials(cred))
+		if err != nil {
+			return "", err
+		}
 	} else {
-		u.log.Debug("Key file is empty, trying to use application default credentials")
-		client, err = google.DefaultClient(ctx)
+		u.log.Debug("Creating gcs client with no credentials")
+		client, err = storage.NewClient(ctx)
 		if err != nil {
 			return "", err
 		}
 	}
 
-	err = u.uploadFile(client, imageDiskPath, key)
+	err = u.uploadFileWithSDK(ctx, client, imageDiskPath, key)
 	if err != nil {
 		return "", err
 	}
-
-	if !u.enableSignedUrls {
-		return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
-	}
-
-	u.log.Debug("Signing GCS URL")
-	var conf *jwt.Config
-	if u.keyFile != "" {
-		jsonKey, err := ioutil.ReadFile(u.keyFile)
-		if err != nil {
-			return "", fmt.Errorf("ioutil.ReadFile: %v", err)
-		}
-		conf, err = google.JWTConfigFromJSON(jsonKey)
-		if err != nil {
-			return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
-		}
-	} else {
-		creds, err := google.FindDefaultCredentials(ctx, storage.ScopeReadWrite)
-		if err != nil {
-			return "", fmt.Errorf("google.FindDefaultCredentials: %v", err)
-		}
-		conf, err = google.JWTConfigFromJSON(creds.JSON)
-		if err != nil {
-			return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
-		}
-	}
-	opts := &storage.SignedURLOptions{
-		Scheme:         storage.SigningSchemeV4,
-		Method:         "GET",
-		GoogleAccessID: conf.Email,
-		PrivateKey:     conf.PrivateKey,
-		Expires:        time.Now().Add(u.signedUrlExpiration),
-	}
-	signedUrl, err := storage.SignedURL(u.bucket, key, opts)
-	if err != nil {
-		return "", fmt.Errorf("storage.SignedURL: %v", err)
-	}
-	return signedUrl, nil
+	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
 }
 
-func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string) error {
+func (u *GCSUploader) uploadFileWithSDK(
+	ctx context.Context,
+	client *storage.Client,
+	imageDiskPath,
+	key string,
+) error {
 	u.log.Debug("Opening image file ", imageDiskPath)
 
 	fileReader, err := os.Open(imageDiskPath)
@@ -143,32 +104,13 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	}
 	defer fileReader.Close()
 
-	reqUrl := fmt.Sprintf(uploadUrl, u.bucket, key)
-	if !u.enableSignedUrls {
-		reqUrl += publicReadOption
-	}
-	u.log.Debug("Request URL: ", reqUrl)
-
-	req, err := http.NewRequest("POST", reqUrl, fileReader)
-	if err != nil {
+	u.log.Debug("Sending to gcs bucket using SDK")
+	wc := client.Bucket(u.bucket).Object(key).NewWriter(ctx)
+	if _, err := io.Copy(wc, fileReader); err != nil {
 		return err
 	}
-
-	req.Header.Add("Content-Type", "image/png")
-	u.log.Debug("Sending POST request to GCS")
-
-	resp, err := client.Do(req)
-	if err != nil {
+	if err := wc.Close(); err != nil {
 		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		respBody, err := ioutil.ReadAll(io.LimitReader(resp.Body, bodySizeLimit))
-		if err == nil && len(respBody) > 0 {
-			u.log.Error(fmt.Sprintf("GCS response: url=%q status=%d, body=%q", reqUrl, resp.StatusCode, string(respBody)))
-		}
-		return fmt.Errorf("GCS response status code %d", resp.StatusCode)
 	}
 
 	return nil
