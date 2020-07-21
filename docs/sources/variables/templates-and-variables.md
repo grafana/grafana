@@ -104,7 +104,7 @@ Interval variables represent time spans. Instead of hard-coding a group by time 
 
 ### Ad hoc filters
 
-Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources. This variable type allows you to add key/value filters that are automatically added to all metric queries that use the specified data source.
+Ad hoc filters allow you to add key/value filters that are automatically added to all metric queries that use the specified data source. Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources. For instructions, refer to [Add ad hoc filters]({{< relref "add-ad-hoc-filters.md" >}}).
 
 ## Variable best practices
 
