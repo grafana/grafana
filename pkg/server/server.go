@@ -109,6 +109,7 @@ func (s *Server) init(cfg *Config) error {
 	if s.isInitialized {
 		return nil
 	}
+	s.isInitialized = true
 
 	s.loadConfiguration()
 	s.writePIDFile()
@@ -273,7 +274,6 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 
 	// Provide services and their dependencies to the graph.
 	for _, obj := range objs {
-		s.log.Info("Injecting service", "service", obj)
 		if err := serviceGraph.Provide(&inject.Object{Value: obj}); err != nil {
 			return errutil.Wrapf(err, "Failed to provide object to the graph")
 		}

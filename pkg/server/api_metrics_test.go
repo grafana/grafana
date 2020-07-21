@@ -1,15 +1,37 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
+	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
+
+	cwapi "github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+	"xorm.io/xorm"
 )
 
 func createGrafDir(t *testing.T) (string, string) {
@@ -27,6 +49,8 @@ func createGrafDir(t *testing.T) (string, string) {
 	err = os.MkdirAll(cfgDir, 0755)
 	require.NoError(t, err)
 	dataDir := filepath.Join(tmpDir, "data")
+	err = os.MkdirAll(dataDir, 0755)
+	require.NoError(t, err)
 	logsDir := filepath.Join(tmpDir, "logs")
 	pluginsDir := filepath.Join(tmpDir, "plugins")
 	publicDir := filepath.Join(tmpDir, "public")
@@ -45,6 +69,9 @@ func createGrafDir(t *testing.T) (string, string) {
 	provPluginsDir := filepath.Join(provDir, "plugins")
 	err = os.MkdirAll(provPluginsDir, 0755)
 	require.NoError(t, err)
+	provDashboardsDir := filepath.Join(provDir, "dashboards")
+	err = os.MkdirAll(provDashboardsDir, 0755)
+	require.NoError(t, err)
 
 	cfg := ini.Empty()
 	dfltSect := cfg.Section("")
@@ -60,9 +87,19 @@ func createGrafDir(t *testing.T) (string, string) {
 	_, err = pathsSect.NewKey("plugins", pluginsDir)
 	require.NoError(t, err)
 
+	logSect, err := cfg.NewSection("log")
+	require.NoError(t, err)
+	_, err = logSect.NewKey("level", "debug")
+	require.NoError(t, err)
+
 	serverSect, err := cfg.NewSection("server")
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("port", "0")
+	require.NoError(t, err)
+
+	anonSect, err := cfg.NewSection("auth.anonymous")
+	require.NoError(t, err)
+	_, err = anonSect.NewKey("enabled", "true")
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -75,20 +112,156 @@ func createGrafDir(t *testing.T) (string, string) {
 	return tmpDir, cfgPath
 }
 
-func TestQueryMetrics(t *testing.T) {
-	tmpDir, cfgPath := createGrafDir(t)
+func startGrafana(t *testing.T, grafDir, cfgPath string) string {
+	t.Helper()
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	_, err = New(Config{
+	server, err := New(Config{
 		ConfigFile: cfgPath,
-		HomePath:   tmpDir,
+		HomePath:   grafDir,
 		Listener:   listener,
 	})
 	require.NoError(t, err)
 
-	// TODO: Run Grafana server in goroutine, listening on random port
+	go func() {
+		if err := server.Run(); err != nil {
+			t.Log("Server exited uncleanly", "error", err)
+		}
+	}()
+	t.Cleanup(func() {
+		server.Shutdown("")
+	})
 
-	// TODO: Make POST request to /api/ds/query
-	// TODO: Verify results
+	// Wait for Grafana to be ready
+	addr := listener.Addr().String()
+	resp, err := http.Get(fmt.Sprintf("http://%s/healthz", addr))
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	resp.Body.Close()
+	require.Equal(t, 200, resp.StatusCode)
+
+	t.Logf("Grafana is listening on %s", addr)
+
+	return addr
+}
+
+func setUpDatabase(t *testing.T, grafDir string) {
+	t.Helper()
+
+	connStr := fmt.Sprintf("file:%s/data/grafana.db?mode=rwc", grafDir)
+	engine, err := xorm.NewEngine("sqlite3", connStr)
+	require.NoError(t, err)
+	defer engine.Close()
+	migrator := migrator.NewMigrator(engine)
+	migrations.AddMigrations(migrator)
+	for _, descriptor := range registry.GetServices() {
+		sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
+		if ok {
+			sc.AddMigration(migrator)
+		}
+	}
+	err = migrator.Start()
+	require.NoError(t, err)
+
+	// Migrate
+	_, err = engine.Insert(&models.DataSource{
+		Id:      1,
+		OrgId:   1,
+		Name:    "Test",
+		Type:    "cloudwatch",
+		Created: time.Now(),
+		Updated: time.Now(),
+	})
+	require.NoError(t, err)
+}
+
+func TestQueryMetrics(t *testing.T) {
+	origNewCWClient := cloudwatch.NewCWClient
+	t.Cleanup(func() {
+		cloudwatch.NewCWClient = origNewCWClient
+	})
+
+	var client cloudwatch.FakeCWClient
+	cloudwatch.NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return client
+	}
+
+	grafDir, cfgPath := createGrafDir(t)
+
+	setUpDatabase(t, grafDir)
+
+	addr := startGrafana(t, grafDir, cfgPath)
+
+	t.Run("Custom metrics", func(t *testing.T) {
+		client = cloudwatch.FakeCWClient{
+			Metrics: []*cwapi.Metric{
+				{
+					MetricName: aws.String("Test_MetricName"),
+					Dimensions: []*cwapi.Dimension{
+						{
+							Name: aws.String("Test_DimensionName"),
+						},
+					},
+				},
+			},
+		}
+
+		req := dtos.MetricRequest{
+			Queries: []*simplejson.Json{
+				simplejson.NewFromAny(map[string]interface{}{
+					"type":         "metricFindQuery",
+					"subtype":      "metrics",
+					"region":       "us-east-1",
+					"namespace":    "custom",
+					"datasourceId": 1,
+				}),
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&req)
+		require.NoError(t, err)
+		resp, err := http.Post(fmt.Sprintf("http://%s/api/ds/query", addr), "application/json", &buf)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		t.Cleanup(func() { resp.Body.Close() })
+
+		buf = bytes.Buffer{}
+		_, err = io.Copy(&buf, resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+
+		var tr tsdb.Response
+		err = json.Unmarshal(buf.Bytes(), &tr)
+		require.NoError(t, err)
+		assert.Equal(t, tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"A": {
+					RefId: "A",
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": json.Number("1"),
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"Test_MetricName",
+									"Test_MetricName",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, tr)
+	})
 }

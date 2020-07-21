@@ -37,6 +37,7 @@ func Wrap(action interface{}) macaron.Handler {
 		if err == nil && val != nil && len(val) > 0 {
 			res = val[0].Interface().(Response)
 		} else {
+			c.Logger.Error("An internal error occurred", "error", err)
 			res = ServerError(err)
 		}
 

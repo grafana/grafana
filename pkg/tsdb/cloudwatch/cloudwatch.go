@@ -81,7 +81,7 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 	if err != nil {
 		return nil, err
 	}
-	return newCWClient(sess), nil
+	return NewCWClient(sess), nil
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
@@ -276,10 +276,10 @@ func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
 }
 
-// CloudWatch client factory.
+// NewCWClient is a CloudWatch client factory.
 //
 // Stubbable by tests.
-var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+var NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 	client := cloudwatch.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
