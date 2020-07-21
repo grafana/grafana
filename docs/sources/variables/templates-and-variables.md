@@ -96,7 +96,7 @@ Define a hidden constant. For instructions, refer to [Add a constant variable]({
 
 ### Data source
 
-Data source variables allow you to quickly change the data source for an entire dashboard. Useful if you have multiple instances of a data source in for example different environments.
+Quickly change the data source for an entire dashboard. For instructions, refer to [Add a data source variable]({{< relref "add-data-source-variable.md" >}}).
 
 ### Interval
 
