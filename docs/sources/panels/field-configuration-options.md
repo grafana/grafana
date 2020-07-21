@@ -139,7 +139,9 @@ For more information and instructions, refer to [Data links]({{< relref "../link
 
 Lets you set the display title of all fields. You can use [variables]({{< relref "../variables/templates-and-variables.md" >}}) in the field title.
 
-When multiple stats are shown, this field controls the title in each stat. By default this is the series name and field name. You can use expressions like ${__series.name} or ${**field.name} to use only series name or field name in title or \${**cell_2} to refer to other fields (2 being field/column with index 2).
+When multiple stats are shown, this field controls the title in each stat. By default this is the series name and field name. You can use expressions like `${__series.name}` or `${**field.name}` to use only series name or field name in title or `${**cell_2}` to refer to other fields (2 being field/column with index 2).
+
+To display the values of [labels]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) (a.k.a. _tags_) in the field title, you can use expressions in the format of `${__field.labels.X}`, where `X` is the key of the label. For example, `${__field.labels.host}`.  
 
 ### Max
 
