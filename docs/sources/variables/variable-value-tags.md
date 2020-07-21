@@ -25,7 +25,7 @@ In this [example dashboard](https://play.grafana.org/d/ZUPhFVGGk/graphite-with-e
 
 ## Tag values query
 
-Enter a data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer the currently selected tag.
+Enter a data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer to the currently selected tag.
 
 The `$tag` variable will have the value of the tag that the user chooses. 
 
