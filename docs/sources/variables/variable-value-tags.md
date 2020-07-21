@@ -15,7 +15,7 @@ This feature is off by default. Click **Enabled** to turn the feature on.
 
 ## Tags query
 
-Enter a data source query that should return a list of tags. The tags query returns a list of tags that each represent a group, and the tag values query returns a list of group members. 
+Enter a data source query that should return a list of tags. The tags query returns a list of tags that each represents a group, and the tag values query returns a list of group members. 
 
 For example, the tags query could be a list of regions (Europe, Asia, Americas), and then if the user selects the Europe tag, then the tag values query would return a list of countries -- Sweden, Germany, France, and so on.
 
