@@ -420,5 +420,5 @@ datasources:
 ```
 
 If you encounter metric request errors or other issues:
-- Make sure your data source yaml file parameters exactly match the example. This includes parameter names and use of quotation marks.
+- Make sure your data source YAML file parameters exactly match the example. This includes parameter names and use of quotation marks.
 - Make sure the `database` name is not included in the `url`.
