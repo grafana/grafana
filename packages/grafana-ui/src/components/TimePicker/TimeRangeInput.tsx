@@ -70,7 +70,7 @@ export const TimeRangeInput: FC<Props> = ({
     <div className={styles.container}>
       <div tabIndex={0} className={styles.pickerInput} aria-label="TimePicker Open Button" onClick={onOpen}>
         {isValidTimeRange(value) ? (
-          <TimePickerButtonLabel value={value as TimeRange} />
+          <TimePickerButtonLabel value={value as TimeRange} timeZone={timeZone} />
         ) : (
           <span className={styles.placeholder}>{placeholder}</span>
         )}

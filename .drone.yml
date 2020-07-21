@@ -225,8 +225,6 @@ services:
 trigger:
   event:
   - pull_request
-  repo:
-  - grafana/grafana
 
 ---
 kind: pipeline
@@ -506,7 +504,5 @@ trigger:
   - master
   event:
   - push
-  repo:
-  - grafana/grafana
 
 ...

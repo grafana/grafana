@@ -43,7 +43,7 @@ export const getStyles = createStyle((theme: Theme) => {
       /* The size of the indentGuide is based off of the iconWrapper */
       padding-right: calc(0.5rem + 12px);
       height: 100%;
-      border-left: 1px solid transparent;
+      border-left: 3px solid transparent;
       display: inline-flex;
       &::before {
         content: '';
@@ -53,12 +53,9 @@ export const getStyles = createStyle((theme: Theme) => {
     `,
     indentGuideActive: css`
       label: indentGuideActive;
-      padding-right: calc(0.5rem + 11px);
-      border-left: 0px;
+      border-color: ${autoColor(theme, 'darkgrey')};
       &::before {
-        content: '';
-        padding-left: 3px;
-        background-color: ${autoColor(theme, 'darkgrey')};
+        background-color: transparent;
       }
     `,
     iconWrapper: css`
