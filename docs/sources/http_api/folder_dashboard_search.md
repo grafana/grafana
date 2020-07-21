@@ -102,7 +102,7 @@ Content-Type: application/json
 The most basic example for a dashboard for which there is no authentication required is:
 
 ```
-curl 'https://play.grafana.org/api/search'
+curl https://play.grafana.org/api/search
 ```
 
 Here’s a cURL command that works for getting the home dashboard when you are running Grafana locally with [basic authentication]({{<relref "./auth/#basic-auth">}}) enabled using the default admin credentials:
