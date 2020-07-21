@@ -1,4 +1,3 @@
-
 apiVersion: 1
 
 datasources:
@@ -226,6 +225,7 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
+      customMetricsNamespaces: "CWAgent"
 
   # Keep to test old /api/prom API
   - name: gdev-loki-0.3
@@ -270,5 +270,3 @@ datasources:
     access: proxy
     url: http://localhost:9411
     editable: false
-
-

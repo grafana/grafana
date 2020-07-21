@@ -27,7 +27,7 @@ enable = [
   "govet",
   "ineffassign",
   # "interfacer",
-  # "misspell",
+  "misspell",
   "rowserrcheck",
   "exportloopref",
   "staticcheck",
@@ -75,3 +75,7 @@ text = "402"
 [[issues.exclude-rules]]
 linters = ["gosec"]
 text = "501"
+
+[[issues.exclude-rules]]
+linters = ["misspell"]
+text = "Unknwon` is a misspelling of `Unknown"
