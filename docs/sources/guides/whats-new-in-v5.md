@@ -135,7 +135,7 @@ We are introducing a new unique identifier (`uid`) in the dashboard JSON model. 
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.
 
 The unique identifier allows having persistent URLs for accessing dashboards, sharing them
-between instances and when using [dashboard provisioning](#dashboards). This means that dashboard can
+between instances and when using [dashboard provisioning]((/administration/provisioning/#reusable-dashboard-urls)). This means that dashboard can
 be renamed without breaking any links. We're changing the URL format for dashboards
 from `/dashboard/db/:slug` to `/d/:uid/:slug`. We'll keep supporting the old slug-based URLs for dashboards
 and redirects to the new one for backward compatibility. Please note that the old slug-based URLs
