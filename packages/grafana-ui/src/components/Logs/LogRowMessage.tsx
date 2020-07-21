@@ -17,7 +17,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { LogRowContext } from './LogRowContext';
 import { LogMessageAnsi } from './LogMessageAnsi';
 
-const MAX_CHARACTERS = 5000;
+export const MAX_CHARACTERS = 100000;
 
 interface Props extends Themeable {
   row: LogRowModel;
@@ -88,7 +88,8 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter = highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0;
+    const needsHighlighter =
+      highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
     const highlightClassName = previewHighlights
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
@@ -112,7 +113,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {needsHighlighter && entry.length < MAX_CHARACTERS ? (
+            {needsHighlighter ? (
               <Highlighter
                 textToHighlight={entry}
                 searchWords={highlights}
