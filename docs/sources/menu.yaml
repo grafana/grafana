@@ -265,6 +265,8 @@
       name: Add data source variable
     - link: /variables/add-interval-variable/
       name: Add interval variable
+    - link: /variables/add-ad-hoc-filters/
+      name: Add ad hoc filters
     - name: Selection options
       link: /variables/variable-selection-options/
     - name: Value groups/tags
