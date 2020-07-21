@@ -37,7 +37,7 @@ Query expressions are different for each data source. For more information, refe
 1. In the **Query** field, enter a query. 
    - The query field varies according to your data source. Some data sources have custom query editors.
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
-1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names return by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "filter-variables-with-regex.md" >}}).
+1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "filter-variables-with-regex.md" >}}).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
 1. (optional) Enter [Selection Options]({{< relref "variable-selection-options.md" >}}).
 1. (optional) Enter [Value groups/tags]({{< relref "variable-value-tags.md" >}}).
