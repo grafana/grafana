@@ -8,11 +8,22 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -42,7 +53,6 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return &cloudWatchExecutor{
 			DataSource: ds,
-			clients:    awsCredsCache,
 		}, nil
 	})
 }
@@ -50,9 +60,53 @@ func init() {
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
 	*models.DataSource
+}
 
-	// clients is our interface to access AWS service-specific API clients
-	clients clientCache
+func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
+	dsInfo := e.getDSInfo(region)
+	creds, err := getCredentials(dsInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := &aws.Config{
+		Region:      aws.String(dsInfo.Region),
+		Credentials: creds,
+	}
+	return newSession(cfg)
+}
+
+func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	return newCWClient(sess), nil
+}
+
+func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	return newCWLogsClient(sess), nil
+}
+
+func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	return newEC2Client(sess), nil
+}
+
+func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
+	error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	return newRGTAClient(sess), nil
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
@@ -142,7 +196,7 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 		queryParams.Set("region", region)
 	}
 
-	logsClient, err := e.clients.logsClient(e.getDSInfo(region))
+	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -220,4 +274,42 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 
 func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
+}
+
+// CloudWatch client factory.
+//
+// Stubbable by tests.
+var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+	client := cloudwatch.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
+}
+
+// CloudWatch logs client factory.
+//
+// Stubbable by tests.
+var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	client := cloudwatchlogs.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
+}
+
+// EC2 client factory.
+//
+// Stubbable by tests.
+var newEC2Client = func(provider client.ConfigProvider) ec2iface.EC2API {
+	return ec2.New(provider)
+}
+
+// RGTA client factory.
+//
+// Stubbable by tests.
+var newRGTAClient = func(provider client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+	return resourcegroupstaggingapi.New(provider)
 }

@@ -50,7 +50,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				}
 			}()
 
-			client, err := e.clients.cloudWatchClient(e.getDSInfo(region))
+			client, err := e.getCWClient(region)
 			if err != nil {
 				return err
 			}

@@ -36,7 +36,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	actionPrefix := parameters.Get("actionPrefix").MustString("")
 	alarmNamePrefix := parameters.Get("alarmNamePrefix").MustString("")
 
-	cli, err := e.clients.cloudWatchClient(e.getDSInfo(region))
+	cli, err := e.getCWClient(region)
 	if err != nil {
 		return nil, err
 	}
