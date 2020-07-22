@@ -382,6 +382,8 @@
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
       link: /tutorials/api_org_token_howto/
+    - name: cURL examples
+      link: /http_api/curl-examples/  
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API
