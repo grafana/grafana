@@ -254,7 +254,17 @@
     - link: /variables/templates-and-variables/
       name: Overview
     - link: /variables/add-query-variable/
-      name: Add a query variable
+      name: Add query variable
+    - link: /variables/add-custom-variable/
+      name: Add custom variable
+    - link: /variables/add-text-box-variable/
+      name: Add text box variable
+    - link: /variables/add-constant-variable/
+      name: Add constant variable
+    - name: Selection options
+      link: /variables/variable-selection-options/
+    - name: Value groups/tags
+      link: /variables/variable-value-tags/
     - link: /variables/global-variables/
       name: Global variables
     - link: /variables/url-variables/
