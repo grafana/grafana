@@ -6,7 +6,7 @@ jest.mock('@grafana/data/src/datetime/formatter', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { ExploreMode, FieldType, LogRowModel, TimeSeries, toDataFrame } from '@grafana/data';
+import { FieldType, LogRowModel, TimeSeries, toDataFrame, ArrayVector } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
@@ -34,9 +34,20 @@ const testContext = (options: any = {}) => {
 
   const emptyTable = toDataFrame({ name: 'empty-table', refId: 'A', fields: [] });
 
+  const logs = toDataFrame({
+    name: 'logs-res',
+    refId: 'A',
+    fields: [
+      { name: 'value', type: FieldType.number, values: [4, 5, 6] },
+      { name: 'time', type: FieldType.time, values: [100, 100, 100] },
+      { name: 'tsNs', type: FieldType.time, values: ['100000002', undefined, '100000001'] },
+      { name: 'message', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
+    ],
+    meta: { preferredVisualisationType: 'logs' },
+  });
+
   const defaultOptions = {
-    mode: ExploreMode.Metrics,
-    dataFrames: [timeSeries, table, emptyTable],
+    dataFrames: [timeSeries, table, emptyTable, logs],
     graphResult: [] as TimeSeries[],
     tableResult: new TableModel(),
     logsResult: { hasUniqueLabels: false, rows: [] as LogRowModel[] },
@@ -45,7 +56,6 @@ const testContext = (options: any = {}) => {
   const combinedOptions = { ...defaultOptions, ...options };
 
   const state = ({
-    mode: combinedOptions.mode,
     graphResult: combinedOptions.graphResult,
     tableResult: combinedOptions.tableResult,
     logsResult: combinedOptions.logsResult,
@@ -191,10 +201,9 @@ describe('ResultProcessor', () => {
 
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
-        const { resultProcessor, dataFrames } = testContext({ mode: ExploreMode.Logs });
-        const timeField = dataFrames[0].fields[0];
-        const valueField = dataFrames[0].fields[1];
-        const logsDataFrame = dataFrames[1];
+        const { resultProcessor, dataFrames } = testContext({});
+        const logsDataFrame = dataFrames[3];
+
         const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toEqual({
@@ -258,24 +267,37 @@ describe('ResultProcessor', () => {
           ],
           series: [
             {
-              label: 'A-series',
-              color: '#7EB26D',
-              data: [
-                [100, 4],
-                [200, 5],
-                [300, 6],
-              ],
-              info: [],
+              label: 'unknown',
+              color: '#8e8e8e',
+              data: [[0, 3]],
               isVisible: true,
               yAxis: {
                 index: 1,
+                min: 0,
+                tickDecimals: 0,
               },
               seriesIndex: 0,
-              timeField,
-              valueField,
-              timeStep: 100,
+              timeField: {
+                name: 'Time',
+                type: 'time',
+                config: { unit: 'time:YYYY-MM-DD HH:mm:ss' },
+                values: new ArrayVector([0]),
+                index: 0,
+                display: expect.anything(),
+              },
+              valueField: {
+                name: 'unknown',
+                type: 'number',
+                config: { unit: undefined, color: '#8e8e8e' },
+                values: new ArrayVector([3]),
+                labels: undefined,
+                index: 1,
+                display: expect.anything(),
+              },
+              timeStep: 0,
             },
           ],
+          visibleRange: undefined,
         });
       });
     });

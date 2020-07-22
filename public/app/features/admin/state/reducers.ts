@@ -156,6 +156,7 @@ export const userListAdminSlice = createSlice({
     queryChanged: (state, action: PayloadAction<string>) => ({
       ...state,
       query: action.payload,
+      page: 0,
     }),
     pageChanged: (state, action: PayloadAction<number>) => ({
       ...state,

@@ -266,7 +266,7 @@ function pluginDirectiveLoader(
           registerPluginComponent(scope, elem, attrs, componentInfo);
         })
         .catch((err: any) => {
-          console.log('Plugin component error', err);
+          console.error('Plugin component error', err);
         });
     },
   };

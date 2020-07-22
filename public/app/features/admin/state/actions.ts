@@ -37,7 +37,7 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
       }
       dispatch(userAdminPageLoadedAction(true));
     } catch (error) {
-      console.log(error);
+      console.error(error);
 
       const userError = {
         title: error.data.message,

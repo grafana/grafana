@@ -87,7 +87,7 @@ func TestGetCredentials_ARNAuthType(t *testing.T) {
 			}, nil).
 			Times(1)
 
-		creds, err := getCredentials(&DatasourceInfo{
+		creds, err := getCredentials(&datasourceInfo{
 			AuthType: "arn",
 		})
 		require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestGetCredentials_ARNAuthType(t *testing.T) {
 			}, nil).
 			Times(1)
 
-		creds, err := getCredentials(&DatasourceInfo{
+		creds, err := getCredentials(&datasourceInfo{
 			AuthType:   "arn",
 			ExternalID: "external-id",
 		})
