@@ -1199,3 +1199,12 @@ func IsExpressionsEnabled() bool {
 	}
 	return v
 }
+
+// IsLiveEnabled returns if grafana live should be enabled
+func IsLiveEnabled() bool {
+	v, ok := FeatureToggles["live"]
+	if !ok {
+		return false
+	}
+	return v
+}
