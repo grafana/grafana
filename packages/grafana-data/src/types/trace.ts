@@ -58,6 +58,7 @@ export type TraceSpanData = {
   references?: TraceSpanReference[];
   warnings?: string[] | null;
   flags: number;
+  errorIconColor?: string;
 };
 
 export type TraceSpan = TraceSpanData & {
