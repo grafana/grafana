@@ -309,6 +309,7 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	const region = "default"
 	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
@@ -317,7 +318,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		}
 	}
 
-	client, err := e.clients.ec2Client(dsInfo)
+	client, err := e.getEC2Client(region)
 	if err != nil {
 		return nil, err
 	}
@@ -621,7 +622,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 }
 
 func (e *cloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	svc, err := e.clients.cloudWatchClient(e.getDSInfo(region))
+	svc, err := e.getCWClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -657,7 +658,7 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.clients.ec2Client(e.getDSInfo(region))
+	client, err := e.getEC2Client(region)
 	if err != nil {
 		return nil, err
 	}
@@ -680,16 +681,17 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 		TagFilters:          filters,
 	}
 
-	client, err := e.clients.rgtaClient(e.getDSInfo(region))
+	client, err := e.getRGTAClient(region)
 	if err != nil {
 		return nil, err
 	}
 
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	if err := client.GetResourcesPages(params, func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-		resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
-		return !lastPage
-	}); err != nil {
+	if err := client.GetResourcesPages(params,
+		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
+			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
+			return !lastPage
+		}); err != nil {
 		return nil, fmt.Errorf("failed to call tags:GetResources, %w", err)
 	}
 
@@ -697,19 +699,18 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 }
 
 func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
-	dsInfo := e.getDSInfo(region)
-
-	cli, err := e.clients.cloudWatchClient(dsInfo)
+	client, err := e.getCWClient(region)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
 
+	dsInfo := e.getDSInfo(region)
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(dsInfo.Namespace),
 	}
 
 	var resp cloudwatch.ListMetricsOutput
-	err = cli.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+	err = client.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		metrics.MAwsCloudWatchListMetrics.Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
 		if err != nil {
@@ -721,6 +722,7 @@ func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 		}
 		return !lastPage
 	})
+
 	return resp, err
 }
 

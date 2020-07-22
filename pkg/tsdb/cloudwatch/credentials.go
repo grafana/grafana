@@ -14,102 +14,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
-	"github.com/grafana/grafana/pkg/setting"
 )
-
-// clientCache represents the interface a cloudWatchExecutor needs to access
-// AWS service-specific clients in order to perform API requests.
-type clientCache interface {
-	cloudWatchClient(dsInfo *datasourceInfo) (cloudwatchiface.CloudWatchAPI, error)
-	ec2Client(dsInfo *datasourceInfo) (ec2iface.EC2API, error)
-	rgtaClient(dsInfo *datasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error)
-	logsClient(dsInfo *datasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error)
-}
 
 type envelope struct {
 	credentials *credentials.Credentials
 	expiration  *time.Time
 }
 
-type sharedCache map[string]envelope
-
-func (c sharedCache) cloudWatchClient(dsInfo *datasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
-}
-
-func (c sharedCache) ec2Client(dsInfo *datasourceInfo) (ec2iface.EC2API, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-	}
-	return ec2.New(sess, cfg), nil
-}
-
-func (c sharedCache) rgtaClient(dsInfo *datasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-	}
-	return resourcegroupstaggingapi.New(sess, cfg), nil
-}
-
-func (c sharedCache) logsClient(dsInfo *datasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	cfg, err := getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
-}
-
-var awsCredsCache = make(sharedCache)
+var awsCredsCache = map[string]envelope{}
 var credsCacheLock sync.RWMutex
 
 // Session factory.
@@ -258,18 +173,4 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 
 func ec2RoleProvider(sess *session.Session) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
-}
-
-func getAwsConfig(dsInfo *datasourceInfo) (*aws.Config, error) {
-	creds, err := getCredentials(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-
-	return cfg, nil
 }

@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func mockDatasource() *models.DataSource {
+func fakeDataSource() *models.DataSource {
 	jsonData := simplejson.New()
 	jsonData.Set("defaultRegion", "default")
 	return &models.DataSource{
@@ -29,92 +29,105 @@ func mockDatasource() *models.DataSource {
 	}
 }
 
-type mockedCloudWatch struct {
-	cloudwatchiface.CloudWatchAPI
-	Resp cloudwatch.ListMetricsOutput
-}
-
-type mockedEc2 struct {
-	ec2iface.EC2API
-	Resp        ec2.DescribeInstancesOutput
-	RespRegions ec2.DescribeRegionsOutput
-}
-
-type mockedRGTA struct {
-	resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	Resp resourcegroupstaggingapi.GetResourcesOutput
-}
-
-type mockedLogs struct {
+type fakeCWLogsClient struct {
 	cloudwatchlogsiface.CloudWatchLogsAPI
 	logGroups      cloudwatchlogs.DescribeLogGroupsOutput
 	logGroupFields cloudwatchlogs.GetLogGroupFieldsOutput
 	queryResults   cloudwatchlogs.GetQueryResultsOutput
 }
 
-func (m mockedCloudWatch) ListMetricsPages(in *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-
-func (m mockedEc2) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-func (m mockedEc2) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
-	return &m.RespRegions, nil
-}
-
-func (m mockedRGTA) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput, fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-
-func (m mockedLogs) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (m fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	return &m.queryResults, nil
 }
 
-func (m mockedLogs) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
+func (m fakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
 	return &cloudwatchlogs.StartQueryOutput{
 		QueryId: aws.String("abcd-efgh-ijkl-mnop"),
 	}, nil
 }
 
-func (m mockedLogs) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
+func (m fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
 	return &cloudwatchlogs.StopQueryOutput{
 		Success: aws.Bool(true),
 	}, nil
 }
 
-func (m mockedLogs) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (m fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	return &m.logGroups, nil
 }
 
-func (m mockedLogs) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (m fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return &m.logGroupFields, nil
 }
 
-// mockClients is an implementation of the clientCache interface that enables users to
-// mock the AWS API by providing mock implementations of the respective APIs.
-type mockClients struct {
-	cloudWatch cloudwatchiface.CloudWatchAPI
-	ec2        ec2iface.EC2API
-	rgta       resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	logs       cloudwatchlogsiface.CloudWatchLogsAPI
+type fakeCWClient struct {
+	cloudwatchiface.CloudWatchAPI
+
+	metrics []*cloudwatch.Metric
 }
 
-func (m *mockClients) cloudWatchClient(dsInfo *datasourceInfo) (cloudwatchiface.CloudWatchAPI, error) {
-	return m.cloudWatch, nil
+func (c fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+	fn(&cloudwatch.ListMetricsOutput{
+		Metrics: c.metrics,
+	}, true)
+	return nil
 }
 
-func (m *mockClients) ec2Client(dsInfo *datasourceInfo) (ec2iface.EC2API, error) {
-	return m.ec2, nil
+type fakeEC2Client struct {
+	ec2iface.EC2API
+
+	regions      []string
+	reservations []*ec2.Reservation
 }
 
-func (m *mockClients) rgtaClient(dsInfo *datasourceInfo) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI, error) {
-	return m.rgta, nil
+func (c fakeEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+	regions := []*ec2.Region{}
+	for _, region := range c.regions {
+		regions = append(regions, &ec2.Region{
+			RegionName: aws.String(region),
+		})
+	}
+	return &ec2.DescribeRegionsOutput{
+		Regions: regions,
+	}, nil
 }
 
-func (m *mockClients) logsClient(dsInfo *datasourceInfo) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	return m.logs, nil
+func (c fakeEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
+	fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+	reservations := []*ec2.Reservation{}
+	for _, r := range c.reservations {
+		instances := []*ec2.Instance{}
+		for _, inst := range r.Instances {
+			if len(in.InstanceIds) == 0 {
+				instances = append(instances, inst)
+				continue
+			}
+
+			for _, id := range in.InstanceIds {
+				if *inst.InstanceId == *id {
+					instances = append(instances, inst)
+				}
+			}
+		}
+		reservation := &ec2.Reservation{Instances: instances}
+		reservations = append(reservations, reservation)
+	}
+	fn(&ec2.DescribeInstancesOutput{
+		Reservations: reservations,
+	}, true)
+	return nil
+}
+
+type fakeRGTAClient struct {
+	resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+
+	tagMapping []*resourcegroupstaggingapi.ResourceTagMapping
+}
+
+func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput,
+	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
+	fn(&resourcegroupstaggingapi.GetResourcesOutput{
+		ResourceTagMappingList: c.tagMapping,
+	}, true)
+	return nil
 }
