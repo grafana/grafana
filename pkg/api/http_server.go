@@ -10,11 +10,11 @@ import (
 	"path"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
-	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -48,11 +48,10 @@ func init() {
 }
 
 type HTTPServer struct {
-	log           log.Logger
-	macaron       *macaron.Macaron
-	context       context.Context
-	streamManager *live.StreamManager
-	httpSrv       *http.Server
+	log     log.Logger
+	macaron *macaron.Macaron
+	context context.Context
+	httpSrv *http.Server
 
 	RouteRegister        routing.RouteRegister            `inject:""`
 	Bus                  bus.Bus                          `inject:""`
@@ -70,12 +69,21 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
+	Live                 *live.GrafanaLive
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
-	hs.streamManager = live.NewStreamManager()
+	// Set up a websocket broker
+	if true { // feature flag
+		node, err := live.InitalizeBroker()
+		if err != nil {
+			return err
+		}
+		hs.Live = node
+	}
+
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
 
@@ -86,7 +94,6 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
-	hs.streamManager.Run(ctx)
 
 	hs.httpSrv = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
