@@ -59,6 +59,7 @@ export type TraceSpanData = {
   warnings?: string[] | null;
   stackTraces?: string[];
   flags: number;
+  errorIconColor?: string;
 };
 
 export type TraceSpan = TraceSpanData & {
