@@ -97,6 +97,7 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     Textarea: css`
       word-break: break-all;
+      white-space: pre;
     `,
   };
 });
@@ -225,7 +226,14 @@ export default function SpanDetail(props: SpanDetailProps) {
             data={stackTraces}
             isOpen={isStackTracesOpen}
             TextComponent={textComponentProps => (
-              <TextArea className={styles.Textarea} readOnly cols={10} rows={10} value={textComponentProps.data} />
+              <TextArea
+                className={styles.Textarea}
+                style={{ cursor: 'unset' }}
+                readOnly
+                cols={10}
+                rows={10}
+                value={textComponentProps.data}
+              />
             )}
             onToggle={() => stackTracesToggle(spanID)}
           />
