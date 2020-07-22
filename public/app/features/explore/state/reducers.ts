@@ -511,7 +511,11 @@ export const processQueryResponse = (
 
   if (error) {
     if (error.cancelled) {
-      return state;
+      return {
+        ...state,
+        queryResponse: response,
+        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+      };
     }
 
     // For Angular editors

@@ -39,13 +39,14 @@ import {
   MetricRequest,
   TSDBResponse,
 } from './types';
-import { empty, from, Observable, of, merge } from 'rxjs';
-import { catchError, delay, expand, finalize, map, mergeMap, tap } from 'rxjs/operators';
+import { from, Observable, of, merge, zip } from 'rxjs';
+import { catchError, finalize, map, mergeMap, tap, concatMap, scan, share, repeat, takeWhile } from 'rxjs/operators';
 import { CloudWatchLanguageProvider } from './language_provider';
 
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { AwsUrl, encodeUrl } from './aws_url';
+import { increasingInterval } from './utils/rxjs/increasingInterval';
 
 const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
 
@@ -67,9 +68,7 @@ const displayAlert = (datasourceName: string, region: string) =>
 const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
 
-// TODO: Temporary times here, could just change to some fixed number.
-export const MAX_ATTEMPTS = 8;
-const POLLING_TIMES = [100, 200, 500, 1000];
+export const MAX_ATTEMPTS = 5;
 
 export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
   type: any;
@@ -234,65 +233,74 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         statsQuery: (param.statsGroups?.length ?? 0) > 0 ?? false,
       };
     });
+
+    const dataFrames = increasingInterval(100, 1000, 300).pipe(
+      concatMap(_ => this.makeLogActionRequest('GetQueryResults', queryParams)),
+      repeat(),
+      share()
+    );
+
     let prevRecordsMatched: Record<string, number> = {};
+    const consecutiveFailedAttempts = dataFrames.pipe(
+      scan((acc, frames) => {
+        let newAcc = acc + 1;
+        for (const frame of frames) {
+          const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')?.value!;
+          if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
+            newAcc = 0;
+          }
+          prevRecordsMatched[frame.refId!] = recordsMatched;
+        }
 
-    return withTeardown(
-      this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
-        expand((dataFrames, i) => {
-          const allFramesCompleted = dataFrames.every(
-            dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
-          );
-          return allFramesCompleted
-            ? empty()
-            : this.makeLogActionRequest('GetQueryResults', queryParams).pipe(
-                map(frames => {
-                  let moreRecordsMatched = false;
-                  for (const frame of frames) {
-                    const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')
-                      ?.value!;
-                    if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
-                      moreRecordsMatched = true;
-                    }
-                    prevRecordsMatched[frame.refId!] = recordsMatched;
-                  }
-                  const noProgressMade = i >= MAX_ATTEMPTS - 2 && !moreRecordsMatched;
-                  if (noProgressMade) {
-                    for (const frame of frames) {
-                      _.set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Complete);
-                    }
-                  }
+        return newAcc;
+      }, 0),
+      share()
+    );
 
-                  return frames;
-                }),
-                delay(POLLING_TIMES[Math.min(i, POLLING_TIMES.length - 1)])
-              );
-        }),
-        tap(dataFrames => {
-          dataFrames.forEach((dataframe, i) => {
-            if (
-              [
-                CloudWatchLogsQueryStatus.Complete,
-                CloudWatchLogsQueryStatus.Cancelled,
-                CloudWatchLogsQueryStatus.Failed,
-              ].includes(dataframe.meta?.custom?.['Status']) &&
-              this.logQueries.hasOwnProperty(dataframe.refId!)
-            ) {
-              delete this.logQueries[dataframe.refId!];
-            }
-          });
-        }),
-        map(dataFrames => ({
+    const queryResponse: Observable<DataQueryResponse> = zip(dataFrames, consecutiveFailedAttempts).pipe(
+      tap(([dataFrames]) => {
+        for (const frame of dataFrames) {
+          if (
+            [
+              CloudWatchLogsQueryStatus.Complete,
+              CloudWatchLogsQueryStatus.Cancelled,
+              CloudWatchLogsQueryStatus.Failed,
+            ].includes(frame.meta?.custom?.['Status']) &&
+            this.logQueries.hasOwnProperty(frame.refId!)
+          ) {
+            delete this.logQueries[frame.refId!];
+          }
+        }
+      }),
+      map(([dataFrames, failedAttempts]) => {
+        if (failedAttempts >= MAX_ATTEMPTS) {
+          for (const frame of dataFrames) {
+            _.set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
+          }
+        }
+
+        return {
           data: dataFrames,
           key: 'test-key',
-          state: dataFrames.every(
-            dataFrame => dataFrame.meta?.custom?.['Status'] === CloudWatchLogsQueryStatus.Complete
+          state: dataFrames.every(dataFrame =>
+            [
+              CloudWatchLogsQueryStatus.Complete,
+              CloudWatchLogsQueryStatus.Cancelled,
+              CloudWatchLogsQueryStatus.Failed,
+            ].includes(dataFrame.meta?.custom?.['Status'])
           )
             ? LoadingState.Done
             : LoadingState.Loading,
-        }))
-      ),
-      () => this.stopQueries()
+          error:
+            failedAttempts >= MAX_ATTEMPTS
+              ? { message: `error: query timed out after ${MAX_ATTEMPTS} attempts`, cancelled: true }
+              : undefined,
+        };
+      }),
+      takeWhile(({ state }) => state !== LoadingState.Error && state !== LoadingState.Done, true)
     );
+
+    return withTeardown(queryResponse, () => this.stopQueries());
   }
 
   private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
