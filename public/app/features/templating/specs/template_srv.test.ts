@@ -430,9 +430,9 @@ describe('templateSrv', () => {
       expect(result).toBe(true);
     });
 
-    it('should return null if there are no variables in string', () => {
+    it('should return false if there are no variables in string', () => {
       const result = _templateSrv.variableExists('string without variables');
-      expect(result).toBe(null);
+      expect(result).toBe(false);
     });
   });
 
