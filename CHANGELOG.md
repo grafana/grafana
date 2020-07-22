@@ -2033,7 +2033,7 @@ See [security announcement](https://community.grafana.com/t/grafana-5-3-3-and-4-
 - **Docker**: Make it possible to set a specific plugin url [#12861](https://github.com/grafana/grafana/pull/12861), thx [ClementGautier](https://github.com/ClementGautier)
 - **GrafanaCli**: Fixed issue with grafana-cli install plugin resulting in corrupt http response from source error. Fixes [#13079](https://github.com/grafana/grafana/issues/13079)
 - **Provisioning**: Should allow one default data source per organization [#12229](https://github.com/grafana/grafana/issues/12229)
-- **Github OAuth**: Allow changes of user info at Github to be synched to Grafana when signing in [#11818](https://github.com/grafana/grafana/issues/11818), thx [@rwaweber](https://github.com/rwaweber)
+- **GitHub OAuth**: Allow changes of user info at GitHub to be synched to Grafana when signing in [#11818](https://github.com/grafana/grafana/issues/11818), thx [@rwaweber](https://github.com/rwaweber)
 - **OAuth**: Fix overriding tls_skip_verify_insecure using environment variable [#12747](https://github.com/grafana/grafana/issues/12747), thx [@jangaraj](https://github.com/jangaraj)
 - **Prometheus**: Fix graph panel bar width issue in aligned prometheus queries [#12379](https://github.com/grafana/grafana/issues/12379)
 - **Prometheus**: Heatmap - fix unhandled error when some points are missing [#12484](https://github.com/grafana/grafana/issues/12484)
@@ -2348,7 +2348,7 @@ See [security announcement](https://community.grafana.com/t/grafana-5-2-3-and-4-
 
 ### Fixes
 
-- **oauth** Fix Github OAuth not working with private Organizations [#11028](https://github.com/grafana/grafana/pull/11028) [@lostick](https://github.com/lostick)
+- **oauth** Fix GitHub OAuth not working with private Organizations [#11028](https://github.com/grafana/grafana/pull/11028) [@lostick](https://github.com/lostick)
 - **kiosk** white area over bottom panels in kiosk mode [#11010](https://github.com/grafana/grafana/issues/11010)
 - **alerting** Fix OK state doesn't show up in Microsoft Teams [#11032](https://github.com/grafana/grafana/pull/11032), thx [@manacker](https://github.com/manacker)
 
@@ -2360,7 +2360,7 @@ See [security announcement](https://community.grafana.com/t/grafana-5-2-3-and-4-
 - **Folders** Make it easier/explicit to access/modify folders using the API [#10630](https://github.com/grafana/grafana/issues/10630)
 - **Dashboard** Scrollbar works incorrectly in Grafana 5.0 Beta4 in some cases [#10982](https://github.com/grafana/grafana/issues/10982)
 - **ElasticSearch** Custom aggregation sizes no longer allowed for Elasticsearch [#10124](https://github.com/grafana/grafana/issues/10124)
-- **oauth** Github OAuth with allowed organizations fails to login [#10964](https://github.com/grafana/grafana/issues/10964)
+- **oauth** GitHub OAuth with allowed organizations fails to login [#10964](https://github.com/grafana/grafana/issues/10964)
 - **heatmap** Heatmap panel has partially hidden legend [#10793](https://github.com/grafana/grafana/issues/10793)
 - **snapshots** Expired snapshots not being cleaned up [#10996](https://github.com/grafana/grafana/pull/10996)
 
@@ -2393,7 +2393,7 @@ See [security announcement](https://community.grafana.com/t/grafana-5-2-3-and-4-
 - **Light theme** Fixed problem with light theme in safari, [#10869](https://github.com/grafana/grafana/issues/10869)
 - **Provisioning** Now handles deletes when dashboard json files removed from disk [#10865](https://github.com/grafana/grafana/issues/10865)
 - **MySQL** Fixed issue with schema migration on old mysql (index too long) [#10779](https://github.com/grafana/grafana/issues/10779)
-- **Github OAuth** Fixed fetching github orgs from private github org [#10823](https://github.com/grafana/grafana/issues/10823)
+- **GitHub OAuth** Fixed fetching github orgs from private github org [#10823](https://github.com/grafana/grafana/issues/10823)
 - **Embedding** Fixed issues embedding panel [#10787](https://github.com/grafana/grafana/issues/10787)
 
 # 5.0.0-beta1 (2018-02-05)
@@ -2452,7 +2452,7 @@ Dashboard panels and rows are positioned using a gridPos object `{x: 0, y: 0, w:
 - **Dashboard**: Make it possible to start dashboards from search and dashboard list panel [#1871](https://github.com/grafana/grafana/issues/1871)
 - **Annotations**: Posting annotations now return the id of the annotation [#9798](https://github.com/grafana/grafana/issues/9798)
 - **Systemd**: Use systemd notification ready flag [#10024](https://github.com/grafana/grafana/issues/10024), thx [@jgrassler](https://github.com/jgrassler)
-- **Github**: Use organizations_url provided from github to verify user belongs in org. [#10111](https://github.com/grafana/grafana/issues/10111), thx
+- **GitHub**: Use organizations_url provided from github to verify user belongs in org. [#10111](https://github.com/grafana/grafana/issues/10111), thx
   [@adiletmaratov](https://github.com/adiletmaratov)
 - **Backend**: Fixed bug where Grafana exited before all sub routines where finished [#10131](https://github.com/grafana/grafana/issues/10131)
 - **Azure**: Adds support for Azure blob storage as external image stor [#8955](https://github.com/grafana/grafana/issues/8955), thx [@saada](https://github.com/saada)
@@ -3459,8 +3459,8 @@ Grunt & Watch tasks:
 
 - [Issue #2218](https://github.com/grafana/grafana/issues/2218). Auth: You can now authenticate against api with username / password using basic auth
 - [Issue #2095](https://github.com/grafana/grafana/issues/2095). Search: Search now supports filtering by multiple dashboard tags
-- [Issue #1905](https://github.com/grafana/grafana/issues/1905). Github OAuth: You can now configure a Github team membership requirement, thx @dewski
-- [Issue #2052](https://github.com/grafana/grafana/issues/2052). Github OAuth: You can now configure a Github organization requirement, thx @indrekj
+- [Issue #1905](https://github.com/grafana/grafana/issues/1905). GitHub OAuth: You can now configure a GitHub team membership requirement, thx @dewski
+- [Issue #2052](https://github.com/grafana/grafana/issues/2052). GitHub OAuth: You can now configure a GitHub organization requirement, thx @indrekj
 - [Issue #1891](https://github.com/grafana/grafana/issues/1891). Security: New config option to disable the use of gravatar for profile images
 - [Issue #1921](https://github.com/grafana/grafana/issues/1921). Auth: Support for user authentication via reverse proxy header (like X-Authenticated-User, or X-WEBAUTH-USER)
 - [Issue #960](https://github.com/grafana/grafana/issues/960). Search: Backend can now index a folder with json files, will be available in search (saving back to folder is not supported, this feature is meant for static generated json dashboards)
@@ -3502,7 +3502,7 @@ Grunt & Watch tasks:
 - [Issue #1749](https://github.com/grafana/grafana/issues/1749). Graph Panel: Table legends are now visible when rendered to PNG
 - [Issue #1786](https://github.com/grafana/grafana/issues/1786). Graph Panel: Legend in table mode now aligns, graph area is reduced depending on how many series
 - [Issue #1734](https://github.com/grafana/grafana/issues/1734). Support for unicode / international characters in dashboard title (improved slugify)
-- [Issue #1782](https://github.com/grafana/grafana/issues/1782). Github OAuth: Now works with Github for Enterprise, thanks @williamjoy
+- [Issue #1782](https://github.com/grafana/grafana/issues/1782). GitHub OAuth: Now works with GitHub for Enterprise, thanks @williamjoy
 - [Issue #1780](https://github.com/grafana/grafana/issues/1780). Dashboard snapshot: Should not require login to view snapshot, Fixes #1780
 
 # 2.0.0-Beta3 (2015-04-12)
