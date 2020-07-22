@@ -67,13 +67,11 @@ type LineNotifier struct {
 // Notify send an alert notification to LINE
 func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	ln.log.Info("Executing line notification", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
-
-	var err error
-	switch evalContext.Rule.State {
-	case models.AlertStateAlerting:
-		err = ln.createAlert(evalContext)
+	if evalContext.Rule.State == models.AlertStateAlerting {
+		return ln.createAlert(evalContext)
 	}
-	return err
+
+	return nil
 }
 
 func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
