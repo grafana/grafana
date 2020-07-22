@@ -462,6 +462,8 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
+        - name: Error handling
+          link: /developers/plugins/error-handling/
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/
