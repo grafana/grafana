@@ -102,12 +102,17 @@ export class TimePickerSettings extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form" aria-label={selectors.components.TimeZonePicker.container}>
             <label className="gf-form-label width-7">Timezone</label>
-            <TimeZonePicker value={dashboard.timezone} onChange={this.onTimeZoneChange} width={40} />
+            <TimeZonePicker
+              includeInternal={true}
+              value={dashboard.timezone}
+              onChange={this.onTimeZoneChange}
+              width={40}
+            />
           </div>
 
           <div className="gf-form">
             <span className="gf-form-label width-7">Auto-refresh</span>
-            <Input width={60} value={this.getRefreshIntervals()} onChange={this.onRefreshIntervalChange} />
+            <Input width={60} defaultValue={this.getRefreshIntervals()} onBlur={this.onRefreshIntervalChange} />
           </div>
           <div className="gf-form">
             <span className="gf-form-label width-7">Now delay now-</span>

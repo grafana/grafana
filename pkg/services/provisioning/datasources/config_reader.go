@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"gopkg.in/yaml.v2"
 )
 
@@ -36,7 +37,7 @@ func (cr *configReader) readConfig(path string) ([]*configs, error) {
 		}
 	}
 
-	err = validateDefaultUniqueness(datasources)
+	err = cr.validateDefaultUniqueness(datasources)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*c
 	return v0.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
 }
 
-func validateDefaultUniqueness(datasources []*configs) error {
+func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error {
 	defaultCount := map[int64]int{}
 	for i := range datasources {
 		if datasources[i].Datasources == nil {
@@ -95,11 +96,16 @@ func validateDefaultUniqueness(datasources []*configs) error {
 			}
 
 			if ds.Access == "" {
-				ds.Access = "proxy"
+				ds.Access = models.DS_ACCESS_PROXY
+			}
+
+			if ds.Access != models.DS_ACCESS_DIRECT && ds.Access != models.DS_ACCESS_PROXY {
+				cr.log.Warn("invalid access value, will use 'proxy' instead", "value", ds.Access)
+				ds.Access = models.DS_ACCESS_PROXY
 			}
 
 			if ds.IsDefault {
-				defaultCount[ds.OrgID] = defaultCount[ds.OrgID] + 1
+				defaultCount[ds.OrgID]++
 				if defaultCount[ds.OrgID] > 1 {
 					return ErrInvalidConfigToManyDefault
 				}

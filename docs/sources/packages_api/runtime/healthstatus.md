@@ -11,7 +11,7 @@ type = "docs"
 
 ### HealthStatus enum
 
-Describes the current healt status of a data source plugin.
+Describes the current health status of a data source plugin.
 
 <b>Signature</b>
 

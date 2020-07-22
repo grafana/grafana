@@ -90,6 +90,8 @@ revive-strict: scripts/go/bin/revive
 		./pkg/services/alerting/... \
 		./pkg/services/provisioning/datasources/... \
 		./pkg/services/provisioning/dashboards/... \
+		./pkg/services/provisioning/notifiers/... \
+		./pkg/services/provisioning/values/... \
 		./pkg/plugins/backendplugin/...
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
@@ -99,7 +101,7 @@ scripts/go/bin/golangci-lint: scripts/go/go.mod
 golangci-lint: scripts/go/bin/golangci-lint
 	@echo "lint via golangci-lint"
 	@scripts/go/bin/golangci-lint run \
-		--config ./scripts/go/configs/.golangci.yml \
+		--config ./scripts/go/configs/.golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint revive revive-strict # Run all code checks for backend.

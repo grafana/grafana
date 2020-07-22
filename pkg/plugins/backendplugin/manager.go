@@ -34,11 +34,7 @@ var (
 )
 
 func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "BackendPluginManager",
-		Instance:     &manager{},
-		InitPriority: registry.Low,
-	})
+	registry.RegisterService(&manager{})
 }
 
 // Manager manages backend plugins.
@@ -100,7 +96,11 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 	}
 
 	if m.License.HasLicense() {
-		hostEnv = append(hostEnv, fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath))
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath),
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", m.License.TokenRaw()),
+		)
 	}
 
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)

@@ -40,7 +40,7 @@ describe('AzureMonitorQueryCtrl', () => {
       expect(queryCtrl.target.azureMonitor.resourceName).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricNamespace).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricName).toBe('select');
-      expect(queryCtrl.target.appInsights.dimension).toBe('none');
+      expect(queryCtrl.target.appInsights.dimension).toMatchObject([]);
     });
   });
 

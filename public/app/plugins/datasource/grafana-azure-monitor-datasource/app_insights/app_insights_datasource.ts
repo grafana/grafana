@@ -1,7 +1,7 @@
-import { ScopedVars } from '@grafana/data';
+import { ScopedVars, MetricFindValue } from '@grafana/data';
 import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import _ from 'lodash';
+import _, { isString } from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from '../types';
@@ -84,10 +84,22 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
 
     // migration for non-standard names
     if (old.groupBy && !item.dimension) {
-      item.dimension = old.groupBy;
+      item.dimension = [old.groupBy];
     }
     if (old.filter && !item.dimensionFilter) {
       item.dimensionFilter = old.filter;
+    }
+
+    // Migrate single dimension string to array
+    if (isString(item.dimension)) {
+      if (item.dimension === 'None') {
+        item.dimension = [];
+      } else {
+        item.dimension = [item.dimension as string];
+      }
+    }
+    if (!item.dimension) {
+      item.dimension = [];
     }
 
     const templateSrv = getTemplateSrv();
@@ -102,7 +114,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
         allowedTimeGrainsMs: item.allowedTimeGrainsMs,
         metricName: templateSrv.replace(item.metricName, scopedVars),
         aggregation: templateSrv.replace(item.aggregation, scopedVars),
-        dimension: templateSrv.replace(item.dimension, scopedVars),
+        dimension: item.dimension.map(d => templateSrv.replace(d, scopedVars)),
         dimensionFilter: templateSrv.replace(item.dimensionFilter, scopedVars),
         alias: item.alias,
         format: target.format,
@@ -110,7 +122,13 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     };
   }
 
-  metricFindQuery(query: string) {
+  /**
+   * This is named differently than DataSourceApi.metricFindQuery
+   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
+   * And some of the azure internal data sources return null in this function, which the
+   * external interface does not support
+   */
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
     const appInsightsMetricNameQuery = query.match(/^AppInsightsMetricNames\(\)/i);
     if (appInsightsMetricNameQuery) {
       return this.getMetricNames();
@@ -122,7 +140,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
       return this.getGroupBys(getTemplateSrv().replace(metricName));
     }
 
-    return undefined;
+    return null;
   }
 
   testDatasource() {

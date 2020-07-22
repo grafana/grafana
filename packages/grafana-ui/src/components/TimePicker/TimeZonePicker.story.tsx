@@ -21,6 +21,7 @@ export const basic = () => {
       {(value, updateValue) => {
         return (
           <TimeZonePicker
+            includeInternal={true}
             value={value.value}
             onChange={newValue => {
               if (!newValue) {

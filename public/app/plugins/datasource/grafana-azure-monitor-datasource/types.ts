@@ -45,6 +45,12 @@ export interface AzureDataSourceSecureJsonData {
   appInsightsApiKey?: string;
 }
 
+export interface AzureMetricDimension {
+  dimension: string;
+  operator: 'eq'; // future proof
+  filter?: string; // *
+}
+
 export interface AzureMetricQuery {
   resourceGroup: string;
   resourceName: string;
@@ -55,8 +61,7 @@ export interface AzureMetricQuery {
   timeGrain: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;
-  dimension: string;
-  dimensionFilter: string;
+  dimensionFilters: AzureMetricDimension[];
   alias: string;
   top: string;
 }
@@ -73,7 +78,8 @@ export interface ApplicationInsightsQuery {
   timeGrain: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;
-  dimension: string;
+  dimension: string[]; // Was string before 7.1
+  // dimensions: string[]; why is this metadata stored on the object!
   dimensionFilter: string;
   alias: string;
 }

@@ -9,7 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -85,7 +85,7 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 // getPluginSignatureState returns the signature state for a plugin.
 func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature {
 	log.Debug("Getting signature state of plugin", "plugin", plugin.Id)
-	manifestPath := path.Join(plugin.PluginDir, "MANIFEST.txt")
+	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
@@ -106,7 +106,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
 	for p, hash := range manifest.Files {
 		// Open the file
-		fp := path.Join(plugin.PluginDir, p)
+		fp := filepath.Join(plugin.PluginDir, p)
 		f, err := os.Open(fp)
 		if err != nil {
 			return PluginSignatureModified

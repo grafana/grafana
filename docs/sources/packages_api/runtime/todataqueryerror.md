@@ -11,7 +11,7 @@ type = "docs"
 
 ### toDataQueryError() function
 
-Convert an object into a DataQueryError -- if this is an HTTP response, it will put the correct values in the error filds
+Convert an object into a DataQueryError -- if this is an HTTP response, it will put the correct values in the error field
 
 <b>Signature</b>
 

@@ -19,7 +19,7 @@ import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 import { ColumnOptionsCtrl } from './column_options';
 
 export class TableRenderer {
-  formatters: any[];
+  formatters: any[] = [];
   colorState: any;
 
   constructor(

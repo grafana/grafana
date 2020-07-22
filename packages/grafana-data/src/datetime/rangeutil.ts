@@ -203,7 +203,7 @@ export const isValidTimeSpan = (value: string) => {
   return info.invalid !== true;
 };
 
-export const describeTimeRangeAbbrevation = (range: TimeRange, timeZone?: TimeZone) => {
+export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZone) => {
   if (isDateTime(range.from)) {
     return timeZoneAbbrevation(range.from, { timeZone });
   }

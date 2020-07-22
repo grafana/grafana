@@ -44,15 +44,17 @@ to{
 }`;
 
 export const getLoginStyles = (theme: GrafanaTheme) => {
+  const bgColor = theme.isDark ? theme.palette.black : theme.palette.white;
   return {
     container: css`
       min-height: 100vh;
       background-position: center;
       background-repeat: no-repeat;
+      background-color: ${bgColor};
       min-width: 100%;
       margin-left: 0;
-      background-color: $black;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
     `,
@@ -76,7 +78,7 @@ export const getLoginStyles = (theme: GrafanaTheme) => {
       text-align: center;
     `,
     mainTitle: css`
-      font-size: '32px';
+      font-size: 32px;
     `,
     subTitle: css`
       font-size: ${theme.typography.size.md};

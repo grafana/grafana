@@ -35,6 +35,11 @@ export { FilterPill } from './FilterPill/FilterPill';
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
+// Code editor
+export { CodeEditor } from './Monaco/CodeEditorLazy';
+export { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
+
 // TODO: namespace
 export { Modal } from './Modal/Modal';
 export { ModalHeader } from './Modal/ModalHeader';
@@ -60,6 +65,7 @@ export {
   BigValueSparkline,
   BigValueGraphMode,
   BigValueJustifyMode,
+  BigValueTextMode,
 } from './BigValue/BigValue';
 
 export { Gauge } from './Gauge/Gauge';
@@ -152,11 +158,13 @@ export { Switch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
+export { FileUpload } from './FileUpload/FileUpload';
+export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
-export { FormLabel as InlineFormLabel } from './FormLabel/FormLabel';
+export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
