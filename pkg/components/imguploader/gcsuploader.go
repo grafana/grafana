@@ -64,19 +64,19 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 			return "", err
 		}
 
-		u.log.Debug("Creating google Credentials from json")
-		cred, err := google.CredentialsFromJSON(ctx, data)
+		u.log.Debug("Creating Google credentials from JSON")
+		creds, err := google.CredentialsFromJSON(ctx, data)
 		if err != nil {
 			return "", err
 		}
 
-		u.log.Debug("Creating gcs client")
-		client, err = storage.NewClient(ctx, option.WithCredentials(cred))
+		u.log.Debug("Creating GCS client")
+		client, err = storage.NewClient(ctx, option.WithCredentials(creds))
 		if err != nil {
 			return "", err
 		}
 	} else {
-		u.log.Debug("Creating gcs client with no credentials")
+		u.log.Debug("Creating GCS client with default application credentials")
 		client, err = storage.NewClient(ctx)
 		if err != nil {
 			return "", err
@@ -104,7 +104,7 @@ func (u *GCSUploader) uploadFile(
 	}
 	defer fileReader.Close()
 
-	u.log.Debug("Sending to gcs bucket using SDK")
+	u.log.Debug("Sending to GCS bucket using SDK")
 	wc := client.Bucket(u.bucket).Object(key).NewWriter(ctx)
 	if _, err := io.Copy(wc, fileReader); err != nil {
 		return err
