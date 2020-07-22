@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
     "baseUrl": "node_modules/@types",
+    "paths": {
+      "@grafana/slate-react": ["slate-react"]
+    },
     "typeRoots": ["node_modules/@types"]
   },
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "typings", "../../public/app/types/jquery/*.ts"]
+  "include": ["src/**/*.ts*", "typings", "../../public/app/types/jquery/*.ts", "../../public/app/types/svg.d.ts"]
 }

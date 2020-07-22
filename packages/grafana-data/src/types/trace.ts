@@ -57,6 +57,7 @@ export type TraceSpanData = {
   tags?: TraceKeyValuePair[];
   references?: TraceSpanReference[];
   warnings?: string[] | null;
+  stackTraces?: string[];
   flags: number;
 };
 

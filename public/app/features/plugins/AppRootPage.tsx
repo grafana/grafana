@@ -9,9 +9,9 @@ import { AppEvents, AppPlugin, AppPluginMeta, NavModel, PluginType, UrlQueryMap 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { getLoadingNav } from './PluginPage';
 import { getNotFoundNav, getWarningNav } from 'app/core/nav_model_srv';
 import { appEvents } from 'app/core/core';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 
 interface Props {
   pluginId: string; // From the angular router
@@ -22,8 +22,8 @@ interface Props {
 
 interface State {
   loading: boolean;
-  plugin?: AppPlugin;
-  nav: NavModel;
+  plugin?: AppPlugin | null;
+  nav?: NavModel;
 }
 
 export function getAppPluginPageError(meta: AppPluginMeta) {
@@ -44,7 +44,6 @@ class AppRootPage extends Component<Props, State> {
     super(props);
     this.state = {
       loading: true,
-      nav: getLoadingNav(),
     };
   }
 
@@ -80,10 +79,18 @@ class AppRootPage extends Component<Props, State> {
       return <div>No Root App</div>;
     }
 
+    // When no naviagion is set, give full control to the app plugin
+    if (!nav) {
+      if (plugin && plugin.root) {
+        return <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />;
+      }
+      return <PageLoader />;
+    }
+
     return (
       <Page navModel={nav}>
         <Page.Contents isLoading={loading}>
-          {!loading && plugin && (
+          {plugin && plugin.root && (
             <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />
           )}
         </Page.Contents>

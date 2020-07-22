@@ -57,7 +57,7 @@ func TestInfluxDB(t *testing.T) {
 				testBodyValues := url.Values{}
 				testBodyValues.Add("q", query)
 				testBody := testBodyValues.Encode()
-				So(string(body[:]), ShouldEqual, testBody)
+				So(string(body), ShouldEqual, testBody)
 			})
 		})
 

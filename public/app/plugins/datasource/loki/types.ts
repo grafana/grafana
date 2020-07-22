@@ -24,7 +24,6 @@ export enum LokiResultType {
 
 export interface LokiQuery extends DataQuery {
   expr: string;
-  liveStreaming?: boolean;
   query?: string;
   format?: string;
   reverse?: boolean;
@@ -91,7 +90,7 @@ export interface LokiTailResponse {
   dropped_entries?: Array<{
     labels: Record<string, string>;
     timestamp: string;
-  }>;
+  }> | null;
 }
 
 export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult;

@@ -85,7 +85,7 @@ Let users write custom annotation queries to only display the annotation events 
 
 > **Note**: Annotation query editors have yet to receive support for React. The instructions here are given for Angular. Fortunately, you can run Angular even in a plugin otherwise written using React. This section will be updated once React support for annotation queries editors is available.
 
-1. Create a file called `AnnotationQueryEditor.ts` in the plugin root directory, with the following content.
+1. Create a file called `AnnotationQueryEditor.ts` in the `src` directory, with the following content.
 
    ```ts
    export class AnnotationQueryEditor {
@@ -94,12 +94,12 @@ Let users write custom annotation queries to only display the annotation events 
      annotation: any;
 
      constructor() {
-       this.annotation.rawQuery = this.annotation.rawQuery || '';
+       this.annotation.queryText = this.annotation.queryText || '';
      }
    }
    ```
 
-1. Create a directory called `partials` in the plugin root directory.
+1. Create a directory called `partials` in the `src` directory.
 
 1. Create a file called `annotations.editor.html` in the `partials` directory you just created, with the following content.
 

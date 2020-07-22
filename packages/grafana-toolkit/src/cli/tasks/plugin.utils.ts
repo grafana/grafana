@@ -161,14 +161,16 @@ export interface GithubPublishOptions {
 }
 
 const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, verbose, commitHash }) => {
-  if (!process.env['CIRCLE_REPOSITORY_URL']) {
+  let repoUrl: string | undefined = process.env.DRONE_REPO_LINK || process.env.CIRCLE_REPOSITORY_URL;
+  if (!repoUrl) {
     // Try and figure it out
     const repo = await execa('git', ['config', '--local', 'remote.origin.url']);
     if (repo && repo.stdout) {
-      process.env.CIRCLE_REPOSITORY_URL = repo.stdout;
+      repoUrl = repo.stdout;
     } else {
       throw new Error(
-        'The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL'
+        'The release plugin requires you specify the repository url as environment variable DRONE_REPO_LINK or ' +
+          'CIRCLE_REPOSITORY_URL'
       );
     }
   }
@@ -179,7 +181,7 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
       process.env['GITHUB_ACCESS_TOKEN'] = process.env['GITHUB_TOKEN'];
     } else {
       throw new Error(
-        `Github publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
+        `GitHub publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
         See: https://github.com/settings/tokens for more details.`
       );
     }
@@ -190,7 +192,7 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
     process.env['GITHUB_USERNAME'] = DEFAULT_EMAIL_ADDRESS;
   }
 
-  const parsedUrl = gitUrlParse(process.env['CIRCLE_REPOSITORY_URL']);
+  const parsedUrl = gitUrlParse(repoUrl);
   const githubToken = process.env['GITHUB_ACCESS_TOKEN'];
   const githubUser = parsedUrl.owner;
 
@@ -207,4 +209,4 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
   });
 };
 
-export const githubPublishTask = new Task<GithubPublishOptions>('Github Publish', githubPublishRunner);
+export const githubPublishTask = new Task<GithubPublishOptions>('GitHub Publish', githubPublishRunner);

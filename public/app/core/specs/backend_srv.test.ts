@@ -7,6 +7,7 @@ import { BackendSrv } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { describe, expect } from '../../../test/lib/common';
+import { BackendSrvRequest, FetchError } from '@grafana/runtime';
 
 const getTestContext = (overides?: object) => {
   const defaults = {
@@ -214,6 +215,26 @@ describe('backendSrv', () => {
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['Forbidden', '']);
           });
+      });
+    });
+
+    describe('when showing error alert', () => {
+      describe('when showErrorAlert is undefined and url is a normal api call', () => {
+        it('It should emit alert event for normal api errors', async () => {
+          const { backendSrv, appEventsMock } = getTestContext({});
+          backendSrv.showErrorAlert(
+            {
+              url: 'api/do/something',
+            } as BackendSrvRequest,
+            {
+              data: {
+                message: 'Something failed',
+                error: 'Error',
+              },
+            } as FetchError
+          );
+          expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['Something failed', '']);
+        });
       });
     });
 
