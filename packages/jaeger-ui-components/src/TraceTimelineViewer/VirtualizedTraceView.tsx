@@ -68,6 +68,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
   detailWarningsToggle: (spanID: string) => void;
+  detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
@@ -392,6 +393,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailProcessToggle,
       detailReferencesToggle,
       detailWarningsToggle,
+      detailStackTracesToggle,
       detailStates,
       detailTagsToggle,
       detailToggle,
@@ -423,6 +425,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           processToggle={detailProcessToggle}
           referencesToggle={detailReferencesToggle}
           warningsToggle={detailWarningsToggle}
+          stackTracesToggle={detailStackTracesToggle}
           span={span}
           tagsToggle={detailTagsToggle}
           traceStartTime={trace.startTime}
