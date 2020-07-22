@@ -22,7 +22,7 @@ steps:
   - cp -r $(yarn cache dir) yarn-cache
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.4.24
+    GRABPL_VERSION: 0.4.25
 
 - name: lint-backend
   image: grafana/build-container:1.2.21
@@ -78,7 +78,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.21
   commands:
-  - go test -covermode=atomic ./pkg/...
+  - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   - cp -r $(go env GOCACHE) go-cache
   depends_on:
@@ -250,7 +250,7 @@ steps:
   - cp -r $(yarn cache dir) yarn-cache
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.4.24
+    GRABPL_VERSION: 0.4.25
 
 - name: lint-backend
   image: grafana/build-container:1.2.21
@@ -306,7 +306,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.21
   commands:
-  - go test -covermode=atomic ./pkg/...
+  - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   - cp -r $(go env GOCACHE) go-cache
   depends_on:

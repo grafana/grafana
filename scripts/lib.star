@@ -129,7 +129,7 @@ def pipeline(name, edition, trigger, steps, services=[]):
     return pipeline
 
 def init_steps(edition):
-    grabpl_version = '0.4.24'
+    grabpl_version = '0.4.25'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
@@ -307,7 +307,7 @@ def test_backend_step():
         ],
         'commands': [
             # First execute non-integration tests in parallel, since it should be safe
-            'go test -covermode=atomic ./pkg/...',
+            './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
             # Keep the test cache
