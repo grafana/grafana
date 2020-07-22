@@ -43,6 +43,16 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 			},
 		},
 		{
+			name:     "empty response",
+			testFile: "applicationinsights/5-application-insights-empty-response.json",
+			metric:   "value",
+			agg:      "avg",
+			expectedFrame: func() *data.Frame {
+				frame := data.NewFrame("", data.NewField("StartTime", nil, []time.Time{}))
+				return frame
+			},
+		},
+		{
 			name:       "segmented series",
 			testFile:   "applicationinsights/4-application-insights-response-metrics-segmented.json",
 			metric:     "value",
