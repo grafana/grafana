@@ -42,7 +42,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
-			hs.log.Debug("Can't process query since it's missing data soruce ID")
+			hs.log.Debug("Can't process query since it's missing data source ID")
 			return Error(400, "Missing data source ID", nil)
 		}
 

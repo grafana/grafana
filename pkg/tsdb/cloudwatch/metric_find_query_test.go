@@ -33,7 +33,7 @@ func TestQuery_Metrics(t *testing.T) {
 
 	t.Run("Custom metrics", func(t *testing.T) {
 		client = FakeCWClient{
-			metrics: []*cloudwatch.Metric{
+			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
 					Dimensions: []*cloudwatch.Dimension{
@@ -90,7 +90,7 @@ func TestQuery_Metrics(t *testing.T) {
 
 	t.Run("Dimension keys for custom metrics", func(t *testing.T) {
 		client = FakeCWClient{
-			metrics: []*cloudwatch.Metric{
+			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
 					Dimensions: []*cloudwatch.Dimension{
