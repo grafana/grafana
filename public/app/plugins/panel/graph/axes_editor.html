@@ -13,7 +13,10 @@
 
     <div ng-if="yaxis.show">
       <div class="gf-form gf-form--grow">
-        <label class="gf-form-label width-6">Unit</label>
+        <label class="gf-form-label width-6">
+          Unit
+				  <info-popover mode="right-normal">This defines the unit when one is not defined on the field</info-popover>
+        </label>
         <unit-picker onChange="ctrl.setUnitFormat(yaxis)" value="yaxis.format" class="flex-grow-1" />
       </div>
     </div>
