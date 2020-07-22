@@ -10,8 +10,8 @@ describe('Template proxies', () => {
             name: '🔥',
             config: { displayName: '✨' },
             labels: {
-              a: 'AAA',
               b: 'BBB',
+              a: 'AAA',
             },
           },
         ],
@@ -23,6 +23,7 @@ describe('Template proxies', () => {
     expect(f.name).toEqual('🔥');
     expect(f.displayName).toEqual('✨');
     expect(`${f.labels}`).toEqual('a="AAA", b="BBB"');
+    expect(f.labels.__values).toEqual('AAA, BBB');
     expect(f.labels.a).toEqual('AAA');
 
     // Deprecated syntax
