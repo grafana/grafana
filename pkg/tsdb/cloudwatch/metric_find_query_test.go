@@ -67,7 +67,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			}, nil
 		}
-		metrics, err := e.getMetricsForCustomMetrics(region, f)
+		metrics, err := e.getMetricsForCustomMetrics(region, "custom", f)
 		require.NoError(t, err)
 
 		assert.Contains(t, metrics, "Test_MetricName")
