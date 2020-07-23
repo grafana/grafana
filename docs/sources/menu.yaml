@@ -261,6 +261,12 @@
       name: Add text box variable
     - link: /variables/add-constant-variable/
       name: Add constant variable
+    - link: /variables/add-data-source-variable/
+      name: Add data source variable
+    - link: /variables/add-interval-variable/
+      name: Add interval variable
+    - link: /variables/add-ad-hoc-filters/
+      name: Add ad hoc filters
     - name: Selection options
       link: /variables/variable-selection-options/
     - name: Value groups/tags
@@ -376,6 +382,8 @@
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
       link: /tutorials/api_org_token_howto/
+    - name: cURL examples
+      link: /http_api/curl-examples/  
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API
