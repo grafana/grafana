@@ -174,17 +174,3 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 func ec2RoleProvider(sess client.ConfigProvider) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
 }
-
-func getAwsConfig(dsInfo *datasourceInfo) (*aws.Config, error) {
-	creds, err := getCredentials(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-
-	return cfg, nil
-}

@@ -211,7 +211,7 @@ export function loadLdapState(): ThunkResult<void> {
 export function loadUserMapping(username: string): ThunkResult<void> {
   return async dispatch => {
     try {
-      const response = await getBackendSrv().get(`/api/admin/ldap/${username}`);
+      const response = await getBackendSrv().get(`/api/admin/ldap/${encodeURIComponent(username)}`);
       const { name, surname, email, login, isGrafanaAdmin, isDisabled, roles, teams } = response;
       const userInfo: LdapUser = {
         info: { name, surname, email, login },
