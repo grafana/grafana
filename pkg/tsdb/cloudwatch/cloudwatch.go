@@ -61,7 +61,8 @@ func init() {
 type cloudWatchExecutor struct {
 	*models.DataSource
 
-	ec2Client ec2iface.EC2API
+	ec2Client  ec2iface.EC2API
+	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -110,11 +111,17 @@ func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error
 
 func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
+	if e.rgtaClient != nil {
+		return e.rgtaClient, nil
+	}
+
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
-	return newRGTAClient(sess), nil
+	e.rgtaClient = newRGTAClient(sess)
+
+	return e.rgtaClient, nil
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
