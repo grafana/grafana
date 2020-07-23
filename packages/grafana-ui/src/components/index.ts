@@ -108,6 +108,8 @@ export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { ThresholdsEditor } from './ThresholdsEditorNew/ThresholdsEditor';
+export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
