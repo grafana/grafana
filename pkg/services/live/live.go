@@ -95,11 +95,11 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		WebsocketReadBufferSize:  1024,
 		WebsocketWriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			logger.Info("check orgin? %s", r.RemoteAddr)
+			logger.Info("CheckOrigin? %s", r.RemoteAddr)
 			return true
 		},
 		WebsocketCheckOrigin: func(r *http.Request) bool {
-			logger.Info("check websocket orgin? %s", r.RemoteAddr)
+			logger.Info("WebsocketCheckOrigin? %s", r.RemoteAddr)
 			return true
 		},
 	})
