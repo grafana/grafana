@@ -53,6 +53,7 @@ type HTTPServer struct {
 	context       context.Context
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
+	middlewares   []macaron.Handler
 
 	RouteRegister        routing.RouteRegister            `inject:""`
 	Bus                  bus.Bus                          `inject:""`
@@ -80,6 +81,10 @@ func (hs *HTTPServer) Init() error {
 	hs.registerRoutes()
 
 	return nil
+}
+
+func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
+	hs.middlewares = append(hs.middlewares, middleware)
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
@@ -323,6 +328,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())
+
+	for _, mw := range hs.middlewares {
+		m.Use(mw)
+	}
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
