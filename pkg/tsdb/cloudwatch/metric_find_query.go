@@ -309,7 +309,6 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	const region = "default"
 	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
@@ -318,7 +317,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		}
 	}
 
-	client, err := e.getEC2Client(region)
+	client, err := e.getEC2Client(defaultRegion)
 	if err != nil {
 		return nil, err
 	}

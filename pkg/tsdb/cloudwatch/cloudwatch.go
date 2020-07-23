@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -61,8 +62,10 @@ func init() {
 type cloudWatchExecutor struct {
 	*models.DataSource
 
-	ec2Client  ec2iface.EC2API
-	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	ec2Client           ec2iface.EC2API
+	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
+	mtx                 sync.Mutex
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -88,11 +91,22 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
+	if logsClient, ok := e.logsClientsByRegion[region]; ok {
+		return logsClient, nil
+	}
+
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
-	return newCWLogsClient(sess), nil
+
+	logsClient := newCWLogsClient(sess)
+	e.logsClientsByRegion[region] = logsClient
+
+	return logsClient, nil
 }
 
 func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
