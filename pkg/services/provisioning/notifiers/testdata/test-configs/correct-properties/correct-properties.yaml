@@ -11,6 +11,9 @@ notifiers:
       token: "xoxb"
       uploadImage: true
       url: https://slack.com
+    secure_settings:
+      url: https://slack.com/secure
+      token: "xoxbsecure"
   - name: another-not-default-notification
     type: email
     settings:

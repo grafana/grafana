@@ -312,21 +312,35 @@ export function lokiStreamsToDataframes(
     lokiQueryStatKey: 'Summary: total bytes processed',
   };
 
+  const meta: QueryResultMeta = {
+    searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
+    limit,
+    stats,
+    custom,
+    preferredVisualisationType: 'logs',
+  };
+
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
+
     return {
       ...dataFrame,
       refId: target.refId,
-      meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
-        limit,
-        stats,
-        custom,
-        preferredVisualisationType: 'logs',
-      },
+      meta,
     };
   });
+
+  if (stats.length && !data.length) {
+    return [
+      {
+        fields: [],
+        length: 0,
+        refId: target.refId,
+        meta,
+      },
+    ];
+  }
 
   return series;
 }

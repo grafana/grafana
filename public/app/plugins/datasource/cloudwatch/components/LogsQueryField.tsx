@@ -155,7 +155,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
   onLogGroupSearchDebounced = debounce(this.onLogGroupSearch, 300);
 
-  componentWillMount = () => {
+  componentDidMount = () => {
     const { datasource, query, onChange } = this.props;
 
     this.setState({

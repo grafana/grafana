@@ -160,4 +160,4 @@ Hide series when all values of a series from a metric query are of a specific va
 
 ### Time regions
 
-Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours.
+Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours. All configured time regions refer to UTC time.
