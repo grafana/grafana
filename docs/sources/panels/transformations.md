@@ -192,21 +192,64 @@ After I apply the transformation, my labels appear in the table as fields.
 {{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 
-### Number of Occurrences
+### Group By
 
-This transformation counts the number of occurrences of each value of a specified field.
+This transformation first groups the data by a specified field value and then processes calculations on each group. The available calculations are the same as the Reduce transformation.
 
 Here's an example of original data.
 
-{{< docs-imagebox img="/img/docs/transformations/occurrences-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+| Time                | Server ID   | CPU Temperature | Server Status
+|---------------------|-------------|-----------------|----------
+| 2020-07-07 11:34:20 | server 1    | 80              | Shutdown
+| 2020-07-07 11:34:20 | server 3    | 62              | OK
+| 2020-07-07 10:32:20 | server 2    | 90              | Overload
+| 2020-07-07 10:31:22 | server 3    | 55              | OK
+| 2020-07-07 09:30:57 | server 3    | 62              | Rebooting
+| 2020-07-07 09:30:05 | server 2    | 88              | OK
+| 2020-07-07 09:28:06 | server 1    | 80              | OK
+| 2020-07-07 09:25:05 | server 2    | 88              | OK
+| 2020-07-07 09:23:07 | server 1    | 86              | OK
 
-By applying the transformation on the field `level`, we obtain the following result.
+You can understand this transformation by illustrating its two steps. First you specify a field name to group the data by. This will group all the same values of this field together, as if you sorted them. For instance if we **Group By** _Server ID_ :
 
-{{< docs-imagebox img="/img/docs/transformations/occurrences-after-level-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+| Time                | Server ID   | CPU Temperature | Server Status
+|---------------------|-------------|-----------------|----------
+| 2020-07-07 11:34:20 | **server 1**    | 80              | Shutdown
+| 2020-07-07 09:28:06 | **server 1**    | 80              | OK
+| 2020-07-07 09:23:07 | **server 1**    | 86              | OK
+|
+| 2020-07-07 10:32:20 | server 2    | 90              | Overload
+| 2020-07-07 09:30:05 | server 2    | 88              | OK
+| 2020-07-07 09:25:05 | server 2    | 88              | OK
+|
+| 2020-07-07 11:34:20 | ***server 3***    | 62              | OK
+| 2020-07-07 10:31:22 | ***server 3***    | 55              | OK
+| 2020-07-07 09:30:57 | ***server 3***    | 62              | Rebooting
 
-By applying the transformation on the field `hostname`, we obtain the following result.
+Then you can apply various calculations on each group. The result is reduced to one line per group.
 
-{{< docs-imagebox img="/img/docs/transformations/occurrences-after-hostname-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+For instance, **On Field** *CPU Temperature*, we can **Calculate** the average. We will obtain the average of each server's CPU Temperature as a result :
+
+| Server ID | CPU Temperature (average) 
+|-----------|--------------------------
+| server 1  | 82
+| server 2  | 88.6
+| server 3  | 59.6
+
+And we can add more than one of those calculation, for instance :
+
+- **On Field** *Time*, we can **Calculate** the *Last* value, to know when the last data point was received for each server
+- **On Field** *Server Status*, we can **Calculate** the *Last* value to know what is the last state value for each server
+- **On Field** *Temperature*, we can also **Calculate** the *Last* value to know what is the latest monitored temperature for each server
+
+We would get :
+
+| Server ID | CPU Temperature (average) | CPU Temperature (last) | Time (last)      | Server Status (last)
+|-----------|-------------------------- |------------------------|------------------|----------------------
+| server 1  | 82                        | 80                     | 2020-07-07 11:34:20 | Shutdown
+| server 2  | 88.6                      | 90                     | 2020-07-07 10:32:20 | Overload
+| server 3  | 59.6                      | 62                     | 2020-07-07 11:34:20 | OK
+
 
 ## Debug transformations
 
