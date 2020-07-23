@@ -232,7 +232,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			ctx.Redirect(redirectTo)
 			return
 		}
-		log.Debug("Ignored invalid redirect_to cookie value: %v", redirectTo)
+		log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
 	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")

@@ -166,7 +166,7 @@ func NewOAuthService() {
 			}
 		}
 
-		// Generic - Uses the same scheme as Github.
+		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &SocialGenericOAuth{
 				SocialBase:           newSocialBase(name, &config, info),
