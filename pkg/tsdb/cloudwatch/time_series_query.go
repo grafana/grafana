@@ -72,7 +72,6 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			}
 
 			cloudwatchResponses := make([]*cloudwatchResponse, 0)
-			plog.Debug("Executing time series request")
 			mdo, err := e.executeRequest(ectx, client, metricDataInput)
 			if err != nil {
 				for _, query := range requestQueries {

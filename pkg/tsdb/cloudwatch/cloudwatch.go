@@ -191,7 +191,6 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
 	*/
 	queryParams := queryContext.Queries[0].Model
-	plog.Debug("Query request received", "params", queryParams)
 	_, fromAlert := queryContext.Headers["FromAlert"]
 	isLogAlertQuery := fromAlert && queryParams.Get("queryMode").MustString("") == "Logs"
 

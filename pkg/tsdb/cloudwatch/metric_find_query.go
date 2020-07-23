@@ -663,7 +663,6 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	}
 
 	var resp ec2.DescribeInstancesOutput
-	plog.Debug("Describing EC2 instances", "params", params)
 	if err := client.DescribeInstancesPages(params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 		resp.Reservations = append(resp.Reservations, page.Reservations...)
 		return !lastPage
