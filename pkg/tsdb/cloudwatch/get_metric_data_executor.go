@@ -16,6 +16,7 @@ func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client cloudWat
 		if nextToken != "" {
 			metricDataInput.NextToken = aws.String(nextToken)
 		}
+		plog.Debug("Getting metric data", "input", metricDataInput)
 		resp, err := client.GetMetricDataWithContext(ctx, metricDataInput)
 		if err != nil {
 			return mdo, err
