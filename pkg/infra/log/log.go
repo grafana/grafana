@@ -36,7 +36,7 @@ func New(logger string, ctx ...interface{}) Logger {
 	return Root.New(params...)
 }
 
-func Trace(format string, v ...interface{}) {
+func Tracef(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -47,7 +47,7 @@ func Trace(format string, v ...interface{}) {
 	Root.Debug(message)
 }
 
-func Debug(format string, v ...interface{}) {
+func Debugf(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -58,7 +58,7 @@ func Debug(format string, v ...interface{}) {
 	Root.Debug(message)
 }
 
-func Info(format string, v ...interface{}) {
+func Infof(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -69,7 +69,7 @@ func Info(format string, v ...interface{}) {
 	Root.Info(message)
 }
 
-func Warn(format string, v ...interface{}) {
+func Warnf(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -80,15 +80,15 @@ func Warn(format string, v ...interface{}) {
 	Root.Warn(message)
 }
 
-func Error(skip int, format string, v ...interface{}) {
+func Errorf(skip int, format string, v ...interface{}) {
 	Root.Error(fmt.Sprintf(format, v...))
 }
 
-func Critical(skip int, format string, v ...interface{}) {
+func Criticalf(skip int, format string, v ...interface{}) {
 	Root.Crit(fmt.Sprintf(format, v...))
 }
 
-func Fatal(skip int, format string, v ...interface{}) {
+func Fatalf(skip int, format string, v ...interface{}) {
 	Root.Crit(fmt.Sprintf(format, v...))
 	Close()
 	os.Exit(1)
