@@ -52,10 +52,14 @@ var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return &cloudWatchExecutor{
-			DataSource: ds,
-		}, nil
+		return newExecutor(), nil
 	})
+}
+
+func newExecutor() *cloudWatchExecutor {
+	return &cloudWatchExecutor{
+		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+	}
 }
 
 // cloudWatchExecutor executes CloudWatch requests.
