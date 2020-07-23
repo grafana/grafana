@@ -70,6 +70,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         },
         (err: any) => {
           const regions = [
+            'af-south-1',
             'ap-east-1',
             'ap-northeast-1',
             'ap-northeast-2',

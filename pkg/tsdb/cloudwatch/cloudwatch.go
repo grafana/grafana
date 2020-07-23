@@ -9,11 +9,17 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -45,35 +51,25 @@ var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", newcloudWatchExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return newExecutor(), nil
+	})
 }
 
-func newcloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	e := &cloudWatchExecutor{
-		DataSource: datasource,
+func newExecutor() *cloudWatchExecutor {
+	return &cloudWatchExecutor{
+		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
 	}
-
-	dsInfo := e.getDSInfo(defaultRegion)
-	defaultLogsClient, err := retrieveLogsClient(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-	e.logsClientsByRegion = map[string]*cloudwatchlogs.CloudWatchLogs{
-		dsInfo.Region: defaultLogsClient,
-		defaultRegion: defaultLogsClient,
-	}
-
-	return e, nil
 }
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
 	*models.DataSource
-	ec2Svc  ec2iface.EC2API
-	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 
-	logsClientsByRegion map[string](*cloudwatchlogs.CloudWatchLogs)
-	mux                 sync.Mutex
+	ec2Client           ec2iface.EC2API
+	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
+	mtx                 sync.Mutex
 }
 
 func (e *cloudWatchExecutor) getCWClient(region string) (*cloudwatch.CloudWatch, error) {
