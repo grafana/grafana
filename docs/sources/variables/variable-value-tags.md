@@ -7,11 +7,13 @@ weight = 800
 
 # Enter variable value groups/tags (experimental feature)
 
-Value groups/tags are a feature you can use to organize variable options. If you have many options in the dropdown for a multi-value variable, then you can use this feature to group the values into selectable tags.
+Value groups/tags are a feature you can use to organize variable options. If you have many options in the dropdown for a multi-value variable, then you can use this feature to group the values into selectable tags. 
 
 {{< docs-imagebox img="/img/docs/v50/variable_dropdown_tags.png" max-width="300px" >}}
 
 This feature is off by default. Click **Enabled** to turn the feature on.
+
+To see an example, check out [Templating value groups](https://play.grafana.org/d/000000024/templating-value-groups?orgId=1).
 
 ## Tags query
 
