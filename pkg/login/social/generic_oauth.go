@@ -21,6 +21,7 @@ type SocialGenericOAuth struct {
 	apiUrl               string
 	emailAttributeName   string
 	emailAttributePath   string
+	loginAttributePath   string
 	roleAttributePath    string
 	teamIds              []int
 }
@@ -242,6 +243,15 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 	if data.Login != "" {
 		return data.Login
+	}
+
+	if s.loginAttributePath != "" {
+		login, err := s.searchJSONForAttr(s.loginAttributePath, data.rawJSON)
+		if err != nil {
+			s.log.Error("Failed to search JSON for attribute", "error", err)
+		} else if login != "" {
+			return login
+		}
 	}
 
 	if data.Username != "" {
