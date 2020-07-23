@@ -4,7 +4,7 @@ This style guide applies to all documentation created for Grafana products.
 
 For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
 
-The [Divio documentation system](https://documentation.divio.com/) site is also a good resource.
+The [Divio documentation system](https://documentation.divio.com/) site and the [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles) are also good resources.
 
 ## Contributing
 
