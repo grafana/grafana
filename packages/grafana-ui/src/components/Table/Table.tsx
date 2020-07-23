@@ -36,9 +36,9 @@ export interface Props {
   noHeader?: boolean;
   resizable?: boolean;
   initialSortBy?: TableSortByFieldState[];
-  onCellClick?: TableFilterActionCallback;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}> {}
@@ -110,7 +110,15 @@ function getInitialState(props: Props, columns: Column[]): Partial<ReactTableInt
 }
 
 export const Table: FC<Props> = memo((props: Props) => {
-  const { data, height, onCellClick, width, columnMinWidth = COLUMN_MIN_WIDTH, noHeader, resizable = true } = props;
+  const {
+    data,
+    height,
+    onCellFilterAdded,
+    width,
+    columnMinWidth = COLUMN_MIN_WIDTH,
+    noHeader,
+    resizable = true,
+  } = props;
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
 
@@ -162,7 +170,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               field={data.fields[index]}
               tableStyles={tableStyles}
               cell={cell}
-              onCellClick={onCellClick}
+              onCellFilterAdded={onCellFilterAdded}
             />
           ))}
         </div>

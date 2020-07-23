@@ -5,8 +5,10 @@ import {
   getFlattenedSections,
   markSelected,
   mergeReducers,
+  parseRouteParams,
 } from './utils';
 import { sections, searchResults } from './testData';
+import { RouteParams } from './types';
 
 describe('Search utils', () => {
   describe('getFlattenedSections', () => {
@@ -144,6 +146,62 @@ describe('Search utils', () => {
   describe('getCheckedDashboardsUids', () => {
     it('should get uids of all checked dashboards', () => {
       expect(getCheckedDashboardsUids(searchResults as any[])).toEqual(['lBdLINUWk', '8DY63kQZk']);
+    });
+  });
+
+  describe('parseRouteParams', () => {
+    it('should remove all undefined keys', () => {
+      const params: Partial<RouteParams> = { sort: undefined, tag: undefined, query: 'test' };
+
+      expect(parseRouteParams(params)).toEqual({
+        params: {
+          query: 'test',
+        },
+      });
+    });
+
+    it('should return tag as array, if present', () => {
+      //@ts-ignore
+      const params = { sort: undefined, tag: 'test', query: 'test' };
+      expect(parseRouteParams(params)).toEqual({
+        params: {
+          query: 'test',
+          tag: ['test'],
+        },
+      });
+
+      const params2: Partial<RouteParams> = { sort: undefined, tag: ['test'], query: 'test' };
+      expect(parseRouteParams(params2)).toEqual({
+        params: {
+          query: 'test',
+          tag: ['test'],
+        },
+      });
+    });
+
+    it('should return sort as a SelectableValue', () => {
+      const params: Partial<RouteParams> = { sort: 'test' };
+
+      expect(parseRouteParams(params)).toEqual({
+        params: {
+          sort: { value: 'test' },
+        },
+      });
+    });
+
+    it('should prepend folder:{folder} to the query if folder is present', () => {
+      expect(parseRouteParams({}, 'current')).toEqual({
+        params: {
+          query: 'folder:current ',
+        },
+      });
+      // Prepend to exiting query
+      const params: Partial<RouteParams> = { query: 'test' };
+      expect(parseRouteParams(params, 'current')).toEqual({
+        params: {
+          query: 'folder:current test',
+        },
+      });
     });
   });
 });

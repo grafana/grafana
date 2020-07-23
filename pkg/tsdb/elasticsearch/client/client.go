@@ -154,12 +154,14 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 }
 
 func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*response, error) {
-	u, _ := url.Parse(c.ds.Url)
+	u, err := url.Parse(c.ds.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, uriPath)
 	u.RawQuery = uriQuery
 
 	var req *http.Request
-	var err error
 	if method == http.MethodPost {
 		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
 	} else {
@@ -203,11 +205,15 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
-	res, err := ctxhttp.Do(c.ctx, httpClient, req)
+	//nolint:bodyclose
+	resp, err := ctxhttp.Do(c.ctx, httpClient, req)
+	if err != nil {
+		return nil, err
+	}
 	return &response{
-		httpResponse: res,
+		httpResponse: resp,
 		reqInfo:      reqInfo,
-	}, err
+	}, nil
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {

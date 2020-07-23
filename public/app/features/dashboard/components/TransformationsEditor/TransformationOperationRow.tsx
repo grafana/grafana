@@ -7,7 +7,7 @@ import { QueryOperationAction } from 'app/core/components/QueryOperationRow/Quer
 
 interface TransformationOperationRowProps {
   name: string;
-  description: string;
+  description?: string;
   editor?: JSX.Element;
   onRemove: () => void;
   input: DataFrame[];
@@ -25,6 +25,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
     return (
       <HorizontalGroup align="center">
         <QueryOperationAction
+          title="Debug"
           disabled={!isOpen}
           icon="bug"
           onClick={() => {
@@ -32,7 +33,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
           }}
         />
 
-        <QueryOperationAction icon="trash-alt" onClick={onRemove} />
+        <QueryOperationAction title="Remove" icon="trash-alt" onClick={onRemove} />
       </HorizontalGroup>
     );
   };

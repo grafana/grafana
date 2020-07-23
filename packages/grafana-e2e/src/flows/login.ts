@@ -1,7 +1,7 @@
 import { e2e } from '../index';
 
 export const login = (username: string = 'admin', password: string = 'admin') => {
-  e2e().logToConsole('Trying to login with username:', username);
+  e2e().logToConsole('Logging in with username:', username);
   e2e.pages.Login.visit();
   e2e.pages.Login.username()
     .should('be.visible') // prevents flakiness
@@ -13,11 +13,9 @@ export const login = (username: string = 'admin', password: string = 'admin') =>
   e2e()
     .url()
     .then(url => {
-      if (/^https?:\/\/localhost/.test(url)) {
-        e2e.pages.Login.skip()
-          .should('be.visible')
-          .click();
-      }
+      e2e.pages.Login.skip()
+        .should('be.visible')
+        .click();
     });
 
   e2e()

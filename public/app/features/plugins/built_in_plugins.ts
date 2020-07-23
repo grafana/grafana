@@ -29,15 +29,14 @@ const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const testDataDSPlugin = async () =>
   await import(/* webpackChunkName: "testDataDSPlugin" */ 'app/plugins/datasource/testdata/module');
-const stackdriverPlugin = async () =>
-  await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
+const cloudMonitoringPlugin = async () =>
+  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
 const azureMonitorPlugin = async () =>
   await import(
     /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
   );
 
 import * as textPanel from 'app/plugins/panel/text/module';
-import * as text2Panel from 'app/plugins/panel/text2/module';
 import * as graph2Panel from 'app/plugins/panel/graph2/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -75,11 +74,10 @@ const builtInPlugins: any = {
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
-  'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
+  'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
 
   'app/plugins/panel/text/module': textPanel,
-  'app/plugins/panel/text2/module': text2Panel,
   'app/plugins/panel/graph2/module': graph2Panel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,

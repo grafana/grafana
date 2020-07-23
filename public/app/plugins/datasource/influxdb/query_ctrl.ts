@@ -5,10 +5,13 @@ import InfluxQueryModel from './influx_query_model';
 import queryPart from './query_part';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { InfluxQuery } from './types';
+import InfluxDatasource from './datasource';
 
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
+  datasource: InfluxDatasource;
   queryModel: InfluxQueryModel;
   queryBuilder: any;
   groupBySegment: any;
@@ -35,7 +38,9 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.resultFormats = [
       { text: 'Time series', value: 'time_series' },
       { text: 'Table', value: 'table' },
+      { text: 'Logs', value: 'logs' },
     ];
+
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
 
     if (!this.target.measurement) {
@@ -71,6 +76,17 @@ export class InfluxQueryCtrl extends QueryCtrl {
     });
   }
 
+  /**
+   * Only called for flux
+   */
+  onChange = (target: InfluxQuery) => {
+    this.target.query = target.query;
+  };
+
+  onRunQuery = () => {
+    this.panelCtrl.refresh();
+  };
+
   removeOrderByTime() {
     this.target.orderByTime = 'ASC';
   }
@@ -89,7 +105,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         memo.push(menu);
         return memo;
       },
-      []
+      [] as any
     );
   }
 
@@ -152,6 +168,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     const plusButton = this.uiSegmentSrv.newPlusButton();
     this.groupBySegment.value = plusButton.value;
     this.groupBySegment.html = plusButton.html;
+    this.groupBySegment.fake = true;
     this.panelCtrl.refresh();
   }
 
@@ -182,6 +199,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
+    return Promise.resolve();
   }
 
   handleGroupByPartEvent(part: any, index: any, evt: { name: any }) {
@@ -206,6 +224,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
+    return Promise.resolve();
   }
 
   fixTagSegments() {
@@ -235,11 +254,16 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  // Only valid for InfluxQL queries
   toggleEditorMode() {
+    if (this.datasource.is2x) {
+      return; // nothing
+    }
+
     try {
       this.target.query = this.queryModel.render(false);
     } catch (err) {
-      console.log('query render error');
+      console.error('query render error');
     }
     this.target.rawQuery = !this.target.rawQuery;
   }
@@ -286,6 +310,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     if (segment.type === 'condition') {
       return Promise.resolve([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
+
     if (segment.type === 'operator') {
       const nextValue = this.tagSegments[index + 1].value;
       if (/^\/.*\/$/.test(nextValue)) {
@@ -360,7 +385,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   rebuildTargetTagConditions() {
     const tags: any[] = [];
     let tagIndex = 0;
-    let tagOperator = '';
+    let tagOperator: string | null = '';
 
     _.each(this.tagSegments, (segment2, index) => {
       if (segment2.type === 'key') {
@@ -387,16 +412,12 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  getTagValueOperator(tagValue: string, tagOperator: string): string {
+  getTagValueOperator(tagValue: string, tagOperator: string): string | null {
     if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
       return '=~';
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
     return null;
-  }
-
-  getCollapsedText() {
-    return this.queryModel.render(false);
   }
 }

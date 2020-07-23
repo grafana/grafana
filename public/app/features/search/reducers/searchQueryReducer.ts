@@ -1,4 +1,4 @@
-import { DashboardQuery, SearchAction, SearchLayout } from '../types';
+import { DashboardQuery, RouteParams, SearchAction, SearchLayout } from '../types';
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -20,6 +20,14 @@ export const defaultQuery: DashboardQuery = {
   folderIds: [],
   sort: null,
   layout: SearchLayout.Folders,
+};
+
+export const defaultQueryParams: RouteParams = {
+  sort: null,
+  starred: null,
+  query: null,
+  tag: null,
+  layout: null,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {

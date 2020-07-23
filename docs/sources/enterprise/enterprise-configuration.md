@@ -12,7 +12,7 @@ weight = 300
 
 # Grafana Enterprise configuration
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about available configuration options.
 
 ## [white_labeling]
 
@@ -35,11 +35,11 @@ login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg
 
 ### menu_logo
 
-Set to complete url to override menu logo.
+Set to complete URL to override menu logo.
 
 ### fav_icon
 
-Set to complete url to override fav icon (icon shown in browser tab).
+Set to complete URL to override fav icon (icon shown in browser tab).
 
 ### apple_touch_icon
 
@@ -186,3 +186,33 @@ List of comma- or space-separated roles that will be mapped to the Admin role.
 ### role_values_grafana_admin
 
 List of comma- or space-separated roles that will be mapped to the Grafana Admin (Super Admin) role.
+
+## [keystore.vault]
+
+### url
+
+Location of the Vault server.
+
+### namespace
+
+Vault namespace if using Vault with multi-tenancy.
+
+### auth_method
+
+Method for authenticating towards Vault. Vault is inactive if this option is not set. Current possible values: `token`.
+
+### token
+
+Secret token to connect to Vault when auth_method is `token`.
+
+### lease_renewal_interval
+
+Time between checking if there are any secrets which needs to be renewed.
+
+### lease_renewal_expires_within
+
+Time until expiration for tokens which are renewed. Should have a value higher than lease_renewal_interval.
+
+### lease_renewal_increment
+
+New duration for renewed tokens. Vault may be configured to ignore this value and impose a stricter limit.

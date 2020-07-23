@@ -51,8 +51,14 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   queryUpdated() {
+    // As Raw Data and Raw Document have the same request, we need to run refresh if they are updated
+    const isPossiblyRawDataSwitch = this.target.metrics.some(
+      (metric: any) => metric.type === 'raw_data' || metric.type === 'raw_document'
+    );
     const newJson = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
     if (this.rawQueryOld && newJson !== this.rawQueryOld) {
+      this.refresh();
+    } else if (isPossiblyRawDataSwitch) {
       this.refresh();
     }
 

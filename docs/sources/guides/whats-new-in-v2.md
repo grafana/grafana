@@ -70,7 +70,7 @@ You control these overrides in panel editor mode and the new tab `Time Range`.
 
 When you zoom or change the Dashboard time to a custom absolute time range, all panel overrides will be disabled. The panel relative time override is only active when the dashboard time is also relative. The panel timeshift override however is always active, even when the dashboard time is absolute.
 
-The `Hide time override info` option allows you to hide the the override info text that is by default shown in the
+The `Hide time override info` option allows you to hide the override info text that is by default shown in the
 upper right of a panel when overridden time range options.
 
 Currently you can only override the dashboard time with relative time ranges, not absolute time ranges.
@@ -145,7 +145,7 @@ In addition, connections to Data Sources can be better controlled and secured, a
 
 ## Dashboard "now delay"
 
-A commonly reported problem has been graphs dipping to zero at the the end, because metric data for the last interval has yet to be written to the Data Source. These graphs then "self correct" once the data comes in, but can look deceiving or alarming at times.
+A commonly reported problem has been graphs dipping to zero at the end, because metric data for the last interval has yet to be written to the Data Source. These graphs then "self correct" once the data comes in, but can look deceiving or alarming at times.
 
 You can avoid this problem by adding a `now delay` in `Dashboard Settings` > `Time Picker` tab. This new feature will cause Grafana to ignore the most recent data up to the set delay.
 ![](/img/docs/v2/timepicker_now_delay.jpg)

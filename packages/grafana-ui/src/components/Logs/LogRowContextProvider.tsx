@@ -123,17 +123,17 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   children,
 }) => {
   // React Hook that creates a number state value called limit to component state and a setter function called setLimit
-  // The intial value for limit is 10
+  // The initial value for limit is 10
   // Used for the number of rows to retrieve from backend from a specific point in time
   const [limit, setLimit] = useState(10);
 
   // React Hook that creates an object state value called result to component state and a setter function called setResult
-  // The intial value for result is null
+  // The initial value for result is null
   // Used for sorting the response from backend
   const [result, setResult] = useState<ResultType>((null as any) as ResultType);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
-  // The intial value for hasMoreContextRows is {before: true, after: true}
+  // The initial value for hasMoreContextRows is {before: true, after: true}
   // Used for indicating in UI if there are more rows to load in a given direction
   const [hasMoreContextRows, setHasMoreContextRows] = useState({
     before: true,

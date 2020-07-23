@@ -18,7 +18,7 @@ To prevent this type of exploitation from happening, we recommend that you apply
 
 ## Limit IP addresses/hostnames for data source URL
 
-You can configure Grafana to only allow certain IP addresses or hostnames to be used as data source URLs and proxied through the Grafana data source proxy. Refer to [data_source_proxy_whitelist]({{< relref "configuration/#data-source-proxy-whitelist" >}}) for usage instructions.
+You can configure Grafana to only allow certain IP addresses or hostnames to be used as data source URLs and proxied through the Grafana data source proxy. Refer to [data_source_proxy_whitelist]({{< relref "../administration/configuration/#data-source-proxy-whitelist" >}}) for usage instructions.
 
 ## Firewall rules
 

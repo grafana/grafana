@@ -25,7 +25,11 @@ export interface TableRow {
   [x: string]: any;
 }
 
-export type TableFilterActionCallback = (key: string, value: string) => void;
+export const FILTER_FOR_OPERATOR = '=';
+export const FILTER_OUT_OPERATOR = '!=';
+export type FilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+export type FilterItem = { key: string; value: string; operator: FilterOperator };
+export type TableFilterActionCallback = (item: FilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 

@@ -14,33 +14,34 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, LegacyForms, Select, Table } from '@grafana/ui';
+import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container, HorizontalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-
-const { Switch } = LegacyForms;
+import { PanelModel } from 'app/features/dashboard/state';
+import { DetailText } from './DetailText';
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
-  dashboard: DashboardModel;
   panel: PanelModel;
-  data: DataFrame[];
+  data?: DataFrame[];
   isLoading: boolean;
   options: GetDataOptions;
   onOptionsChange: (options: GetDataOptions) => void;
 }
 
 interface State {
+  /** The string is seriesToColumns transformation. Otherwise it is a dataframe index */
+  selectedDataFrame: number | DataTransformerID;
   transformId: DataTransformerID;
   dataFrameIndex: number;
-  transformationOptions: Array<SelectableValue<string>>;
+  transformationOptions: Array<SelectableValue<DataTransformerID>>;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
@@ -48,8 +49,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
+      selectedDataFrame: DataTransformerID.seriesToColumns,
       dataFrameIndex: 0,
-      transformId: DataTransformerID.noop,
+      transformId: DataTransformerID.seriesToColumns,
       transformationOptions: buildTransformationOptions(),
     };
   }
@@ -60,9 +62,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     // Replace the time field with a formatted time
     const { timeIndex, timeField } = getTimeField(dataFrame);
+
     if (timeField) {
       // Use the configurd date or standandard time display
-      let processor: DisplayProcessor = timeField.display;
+      let processor: DisplayProcessor | undefined = timeField.display;
       if (!processor) {
         processor = getDisplayProcessor({
           field: timeField,
@@ -76,7 +79,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
       };
 
       const fields = [...dataFrame.fields];
-      fields[timeIndex] = formattedDateField;
+      fields[timeIndex!] = formattedDateField;
+
       dataFrame = {
         ...dataFrame,
         fields,
@@ -85,23 +89,24 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const dataFrameCsv = toCSV([dataFrame]);
 
-    const blob = new Blob([dataFrameCsv], {
-      type: 'application/csv;charset=utf-8',
+    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
+      type: 'text/csv;charset=utf-8',
     });
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
     const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
     saveAs(blob, fileName);
   };
 
-  onSelectedFrameChanged = (item: SelectableValue<number>) => {
-    this.setState({ dataFrameIndex: item.value || 0 });
-  };
+  onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
+    this.setState({
+      transformId:
+        item.value === DataTransformerID.seriesToColumns ? DataTransformerID.seriesToColumns : DataTransformerID.noop,
+      dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
+      selectedDataFrame: item.value!,
+    });
 
-  onTransformationChange = (value: SelectableValue<DataTransformerID>) => {
-    this.setState({ transformId: value.value, dataFrameIndex: 0 });
     this.props.onOptionsChange({
       ...this.props.options,
-      withTransforms: false,
     });
   };
 
@@ -125,8 +130,20 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { options } = this.props;
     let data = this.props.data;
 
+    if (!data) {
+      return [];
+    }
+
     if (this.state.transformId !== DataTransformerID.noop) {
       data = this.getTransformedData();
+    }
+
+    // In case the transform removes the currently selected data frame
+    if (!data[this.state.dataFrameIndex]) {
+      this.setState({
+        dataFrameIndex: 0,
+        selectedDataFrame: 0,
+      });
     }
 
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
@@ -138,12 +155,47 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
+      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 
-  renderDataOptions = () => {
-    const { options, onOptionsChange, panel } = this.props;
-    const { transformId } = this.state;
+  getActiveString() {
+    const { selectedDataFrame } = this.state;
+    const { options, data } = this.props;
+    let activeString = '';
+
+    if (!data) {
+      return activeString;
+    }
+
+    if (selectedDataFrame === DataTransformerID.seriesToColumns) {
+      activeString = 'series joined by time';
+    } else {
+      activeString = getFrameDisplayName(data[selectedDataFrame as number]);
+    }
+
+    if (options.withTransforms || options.withFieldConfig) {
+      activeString += ' - applied ';
+      if (options.withTransforms) {
+        activeString += 'panel transformations ';
+      }
+
+      if (options.withTransforms && options.withFieldConfig) {
+        activeString += 'and  ';
+      }
+
+      if (options.withFieldConfig) {
+        activeString += 'field configuration';
+      }
+    }
+
+    return activeString;
+  }
+
+  renderDataOptions(dataFrames: DataFrame[]) {
+    const { options, onOptionsChange, panel, data } = this.props;
+    const { transformId, transformationOptions, selectedDataFrame } = this.state;
+
     const styles = getPanelInspectorStyles();
 
     const panelTransformations = panel.getTransformations();
@@ -152,43 +204,80 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const showFieldConfigsOption = !panel.plugin?.fieldConfigRegistry.isEmpty();
     const showDataOptions = showPanelTransformationsOption || showFieldConfigsOption;
 
+    let dataSelect = dataFrames;
+    if (selectedDataFrame === DataTransformerID.seriesToColumns) {
+      dataSelect = data!;
+    }
+
+    const choices = dataSelect.map((frame, index) => {
+      return {
+        value: index,
+        label: `${getFrameDisplayName(frame)} (${index})`,
+      } as SelectableValue<number>;
+    });
+
+    const selectableOptions = [...transformationOptions, ...choices];
+
     if (!showDataOptions) {
       return null;
     }
 
     return (
-      <div className={cx(styles.options, styles.dataDisplayOptions)}>
-        <QueryOperationRow title={'Data display options'} isOpen={false}>
-          {showPanelTransformationsOption && (
-            <div className="gf-form-inline">
-              <Switch
-                tooltip="Data shown in the table will be transformed using transformations defined in the panel"
-                label="Apply panel transformations"
-                labelClass="width-12"
-                checked={!!options.withTransforms}
-                onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+      <QueryOperationRow
+        title="Table data options"
+        headerElement={<DetailText>{this.getActiveString()}</DetailText>}
+        isOpen={false}
+      >
+        <div className={styles.options}>
+          <VerticalGroup spacing="lg">
+            <Field
+              label="Show data frame"
+              className={css`
+                margin-bottom: 0;
+              `}
+              disabled={data!.length < 2}
+            >
+              <Select
+                options={selectableOptions}
+                value={selectedDataFrame}
+                onChange={this.onDataFrameChange}
+                width={30}
               />
-            </div>
-          )}
-          {showFieldConfigsOption && (
-            <div className="gf-form-inline">
-              <Switch
-                tooltip="Data shown in the table will have panel field configuration applied, for example units or display name"
-                label="Apply field configuration"
-                labelClass="width-12"
-                checked={!!options.withFieldConfig}
-                onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
-              />
-            </div>
-          )}
-        </QueryOperationRow>
-      </div>
+            </Field>
+
+            <HorizontalGroup>
+              {showPanelTransformationsOption && (
+                <Field
+                  label="Apply panel transformations"
+                  description="Table data is displayed with transformations defined in the panel Transform tab."
+                >
+                  <Switch
+                    value={!!options.withTransforms}
+                    onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+                  />
+                </Field>
+              )}
+              {showFieldConfigsOption && (
+                <Field
+                  label="Apply field configuration"
+                  description="Table data is displayed with options defined in the Field and Override tabs."
+                >
+                  <Switch
+                    value={!!options.withFieldConfig}
+                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
+                  />
+                </Field>
+              )}
+            </HorizontalGroup>
+          </VerticalGroup>
+        </div>
+      </QueryOperationRow>
     );
-  };
+  }
 
   render() {
-    const { isLoading, data } = this.props;
-    const { dataFrameIndex, transformId, transformationOptions } = this.state;
+    const { isLoading } = this.props;
+    const { dataFrameIndex } = this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -205,55 +294,25 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return <div>No Data</div>;
     }
 
-    const choices = dataFrames.map((frame, index) => {
-      return {
-        value: index,
-        label: `${getFrameDisplayName(frame)} (${index})`,
-      };
-    });
+    if (!dataFrames[dataFrameIndex]) {
+      return <div>Could not find the Data Frame</div>;
+    }
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
         <div className={styles.actionsWrapper}>
-          <div className={styles.leftActions}>
-            <div className={styles.selects}>
-              {data.length > 1 && (
-                <Field
-                  label="Transformer"
-                  className={css`
-                    margin-bottom: 0;
-                  `}
-                >
-                  <Select
-                    options={transformationOptions}
-                    value={transformId}
-                    onChange={this.onTransformationChange}
-                    width={15}
-                  />
-                </Field>
-              )}
-              {choices.length > 1 && (
-                <Field
-                  label="Select result"
-                  className={css`
-                    margin-bottom: 0;
-                  `}
-                >
-                  <Select options={choices} value={dataFrameIndex} onChange={this.onSelectedFrameChanged} width={30} />
-                </Field>
-              )}
-            </div>
-            {this.renderDataOptions()}
-          </div>
-
-          <div className={styles.options}>
-            <Button variant="primary" onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}>
-              Download CSV
-            </Button>
-          </div>
+          <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
+          <Button
+            variant="primary"
+            onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
+            className={css`
+              margin-bottom: 10px;
+            `}
+          >
+            Download CSV
+          </Button>
         </div>
-
-        <div style={{ flexGrow: 1 }}>
+        <Container grow={1}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -267,24 +326,17 @@ export class InspectDataTab extends PureComponent<Props, State> {
               );
             }}
           </AutoSizer>
-        </div>
+        </Container>
       </div>
     );
   }
 }
 
 function buildTransformationOptions() {
-  const transformations: Array<SelectableValue<string>> = [
+  const transformations: Array<SelectableValue<DataTransformerID>> = [
     {
-      value: 'Do nothing',
-      label: 'None',
-      transformer: {
-        id: DataTransformerID.noop,
-      },
-    },
-    {
-      value: 'join by time',
-      label: 'Join by time',
+      value: DataTransformerID.seriesToColumns,
+      label: 'Series joined by time',
       transformer: {
         id: DataTransformerID.seriesToColumns,
         options: { byField: 'Time' },

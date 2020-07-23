@@ -33,4 +33,4 @@ Use the following options to refine your visualization:
   - **Horizontal -** Bars stretch horizontally, left to right.
   - **Vertical -** Bars stretch vertically, top to bottom.
 - **Show threshold labels -** Controls if threshold values are shown.
-- **Show threshold markers -** Controls if a thresholds band is shown outside the inner gauge value band.
+- **Show threshold markers -** Controls if a threshold band is shown outside the inner gauge value band.

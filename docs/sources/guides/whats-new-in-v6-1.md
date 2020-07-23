@@ -32,7 +32,7 @@ This feature also adds a new Team permission that can be assigned to any user wi
 
 We believe that this is more in line with the Grafana philosophy, as it will allow teams to be more self-organizing. This option will be made permanent if it gets positive feedback from the community so let us know what you think in the [issue on GitHub](https://github.com/grafana/grafana/issues/15590).
 
-To turn this feature on add the following [config option](/installation/configuration/#editors-can-admin) to your Grafana ini file in the `users` section and then restart the Grafana server:
+To turn this feature on add the following [config option](/administration/configuration/#editors-can-admin) to your Grafana ini file in the `users` section and then restart the Grafana server:
 
 ```ini
 [users]

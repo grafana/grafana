@@ -20,6 +20,8 @@ import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { VariableHide } from '../../../features/variables/types';
+import { describe } from '../../../../test/lib/common';
+import { QueryOptions } from 'app/types';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
@@ -1294,7 +1296,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1335,7 +1337,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1376,7 +1378,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=0&end=400&step=100';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1422,7 +1424,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=50&end=400&step=50';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1521,7 +1523,7 @@ describe('PrometheusDatasource', () => {
         '&step=' +
         step;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1571,7 +1573,7 @@ describe('PrometheusDatasource', () => {
         query.targets[0].expr
       )}&start=0&end=3600&step=60`;
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1682,7 +1684,7 @@ describe('PrometheusDatasource for POST', () => {
   });
 });
 
-const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp) => {
+const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp, queryOptions?: Partial<QueryOptions>) => {
   const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
@@ -1693,7 +1695,9 @@ const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp) => {
   const start = 0;
   const end = 1;
   const panelId = '2';
-  const options = ({ targets: [target], interval: '1s', panelId, app } as any) as DataQueryRequest<PromQuery>;
+  const options = ({ targets: [target], interval: '1s', panelId, app, ...queryOptions } as any) as DataQueryRequest<
+    PromQuery
+  >;
 
   const ds = new PrometheusDatasource(instanceSettings);
   const { queries, activeTargets } = ds.prepareTargets(options, start, end);
@@ -1743,11 +1747,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: true,
-          showingTable: true,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: true,
+          showingTable: true,
+        });
 
         expect(queries.length).toBe(2);
         expect(activeTargets.length).toBe(2);
@@ -1816,11 +1821,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: false,
-          showingTable: true,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: false,
+          showingTable: true,
+        });
 
         expect(queries.length).toBe(1);
         expect(activeTargets.length).toBe(1);
@@ -1853,11 +1859,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: true,
-          showingTable: false,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: true,
+          showingTable: false,
+        });
 
         expect(queries.length).toBe(1);
         expect(activeTargets.length).toBe(1);
@@ -1886,6 +1893,68 @@ describe('prepareTargets', () => {
   });
 });
 
+describe('modifyQuery', () => {
+  describe('when called with ADD_FILTER', () => {
+    describe('and query has no labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
+        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster"}');
+      });
+    });
+
+    describe('and query has labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
+        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod="pod-123"}');
+      });
+    });
+  });
+
+  describe('when called with ADD_FILTER_OUT', () => {
+    describe('and query has no labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
+        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster!="us-cluster"}');
+      });
+    });
+
+    describe('and query has labels', () => {
+      it('then the correct label should be added', () => {
+        const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
+        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
+        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const ds = new PrometheusDatasource(instanceSettings);
+
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.refId).toEqual('A');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod!="pod-123"}');
+      });
+    });
+  });
+});
+
 function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>): DataQueryRequest<PromQuery> {
   const defaults = {
     app: CoreApp.Dashboard,
@@ -1895,7 +1964,6 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
         start: dateTime().subtract(5, 'minutes'),
         end: dateTime(),
         expr: 'test',
-        showingGraph: true,
         ...t,
       };
     }),
@@ -1904,6 +1972,7 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
       to: dateTime(),
     },
     interval: '15s',
+    showingGraph: true,
   };
 
   return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;

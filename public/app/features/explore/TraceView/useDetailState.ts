@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { DetailState, Log } from '@jaegertracing/jaeger-ui-components';
+import { DetailState } from '@jaegertracing/jaeger-ui-components';
+import { TraceLog } from '@grafana/data';
 
 /**
  * Keeps state of the span detail. This means whether span details are open but also state of each detail subitem
@@ -22,7 +23,7 @@ export function useDetailState() {
   );
 
   const detailLogItemToggle = useCallback(
-    function detailLogItemToggle(spanID: string, log: Log) {
+    function detailLogItemToggle(spanID: string, log: TraceLog) {
       const old = detailStates.get(spanID);
       if (!old) {
         return;

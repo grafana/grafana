@@ -7,7 +7,7 @@ import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMig
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .useFieldConfig()
   .setPanelOptions(builder => {
-    addStandardDataReduceOptions(builder);
+    addStandardDataReduceOptions(builder, false);
     builder
       .addBooleanSwitch({
         path: 'showThresholdLabels',

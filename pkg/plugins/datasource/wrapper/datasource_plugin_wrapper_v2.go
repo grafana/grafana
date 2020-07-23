@@ -4,22 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, plugin backendplugin.DataPlugin) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{DataPlugin: plugin, logger: log, pluginId: pluginId, pluginType: pluginType}
+func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, client grpcplugin.DataClient) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{DataClient: client, logger: log, pluginId: pluginId, pluginType: pluginType}
 }
 
 type DatasourcePluginWrapperV2 struct {
-	backendplugin.DataPlugin
+	grpcplugin.DataClient
 	logger     log.Logger
 	pluginId   string
 	pluginType string
@@ -79,14 +79,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		})
 	}
 
-	var pbRes *pluginv2.QueryDataResponse
-	err = backendplugin.InstrumentPluginRequest(ds.Type, "dataquery", func() error {
-		var err error
-		pbRes, err = tw.DataPlugin.QueryData(ctx, pbQuery)
-
-		return err
-	})
-
+	pbRes, err := tw.DataClient.QueryData(ctx, pbQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +91,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	for refID, pRes := range pbRes.Responses {
 		qr := &tsdb.QueryResult{
 			RefId:      refID,
-			Dataframes: pRes.Frames,
+			Dataframes: tsdb.NewEncodedDataFrames(pRes.Frames),
 		}
 		if len(pRes.JsonMeta) != 0 {
 			qr.Meta = simplejson.NewFromAny(pRes.JsonMeta)

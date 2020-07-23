@@ -7,7 +7,6 @@ import (
 
 	gocontext "context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -174,7 +173,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		useDataframes := v.Dataframes != nil && (v.Series == nil || len(v.Series) == 0)
 
 		if useDataframes { // convert the dataframes to tsdb.TimeSeries
-			frames, err := data.UnmarshalArrowFrames(v.Dataframes)
+			frames, err := v.Dataframes.Decoded()
 			if err != nil {
 				return nil, errutil.Wrap("tsdb.HandleRequest() failed to unmarshal arrow dataframes from bytes", err)
 			}

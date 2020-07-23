@@ -12,10 +12,10 @@ export default {
   decorators: [withCenteredStory, withKnobs],
 };
 
-const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
+const initialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
 
 const options = object<Array<SelectableValue<string>>>('Options:', [
-  intialState,
+  initialState,
   { label: 'Another label', value: 'Another value 1' },
   { label: 'Another label', value: 'Another value 2' },
   { label: 'Another label', value: 'Another value 3' },
@@ -25,7 +25,7 @@ const options = object<Array<SelectableValue<string>>>('Options:', [
 ]);
 
 export const basic = () => {
-  const value = object<SelectableValue<string>>('Selected Value:', intialState);
+  const value = object<SelectableValue<string>>('Selected Value:', initialState);
 
   return (
     <UseState initialState={value}>
@@ -55,7 +55,6 @@ export const withAllowCustomValue = () => {
       {(value, updateValue) => {
         return (
           <Select
-            // value={value}
             placeholder="Choose..."
             options={options}
             width={20}
@@ -73,7 +72,7 @@ export const withAllowCustomValue = () => {
 
 export const asyncSelect = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [value, setValue] = useState();
+  const [value, setValue] = useState<SelectableValue<any>>();
   const loadAsyncOptions = useCallback(
     inputValue => {
       return new Promise<Array<SelectableValue<string>>>(resolve => {

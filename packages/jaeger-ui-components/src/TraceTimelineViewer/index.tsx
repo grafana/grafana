@@ -21,7 +21,7 @@ import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 import { TNil } from '../types';
-import { Span, Trace, Log, KeyValuePair, Link } from '../types/trace';
+import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink } from '@grafana/data';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 import ExternalLinkContext from '../url/externalLinkContext';
@@ -79,14 +79,14 @@ type TProps = TExtractUiFindFromStateReturn & {
   createLinkToExternalSpan: (traceID: string, spanID: string) => string;
 
   setSpanNameColumnWidth: (width: number) => void;
-  collapseAll: (spans: Span[]) => void;
-  collapseOne: (spans: Span[]) => void;
+  collapseAll: (spans: TraceSpan[]) => void;
+  collapseOne: (spans: TraceSpan[]) => void;
   expandAll: () => void;
-  expandOne: (spans: Span[]) => void;
+  expandOne: (spans: TraceSpan[]) => void;
 
   childrenToggle: (spanID: string) => void;
   clearShouldScrollToFirstUiFindMatch: () => void;
-  detailLogItemToggle: (spanID: string, log: Log) => void;
+  detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
   detailWarningsToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
@@ -96,7 +96,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   setTrace: (trace: Trace | TNil, uiFind: string | TNil) => void;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  linksGetter: (span: Span, items: KeyValuePair[], itemIndex: number) => Link[];
+  linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   theme: Theme;
 };
 

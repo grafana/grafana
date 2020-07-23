@@ -23,6 +23,7 @@ import { createConstantVariableAdapter } from './constant/adapter';
 import { createDataSourceVariableAdapter } from './datasource/adapter';
 import { createIntervalVariableAdapter } from './interval/adapter';
 import { createAdHocVariableAdapter } from './adhoc/adapter';
+import { createSystemVariableAdapter } from './system/adapter';
 
 export interface VariableAdapter<Model extends VariableModel> {
   id: VariableType;
@@ -58,6 +59,7 @@ export const getDefaultVariableAdapters = () => [
   createDataSourceVariableAdapter(),
   createIntervalVariableAdapter(),
   createAdHocVariableAdapter(),
+  createSystemVariableAdapter(),
 ];
 
 export const variableAdapters: VariableTypeRegistry = new Registry<VariableAdapter<VariableModels>>();

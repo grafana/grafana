@@ -47,9 +47,10 @@ You can use this functionality to link to your tracing backend directly from you
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
 
-- **Name:** Shown in the log details as a label.
-- **Regex:** A Regex pattern that runs on the log message and captures part of it as the value of the new field. Can only contain a single capture group.
-- **URL**: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` value in your template to interpolate the real field value into your URL template.
+- **Name -** Shown in the log details as a label.
+- **Regex -** A Regex pattern that runs on the log message and captures part of it as the value of the new field. Can only contain a single capture group.
+- **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
+- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
@@ -59,7 +60,7 @@ The new field with the link shown in log details:
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
+Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://github.com/grafana/loki/blob/master/docs/logql.md) query to display your logs.
 
 ### Log Queries
 
@@ -129,8 +130,10 @@ The following filter types are currently supported:
 
 Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
-Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly.
-
+Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly. The following example for Apache2 can be used for proxying between the browser and the Grafana server:
+```
+ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
+```
 
 > Note: This feature is only available in Grafana v6.3+
 
@@ -191,6 +194,7 @@ datasources:
       derivedFields:
         # Field with internal link pointing to data source in Grafana.
         # Right now, Grafana supports only Jaeger and Zipkin data sources as link targets.
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
           name: TraceID

@@ -237,7 +237,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
-          {this.hasDataSource && <div>{page ? this.renderConfigPageBody(page) : this.renderSettings()}</div>}
+          {this.hasDataSource ? <div>{page ? this.renderConfigPageBody(page) : this.renderSettings()}</div> : null}
         </Page.Contents>
       </Page>
     );

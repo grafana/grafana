@@ -7,6 +7,8 @@ import { seriesToFieldsTransformerRegistryItem } from '../components/Transformer
 import { calculateFieldTransformRegistryItem } from '../components/TransformersUI/CalculateFieldTransformerEditor';
 import { labelsToFieldsTransformerRegistryItem } from '../components/TransformersUI/LabelsToFieldsTransformerEditor';
 import { groupByTransformRegistryItem } from '../components/TransformersUI/GroupByTransformerEditor';
+import { mergeTransformerRegistryItem } from '../components/TransformersUI/MergeTransformerEditor';
+import { seriesToRowsTransformerRegistryItem } from '../components/TransformersUI/SeriesToRowsTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> => {
   return [
@@ -15,8 +17,10 @@ export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> =>
     filterFramesByRefIdTransformRegistryItem,
     organizeFieldsTransformRegistryItem,
     seriesToFieldsTransformerRegistryItem,
+    seriesToRowsTransformerRegistryItem,
     calculateFieldTransformRegistryItem,
     labelsToFieldsTransformerRegistryItem,
     groupByTransformRegistryItem,
+    mergeTransformerRegistryItem,
   ];
 };

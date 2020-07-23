@@ -10,8 +10,9 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
       func="func"
       onRemove="ctrl.handleRemoveFunction"
       onMoveLeft="ctrl.handleMoveLeft"
-      onMoveRight="ctrl.handleMoveRight"
-    /><span>(</span>
+      onMoveRight="ctrl.handleMoveRight">
+    </function-editor>
+    <span>(</span>
   `;
   const paramTemplate =
     '<input type="text" style="display:none"' + ' class="input-small tight-form-func-param"></input>';

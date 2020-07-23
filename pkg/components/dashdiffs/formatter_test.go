@@ -61,7 +61,6 @@ func TestDiff(t *testing.T) {
 	)
 
 	Convey("Testing dashboard diffs", t, func() {
-
 		// Compute the diff between the two JSON objects
 		baseData, err := simplejson.NewJson([]byte(leftJSON))
 		So(err, ShouldBeNil)

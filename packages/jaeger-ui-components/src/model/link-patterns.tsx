@@ -17,7 +17,7 @@ import memoize from 'lru-memoize';
 import { getConfigValue } from '../utils/config/get-config';
 import { getParent } from './span';
 import { TNil } from '../types';
-import { Span, Link, KeyValuePair, Trace } from '..';
+import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '@grafana/data';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 
@@ -118,15 +118,15 @@ export function processLinkPattern(pattern: any): ProcessedLinkPattern | TNil {
   }
 }
 
-export function getParameterInArray(name: string, array: KeyValuePair[]) {
+export function getParameterInArray(name: string, array: TraceKeyValuePair[]) {
   if (array) {
     return array.find(entry => entry.key === name);
   }
   return undefined;
 }
 
-export function getParameterInAncestor(name: string, span: Span) {
-  let currentSpan: Span | TNil = span;
+export function getParameterInAncestor(name: string, span: TraceSpan) {
+  let currentSpan: TraceSpan | TNil = span;
   while (currentSpan) {
     const result = getParameterInArray(name, currentSpan.tags) || getParameterInArray(name, currentSpan.process.tags);
     if (result) {
@@ -174,8 +174,8 @@ export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Tr
 
 export function computeLinks(
   linkPatterns: ProcessedLinkPattern[],
-  span: Span,
-  items: KeyValuePair[],
+  span: TraceSpan,
+  items: TraceKeyValuePair[],
   itemIndex: number
 ) {
   const item = items[itemIndex];
@@ -221,8 +221,8 @@ export function computeLinks(
   return result;
 }
 
-export function createGetLinks(linkPatterns: ProcessedLinkPattern[], cache: WeakMap<KeyValuePair, Link[]>) {
-  return (span: Span, items: KeyValuePair[], itemIndex: number) => {
+export function createGetLinks(linkPatterns: ProcessedLinkPattern[], cache: WeakMap<TraceKeyValuePair, TraceLink[]>) {
+  return (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => {
     if (linkPatterns.length === 0) {
       return [];
     }

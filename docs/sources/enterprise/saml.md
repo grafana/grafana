@@ -39,7 +39,7 @@ In terms of initiation:
 
 ## Set up SAML authentication
 
-The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../installation/configuration.md#configure-with-environment-variables" >}}).
+The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../administration/configuration.md#configure-with-environment-variables" >}}).
 
 | Setting                                                     | Required | Description                                                                                        | Default       |
 | ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
@@ -65,7 +65,7 @@ The table below describes all SAML configuration options. Continue reading below
 
 To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`. 
 
-Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about configuring Grafana.
+Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana.
 
 ### Certificate and private key
 
@@ -239,7 +239,7 @@ To configure SAML integration with Okta, create integration inside the Okta orga
 
 ### Edit SAML options in the Grafana config file
 
-Once the application is created, configure Grafana to use it for SAML authentication. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) to get more information about how to configure Grafana.
+Once the application is created, configure Grafana to use it for SAML authentication. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) to get more information about how to configure Grafana.
 
 1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref "./enterprise-configuration.md#enabled" >}}) to `true`.
 1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
@@ -271,7 +271,7 @@ assertion_attribute_groups = Group
 
 ## Troubleshoot SAML authentication
 
-To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
+To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md#filters" >}}) for more information.
 
 ```bash
 [log]

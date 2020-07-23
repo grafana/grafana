@@ -52,7 +52,7 @@ func New() *Json {
 	}
 }
 
-// New returns a pointer to a new, empty `Json` object
+// NewFromAny returns a pointer to a new `Json` object with provided data.
 func NewFromAny(data interface{}) *Json {
 	return &Json{data: data}
 }

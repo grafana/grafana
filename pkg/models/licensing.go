@@ -16,4 +16,6 @@ type Licensing interface {
 	LicenseURL(user *SignedInUser) string
 
 	StateInfo() string
+
+	TokenRaw() string
 }

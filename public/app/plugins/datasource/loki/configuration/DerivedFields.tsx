@@ -20,6 +20,7 @@ type Props = {
   value?: DerivedFieldConfig[];
   onChange: (value: DerivedFieldConfig[]) => void;
 };
+
 export const DerivedFields = (props: Props) => {
   const { value, onChange } = props;
   const theme = useTheme();

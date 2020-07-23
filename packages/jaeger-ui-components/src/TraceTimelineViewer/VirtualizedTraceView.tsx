@@ -29,7 +29,7 @@ import {
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
 import { TNil } from '../types';
-import { Log, Span, Trace, KeyValuePair, Link } from '../types/trace';
+import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '@grafana/data';
 import TTraceTimeline from '../types/TTraceTimeline';
 
 import { createStyle, Theme, withTheme } from '../Theme';
@@ -51,7 +51,7 @@ const getStyles = createStyle(() => {
 
 type RowState = {
   isDetail: boolean;
-  span: Span;
+  span: TraceSpan;
   spanIndex: number;
 };
 
@@ -62,10 +62,10 @@ type TVirtualizedTraceViewOwnProps = {
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
   focusSpan: (uiFind: string) => void;
-  linksGetter: (span: Span, items: KeyValuePair[], itemIndex: number) => Link[];
+  linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
   clearShouldScrollToFirstUiFindMatch: () => void;
-  detailLogItemToggle: (spanID: string, log: Log) => void;
+  detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
   detailWarningsToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
@@ -92,7 +92,7 @@ export const DEFAULT_HEIGHTS = {
 const NUM_TICKS = 5;
 
 function generateRowStates(
-  spans: Span[] | TNil,
+  spans: TraceSpan[] | TNil,
   childrenHiddenIDs: Set<string>,
   detailStates: Map<string, DetailState | TNil>
 ): RowState[] {
@@ -313,7 +313,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
   };
 
-  renderSpanBarRow(span: Span, spanIndex: number, key: string, style: React.CSSProperties, attrs: {}) {
+  renderSpanBarRow(span: TraceSpan, spanIndex: number, key: string, style: React.CSSProperties, attrs: {}) {
     const { spanID } = span;
     const { serviceName } = span.process;
     const {
@@ -383,7 +383,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     );
   }
 
-  renderSpanDetailRow(span: Span, key: string, style: React.CSSProperties, attrs: {}) {
+  renderSpanDetailRow(span: TraceSpan, key: string, style: React.CSSProperties, attrs: {}) {
     const { spanID } = span;
     const { serviceName } = span.process;
     const {

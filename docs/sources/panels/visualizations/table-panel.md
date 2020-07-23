@@ -17,7 +17,7 @@ The table panel is very flexible, supporting multiple modes for time series and 
 
 ## Data and field options
 
-Tables visualizations allow you to apply:
+Table visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations.md" >}})
 - [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})

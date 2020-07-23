@@ -2,22 +2,22 @@ import React, { FC } from 'react';
 import { css } from 'emotion';
 import { stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue, PanelData, getValueFormat, formattedValueToString } from '@grafana/data';
-import { InspectTab } from './PanelInspector';
+import { InspectTab } from './types';
 
 interface Props {
   tab: InspectTab;
   tabs: Array<{ label: string; value: InspectTab }>;
-  panelData: PanelData;
+  data?: PanelData;
   onSelectTab: (tab: SelectableValue<InspectTab>) => void;
 }
 
-export const InspectSubtitle: FC<Props> = ({ tab, tabs, onSelectTab, panelData }) => {
+export const InspectSubtitle: FC<Props> = ({ tab, tabs, onSelectTab, data }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
   return (
     <>
-      <div className="muted">{formatStats(panelData)}</div>
+      {data && <div className="muted">{formatStats(data)}</div>}
       <TabsBar className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
@@ -43,8 +43,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-function formatStats(panelData: PanelData) {
-  const { request } = panelData;
+function formatStats(data: PanelData) {
+  const { request } = data;
   if (!request) {
     return '';
   }

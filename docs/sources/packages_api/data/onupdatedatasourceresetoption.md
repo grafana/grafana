@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceResetOption: (props: DataSourcePluginOptionsEditorProps<import("../types").DataSourceJsonData, {}>, key: string) => (event: import("react").MouseEvent<HTMLButtonElement, MouseEvent>) => void
+onUpdateDatasourceResetOption: (props: DataSourcePluginOptionsEditorProps, key: string) => (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
 ```
 <b>Import</b>
 

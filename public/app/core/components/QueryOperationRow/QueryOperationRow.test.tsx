@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryOperationRow } from './QueryOperationRow';
-import { shallow, mount } from 'enzyme';
+import { mount, shallow } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 
 describe('QueryOperationRow', () => {
@@ -17,6 +17,7 @@ describe('QueryOperationRow', () => {
   describe('callbacks', () => {
     it('should not call onOpen when component is shallowed', async () => {
       const onOpenSpy = jest.fn();
+      // @ts-ignore strict null error, you shouldn't use promise like approach with act but I don't know what the intention is here
       await act(async () => {
         shallow(
           <QueryOperationRow onOpen={onOpenSpy}>
@@ -38,10 +39,13 @@ describe('QueryOperationRow', () => {
       const titleEl = wrapper.find({ 'aria-label': 'Query operation row title' });
       expect(titleEl).toHaveLength(1);
 
+      // @ts-ignore strict null error, you shouldn't use promise like approach with act but I don't know what the intention is here
       await act(async () => {
         // open
         titleEl.first().simulate('click');
       });
+
+      // @ts-ignore strict null error, you shouldn't use promise like approach with act but I don't know what the intention is here
       await act(async () => {
         // close
         titleEl.first().simulate('click');
