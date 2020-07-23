@@ -26,7 +26,6 @@ enable = [
   "gosimple",
   "govet",
   "ineffassign",
-  # "interfacer",
   "misspell",
   "nakedret",
   "rowserrcheck",
