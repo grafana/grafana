@@ -123,9 +123,10 @@ func TestCloudWatchMetrics(t *testing.T) {
 		result, err := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
 		require.NoError(t, err)
 
-		assert.Equal(t, "ap-east-1", result[0].Text)
-		assert.Equal(t, "ap-northeast-1", result[1].Text)
-		assert.Equal(t, "ap-northeast-2", result[2].Text)
+		assert.Equal(t, "af-south-1", result[0].Text)
+		assert.Equal(t, "ap-east-1", result[1].Text)
+		assert.Equal(t, "ap-northeast-1", result[2].Text)
+		assert.Equal(t, "ap-northeast-2", result[3].Text)
 	})
 
 	t.Run("When calling handleGetEc2InstanceAttribute", func(t *testing.T) {
