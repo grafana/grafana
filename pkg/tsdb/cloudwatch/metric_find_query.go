@@ -713,7 +713,6 @@ func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 
 	plog.Debug("Listing metrics pages")
 	var resp cloudwatch.ListMetricsOutput
-	plog.Debug("Listing metrics pages")
 	err = client.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		metrics.MAwsCloudWatchListMetrics.Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
