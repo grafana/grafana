@@ -128,6 +128,10 @@ func InitalizeBroker() (*GrafanaLive, error) {
 }
 
 // Publish sends the data to the channel
-func (b *GrafanaLive) Publish(channel string, data []byte) {
-	b.node.Publish(channel, data)
+func (b *GrafanaLive) Publish(channel string, data []byte) bool {
+	_, err := b.node.Publish(channel, data)
+	if err != nil {
+		return false
+	}
+	return true
 }
