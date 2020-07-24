@@ -126,6 +126,14 @@ def pipeline(name, edition, trigger, steps, services=[]):
             'disable': True,
         }
 
+    pipeline['steps'].insert(0, {
+        'name': 'Runner identification',
+        'image': alpine_image,
+        'commands': [
+            'echo $DRONE_RUNNER_NAME',
+        ],
+    })
+
     return pipeline
 
 def init_steps(edition):
