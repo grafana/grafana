@@ -176,7 +176,8 @@ func setUpDatabase(t *testing.T, grafDir string) {
 	require.NoError(t, err)
 }
 
-func TestQueryMetrics(t *testing.T) {
+// Test querying of CloudWatch metrics.
+func TestQueryCloudWatchMetrics(t *testing.T) {
 	origNewCWClient := cloudwatch.NewCWClient
 	t.Cleanup(func() {
 		cloudwatch.NewCWClient = origNewCWClient
