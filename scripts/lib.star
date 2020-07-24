@@ -330,6 +330,9 @@ def test_frontend_step():
         'depends_on': [
             'initialize',
         ],
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
         'commands': [
             restore_yarn_cache,
             'yarn run prettier:check',

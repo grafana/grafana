@@ -98,6 +98,8 @@ steps:
   - yarn run packages:typecheck
   - yarn run typecheck
   - yarn run test
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -331,6 +333,8 @@ steps:
   - yarn run packages:typecheck
   - yarn run typecheck
   - yarn run test
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
