@@ -305,6 +305,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
     for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
+      // Always use the configured field unit
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
@@ -378,6 +379,7 @@ export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
   .useFieldConfig({
     standardOptions: [
       FieldConfigProperty.DisplayName,
+      FieldConfigProperty.Unit,
       FieldConfigProperty.Links, // previously saved as dataLinks on options
     ],
   })

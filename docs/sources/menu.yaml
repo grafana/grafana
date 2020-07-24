@@ -253,6 +253,8 @@
   children:
     - link: /variables/templates-and-variables/
       name: Overview
+    - link: /variables/variable-examples/
+      name: Variable examples
     - link: /variables/add-query-variable/
       name: Add query variable
     - link: /variables/add-custom-variable/
