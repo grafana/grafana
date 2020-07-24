@@ -18,7 +18,6 @@ export const basic = () => {
       height={'90vh'}
       text={'a,b,c\n1,2,3'}
       onSeriesParsed={(data: DataFrame[], text: string) => {
-        console.log('Data', data, text);
         action('Data')(data, text);
       }}
     />

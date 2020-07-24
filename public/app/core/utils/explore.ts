@@ -113,6 +113,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
     url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
+
   return url;
 }
 
@@ -123,7 +124,6 @@ export function buildQueryTransaction(
   scanning: boolean,
   timeZone?: TimeZone
 ): QueryTransaction {
-  const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
     combinedKey += query.key;
     return combinedKey;
@@ -148,7 +148,7 @@ export function buildQueryTransaction(
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
     // issues down the road.
     panelId: panelId as any,
-    targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
+    targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
     requestId: 'explore',
     rangeRaw: range.raw,
@@ -158,6 +158,9 @@ export function buildQueryTransaction(
     },
     maxDataPoints: queryOptions.maxDataPoints,
     exploreMode: queryOptions.mode,
+    liveStreaming: queryOptions.liveStreaming,
+    showingGraph: queryOptions.showingGraph,
+    showingTable: queryOptions.showingTable,
   };
 
   return {
@@ -245,8 +248,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
-  const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
+  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
 
   const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
   const ui = uiState

@@ -357,7 +357,7 @@
       }
     },
     {
-      "content": "#### Samples Ingested\nThis graph displays the count of samples ingested by the Prometheus server, as measured over the last 5 minutes, per time series in the range vector. When troubleshooting an issue on IRC or Github, this is often the first stat requested by the Prometheus team. ",
+      "content": "#### Samples Ingested\nThis graph displays the count of samples ingested by the Prometheus server, as measured over the last 5 minutes, per time series in the range vector. When troubleshooting an issue on IRC or GitHub, this is often the first stat requested by the Prometheus team. ",
       "datasource": null,
       "editable": true,
       "error": false,

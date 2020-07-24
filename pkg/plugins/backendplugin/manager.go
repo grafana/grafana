@@ -34,11 +34,7 @@ var (
 )
 
 func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "BackendPluginManager",
-		Instance:     &manager{},
-		InitPriority: registry.Low,
-	})
+	registry.RegisterService(&manager{})
 }
 
 // Manager manages backend plugins.

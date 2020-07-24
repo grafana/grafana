@@ -43,11 +43,11 @@ type User struct {
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
-	} else if u.Login != "" {
-		return u.Login
-	} else {
-		return u.Email
 	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 // ---------------------
@@ -192,11 +192,11 @@ func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 func (u *SignedInUser) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
-	} else if u.Login != "" {
-		return u.Login
-	} else {
-		return u.Email
 	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 type UpdateUserLastSeenAtCommand struct {

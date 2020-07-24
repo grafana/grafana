@@ -1,3 +1,4 @@
+import 'symbol-observable';
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 

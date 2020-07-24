@@ -210,7 +210,9 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
         )}
 
-        <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
+        {dataSourceConfig.access === 'proxy' && (
+          <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
+        )}
       </>
     </div>
   );
