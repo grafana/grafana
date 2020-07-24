@@ -8,7 +8,7 @@ platform:
   arch: amd64
 
 steps:
-- name: Runner identification
+- name: identify-runner
   image: alpine:3.12
   commands:
   - echo $DRONE_RUNNER_NAME
@@ -241,7 +241,7 @@ platform:
   arch: amd64
 
 steps:
-- name: Runner identification
+- name: identify-runner
   image: alpine:3.12
   commands:
   - echo $DRONE_RUNNER_NAME

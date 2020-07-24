@@ -127,7 +127,7 @@ def pipeline(name, edition, trigger, steps, services=[]):
         }
 
     pipeline['steps'].insert(0, {
-        'name': 'Runner identification',
+        'name': 'identify-runner',
         'image': alpine_image,
         'commands': [
             'echo $DRONE_RUNNER_NAME',
