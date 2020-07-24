@@ -5,62 +5,74 @@ import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { NavModel } from '@grafana/data';
-
-import Centrifuge, { PublicationContext } from 'centrifuge/dist/centrifuge.protobuf';
-import SockJS from 'sockjs-client';
-
-const centrifuge = new Centrifuge('http://localhost:3000/live/sockjs', {
-  debug: true,
-  sockjs: SockJS,
-});
-
-centrifuge.setToken('ABCD');
-
-centrifuge.on('connect', function(context) {
-  console.log('CONNECT', context);
-});
-
-centrifuge.on('disconnect', function(context) {
-  console.log('disconnect', context);
-});
-
-// Server side function
-centrifuge.on('publish', function(ctx) {
-  console.log('Publication from server-side channel', ctx);
-});
-
-let sub: any = false;
+import { Unsubscribable, PartialObserver } from 'rxjs';
+import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 interface Props {
   navModel: NavModel;
 }
 
 interface State {
-  // TODO
+  connected: boolean;
+  count: number;
+  lastTime: number;
+  lastBody: string;
 }
 
 export class LiveAdmin extends PureComponent<Props, State> {
-  state: State = {};
+  state: State = {
+    connected: false,
+    count: 0,
+    lastTime: 0,
+    lastBody: '',
+  };
+  subscription?: Unsubscribable;
+
+  observer: PartialObserver<any> = {
+    next: (msg: any) => {
+      this.setState({
+        count: this.state.count + 1,
+        lastTime: Date.now(),
+        lastBody: JSON.stringify(msg),
+      });
+    },
+  };
+
+  startSubscriptoin = () => {
+    const srv = getGrafanaLiveSrv();
+    if (srv.isConnected()) {
+      this.subscription = getGrafanaLiveSrv().subscribe<any>('example', this.observer);
+      this.setState({ connected: true });
+      return;
+    }
+    console.log('Not yet connected... try again...');
+    setTimeout(this.startSubscriptoin, 200);
+  };
 
   componentDidMount = () => {
-    if (!sub) {
-      centrifuge.connect();
-      sub = centrifuge.subscribe('example', (message: PublicationContext) => {
-        console.log('GOT', message);
-      });
-    }
+    this.startSubscriptoin();
   };
+
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
 
   render() {
     const { navModel } = this.props;
+    const { lastBody, lastTime, count } = this.state;
 
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          TODO... show channels
-          <br />
-          more
-          <br />
+          <h3>Last message on channel: example ({count})</h3>
+          {lastTime > 1 && (
+            <div>
+              <b>{lastTime}</b>
+              <pre>{lastBody}</pre>
+            </div>
+          )}
         </Page.Contents>
       </Page>
     );

@@ -83,6 +83,9 @@ func (hs *HTTPServer) Init() error {
 			return err
 		}
 		hs.Live = node
+
+		// Spit random walk to example
+		go live.RunRandomCSV(hs.Live, "example", 2500)
 	}
 
 	hs.macaron = hs.newMacaron()

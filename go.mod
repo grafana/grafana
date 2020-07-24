@@ -10,9 +10,9 @@ require (
 	cloud.google.com/go v0.60.0 // indirect
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
-	github.com/aws/aws-sdk-go v1.29.20
+	github.com/aws/aws-sdk-go v1.30.9
 	github.com/beevik/etree v1.1.0 // indirect
-	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
+	github.com/benbjohnson/clock v1.0.3
 	github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668
 	github.com/centrifugal/centrifuge v0.10.0
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
@@ -34,7 +34,6 @@ require (
 	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.0
-	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.75.0
@@ -43,16 +42,18 @@ require (
 	github.com/hashicorp/go-version v1.1.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/influxdata/influxdb-client-go v1.3.0
-	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
+	github.com/jmespath/go-jmespath v0.3.0
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
-	github.com/klauspost/compress v1.4.1 // indirect
-	github.com/klauspost/cpuid v1.2.0 // indirect
-	github.com/lib/pq v1.2.0
+	github.com/klauspost/compress v1.9.2 // indirect
+	github.com/lib/pq v1.3.0
 	github.com/linkedin/goavro/v2 v2.9.7
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.11.0
+	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
+	github.com/onsi/ginkgo v1.11.0 // indirect
+	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
@@ -81,13 +82,13 @@ require (
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/tools v0.0.0-20200708183856-df98bc6d456c // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	google.golang.org/grpc v1.29.1
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.46.0
-	gopkg.in/ldap.v3 v3.0.2
+	gopkg.in/ldap.v3 v3.1.0
 	gopkg.in/macaron.v1 v1.3.9
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/redis.v5 v5.2.9

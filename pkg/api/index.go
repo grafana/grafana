@@ -344,7 +344,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 		if hs.Live != nil {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-				Text: "Live", Id: "live", Url: setting.AppSubUrl + "/admin/live", Icon: "graph-bar",
+				Text: "Live", Id: "live", Url: setting.AppSubUrl + "/admin/live", Icon: "water",
 			})
 		}
 

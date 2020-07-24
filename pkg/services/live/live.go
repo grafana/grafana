@@ -24,6 +24,9 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// reasonable values for available options.
 	cfg := centrifuge.DefaultConfig
 
+	// Debug print everything for now
+	// cfg.LogLevel = centrifuge.LogLevelDebug
+
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method, but in this example we will publish messages
@@ -55,7 +58,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// all subscriptions to all channels. In real life you may use a more
 	// complex permission check here.
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-		logger.Info("client subscribes on channel %s", e.Channel)
+		logger.Info("client subscribes on channel", "channel", e.Channel)
 
 		return centrifuge.SubscribeReply{}, nil
 	})
@@ -105,7 +108,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	})
 
 	b.Handler = func(ctx *models.ReqContext) {
-		logger.Info("live request")
+		logger.Info("live request", ctx.Req.Request, "xxx")
 
 		// Put authentication Credentials into request Context. Since we don't
 		// have any session backend here we simply set user ID as empty string.
@@ -131,7 +134,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 func (b *GrafanaLive) Publish(channel string, data []byte) bool {
 	_, err := b.node.Publish(channel, data)
 	if err != nil {
-		return false
+		logger.Warn("error writing to channel", "channel", channel, "err", err)
 	}
-	return true
+	return err == nil
 }
