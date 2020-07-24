@@ -3,7 +3,6 @@ package fs
 import (
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -66,17 +65,17 @@ func TestCopyRecursive_NonExistentDest(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(src)
 
-	err = os.MkdirAll(path.Join(src, "data"), 0755)
+	err = os.MkdirAll(filepath.Join(src, "data"), 0755)
 	require.NoError(t, err)
 	// nolint:gosec
-	err = ioutil.WriteFile(path.Join(src, "data", "file.txt"), []byte("Test"), 0644)
+	err = ioutil.WriteFile(filepath.Join(src, "data", "file.txt"), []byte("Test"), 0644)
 	require.NoError(t, err)
 
 	dstParent, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(dstParent)
 
-	dst := path.Join(dstParent, "dest")
+	dst := filepath.Join(dstParent, "dest")
 
 	err = CopyRecursive(src, dst)
 	require.NoError(t, err)
@@ -89,10 +88,10 @@ func TestCopyRecursive_ExistentDest(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(src)
 
-	err = os.MkdirAll(path.Join(src, "data"), 0755)
+	err = os.MkdirAll(filepath.Join(src, "data"), 0755)
 	require.NoError(t, err)
 	// nolint:gosec
-	err = ioutil.WriteFile(path.Join(src, "data", "file.txt"), []byte("Test"), 0644)
+	err = ioutil.WriteFile(filepath.Join(src, "data", "file.txt"), []byte("Test"), 0644)
 	require.NoError(t, err)
 
 	dst, err := ioutil.TempDir("", "")
