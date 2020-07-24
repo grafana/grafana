@@ -23,6 +23,7 @@ type SocialGenericOAuth struct {
 	emailAttributePath   string
 	loginAttributePath   string
 	roleAttributePath    string
+	idTokenAttributeName string
 	teamIds              []int
 }
 
@@ -149,7 +150,13 @@ func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInf
 func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
 	var err error
 
-	idToken := token.Extra("id_token")
+	idTokenAttribute := "id_token"
+	if s.idTokenAttributeName != "" {
+		idTokenAttribute = s.idTokenAttributeName
+		s.log.Debug("Using custom id_token attribute name", "attribute_name", idTokenAttribute)
+	}
+
+	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
 		return false
