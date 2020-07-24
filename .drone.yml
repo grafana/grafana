@@ -238,6 +238,34 @@ trigger:
 ---
 kind: pipeline
 type: docker
+name: test-pr-windows
+
+platform:
+  os: windows
+  arch: amd64
+  version: 1809
+
+steps:
+- name: identify-runner
+  image: mcr.microsoft.com/windows:1809
+  commands:
+  - echo $Env:DRONE_RUNNER_NAME
+
+- name: windows-installer
+  image: mcr.microsoft.com/windows:1809
+  commands:
+  - echo TODO
+
+trigger:
+  event:
+  - pull_request
+
+depends_on:
+- test-pr
+
+---
+kind: pipeline
+type: docker
 name: test-master
 
 platform:

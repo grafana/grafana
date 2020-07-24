@@ -2,10 +2,14 @@ build_image = 'grafana/build-container:1.2.24'
 publish_image = 'grafana/grafana-ci-deploy:1.2.5'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
+windows_image = 'mcr.microsoft.com/windows:1809'
 
 restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
 
 def pr_pipelines(edition):
+    trigger = {
+        'event': ['pull_request',],
+    }
     services = [
         {
             'name': 'postgres',
@@ -47,11 +51,16 @@ def pr_pipelines(edition):
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ]
+    windows_steps = [
+        windows_installer_step(),
+    ]
     return [
         pipeline(
-            name='test-pr', edition=edition, trigger={
-                'event': ['pull_request',],
-            }, services=services, steps=steps
+            name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps,
+        ),
+        pipeline(
+            name='test-pr-windows', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
+            depends_on=['test-pr',],
         ),
     ]
 
@@ -111,32 +120,58 @@ def master_pipelines(edition):
         ),
     ]
 
-def pipeline(name, edition, trigger, steps, services=[]):
+def pipeline(name, edition, trigger, steps, services=[], platform='linux', depends_on=[]):
+    if platform != 'windows':
+        platform_conf = {
+            'os': 'linux',
+            'arch': 'amd64',
+        }
+    else:
+        platform_conf = {
+            'os': 'windows',
+            'arch': 'amd64',
+            'version': '1809',
+        }
+
     pipeline = {
         'kind': 'pipeline',
         'type': 'docker',
+        'platform': platform_conf,
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': init_steps(edition) + steps,
+        'steps': init_steps(edition, platform) + steps,
+        'depends_on': depends_on,
     }
+
     if edition == 'enterprise':
         # We have a custom clone step for enterprise
         pipeline['clone'] = {
             'disable': True,
         }
 
-    pipeline['steps'].insert(0, {
+    return pipeline
+
+def init_steps(edition, platform):
+    if platform == 'windows':
+        return [
+            {
+                'name': 'identify-runner',
+                'image': windows_image,
+                'commands': [
+                    'echo $Env:DRONE_RUNNER_NAME',
+                ],
+            },
+        ]
+
+    identify_runner_step = {
         'name': 'identify-runner',
         'image': alpine_image,
         'commands': [
             'echo $DRONE_RUNNER_NAME',
         ],
-    })
+    }
 
-    return pipeline
-
-def init_steps(edition):
     grabpl_version = '0.4.25'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
@@ -148,6 +183,7 @@ def init_steps(edition):
     ]
     if edition == 'enterprise':
         return [
+            identify_runner_step,
             {
                 'name': 'clone',
                 'image': 'alpine/git:v2.26.2',
@@ -185,6 +221,7 @@ def init_steps(edition):
         ]
 
     return [
+        identify_runner_step,
         {
             'name': 'initialize',
             'image': build_image,
@@ -343,6 +380,15 @@ def test_frontend_step():
             'yarn run packages:typecheck',
             'yarn run typecheck',
             'yarn run test',
+        ],
+    }
+
+def windows_installer_step():
+    return {
+        'name': 'windows-installer',
+        'image': windows_image,
+        'commands': [
+            'echo TODO',
         ],
     }
 
