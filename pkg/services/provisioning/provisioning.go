@@ -139,8 +139,6 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}
 
-	// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
-	// old provisioner as we did not switch them yet.
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
 
@@ -149,6 +147,8 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 
 	err = dashProvisioner.Provision()
 	if err != nil {
+		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
+		// old provisioner as we did not switch them yet.
 		return errutil.Wrap("Failed to provision dashboards", err)
 	}
 	ps.dashboardProvisioner = dashProvisioner
