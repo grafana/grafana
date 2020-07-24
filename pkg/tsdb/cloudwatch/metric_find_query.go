@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Known AWS regions.
@@ -384,11 +385,8 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 		}
 	} else {
 		var err error
-		dsInfo := e.getDSInfo(region)
-		dsInfo.Namespace = namespace
-
-		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region); err != nil {
-			return nil, errors.New("Unable to call AWS API")
+		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace); err != nil {
+			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
 	sort.Strings(namespaceMetrics)
@@ -417,7 +415,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		dsInfo.Namespace = namespace
 
 		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
-			return nil, errors.New("Unable to call AWS API")
+			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
 	sort.Strings(dimensionValues)
@@ -727,11 +725,12 @@ func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 
 var metricsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string) ([]string, error) {
+func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string) ([]string, error) {
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
 	dsInfo := e.getDSInfo(region)
+	dsInfo.Namespace = namespace
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
