@@ -45,8 +45,8 @@ func TestDefaultEC2RoleProvider(t *testing.T) {
 	require.True(t, ok)
 }
 
-// Test newAWSSession with assumption of IAM role.
-func TestNewAWSSession_AssumeRole(t *testing.T) {
+// Test cloudWatchExecutor.newSession with assumption of IAM role.
+func TestNewSession_AssumeRole(t *testing.T) {
 	origNewSession := newSession
 	origNewSTSCredentials := newSTSCredentials
 	origNewEC2Metadata := newEC2Metadata
@@ -80,10 +80,12 @@ func TestNewAWSSession_AssumeRole(t *testing.T) {
 	t.Run("Without external ID", func(t *testing.T) {
 		const roleARN = "test"
 
-		sess, err := newAWSSession(&datasourceInfo{
-			AuthType:      "sdk",
-			AssumeRoleArn: roleARN,
+		e := newExecutor()
+		e.DataSource = fakeDataSource(fakeDataSourceCfg{
+			assumeRoleARN: roleARN,
 		})
+
+		sess, err := e.newSession(defaultRegion)
 		require.NoError(t, err)
 		require.NotNil(t, sess)
 
@@ -98,11 +100,13 @@ func TestNewAWSSession_AssumeRole(t *testing.T) {
 		const roleARN = "test"
 		const externalID = "external"
 
-		sess, err := newAWSSession(&datasourceInfo{
-			AuthType:      "sdk",
-			AssumeRoleArn: roleARN,
-			ExternalID:    externalID,
+		e := newExecutor()
+		e.DataSource = fakeDataSource(fakeDataSourceCfg{
+			assumeRoleARN: roleARN,
+			externalID:    externalID,
 		})
+
+		sess, err := e.newSession(defaultRegion)
 		require.NoError(t, err)
 		require.NotNil(t, sess)
 

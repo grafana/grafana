@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,10 +17,20 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
+type envelope struct {
+	credentials *credentials.Credentials
+	expiration  *time.Time
+}
+
+var awsCredsCache = map[string]envelope{}
+var credsCacheLock sync.RWMutex
+
 // Session factory.
 // Stubbable by tests.
 //nolint:gocritic
-var newSession = session.NewSession
+var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
+	return session.NewSession(cfgs...)
+}
 
 // STS credentials factory.
 // Stubbable by tests.
@@ -53,57 +64,4 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 
 func ec2RoleProvider(sess client.ConfigProvider) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
-}
-
-func newAWSSession(dsInfo *datasourceInfo) (*session.Session, error) {
-	regionCfg := &aws.Config{Region: aws.String(dsInfo.Region)}
-	cfgs := []*aws.Config{
-		regionCfg,
-	}
-	// Choose authentication scheme based on the type chosen for the data source
-	// Basically, we support the following methods:
-	// Shared credentials: Providing access key pair sourced from user's AWS credentials file
-	// Static credentials: Providing access key pair directly
-	// SDK: Leave it to SDK to decide
-	switch dsInfo.AuthType {
-	case "credentials":
-		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
-			"region", dsInfo.Region)
-		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
-		})
-	case "keys":
-		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
-		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
-		})
-	case "sdk":
-		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
-	default:
-		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "credentials", "keys" or "sdk"`,
-			dsInfo.AuthType)
-	}
-	sess, err := newSession(cfgs...)
-	if err != nil {
-		return nil, err
-	}
-
-	// We should assume a role in AWS
-	if dsInfo.AssumeRoleArn != "" {
-		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleArn)
-
-		sess, err = newSession(regionCfg, &aws.Config{
-			Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleArn, func(p *stscreds.AssumeRoleProvider) {
-				if dsInfo.ExternalID != "" {
-					p.ExternalID = aws.String(dsInfo.ExternalID)
-				}
-			}),
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	plog.Debug("Successfully authenticated towards AWS")
-	return sess, nil
 }

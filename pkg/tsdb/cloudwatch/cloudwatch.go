@@ -11,6 +11,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -72,39 +74,114 @@ type cloudWatchExecutor struct {
 	mtx                 sync.Mutex
 }
 
-func (e *cloudWatchExecutor) getCWClient(region string) (*cloudwatch.CloudWatch, error) {
+func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
-	sess, err := newAWSSession(dsInfo)
+	regionCfg := &aws.Config{Region: aws.String(dsInfo.Region)}
+	cfgs := []*aws.Config{
+		regionCfg,
+	}
+	// Choose authentication scheme based on the type chosen for the data source
+	// Basically, we support the following methods:
+	// Shared credentials: Providing access key pair sourced from user's AWS credentials file
+	// Static credentials: Providing access key pair directly
+	// SDK: Leave it to SDK to decide
+	switch dsInfo.AuthType {
+	case "credentials":
+		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
+			"region", dsInfo.Region)
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
+		})
+	case "keys":
+		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
+		})
+	case "sdk":
+		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
+	default:
+		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "credentials", "keys" or "sdk"`,
+			dsInfo.AuthType)
+	}
+	sess, err := newSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	client := cloudwatch.New(sess)
+	if dsInfo.AssumeRoleArn != "" {
+		// We should assume a role in AWS
+		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleArn)
 
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
+		sess, err = newSession(regionCfg, &aws.Config{
+			Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleArn, func(p *stscreds.AssumeRoleProvider) {
+				if dsInfo.ExternalID != "" {
+					p.ExternalID = aws.String(dsInfo.ExternalID)
+				}
+			}),
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	return client, nil
+	plog.Debug("Successfully authenticated towards AWS")
+	return sess, nil
 }
 
-func (e *cloudWatchExecutor) getCWLogsClient(region string) (*cloudwatchlogs.CloudWatchLogs, error) {
-	e.mux.Lock()
-	defer e.mux.Unlock()
+func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	return newCWClient(sess), nil
+}
+
+func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
 
 	if logsClient, ok := e.logsClientsByRegion[region]; ok {
 		return logsClient, nil
 	}
 
-	dsInfo := e.getDSInfo(region)
-	newLogsClient, err := retrieveLogsClient(dsInfo)
+	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
 
-	e.logsClientsByRegion[region] = newLogsClient
+	logsClient := newCWLogsClient(sess)
+	e.logsClientsByRegion[region] = logsClient
 
-	return newLogsClient, nil
+	return logsClient, nil
+}
+
+func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
+	if e.ec2Client != nil {
+		return e.ec2Client, nil
+	}
+
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	e.ec2Client = newEC2Client(sess)
+
+	return e.ec2Client, nil
+}
+
+func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
+	error) {
+	if e.rgtaClient != nil {
+		return e.rgtaClient, nil
+	}
+
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	e.rgtaClient = newRGTAClient(sess)
+
+	return e.rgtaClient, nil
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
@@ -270,21 +347,44 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	}
 }
 
-func retrieveLogsClient(dsInfo *datasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	sess, err := newAWSSession(dsInfo)
-	if err != nil {
-		return nil, err
-	}
+func isTerminated(queryStatus string) bool {
+	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
+}
 
-	client := cloudwatchlogs.New(sess)
-
+// CloudWatch client factory.
+//
+// Stubbable by tests.
+var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+	client := cloudwatch.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 	})
 
-	return client, nil
+	return client
 }
 
-func isTerminated(queryStatus string) bool {
-	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
+// CloudWatch logs client factory.
+//
+// Stubbable by tests.
+var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	client := cloudwatchlogs.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
+}
+
+// EC2 client factory.
+//
+// Stubbable by tests.
+var newEC2Client = func(provider client.ConfigProvider) ec2iface.EC2API {
+	return ec2.New(provider)
+}
+
+// RGTA client factory.
+//
+// Stubbable by tests.
+var newRGTAClient = func(provider client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+	return resourcegroupstaggingapi.New(provider)
 }
