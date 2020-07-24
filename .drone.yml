@@ -8,6 +8,11 @@ platform:
   arch: amd64
 
 steps:
+- name: identify-runner
+  image: alpine:3.12
+  commands:
+  - echo $DRONE_RUNNER_NAME
+
 - name: initialize
   image: grafana/build-container:1.2.21
   commands:
@@ -236,6 +241,11 @@ platform:
   arch: amd64
 
 steps:
+- name: identify-runner
+  image: alpine:3.12
+  commands:
+  - echo $DRONE_RUNNER_NAME
+
 - name: initialize
   image: grafana/build-container:1.2.21
   commands:
