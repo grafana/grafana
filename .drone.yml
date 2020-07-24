@@ -65,7 +65,7 @@ steps:
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
-  - ./bin/grabpl build-backend --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
@@ -75,7 +75,7 @@ steps:
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
-  - ./bin/grabpl build-frontend --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
@@ -98,6 +98,8 @@ steps:
   - yarn run packages:typecheck
   - yarn run typecheck
   - yarn run test
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -105,7 +107,7 @@ steps:
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
-  - ./bin/grabpl build-plugins --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
   - initialize
   - lint-backend
@@ -113,7 +115,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.21
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
   depends_on:
   - build-backend
   - build-frontend
@@ -298,7 +300,7 @@ steps:
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
-  - ./bin/grabpl build-backend --edition oss --build-id $DRONE_BUILD_NUMBER
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER
   depends_on:
   - initialize
   - lint-backend
@@ -308,7 +310,7 @@ steps:
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
-  - ./bin/grabpl build-frontend --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
@@ -331,6 +333,8 @@ steps:
   - yarn run packages:typecheck
   - yarn run typecheck
   - yarn run test
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -338,7 +342,7 @@ steps:
   image: grafana/build-container:1.2.21
   commands:
   - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
-  - ./bin/grabpl build-plugins --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
   - initialize
   - lint-backend
@@ -346,7 +350,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.21
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - build-backend
   - build-frontend
