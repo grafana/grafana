@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -51,15 +52,24 @@ var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return &cloudWatchExecutor{
-			DataSource: ds,
-		}, nil
+		return newExecutor(), nil
 	})
+}
+
+func newExecutor() *cloudWatchExecutor {
+	return &cloudWatchExecutor{
+		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+	}
 }
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
 	*models.DataSource
+
+	ec2Client           ec2iface.EC2API
+	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
+	mtx                 sync.Mutex
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -85,28 +95,51 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
+	if logsClient, ok := e.logsClientsByRegion[region]; ok {
+		return logsClient, nil
+	}
+
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
-	return newCWLogsClient(sess), nil
+
+	logsClient := newCWLogsClient(sess)
+	e.logsClientsByRegion[region] = logsClient
+
+	return logsClient, nil
 }
 
 func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
+	if e.ec2Client != nil {
+		return e.ec2Client, nil
+	}
+
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
-	return newEC2Client(sess), nil
+	e.ec2Client = newEC2Client(sess)
+
+	return e.ec2Client, nil
 }
 
 func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
+	if e.rgtaClient != nil {
+		return e.rgtaClient, nil
+	}
+
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
-	return newRGTAClient(sess), nil
+	e.rgtaClient = newRGTAClient(sess)
+
+	return e.rgtaClient, nil
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
