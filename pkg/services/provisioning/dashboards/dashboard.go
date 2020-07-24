@@ -74,7 +74,7 @@ func (provider *Provisioner) Provision() error {
 	return nil
 }
 
-// CleanUpOrphanedDashboards delete provisioned dashboards, which have no linked reader
+// CleanUpOrphanedDashboards deletes provisioned dashboards missing a linked reader.
 func (provider *Provisioner) CleanUpOrphanedDashboards() {
 	currentReaders := make([]string, len(provider.fileReaders))
 

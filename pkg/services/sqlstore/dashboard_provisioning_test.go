@@ -81,7 +81,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(query.Result, ShouldNotBeNil)
 
 				deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-				So(DeleteOrphanedProvisionedDashboard(deleteCmd), ShouldBeNil)
+				So(DeleteOrphanedProvisionedDashboards(deleteCmd), ShouldBeNil)
 
 				query = &models.GetDashboardsQuery{DashboardIds: []int64{cmd.Result.Id, anotherCmd.Result.Id}}
 				err = GetDashboards(query)

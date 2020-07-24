@@ -139,7 +139,7 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}
 
-	// If we fail to provision with the new provisioner, mutex will unlock and the polling we restart with the
+	// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 	// old provisioner as we did not switch them yet.
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
