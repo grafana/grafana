@@ -139,6 +139,20 @@ describe('DashboardPage', () => {
     });
   });
 
+  dashboardPageScenario('When user goes into panel edit but has no edit permissions', ctx => {
+    ctx.setup(() => {
+      ctx.mount();
+      ctx.setDashboardProp({}, { canEdit: false });
+      ctx.wrapper?.setProps({
+        urlEditPanelId: '1',
+      });
+    });
+
+    it('Should update component state to fullscreen and edit', () => {
+      const state = ctx.wrapper?.state();
+      expect(state?.editPanel).toBe(null);
+    });
+  });
   dashboardPageScenario('When user goes back to dashboard from view panel', ctx => {
     ctx.setup(() => {
       ctx.mount();

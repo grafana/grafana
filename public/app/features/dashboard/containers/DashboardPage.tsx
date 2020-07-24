@@ -117,6 +117,12 @@ export class DashboardPage extends PureComponent<Props, State> {
     // entering edit mode
     if (!editPanel && urlEditPanelId) {
       this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
+        // if no edit permission show error
+        if (!dashboard.canEditPanel(panel)) {
+          this.props.notifyApp(createErrorNotification('Permission to edit panel denied'));
+          return;
+        }
+
         this.setState({ editPanel: panel });
       });
     }
