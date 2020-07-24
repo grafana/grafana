@@ -119,7 +119,7 @@ func compareDirs(t *testing.T, src, dst string) {
 		}
 
 		relPath := strings.TrimPrefix(srcPath, src)
-		dstPath := path.Join(dst, relPath)
+		dstPath := filepath.Join(dst, relPath)
 		sfi, err := os.Stat(srcPath)
 		require.NoError(t, err)
 

@@ -126,8 +126,8 @@ func CopyRecursive(src, dst string) error {
 		return err
 	}
 	for _, entry := range entries {
-		srcPath := path.Join(src, entry.Name())
-		dstPath := path.Join(dst, entry.Name())
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
 
 		srcFi, err := os.Stat(srcPath)
 		if err != nil {
