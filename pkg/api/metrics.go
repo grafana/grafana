@@ -42,7 +42,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
 			hs.log.Debug("Can't process query since it's missing data source ID")
-			return Error(400, "Missing data source ID", nil)
+			return Error(400, "Query missing data source ID", nil)
 		}
 
 		if i == 0 && !expr {
@@ -50,7 +50,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			if err != nil {
 				hs.log.Debug("Encountered error getting data source", "err", err)
 				if errors.Is(err, models.ErrDataSourceAccessDenied) {
-					return Error(403, "Access denied to datasource", err)
+					return Error(403, "Access denied to data source", err)
 				}
 				if errors.Is(err, models.ErrDataSourceNotFound) {
 					return Error(400, "Invalid data source ID", err)
