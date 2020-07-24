@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-var varRegex = regexp.MustCompile(`(\$\{.+\})`)
+var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
 
 type ImportDashboardCommand struct {
 	Dashboard *simplejson.Json

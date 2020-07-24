@@ -80,7 +80,7 @@ func (ss *SqlStore) Init() error {
 	x = engine
 	dialect = ss.Dialect
 
-	migrator := migrator.NewMigrator(x)
+	migrator := migrator.NewMigrator(engine)
 	migrations.AddMigrations(migrator)
 
 	for _, descriptor := range registry.GetServices() {
