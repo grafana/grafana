@@ -32,7 +32,6 @@ import {
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
-import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
@@ -142,17 +141,18 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     const data = toDataFrame(series);
     const fieldCache = new FieldCache(data);
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time)!;
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
     });
 
-    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
     valueField.config = {
       ...valueField.config,
       color: series.color,
     };
+
     valueField.name = series.alias;
     const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
     valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
@@ -201,35 +201,21 @@ export function dataFrameToLogsModel(
   timeZone: TimeZone,
   absoluteRange?: AbsoluteTimeRange
 ): LogsModel {
-  const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
+  const { logSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
+  // unification: Removed logic for using metrics data in LogsModel as with the unification changes this would result
+  // in the incorrect data being used. Instead logs series are always derived from logs.
   if (logsModel) {
-    if (metricSeries.length === 0) {
-      // Create histogram metrics from logs using the interval as bucket size for the line count
-      if (intervalMs && logsModel.rows.length > 0) {
-        const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-        const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
-        logsModel.visibleRange = visibleRange;
-        logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
-      } else {
-        logsModel.series = [];
-      }
+    // Create histogram metrics from logs using the interval as bucket size for the line count
+    if (intervalMs && logsModel.rows.length > 0) {
+      const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
+      const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+      logsModel.visibleRange = visibleRange;
+      logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
     } else {
-      // We got metrics in the dataFrame so process those
-      logsModel.series = getGraphSeriesModel(
-        metricSeries,
-        timeZone,
-        {},
-        { showBars: true, showLines: false, showPoints: false },
-        {
-          asTable: false,
-          isVisible: true,
-          placement: 'under',
-        }
-      );
+      logsModel.series = [];
     }
-
     return logsModel;
   }
 
@@ -283,7 +269,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
-    if (isLogsData(dataFrame)) {
+    if (isLogsData(dataFrame) || !dataFrame.fields.length) {
       logSeries.push(dataFrame);
       continue;
     }
@@ -317,23 +303,29 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const allLabels: Labels[] = [];
 
   // Find the fields we care about and collect all labels
-  const allSeries: LogFields[] = logSeries.map(series => {
-    const fieldCache = new FieldCache(series);
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    if (stringField?.labels) {
-      allLabels.push(stringField.labels);
-    }
-    return {
-      series,
-      timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-      timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-        ? fieldCache.getFieldByName('tsNs')
-        : undefined,
-      stringField,
-      logLevelField: fieldCache.getFieldByName('level'),
-      idField: getIdField(fieldCache),
-    } as LogFields;
-  });
+  let allSeries: LogFields[] = [];
+
+  if (hasFields(logSeries)) {
+    allSeries = logSeries.map(series => {
+      const fieldCache = new FieldCache(series);
+      const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+
+      if (stringField?.labels) {
+        allLabels.push(stringField.labels);
+      }
+
+      return {
+        series,
+        timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+          ? fieldCache.getFieldByName('tsNs')
+          : undefined,
+        stringField,
+        logLevelField: fieldCache.getFieldByName('level'),
+        idField: getIdField(fieldCache),
+      } as LogFields;
+    });
+  }
 
   const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
 
@@ -426,20 +418,23 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
   const queriesVisited: { [refId: string]: boolean } = {};
+
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
-    // Stats are per query, keeping track by refId
-    const { refId } = series;
+    const { refId } = series; // Stats are per query, keeping track by refId
+
     if (refId && !queriesVisited[refId]) {
-      if (totalBytesKey && series.meta.stats) {
+      if (totalBytesKey && series.meta?.stats) {
         const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }
       }
+
       queriesVisited[refId] = true;
     }
   }
+
   if (totalBytes > 0) {
     const { text, suffix } = decimalSIPrefix('B')(totalBytes);
     meta.push({
@@ -454,6 +449,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     meta,
     rows: deduplicatedLogRows,
   };
+}
+
+function hasFields(logSeries: DataFrame[]): boolean {
+  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

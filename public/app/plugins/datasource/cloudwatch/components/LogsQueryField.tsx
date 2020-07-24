@@ -14,23 +14,20 @@ import {
   Select,
   MultiSelect,
 } from '@grafana/ui';
-import Plain from 'slate-plain-serializer';
 
 // Utils & Services
 // dom also includes Element polyfills
-import { Plugin, Node, Editor, Value } from 'slate';
+import { Plugin, Node, Editor } from 'slate';
 import syntax from '../syntax';
 
 // Types
-import { ExploreQueryFieldProps, AbsoluteTimeRange, SelectableValue, ExploreMode, AppEvents } from '@grafana/data';
+import { ExploreQueryFieldProps, AbsoluteTimeRange, SelectableValue, AppEvents } from '@grafana/data';
 import { CloudWatchQuery, CloudWatchLogsQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import Prism, { Grammar } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import { css } from 'emotion';
 import { ExploreId } from 'app/types';
-import { dispatch } from 'app/store/store';
-import { changeModeAction } from 'app/features/explore/state/actionTypes';
 import { appEvents } from 'app/core/core';
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
@@ -40,7 +37,7 @@ export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<Cl
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
   syntaxLoaded: boolean;
-  syntax: Grammar;
+  syntax: Grammar | null;
   exploreId: ExploreId;
   allowCustomValue?: boolean;
 }
@@ -158,7 +155,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
   onLogGroupSearchDebounced = debounce(this.onLogGroupSearch, 300);
 
-  componentWillMount = () => {
+  componentDidMount = () => {
     const { datasource, query, onChange } = this.props;
 
     this.setState({
@@ -274,20 +271,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     );
   };
 
-  switchToMetrics = () => {
-    const { query, onChange, exploreId } = this.props;
-
-    if (onChange) {
-      const nextQuery: CloudWatchLogsQuery = {
-        ...(query as CloudWatchLogsQuery),
-        apiMode: 'Logs',
-      };
-      onChange(nextQuery);
-    }
-
-    dispatch(changeModeAction({ exploreId, mode: ExploreMode.Metrics }));
-  };
-
   onQueryFieldClick = (_event: Event, _editor: Editor, next: () => any) => {
     const { selectedLogGroups, loadingLogGroups } = this.state;
 
@@ -307,34 +290,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       invalidLogGroups: false,
     });
   };
-
-  /**
-   * Check if query is stats query in logs mode and shows a hint to switch to metrics mode. Needs to be done
-   * on update of the rich Value because standard onChange is not called on load for example.
-   */
-  checkForStatsQuery = debounce((value: Value) => {
-    const { datasource } = this.props;
-    // TEMP: Remove when logs/metrics unification is complete
-    if (datasource.languageProvider && this.props.exploreMode === ExploreMode.Logs) {
-      const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
-      const queryUsesStatsCommand = cloudwatchLanguageProvider.isStatsQuery(Plain.serialize(value));
-      if (queryUsesStatsCommand) {
-        this.setState({
-          hint: {
-            message: 'You are trying to run a stats query in Logs mode. ',
-            fix: {
-              label: 'Switch to Metrics mode.',
-              action: this.switchToMetrics,
-            },
-          },
-        });
-      } else {
-        this.setState({
-          hint: undefined,
-        });
-      }
-    }
-  }, 250);
 
   render() {
     const { ExtraFieldElement, data, query, syntaxLoaded, datasource, allowCustomValue } = this.props;
@@ -409,7 +364,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
-              query={query.expression}
+              query={query.expression ?? ''}
               onChange={this.onChangeQuery}
               onBlur={this.props.onBlur}
               onClick={this.onQueryFieldClick}
@@ -420,7 +375,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               portalOrigin="cloudwatch"
               syntaxLoaded={syntaxLoaded}
               disabled={loadingLogGroups || selectedLogGroups.length === 0}
-              onRichValueChange={this.checkForStatsQuery}
             />
           </div>
           {ExtraFieldElement}

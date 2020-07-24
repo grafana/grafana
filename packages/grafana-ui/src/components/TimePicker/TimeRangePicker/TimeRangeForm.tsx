@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useCallback } from 'react';
+import React, { FormEvent, useState, useCallback, useEffect } from 'react';
 import {
   TimeZone,
   isDateTime,
@@ -37,6 +37,12 @@ export const TimeRangeForm: React.FC<Props> = props => {
   const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
   const [isOpen, setOpen] = useState(false);
 
+  // Synchronize internal state with external value
+  useEffect(() => {
+    setFrom(valueToState(value.raw.from, false, timeZone));
+    setTo(valueToState(value.raw.to, true, timeZone));
+  }, [value.raw.from, value.raw.to, timeZone]);
+
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
       event.preventDefault();
@@ -55,16 +61,20 @@ export const TimeRangeForm: React.FC<Props> = props => {
     [isFullscreen, onOpen]
   );
 
-  const onApply = useCallback(() => {
-    if (to.invalid || from.invalid) {
-      return;
-    }
+  const onApply = useCallback(
+    (e: FormEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      if (to.invalid || from.invalid) {
+        return;
+      }
 
-    const raw: RawTimeRange = { from: from.value, to: to.value };
-    const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
+      const raw: RawTimeRange = { from: from.value, to: to.value };
+      const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
 
-    props.onApply(timeRange);
-  }, [from, to, roundup, timeZone]);
+      props.onApply(timeRange);
+    },
+    [from, to, roundup, timeZone]
+  );
 
   const onChange = useCallback(
     (from: DateTime, to: DateTime) => {

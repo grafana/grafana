@@ -139,6 +139,7 @@ func (query *cloudMonitoringQuery) buildDeepLink() string {
 
 	q := u.Query()
 	q.Set("project", query.ProjectName)
+	q.Set("Grafana_deeplink", "true")
 
 	pageState := map[string]interface{}{
 		"xyChart": map[string]interface{}{
@@ -313,16 +314,17 @@ func reverse(s string) string {
 
 func interpolateFilterWildcards(value string) string {
 	matches := strings.Count(value, "*")
-	if matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
+	switch {
+	case matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*"):
 		value = strings.Replace(value, "*", "", -1)
 		value = fmt.Sprintf(`has_substring("%s")`, value)
-	} else if matches == 1 && strings.HasPrefix(value, "*") {
+	case matches == 1 && strings.HasPrefix(value, "*"):
 		value = strings.Replace(value, "*", "", 1)
 		value = fmt.Sprintf(`ends_with("%s")`, value)
-	} else if matches == 1 && strings.HasSuffix(value, "*") {
+	case matches == 1 && strings.HasSuffix(value, "*"):
 		value = reverse(strings.Replace(reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
-	} else if matches != 0 {
+	case matches != 0:
 		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
 		}))
@@ -338,19 +340,21 @@ func buildFilterString(metricType string, filterParts []string) string {
 	filterString := ""
 	for i, part := range filterParts {
 		mod := i % 4
-		if part == "AND" {
+		switch {
+		case part == "AND":
 			filterString += " "
-		} else if mod == 2 {
+		case mod == 2:
 			operator := filterParts[i-1]
-			if operator == "=~" || operator == "!=~" {
+			switch {
+			case operator == "=~" || operator == "!=~":
 				filterString = reverse(strings.Replace(reverse(filterString), "~", "", 1))
 				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, part)
-			} else if strings.Contains(part, "*") {
+			case strings.Contains(part, "*"):
 				filterString += interpolateFilterWildcards(part)
-			} else {
+			default:
 				filterString += fmt.Sprintf(`"%s"`, part)
 			}
-		} else {
+		default:
 			filterString += part
 		}
 	}
@@ -397,11 +401,12 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 
 	if alignmentPeriod == "cloud-monitoring-auto" || alignmentPeriod == "stackdriver-auto" { // legacy
 		alignmentPeriodValue := int(math.Max(float64(durationSeconds), 60.0))
-		if alignmentPeriodValue < 60*60*23 {
+		switch {
+		case alignmentPeriodValue < 60*60*23:
 			alignmentPeriod = "+60s"
-		} else if alignmentPeriodValue < 60*60*24*6 {
+		case alignmentPeriodValue < 60*60*24*6:
 			alignmentPeriod = "+300s"
-		} else {
+		default:
 			alignmentPeriod = "+3600s"
 		}
 	}
@@ -734,11 +739,12 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 		return bucketBound
 	}
 
-	if bucketOptions.LinearBuckets != nil {
+	switch {
+	case bucketOptions.LinearBuckets != nil:
 		bucketBound = strconv.FormatInt(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*int64(n-1)), 10)
-	} else if bucketOptions.ExponentialBuckets != nil {
+	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
-	} else if bucketOptions.ExplicitBuckets != nil {
+	case bucketOptions.ExplicitBuckets != nil:
 		bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
 	}
 	return bucketBound

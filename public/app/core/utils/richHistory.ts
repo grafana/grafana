@@ -2,15 +2,7 @@
 import _ from 'lodash';
 
 // Services & Utils
-import {
-  DataQuery,
-  DataSourceApi,
-  ExploreMode,
-  dateTimeFormat,
-  AppEvents,
-  urlUtil,
-  ExploreUrlState,
-} from '@grafana/data';
+import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
 import { SortOrder } from './explore';
@@ -187,15 +179,6 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
     range: { from: 'now-1h', to: 'now' },
     datasource: query.datasourceName,
     queries: query.queries,
-    /* Default mode is metrics. Exceptions are Loki (logs) and Jaeger (tracing) data sources.
-     * In the future, we can remove this as we are working on metrics & logs logic.
-     **/
-    mode:
-      query.datasourceId === 'loki'
-        ? ExploreMode.Logs
-        : query.datasourceId === 'jaeger'
-        ? ExploreMode.Tracing
-        : ExploreMode.Metrics,
     ui: {
       showingGraph: true,
       showingLogs: true,
@@ -205,7 +188,7 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   };
 
   const serializedState = serializeStateToUrlParam(exploreState, true);
-  const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
+  const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
   const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;
 };

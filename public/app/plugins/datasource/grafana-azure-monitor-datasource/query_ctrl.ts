@@ -467,8 +467,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.replace(this.target.azureMonitor.metricName)
       )
       .then((metadata: any) => {
-        console.log('Update metadata', metadata);
-
         this.target.azureMonitor.aggregation = metadata.primaryAggType;
         this.target.azureMonitor.timeGrain = 'auto';
         this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(metadata.supportedTimeGrains || []);
@@ -527,7 +525,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   azureMonitorAddDimensionFilter() {
-    console.log('Add dimension', this.target.azureMonitor);
     this.target.azureMonitor.dimensionFilters.push({
       dimension: '',
       operator: 'eq',
@@ -538,7 +535,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   azureMonitorRemoveDimensionFilter(index: number) {
     this.target.azureMonitor.dimensionFilters.splice(index, 1);
     this.refresh();
-    console.log('Remove dimension', index, this.target.azureMonitor);
   }
 
   /* Azure Log Analytics */

@@ -5,7 +5,7 @@ import { GrafanaTheme, DataFrame } from '@grafana/data';
 
 interface TransformationEditorProps {
   name: string;
-  description: string;
+  description?: string;
   editor?: JSX.Element;
   input: DataFrame[];
   output?: DataFrame[];
@@ -32,9 +32,7 @@ export const TransformationEditor = ({ editor, input, output, debugMode }: Trans
           </div>
           <div className={styles.debug}>
             <div className={styles.debugTitle}>Transformation output data</div>
-            <div className={styles.debugJson}>
-              <JSONFormatter json={output} />
-            </div>
+            <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
           </div>
         </div>
       )}

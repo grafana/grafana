@@ -75,7 +75,7 @@ func TestDashboardService(t *testing.T) {
 					{Uid: "asdf90_-", Error: nil},
 					{Uid: "asdf/90", Error: models.ErrDashboardInvalidUid},
 					{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
-					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidToLong},
+					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidTooLong},
 				}
 
 				for _, tc := range testCases {

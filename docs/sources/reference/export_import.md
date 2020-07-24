@@ -17,7 +17,7 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
-{{< docs-imagebox img="/img/docs/v50/export_modal.png" max-width="700px" >}}
+{{< docs-imagebox img="/img/docs/export/export-modal.png" max-width="800px" >}}
 
 ### Making a dashboard portable
 
@@ -47,7 +47,7 @@ Find dashboards for common server applications at [Grafana.com/dashboards](https
 
 {{< docs-imagebox img="/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
 
-## Import and Sharing with Grafana 2.x or 3.0
+## Import and sharing with Grafana 2.x or 3.0
 
 Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
 to update each panel so that they are using a data source of your choice. If you are running a
