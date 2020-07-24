@@ -168,4 +168,8 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Remove unique index org_id_name", NewDropIndexMigration(alert_notification, &Index{
 		Cols: []string{"org_id", "name"}, Type: UniqueIndex,
 	}))
+
+	// change column type of alert.settings
+	mg.AddMigration("alter alert.settings to mediumtext", NewRawSqlMigration("").
+		Mysql("ALTER TABLE alert MODIFY settings MEDIUMTEXT;"))
 }
