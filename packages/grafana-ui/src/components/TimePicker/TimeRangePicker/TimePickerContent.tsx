@@ -22,18 +22,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       z-index: ${theme.zIndex.modal};
       width: 546px;
       top: 116%;
-      margin-left: -322px;
       border-radius: 2px;
       border: 1px solid ${containerBorder};
+      right: 0;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        width: 218px;
-        margin-left: 6px;
-      }
-
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        width: 264px;
-        margin-left: -100px;
+        width: 262px;
       }
     `,
     body: css`
