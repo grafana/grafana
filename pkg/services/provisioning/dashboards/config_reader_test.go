@@ -1,12 +1,15 @@
 package dashboards
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var (
@@ -19,6 +22,14 @@ var (
 func TestDashboardsAsConfig(t *testing.T) {
 	t.Run("Dashboards as configuration", func(t *testing.T) {
 		logger := log.New("test-logger")
+
+		sqlstore.InitTestDB(t)
+		for _, index := range []int{1, 2} {
+			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", index)}
+			if err := sqlstore.CreateOrg(&orgCommand); err != nil {
+				t.Fatal(err)
+			}
+		}
 
 		t.Run("default values should be applied", func(t *testing.T) {
 			cfgProvider := configReader{path: appliedDefaults, log: logger}
