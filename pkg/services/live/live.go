@@ -1,8 +1,6 @@
 package live
 
 import (
-	"net/http"
-
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -47,9 +45,10 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	node.OnConnect(func(c *centrifuge.Client) {
 		// In our example transport will always be Websocket but it can also be SockJS.
 		transportName := c.Transport().Name()
+
 		// In our example clients connect with JSON protocol but it can also be Protobuf.
 		transportEncoding := c.Transport().Encoding()
-		logger.Info("client connected via %s (%s)", transportName, transportEncoding)
+		logger.Debug("client connected", "transport", transportName, "encoding", transportEncoding)
 	})
 
 	// Set SubscribeHandler to react on every channel subscription attempt
@@ -58,7 +57,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// all subscriptions to all channels. In real life you may use a more
 	// complex permission check here.
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-		logger.Info("client subscribes on channel", "channel", e.Channel)
+		logger.Debug("client subscribes on channel", "channel", e.Channel)
 
 		return centrifuge.SubscribeReply{}, nil
 	})
@@ -66,7 +65,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	node.OnUnsubscribe(func(c *centrifuge.Client, e centrifuge.UnsubscribeEvent) {
 		s, _ := node.PresenceStats(e.Channel)
 
-		logger.Info("client unsubscribe from channel %s (clients:%d, users:%d)", e.Channel, s.NumClients, s.NumUsers)
+		logger.Debug("unsubscribe from channel", "channel", e.Channel, "clients", s.NumClients, "users", s.NumUsers)
 	})
 
 	// By default, clients can not publish messages into channels. By setting
@@ -76,7 +75,11 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// be published into channel and reach active subscribers. In our simple chat
 	// app we allow everyone to publish into any channel.
 	node.OnPublish(func(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-		logger.Info("client publishes into channel %s: %s", e.Channel, string(e.Data))
+		logger.Debug("client publishes into channel", "channel", e.Channel, "body", string(e.Data))
+
+		// For now, broadcast any messages to everyone
+		node.Publish(e.Channel, e.Data)
+
 		return centrifuge.PublishReply{}, nil
 	})
 
@@ -93,23 +96,13 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// SockJS will find the best protocol possible for the client
 	sockJsPrefix := "/live/sockjs"
 	sockjsHandler := centrifuge.NewSockjsHandler(node, centrifuge.SockjsConfig{
-		URL:                      "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js", //??
+		URL:                      "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js", // ??
 		HandlerPrefix:            sockJsPrefix,
 		WebsocketReadBufferSize:  1024,
 		WebsocketWriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			logger.Info("CheckOrigin? %s", r.RemoteAddr)
-			return true
-		},
-		WebsocketCheckOrigin: func(r *http.Request) bool {
-			logger.Info("WebsocketCheckOrigin? %s", r.RemoteAddr)
-			return true
-		},
 	})
 
 	b.Handler = func(ctx *models.ReqContext) {
-		logger.Info("live request", ctx.Req.Request, "xxx")
-
 		// Put authentication Credentials into request Context. Since we don't
 		// have any session backend here we simply set user ID as empty string.
 		// Users with empty ID called anonymous users, in real app you should

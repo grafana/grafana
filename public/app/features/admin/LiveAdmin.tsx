@@ -4,9 +4,9 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { NavModel, SelectableValue } from '@grafana/data';
+import { NavModel, SelectableValue, FeatureState } from '@grafana/data';
 import { LivePanel } from './LivePanel';
-import { Select, Input, Button } from '@grafana/ui';
+import { Select, Input, Button, FeatureInfoBox, Container } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 interface Props {
@@ -20,7 +20,7 @@ interface State {
 
 export class LiveAdmin extends PureComponent<Props, State> {
   state: State = {
-    channel: 'example',
+    channel: 'random-2s-stream',
     text: '', // publish text to a channel
   };
 
@@ -58,9 +58,19 @@ export class LiveAdmin extends PureComponent<Props, State> {
 
     const channels: Array<SelectableValue<string>> = [
       {
-        label: 'example',
-        value: 'example',
-        description: 'Sample event that updates periodically',
+        label: 'random-2s-stream',
+        value: 'random-2s-stream',
+        description: 'Random stream that updates every 2s',
+      },
+      {
+        label: 'random-flakey-stream',
+        value: 'random-flakey-stream',
+        description: 'Random stream with intermittent updates',
+      },
+      {
+        label: 'example-chat',
+        value: 'example-chat',
+        description: 'A channel that expects chat messages',
       },
     ];
     let current = channels.find(f => f.value === channel);
@@ -75,6 +85,18 @@ export class LiveAdmin extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents>
+          <Container grow={1}>
+            <FeatureInfoBox
+              title="Grafana Live"
+              featureState={FeatureState.alpha}
+              // url={getDocsLink(DocsId.Transformations)}
+            >
+              <p>This is an early proof-of-concept that will allow us to use websockets in grafana</p>
+            </FeatureInfoBox>
+            <br />
+            <br />
+          </Container>
+
           <h2>Channels</h2>
           <Select options={channels} value={current} onChange={this.onChannelChanged} allowCustomValue={true} />
           <br />

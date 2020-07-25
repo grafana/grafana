@@ -79,7 +79,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
 
     console.log('initChannel', this.centrifuge.isConnected(), path, handler);
     c.subscription = this.centrifuge.subscribe(path, (ctx: PublicationContext) => {
-      console.log('GOT', JSON.stringify(ctx.data), ctx);
+      // console.log('GOT', JSON.stringify(ctx.data), ctx);
       const v = handler.onPublish(ctx.data);
       c.subject.next(v);
     });

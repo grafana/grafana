@@ -14,7 +14,7 @@ type randomWalkeMessage struct {
 }
 
 // RunRandomCSV just for an example
-func RunRandomCSV(broker *GrafanaLive, channel string, speedMillis int) {
+func RunRandomCSV(broker *GrafanaLive, channel string, speedMillis int, dropPercent float64) {
 	spread := 50.0
 
 	walker := rand.Float64() * 100
@@ -23,6 +23,9 @@ func RunRandomCSV(broker *GrafanaLive, channel string, speedMillis int) {
 	line := randomWalkeMessage{}
 
 	for t := range ticker.C {
+		if rand.Float64() <= dropPercent {
+			continue //
+		}
 		delta := rand.Float64() - 0.5
 		walker += delta
 
