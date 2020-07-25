@@ -1,7 +1,7 @@
 import Centrifuge, { PublicationContext } from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler } from '@grafana/runtime';
-import { PartialObserver, Unsubscribable, Subject } from 'rxjs';
+import { PartialObserver, Unsubscribable, Subject, BehaviorSubject } from 'rxjs';
 import { KeyValue } from '@grafana/data';
 
 interface Channel<T = any> {
@@ -12,6 +12,7 @@ interface Channel<T = any> {
 class CentrifugeSrv implements GrafanaLiveSrv {
   centrifuge: Centrifuge;
   channels: KeyValue<Channel> = {};
+  connectionListeners: BehaviorSubject<boolean>;
 
   constructor() {
     console.log('connecting....');
@@ -22,6 +23,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     });
     this.centrifuge.setToken('ABCD');
     this.centrifuge.connect(); // do connection
+    this.connectionListeners = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
 
     // Register global listeners
     this.centrifuge.on('connect', this.onConnect);
@@ -35,10 +37,12 @@ class CentrifugeSrv implements GrafanaLiveSrv {
 
   onConnect = (context: any) => {
     console.log('CONNECT', context);
+    this.connectionListeners.next(true);
   };
 
   onDisconnect = (context: any) => {
     console.log('onDisconnect', context);
+    this.connectionListeners.next(false);
   };
 
   onServerSideMessage = (context: any) => {
@@ -49,8 +53,18 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   // Exported functions
   //----------------------------------------------------------
 
-  isConnected = () => {
+  /**
+   * Is the server currently connected
+   */
+  isConnected = (): boolean => {
     return this.centrifuge.isConnected();
+  };
+
+  /**
+   * Listen for changes to the connection state
+   */
+  connection = (observer: PartialObserver<boolean>): Unsubscribable => {
+    return this.connectionListeners.subscribe(observer);
   };
 
   initChannel = <T>(path: string, handler: ChannelHandler<T>) => {
@@ -63,7 +77,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     };
     this.channels[path] = c;
 
-    console.log('initChannel', this.isConnected(), path, handler);
+    console.log('initChannel', this.centrifuge.isConnected(), path, handler);
     c.subscription = this.centrifuge.subscribe(path, (ctx: PublicationContext) => {
       console.log('GOT', JSON.stringify(ctx.data), ctx);
       const v = handler.onPublish(ctx.data);
@@ -78,6 +92,13 @@ class CentrifugeSrv implements GrafanaLiveSrv {
       c = this.channels[path];
     }
     return c!.subject.subscribe(observer);
+  };
+
+  /**
+   * Send data to a channel.  This feature is disabled for most channels and will return an error
+   */
+  publish = <T>(channel: string, data: any): Promise<T> => {
+    return this.centrifuge.publish(channel, data);
   };
 }
 

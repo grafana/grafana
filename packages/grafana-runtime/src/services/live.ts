@@ -24,11 +24,30 @@ export interface ChannelHandler<T = any> {
  * @experimental
  */
 export interface GrafanaLiveSrv {
+  /**
+   * Is the server currently connected
+   */
   isConnected(): boolean;
 
-  initChannel<T>(path: string, handler: ChannelHandler<T>): void;
+  /**
+   * Listen for changes to the connection state
+   */
+  connection(observer: PartialObserver<boolean>): Unsubscribable;
 
-  subscribe<T>(path: string, observer?: PartialObserver<T>): Unsubscribable;
+  /**
+   * Configure a channel with the given setup
+   */
+  initChannel<T>(channel: string, handler: ChannelHandler<T>): void;
+
+  /**
+   * Subscribe to activity on a given channel
+   */
+  subscribe<T>(channel: string, observer: PartialObserver<T>): Unsubscribable;
+
+  /**
+   * Send data to a channel.  This feature is disabled for most channels and will return an error
+   */
+  publish<T>(channel: string, data: any): Promise<T>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

@@ -4,8 +4,9 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { NavModel } from '@grafana/data';
-import { Unsubscribable, PartialObserver } from 'rxjs';
+import { NavModel, SelectableValue } from '@grafana/data';
+import { LivePanel } from './LivePanel';
+import { Select, Input, Button } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 interface Props {
@@ -13,66 +14,78 @@ interface Props {
 }
 
 interface State {
-  connected: boolean;
-  count: number;
-  lastTime: number;
-  lastBody: string;
+  channel: string;
+  text: string;
 }
 
 export class LiveAdmin extends PureComponent<Props, State> {
   state: State = {
-    connected: false,
-    count: 0,
-    lastTime: 0,
-    lastBody: '',
+    channel: 'example',
+    text: '', // publish text to a channel
   };
-  subscription?: Unsubscribable;
 
-  observer: PartialObserver<any> = {
-    next: (msg: any) => {
+  onChannelChanged = (v: SelectableValue<string>) => {
+    if (v.value) {
       this.setState({
-        count: this.state.count + 1,
-        lastTime: Date.now(),
-        lastBody: JSON.stringify(msg),
+        channel: v.value,
       });
-    },
-  };
-
-  startSubscriptoin = () => {
-    const srv = getGrafanaLiveSrv();
-    if (srv.isConnected()) {
-      this.subscription = getGrafanaLiveSrv().subscribe<any>('example', this.observer);
-      this.setState({ connected: true });
-      return;
     }
-    console.log('Not yet connected... try again...');
-    setTimeout(this.startSubscriptoin, 200);
   };
 
-  componentDidMount = () => {
-    this.startSubscriptoin();
+  onTextChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ text: event.target.value });
   };
 
-  componentWillUnmount() {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
+  onPublish = () => {
+    const { text, channel } = this.state;
+    if (text) {
+      const msg = {
+        line: text,
+      };
+
+      const srv = getGrafanaLiveSrv();
+      console.log('PUBLISHING', msg, channel, srv);
+      srv.publish(channel, msg).then(v => {
+        console.log('PUBLISHED', text, v);
+      });
     }
-  }
+    this.setState({ text: '' });
+  };
 
   render() {
     const { navModel } = this.props;
-    const { lastBody, lastTime, count } = this.state;
+    const { channel, text } = this.state;
+
+    const channels: Array<SelectableValue<string>> = [
+      {
+        label: 'example',
+        value: 'example',
+        description: 'Sample event that updates periodically',
+      },
+    ];
+    let current = channels.find(f => f.value === channel);
+    if (!current) {
+      current = {
+        label: channel,
+        value: channel,
+      };
+      channels.push(current);
+    }
 
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          <h3>Last message on channel: example ({count})</h3>
-          {lastTime > 1 && (
-            <div>
-              <b>{lastTime}</b>
-              <pre>{lastBody}</pre>
-            </div>
-          )}
+          <h2>Channels</h2>
+          <Select options={channels} value={current} onChange={this.onChannelChanged} allowCustomValue={true} />
+          <br />
+
+          <LivePanel channel={channel} />
+
+          <br />
+          <br />
+          <h3>Write to channel</h3>
+          <Input value={text} onChange={this.onTextChanged} />
+          <Button onClick={this.onPublish}>Publish</Button>
         </Page.Contents>
       </Page>
     );
