@@ -3,7 +3,7 @@ import { action } from '@storybook/addon-actions';
 import { dateTime, TimeFragment } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { TimeRangeInput } from './TimeRangeInput';
+import { TimeRangeInput } from '@grafana/ui';
 import mdx from './TimeRangeInput.mdx';
 
 export default {
