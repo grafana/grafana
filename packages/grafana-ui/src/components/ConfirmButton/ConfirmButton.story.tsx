@@ -1,6 +1,6 @@
 import React from 'react';
 import { text, boolean, select } from '@storybook/addon-knobs';
-import { ConfirmButton } from './ConfirmButton';
+import { ConfirmButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
 import { Button } from '../Button';
