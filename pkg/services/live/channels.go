@@ -7,10 +7,10 @@ import (
 )
 
 type randomWalkeMessage struct {
-	time  int64
-	value float64
-	min   float64
-	max   float64
+	Time  int64
+	Value float64
+	Min   float64
+	Max   float64
 }
 
 // RunRandomCSV just for an example
@@ -26,10 +26,10 @@ func RunRandomCSV(broker *GrafanaLive, channel string, speedMillis int) {
 		delta := rand.Float64() - 0.5
 		walker += delta
 
-		line.time = t.UnixNano() / int64(time.Millisecond)
-		line.value = walker
-		line.min = walker - ((rand.Float64() * spread) + 0.01)
-		line.max = walker + ((rand.Float64() * spread) + 0.01)
+		line.Time = t.UnixNano() / int64(time.Millisecond)
+		line.Value = walker
+		line.Min = walker - ((rand.Float64() * spread) + 0.01)
+		line.Max = walker + ((rand.Float64() * spread) + 0.01)
 
 		bytes, _ := json.Marshal(&line)
 		v := broker.Publish(channel, bytes)
