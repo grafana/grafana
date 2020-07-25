@@ -1,4 +1,4 @@
-import Centrifuge, { PublicationContext } from 'centrifuge'; // /dist/centrifuge.protobuf';
+import Centrifuge, { PublicationContext } from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler } from '@grafana/runtime';
 import { PartialObserver, Unsubscribable, Subject } from 'rxjs';

@@ -4,6 +4,10 @@ import { PartialObserver, Unsubscribable } from 'rxjs';
  * @experimental
  */
 export interface ChannelHandler<T = any> {
+  /**
+   * Process the raw message from the server before broadcasting it
+   * to all subscribeers on this channel
+   */
   onPublish(msg: any): T;
 }
 
@@ -40,8 +44,8 @@ export const setGrafanaLiveSrv = (instance: GrafanaLiveSrv) => {
 };
 
 /**
- * Used to retrieve the {@link GrafanaLiveSrv} that can be used to communicate
- * via http(s) to a remote backend such as the Grafana backend, a datasource etc.
+ * Used to retrieve the {@link GrafanaLiveSrv} that allows you to subscribe to
+ * server side events and streams
  *
  * @experimental
  * @public
