@@ -2,7 +2,7 @@
 
 exports[`TimePickerContent renders correctly in full screen 1`] = `
 <div
-  className="css-1py9bjs"
+  className="css-ajr8sn"
 >
   <div
     className="css-ooqtr4"
@@ -103,7 +103,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
 
 exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 <div
-  className="css-1py9bjs"
+  className="css-ajr8sn"
 >
   <div
     className="css-ooqtr4"
@@ -200,7 +200,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 
 exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
 <div
-  className="css-1py9bjs"
+  className="css-ajr8sn"
 >
   <div
     className="css-ooqtr4"
