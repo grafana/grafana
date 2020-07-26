@@ -19,7 +19,7 @@ Grafana has global built-in variables that can be used in expressions in the que
 
 ## $__from and $__to
 
-Grafana has two built in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default but you can control formatting using a special formating syntax.
+Grafana has two built in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default but you can control date formatting.
 
 > This special formatting syntax is only available in Grafan a 7.1.2+
 
@@ -31,7 +31,7 @@ Grafana has two built in time range variables: `$__from` and `$__to`. They are c
 | `${__from:date:seconds}` | 1594671549               | Unix seconds epoch |
 | `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) |
 
-The above syntax of course works with `${__to} as well.  
+The above syntax of course works with `${__to}` as well.  
 
 ## $__interval
 
