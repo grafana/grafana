@@ -64,8 +64,8 @@ To change or update an existing dashboard link, follow this procedure.
 
 ## Duplicate a dashboard link
 
-To duplicate an existing dashboard link, click the blue **⇄** next to the existing link that you want to duplicate.
+To duplicate an existing dashboard link, click the duplicate icon next to the existing link that you want to duplicate.
 
 ## Delete a dashboard link
 
-To delete an existing dashboard link, click the red **X** next to the existing link that you want to delete.
+To delete an existing dashboard link, click the trash icon next to the duplicate icon that you want to delete.
