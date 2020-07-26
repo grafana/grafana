@@ -1,7 +1,7 @@
 import Centrifuge, { PublicationContext } from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler } from '@grafana/runtime';
-import { PartialObserver, Unsubscribable, Subject, BehaviorSubject } from 'rxjs';
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { KeyValue } from '@grafana/data';
 
 interface Channel<T = any> {
@@ -12,7 +12,7 @@ interface Channel<T = any> {
 class CentrifugeSrv implements GrafanaLiveSrv {
   centrifuge: Centrifuge;
   channels: KeyValue<Channel> = {};
-  connectionListeners: BehaviorSubject<boolean>;
+  connectionState: BehaviorSubject<boolean>;
 
   constructor() {
     console.log('connecting....');
@@ -23,7 +23,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     });
     this.centrifuge.setToken('ABCD');
     this.centrifuge.connect(); // do connection
-    this.connectionListeners = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
+    this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
 
     // Register global listeners
     this.centrifuge.on('connect', this.onConnect);
@@ -37,12 +37,12 @@ class CentrifugeSrv implements GrafanaLiveSrv {
 
   onConnect = (context: any) => {
     console.log('CONNECT', context);
-    this.connectionListeners.next(true);
+    this.connectionState.next(true);
   };
 
   onDisconnect = (context: any) => {
     console.log('onDisconnect', context);
-    this.connectionListeners.next(false);
+    this.connectionState.next(false);
   };
 
   onServerSideMessage = (context: any) => {
@@ -56,16 +56,16 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   /**
    * Is the server currently connected
    */
-  isConnected = (): boolean => {
+  isConnected() {
     return this.centrifuge.isConnected();
-  };
+  }
 
   /**
    * Listen for changes to the connection state
    */
-  connection = (observer: PartialObserver<boolean>): Unsubscribable => {
-    return this.connectionListeners.subscribe(observer);
-  };
+  getConnectionState() {
+    return this.connectionState.asObservable();
+  }
 
   initChannel = <T>(path: string, handler: ChannelHandler<T>) => {
     if (this.channels[path]) {
@@ -85,13 +85,13 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     });
   };
 
-  subscribe = <T>(path: string, observer: PartialObserver<T>): Unsubscribable => {
+  getChannelStream = <T>(path: string): Observable<T> => {
     let c = this.channels[path];
     if (!c) {
       this.initChannel(path, standardChannelHandler);
       c = this.channels[path];
     }
-    return c!.subject.subscribe(observer);
+    return c!.subject.asObservable();
   };
 
   /**

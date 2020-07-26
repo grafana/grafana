@@ -40,7 +40,8 @@ export class LivePanel extends PureComponent<Props, State> {
 
     const srv = getGrafanaLiveSrv();
     if (srv.isConnected()) {
-      this.subscription = getGrafanaLiveSrv().subscribe<any>(this.props.channel, this.observer);
+      const stream = srv.getChannelStream(this.props.channel);
+      this.subscription = stream.subscribe(this.observer);
       this.setState({ connected: true, count: 0, lastTime: 0, lastBody: '' });
       return;
     }

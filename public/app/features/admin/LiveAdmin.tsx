@@ -91,7 +91,10 @@ export class LiveAdmin extends PureComponent<Props, State> {
               featureState={FeatureState.alpha}
               // url={getDocsLink(DocsId.Transformations)}
             >
-              <p>This is an early proof-of-concept that will allow us to use websockets in grafana</p>
+              <p>
+                This supports real-time event streams in grafana core. This feature is under heavy development. Expect
+                the intefaces and structures to change as this becomes more production ready.
+              </p>
             </FeatureInfoBox>
             <br />
             <br />

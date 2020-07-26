@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+// ChannelInfo holds metadata about each channel and is retruned on connection.
+// Eventually each plugin should control exactly what is in this structure
+type ChannelInfo struct {
+	Description string
+}
+
 type randomWalkeMessage struct {
 	Time  int64
 	Value float64

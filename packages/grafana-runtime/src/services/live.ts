@@ -1,4 +1,4 @@
-import { PartialObserver, Unsubscribable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 /**
  * @experimental
@@ -32,7 +32,7 @@ export interface GrafanaLiveSrv {
   /**
    * Listen for changes to the connection state
    */
-  connection(observer: PartialObserver<boolean>): Unsubscribable;
+  getConnectionState(): Observable<boolean>;
 
   /**
    * Configure a channel with the given setup
@@ -42,7 +42,7 @@ export interface GrafanaLiveSrv {
   /**
    * Subscribe to activity on a given channel
    */
-  subscribe<T>(channel: string, observer: PartialObserver<T>): Unsubscribable;
+  getChannelStream<T>(channel: string): Observable<T>;
 
   /**
    * Send data to a channel.  This feature is disabled for most channels and will return an error

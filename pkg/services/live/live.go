@@ -1,6 +1,8 @@
 package live
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/centrifugal/centrifuge"
@@ -61,7 +63,15 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 		logger.Debug("client subscribes on channel", "channel", e.Channel)
 
-		return centrifuge.SubscribeReply{}, nil
+		info := &ChannelInfo{
+			Description: fmt.Sprintf("channel: %s", e.Channel),
+		}
+		bytes, _ := json.Marshal(&info)
+
+		return centrifuge.SubscribeReply{
+			ExpireAt:    0, // does not expire
+			ChannelInfo: bytes,
+		}, nil
 	})
 
 	node.OnUnsubscribe(func(c *centrifuge.Client, e centrifuge.UnsubscribeEvent) {
@@ -77,7 +87,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// be published into channel and reach active subscribers. In our simple chat
 	// app we allow everyone to publish into any channel.
 	node.OnPublish(func(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-		logger.Debug("client publishes into channel", "channel", e.Channel, "body", string(e.Data))
+		// logger.Debug("client publishes into channel", "channel", e.Channel, "body", string(e.Data))
 
 		// For now, broadcast any messages to everyone
 		_, err := node.Publish(e.Channel, e.Data)
