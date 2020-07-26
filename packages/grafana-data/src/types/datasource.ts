@@ -433,6 +433,11 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Request Timing
   startTime: number;
   endTime?: number;
+
+  // Explore state used by various datasources
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface DataQueryTimings {

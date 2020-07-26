@@ -38,7 +38,7 @@ func formatShort(interval time.Duration) string {
 		result += fmt.Sprintf("%dm", mins)
 	}
 
-	remaining = remaining - (mins * time.Minute)
+	remaining -= (mins * time.Minute)
 	seconds := remaining / time.Second
 	if seconds > 0 {
 		result += fmt.Sprintf("%ds", seconds)

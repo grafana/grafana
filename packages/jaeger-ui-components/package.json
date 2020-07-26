@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@grafana/data": "7.2.0-pre.0",
+    "@grafana/ui": "7.2.0-pre.0",
     "@types/classnames": "^2.2.7",
     "@types/deep-freeze": "^0.1.1",
     "@types/hoist-non-react-statics": "^3.3.1",
@@ -22,6 +23,7 @@
     "@types/moment": "^2.13.0",
     "@types/react-icons": "2.2.7",
     "@types/recompose": "^0.30.7",
+    "@types/slate-react": "0.22.5",
     "chance": "^1.0.10",
     "classnames": "^2.2.5",
     "combokeys": "^3.0.0",

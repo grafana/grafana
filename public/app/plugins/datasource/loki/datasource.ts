@@ -1,14 +1,14 @@
 // Libraries
-import { isEmpty, map as lodashMap } from 'lodash';
+import { isEmpty, map as lodashMap, cloneDeep } from 'lodash';
 import { Observable, from, merge, of } from 'rxjs';
-import { map, filter, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 
 // Services & Utils
 import { DataFrame, dateMath, FieldCache, QueryResultMeta } from '@grafana/data';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
+import { getBackendSrv, BackendSrvRequest, FetchError } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
+import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { lokiResultsToTableModel, processRangeQueryResponse, lokiStreamResultToDataFrame } from './result_transformer';
 import { getHighlighterExpressionsFromQuery } from './query_utils';
 
@@ -42,7 +42,7 @@ import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
-export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
+export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 
@@ -120,8 +120,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
 
     return this._request(INSTANT_QUERY_ENDPOINT, query).pipe(
-      catchError((err: any) => this.throwUnless(err, err.cancelled, target)),
-      filter((response: any) => (response.cancelled ? false : true)),
       map((response: { data: LokiResponse }) => {
         if (response.data.data.resultType === LokiResultType.Stream) {
           return {
@@ -145,7 +143,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = Math.ceil(this.adjustInterval(options.intervalMs || 1000, rangeMs) / 1000);
+      const step = Math.ceil(
+        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000
+      );
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -162,7 +162,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       ...DEFAULT_QUERY_PARAMS,
       ...range,
       query,
-      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
+      limit: Math.min((options as DataQueryRequest<LokiQuery>).maxDataPoints || Infinity, this.maxLines),
     };
   }
 
@@ -184,7 +184,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let linesLimit = 0;
     if (target.maxLines === undefined) {
       // no target.maxLines, using options.maxDataPoints
-      linesLimit = Math.min(options.maxDataPoints || Infinity, this.maxLines);
+      linesLimit = Math.min((options as DataQueryRequest<LokiQuery>).maxDataPoints || Infinity, this.maxLines);
     } else {
       // using target.maxLines
       if (isNaN(target.maxLines)) {
@@ -195,13 +195,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     const queryOptions = { ...options, maxDataPoints: linesLimit };
-    if (target.liveStreaming) {
+    if ((options as DataQueryRequest<LokiQuery>).liveStreaming) {
       return this.runLiveQuery(target, queryOptions);
     }
     const query = this.createRangeQuery(target, queryOptions);
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
-      catchError((err: any) => this.throwUnless(err, err.cancelled || err.status === 404, target)),
-      filter((response: any) => (response.cancelled ? false : true)),
+      catchError((err: any) => this.throwUnless(err, err.status === 404, target)),
       switchMap((response: { data: LokiResponse; status: number }) =>
         processRangeQueryResponse(
           response.data,
@@ -210,7 +209,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           responseListLength,
           linesLimit,
           this.instanceSettings.jsonData,
-          options.reverse
+          (options as DataQueryRequest<LokiQuery>).reverse
         )
       )
     );
@@ -498,42 +497,22 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return (row && row.searchWords && row.searchWords.length > 0) === true;
   }
 
-  throwUnless = (err: any, condition: boolean, target: LokiQuery) => {
+  throwUnless(err: FetchError, condition: boolean, target: LokiQuery) {
     if (condition) {
       return of(err);
     }
 
-    const error: DataQueryError = this.processError(err, target);
+    const error = this.processError(err, target);
     throw error;
-  };
+  }
 
-  processError = (err: any, target: LokiQuery): DataQueryError => {
-    const error: DataQueryError = {
-      message: (err && err.statusText) || 'Unknown error during query transaction. Please check JS console logs.',
-      refId: target.refId,
-    };
-
-    if (err.data) {
-      if (typeof err.data === 'string') {
-        if (err.data.includes('escape') && target.expr.includes('\\')) {
-          error.message = `Error: ${err.data}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.`;
-        } else {
-          error.message = err.data;
-        }
-      } else if (err.data.error) {
-        error.message = safeStringifyValue(err.data.error);
-      }
-    } else if (err.message) {
-      error.message = err.message;
-    } else if (typeof err === 'string') {
-      error.message = err;
+  processError(err: FetchError, target: LokiQuery) {
+    let error = cloneDeep(err);
+    if (err.data.message.includes('escape') && target.expr.includes('\\')) {
+      error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.`;
     }
-
-    error.status = err.status;
-    error.statusText = err.statusText;
-
     return error;
-  };
+  }
 
   adjustInterval(interval: number, range: number) {
     // Loki will drop queries that might return more than 11000 data points.

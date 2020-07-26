@@ -1,9 +1,6 @@
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { FieldSet } from './FieldSet';
-import { Form } from './Form';
-import { Field } from './Field';
-import { Input } from '../Input/Input';
+import { Input, Form, FieldSet, Field } from '@grafana/ui';
 import mdx from './FieldSet.mdx';
 import { Button } from '../Button';
 

@@ -20,6 +20,7 @@ export const AdminListOrgsPages: FC = () => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
   const [state, fetchOrgs] = useAsyncFn(async () => await getOrgs(), []);
+
   useEffect(() => {
     fetchOrgs();
   }, []);
@@ -44,7 +45,7 @@ export const AdminListOrgsPages: FC = () => {
               </VerticalGroup>
             </InfoBox>
 
-            <div className="page-action-bar__spacer"></div>
+            <div className="page-action-bar__spacer" />
             <LinkButton icon="plus" href="org/new">
               New org
             </LinkButton>
@@ -55,8 +56,7 @@ export const AdminListOrgsPages: FC = () => {
             <AdminOrgsTable
               orgs={state.value}
               onDelete={orgId => {
-                deleteOrg(orgId);
-                fetchOrgs();
+                deleteOrg(orgId).then(() => fetchOrgs());
               }}
             />
           )}

@@ -100,6 +100,21 @@ var BoolToOptionalBool = data.FieldConverter{
 	},
 }
 
+// TimeToOptionalTime optional int value
+var TimeToOptionalTime = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableTime,
+	Converter: func(v interface{}) (interface{}, error) {
+		if v == nil {
+			return nil, nil
+		}
+		val, ok := v.(time.Time)
+		if !ok { // or return some default value instead of erroring
+			return nil, fmt.Errorf("[time] expected time input but got type %T", v)
+		}
+		return &val, nil
+	},
+}
+
 // RFC3339StringToNullableTime .....
 func RFC3339StringToNullableTime(s string) (*time.Time, error) {
 	if s == "" {
