@@ -45,6 +45,14 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     this.connectionState.next(false);
   };
 
+  onSubscribe = (context: any) => {
+    console.log('onSubscribe', context);
+  };
+
+  onUnsubscribe = (context: any) => {
+    console.log('onUnsubscribe', context);
+  };
+
   onServerSideMessage = (context: any) => {
     console.log('Publication from server-side channel', context);
   };
@@ -78,11 +86,16 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     this.channels[path] = c;
 
     console.log('initChannel', this.centrifuge.isConnected(), path, handler);
-    c.subscription = this.centrifuge.subscribe(path, (ctx: PublicationContext) => {
-      // console.log('GOT', JSON.stringify(ctx.data), ctx);
-      const v = handler.onPublish(ctx.data);
-      c.subject.next(v);
-    });
+    const callbacks = {
+      subscribe: this.onSubscribe,
+      unsubscribe: this.onUnsubscribe,
+      publish: (ctx: PublicationContext) => {
+        // console.log('GOT', JSON.stringify(ctx.data), ctx);
+        const v = handler.onPublish(ctx.data);
+        c.subject.next(v);
+      },
+    };
+    c.subscription = this.centrifuge.subscribe(path, callbacks);
   };
 
   getChannelStream = <T>(path: string): Observable<T> => {

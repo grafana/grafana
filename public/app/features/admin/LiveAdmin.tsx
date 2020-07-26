@@ -44,7 +44,6 @@ export class LiveAdmin extends PureComponent<Props, State> {
       };
 
       const srv = getGrafanaLiveSrv();
-      console.log('PUBLISHING', msg, channel, srv);
       srv.publish(channel, msg).then(v => {
         console.log('PUBLISHED', text, v);
       });
