@@ -2,6 +2,10 @@ import { PanelModel } from 'app/features/dashboard/state';
 
 export class ThresholdMapper {
   static alertToGraphThresholds(panel: PanelModel) {
+    if (!panel.alert) {
+      return false; // no update when no alerts
+    }
+
     for (let i = 0; i < panel.alert.conditions.length; i++) {
       const condition = panel.alert.conditions[i];
       if (condition.type !== 'query') {
