@@ -78,9 +78,8 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		logger.Debug("client publishes into channel", "channel", e.Channel, "body", string(e.Data))
 
 		// For now, broadcast any messages to everyone
-		node.Publish(e.Channel, e.Data)
-
-		return centrifuge.PublishReply{}, nil
+		_, err := node.Publish(e.Channel, e.Data)
+		return centrifuge.PublishReply{}, err // returns an error if it could not publish
 	})
 
 	// Set Disconnect handler to react on client disconnect events.
