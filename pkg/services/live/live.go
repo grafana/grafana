@@ -97,7 +97,6 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// SockJS will find the best protocol possible for the browser
 	sockJsPrefix := "/live/sockjs"
 	sockjsHandler := centrifuge.NewSockjsHandler(node, centrifuge.SockjsConfig{
-		URL:                      "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js", // ??
 		HandlerPrefix:            sockJsPrefix,
 		WebsocketReadBufferSize:  1024,
 		WebsocketWriteBufferSize: 1024,
