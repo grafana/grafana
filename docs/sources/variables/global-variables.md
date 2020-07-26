@@ -10,7 +10,7 @@ weight = 200
 
 # Global variables
 
-Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them.
+Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them. These variables are useful in both queries, dashboard links, panel links & data links.
 
 ## $__dashboard
 
@@ -23,9 +23,15 @@ Grafana has two built in time range variables: `$__from` and `$__to`. They are c
 
 > This special formatting syntax is only available in Grafan a 7.1.2+
 
-| Syntax              | Example result | Description |
-| ------------------- | ------------- | ----------- |
-| `${__from:date}` | 2020-07-13T20:19:09.254Z | Defaults to ISO 8601/RFC 3339 |
+| Syntax                   | Example result           | Description |
+| ------------------------ | ------------------------ | ----------- |
+| `${__from}`              | 1594671549254            | Unix millisecond epoch |
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339 | 
+| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339 |
+| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch |
+| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) |
+
+The above syntax of course works with `${__to} as well.  
 
 ## $__interval
 
