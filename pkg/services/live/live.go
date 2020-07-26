@@ -1,6 +1,8 @@
 package live
 
 import (
+	"strings"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -92,13 +94,19 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		return nil, err
 	}
 
-	// SockJS will find the best protocol possible for the client
+	// SockJS will find the best protocol possible for the browser
 	sockJsPrefix := "/live/sockjs"
 	sockjsHandler := centrifuge.NewSockjsHandler(node, centrifuge.SockjsConfig{
 		URL:                      "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js", // ??
 		HandlerPrefix:            sockJsPrefix,
 		WebsocketReadBufferSize:  1024,
 		WebsocketWriteBufferSize: 1024,
+	})
+
+	// Use a direct websocket from go clients
+	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 	})
 
 	b.Handler = func(ctx *models.ReqContext) {
@@ -115,9 +123,18 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 
+		path := ctx.Req.URL.Path
+		logger.Debug("Handle", "path", path)
+
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID
-		sockjsHandler.ServeHTTP(ctx.Resp, r)
+
+		// Check if this is a direct websocket connection
+		if strings.Contains(path, "live/ws") {
+			wsHandler.ServeHTTP(ctx.Resp, r)
+		} else { // live/sockjs
+			sockjsHandler.ServeHTTP(ctx.Resp, r)
+		}
 	}
 	return b, nil
 }
