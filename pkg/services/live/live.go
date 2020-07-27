@@ -61,12 +61,11 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// all subscriptions to all channels. In real life you may use a more
 	// complex permission check here.
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-		logger.Debug("client subscribes on channel", "channel", e.Channel)
-
 		info := &ChannelInfo{
 			Description: fmt.Sprintf("channel: %s", e.Channel),
 		}
 		bytes, _ := json.Marshal(&info)
+		logger.Debug("client subscribes on channel", "channel", e.Channel, "info", string(bytes))
 
 		return centrifuge.SubscribeReply{
 			ExpireAt:    0, // does not expire

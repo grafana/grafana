@@ -1,4 +1,11 @@
-import Centrifuge, { PublicationContext } from 'centrifuge/dist/centrifuge.protobuf';
+import Centrifuge, {
+  PublicationContext,
+  SubscriptionEvents,
+  SubscribeSuccessContext,
+  UnsubscribeContext,
+  JoinLeaveContext,
+  SubscribeErrorContext,
+} from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler } from '@grafana/runtime';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
@@ -13,6 +20,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   centrifuge: Centrifuge;
   channels: KeyValue<Channel> = {};
   connectionState: BehaviorSubject<boolean>;
+  standardCallbacks: SubscriptionEvents;
 
   constructor() {
     console.log('connecting....');
@@ -29,6 +37,14 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     this.centrifuge.on('connect', this.onConnect);
     this.centrifuge.on('disconnect', this.onDisconnect);
     this.centrifuge.on('publish', this.onServerSideMessage);
+
+    this.standardCallbacks = {
+      subscribe: this.onSubscribe,
+      unsubscribe: this.onUnsubscribe,
+      join: this.onJoin,
+      leave: this.onLeave,
+      error: this.onError,
+    };
   }
 
   //----------------------------------------------------------
@@ -45,16 +61,35 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     this.connectionState.next(false);
   };
 
-  onSubscribe = (context: any) => {
+  onServerSideMessage = (context: any) => {
+    console.log('Publication from server-side channel', context);
+  };
+
+  //   export interface SubscriptionEvents {
+  //     publish?: (ctx: PublicationContext) => void;
+  //     join?: (ctx: JoinLeaveContext) => void;
+  //     leave?: (ctx: JoinLeaveContex) => void;
+  //     subscribe?: (ctx: SubscribeSuccessContext) => void;
+  //     error?: (ctx: SubscribeErrorContext) => void;
+  //     unsubscribe?: (ctx: UnsubscribeContext) => void;
+  // }
+
+  onSubscribe = (context: SubscribeSuccessContext) => {
     console.log('onSubscribe', context);
   };
 
-  onUnsubscribe = (context: any) => {
+  onUnsubscribe = (context: UnsubscribeContext) => {
     console.log('onUnsubscribe', context);
   };
 
-  onServerSideMessage = (context: any) => {
-    console.log('Publication from server-side channel', context);
+  onJoin = (context: JoinLeaveContext) => {
+    console.log('onJoin', context);
+  };
+  onLeave = (context: JoinLeaveContext) => {
+    console.log('onLeave', context);
+  };
+  onError = (context: SubscribeErrorContext) => {
+    console.log('SubscribeErrorContext', context);
   };
 
   //----------------------------------------------------------
@@ -86,9 +121,8 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     this.channels[path] = c;
 
     console.log('initChannel', this.centrifuge.isConnected(), path, handler);
-    const callbacks = {
-      subscribe: this.onSubscribe,
-      unsubscribe: this.onUnsubscribe,
+    const callbacks: SubscriptionEvents = {
+      ...this.standardCallbacks,
       publish: (ctx: PublicationContext) => {
         // console.log('GOT', JSON.stringify(ctx.data), ctx);
         const v = handler.onPublish(ctx.data);

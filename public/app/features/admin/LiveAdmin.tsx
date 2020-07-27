@@ -109,7 +109,9 @@ export class LiveAdmin extends PureComponent<Props, State> {
           <br />
           <h3>Write to channel</h3>
           <Input value={text} onChange={this.onTextChanged} />
-          <Button onClick={this.onPublish}>Publish</Button>
+          <Button onClick={this.onPublish} variant={text ? 'primary' : 'secondary'}>
+            Publish
+          </Button>
         </Page.Contents>
       </Page>
     );
