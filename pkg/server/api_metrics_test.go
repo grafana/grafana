@@ -221,7 +221,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 				}),
 			},
 		}
-		tr := makeRequest(t, req, addr)
+		tr := makeCWRequest(t, req, addr)
 
 		assert.Equal(t, tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
@@ -285,7 +285,7 @@ func TestQueryCloudWatchLogGroups(t *testing.T) {
 				}),
 			},
 		}
-		tr := makeRequest(t, req, addr)
+		tr := makeCWRequest(t, req, addr)
 
 		dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
 			&data.Frame{
@@ -313,7 +313,7 @@ func TestQueryCloudWatchLogGroups(t *testing.T) {
 	})
 }
 
-func makeRequest(t *testing.T, req dtos.MetricRequest, addr string) tsdb.Response {
+func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) tsdb.Response {
 	t.Helper()
 
 	buf := bytes.Buffer{}
