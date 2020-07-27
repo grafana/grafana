@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -220,29 +221,14 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 				}),
 			},
 		}
-		buf := bytes.Buffer{}
-		enc := json.NewEncoder(&buf)
-		err := enc.Encode(&req)
-		require.NoError(t, err)
-		resp, err := http.Post(fmt.Sprintf("http://%s/api/ds/query", addr), "application/json", &buf)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		t.Cleanup(func() { resp.Body.Close() })
+		tr := makeRequest(t, req, addr)
 
-		buf = bytes.Buffer{}
-		_, err = io.Copy(&buf, resp.Body)
-		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-
-		var tr tsdb.Response
-		err = json.Unmarshal(buf.Bytes(), &tr)
-		require.NoError(t, err)
 		assert.Equal(t, tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": {
 					RefId: "A",
 					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": json.Number("1"),
+						"rowCount": float64(1),
 					}),
 					Tables: []*tsdb.Table{
 						{
@@ -292,56 +278,61 @@ func TestQueryCloudWatchLogGroups(t *testing.T) {
 		req := dtos.MetricRequest{
 			Queries: []*simplejson.Json{
 				simplejson.NewFromAny(map[string]interface{}{
-					"type":    "logAction",
-					"subtype": "DescribeLogGroups",
-					"region":  "us-east-1",
+					"type":         "logAction",
+					"subtype":      "DescribeLogGroups",
+					"region":       "us-east-1",
+					"datasourceId": 1,
 				}),
 			},
 		}
-		buf := bytes.Buffer{}
-		enc := json.NewEncoder(&buf)
-		err := enc.Encode(&req)
-		require.NoError(t, err)
-		resp, err := http.Post(fmt.Sprintf("http://%s/api/ds/query", addr), "application/json", &buf)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		t.Cleanup(func() { resp.Body.Close() })
+		tr := makeRequest(t, req, addr)
 
-		buf = bytes.Buffer{}
-		_, err = io.Copy(&buf, resp.Body)
-		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-
-		var tr tsdb.Response
-		err = json.Unmarshal(buf.Bytes(), &tr)
+		dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
+			&data.Frame{
+				Name: "logGroups",
+				Fields: []*data.Field{
+					data.NewField("logGroupName", nil, []*string{}),
+				},
+				Meta: &data.FrameMeta{
+					PreferredVisualization: "logs",
+				},
+			},
+		})
+		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
+		// In the future we should use gocmp instead and ignore this field
+		_, err := dataFrames.Encoded()
 		require.NoError(t, err)
 		assert.Equal(t, tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": {
-					RefId: "A",
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": json.Number("1"),
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"Test_MetricName",
-									"Test_MetricName",
-								},
-							},
-						},
-					},
+					RefId:      "A",
+					Dataframes: dataFrames,
 				},
 			},
 		}, tr)
 	})
+}
+
+func makeRequest(t *testing.T, req dtos.MetricRequest, addr string) tsdb.Response {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(&req)
+	require.NoError(t, err)
+	resp, err := http.Post(fmt.Sprintf("http://%s/api/ds/query", addr), "application/json", &buf)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	buf = bytes.Buffer{}
+	_, err = io.Copy(&buf, resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, 200, resp.StatusCode)
+
+	var tr tsdb.Response
+	err = json.Unmarshal(buf.Bytes(), &tr)
+	require.NoError(t, err)
+
+	return tr
 }

@@ -107,7 +107,7 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface
 		return nil, err
 	}
 
-	logsClient := newCWLogsClient(sess)
+	logsClient := NewCWLogsClient(sess)
 	e.logsClientsByRegion[region] = logsClient
 
 	return logsClient, nil
@@ -321,10 +321,10 @@ var NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 	return client
 }
 
-// CloudWatch logs client factory.
+// NewCWLogsClient is a CloudWatch logs client factory.
 //
 // Stubbable by tests.
-var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+var NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 	client := cloudwatchlogs.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

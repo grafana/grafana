@@ -29,34 +29,34 @@ func fakeDataSource() *models.DataSource {
 	}
 }
 
-type fakeCWLogsClient struct {
+type FakeCWLogsClient struct {
 	cloudwatchlogsiface.CloudWatchLogsAPI
 	logGroups      cloudwatchlogs.DescribeLogGroupsOutput
 	logGroupFields cloudwatchlogs.GetLogGroupFieldsOutput
 	queryResults   cloudwatchlogs.GetQueryResultsOutput
 }
 
-func (m fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (m FakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	return &m.queryResults, nil
 }
 
-func (m fakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
+func (m FakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
 	return &cloudwatchlogs.StartQueryOutput{
 		QueryId: aws.String("abcd-efgh-ijkl-mnop"),
 	}, nil
 }
 
-func (m fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
+func (m FakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
 	return &cloudwatchlogs.StopQueryOutput{
 		Success: aws.Bool(true),
 	}, nil
 }
 
-func (m fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (m FakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	return &m.logGroups, nil
 }
 
-func (m fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (m FakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return &m.logGroupFields, nil
 }
 
