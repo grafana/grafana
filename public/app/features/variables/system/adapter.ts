@@ -5,6 +5,7 @@ import { NEW_VARIABLE_ID } from '../state/types';
 import { Deferred } from '../../../core/utils/deferred';
 import { VariablePickerProps } from '../pickers/types';
 import { VariableEditorProps } from '../editor/types';
+const noop = async () => {};
 
 export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<any>> => {
   return {
@@ -29,9 +30,7 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
     dependsOn: () => {
       return false;
     },
-    setValue: async (variable, option, emitChanges = false) => {
-      return;
-    },
+    setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {
       return;
     },
