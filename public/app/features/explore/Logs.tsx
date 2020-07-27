@@ -18,6 +18,7 @@ import {
 import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, Button } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import store from 'app/core/store';
+import { SortOrder, sortInAscendingOrder, sortInDescendingOrder } from 'app/core/utils/explore';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
@@ -71,6 +72,7 @@ interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  logsOrder: SortOrder | null;
 }
 
 export class Logs extends PureComponent<Props, State> {
@@ -78,6 +80,16 @@ export class Logs extends PureComponent<Props, State> {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
+    logsOrder: null,
+  };
+
+  onChangeLogsOrder = () => {
+    this.setState(prevState => {
+      if (prevState.logsOrder === null || prevState.logsOrder === SortOrder.Descending) {
+        return { logsOrder: SortOrder.Ascending };
+      }
+      return { logsOrder: SortOrder.Descending };
+    });
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -140,6 +152,15 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
+  processLogsOrder = (logRows: LogRowModel[], logsSortOrder: SortOrder): LogRowModel[] => {
+    if (logsSortOrder === null) {
+      return logRows;
+    }
+    return logsSortOrder === SortOrder.Ascending
+      ? logRows.sort(sortInAscendingOrder)
+      : logRows.sort(sortInDescendingOrder);
+  };
+
   render() {
     const {
       logRows,
@@ -165,7 +186,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage } = this.state;
+    const { showLabels, showTime, wrapLogMessage, logsOrder } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -222,6 +243,9 @@ export class Logs extends PureComponent<Props, State> {
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
+            <Button style={{ marginLeft: 'auto', marginRight: 0 }} variant="secondary" onClick={this.onChangeLogsOrder}>
+              Flip results order
+            </Button>
           </div>
         </div>
 
@@ -251,6 +275,8 @@ export class Logs extends PureComponent<Props, State> {
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
+          processLogsOrder={this.processLogsOrder}
+          logsOrder={logsOrder}
         />
 
         {!loading && !hasData && !scanning && (

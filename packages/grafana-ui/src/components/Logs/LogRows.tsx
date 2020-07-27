@@ -23,6 +23,7 @@ export interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
+  logsOrder: any;
   rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
@@ -33,6 +34,7 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  processLogsOrder: (row: LogRowModel[]) => void;
 }
 
 interface State {
@@ -93,6 +95,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       previewLimit,
       getFieldLinks,
       disableCustomHorizontalScroll,
+      processLogsOrder,
+      logsOrder,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -109,9 +113,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const firstRows = processedRows.slice(0, previewLimit!);
+    const orderedRows = processLogsOrder(processedRows, logsOrder);
+    const firstRows = orderedRows.slice(0, previewLimit!);
     const rowCount = Math.min(processedRows.length, rowLimit!);
-    const lastRows = processedRows.slice(previewLimit!, rowCount);
+    const lastRows = orderedRows.slice(previewLimit!, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(processedRows);
