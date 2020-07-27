@@ -32,7 +32,7 @@ export class LivePanel extends PureComponent<Props, State> {
     },
   };
 
-  startSubscriptoin = () => {
+  startSubscription = () => {
     if (this.subscription) {
       this.subscription.unsubscribe();
       this.subscription = undefined;
