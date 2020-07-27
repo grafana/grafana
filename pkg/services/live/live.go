@@ -21,7 +21,7 @@ type GrafanaLive struct {
 	Handler interface{} // handler func
 }
 
-// InitalizeBroker the broker and start listening for requests
+// InitalizeBroker initializes the broker and starts listening for requests.
 func InitalizeBroker() (*GrafanaLive, error) {
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
