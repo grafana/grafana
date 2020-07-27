@@ -166,7 +166,6 @@ func setUpDatabase(t *testing.T, grafDir string) {
 	err = migrator.Start()
 	require.NoError(t, err)
 
-	// Migrate
 	_, err = engine.Insert(&models.DataSource{
 		Id:      1,
 		OrgId:   1,
