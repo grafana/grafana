@@ -62,7 +62,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// all subscriptions to all channels. In real life you may use a more
 	// complex permission check here.
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-		info := &ChannelInfo{
+		info := &channelInfo{
 			Description: fmt.Sprintf("channel: %s", e.Channel),
 		}
 		bytes, err := json.Marshal(&info)

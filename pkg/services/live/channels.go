@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-// ChannelInfo holds metadata about each channel and is returned on connection.
+// channelInfo holds metadata about each channel and is returned on connection.
 // Eventually each plugin should control exactly what is in this structure.
-type ChannelInfo struct {
+type channelInfo struct {
 	Description string
 }
 
