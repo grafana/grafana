@@ -83,7 +83,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.21
   commands:
-  - ./bin/grabpl test-backend
+  - go test ./pkg/server/...
   - ./bin/grabpl integration-tests
   - cp -r $(go env GOCACHE) go-cache
   depends_on:
@@ -318,7 +318,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.21
   commands:
-  - ./bin/grabpl test-backend
+  - go test ./pkg/server/...
   - ./bin/grabpl integration-tests
   - cp -r $(go env GOCACHE) go-cache
   depends_on:
