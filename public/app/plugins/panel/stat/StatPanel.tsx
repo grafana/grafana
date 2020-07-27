@@ -6,6 +6,7 @@ import {
   DataLinksContextMenu,
   VizRepeater,
   VizRepeaterRenderValueProps,
+  BigValueTextMode,
 } from '@grafana/ui';
 import {
   DisplayValueAlignmentFactors,
@@ -25,7 +26,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
-    const { timeRange, options } = this.props;
+    const { timeRange, options, fieldConfig } = this.props;
     const { value, alignmentFactors, width, height, count } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline: BigValueSparkline | undefined;
@@ -45,6 +46,11 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       }
     }
 
+    let textMode = options.textMode;
+    if (options.textMode === BigValueTextMode.Auto && fieldConfig.defaults.displayName) {
+      textMode = BigValueTextMode.ValueAndName;
+    }
+
     return (
       <BigValue
         value={value.display}
@@ -53,7 +59,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         colorMode={options.colorMode}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
-        textMode={options.textMode}
+        textMode={textMode}
         alignmentFactors={alignmentFactors}
         width={width}
         height={height}
