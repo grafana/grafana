@@ -12,7 +12,7 @@ type ChannelInfo struct {
 	Description string
 }
 
-type randomWalkeMessage struct {
+type randomWalkMessage struct {
 	Time  int64
 	Value float64
 	Min   float64
