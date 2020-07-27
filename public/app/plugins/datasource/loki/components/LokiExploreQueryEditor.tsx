@@ -5,6 +5,7 @@ import _ from 'lodash';
 // Types
 import { AbsoluteTimeRange, ExploreQueryFieldProps } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
+import { createAbsoluteRange } from '../query_utils';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
 import LokiExploreExtraField from './LokiExploreExtraField';
@@ -12,22 +13,7 @@ import LokiExploreExtraField from './LokiExploreExtraField';
 type Props = ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions>;
 
 export function LokiExploreQueryEditor(props: Props) {
-  const { query, data, datasource, history, onChange, onRunQuery } = props;
-
-  let absolute: AbsoluteTimeRange;
-  if (data && data.request) {
-    const { range } = data.request;
-
-    absolute = {
-      from: range.from.valueOf(),
-      to: range.to.valueOf(),
-    };
-  } else {
-    absolute = {
-      from: Date.now() - 10000,
-      to: Date.now(),
-    };
-  }
+  const { absoluteRange, query, data, datasource, history, onChange, onRunQuery } = props;
 
   function onChangeQueryLimit(value: string) {
     const { query, onChange } = props;
@@ -70,7 +56,7 @@ export function LokiExploreQueryEditor(props: Props) {
       onRunQuery={onRunQuery}
       history={history}
       data={data}
-      absoluteRange={absolute}
+      absoluteRange={createAbsoluteRange(data, absoluteRange)}
       ExtraFieldElement={
         <LokiExploreExtraField
           label={'Line limit'}

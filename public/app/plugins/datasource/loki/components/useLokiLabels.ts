@@ -39,7 +39,7 @@ export const useLokiLabels = (
   };
 
   const tryLabelsRefresh = async () => {
-    await languageProvider.refreshLogLabels(absoluteRange);
+    await languageProvider.refreshLogLabels(absoluteRange, true);
 
     if (mounted.current) {
       setRefreshLabels(false);

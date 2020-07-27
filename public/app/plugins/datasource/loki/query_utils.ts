@@ -1,4 +1,5 @@
 import escapeRegExp from 'lodash/escapeRegExp';
+import { AbsoluteTimeRange, PanelData } from '@grafana/data';
 
 export function formatQuery(selector: string | undefined): string {
   return `${selector || ''}`.trim();
@@ -49,4 +50,25 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   }
 
   return results;
+}
+
+export function createAbsoluteRange(data: PanelData | undefined, absoluteRange?: AbsoluteTimeRange | undefined) {
+  let absolute: AbsoluteTimeRange;
+
+  if (absoluteRange) {
+    absolute = absoluteRange;
+  } else if (data && data.request) {
+    const { range } = data.request;
+
+    absolute = {
+      from: range.from.valueOf(),
+      to: range.to.valueOf(),
+    };
+  } else {
+    absolute = {
+      from: Date.now() - 10000,
+      to: Date.now(),
+    };
+  }
+  return absolute;
 }
