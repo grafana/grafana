@@ -31,7 +31,7 @@ Grafana has two built in time range variables: `$__from` and `$__to`. They are c
 | `${__from:date:seconds}` | 1594671549               | Unix seconds epoch |
 | `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) |
 
-The above syntax of course works with `${__to}` as well.  
+The above syntax works with `${__to}` as well.  
 
 ## $__interval
 
