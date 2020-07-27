@@ -65,6 +65,10 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     console.log('Publication from server-side channel', context);
   };
 
+  //----------------------------------------------------------
+  // Channel functions
+  //----------------------------------------------------------
+
   //   export interface SubscriptionEvents {
   //     publish?: (ctx: PublicationContext) => void;
   //     join?: (ctx: JoinLeaveContext) => void;
@@ -85,11 +89,13 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   onJoin = (context: JoinLeaveContext) => {
     console.log('onJoin', context);
   };
+
   onLeave = (context: JoinLeaveContext) => {
     console.log('onLeave', context);
   };
+
   onError = (context: SubscribeErrorContext) => {
-    console.log('SubscribeErrorContext', context);
+    console.log('onError', context);
   };
 
   //----------------------------------------------------------
@@ -110,7 +116,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     return this.connectionState.asObservable();
   }
 
-  initChannel = <T>(path: string, handler: ChannelHandler<T>) => {
+  initChannel<T>(path: string, handler: ChannelHandler<T>) {
     if (this.channels[path]) {
       console.log('Already connected to:', path);
       return;
@@ -130,28 +136,28 @@ class CentrifugeSrv implements GrafanaLiveSrv {
       },
     };
     c.subscription = this.centrifuge.subscribe(path, callbacks);
-  };
+  }
 
-  getChannelStream = <T>(path: string): Observable<T> => {
+  getChannelStream<T>(path: string): Observable<T> {
     let c = this.channels[path];
     if (!c) {
-      this.initChannel(path, standardChannelHandler);
+      this.initChannel(path, noopChannelHandler);
       c = this.channels[path];
     }
     return c!.subject.asObservable();
-  };
+  }
 
   /**
    * Send data to a channel.  This feature is disabled for most channels and will return an error
    */
-  publish = <T>(channel: string, data: any): Promise<T> => {
+  publish<T>(channel: string, data: any): Promise<T> {
     return this.centrifuge.publish(channel, data);
-  };
+  }
 }
 
-export const standardChannelHandler: ChannelHandler = {
+const noopChannelHandler: ChannelHandler = {
   onPublish: (v: any) => {
-    return v;
+    return v; // Just pass the object along
   },
 };
 
