@@ -27,7 +27,7 @@ import {
   resolveInitLock,
   setCurrentVariableValue,
 } from './sharedReducer';
-import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 import { appEvents } from 'app/core/core';
 import { contextSrv } from 'app/core/services/context_srv';
 import templateSrv from '../../templating/template_srv';
@@ -78,21 +78,14 @@ import isEqual from 'lodash/isEqual';
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
   return (dispatch, getState) => {
+    let orderIndex = 0;
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
       if (!variableAdapters.getIfExists(model.type)) {
         continue;
       }
 
-      const global = false;
-      // const index = getNewVariabelIndex(getState());
-      const identifier: VariableIdentifier = { type: 'adhoc', id: model.id };
-
-      dispatch(
-        addVariable(
-          toVariablePayload<AddVariable>(identifier, { global, model, index })
-        )
-      );
+      dispatch(addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model })));
     }
 
     templateSrv.updateTimeRange(getTimeSrv().timeRange());
@@ -562,12 +555,11 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     dispatch(variablesInitTransaction({ uid: dashboardUid }));
 
     dispatch(initDashboardTemplating(dashboard.templating.list));
-
+    await dispatch(processVariables());
     dispatch(completeDashboardTemplating(dashboard));
+    await dispatch(processVariables());
 
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
-
-    await dispatch(processVariables());
   } catch (err) {
     dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
     console.error(err);
