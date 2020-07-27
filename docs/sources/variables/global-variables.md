@@ -14,8 +14,9 @@ Grafana has global built-in variables that can be used in expressions in the que
 
 ## $__dashboard
 
-- `${__dashboard.name}` is the name of the current dashboard
-- `${__dashboard.uid}` is the UID of the current dashboard (used in url)
+> Only available in Grafana v6.7+. In Grafana 7.1, the variable changed from showing the UID of the current dashboard to the name of the current dashboard.
+
+This variable is the name of the current dashboard.
 
 ## $__from and $__to
 
@@ -81,3 +82,4 @@ This is used in several places, including:
 - Log Analytics queries in the Azure Monitor data source.
 - SQL queries in MySQL, Postgres, and MSSQL
 - The `$__timeFilter` variable is used in the MySQL data source.
+
