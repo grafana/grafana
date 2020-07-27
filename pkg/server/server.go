@@ -100,8 +100,7 @@ type Server struct {
 	commit      string
 	buildBranch string
 
-	RouteRegister routing.RouteRegister `inject:""`
-	HTTPServer    *api.HTTPServer       `inject:""`
+	HTTPServer *api.HTTPServer `inject:""`
 }
 
 // init initializes the server and its services.

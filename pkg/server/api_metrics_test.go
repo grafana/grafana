@@ -266,3 +266,83 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 		}, tr)
 	})
 }
+
+/*
+// Test querying of CloudWatch log groups.
+func TestQueryCloudWatchLogGroups(t *testing.T) {
+	origNewCWLogsClient := cloudwatch.NewCWLogsClient
+	t.Cleanup(func() {
+		cloudwatch.NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var client cloudwatch.FakeCWLogsClient
+	cloudwatch.NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return client
+	}
+
+	grafDir, cfgPath := createGrafDir(t)
+
+	setUpDatabase(t, grafDir)
+
+	addr := startGrafana(t, grafDir, cfgPath)
+
+	t.Run("Describe log groups", func(t *testing.T) {
+		client = cloudwatch.FakeCWLogsClient{}
+
+		req := dtos.MetricRequest{
+			Queries: []*simplejson.Json{
+				simplejson.NewFromAny(map[string]interface{}{
+					"type":    "logAction",
+					"subtype": "DescribeLogGroups",
+					"region":  "us-east-1",
+				}),
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&req)
+		require.NoError(t, err)
+		resp, err := http.Post(fmt.Sprintf("http://%s/api/ds/query", addr), "application/json", &buf)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		t.Cleanup(func() { resp.Body.Close() })
+
+		buf = bytes.Buffer{}
+		_, err = io.Copy(&buf, resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+
+		var tr tsdb.Response
+		err = json.Unmarshal(buf.Bytes(), &tr)
+		require.NoError(t, err)
+		assert.Equal(t, tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"A": {
+					RefId: "A",
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": json.Number("1"),
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"Test_MetricName",
+									"Test_MetricName",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, tr)
+	})
+}
+*/
