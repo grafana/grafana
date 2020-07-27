@@ -37,6 +37,8 @@
   children:
     - name: Change password
       link: /administration/change-your-password/
+    - name: Change preferences
+      link: /administration/preferences/
     - name: Configuration
       link: /administration/configuration/
     - name: Configure Docker image
