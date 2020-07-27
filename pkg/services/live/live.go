@@ -80,7 +80,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	node.OnUnsubscribe(func(c *centrifuge.Client, e centrifuge.UnsubscribeEvent) {
 		s, err := node.PresenceStats(e.Channel)
 		if err != nil {
-			logger.Warn("unable to get presense stats", "channel", e.Channel, "error", err)
+			logger.Warn("unable to get presence stats", "channel", e.Channel, "error", err)
 		}
 		logger.Debug("unsubscribe from channel", "channel", e.Channel, "clients", s.NumClients, "users", s.NumUsers)
 	})
