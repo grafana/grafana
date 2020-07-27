@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	logger = log.New("live")
+	logger   = log.New("live")
+	loggerCF = log.New("live.centrifuge")
 )
 
 // GrafanaLive pretends to be the server
@@ -26,8 +27,8 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// reasonable values for available options.
 	cfg := centrifuge.DefaultConfig
 
-	// Debug print everything for now
 	// cfg.LogLevel = centrifuge.LogLevelDebug
+	cfg.LogHandler = handleLog
 
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
@@ -140,9 +141,16 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		// Check if this is a direct websocket connection
 		if strings.Contains(path, "live/ws") {
 			wsHandler.ServeHTTP(ctx.Resp, r)
-		} else { // live/sockjs
-			sockjsHandler.ServeHTTP(ctx.Resp, r)
+			return
 		}
+
+		if strings.Contains(path, sockJsPrefix) {
+			sockjsHandler.ServeHTTP(ctx.Resp, r)
+			return
+		}
+
+		// Unknown path
+		ctx.Resp.WriteHeader(404)
 	}
 	return b, nil
 }
@@ -154,4 +162,26 @@ func (b *GrafanaLive) Publish(channel string, data []byte) bool {
 		logger.Warn("error writing to channel", "channel", channel, "err", err)
 	}
 	return err == nil
+}
+
+// Write to the standard log15 logger
+func handleLog(msg centrifuge.LogEntry) {
+	arr := make([]interface{}, 0)
+	for k, v := range msg.Fields {
+		if v == nil {
+			v = "<nil>"
+		} else if v == "" {
+			v = "<empty>"
+		}
+		arr = append(arr, k, v)
+	}
+
+	switch msg.Level {
+	case centrifuge.LogLevelDebug:
+		loggerCF.Debug(msg.Message, arr...)
+	case centrifuge.LogLevelError:
+		loggerCF.Error(msg.Message, arr...)
+	case centrifuge.LogLevelInfo:
+		loggerCF.Info(msg.Message, arr...)
+	}
 }
