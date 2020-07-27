@@ -215,7 +215,6 @@ var (
 	S3TempImageStoreSecretKey string
 
 	ImageUploadProvider string
-	FeatureToggles      map[string]bool
 )
 
 // TODO move all global vars to this struct
@@ -1023,7 +1022,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	for _, feature := range util.SplitString(featuresTogglesStr) {
 		cfg.FeatureToggles[feature] = true
 	}
-	FeatureToggles = cfg.FeatureToggles
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {
@@ -1190,12 +1188,4 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
-}
-
-func IsExpressionsEnabled() bool {
-	v, ok := FeatureToggles["expressions"]
-	if !ok {
-		return false
-	}
-	return v
 }
