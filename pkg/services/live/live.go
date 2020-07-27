@@ -65,7 +65,10 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		info := &ChannelInfo{
 			Description: fmt.Sprintf("channel: %s", e.Channel),
 		}
-		bytes, _ := json.Marshal(&info)
+		bytes, err := json.Marshal(&info)
+		if err != nil {
+			return centrifuge.SubscribeReply{}, err
+		}
 		logger.Debug("client subscribes on channel", "channel", e.Channel, "info", string(bytes))
 
 		return centrifuge.SubscribeReply{
