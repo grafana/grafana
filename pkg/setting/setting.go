@@ -313,6 +313,11 @@ func (c Cfg) IsStandaloneAlertsEnabled() bool {
 	return c.FeatureToggles["standaloneAlerts"]
 }
 
+// IsLiveEnabled returns if grafana live should be enabled
+func (c Cfg) IsLiveEnabled() bool {
+	return c.FeatureToggles["live"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
