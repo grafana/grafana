@@ -595,11 +595,6 @@ describe('templateSrv', () => {
       initTemplateSrv([]);
     });
 
-    it('should be possible to fetch value with getBuilInIntervalValue', () => {
-      const val = _templateSrv.getBuiltInIntervalValue();
-      expect(val).toBe('1s');
-    });
-
     it('should replace $__interval_ms with interval milliseconds', () => {
       const target = _templateSrv.replace('10 * $__interval_ms', {
         __interval_ms: { text: '100', value: '100' },
