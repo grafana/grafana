@@ -13,14 +13,14 @@ weight = 200
 Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them.
 
 ## $__dashboard
-> Only available in Grafana v6.7+
 
-This variable is the UID of the current dashboard.
-`${__dashboard.name}` is the name of the current dashboard.
+> Only available in Grafana v6.7+. In Grafana 7.1, the variable changed from showing the UID of the current dashboard to the name of the current dashboard.
+
+This variable is the name of the current dashboard.
 
 ## $__from and $__to
 
-> Only available in Grafana v6.0+
+> Only available in Grafana v6.0+.
 
 Grafana has two built in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds. 
 
@@ -48,7 +48,7 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 ## $__org
 
-> Only available in Grafana v6.7+
+> Only available in Grafana v6.7+.
 
 This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
@@ -62,7 +62,7 @@ This variable is the ID of the current organization.
 
 ## $__range
 
-> Only available in Grafana v5.3+
+> Only available in Grafana v5.3+.
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
