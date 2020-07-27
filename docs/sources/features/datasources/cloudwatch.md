@@ -230,8 +230,6 @@ The updated CloudWatch data source ships with pre-configured dashboards for five
 
 To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-TODO: will need to be update when we have the dashboards for logs.
-
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
 
 ## Templated queries

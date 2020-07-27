@@ -253,6 +253,8 @@
   children:
     - link: /variables/templates-and-variables/
       name: Overview
+    - link: /variables/variable-examples/
+      name: Variable examples
     - link: /variables/add-query-variable/
       name: Add query variable
     - link: /variables/add-custom-variable/
@@ -382,6 +384,8 @@
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
       link: /tutorials/api_org_token_howto/
+    - name: cURL examples
+      link: /http_api/curl-examples/  
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API

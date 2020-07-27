@@ -1,6 +1,6 @@
 import React from 'react';
 import { boolean, text, select } from '@storybook/addon-knobs';
-import { Badge, BadgeColor } from './Badge';
+import { Badge, BadgeColor } from '@grafana/ui';
 
 export default {
   title: 'Data Display/Badge',
