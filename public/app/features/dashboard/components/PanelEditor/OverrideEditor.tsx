@@ -170,7 +170,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
               icon="plus"
               options={configPropertiesOptions}
               onChange={o => {
-                onDynamicConfigValueAdd(o.value);
+                onDynamicConfigValueAdd(o.value!);
               }}
               isFullWidth={false}
             />

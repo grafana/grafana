@@ -19,7 +19,7 @@ export class NavModelSrv {
     let children = this.navItems;
     const nav = {
       breadcrumbs: [],
-    } as NavModel;
+    } as any;
 
     for (const id of args) {
       // if its a number then it's the index to use for main

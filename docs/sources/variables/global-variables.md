@@ -47,12 +47,14 @@ This variable is the `$__interval` variable in milliseconds, not a time interval
 This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
 
 ## $__org
+
 > Only available in Grafana v6.7+
 
 This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
 
 ## $__user
+
 > Only available in Grafana v7.1+
 
 `${__user.id}` is the ID of the current user.

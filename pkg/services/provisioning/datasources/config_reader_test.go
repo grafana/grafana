@@ -22,6 +22,7 @@ var (
 	brokenYaml                      = "testdata/broken-yaml"
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
 	withoutDefaults                 = "testdata/appliedDefaults"
+	invalidAccess                   = "testdata/invalid-access"
 
 	fakeRepo *fakeRepository
 )
@@ -147,6 +148,13 @@ func TestDatasourceAsConfig(t *testing.T) {
 			reader := &configReader{}
 			_, err := reader.readConfig(brokenYaml)
 			So(err, ShouldNotBeNil)
+		})
+
+		Convey("invalid access should warn about invalid value and return 'proxy'", func() {
+			reader := &configReader{log: logger}
+			configs, err := reader.readConfig(invalidAccess)
+			So(err, ShouldBeNil)
+			So(configs[0].Datasources[0].Access, ShouldEqual, models.DS_ACCESS_PROXY)
 		})
 
 		Convey("skip invalid directory", func() {

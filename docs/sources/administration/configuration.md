@@ -37,7 +37,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "../installation/configur
 
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-### MacOS
+### macOS
 
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
@@ -536,6 +536,10 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
+### default_home_dashboard_path
+
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+
 <hr />
 
 ## [users]
@@ -648,10 +652,6 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### api_key_max_seconds_to_live
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
-
-### default_home_dashboard_path
-
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
 
 <hr />
 
@@ -1349,4 +1349,4 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`
