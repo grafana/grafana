@@ -6,9 +6,6 @@ alpine_image = 'alpine:3.12'
 restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
 
 def pr_pipelines(edition):
-    repo = 'grafana/grafana'
-    if edition == 'enterprise':
-        repo = 'grafana/grafana-enterprise'
     services = [
         {
             'name': 'postgres',
@@ -54,15 +51,11 @@ def pr_pipelines(edition):
         pipeline(
             name='test-pr', edition=edition, trigger={
                 'event': ['pull_request',],
-                'repo': repo,
             }, services=services, steps=steps
         ),
     ]
 
 def master_pipelines(edition):
-    repo = 'grafana/grafana'
-    if edition == 'enterprise':
-        repo = 'grafana/grafana-enterprise'
     services = [
         {
             'name': 'postgres',
@@ -114,7 +107,6 @@ def master_pipelines(edition):
             name='test-master', edition=edition, trigger={
                 'event': ['push',],
                 'branch': 'master',
-                'repo': repo,
             }, services=services, steps=steps
         ),
     ]
@@ -134,10 +126,18 @@ def pipeline(name, edition, trigger, steps, services=[]):
             'disable': True,
         }
 
+    pipeline['steps'].insert(0, {
+        'name': 'identify-runner',
+        'image': alpine_image,
+        'commands': [
+            'echo $DRONE_RUNNER_NAME',
+        ],
+    })
+
     return pipeline
 
 def init_steps(edition):
-    grabpl_version = '0.4.24'
+    grabpl_version = '0.4.25'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
@@ -157,7 +157,7 @@ def init_steps(edition):
                     },
                 },
                 'commands': [
-                    'git clone https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git',
+                    'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout ${DRONE_COMMIT}',
                 ],
@@ -251,7 +251,7 @@ def publish_storybook_step(edition):
             },
         },
         'commands': [
-            'echo $${GCP_KEY} > /tmp/gcpkey.json',
+            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
             'echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
         ],
@@ -272,7 +272,10 @@ def build_backend_step(edition, variants=None):
         ],
         'commands': [
             'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
-            './bin/grabpl build-backend --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(edition, variants_str),
+            # TODO: Convert number of jobs to percentage
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(
+                edition, variants_str
+            ),
         ],
     }
 
@@ -286,7 +289,8 @@ def build_frontend_step(edition):
         ],
         'commands': [
             restore_yarn_cache,
-            './bin/grabpl build-frontend --no-install-deps --edition {} '.format(edition) +
+            # TODO: Use percentage for num jobs
+            './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) +
                 '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise',
         ],
     }
@@ -301,7 +305,8 @@ def build_plugins_step(edition):
         ],
         'commands': [
             restore_yarn_cache,
-            './bin/grabpl build-plugins --edition {} --no-install-deps'.format(edition),
+            # TODO: Use percentage for num jobs
+            './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps'.format(edition),
         ],
     }
 
@@ -315,7 +320,7 @@ def test_backend_step():
         ],
         'commands': [
             # First execute non-integration tests in parallel, since it should be safe
-            'go test -covermode=atomic ./pkg/...',
+            './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
             # Keep the test cache
@@ -330,6 +335,9 @@ def test_frontend_step():
         'depends_on': [
             'initialize',
         ],
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
         'commands': [
             restore_yarn_cache,
             'yarn run prettier:check',
@@ -394,7 +402,8 @@ def package_step(edition, variants=None):
             'shellcheck',
         ],
         'commands': [
-            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition {} '.format(edition) +
+            # TODO: Use percentage for jobs
+            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition {} '.format(edition) +
                 '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise' + variants_str,
         ],
     }

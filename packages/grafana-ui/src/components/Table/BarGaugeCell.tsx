@@ -37,6 +37,8 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
 
   if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
     barGaugeMode = BarGaugeDisplayMode.Lcd;
+  } else if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.BasicGauge) {
+    barGaugeMode = BarGaugeDisplayMode.Basic;
   }
 
   let width;
