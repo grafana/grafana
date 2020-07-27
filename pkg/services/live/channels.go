@@ -40,7 +40,12 @@ func RunRandomCSV(broker *GrafanaLive, channel string, speedMillis int, dropPerc
 		line.Min = walker - ((rand.Float64() * spread) + 0.01)
 		line.Max = walker + ((rand.Float64() * spread) + 0.01)
 
-		bytes, _ := json.Marshal(&line)
+		bytes, err := json.Marshal(&line)
+		if err != nil {
+			logger.Warn("unable to marshal line", "error", err)
+			continue
+		}
+
 		v := broker.Publish(channel, bytes)
 		if !v {
 			logger.Warn("write", "channel", channel, "line", line, "ok", v)
