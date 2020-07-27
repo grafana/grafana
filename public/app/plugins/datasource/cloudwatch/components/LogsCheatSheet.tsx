@@ -256,13 +256,13 @@ export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps,
     return (
       <div>
         <h2>CloudWatch Logs Cheat Sheet</h2>
-        {CLIQ_EXAMPLES.map(cat => (
-          <div>
+        {CLIQ_EXAMPLES.map((cat, i) => (
+          <div key={`cat-${i}`}>
             <div className={`cheat-sheet-item__title ${cx(exampleCategory)}`}>{cat.category}</div>
-            {cat.examples.map((item, i) => (
-              <div className="cheat-sheet-item" key={`item-${i}`}>
+            {cat.examples.map((item, j) => (
+              <div className="cheat-sheet-item" key={`item-${j}`}>
                 <h4>{item.title}</h4>
-                {this.renderExpression(item.expr, `item-${i}`)}
+                {this.renderExpression(item.expr, `item-${j}`)}
               </div>
             ))}
           </div>

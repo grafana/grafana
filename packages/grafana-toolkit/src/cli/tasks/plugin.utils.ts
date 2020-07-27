@@ -181,7 +181,7 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
       process.env['GITHUB_ACCESS_TOKEN'] = process.env['GITHUB_TOKEN'];
     } else {
       throw new Error(
-        `Github publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
+        `GitHub publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
         See: https://github.com/settings/tokens for more details.`
       );
     }
@@ -209,4 +209,4 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
   });
 };
 
-export const githubPublishTask = new Task<GithubPublishOptions>('Github Publish', githubPublishRunner);
+export const githubPublishTask = new Task<GithubPublishOptions>('GitHub Publish', githubPublishRunner);
