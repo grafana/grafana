@@ -77,7 +77,7 @@ The `$timeFilter` variable returns the currently selected time range as an expre
 
 This is used in several places, including:
 
-- The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor Mode. It has to be added manually in Text Editor Mode: `WHERE $timeFilter`.
+- The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor mode. You can add it manually in Text Editor mode: `WHERE $timeFilter`.
 - Log Analytics queries in the Azure Monitor data source.
 - SQL queries in MySQL, Postgres, and MSSQL
 - The `$__timeFilter` variable is used in the MySQL data source.
