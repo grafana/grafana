@@ -9,6 +9,8 @@ import {
   dateTime,
   LoadingState,
   QueryResultMeta,
+  MetricFindValue,
+  DataFrame,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
@@ -30,7 +32,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   interval: any;
   responseParser: any;
   httpMode: string;
-  is2x: boolean;
+  isFlux: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>) {
     super(instanceSettings);
@@ -50,11 +52,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
-    this.is2x = settingsData.version === InfluxVersion.Flux;
+    this.isFlux = settingsData.version === InfluxVersion.Flux;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
-    if (this.is2x) {
+    if (this.isFlux) {
       return super.query(request);
     }
 
@@ -63,7 +65,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   getQueryDisplayText(query: InfluxQuery) {
-    if (this.is2x) {
+    if (this.isFlux) {
       return query.query;
     }
     return new InfluxQueryModel(query).render(false);
@@ -183,6 +185,23 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
+    if (this.isFlux) {
+      console.log('Annotation query from', options);
+      const query: InfluxQuery = {
+        refId: 'Anno',
+        rawQuery: options.query,
+      };
+      return super
+        .query({
+          targets: [query],
+        } as DataQueryRequest)
+        .toPromise()
+        .then(rsp => {
+          console.log('Annotation query with flux', rsp);
+          return [];
+        });
+    }
+
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = getTemplateSrv().replace(query, undefined, 'regex');
@@ -255,7 +274,31 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return expandedQueries;
   }
 
-  metricFindQuery(query: string, options?: any) {
+  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+    if (this.isFlux) {
+      const target: InfluxQuery = {
+        refId: 'metricFindQuery',
+        query,
+      };
+      return super
+        .query({
+          targets: [target],
+          range: options.range,
+          rangeRaw: options.range.raw,
+        } as DataQueryRequest)
+        .toPromise()
+        .then(rsp => {
+          if (rsp.data && rsp.data.length) {
+            const frame: DataFrame = rsp.data[0];
+            console.log(
+              'First frame',
+              frame.fields.map(f => f.name)
+            );
+          }
+          return [];
+        });
+    }
+
     const interpolated = getTemplateSrv().replace(query, undefined, 'regex');
 
     return this._seriesQuery(interpolated, options).then(resp => {
@@ -307,7 +350,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   testDatasource() {
-    if (this.is2x) {
+    if (this.isFlux) {
       // TODO: eventually use the real /health endpoint
       const request: DataQueryRequest<InfluxQuery> = {
         targets: [{ refId: 'test', query: 'buckets()' }],
