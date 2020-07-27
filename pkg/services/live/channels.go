@@ -26,7 +26,7 @@ func RunRandomCSV(broker *GrafanaLive, channel string, speedMillis int, dropPerc
 	walker := rand.Float64() * 100
 	ticker := time.NewTicker(time.Duration(speedMillis) * time.Millisecond)
 
-	line := randomWalkeMessage{}
+	line := randomWalkMessage{}
 
 	for t := range ticker.C {
 		if rand.Float64() <= dropPercent {
