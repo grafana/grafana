@@ -77,7 +77,7 @@ func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
 	// Set up a websocket broker
-	if setting.IsLiveEnabled() { // feature flag
+	if setting.Cfg.IsLiveEnabled() { // feature flag
 		node, err := live.InitalizeBroker()
 		if err != nil {
 			return err

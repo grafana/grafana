@@ -314,6 +314,11 @@ func (c Cfg) IsStandaloneAlertsEnabled() bool {
 	return c.FeatureToggles["standaloneAlerts"]
 }
 
+// IsLiveEnabled returns if grafana live should be enabled
+func (c Cfg) IsLiveEnabled() bool {
+	return c.FeatureToggles["live"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
@@ -1194,15 +1199,6 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 
 func IsExpressionsEnabled() bool {
 	v, ok := FeatureToggles["expressions"]
-	if !ok {
-		return false
-	}
-	return v
-}
-
-// IsLiveEnabled returns if grafana live should be enabled
-func IsLiveEnabled() bool {
-	v, ok := FeatureToggles["live"]
 	if !ok {
 		return false
 	}
