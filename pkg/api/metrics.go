@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -77,7 +76,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			return Error(500, "Metric request error", err)
 		}
 	} else {
-		if !setting.IsExpressionsEnabled() {
+		if !hs.Cfg.IsExpressionsEnabled() {
 			return Error(404, "Expressions feature toggle is not enabled", nil)
 		}
 
