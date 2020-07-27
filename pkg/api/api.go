@@ -56,6 +56,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -422,11 +423,10 @@ func (hs *HTTPServer) registerRoutes() {
 	avatarCacheServer := avatar.NewCacheServer()
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
-	// Websocket
-	r.Any("/ws", hs.streamManager.Serve)
-
-	// streams
-	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+	// Live streaming
+	if hs.Live != nil {
+		r.Any("/live/*", hs.Live.Handler)
+	}
 
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)

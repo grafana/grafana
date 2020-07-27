@@ -10,11 +10,11 @@ import (
 	"path"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
-	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -48,12 +48,11 @@ func init() {
 }
 
 type HTTPServer struct {
-	log           log.Logger
-	macaron       *macaron.Macaron
-	context       context.Context
-	streamManager *live.StreamManager
-	httpSrv       *http.Server
-	middlewares   []macaron.Handler
+	log         log.Logger
+	macaron     *macaron.Macaron
+	context     context.Context
+	httpSrv     *http.Server
+	middlewares []macaron.Handler
 
 	routeRegister        routing.RouteRegister
 	Bus                  bus.Bus                          `inject:""`
@@ -71,6 +70,7 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
+	Live                 *live.GrafanaLive
 	Listener             net.Listener
 }
 
@@ -78,7 +78,19 @@ func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
 	hs.routeRegister = routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)
-	hs.streamManager = live.NewStreamManager()
+	// Set up a websocket broker
+	if hs.Cfg.IsLiveEnabled() { // feature flag
+		node, err := live.InitalizeBroker()
+		if err != nil {
+			return err
+		}
+		hs.Live = node
+
+		// Spit random walk to example
+		go live.RunRandomCSV(hs.Live, "random-2s-stream", 2000, 0)
+		go live.RunRandomCSV(hs.Live, "random-flakey-stream", 400, .6)
+	}
+
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
 
@@ -93,7 +105,6 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
-	hs.streamManager.Run(ctx)
 
 	hs.httpSrv = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
