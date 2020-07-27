@@ -46,11 +46,11 @@ export class LivePanel extends PureComponent<Props, State> {
       return;
     }
     console.log('Not yet connected... try again...');
-    setTimeout(this.startSubscriptoin, 200);
+    setTimeout(this.startSubscription, 200);
   };
 
   componentDidMount = () => {
-    this.startSubscriptoin();
+    this.startSubscription();
   };
 
   componentWillUnmount() {
@@ -62,7 +62,7 @@ export class LivePanel extends PureComponent<Props, State> {
 
   componentDidUpdate(oldProps: Props) {
     if (oldProps.channel !== this.props.channel) {
-      this.startSubscriptoin();
+      this.startSubscription();
     }
   }
 
