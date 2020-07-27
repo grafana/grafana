@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -267,7 +268,6 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 	})
 }
 
-/*
 // Test querying of CloudWatch log groups.
 func TestQueryCloudWatchLogGroups(t *testing.T) {
 	origNewCWLogsClient := cloudwatch.NewCWLogsClient
@@ -345,4 +345,3 @@ func TestQueryCloudWatchLogGroups(t *testing.T) {
 		}, tr)
 	})
 }
-*/
