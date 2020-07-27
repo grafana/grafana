@@ -31,9 +31,9 @@ export interface BuildInfo {
  * @public
  */
 export interface FeatureToggles {
-  transformations: boolean;
+  live: boolean;
   expressions: boolean;
-  newEdit: boolean;
+
   /**
    * @remarks
    * Available only in Grafana Enterprise
