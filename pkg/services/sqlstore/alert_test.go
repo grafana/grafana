@@ -435,6 +435,139 @@ func TestCreatingAlerts(t *testing.T) {
 		assert.Nil(t, cmd.Result)
 	})
 }
+func TestUpdatingAlerts(t *testing.T) {
+	db := InitTestDB(t)
+
+	mockTimeNow()
+	defer resetTimeNow()
+
+	t.Run("Error when updating non existing alert", func(t *testing.T) {
+		err := UpdateAlert(&models.UpdateAlertCommand{ID: 1, For: "10s"})
+		assert.Error(t, err, "Cannot find alert")
+	})
+
+	t.Run("Can update existing alert", func(t *testing.T) {
+		// setup up code
+		settings := []byte(`{
+			"alertRuleTags": {
+				"foo": "bar"
+			},
+			"name": "Alerting title",
+			"frequency": 10,
+			"for": "5s",
+			"notifications": [
+				{
+					"uid": "notifier1"
+				}
+			]
+		}`)
+		var cmd models.CreateAlertCommand
+		err := json.Unmarshal(settings, &cmd)
+		assert.NoError(t, err)
+
+		cmd.OrgId = 1
+
+		// create a notification
+		notification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+		err = CreateAlertNotificationCommand(&notification)
+		assert.NoError(t, err)
+		// set the generated notification to the command
+		cmd.Notifications[0].UID = notification.Uid
+
+		err = CreateAlert(&cmd)
+		assert.NoError(t, err)
+
+		// assert tag is associated with the newly created alert
+		alertTags, err := getAlertTags(1)
+		assert.NoError(t, err)
+		assert.Len(t, alertTags, 1)
+		assert.Equal(t, alertTags[0].Key, "foo")
+		assert.Equal(t, alertTags[0].Value, "bar")
+
+		// assert notitication is associated with the newly created alert
+		notificationIDs, err := getAlertNotificationIDs(1)
+		assert.NoError(t, err)
+		assert.Len(t, alertTags, 1)
+		id := notificationIDs[0]
+		q := models.GetAlertNotificationUidQuery{
+			Id:    id,
+			OrgId: 1,
+		}
+		err = db.GetAlertNotificationUidWithId(&q)
+		assert.NoError(t, err)
+		assert.Equal(t, "notifier1", q.Result)
+
+		//actual test starts here
+		settings = []byte(`{
+			"alertRuleTags": {
+				"something": "else"
+			},
+			"name": "Different alerting title",
+			"frequency": 20,
+			"for": "15s",
+			"notifications": [
+				{
+					"uid": "notifier2"
+				}
+			]
+		}`)
+		var updateCMD models.UpdateAlertCommand
+		err = json.Unmarshal(settings, &updateCMD)
+		assert.NoError(t, err)
+
+		updateCMD.OrgID = 1
+		updateCMD.ID = 1
+
+		// create a notification
+		notification = models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+		err = CreateAlertNotificationCommand(&notification)
+		assert.NoError(t, err)
+		// set the generated notification to the command
+		cmd.Notifications[0].UID = notification.Uid
+
+		err = UpdateAlert(&updateCMD)
+		assert.NoError(t, err)
+
+		t.Run("alert fileds have been updated", func(t *testing.T) {
+			qq := &models.GetAlertByIdQuery{
+				Id: 1,
+			}
+			err = GetAlertById(qq)
+			alert := qq.Result
+			assert.NoError(t, err)
+			assert.Equal(t, int64(1), alert.OrgId)
+			assert.Equal(t, "Different alerting title", alert.Name)
+			assert.Equal(t, int64(20), alert.Frequency)
+			assert.Equal(t, 15*time.Second, alert.For)
+
+			loc := time.FixedZone("MockZoneUTC-5", -5*60*60)
+			expTime := time.Unix(1, 0).In(loc).UTC()
+			assert.Equal(t, expTime, alert.Updated)
+		})
+
+		t.Run("alert tags have been updated", func(t *testing.T) {
+			alertTags, err = getAlertTags(1)
+			assert.NoError(t, err)
+			assert.Len(t, alertTags, 1)
+			assert.Equal(t, alertTags[0].Key, "something")
+			assert.Equal(t, alertTags[0].Value, "else")
+		})
+
+		t.Run("alert notifications have been updated", func(t *testing.T) {
+			notificationIDs, err = getAlertNotificationIDs(1)
+			assert.NoError(t, err)
+			assert.Len(t, alertTags, 1)
+			id = notificationIDs[0]
+			q = models.GetAlertNotificationUidQuery{
+				Id:    id,
+				OrgId: 1,
+			}
+			err = db.GetAlertNotificationUidWithId(&q)
+			assert.NoError(t, err)
+			assert.Equal(t, "notifier2", q.Result)
+		})
+	})
+}
 
 func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
 	cmd := &models.PauseAlertCommand{
@@ -446,6 +579,7 @@ func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
 	So(err, ShouldBeNil)
 	return cmd.ResultCount, err
 }
+
 func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json) (*models.Alert, error) {
 	items := []*models.Alert{
 		{

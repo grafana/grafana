@@ -304,3 +304,21 @@ type CreateAlertCommand struct {
 	OrgId  int64 `json:"-"`
 	Result *Alert
 }
+
+type UpdateAlertCommand struct {
+	OrgID               int64             `json:"-"`
+	ID                  int64             `json:"id"`
+	AlertRuleTags       map[string]string `json:"alertRuleTags"`
+	Conditions          []*alertCondition `json:"conditions"`
+	ExecutionErrorState string            `json:"executionErrorState"`
+	For                 string            `json:"for"`
+	Frequency           int64             `json:"frequency"`
+	Handler             int64             `json:"handler"`
+	Name                string            `json:"name"`
+	NoDataState         NoDataOption      `json:"noDataState"`
+	Notifications       []struct {
+		UID string `json:"uid"`
+	} `json:"notifications"`
+
+	Result *Alert
+}

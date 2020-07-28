@@ -351,9 +351,9 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 
 			if hs.Cfg.IsStandaloneAlertsEnabled() {
-				// alertsRoute.Put("/:alertId", reqEditorRole, bind(models.UpdateAlertCommand{}), ValidateAlert, Wrap(UpdateAlert))
+				alertsRoute.Put("/:alertId", reqEditorRole, ValidateOrgAlert, bind(models.UpdateAlertCommand{}), Wrap(UpdateAlert))
 				alertsRoute.Post("/", reqEditorRole, bind(models.CreateAlertCommand{}), Wrap(CreateAlert))
-				alertsRoute.Delete("/:alertId", reqEditorRole, Wrap(DeleteAlert))
+				alertsRoute.Delete("/:alertId", reqEditorRole, ValidateOrgAlert, Wrap(DeleteAlert))
 			}
 		})
 

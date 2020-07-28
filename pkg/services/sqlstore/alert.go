@@ -26,6 +26,7 @@ func init() {
 
 	bus.AddHandler("sql", CreateAlert)
 	bus.AddHandler("sql", DeleteAlert)
+	bus.AddHandler("sql", UpdateAlert)
 }
 
 func GetAlertById(query *models.GetAlertByIdQuery) error {
@@ -476,10 +477,12 @@ func CreateAlert(cmd *models.CreateAlertCommand) error {
 			NewStateDate: creationTime,
 		}
 
-		alertID, err := sess.MustCols("message", "for").Insert(alert)
+		alertID, err := sess.Insert(alert)
 		if err != nil {
 			return err
 		}
+
+		sqlog.Debug("Alert inserted", "name", alert.Name, "id", alertID)
 
 		tags := []*models.Tag{}
 		for key, value := range cmd.AlertRuleTags {
@@ -491,10 +494,71 @@ func CreateAlert(cmd *models.CreateAlertCommand) error {
 		for _, n := range cmd.Notifications {
 			notificationUIDs = append(notificationUIDs, n.UID)
 		}
-
 		insertNotifications(sess, alertID, cmd.OrgId, notificationUIDs)
 
 		cmd.Result = alert
+		return nil
+	})
+}
+
+func UpdateAlert(cmd *models.UpdateAlertCommand) error {
+	has, err := x.Exist(&models.Alert{
+		Id: cmd.ID,
+	})
+	if err != nil {
+		return err
+	}
+	if !has {
+		return fmt.Errorf("Cannot find alert")
+	}
+
+	settings := *cmd
+	settings.Result = nil
+
+	forDuration, err := time.ParseDuration(cmd.For)
+	if err != nil {
+		return err
+	}
+
+	alert := &models.Alert{
+		OrgId:     cmd.OrgID,
+		Id:        cmd.ID,
+		Name:      cmd.Name,
+		Frequency: cmd.Frequency,
+		For:       forDuration,
+		Settings:  simplejson.NewFromAny(settings), // unmarshalling and marshalling again is costly
+		Updated:   timeNow(),
+	}
+
+	return inTransaction(func(sess *DBSession) error {
+		sess.MustCols("message", "for")
+
+		_, err := sess.ID(alert.Id).Update(alert)
+		if err != nil {
+			return err
+		}
+		sqlog.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
+
+		if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.Id); err != nil {
+			return err
+		}
+		tags := []*models.Tag{}
+		for key, value := range cmd.AlertRuleTags {
+			tags = append(tags, &models.Tag{Key: key, Value: value})
+		}
+		insertTags(sess, tags, alert.Id)
+
+		if _, err := sess.Exec("DELETE FROM alert_rule_notification WHERE alert_id = ?", alert.Id); err != nil {
+			return err
+		}
+		notificationUIDs := make([]string, 0)
+		for _, n := range cmd.Notifications {
+			notificationUIDs = append(notificationUIDs, n.UID)
+		}
+		insertNotifications(sess, cmd.ID, cmd.OrgID, notificationUIDs)
+
+		cmd.Result = alert
+
 		return nil
 	})
 }

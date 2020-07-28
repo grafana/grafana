@@ -530,3 +530,14 @@ func CreateAlert(c *models.ReqContext, cmd models.CreateAlertCommand) Response {
 
 	return JSON(200, &cmd.Result)
 }
+
+func UpdateAlert(c *models.ReqContext, cmd models.UpdateAlertCommand) Response {
+	cmd.OrgID = c.OrgId
+	cmd.ID = c.ParamsInt64(":id")
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return Error(500, "Failed to update alert", err)
+	}
+
+	return JSON(200, &cmd.Result)
+}
