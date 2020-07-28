@@ -44,8 +44,12 @@ export function toNanoSeconds(size: number, decimals?: DecimalCount, scaledDecim
     return toFixedScaled(size / 1000000, decimals, scaledDecimals, 6, ' ms');
   } else if (Math.abs(size) < 60000000000) {
     return toFixedScaled(size / 1000000000, decimals, scaledDecimals, 9, ' s');
-  } else {
+  } else if (Math.abs(size) < 3600000000000) {
     return toFixedScaled(size / 60000000000, decimals, scaledDecimals, 12, ' min');
+  } else if (Math.abs(size) < 86400000000000) {
+    return toFixedScaled(size / 3600000000000, decimals, scaledDecimals, 13, ' hour');
+  } else {
+    return toFixedScaled(size / 86400000000000, decimals, scaledDecimals, 14, ' day');
   }
 }
 

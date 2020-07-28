@@ -76,46 +76,37 @@ You can also define the following types of variables in Grafana.
 
 ### Query
 
-Query variables allow you to write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, data centers, etc.
+Write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, data centers, and so on.
 
 For instructions, refer to [Add a query variable]({{< relref "add-query-variable.md" >}}).
 
-Queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
+Variable queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
 
 ### Custom
 
-Define the variable options manually using a comma-separated list.
+Define the variable options manually using a comma-separated list. For instructions, refer to [Add a custom variable]({{< relref "add-custom-variable.md" >}}).
 
 ### Text box
 
-Text box variables display as a free text input field with an optional default value.
+Display a free text input field with an optional default value. For instructions, refer to [Add a text box variable]({{< relref "add-text-box-variable.md" >}}).
 
 ### Constant
 
-Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables are made into an import option.
+Define a hidden constant. For instructions, refer to [Add a constant variable]({{< relref "add-constant-variable.md" >}}).
 
 ### Data source
 
-Data source variables allow you to quickly change the data source for an entire dashboard. Useful if you have multiple instances of a data source in for example different environments.
+Quickly change the data source for an entire dashboard. For instructions, refer to [Add a data source variable]({{< relref "add-data-source-variable.md" >}}).
 
 ### Interval
 
-Interval variables represent time spans. Instead of hard-coding a group by time or date histogram interval, use an interval variable.
-
-You can use the `Interval` type to create a variable that represents a time span (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range. You can specify how many times the current time range should be divided to calculate the current `auto` timespan.
-
-This variable type is useful as a parameter to group by time (for InfluxDB), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
-
-Example using the template variable `myinterval` of type `Interval` in a Graphite function:
-
-```
-summarize($myinterval, sum, false)
-```
+Interval variables represent time spans. Instead of hard-coding a group by time or date histogram interval, use an interval variable. For instructions, refer to [Add an interval variable]({{< relref "add-interval-variable.md" >}}).
 
 ### Ad hoc filters
 
-Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources. This variable type allows you to add key/value filters that are automatically added to all metric queries that use the specified data source.
+Add key/value filters that are automatically added to all metric queries that use the specified data source. Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources. For instructions, refer to [Add ad hoc filters]({{< relref "add-ad-hoc-filters.md" >}}).
 
 ## Variable best practices
 
-- Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings. Consider putting the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings.
+- Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).

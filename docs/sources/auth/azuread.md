@@ -20,31 +20,30 @@ The Azure AD authentication provides the possibility to use an Azure Active Dire
 
 To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
-1. Log in to [Azure Portal](https://portal.azure.com) and click **Azure Active Directory** in the side menu.
+1. Log in to [Azure Portal](https://portal.azure.com) and click **Azure Active Directory** in the side menu. If you have access to more than one tenant, select your account in the upper right. Set your session to the Azure AD tenant you wish to use.
 
-1. Click **App Registrations** and add a new application registration with a fitting name.
-   
-1. Click on **Authentication** then **Add a platform** and pick **Web App**.
+1. Under **Manage** in the side menu, click **App Registrations** and then **New Registration**. Provide a fitting name.
 
-1. Add the redirect URL `https://<grafana domain>/login/azuread`.
+1. Under **Redirect URI**, select **Web** as the app type. 
 
-1. Click **Overview** and then **Endpoints**.
-   - Note down the **OAuth 2.0 authorization endpoint (v2)**, this will be the auth URL.
-   - Note down the **OAuth 2.0 token endpoint (v2)**, this will be the token URL.
+1. Add the redirect URL `https://<grafana domain>/login/azuread`, then click **Register**.
 
-1. Close the Endpoints page to come back to the application overview.
+1. The app's **Overview** page is displayed. Note the **Application ID**, this is the OAuth client id.
 
-1. Note down the "Application ID", this will be the OAuth client id.
+1. Click **Endpoints** from the top menu.
+
+   - Note the **OAuth 2.0 authorization endpoint (v2)**, this is the auth URL.
+   - Note the **OAuth 2.0 token endpoint (v2)**, this is the token URL.
 
 1. Click **Certificates & secrets** and add a new entry under Client secrets.
     - Description: Grafana OAuth
     - Expires: Never
 
-1. Click **Add** then copy the key value, this will be the OAuth client secret.
+1. Click **Add**, then copy the key value. This is the OAuth client secret.
 
 1. Click **Manifest**.
-   - Add definitions for the required Application Roles for Grafana (Viewer, Editor, Admin). Without this configuration all users will be assigned to the Viewer role.
-   - Every role has to have a unique id. On Linux this can be created with `uuidgen` for instance.
+   - Add definitions for the required Application Roles for Grafana (Viewer, Editor, Admin). Without this configuration, all users will be assigned the Viewer role.
+   - Every role requires a unique id. On Linux, this can be created with `uuidgen`. For example:
 
         ```json
         "appRoles": [

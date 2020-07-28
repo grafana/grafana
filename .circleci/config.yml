@@ -45,7 +45,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.24
+            VERSION=0.4.25
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -814,8 +814,9 @@ jobs:
           command: |
             # To save memory, run in two batches
             golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E deadcode -E depguard -E dogsled \
-              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E exportloopref -E whitespace ./pkg/...
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign \
+              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E exportloopref -E whitespace \
+              -E goprintffuncname ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign -E gocritic -E nakedret \
               -E rowserrcheck -E staticcheck -E structcheck -E typecheck -E unconvert -E unused -E varcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \

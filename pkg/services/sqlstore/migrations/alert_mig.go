@@ -172,6 +172,10 @@ func addAlertMigrations(mg *Migrator) {
 		Name: "secure_settings", Type: DB_Text, Nullable: true,
 	}))
 
+	// change column type of alert.settings
+	mg.AddMigration("alter alert.settings to mediumtext", NewRawSqlMigration("").
+		Mysql("ALTER TABLE alert MODIFY settings MEDIUMTEXT;"))
+
 	alertRuleNotificationTable := Table{
 		Name: "alert_rule_notification",
 		Columns: []*Column{
@@ -185,5 +189,4 @@ func addAlertMigrations(mg *Migrator) {
 
 	mg.AddMigration("Create alert_rule_notification table v1", NewAddTableMigration(alertRuleNotificationTable))
 	mg.AddMigration("Add unique index alert_rule_notification.alert_id_alert_notification_id", NewAddIndexMigration(alertRuleNotificationTable, alertRuleNotificationTable.Indices[0]))
-
 }

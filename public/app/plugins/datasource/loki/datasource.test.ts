@@ -1,4 +1,4 @@
-import LokiDatasource, { RangeQueryOptions } from './datasource';
+import LokiDatasource from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { AnnotationQueryRequest, DataFrame, DataSourceApi, dateTime, FieldCache, TimeRange } from '@grafana/data';
@@ -81,7 +81,7 @@ describe('LokiDatasource', () => {
         intervalMs: 2000,
       };
 
-      const req = ds.createRangeQuery(target, options);
+      const req = ds.createRangeQuery(target, options as any);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
@@ -176,7 +176,9 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(
         jest.fn().mockReturnValueOnce(
           Promise.reject({
-            data: 'parse error at line 1, col 6: invalid char escape',
+            data: {
+              message: 'parse error at line 1, col 6: invalid char escape',
+            },
             status: 400,
             statusText: 'Bad Request',
           })
@@ -189,7 +191,7 @@ describe('LokiDatasource', () => {
       try {
         await ds.query(options).toPromise();
       } catch (err) {
-        expect(err.message).toBe(
+        expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.'
         );
       }
@@ -343,8 +345,8 @@ describe('LokiDatasource', () => {
         raw: { from: '0', to: '1000000001' },
       };
       // Odd timerange/interval combination that would lead to a float step
-      const options: RangeQueryOptions = { range, intervalMs: 2000 };
-      expect(Number.isInteger(ds.createRangeQuery(query, options).step!)).toBeTruthy();
+      const options = { range, intervalMs: 2000 };
+      expect(Number.isInteger(ds.createRangeQuery(query, options as any).step!)).toBeTruthy();
     });
   });
 

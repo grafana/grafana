@@ -19,9 +19,9 @@ Upgrading is generally safe (between many minor and one major version) and dashb
 
 ## Backup
 
-We recommend that you backup a few things in case you have to rollback the upgrade. 
-- Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you where running before the upgrade. 
-- Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback. 
+We recommend that you backup a few things in case you have to rollback the upgrade.
+- Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you where running before the upgrade.
+- Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback.
 
 ### Database backup
 
@@ -120,14 +120,6 @@ You can update all plugins using
 ```bash
 grafana-cli plugins update-all
 ```
-
-## Upgrading from 1.x
-
-[Migrating from 1.x to 2.x]({{< relref "migrating_to2.md" >}})
-
-## Upgrading from 2.x
-
-We are not aware of any issues upgrading directly from 2.x to 4.x but to be on the safe side go via 3.x => 4.x.
 
 ## Upgrading to v5.0
 
@@ -261,3 +253,19 @@ Grafana now requires backend plugins to be signed. If a backend plugin is not si
 ### Cookie path
 
 Starting from Grafana v7.0.0, the cookie path does not include the trailing slash if Grafana is served from a subpath in order to align with [RFC 6265](https://tools.ietf.org/html/rfc6265#section-5.1.4). However, stale session cookies (set before the upgrade) can result in unsuccessful logins because they can not be deleted during the standard login phase due to the changed cookie path. Therefore users experiencing login problems are advised to manually delete old session cookies, or administrators can fix this for all users by changing the [`login_cookie_name`]({{< relref "../administration/#login-cookie-name" >}}), so the old cookie would get ignored.
+
+## Upgrading to v7.2
+
+### Ensure encryption of existing alert notification channel secrets
+
+Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
+
+Currently the following alert notifiers have been updated to support storing their sensitive settings encrypted:
+- Slack (URL and Token)
+- Pagerduty (Integration Key)
+- Webhook (Password)
+- Prometheus Alertmanager (Basic Auth Password)
+
+For existing alert notification channels, there is no automatic migration of storing sensitive settings encrypted, and they will continue to work as before. Migration must be done manually. Opening a configured alert notification channel in the UI and saving it will store sensitive settings encrypted and at the same time reset the historic unencrypted setting of that alert notification channel in the database.
+
+For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administration/provisioning.md#alert-notification-channels" >}}).

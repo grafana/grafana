@@ -273,6 +273,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           <PanelComponent
             id={panel.id}
             data={data}
+            title={panel.title}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}

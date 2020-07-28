@@ -8,6 +8,7 @@ import { LoginServiceButtons } from './LoginServiceButtons';
 import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
 import { LoginLayout, InnerBox } from './LoginLayout';
 
@@ -17,6 +18,7 @@ const forgottenPasswordStyles = css`
 `;
 
 export const LoginPage: FC = () => {
+  document.title = Branding.AppTitle;
   return (
     <LoginLayout>
       <LoginCtrl>

@@ -788,7 +788,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{SaveError: models.ErrDashboardFolderNameExists, ExpectedStatusCode: 400},
 				{SaveError: models.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
 				{SaveError: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardUidToLong, ExpectedStatusCode: 400},
+				{SaveError: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 				{SaveError: models.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
 				{SaveError: models.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
