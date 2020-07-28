@@ -1,5 +1,4 @@
 import escapeRegExp from 'lodash/escapeRegExp';
-import { AbsoluteTimeRange, PanelData } from '@grafana/data';
 
 export function formatQuery(selector: string | undefined): string {
   return `${selector || ''}`.trim();
