@@ -304,7 +304,3 @@ type CreateAlertCommand struct {
 	OrgId  int64 `json:"-"`
 	Result *Alert
 }
-
-type AlertJSONModel struct {
-	Conditions []*alertCondition `json:"conditions"`
-}

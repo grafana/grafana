@@ -76,7 +76,7 @@ func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAl
 
 func (ae *AlertEngine) parseAlertRuleModel(settings json.Marshaler) ([]int64, error) {
 	datasourceIDs := []int64{}
-	model := models.AlertJSONModel{}
+	model := alertJSONModel{}
 
 	if settings == nil {
 		return datasourceIDs, nil
@@ -97,4 +97,16 @@ func (ae *AlertEngine) parseAlertRuleModel(settings json.Marshaler) ([]int64, er
 	}
 
 	return datasourceIDs, nil
+}
+
+type alertCondition struct {
+	Query *conditionQuery `json:"query"`
+}
+
+type conditionQuery struct {
+	DatasourceID int64 `json:"datasourceId"`
+}
+
+type alertJSONModel struct {
+	Conditions []*alertCondition `json:"conditions"`
 }
