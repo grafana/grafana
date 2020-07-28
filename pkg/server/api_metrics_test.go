@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +13,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -274,6 +277,22 @@ func TestQueryCloudWatchLogGroups(t *testing.T) {
 	t.Run("Describe log groups", func(t *testing.T) {
 		client = cloudwatch.FakeCWLogsClient{}
 
+		db, err := sql.Open("sqlite3", filepath.Join(grafDir, "data", "grafana.db"))
+		require.NoError(t, err)
+		defer db.Close()
+
+		rows, err := db.Query("SELECT id, org_id FROM data_source")
+		require.NoError(t, err)
+		require.NoError(t, rows.Err())
+		defer rows.Close()
+		for rows.Next() {
+			var id int64
+			var orgID int64
+			err = rows.Scan(&id, &orgID)
+			require.NoError(t, err)
+			t.Logf("Found data source ID %d, org ID %d in database", id, orgID)
+		}
+
 		req := dtos.MetricRequest{
 			Queries: []*simplejson.Json{
 				simplejson.NewFromAny(map[string]interface{}{
@@ -299,7 +318,7 @@ func TestQueryCloudWatchLogGroups(t *testing.T) {
 		})
 		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
 		// In the future we should use gocmp instead and ignore this field
-		_, err := dataFrames.Encoded()
+		_, err = dataFrames.Encoded()
 		require.NoError(t, err)
 		assert.Equal(t, tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
