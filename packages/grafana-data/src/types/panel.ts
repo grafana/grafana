@@ -69,6 +69,8 @@ export interface PanelProps<T = any> {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
   /** @internal */
   renderCounter: number;
+  /** Panel title */
+  title: string;
 }
 
 export interface PanelEditorProps<T = any> {
