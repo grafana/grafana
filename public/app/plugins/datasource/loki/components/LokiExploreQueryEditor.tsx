@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import _ from 'lodash';
 
 // Types
-import { AbsoluteTimeRange, ExploreQueryFieldProps } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';

@@ -293,7 +293,6 @@ export interface QueryEditorProps<
 > {
   datasource: DSType;
   query: TQuery;
-  range: TimeRange;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
   onBlur?: () => void;
@@ -301,6 +300,7 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
+  range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
 }
@@ -323,7 +323,6 @@ export interface ExploreQueryFieldProps<
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
   onBlur?: () => void;
-  absoluteRange?: AbsoluteTimeRange;
   exploreId?: any;
 }
 
