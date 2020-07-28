@@ -293,6 +293,7 @@ export interface QueryEditorProps<
 > {
   datasource: DSType;
   query: TQuery;
+  range: TimeRange;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
   onBlur?: () => void;

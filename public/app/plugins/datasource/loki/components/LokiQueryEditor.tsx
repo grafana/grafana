@@ -5,7 +5,6 @@ import React, { PureComponent } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
-import { createAbsoluteRange } from '../query_utils';
 import { LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';
 
@@ -49,7 +48,7 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, data } = this.props;
+    const { datasource, query, data, range } = this.props;
     const { legendFormat } = this.state;
 
     return (
@@ -61,7 +60,7 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
           onRunQuery={this.onRunQuery}
           history={[]}
           data={data}
-          absoluteRange={createAbsoluteRange(data)}
+          range={range}
         />
 
         <div className="gf-form-inline">

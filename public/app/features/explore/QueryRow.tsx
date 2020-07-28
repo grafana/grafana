@@ -138,6 +138,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           onBlur={noopOnBlur}
           onChange={this.onChange}
           data={queryResponse}
+          range={range}
           absoluteRange={absoluteRange}
           exploreId={exploreId}
         />
