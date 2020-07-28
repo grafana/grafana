@@ -239,10 +239,15 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	ProvisioningPath   string
 	DataPath           string
 	LogsPath           string
 	BundledPluginsPath string
+
+	// Provisioning
+	ProvisioningDatasourcesPath string
+	ProvisioningDashboardsPath  string
+	ProvisioningNotifiersPath   string
+	ProvisioningPluginsPath     string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -655,11 +660,33 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
+
 	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err
 	}
-	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
+	provisioningConfig := iniFile.Section("provisioning")
+	provisioningDatasourcesPath, err := valueAsString(provisioningConfig, "datasources_path", path.Join(provisioning, "datasources"))
+	if err != nil {
+		return err
+	}
+	cfg.ProvisioningDatasourcesPath = makeAbsolute(provisioningDatasourcesPath, HomePath)
+	provisioningDashboardsPath, err := valueAsString(provisioningConfig, "dashboards_path", path.Join(provisioning, "dashboards"))
+	if err != nil {
+		return err
+	}
+	cfg.ProvisioningDashboardsPath = makeAbsolute(provisioningDashboardsPath, HomePath)
+	provisioningNotifiersPath, err := valueAsString(provisioningConfig, "notifiers_path", path.Join(provisioning, "notifiers"))
+	if err != nil {
+		return err
+	}
+	cfg.ProvisioningNotifiersPath = makeAbsolute(provisioningNotifiersPath, HomePath)
+	provisioningPluginsPath, err := valueAsString(provisioningConfig, "plugins_path", path.Join(provisioning, "plugins"))
+	if err != nil {
+		return err
+	}
+	cfg.ProvisioningPluginsPath = makeAbsolute(provisioningPluginsPath, HomePath)
+
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
 	if err != nil {
@@ -1160,7 +1187,11 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
-	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
+	cfg.Logger.Info("Path Datasources Provisioning", "path", cfg.ProvisioningDatasourcesPath)
+	cfg.Logger.Info("Path Dashboards Provisioning", "path", cfg.ProvisioningDashboardsPath)
+	cfg.Logger.Info("Path Notifiers Provisioning", "path", cfg.ProvisioningNotifiersPath)
+	cfg.Logger.Info("Path Plugins Provisioning", "path", cfg.ProvisioningPluginsPath)
+
 	cfg.Logger.Info("App mode " + Env)
 }
 
