@@ -421,6 +421,7 @@ func TestCreatingAlerts(t *testing.T) {
 			checkTags(sess, t, alert)
 			return nil
 		})
+		assert.NoError(t, err)
 		checkNotifications(t, alert, notification.Uid)
 	})
 

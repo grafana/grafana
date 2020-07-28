@@ -238,14 +238,18 @@ func updateAlerts(existingAlerts []*models.Alert, cmd *models.SaveAlertsCommand,
 		if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.Id); err != nil {
 			return err
 		}
-		insertTags(sess, tags, alert.Id)
+		if err := insertTags(sess, tags, alert.Id); err != nil {
+			return err
+		}
 
 		// populate alert_rule_notification table for newly created dashboard alerts too
 		alertNotificationUIDs := alert.GetNotificationsFromSettings()
 		if _, err := sess.Exec("DELETE FROM alert_rule_notification WHERE alert_id = ?", alert.Id); err != nil {
 			return err
 		}
-		insertNotifications(sess, alert.Id, alert.OrgId, alertNotificationUIDs)
+		if err := insertNotifications(sess, alert.Id, alert.OrgId, alertNotificationUIDs); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -488,13 +492,17 @@ func CreateAlert(cmd *models.CreateAlertCommand) error {
 		for key, value := range cmd.AlertRuleTags {
 			tags = append(tags, &models.Tag{Key: key, Value: value})
 		}
-		insertTags(sess, tags, alertID)
+		if err := insertTags(sess, tags, alertID); err != nil {
+			return err
+		}
 
 		notificationUIDs := make([]string, 0)
 		for _, n := range cmd.Notifications {
 			notificationUIDs = append(notificationUIDs, n.UID)
 		}
-		insertNotifications(sess, alertID, cmd.OrgId, notificationUIDs)
+		if err := insertNotifications(sess, alertID, cmd.OrgId, notificationUIDs); err != nil {
+			return err
+		}
 
 		cmd.Result = alert
 		return nil
@@ -546,7 +554,9 @@ func UpdateAlert(cmd *models.UpdateAlertCommand) error {
 		for key, value := range cmd.AlertRuleTags {
 			tags = append(tags, &models.Tag{Key: key, Value: value})
 		}
-		insertTags(sess, tags, alert.Id)
+		if err := insertTags(sess, tags, alert.Id); err != nil {
+			return err
+		}
 
 		if _, err := sess.Exec("DELETE FROM alert_rule_notification WHERE alert_id = ?", alert.Id); err != nil {
 			return err
@@ -555,7 +565,9 @@ func UpdateAlert(cmd *models.UpdateAlertCommand) error {
 		for _, n := range cmd.Notifications {
 			notificationUIDs = append(notificationUIDs, n.UID)
 		}
-		insertNotifications(sess, cmd.ID, cmd.OrgID, notificationUIDs)
+		if err := insertNotifications(sess, cmd.ID, cmd.OrgID, notificationUIDs); err != nil {
+			return err
+		}
 
 		cmd.Result = alert
 
