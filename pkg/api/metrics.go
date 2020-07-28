@@ -53,15 +53,15 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		if i == 0 && !expr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
-				db, err := sql.Open("sqlite3", filepath.Join(setting.HomePath, "data", "grafana.db"))
-				if err != nil {
-					return Error(500, "Unable to load data source metadata", err)
+				db, err1 := sql.Open("sqlite3", filepath.Join(setting.HomePath, "data", "grafana.db"))
+				if err1 != nil {
+					return Error(500, "Unable to load data source metadata", err1)
 				}
 				defer db.Close()
 
-				rows, err := db.Query("SELECT id, org_id FROM data_source")
-				if err != nil {
-					return Error(500, "Unable to load data source metadata", err)
+				rows, err1 := db.Query("SELECT id, org_id FROM data_source")
+				if err1 != nil {
+					return Error(500, "Unable to load data source metadata", err1)
 				}
 				if rows.Err() != nil {
 					return Error(500, "Unable to load data source metadata", rows.Err())
@@ -70,8 +70,8 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 				for rows.Next() {
 					var id int64
 					var orgID int64
-					if err := rows.Scan(&id, &orgID); err != nil {
-						return Error(500, "Unable to load data source metadata", err)
+					if err1 := rows.Scan(&id, &orgID); err1 != nil {
+						return Error(500, "Unable to load data source metadata", err1)
 					}
 					fmt.Printf("\nFound data source ID %d, org ID %d in database\n", id, orgID)
 				}

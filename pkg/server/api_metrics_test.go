@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,8 +12,6 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
-
-	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -180,154 +177,134 @@ func setUpDatabase(t *testing.T, grafDir string) {
 	require.NoError(t, err)
 }
 
-// Test querying of CloudWatch metrics.
-func TestQueryCloudWatchMetrics(t *testing.T) {
-	origNewCWClient := cloudwatch.NewCWClient
-	t.Cleanup(func() {
-		cloudwatch.NewCWClient = origNewCWClient
-	})
-
-	var client cloudwatch.FakeCWClient
-	cloudwatch.NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return client
-	}
-
+// Test CloudWatch querying.
+func TestQueryCloudWatch(t *testing.T) {
 	grafDir, cfgPath := createGrafDir(t)
 
 	setUpDatabase(t, grafDir)
 
 	addr := startGrafana(t, grafDir, cfgPath)
 
-	t.Run("Custom metrics", func(t *testing.T) {
-		client = cloudwatch.FakeCWClient{
-			Metrics: []*cwapi.Metric{
-				{
-					MetricName: aws.String("Test_MetricName"),
-					Dimensions: []*cwapi.Dimension{
-						{
-							Name: aws.String("Test_DimensionName"),
-						},
-					},
-				},
-			},
-		}
-
-		req := dtos.MetricRequest{
-			Queries: []*simplejson.Json{
-				simplejson.NewFromAny(map[string]interface{}{
-					"type":         "metricFindQuery",
-					"subtype":      "metrics",
-					"region":       "us-east-1",
-					"namespace":    "custom",
-					"datasourceId": 1,
-				}),
-			},
-		}
-		tr := makeCWRequest(t, req, addr)
-
-		assert.Equal(t, tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"A": {
-					RefId: "A",
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": float64(1),
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"Test_MetricName",
-									"Test_MetricName",
-								},
-							},
-						},
-					},
-				},
-			},
-		}, tr)
-	})
-}
-
-// Test querying of CloudWatch log groups.
-func TestQueryCloudWatchLogGroups(t *testing.T) {
-	origNewCWLogsClient := cloudwatch.NewCWLogsClient
-	t.Cleanup(func() {
-		cloudwatch.NewCWLogsClient = origNewCWLogsClient
-	})
-
-	var client cloudwatch.FakeCWLogsClient
-	cloudwatch.NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-		return client
-	}
-
-	grafDir, cfgPath := createGrafDir(t)
-
-	setUpDatabase(t, grafDir)
-
-	addr := startGrafana(t, grafDir, cfgPath)
-
-	t.Run("Describe log groups", func(t *testing.T) {
-		client = cloudwatch.FakeCWLogsClient{}
-
-		db, err := sql.Open("sqlite3", filepath.Join(grafDir, "data", "grafana.db"))
-		require.NoError(t, err)
-		defer db.Close()
-
-		rows, err := db.Query("SELECT id, org_id FROM data_source")
-		require.NoError(t, err)
-		require.NoError(t, rows.Err())
-		defer rows.Close()
-		for rows.Next() {
-			var id int64
-			var orgID int64
-			err = rows.Scan(&id, &orgID)
-			require.NoError(t, err)
-			t.Logf("Found data source ID %d, org ID %d in database", id, orgID)
-		}
-
-		req := dtos.MetricRequest{
-			Queries: []*simplejson.Json{
-				simplejson.NewFromAny(map[string]interface{}{
-					"type":         "logAction",
-					"subtype":      "DescribeLogGroups",
-					"region":       "us-east-1",
-					"datasourceId": 1,
-				}),
-			},
-		}
-		tr := makeCWRequest(t, req, addr)
-
-		dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
-			&data.Frame{
-				Name: "logGroups",
-				Fields: []*data.Field{
-					data.NewField("logGroupName", nil, []*string{}),
-				},
-				Meta: &data.FrameMeta{
-					PreferredVisualization: "logs",
-				},
-			},
+	t.Run("Metrics", func(t *testing.T) {
+		origNewCWClient := cloudwatch.NewCWClient
+		t.Cleanup(func() {
+			cloudwatch.NewCWClient = origNewCWClient
 		})
-		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
-		// In the future we should use gocmp instead and ignore this field
-		_, err = dataFrames.Encoded()
-		require.NoError(t, err)
-		assert.Equal(t, tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"A": {
-					RefId:      "A",
-					Dataframes: dataFrames,
+
+		var client cloudwatch.FakeCWClient
+		cloudwatch.NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+			return client
+		}
+
+		t.Run("Custom metrics", func(t *testing.T) {
+			// TODO: Clean database
+			client = cloudwatch.FakeCWClient{
+				Metrics: []*cwapi.Metric{
+					{
+						MetricName: aws.String("Test_MetricName"),
+						Dimensions: []*cwapi.Dimension{
+							{
+								Name: aws.String("Test_DimensionName"),
+							},
+						},
+					},
 				},
-			},
-		}, tr)
+			}
+
+			req := dtos.MetricRequest{
+				Queries: []*simplejson.Json{
+					simplejson.NewFromAny(map[string]interface{}{
+						"type":         "metricFindQuery",
+						"subtype":      "metrics",
+						"region":       "us-east-1",
+						"namespace":    "custom",
+						"datasourceId": 1,
+					}),
+				},
+			}
+			tr := makeCWRequest(t, req, addr)
+
+			assert.Equal(t, tsdb.Response{
+				Results: map[string]*tsdb.QueryResult{
+					"A": {
+						RefId: "A",
+						Meta: simplejson.NewFromAny(map[string]interface{}{
+							"rowCount": float64(1),
+						}),
+						Tables: []*tsdb.Table{
+							{
+								Columns: []tsdb.TableColumn{
+									{
+										Text: "text",
+									},
+									{
+										Text: "value",
+									},
+								},
+								Rows: []tsdb.RowValues{
+									{
+										"Test_MetricName",
+										"Test_MetricName",
+									},
+								},
+							},
+						},
+					},
+				},
+			}, tr)
+		})
+	})
+
+	t.Run("Logs", func(t *testing.T) {
+		origNewCWLogsClient := cloudwatch.NewCWLogsClient
+		t.Cleanup(func() {
+			cloudwatch.NewCWLogsClient = origNewCWLogsClient
+		})
+
+		var client cloudwatch.FakeCWLogsClient
+		cloudwatch.NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+			return client
+		}
+
+		t.Run("Describe log groups", func(t *testing.T) {
+			client = cloudwatch.FakeCWLogsClient{}
+
+			req := dtos.MetricRequest{
+				Queries: []*simplejson.Json{
+					simplejson.NewFromAny(map[string]interface{}{
+						"type":         "logAction",
+						"subtype":      "DescribeLogGroups",
+						"region":       "us-east-1",
+						"datasourceId": 1,
+					}),
+				},
+			}
+			tr := makeCWRequest(t, req, addr)
+
+			dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
+				&data.Frame{
+					Name: "logGroups",
+					Fields: []*data.Field{
+						data.NewField("logGroupName", nil, []*string{}),
+					},
+					Meta: &data.FrameMeta{
+						PreferredVisualization: "logs",
+					},
+				},
+			})
+			// Have to call this so that dataFrames.encoded is non-nil, for the comparison
+			// In the future we should use gocmp instead and ignore this field
+			_, err := dataFrames.Encoded()
+			require.NoError(t, err)
+			assert.Equal(t, tsdb.Response{
+				Results: map[string]*tsdb.QueryResult{
+					"A": {
+						RefId:      "A",
+						Dataframes: dataFrames,
+					},
+				},
+			}, tr)
+		})
 	})
 }
 
