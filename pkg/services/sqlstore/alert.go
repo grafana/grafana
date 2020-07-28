@@ -254,13 +254,32 @@ func insertTags(sess *DBSession, tags []*models.Tag, alertID int64) error {
 	return nil
 }
 
-func insertNotifications(sess *DBSession, settings models.AlertSettings, orgID int64, alertID int64) error {
-	for _, n := range settings.Notifications {
-		if _, err := sess.Exec(fmt.Sprintf(
+func getAlertTags(alertID int64) ([]models.Tag, error) {
+	tags := make([]models.Tag, 0)
+	sql := "SELECT id, key, value FROM tag WHERE id = (SELECT tag_id from alert_rule_tag WHERE alert_id = ?)"
+	if err := x.SQL(sql, alertID).Find(&tags); err != nil {
+		return tags, err
+	}
+	return tags, nil
+}
+
+func getAlertNotificationIDs(alertID int64) ([]int64, error) {
+	notifiers := make([]int64, 0)
+	sql := "SELECT alert_notification_id from alert_rule_notification WHERE alert_id = ?"
+	if err := x.SQL(sql, alertID).Find(&notifiers); err != nil {
+		return notifiers, err
+	}
+	return notifiers, nil
+}
+
+func insertNotifications(sess *DBSession, cmd *models.CreateAlertCommand, alertID int64) error {
+	for _, n := range cmd.Notifications {
+		sql := fmt.Sprintf(
 			`INSERT INTO alert_rule_notification (alert_id, alert_notification_id)
-			 SELECT '%d', alert_notification_id 
+			 SELECT %d, alert_notification.id 
 			 FROM alert_notification 
-			 WHERE alert_notification_org_id = ? AND alert_notification_uid = ?`, alertID), orgID, n.UID); err != nil {
+			 WHERE alert_notification.org_id = ? AND alert_notification.uid = ?`, alertID)
+		if _, err := sess.Exec(sql, cmd.OrgId, n.UID); err != nil {
 			return err
 		}
 	}
@@ -410,6 +429,8 @@ func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) e
 
 // DeleteAlert deletes alert identifyied by cmd.Id
 func DeleteAlert(cmd *models.DeleteAlertCommand) error {
+	// TODO delete orphan tags
+	// TODO delete orphan alert_notifications? Is that possible anyway?
 	return inTransaction(func(sess *DBSession) error {
 		if err := deleteAlertByIdInternal(cmd.Id, "Alert deletion requested from the API", sess); err != nil {
 			return err
@@ -420,20 +441,28 @@ func DeleteAlert(cmd *models.DeleteAlertCommand) error {
 
 // CreateAlert creates a new standalone alert not associated with a dashboard
 func CreateAlert(cmd *models.CreateAlertCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		cmd.Settings.ExecutionErrorState = "" // override whatever state
+	settings := *cmd
+	settings.Result = nil
 
+	cmd.ExecutionErrorState = "" // override whatever state
+
+	forDuration, err := time.ParseDuration(cmd.For)
+	if err != nil {
+		return err
+	}
+
+	return inTransaction(func(sess *DBSession) error {
+		creationTime := timeNow()
 		alert := &models.Alert{
-			OrgId:     cmd.OrgId,
-			Name:      cmd.Name,
-			Message:   cmd.Message,
-			Severity:  cmd.Severity,
-			Frequency: cmd.Frequency,
-			For:       cmd.For,
-			Settings:  simplejson.NewFromAny(cmd.Settings), // unmarshalling and marshalling again is costly
-			State:     models.AlertStateUnknown,
-			Created:   timeNow(),
-			Updated:   timeNow(),
+			OrgId:        cmd.OrgId,
+			Name:         cmd.Name,
+			Frequency:    cmd.Frequency,
+			For:          forDuration,
+			Settings:     simplejson.NewFromAny(settings), // unmarshalling and marshalling again is costly
+			State:        models.AlertStateUnknown,
+			Created:      creationTime,
+			Updated:      creationTime,
+			NewStateDate: creationTime,
 		}
 
 		alertID, err := sess.MustCols("message", "for").Insert(alert)
@@ -442,12 +471,12 @@ func CreateAlert(cmd *models.CreateAlertCommand) error {
 		}
 
 		tags := []*models.Tag{}
-		for key, value := range cmd.Settings.AlertRuleTags {
+		for key, value := range cmd.AlertRuleTags {
 			tags = append(tags, &models.Tag{Key: key, Value: value})
 		}
 		insertTags(sess, tags, alertID)
 
-		insertNotifications(sess, cmd.Settings, cmd.OrgId, alertID)
+		insertNotifications(sess, cmd, alertID)
 
 		cmd.Result = alert
 		return nil

@@ -1,0 +1,59 @@
+{
+    "alertRuleTags": {
+        "foo": "bar"
+    },
+    "conditions": [
+        {
+            "evaluator": {
+                "params": [
+                    0
+                ],
+                "type": "gt"
+            },
+            "operator": {
+                "type": "and"
+            },
+            "query": {
+                "datasourceId": 98,
+                "model": {
+                    "metricQuery": {
+                        "aliasBy": "",
+                        "alignmentPeriod": "cloud-monitoring-auto",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "filters": [],
+                        "groupBys": [],
+                        "metricKind": "DELTA",
+                        "metricType": "compute.googleapis.com/firewall/dropped_bytes_count",
+                        "perSeriesAligner": "ALIGN_DELTA",
+                        "projectName": "stack-doctor",
+                        "unit": "By",
+                        "valueType": "INT64"
+                    },
+                    "queryType": "metrics",
+                    "refId": "A"
+                },
+                "params": [
+                    "A",
+                    "10s",
+                    "now"
+                ]
+            },
+            "reducer": {
+                "params": [],
+                "type": "avg"
+            },
+            "type": "query"
+        }
+    ],
+    "executionErrorState": "alerting",
+    "for": "30s",
+    "frequency": 10,
+    "handler": 1,
+    "name": "Test cloud monitoring standalone alert",
+    "noDataState": "no_data",
+    "notifications": [
+        {
+            "uid": "ubraS7iGz"
+        }
+    ]
+}

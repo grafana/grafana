@@ -1,8 +1,13 @@
 package sqlstore
 
 import (
+	"context"
+	"encoding/json"
+	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -303,6 +308,91 @@ func TestPausingAlerts(t *testing.T) {
 		})
 	})
 }
+
+func TestDeletingAlerts(t *testing.T) {
+	InitTestDB(t)
+
+	Convey("No error when deleting non existing alert", t, func() { // Is that what we want?
+		err := DeleteAlert(&models.DeleteAlertCommand{Id: 1})
+		So(err, ShouldBeNil)
+	})
+
+	Convey("Can delete existing alert", t, func() {
+		org := int64(1)
+		dashboard := int64(0)
+		alert, _ := insertTestAlert("Alerting title", "Alerting message", org, dashboard, simplejson.New())
+		err := DeleteAlert(&models.DeleteAlertCommand{Id: 1})
+		So(err, ShouldBeNil)
+
+		q := &models.GetAlertByIdQuery{
+			Id: alert.Id,
+		}
+		err = GetAlertById(q)
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestCreatingAlerts(t *testing.T) {
+	db := InitTestDB(t)
+
+	mockTimeNow()
+	defer resetTimeNow()
+
+	t.Run("Can create alert", func(t *testing.T) {
+		// TODO alerts for other datasources
+		cmd, err := loadTestFile("./testdata/1-cloud_monitoring-alert.json")
+		assert.NoError(t, err)
+
+		cmd.OrgId = 1
+
+		// create a notification
+		notification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+		err = CreateAlertNotificationCommand(&notification)
+		assert.NoError(t, err)
+		// set the generated notification to the command
+		cmd.Notifications[0].UID = notification.Uid
+
+		err = CreateAlert(&cmd)
+		assert.NoError(t, err)
+		assert.NotNil(t, cmd.Result)
+
+		q := &models.GetAlertByIdQuery{
+			Id: cmd.Result.Id,
+		}
+		err = GetAlertById(q)
+		alert := q.Result
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), alert.OrgId)
+		assert.Equal(t, "Test cloud monitoring standalone alert", alert.Name)
+		assert.Equal(t, int64(10), alert.Frequency)
+		assert.Equal(t, 30*time.Second, alert.For)
+		assert.Equal(t, models.AlertStateUnknown, alert.State)
+
+		loc := time.FixedZone("MockZoneUTC-5", -5*60*60)
+		expTime := time.Unix(0, 0).In(loc).UTC()
+		assert.Equal(t, expTime, alert.Created)
+		assert.Equal(t, expTime, alert.Updated)
+		assert.Equal(t, expTime, alert.NewStateDate)
+
+		err = db.WithDbSession(context.Background(), func(sess *DBSession) error {
+			checkTags(sess, t, alert)
+			return nil
+		})
+		checkNotifications(t, alert, notification.Uid)
+	})
+
+	t.Run("Fails to create alert with unparsable for", func(t *testing.T) {
+		cmd, err := loadTestFile("./testdata/1-cloud_monitoring-alert.json")
+		assert.NoError(t, err)
+		cmd.OrgId = 1
+		cmd.For = "some text"
+
+		err = CreateAlert(&cmd)
+		assert.Error(t, err, "invalid duration some text")
+		assert.Nil(t, cmd.Result)
+	})
+}
+
 func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
 	cmd := &models.PauseAlertCommand{
 		OrgId:    orgId,
@@ -353,4 +443,65 @@ func pauseAllAlerts(pauseState bool) error {
 	err := PauseAllAlerts(cmd)
 	So(err, ShouldBeNil)
 	return err
+}
+
+func loadTestFile(path string) (models.CreateAlertCommand, error) {
+	var data models.CreateAlertCommand
+
+	jsonBody, err := ioutil.ReadFile(path)
+	if err != nil {
+		return data, err
+	}
+	err = json.Unmarshal(jsonBody, &data)
+	return data, err
+}
+
+func checkTags(sess *DBSession, t *testing.T, alert *models.Alert) {
+	t.Run("tag is stored in alert settings", func(t *testing.T) {
+		tags := alert.GetTagsFromSettings()
+		assert.Len(t, tags, 1)
+		assert.Equal(t, tags[0].Key, "foo")
+		assert.Equal(t, tags[0].Value, "bar")
+	})
+
+	t.Run("record exists in alert_rule_tag table", func(t *testing.T) {
+		tag, err := getTag(sess, "foo", "bar")
+		assert.NoError(t, err)
+		assert.NotNil(t, tag)
+
+		alertTags, err := getAlertTags(alert.Id)
+		assert.NoError(t, err)
+		tagFound := false
+		for _, t := range alertTags {
+			if t.Id == tag.Id {
+				tagFound = true
+			}
+		}
+		assert.True(t, tagFound)
+	})
+}
+
+func checkNotifications(t *testing.T, alert *models.Alert, uid string) {
+	t.Run("tag is stored in alert settings", func(t *testing.T) {
+		notifications := alert.GetNotificationsFromSettings()
+		assert.Len(t, notifications, 1)
+		assert.Equal(t, notifications[0], uid)
+	})
+
+	t.Run("record exists in alert_rule_notification table", func(t *testing.T) {
+		q := models.GetAlertNotificationsWithUidQuery{OrgId: alert.OrgId, Uid: uid}
+		err := GetAlertNotificationsWithUid(&q)
+		assert.NoError(t, err)
+		assert.NotNil(t, q.Result)
+
+		notificationIDs, err := getAlertNotificationIDs(alert.Id)
+		assert.NoError(t, err)
+		notificationsFound := false
+		for _, id := range notificationIDs {
+			if id == q.Result.Id {
+				notificationsFound = true
+			}
+		}
+		assert.True(t, notificationsFound)
+	})
 }

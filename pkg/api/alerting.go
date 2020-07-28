@@ -525,7 +525,7 @@ func CreateAlert(c *models.ReqContext, cmd models.CreateAlertCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to create alert notification", err)
+		return Error(500, "Failed to create alert", err)
 	}
 
 	return JSON(200, &cmd.Result)

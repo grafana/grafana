@@ -132,6 +132,20 @@ func (alert *Alert) GetTagsFromSettings() []*Tag {
 	return tags
 }
 
+func (alert *Alert) GetNotificationsFromSettings() []string {
+	notifications := make([]string, 0)
+	if alert.Settings != nil {
+		if data, ok := alert.Settings.CheckGet("notifications"); ok {
+			data := data.MustArray()
+			for _, m := range data {
+				mm := simplejson.NewFromAny(m).MustMap()
+				notifications = append(notifications, mm["uid"].(string))
+			}
+		}
+	}
+	return notifications
+}
+
 type AlertingClusterInfo struct {
 	ServerId       string
 	ClusterSize    int
@@ -260,7 +274,13 @@ type alertCondition struct {
 	Operator struct {
 		Type string `json:"type"`
 	} `json:"operator"`
-	Query   *conditionQuery `json:"query"`
+	Query struct {
+		DatasourceID int64 `json:"datasourceId"`
+		Model        struct {
+			data interface{}
+		} `json:"model"`
+		Params []string `json:"params"`
+	} `json:"query"`
 	Reducer struct {
 		Params []string `json:"params"`
 		Type   string   `json:"type"`
@@ -268,42 +288,23 @@ type alertCondition struct {
 	Type string `json:"type"`
 }
 
-type conditionQuery struct {
-	DatasourceID int64 `json:"datasourceId"`
-	Model        struct {
-		data interface{}
-	} `json:"model"`
-	Params []string `json:"params"`
-}
-
-type AlertJSONModel struct {
-	Conditions []*alertCondition `json:"conditions"`
-}
-
-type AlertSettings struct {
+type CreateAlertCommand struct {
 	AlertRuleTags       map[string]string `json:"alertRuleTags"`
 	Conditions          []*alertCondition `json:"conditions"`
-	ExecutionErrorState AlertStateType    `json:"executionErrorState"`
+	ExecutionErrorState string            `json:"executionErrorState"`
 	For                 string            `json:"for"`
-	Frequency           AlertSeverityType `json:"frequency"`
+	Frequency           int64             `json:"frequency"`
 	Handler             int64             `json:"handler"`
 	Name                string            `json:"name"`
 	NoDataState         NoDataOption      `json:"noDataState"`
 	Notifications       []struct {
 		UID string `json:"uid"`
-	}
-}
-
-type CreateAlertCommand struct {
-	Name      string        `json:"name"  binding:"Required"`
-	Message   string        `json:"message"`
-	Severity  string        `json:"severity"`
-	Handler   int64         `json:"handler"`
-	Silenced  bool          `json:"silenced"`
-	Frequency int64         `json:"frequency"`
-	For       time.Duration `json:"for"`
-	Settings  AlertSettings `json:"settings"`
+	} `json:"notifications"`
 
 	OrgId  int64 `json:"-"`
 	Result *Alert
+}
+
+type AlertJSONModel struct {
+	Conditions []*alertCondition `json:"conditions"`
 }
