@@ -43,7 +43,7 @@ export class ResultTransformer {
 
   transformMetricData(metricData: any, options: any, start: number, end: number): TimeSeries {
     const dps = [];
-    const { name, labels, title } = this.createLabelInfo(metricData.metric, options);
+    const { name, labels } = this.createLabelInfo(metricData.metric, options);
 
     const stepMs = parseFloat(options.step) * 1000;
     let baseTimestamp = start * 1000;
@@ -77,7 +77,6 @@ export class ResultTransformer {
       refId: options.refId,
       target: name ?? '',
       tags: labels,
-      title,
       meta: options.meta,
     };
   }
@@ -151,28 +150,34 @@ export class ResultTransformer {
     const dps = [];
     const { name, labels } = this.createLabelInfo(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: name ?? '', title: name, datapoints: dps, tags: labels, refId: options.refId, meta: options.meta };
+    return {
+      target: name ?? '',
+      datapoints: dps,
+      tags: labels,
+      refId: options.refId,
+      meta: options.meta,
+    };
   }
 
-  createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels; title?: string } {
+  createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels } {
     if (options?.legendFormat) {
-      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labels);
-      return { name: title, title, labels };
+      const name = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labels);
+      return { name, labels };
     }
 
     let { __name__, ...labelsWithoutName } = labels;
 
-    let title = __name__ || '';
+    let name = __name__ || '';
 
     const labelPart = formatLabels(labelsWithoutName);
 
-    if (!title && !labelPart) {
-      title = options.query;
+    if (!name && !labelPart) {
+      name = options.query;
     }
 
-    title = `${__name__ ?? ''}${labelPart}`;
+    name = `${__name__ ?? ''}${labelPart}`;
 
-    return { name: title, title, labels: labelsWithoutName };
+    return { name, labels: labelsWithoutName };
   }
 
   getOriginalMetricName(labelData: { [key: string]: string }) {

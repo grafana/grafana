@@ -94,10 +94,6 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     },
   ];
 
-  if (timeSeries.title) {
-    (fields[1].config as FieldConfig).displayName = timeSeries.title;
-  }
-
   return {
     name: timeSeries.target || (timeSeries as any).name,
     refId: timeSeries.refId,

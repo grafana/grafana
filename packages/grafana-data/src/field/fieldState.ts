@@ -1,4 +1,11 @@
-import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
+import {
+  DataFrame,
+  Field,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  FieldType,
+  TIME_SERIES_TIME_FIELD_NAME,
+  FieldNamingStrategy,
+} from '../types';
 import { formatLabels } from '../utils/labels';
 
 /**
@@ -56,6 +63,10 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
 
   if (hasConfigTitle) {
     return displayName;
+  }
+
+  if (frame && frame.meta && frame.meta.namingStrategy === FieldNamingStrategy.FrameName) {
+    return frame.name ?? 'missing name';
   }
 
   // This is an ugly exception for time field

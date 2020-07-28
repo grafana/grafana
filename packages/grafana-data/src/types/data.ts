@@ -17,7 +17,11 @@ export enum LoadingState {
 
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
 
-export type FieldNamingStrategy = 'smart' | 'complete' | 'use-frame-name';
+export enum FieldNamingStrategy {
+  Smart = 'smart',
+  Complete = 'complete',
+  FrameName = 'frame-name',
+}
 
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
@@ -124,10 +128,6 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 
 export interface TimeSeries extends QueryResultBase {
   target: string;
-  /**
-   * If name is manually configured via an alias / legend pattern
-   */
-  title?: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
   tags?: Labels;

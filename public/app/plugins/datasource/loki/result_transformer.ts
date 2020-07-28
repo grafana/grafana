@@ -147,7 +147,6 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
   const name = createMetricLabel(matrixResult.metric, options);
   return {
     target: name,
-    title: name,
     datapoints: lokiPointsToTimeseriesPoints(matrixResult.values, options),
     tags: matrixResult.metric,
     meta: options.meta,

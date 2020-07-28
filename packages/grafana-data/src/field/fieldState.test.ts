@@ -1,4 +1,4 @@
-import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType } from '../types';
+import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType, FieldNamingStrategy } from '../types';
 import { getFieldDisplayName } from './fieldState';
 import { toDataFrame } from '../dataframe';
 
@@ -132,5 +132,28 @@ describe('Check field state calculations (displayName and id)', () => {
       fieldIndex: 1,
     });
     expect(title).toEqual('line {host="ec2-13-53-116-156.eu-north-1.compute.amazonaws.com", region="eu-north1"}');
+  });
+
+  it('should use frame name when namingStrategy == FrameName', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          refId: 'A',
+          name: 'custom',
+          fields: [
+            { name: 'time', type: FieldType.time },
+            {
+              name: 'line',
+              labels: { host: 'ec2-13-53-116-156.eu-north-1.compute.amazonaws.com', region: 'eu-north1' },
+            },
+          ],
+          meta: {
+            namingStrategy: FieldNamingStrategy.FrameName,
+          },
+        }),
+      ],
+      fieldIndex: 1,
+    });
+    expect(title).toEqual('custom');
   });
 });

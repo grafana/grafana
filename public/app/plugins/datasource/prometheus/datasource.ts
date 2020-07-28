@@ -17,6 +17,7 @@ import {
   ScopedVars,
   TimeRange,
   TimeSeries,
+  FieldNamingStrategy,
 } from '@grafana/data';
 import { forkJoin, from, merge, Observable, of } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
@@ -181,6 +182,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       meta: {
         /** Fix for showing of Prometheus results in Explore table. We want to show result of instant query in table and the rest of time series in graph */
         preferredVisualisationType: query.instant ? 'table' : 'graph',
+        namingStrategy: FieldNamingStrategy.FrameName,
       },
     };
     const series = this.resultTransformer.transform(response, transformerOptions);
