@@ -6,6 +6,7 @@ import {
   DataLinksContextMenu,
   VizRepeater,
   VizRepeaterRenderValueProps,
+  BigValueTextMode,
 } from '@grafana/ui';
 import {
   DisplayValueAlignmentFactors,
@@ -53,7 +54,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         colorMode={options.colorMode}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
-        textMode={options.textMode}
+        textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
         width={width}
         height={height}
@@ -63,6 +64,18 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       />
     );
   };
+
+  getTextMode() {
+    const { options, fieldConfig, title } = this.props;
+
+    // If we have manually set displayName or panel title switch text mode to value and name
+    if (options.textMode === BigValueTextMode.Auto && (fieldConfig.defaults.displayName || !title)) {
+      return BigValueTextMode.ValueAndName;
+    }
+
+    return options.textMode;
+  }
+
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
