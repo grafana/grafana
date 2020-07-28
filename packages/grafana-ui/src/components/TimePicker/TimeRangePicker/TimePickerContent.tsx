@@ -133,6 +133,7 @@ interface Props {
   showHistory?: boolean;
   className?: string;
   hideTimeZone?: boolean;
+  /** Reverse the order of relative and absolute range pickers. Used to left align the picker in forms */
   isReversed?: boolean;
 }
 
