@@ -34,7 +34,7 @@ We recommend using the Git command-line interface to download the source code fo
 
 For alternative ways of cloning the Grafana repository, please refer to [GitHub's cloning a repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) documentation.
 
-We do not recommend that you use Go's `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+We do not recommend using Go's `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
 
 ## Build Grafana
 
