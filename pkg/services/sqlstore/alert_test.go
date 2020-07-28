@@ -312,23 +312,63 @@ func TestPausingAlerts(t *testing.T) {
 func TestDeletingAlerts(t *testing.T) {
 	InitTestDB(t)
 
-	Convey("No error when deleting non existing alert", t, func() { // Is that what we want?
+	t.Run("No error when deleting non existing alert", func(t *testing.T) { // Is that what we want?
 		err := DeleteAlert(&models.DeleteAlertCommand{Id: 1})
-		So(err, ShouldBeNil)
+		assert.NoError(t, err)
 	})
 
-	Convey("Can delete existing alert", t, func() {
-		org := int64(1)
-		dashboard := int64(0)
-		alert, _ := insertTestAlert("Alerting title", "Alerting message", org, dashboard, simplejson.New())
-		err := DeleteAlert(&models.DeleteAlertCommand{Id: 1})
-		So(err, ShouldBeNil)
+	t.Run("Can delete existing alert", func(t *testing.T) {
+		// setup up code
+		settings := []byte(`{
+			"alertRuleTags": {
+				"foo": "bar"
+			},
+			"name": "Alerting title",
+			"frequency": 10,
+			"for": "5s",
+			"notifications": [
+				{
+					"uid": "notifier1"
+				}
+			]
+		}`)
+		var cmd models.CreateAlertCommand
+		err := json.Unmarshal(settings, &cmd)
+		assert.NoError(t, err)
 
-		q := &models.GetAlertByIdQuery{
-			Id: alert.Id,
-		}
-		err = GetAlertById(q)
-		So(err, ShouldNotBeNil)
+		cmd.OrgId = 1
+
+		// create a notification
+		notification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+		err = CreateAlertNotificationCommand(&notification)
+		assert.NoError(t, err)
+		// set the generated notification to the command
+		cmd.Notifications[0].UID = notification.Uid
+
+		err = CreateAlert(&cmd)
+		assert.NoError(t, err)
+
+		// assert tag is associated with the newly created alert
+		alertTags, err := getAlertTags(1)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, alertTags)
+
+		// assert notitication is associated with the newly created alert
+		notificationIDs, err := getAlertNotificationIDs(1)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, notificationIDs)
+
+		// actual test starts here
+		err = DeleteAlert(&models.DeleteAlertCommand{Id: 1})
+		assert.NoError(t, err)
+
+		alertTags, err = getAlertTags(1)
+		assert.NoError(t, err)
+		assert.Empty(t, alertTags)
+
+		notificationIDs, err = getAlertNotificationIDs(1)
+		assert.NoError(t, err)
+		assert.Empty(t, notificationIDs)
 	})
 }
 
@@ -340,6 +380,8 @@ func TestCreatingAlerts(t *testing.T) {
 
 	t.Run("Can create alert", func(t *testing.T) {
 		// TODO alerts for other datasources
+
+		// setup up code
 		cmd, err := loadTestFile("./testdata/1-cloud_monitoring-alert.json")
 		assert.NoError(t, err)
 
@@ -352,6 +394,7 @@ func TestCreatingAlerts(t *testing.T) {
 		// set the generated notification to the command
 		cmd.Notifications[0].UID = notification.Uid
 
+		// actual test starts here
 		err = CreateAlert(&cmd)
 		assert.NoError(t, err)
 		assert.NotNil(t, cmd.Result)
