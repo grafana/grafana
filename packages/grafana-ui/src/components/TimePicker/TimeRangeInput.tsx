@@ -93,6 +93,7 @@ export const TimeRangeInput: FC<Props> = ({
             onChangeTimeZone={onChangeTimeZone || noop}
             className={styles.content}
             hideTimeZone={hideTimeZone}
+            isReversed
           />
         </ClickOutsideWrapper>
       )}
