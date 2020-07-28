@@ -10,23 +10,33 @@ weight = 200
 
 # Global variables
 
-Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them.
+Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them. These variables are useful in queries, dashboard links, panel links, and data links.
 
 ## $__dashboard
-> Only available in Grafana v6.7+
 
-This variable is the UID of the current dashboard.
-`${__dashboard.name}` is the name of the current dashboard.
+> Only available in Grafana v6.7+. In Grafana 7.1, the variable changed from showing the UID of the current dashboard to the name of the current dashboard.
+
+This variable is the name of the current dashboard.
 
 ## $__from and $__to
 
-> Only available in Grafana v6.0+
+Grafana has two built in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default but you can control date formatting.
 
-Grafana has two built in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds. 
+> This special formatting syntax is only available in Grafan a 7.1.2+
+
+| Syntax                   | Example result           | Description |
+| ------------------------ | ------------------------ | ----------- |
+| `${__from}`              | 1594671549254            | Unix millisecond epoch |
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339 | 
+| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339 |
+| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch |
+| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) |
+
+The above syntax works with `${__to}` as well.  
 
 ## $__interval
 
-The `$__interval` variable can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
+You can use the `$__interval` variable as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch), or as a _summarize_ function parameter (for Graphite).
 
 Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph then queries can be made more efficient by grouping by a larger interval. It is more efficient to group by 1 day than by 10s when looking at 3 months of data and the graph will look the same and the query will be faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
 
@@ -48,8 +58,6 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 ## $__org
 
-> Only available in Grafana v6.7+
-
 This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
 
@@ -62,8 +70,6 @@ This variable is the ID of the current organization.
 
 ## $__range
 
-> Only available in Grafana v5.3+
-
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
 ## $timeFilter or $__timeFilter
@@ -71,7 +77,9 @@ Currently only supported for Prometheus data sources. This variable represents t
 The `$timeFilter` variable returns the currently selected time range as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
 
 This is used in several places, including:
-* The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor Mode. It has to be added manually in Text Editor Mode: `WHERE $timeFilter`.
-* Log Analytics queries in the Azure Monitor data source.
-* SQL queries in MySQL, Postgres, and MSSQL
-* The `$__timeFilter` variable is used in the MySQL data source.
+
+- The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor mode. You can add it manually in Text Editor mode: `WHERE $timeFilter`.
+- Log Analytics queries in the Azure Monitor data source.
+- SQL queries in MySQL, Postgres, and MSSQL
+- The `$__timeFilter` variable is used in the MySQL data source.
+
