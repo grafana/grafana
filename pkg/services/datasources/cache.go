@@ -54,6 +54,7 @@ func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.Signe
 		if err := dc.Bus.Dispatch(&query); err != nil {
 			return nil, err
 		}
+		ds = query.Result
 	} else {
 		plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 		var err error

@@ -50,12 +50,10 @@ func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
 	datasource := models.DataSource{OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&datasource)
 	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "id", query.Id, "orgId", query.OrgId)
 		return err
 	}
 
 	if !has {
-		sqlog.Debug("Failed to find data source", "id", query.Id, "orgId", query.OrgId)
 		return models.ErrDataSourceNotFound
 	}
 
