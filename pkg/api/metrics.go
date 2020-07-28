@@ -2,17 +2,11 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
-	"path/filepath"
 	"sort"
-
-	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -53,35 +47,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		if i == 0 && !expr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
-				db, err1 := sql.Open("sqlite3", filepath.Join(setting.HomePath, "data", "grafana.db"))
-				if err1 != nil {
-					return Error(500, "Unable to load data source metadata", err1)
-				}
-				defer db.Close()
-
-				rows, err1 := db.Query("SELECT id, org_id FROM data_source")
-				if err1 != nil {
-					return Error(500, "Unable to load data source metadata", err1)
-				}
-				if rows.Err() != nil {
-					return Error(500, "Unable to load data source metadata", rows.Err())
-				}
-				defer rows.Close()
-				for rows.Next() {
-					var id int64
-					var orgID int64
-					if err1 := rows.Scan(&id, &orgID); err1 != nil {
-						return Error(500, "Unable to load data source metadata", err1)
-					}
-					fmt.Printf("\nFound data source ID %d, org ID %d in database\n", id, orgID)
-				}
-
-				var orgID int64
-				if c.SignedInUser != nil {
-					orgID = c.SignedInUser.OrgId
-				}
-				hs.log.Debug("Encountered error getting data source", "err", err, "datasourceID", datasourceID,
-					"orgID", orgID)
+				hs.log.Debug("Encountered error getting data source", "err", err)
 				if errors.Is(err, models.ErrDataSourceAccessDenied) {
 					return Error(403, "Access denied to data source", err)
 				}
