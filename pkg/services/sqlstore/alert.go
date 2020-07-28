@@ -238,6 +238,13 @@ func updateAlerts(existingAlerts []*models.Alert, cmd *models.SaveAlertsCommand,
 			return err
 		}
 		insertTags(sess, tags, alert.Id)
+
+		// populate alert_rule_notification table for newly created dashboard alerts too
+		alertNotificationUIDs := alert.GetNotificationsFromSettings()
+		if _, err := sess.Exec("DELETE FROM alert_rule_notification WHERE alert_id = ?", alert.Id); err != nil {
+			return err
+		}
+		insertNotifications(sess, alert.Id, alert.OrgId, alertNotificationUIDs)
 	}
 
 	return nil
@@ -276,14 +283,14 @@ func getAlertNotificationIDs(alertID int64) ([]int64, error) {
 	return notifiers, nil
 }
 
-func insertNotifications(sess *DBSession, cmd *models.CreateAlertCommand, alertID int64) error {
-	for _, n := range cmd.Notifications {
+func insertNotifications(sess *DBSession, alertID int64, orgID int64, notificationUIDs []string) error {
+	for _, uid := range notificationUIDs {
 		sql := fmt.Sprintf(
 			`INSERT INTO alert_rule_notification (alert_id, alert_notification_id)
 			 SELECT %d, alert_notification.id 
 			 FROM alert_notification 
 			 WHERE alert_notification.org_id = ? AND alert_notification.uid = ?`, alertID)
-		if _, err := sess.Exec(sql, cmd.OrgId, n.UID); err != nil {
+		if _, err := sess.Exec(sql, orgID, uid); err != nil {
 			return err
 		}
 	}
@@ -480,7 +487,12 @@ func CreateAlert(cmd *models.CreateAlertCommand) error {
 		}
 		insertTags(sess, tags, alertID)
 
-		insertNotifications(sess, cmd, alertID)
+		notificationUIDs := make([]string, 0)
+		for _, n := range cmd.Notifications {
+			notificationUIDs = append(notificationUIDs, n.UID)
+		}
+
+		insertNotifications(sess, alertID, cmd.OrgId, notificationUIDs)
 
 		cmd.Result = alert
 		return nil
