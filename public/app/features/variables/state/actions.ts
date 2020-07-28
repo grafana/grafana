@@ -552,10 +552,10 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
       dispatch(cancelVariables());
     }
 
-    // Add system variables like __dashboard and __user
-    dispatch(addSystemTemplateVariables(dashboard));
     // Start init transaction
     dispatch(variablesInitTransaction({ uid: dashboardUid }));
+    // Add system variables like __dashboard and __user
+    dispatch(addSystemTemplateVariables(dashboard));
     // Load all variables into redux store
     dispatch(initDashboardTemplating(dashboard.templating.list));
     // Process all variable updates
