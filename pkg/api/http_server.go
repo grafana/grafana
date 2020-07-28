@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -72,6 +73,7 @@ type HTTPServer struct {
 	SearchService        *search.SearchService            `inject:""`
 	Live                 *live.GrafanaLive
 	Listener             net.Listener
+	SQLStore             *sqlstore.SqlStore
 }
 
 func (hs *HTTPServer) Init() error {

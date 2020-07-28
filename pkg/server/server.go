@@ -35,6 +35,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -50,6 +51,7 @@ type Config struct {
 	Commit      string
 	BuildBranch string
 	Listener    net.Listener
+	SQLStore    *sqlstore.SqlStore
 }
 
 // New returns a new instance of Server.
@@ -125,10 +127,16 @@ func (s *Server) init(cfg *Config) error {
 			continue
 		}
 
-		if cfg != nil && cfg.Listener != nil {
+		if cfg != nil {
 			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
-				s.log.Debug("Using provided listener for HTTP server")
-				httpS.Listener = cfg.Listener
+				if cfg.Listener != nil {
+					s.log.Debug("Using provided listener for HTTP server")
+					httpS.Listener = cfg.Listener
+				}
+				if cfg.SQLStore != nil {
+					s.log.Debug("Using provided SQL store for HTTP server")
+					httpS.SQLStore = cfg.SQLStore
+				}
 			}
 		}
 		if err := service.Instance.Init(); err != nil {

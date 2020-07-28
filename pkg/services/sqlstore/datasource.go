@@ -27,6 +27,23 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceByName)
 }
 
+func (ss *SqlStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
+	metrics.MDBDataSourceQueryByID.Inc()
+
+	datasource := models.DataSource{OrgId: orgID, Id: id}
+	has, err := ss.engine.Get(&datasource)
+	if err != nil {
+		sqlog.Error("Failed getting data source", "err", err, "id", id, "orgId", orgID)
+		return nil, err
+	}
+	if !has {
+		sqlog.Debug("Failed to find data source", "id", id, "orgId", orgID)
+		return nil, models.ErrDataSourceNotFound
+	}
+
+	return &datasource, nil
+}
+
 func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
 

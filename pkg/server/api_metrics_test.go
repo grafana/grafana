@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,144 +28,139 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
-	"xorm.io/xorm"
 )
 
-// Test CloudWatch querying.
-//
-// XXX: Have to have all tests as sub-tests of a main closure, since Grafana uses a global xorm engine
-// that can lead to race conditions between tests using different Grafana server instances.
-func TestQueryCloudWatch(t *testing.T) {
+func TestQueryCloudWatchMetrics(t *testing.T) {
 	grafDir, cfgPath := createGrafDir(t)
-	setUpDatabase(t, grafDir)
-	addr := startGrafana(t, grafDir, cfgPath)
+	sqlStore := setUpDatabase(t, grafDir)
+	addr := startGrafana(t, grafDir, cfgPath, sqlStore)
 
-	t.Run("Metrics", func(t *testing.T) {
-		origNewCWClient := cloudwatch.NewCWClient
-		t.Cleanup(func() {
-			cloudwatch.NewCWClient = origNewCWClient
-		})
-
-		var client cloudwatch.FakeCWClient
-		cloudwatch.NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-			return client
-		}
-
-		t.Run("Custom metrics", func(t *testing.T) {
-			// TODO: Clean database
-			client = cloudwatch.FakeCWClient{
-				Metrics: []*cwapi.Metric{
-					{
-						MetricName: aws.String("Test_MetricName"),
-						Dimensions: []*cwapi.Dimension{
-							{
-								Name: aws.String("Test_DimensionName"),
-							},
-						},
-					},
-				},
-			}
-
-			req := dtos.MetricRequest{
-				Queries: []*simplejson.Json{
-					simplejson.NewFromAny(map[string]interface{}{
-						"type":         "metricFindQuery",
-						"subtype":      "metrics",
-						"region":       "us-east-1",
-						"namespace":    "custom",
-						"datasourceId": 1,
-					}),
-				},
-			}
-			tr := makeCWRequest(t, req, addr)
-
-			assert.Equal(t, tsdb.Response{
-				Results: map[string]*tsdb.QueryResult{
-					"A": {
-						RefId: "A",
-						Meta: simplejson.NewFromAny(map[string]interface{}{
-							"rowCount": float64(1),
-						}),
-						Tables: []*tsdb.Table{
-							{
-								Columns: []tsdb.TableColumn{
-									{
-										Text: "text",
-									},
-									{
-										Text: "value",
-									},
-								},
-								Rows: []tsdb.RowValues{
-									{
-										"Test_MetricName",
-										"Test_MetricName",
-									},
-								},
-							},
-						},
-					},
-				},
-			}, tr)
-		})
+	origNewCWClient := cloudwatch.NewCWClient
+	t.Cleanup(func() {
+		cloudwatch.NewCWClient = origNewCWClient
 	})
 
-	t.Run("Logs", func(t *testing.T) {
-		origNewCWLogsClient := cloudwatch.NewCWLogsClient
-		t.Cleanup(func() {
-			cloudwatch.NewCWLogsClient = origNewCWLogsClient
-		})
+	var client cloudwatch.FakeCWClient
+	cloudwatch.NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return client
+	}
 
-		var client cloudwatch.FakeCWLogsClient
-		cloudwatch.NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-			return client
+	t.Run("Custom metrics", func(t *testing.T) {
+		// TODO: Clean database
+		client = cloudwatch.FakeCWClient{
+			Metrics: []*cwapi.Metric{
+				{
+					MetricName: aws.String("Test_MetricName"),
+					Dimensions: []*cwapi.Dimension{
+						{
+							Name: aws.String("Test_DimensionName"),
+						},
+					},
+				},
+			},
 		}
 
-		t.Run("Describe log groups", func(t *testing.T) {
-			client = cloudwatch.FakeCWLogsClient{}
+		req := dtos.MetricRequest{
+			Queries: []*simplejson.Json{
+				simplejson.NewFromAny(map[string]interface{}{
+					"type":         "metricFindQuery",
+					"subtype":      "metrics",
+					"region":       "us-east-1",
+					"namespace":    "custom",
+					"datasourceId": 1,
+				}),
+			},
+		}
+		tr := makeCWRequest(t, req, addr)
 
-			req := dtos.MetricRequest{
-				Queries: []*simplejson.Json{
-					simplejson.NewFromAny(map[string]interface{}{
-						"type":         "logAction",
-						"subtype":      "DescribeLogGroups",
-						"region":       "us-east-1",
-						"datasourceId": 1,
+		assert.Equal(t, tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"A": {
+					RefId: "A",
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": float64(1),
 					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"Test_MetricName",
+									"Test_MetricName",
+								},
+							},
+						},
+					},
 				},
-			}
-			tr := makeCWRequest(t, req, addr)
+			},
+		}, tr)
+	})
+}
 
-			dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
-				&data.Frame{
-					Name: "logGroups",
-					Fields: []*data.Field{
-						data.NewField("logGroupName", nil, []*string{}),
-					},
-					Meta: &data.FrameMeta{
-						PreferredVisualization: "logs",
-					},
+func TestQueryCloudWatchLogs(t *testing.T) {
+	grafDir, cfgPath := createGrafDir(t)
+	sqlStore := setUpDatabase(t, grafDir)
+	addr := startGrafana(t, grafDir, cfgPath, sqlStore)
+
+	origNewCWLogsClient := cloudwatch.NewCWLogsClient
+	t.Cleanup(func() {
+		cloudwatch.NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var client cloudwatch.FakeCWLogsClient
+	cloudwatch.NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return client
+	}
+
+	t.Run("Describe log groups", func(t *testing.T) {
+		client = cloudwatch.FakeCWLogsClient{}
+
+		req := dtos.MetricRequest{
+			Queries: []*simplejson.Json{
+				simplejson.NewFromAny(map[string]interface{}{
+					"type":         "logAction",
+					"subtype":      "DescribeLogGroups",
+					"region":       "us-east-1",
+					"datasourceId": 1,
+				}),
+			},
+		}
+		tr := makeCWRequest(t, req, addr)
+
+		dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
+			&data.Frame{
+				Name: "logGroups",
+				Fields: []*data.Field{
+					data.NewField("logGroupName", nil, []*string{}),
 				},
-			})
-			// Have to call this so that dataFrames.encoded is non-nil, for the comparison
-			// In the future we should use gocmp instead and ignore this field
-			_, err := dataFrames.Encoded()
-			require.NoError(t, err)
-			assert.Equal(t, tsdb.Response{
-				Results: map[string]*tsdb.QueryResult{
-					"A": {
-						RefId:      "A",
-						Dataframes: dataFrames,
-					},
+				Meta: &data.FrameMeta{
+					PreferredVisualization: "logs",
 				},
-			}, tr)
+			},
 		})
+		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
+		// In the future we should use gocmp instead and ignore this field
+		_, err := dataFrames.Encoded()
+		require.NoError(t, err)
+		assert.Equal(t, tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"A": {
+					RefId:      "A",
+					Dataframes: dataFrames,
+				},
+			},
+		}, tr)
 	})
 }
 
@@ -270,7 +266,7 @@ func createGrafDir(t *testing.T) (string, string) {
 	return tmpDir, cfgPath
 }
 
-func startGrafana(t *testing.T, grafDir, cfgPath string) string {
+func startGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SqlStore) string {
 	t.Helper()
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -279,6 +275,7 @@ func startGrafana(t *testing.T, grafDir, cfgPath string) string {
 		ConfigFile: cfgPath,
 		HomePath:   grafDir,
 		Listener:   listener,
+		SQLStore:   sqlStore,
 	})
 	require.NoError(t, err)
 
@@ -304,31 +301,23 @@ func startGrafana(t *testing.T, grafDir, cfgPath string) string {
 	return addr
 }
 
-func setUpDatabase(t *testing.T, grafDir string) {
+func setUpDatabase(t *testing.T, grafDir string) *sqlstore.SqlStore {
 	t.Helper()
 
-	connStr := fmt.Sprintf("file:%s/data/grafana.db?mode=rwc", grafDir)
-	engine, err := xorm.NewEngine("sqlite3", connStr)
-	require.NoError(t, err)
-	defer engine.Close()
-	migrator := migrator.NewMigrator(engine)
-	migrations.AddMigrations(migrator)
-	for _, descriptor := range registry.GetServices() {
-		sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
-		if ok {
-			sc.AddMigration(migrator)
-		}
-	}
-	err = migrator.Start()
-	require.NoError(t, err)
+	sqlStore := sqlstore.InitTestDB(t)
 
-	_, err = engine.Insert(&models.DataSource{
-		Id:      1,
-		OrgId:   1,
-		Name:    "Test",
-		Type:    "cloudwatch",
-		Created: time.Now(),
-		Updated: time.Now(),
+	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(&models.DataSource{
+			Id:      1,
+			OrgId:   1,
+			Name:    "Test",
+			Type:    "cloudwatch",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		return err
 	})
 	require.NoError(t, err)
+
+	return sqlStore
 }
