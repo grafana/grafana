@@ -5,7 +5,7 @@ import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
+import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 
