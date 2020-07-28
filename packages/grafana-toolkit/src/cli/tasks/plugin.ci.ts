@@ -116,7 +116,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 
   fs.exists(jobsDir, jobsDirExists => {
     if (!jobsDirExists) {
-      throw 'You must run plugin:ci-build prior to running plugin:ci-package';
+      throw new Error('You must run plugin:ci-build prior to running plugin:ci-package');
     }
   });
 
