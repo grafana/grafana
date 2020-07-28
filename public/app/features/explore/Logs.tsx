@@ -152,7 +152,7 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
-  processLogsOrder = (logRows: LogRowModel[], logsSortOrder: SortOrder): LogRowModel[] => {
+  orderLogs = (logRows: LogRowModel[], logsSortOrder: SortOrder | null): LogRowModel[] => {
     if (logsSortOrder === null) {
       return logRows;
     }
@@ -275,7 +275,7 @@ export class Logs extends PureComponent<Props, State> {
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
-          processLogsOrder={this.processLogsOrder}
+          orderLogs={this.orderLogs}
           logsOrder={logsOrder}
         />
 

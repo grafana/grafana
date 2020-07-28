@@ -23,7 +23,7 @@ export interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
-  logsOrder: any;
+  logsOrder?: any;
   rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
@@ -34,7 +34,7 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  processLogsOrder: (row: LogRowModel[]) => void;
+  orderLogs?: (row: LogRowModel[], logsOrder: any) => LogRowModel[];
 }
 
 interface State {
@@ -95,7 +95,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       previewLimit,
       getFieldLinks,
       disableCustomHorizontalScroll,
-      processLogsOrder,
+      orderLogs,
       logsOrder,
     } = this.props;
     const { renderAll } = this.state;
@@ -113,7 +113,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const orderedRows = processLogsOrder(processedRows, logsOrder);
+    const orderedRows = orderLogs ? orderLogs(processedRows, logsOrder) : processedRows;
     const firstRows = orderedRows.slice(0, previewLimit!);
     const rowCount = Math.min(processedRows.length, rowLimit!);
     const lastRows = orderedRows.slice(previewLimit!, rowCount);

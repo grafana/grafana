@@ -486,7 +486,7 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   // compare milliseconds
   if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
