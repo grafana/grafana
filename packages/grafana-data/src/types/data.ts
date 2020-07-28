@@ -17,12 +17,19 @@ export enum LoadingState {
 
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
 
+export type FieldNamingStrategy = 'smart' | 'complete' | 'use-frame-name';
+
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
 
   /** Stats */
   stats?: QueryResultMetaStat[];
+
+  /**
+   * Field naming strategy
+   */
+  namingStrategy?: FieldNamingStrategy;
 
   /** Meta Notices */
   notices?: QueryResultMetaNotice[];
