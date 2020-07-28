@@ -50,7 +50,6 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
-		// TODO: Clean database
 		client = cloudwatch.FakeCWClient{
 			Metrics: []*cwapi.Metric{
 				{
