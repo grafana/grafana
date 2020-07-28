@@ -320,8 +320,7 @@ def test_backend_step():
         ],
         'commands': [
             # First execute non-integration tests in parallel, since it should be safe
-            # './bin/grabpl test-backend',
-            'go test ./pkg/server/...',
+            './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
             # Keep the test cache
