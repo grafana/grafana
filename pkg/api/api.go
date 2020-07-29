@@ -387,16 +387,16 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", AdminGetSettings)
-		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
-		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
-		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
-		adminRoute.Delete("/users/:id", AdminDeleteUser)
+		adminRoute.Get("/settings", Wrap(AdminGetSettings))
+		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), Wrap(AdminCreateUser))
+		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), Wrap(AdminUpdateUserPassword))
+		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), Wrap(AdminUpdateUserPermissions))
+		adminRoute.Delete("/users/:id", Wrap(AdminDeleteUser))
 		adminRoute.Post("/users/:id/disable", Wrap(hs.AdminDisableUser))
 		adminRoute.Post("/users/:id/enable", Wrap(AdminEnableUser))
 		adminRoute.Get("/users/:id/quotas", Wrap(GetUserQuotas))
 		adminRoute.Put("/users/:id/quotas/:target", bind(models.UpdateUserQuotaCmd{}), Wrap(UpdateUserQuota))
-		adminRoute.Get("/stats", AdminGetStats)
+		adminRoute.Get("/stats", Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), Wrap(PauseAllAlerts))
 
 		adminRoute.Post("/users/:id/logout", Wrap(hs.AdminLogoutUser))
