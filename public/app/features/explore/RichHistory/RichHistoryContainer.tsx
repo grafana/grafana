@@ -1,9 +1,9 @@
 // Libraries
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Resizable } from 're-resizable';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { css, cx } from 'emotion';
+import { css, cx, keyframes } from 'emotion';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -20,6 +20,16 @@ import { RichHistory, Tabs } from './RichHistory';
 
 //Actions
 import { deleteRichHistory } from '../state/actions';
+
+const drawerSlide = keyframes`
+  0% {
+    transform: translateY(400px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+`;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const shadowColor = theme.isLight ? theme.palette.gray4 : theme.palette.black;
@@ -38,11 +48,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     drawerActive: css`
       opacity: 1;
-      transition: transform 0.5s ease-out;
-    `,
-    drawerNotActive: css`
-      opacity: 0;
-      transform: translateY(400px);
+      animation: 0.5s ease-out ${drawerSlide};
     `,
     rzHandle: css`
       background: ${theme.colors.formInputBorder};
@@ -72,14 +78,7 @@ export interface Props {
 }
 
 export function RichHistoryContainer(props: Props) {
-  const [visible, setVisible] = useState(false);
   const [height, setHeight] = useState(400);
-
-  /* To create sliding animation for rich history drawer */
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 10);
-    return () => clearTimeout(timer);
-  }, []);
 
   const { richHistory, width, firstTab, activeDatasourceInstance, exploreId, deleteRichHistory, onClose } = props;
   const theme = useTheme();
@@ -88,7 +87,7 @@ export function RichHistoryContainer(props: Props) {
 
   return (
     <Resizable
-      className={cx(styles.container, visible ? styles.drawerActive : styles.drawerNotActive)}
+      className={cx(styles.container, styles.drawerActive)}
       defaultSize={{ width: drawerWidth, height: '400px' }}
       handleClasses={{ top: styles.rzHandle }}
       enable={{
