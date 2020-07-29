@@ -481,18 +481,18 @@ func CreateAlert(cmd *models.CreateAlertCommand) error {
 			NewStateDate: creationTime,
 		}
 
-		alertID, err := sess.Insert(alert)
+		_, err := sess.Insert(alert)
 		if err != nil {
 			return err
 		}
 
-		sqlog.Debug("Alert inserted", "name", alert.Name, "id", alertID)
+		sqlog.Debug("Alert inserted", "name", alert.Name, "id", alert.Id)
 
 		tags := []*models.Tag{}
 		for key, value := range cmd.AlertRuleTags {
 			tags = append(tags, &models.Tag{Key: key, Value: value})
 		}
-		if err := insertTags(sess, tags, alertID); err != nil {
+		if err := insertTags(sess, tags, alert.Id); err != nil {
 			return err
 		}
 
@@ -500,7 +500,7 @@ func CreateAlert(cmd *models.CreateAlertCommand) error {
 		for _, n := range cmd.Notifications {
 			notificationUIDs = append(notificationUIDs, n.UID)
 		}
-		if err := insertNotifications(sess, alertID, cmd.OrgId, notificationUIDs); err != nil {
+		if err := insertNotifications(sess, alert.Id, cmd.OrgId, notificationUIDs); err != nil {
 			return err
 		}
 
