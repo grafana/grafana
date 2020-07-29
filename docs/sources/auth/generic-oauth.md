@@ -61,7 +61,12 @@ See [JMESPath examples](#jmespath-examples) for more information.
 
 > Only available in Grafana v7.2+.
 
-Customize user login using `login_attribute_path` configuration option. Grafana attempts to evaluate the `login_attribute_path` JMESPath expression against the ID token. If no value is found, Grafana uses for the path lookup the HTTP response obtained by querying the UserInfo endpoint specified via the `api_url` configuration option. The attribute name which will be used for extracting the ID token from the returned OAuth token can be customized with the `id_token_attribute_name` option.
+Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
+
+1. Grafana evaluates the `login_attribute_path` JMESPath expression against the ID token. 
+1. If Grafana finds no value, then Grafana evaluates expression against the JSON data obtained from UserInfo endpoint. The UserInfo endpoint URL is specified in the `api_url` configuration option.
+
+You can customize the attribute name used to extract the ID token from the returned OAuth token with the `id_token_attribute_name` option.
 
 ## Set up OAuth2 with Auth0
 
